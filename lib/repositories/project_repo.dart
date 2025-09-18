@@ -1,0 +1,78 @@
+import 'dart:convert';
+
+import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/models/project.dart';
+
+class ProjectRepo {
+  @deprecated
+  static List<Project> projects = [];
+
+  Future<List<Project>> fetchProjects() async {
+    final response = await ApiClient.http.get(ApiEndpoints.projects);
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      throw "Failed to fetch projects: ${response.body}";
+    }
+
+    projects = (body as List).map((e) => Project.fromJson(e)).toList();
+
+    return projects;
+  }
+
+  Future<void> createProject(Project project) async {
+    final response = await ApiClient.http.post(
+      ApiEndpoints.projects,
+      body: project.toJson(),
+    );
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode != 201) {
+      throw "Failed to create project: ${response.body}\nbody: $body";
+    }
+  }
+
+  Future<void> updateStatus(String projectId, String newStatus) async {
+    final response = await ApiClient.http.put(
+      ApiEndpoints.updateProjectStatus(projectId),
+      body: {"status": newStatus},
+    );
+
+    if (response.statusCode != 200) {
+      throw "Failed to update project status: ${response.body}";
+    }
+  }
+
+  // Get progress logs
+  Future<List<ProgressLog>> fetchProgressLogs(String projectId) async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.projectProgressLogs(projectId),
+    );
+
+    if (response.statusCode != 200) {
+      throw "No logs found: ${response.body}";
+    }
+
+    final body = jsonDecode(response.body);
+
+    return (body as List)
+        .map((e) => ProgressLog.fromJson(projectId, e))
+        .toList();
+  }
+
+  // Create progress log
+  Future<void> createProgressLog(String projectId, ProgressLog log) async {
+    final response = await ApiClient.http.post(
+      ApiEndpoints.projectProgressLogs(projectId),
+      body: log.toJson(),
+    );
+
+    if (response.statusCode != 201) {
+      throw "Failed to create progress log, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successfully created progress log entry
+  }
+}
