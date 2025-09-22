@@ -12,7 +12,22 @@ import 'package:smooflow/providers/project_provider.dart';
 class AddProjectProgressScreen extends ConsumerStatefulWidget {
   final String projectId;
 
-  const AddProjectProgressScreen(this.projectId, {Key? key}) : super(key: key);
+  // Read mode means the user is viewing a project progress log with minimal write privileges (update description and or issue/error)
+  late final bool isReadMode;
+
+  AddProjectProgressScreen(this.projectId, {Key? key}) : super(key: key) {
+    isReadMode = false;
+  }
+
+  late final ProgressLog progressLog;
+
+  AddProjectProgressScreen.view({
+    Key? key,
+    required this.progressLog,
+    required this.projectId,
+  }) : super(key: key) {
+    isReadMode = true;
+  }
 
   @override
   ConsumerState<AddProjectProgressScreen> createState() =>
@@ -99,13 +114,28 @@ class _AddProjectProgressScreenState
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    if (widget.isReadMode) {
+      selectedStatus = widget.progressLog.status;
+      _descriptionController.text = widget.progressLog.description ?? "";
+      dueDate = widget.progressLog.dueDate;
+      selectedIssue = widget.progressLog.issue ?? ProgressIssue.none;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final project = ref.watch(projectByIdProvider(widget.projectId))!;
 
     try {
-      statuses = Status.values.where(
-        (status) => status.name != project.status.toLowerCase(),
-      );
+      statuses =
+          widget.isReadMode
+              ? Status.values
+              : Status.values.where(
+                (status) => status.name != project.status.toLowerCase(),
+              );
     } catch (e) {
       // value already set
     }
@@ -155,9 +185,12 @@ class _AddProjectProgressScreenState
                         ),
                       );
                     }).toList(),
-                onChanged: (value) {
-                  setState(() => selectedStatus = value);
-                },
+                onChanged:
+                    widget.isReadMode
+                        ? null
+                        : (value) {
+                          setState(() => selectedStatus = value);
+                        },
                 decoration: _inputDecoration("Select updated status"),
                 icon: Transform.rotate(
                   angle: pi / 2,
@@ -192,9 +225,10 @@ class _AddProjectProgressScreenState
               ),
               const SizedBox(height: 6),
               GestureDetector(
-                onTap: () => _pickDate(context),
+                onTap: widget.isReadMode ? null : () => _pickDate(context),
                 child: AbsorbPointer(
                   child: TextField(
+                    enabled: !widget.isReadMode,
                     decoration: _dateDecoration(
                       "dd / mm / yyyy",
                       hintColor: Colors.black87,
@@ -265,6 +299,18 @@ class _AddProjectProgressScreenState
   }
 
   void validateAndSave() async {
+    if (widget.isReadMode) {
+      // TODO: Update Log if any changes made
+      widget.progressLog.description = _descriptionController.text;
+      ref
+          .read(projectNotifierProvider.notifier)
+          .updateProgressLog(
+            projectId: widget.projectId,
+            updatedLog: widget.progressLog,
+          );
+      return;
+    }
+
     final isValid = _formKey.currentState?.validate() ?? false;
 
     if (selectedStatus == null) {

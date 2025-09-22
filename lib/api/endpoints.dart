@@ -57,6 +57,9 @@ class ApiEndpoints {
   static String projectProgressLogs(String projectId) =>
       "/projects/$projectId/progressLogs";
 
+  static String updateProgressLog(String logId) =>
+      "/projects/progressLogs/$logId";
+
   // Company endpoints
   static const companies = "/companies";
 }

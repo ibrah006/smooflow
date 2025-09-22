@@ -11,7 +11,7 @@ class QuickActions extends StatelessWidget {
       {"icon": Icons.add_rounded, "label": "New Project", "selected": true},
       {
         "icon": Icons.list_alt_rounded,
-        "label": "View Orders",
+        "label": "All Projects",
         "selected": false,
       },
       {"icon": Icons.bar_chart_rounded, "label": "Reports", "selected": false},
@@ -69,6 +69,12 @@ class _GridCard extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => AddProjectScreen()),
           );
+        } else if (label == "All Projects") {
+          // TODO
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => AddProjectScreen()),
+          // );
         }
       },
       child: Container(

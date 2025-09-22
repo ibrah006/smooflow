@@ -34,6 +34,9 @@ class CustomButton extends StatefulWidget {
 
   late final bool isIconButton;
 
+  late final double iconSize;
+  late final Color iconColor;
+
   CustomButton.icon({
     required this.icon,
     required this.onPressed,
@@ -41,6 +44,8 @@ class CustomButton extends StatefulWidget {
     this.height = 45,
     this.backgroundColor,
     this.surfaceAnimationColor = colorPrimary,
+    this.iconSize = 28,
+    this.iconColor = colorPrimary,
   }) {
     isIconButton = true;
     padding = null;
@@ -94,7 +99,7 @@ class _CustomButtonState extends State<CustomButton>
 
   Widget get _getChild {
     try {
-      return Icon(widget.icon, size: 28, color: colorPrimary);
+      return Icon(widget.icon, size: widget.iconSize, color: widget.iconColor);
     } catch (e) {
       // regular button with child property
       return widget.child;

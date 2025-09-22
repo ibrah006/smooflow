@@ -75,4 +75,18 @@ class ProjectRepo {
 
     // Successfully created progress log entry
   }
+
+  // Create progress log
+  Future<void> updateProgressLog(ProgressLog updatedLog) async {
+    final response = await ApiClient.http.put(
+      ApiEndpoints.updateProgressLog(updatedLog.id),
+      body: updatedLog.toUpdateJson(),
+    );
+
+    if (response.statusCode != 200) {
+      throw "Failed to update progress log, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successfully updated progress log
+  }
 }
