@@ -44,6 +44,12 @@ The app focuses on **project management, team collaboration, and production moni
 
 ---
 
+## Screenshots
+
+
+
+---
+
 ## 🖥️ UI/UX Philosophy  
 
 - **Minimal at a glance** → Show only the most essential details on dashboards  
@@ -51,8 +57,4 @@ The app focuses on **project management, team collaboration, and production moni
 - **Detailed info on demand** → Drill down into specific project, printer, or staff views  
 - **Cross-platform** → Optimized for both **mobile & desktop (admin PC dashboard)**  
 - **Smooth animations & haptic feedback** → Users feel interactions are real  
-
----
-
-## 📂 Project Structure  
 
