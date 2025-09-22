@@ -6,7 +6,6 @@ import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
-import 'package:smooflow/screens/project_timeline_screen_v2.dart';
 
 class ProjectProgressIndicator extends ConsumerStatefulWidget {
   const ProjectProgressIndicator();
@@ -145,24 +144,6 @@ class _ProjectProgressIndicatorState
         SizedBox(height: 10),
 
         // Change Status
-        CustomButton(
-          borderRadius: 20,
-          onPressed: () {
-            // _showStatusBottomSheet(context, widget.project.status);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TimelineScreen(),
-                // ProjectTimelineScreen(projectId: project.id),
-              ),
-            );
-          },
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            "View",
-            style: textTheme.labelMedium!.copyWith(color: colorPrimary),
-          ),
-        ),
         // FilledButton(
         //   onPressed: () {},
         //   style: FilledButton.styleFrom(

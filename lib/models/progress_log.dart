@@ -6,10 +6,20 @@ class ProgressLog {
   final String id;
   final String projectId; // Assuming you'll pass the project ID only
   final Status status;
-  final String? description;
+
+  String? _description;
+  String? get description => _description;
+  set description(String? newDescription) {
+    _description = newDescription;
+  }
+
   final DateTime? dueDate;
   final DateTime startDate;
   final ProgressIssue? issue;
+
+  late bool _isCompleted;
+  bool get isCompleted => _isCompleted;
+  set isCompleted(bool newValue) => _isCompleted = newValue;
 
   bool get hasIssues {
     return (issue != null && issue != ProgressIssue.none);
@@ -19,20 +29,27 @@ class ProgressLog {
     required this.id,
     required this.projectId,
     required this.status,
-    this.description,
+    required String? description,
     required this.startDate,
     this.dueDate,
     this.issue,
-  });
+    required bool isCompleted,
+  }) {
+    _description = description;
+    _isCompleted = isCompleted;
+  }
 
   ProgressLog.create({
     required this.projectId,
     required this.status,
-    this.description,
-    this.dueDate,
-    this.issue,
+    required String? description,
+    required this.dueDate,
+    required this.issue,
   }) : id = const Uuid().v4(),
-       startDate = DateTime.now();
+       startDate = DateTime.now(),
+       _isCompleted = false {
+    _description = description;
+  }
 
   factory ProgressLog.fromJson(String projectId, Map<String, dynamic> json) {
     late final ProgressIssue? issue;
@@ -50,6 +67,7 @@ class ProgressLog {
       issue: issue,
       dueDate: DateTime.parse(json['dueDate']),
       startDate: DateTime.parse(json['startDate']),
+      isCompleted: json['isCompleted'],
     );
   }
 
@@ -61,6 +79,15 @@ class ProgressLog {
       'description': description,
       'issue': issue?.name,
       'dueDate': dueDate?.toIso8601String(),
+      'isCompleted': isCompleted,
+    };
+  }
+
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'description': description,
+      'issue': issue?.name,
+      'isCompleted': isCompleted,
     };
   }
 }

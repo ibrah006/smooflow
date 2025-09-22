@@ -10,6 +10,7 @@ import 'package:smooflow/enums/priorities.dart';
 import 'package:smooflow/models/company.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/sections/project_timeline_section.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 
@@ -180,7 +181,30 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
               ),
             ],
           ),
-          actions: [IconButton(onPressed: () {}, icon: Icon(Icons.more_vert))],
+          actions: [
+            if (widget.isReadMode)
+              PopupMenuButton(
+                icon: Icon(Icons.more_vert),
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProjectTimelineScreen(
+                                  projectId: project.id,
+                                ),
+                          ),
+                        );
+                      },
+                      child: Text("View Timelines"),
+                    ),
+                  ];
+                },
+              ),
+          ],
         ),
         body: Form(
           key: _formKey,
