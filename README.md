@@ -46,7 +46,11 @@ The app focuses on **project management, team collaboration, and production moni
 
 ## Screenshots
 
-
+![App Screenshot](assets/screenshots/new_project.png)
+![App Screenshot](assets/screenshots/new_project_2.png)
+![App Screenshot](assets/screenshots/project_info.png)
+![App Screenshot](assets/screenshots/timline.png)
+![App Screenshot](assets/screenshots/timeline_stage_info.png)
 
 ---
 

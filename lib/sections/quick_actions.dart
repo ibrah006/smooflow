@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/screens/projects_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -70,11 +71,10 @@ class _GridCard extends StatelessWidget {
             MaterialPageRoute(builder: (context) => AddProjectScreen()),
           );
         } else if (label == "All Projects") {
-          // TODO
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(builder: (context) => AddProjectScreen()),
-          // );
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProjectsScreen()),
+          );
         }
       },
       child: Container(
