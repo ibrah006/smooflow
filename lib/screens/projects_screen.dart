@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
@@ -19,7 +22,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 0),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       filled: backgroundColor != null,
       fillColor: backgroundColor,
       prefixIcon: icon != null ? Icon(icon, color: Colors.grey.shade400) : null,
@@ -44,8 +47,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    final projects = ref.watch(projectNotifierProvider);
+
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
+        backgroundColor: Colors.grey.shade50,
         title: Text("Projects"),
         actions: [
           IconButton.filled(
@@ -58,19 +67,76 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               iconColor: WidgetStatePropertyAll(colorPrimary),
             ),
           ),
-          SizedBox(width: 10),
+          SizedBox(width: 20),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 25),
         child: Column(
+          spacing: 15,
           children: [
             TextField(
               decoration: _inputDecoration(
                 "Search Projects...",
                 icon: Icons.search_rounded,
+                backgroundColor: Colors.white,
               ),
             ),
+            ...projects.map((project) {
+              return Container(
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  spacing: 10,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            project.name,
+                            style: textTheme.titleLarge,
+                          ),
+                        ),
+                        Flexible(
+                          child: Text(
+                            project.dueDate?.formatDisplay ?? "NA",
+                            style: textTheme.bodyMedium!.copyWith(
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: colorPrimary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        project.status,
+                        style: textTheme.labelMedium!.copyWith(
+                          color: colorPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    LinearProgressIndicator(
+                      value: 0.60,
+                      color: colorPrimary,
+                      backgroundColor: colorPrimary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
