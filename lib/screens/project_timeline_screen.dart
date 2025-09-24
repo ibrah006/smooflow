@@ -451,7 +451,7 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                   children: [
                     SizedBox(height: 30),
                     ...List.generate(progressLogs.length, (index) {
-                      final log = progressLogs[progressLogs.length - index - 1];
+                      final log = progressLogs[index];
 
                       return _buildStep(
                         context,
