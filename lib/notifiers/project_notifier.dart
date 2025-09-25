@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/repositories/project_repo.dart';
 
 class ProjectNotifier extends StateNotifier<List<Project>> {
@@ -84,6 +85,43 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
         state.map((project) {
           if (project.id == projectId) {
             return project..status = newStatus;
+          } else {
+            return project;
+          }
+        }).toList();
+  }
+
+  // Create Task
+  Future<void> createTask({required Task task}) async {
+    final taskId = await _repo.createTask(task.projectId, task);
+
+    state =
+        state.map((project) {
+          if (project.id == task.projectId) {
+            task.initializeId(taskId);
+            return project..tasks.add(task);
+          } else {
+            return project;
+          }
+        }).toList();
+  }
+
+  // Update task status
+  Future<void> markTaskAsComplete({required Task updatedTask}) async {
+    await _repo.markTaskAsComplete(updatedTask.id);
+
+    // Local changes
+    state =
+        state.map((project) {
+          if (project.id == updatedTask.projectId) {
+            return project
+              ..tasks.map((t) {
+                if (t.id == updatedTask.id) {
+                  return updatedTask..status = "completed";
+                } else {
+                  return t;
+                }
+              });
           } else {
             return project;
           }

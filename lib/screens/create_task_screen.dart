@@ -1,38 +1,121 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
 
-class CreateTaskScreen extends StatefulWidget {
-  const CreateTaskScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
+import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/project_provider.dart';
+
+class CreateTaskScreen extends ConsumerStatefulWidget {
+  final String projectId;
+  const CreateTaskScreen({super.key, required this.projectId});
 
   @override
-  State<CreateTaskScreen> createState() => _CreateTaskScreenState();
+  ConsumerState<CreateTaskScreen> createState() => _CreateTaskScreenState();
 }
 
-class _CreateTaskScreenState extends State<CreateTaskScreen> {
+class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
 
   String? _priority;
   String? _assignee;
   DateTime? _dueDate;
+  String? _selectedProgressLogId;
 
   final List<String> priorities = ["Low", "Medium", "High", "Critical"];
   final List<String> assignees = ["Ali Yusuf", "Liam Scott", "Emma Brown"];
 
-  Future<void> _pickDate() async {
-    DateTime now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now,
-      lastDate: DateTime(now.year + 2),
+  // Show a snackbar with error message
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red[600]),
     );
-    if (picked != null) {
-      setState(() => _dueDate = picked);
+  }
+
+  // Validate and Create Function
+  void validateAndCreate() async {
+    if (_titleController.text.trim().isEmpty) {
+      _showError("Task name is required.");
+      return;
     }
+
+    if (_selectedProgressLogId == null) {
+      _showError("Please select a Progress Stage.");
+    }
+
+    // if (_priority == null || _priority!.isEmpty) {
+    //   _showError("Please select a priority.");
+    //   return;
+    // }
+
+    // if (_assignee == null || _assignee!.isEmpty) {
+    //   _showError("Please select a project head.");
+    //   return;
+    // }
+
+    final newTask = Task.create(
+      name: _titleController.text.trim(),
+      description: _descController.text.trim(),
+      progressLogId: _selectedProgressLogId!,
+      // TODO
+      assignees: [],
+      projectId: widget.projectId,
+      // TODO
+      // priority: _priority,
+      dueDate: _dueDate,
+    );
+
+    await ref.read(projectNotifierProvider.notifier).createTask(task: newTask);
+
+    debugPrint("✅ Task Created: $newTask");
+
+    // Navigate back
+    Navigator.pop(context);
+
+    // Optionally: clear the form
+    _titleController.clear();
+    _descController.clear();
+    _priority = null;
+    _assignee = null;
+    _dueDate = null;
+    _selectedProgressLogId = null;
+  }
+
+  InputDecoration _inputDecoration(String hint, {Color? backgroundColor}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      filled: backgroundColor != null,
+      fillColor: backgroundColor,
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: colorError),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: colorBorderDark),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: colorBorderDark),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: colorBorderDark, width: 1.2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // This project's progress logs
+    final progressLogs =
+        ref.watch(projectByIdProvider(widget.projectId))!.progressLogs;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Create Task"),
@@ -40,114 +123,143 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Task Title
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: "Task Title",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextField(
-              controller: _descController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: "Description",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Due Date
-            InkWell(
-              onTap: _pickDate,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: "Due Date",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Task Title
+                  const Text(
+                    "Task Name*",
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
-                ),
-                child: Text(
-                  _dueDate != null
-                      ? "${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}"
-                      : "Select date",
-                  style: TextStyle(
-                    color: _dueDate != null ? Colors.black : Colors.grey[600],
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _titleController,
+                    decoration: _inputDecoration("Task title"),
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // Associated with progress stage
+                  const Text(
+                    "Progress stage*",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _selectedProgressLogId,
+                    items:
+                        progressLogs
+                            .map(
+                              (log) => DropdownMenuItem(
+                                value: log.id,
+                                child: Text(
+                                  "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
+                                ),
+                              ),
+                            )
+                            .toList(),
+                    onChanged:
+                        (val) => setState(() => _selectedProgressLogId = val),
+                    decoration: _inputDecoration(""),
+                    icon: Transform.rotate(
+                      angle: pi / 2,
+                      child: Icon(Icons.chevron_right_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Description
+                  const Text(
+                    "Description",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _descController,
+                    maxLines: 4,
+                    decoration: _inputDecoration("Description"),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Priority Dropdown
+                  const Text(
+                    "Priority",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _priority,
+                    items:
+                        priorities
+                            .map(
+                              (p) => DropdownMenuItem(value: p, child: Text(p)),
+                            )
+                            .toList(),
+                    onChanged: (val) => setState(() => _priority = val),
+                    decoration: _inputDecoration(""),
+                    icon: Transform.rotate(
+                      angle: pi / 2,
+                      child: Icon(Icons.chevron_right_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Assignee Dropdown
+                  const Text(
+                    "Project Head",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _assignee,
+                    items:
+                        assignees
+                            .map(
+                              (p) => DropdownMenuItem(value: p, child: Text(p)),
+                            )
+                            .toList(),
+                    onChanged: (val) => setState(() => _priority = val),
+                    decoration: _inputDecoration(""),
+                    icon: Transform.rotate(
+                      angle: pi / 2,
+                      child: Icon(Icons.chevron_right_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Priority Dropdown
-            DropdownButtonFormField<String>(
-              value: _priority,
-              items:
-                  priorities
-                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                      .toList(),
-              onChanged: (val) => setState(() => _priority = val),
-              decoration: InputDecoration(
-                labelText: "Priority",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.symmetric(
+                horizontal: BorderSide(color: Colors.grey.shade200),
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Assignee Dropdown
-            DropdownButtonFormField<String>(
-              value: _assignee,
-              items:
-                  assignees
-                      .map((a) => DropdownMenuItem(value: a, child: Text(a)))
-                      .toList(),
-              onChanged: (val) => setState(() => _assignee = val),
-              decoration: InputDecoration(
-                labelText: "Assign To",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Create Task Button
-            SizedBox(
+            padding: EdgeInsets.symmetric(
+              vertical: 15,
+              horizontal: 20,
+            ).copyWith(bottom: 35),
+            child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Handle Task creation
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  padding: EdgeInsets.all(18),
+                  textStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Text(
-                  "Create Task",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                onPressed: validateAndCreate,
+                child: Text("Create Task"),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -3,14 +3,14 @@ import 'package:smooflow/models/material_log.dart';
 import 'package:smooflow/models/user.dart';
 
 class Task {
-  late int _id;
-  late String _title;
+  late final int _id;
+  late String _name;
   late String _description;
-  late DateTime _dueDate;
+  late DateTime? _dueDate;
 
   late String _status;
   late List<User> _assignees;
-  late int _projectId;
+  late String _projectId;
 
   // Material logs
   late List<MaterialLog> _estimatedMaterials;
@@ -21,20 +21,23 @@ class Task {
   Color? _color;
   IconData? _icon;
 
+  final String progressLogId;
+
   // Constructor to initialize values
   Task({
     required int id,
-    required String title,
+    required String name,
+    required this.progressLogId,
     required String description,
-    required DateTime dueDate,
-    required String status,
+    required DateTime? dueDate,
+    String status = "pending",
     required List<User> assignees,
     required List<MaterialLog> estimatedMaterials,
     required List<MaterialLog> usedMaterials,
-    required int projectId,
+    required String projectId,
     required DateTime? dateCompleted,
   }) : _id = id,
-       _title = title,
+       _name = name,
        _description = description,
        _dueDate = dueDate,
        _assignees = assignees,
@@ -46,14 +49,37 @@ class Task {
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
   }
 
+  Task.create({
+    required String name,
+    required this.progressLogId,
+    required String description,
+    required DateTime? dueDate,
+    String status = "pending",
+    required List<User> assignees,
+    List<MaterialLog> estimatedMaterials = const [],
+    List<MaterialLog> usedMaterials = const [],
+    required String projectId,
+  }) : _name = name,
+       _description = description,
+       _dueDate = dueDate,
+       _status = status,
+       _assignees = assignees,
+       _estimatedMaterials = estimatedMaterials,
+       _usedMaterials = usedMaterials,
+       _projectId = projectId;
+
+  void initializeId(int id) {
+    _id = id;
+  }
+
   // Getters (you can add more specific access rules here)
   int get id => _id;
-  String get title => _title;
+  String get name => _name;
   String get description => _description;
-  DateTime get dueDate => _dueDate;
+  DateTime? get dueDate => _dueDate;
   String get status => _status;
   List<User> get assignees => _assignees;
-  int get projectId => _projectId;
+  String get projectId => _projectId;
   DateTime? get dateCompleted => _dateCompleted;
   Color? get color => _color;
   IconData? get icon => _icon;
@@ -76,7 +102,8 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
     id: json['id'],
-    title: json['name'],
+    name: json['name'],
+    progressLogId: json["progressLog"]["id"],
     description: json['description'],
     dueDate: DateTime.parse(json['dueDate']),
     dateCompleted:
@@ -91,7 +118,7 @@ class Task {
         (json['assignees'] as List).map((assigneeRaw) {
           return User.fromJson(assigneeRaw);
         }).toList(),
-    projectId: json['project']['id'],
+    projectId: json['project']?['id'],
     // Material logs
     estimatedMaterials:
         ((json["materialsEstimated"] ?? []) as List)
@@ -106,14 +133,15 @@ class Task {
   // Copy constructor
   Task.copy(Task original)
     : _id = original.id,
-      _title = original.title,
+      _name = original.name,
       _description = original.description,
       _dueDate = original.dueDate,
       _assignees = List.from(original.assignees),
       _projectId = original.projectId,
       _dateCompleted = original._dateCompleted,
       _estimatedMaterials = List.from(original._estimatedMaterials),
-      _usedMaterials = List.from(original._usedMaterials) {
+      _usedMaterials = List.from(original._usedMaterials),
+      progressLogId = original.progressLogId {
     String status = original._status;
     _status = status;
     color = original.color;
@@ -121,17 +149,17 @@ class Task {
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
-  Task.empty();
+  Task.empty() : progressLogId = "";
 
   // Copy With method
   Task copyWithSafe({
     int? id,
-    String? title,
+    String? name,
     String? description,
     DateTime? dueDate,
     String? status,
     List<User>? assignees,
-    int? projectId,
+    String? projectId,
     DateTime? dateCompleted,
     Color? color,
     IconData? icon,
@@ -147,9 +175,9 @@ class Task {
     }
 
     try {
-      newTask._title = title ?? _title;
+      newTask._name = name ?? _name;
     } catch (_) {
-      if (title != null) newTask._title = title;
+      if (name != null) newTask._name = name;
     }
 
     try {
@@ -209,30 +237,30 @@ class Task {
   }
 
   Map<String, dynamic> toJson() {
+    final json = {
+      'name': name,
+      'description': description,
+      'dueDate': dueDate?.toIso8601String(),
+      'status': status,
+      'assignees': assignees.map((user) => user.toJson()).toList(),
+      'project': {'id': projectId},
+      'dateCompleted': dateCompleted?.toIso8601String(),
+      'estimatedMaterials': _estimatedMaterials.map((m) => m.toJson()).toList(),
+      'usedMaterials': _usedMaterials.map((m) => m.toJson()).toList(),
+      'progressLog': {'id': progressLogId},
+    };
     try {
-      return {
-        'id': id,
-        'name': title,
-        'description': description,
-        'dueDate': dueDate.toIso8601String(),
-        'status': status,
-        'assignees': assignees.map((user) => user.toJson()).toList(),
-        'project': {'id': projectId},
-        'dateCompleted': dateCompleted?.toIso8601String(),
-        'estimatedMaterials':
-            _estimatedMaterials.map((m) => m.toJson()).toList(),
-        'usedMaterials': _usedMaterials.map((m) => m.toJson()).toList(),
-      };
+      return {'id': id, ...json};
     } catch (e) {
       print("error caught: $e");
-      return {};
+      return json;
     }
   }
 
   // `replaceWith` function to update Task attributes
   void replaceWith(Task newTask) {
     _id = newTask._id;
-    _title = newTask._title;
+    _name = newTask._name;
     _description = newTask._description;
     _dueDate = newTask._dueDate;
     _status = newTask._status;

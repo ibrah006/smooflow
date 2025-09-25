@@ -4,6 +4,7 @@ import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
+import 'package:smooflow/models/task.dart';
 
 class ProjectRepo {
   @deprecated
@@ -88,5 +89,35 @@ class ProjectRepo {
     }
 
     // Successfully updated progress log
+  }
+
+  // Create task
+  // return task id
+  Future<int> createTask(String projectId, Task task) async {
+    final response = await ApiClient.http.post(
+      ApiEndpoints.createTask(projectId),
+      body: task.toJson(),
+    );
+
+    if (response.statusCode != 201) {
+      throw "Failed to create Task, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successfully created Task
+    return jsonDecode(response.body)["taskId"];
+  }
+
+  // Mark task as completed
+  Future<void> markTaskAsComplete(int taskId) async {
+    final response = await ApiClient.http.put(
+      ApiEndpoints.markTaskAsComplete(taskId),
+      body: {"placeholder": "null"},
+    );
+
+    if (response.statusCode != 200) {
+      throw "Failed to mark task as completed, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successfully marked task as completed
   }
 }

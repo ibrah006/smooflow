@@ -51,7 +51,7 @@ class LocalHttp {
     print("body before calling put: $body");
     return await http.put(
       Uri.parse('$baseUrl$endpoint'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...await getHeaders()},
       body: jsonEncode(body),
     );
   }

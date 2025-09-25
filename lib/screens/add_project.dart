@@ -10,7 +10,9 @@ import 'package:smooflow/enums/priorities.dart';
 import 'package:smooflow/models/company.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
+import 'package:smooflow/screens/tasks_screen.dart';
 import 'package:smooflow/sections/project_timeline_section.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 
@@ -186,22 +188,30 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
               PopupMenuButton(
                 icon: Icon(Icons.more_vert),
                 itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
+                  return List.generate(
+                    3,
+                    (index) => PopupMenuItem(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => ProjectTimelineScreen(
-                                  projectId: project.id,
-                                ),
+                                (context) =>
+                                    [
+                                      ProjectTimelineScreen(
+                                        projectId: project.id,
+                                      ),
+                                      CreateTaskScreen(projectId: project.id),
+                                      TasksScreen(projectId: widget.projectId),
+                                    ][index],
                           ),
                         );
                       },
-                      child: Text("View Timelines"),
+                      child: Text(
+                        ["View Timelines", "Create Task", "View Tasks"][index],
+                      ),
                     ),
-                  ];
+                  );
                 },
               ),
           ],

@@ -6,7 +6,7 @@ class ApiEndpoints {
   // Tasks
   static const getTasks = "/tasks";
 
-  static String createTask(int projectId) => "/projects/$projectId";
+  static String createTask(String projectId) => "/projects/$projectId";
 
   // Endpoint for getting tasks assigned for current user
   static String getUserTasks = "/tasks/me";
@@ -17,6 +17,10 @@ class ApiEndpoints {
 
   // Endpoint for getting active task for current user
   static const getUserActiveTask = "/tasks/me/active";
+
+  // Endpoint for marking task as completed
+  static String markTaskAsComplete(int taskId) =>
+      "/tasks/$taskId/markCompleted";
 
   // Attendance logs
   static const getAttendanceLogs = "activity/attendance";
