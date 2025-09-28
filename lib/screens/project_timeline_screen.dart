@@ -1,11 +1,14 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
+import 'package:smooflow/data/timeline_refresh_manager.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project_progress_screen.dart';
 import 'dart:io' show Platform;
@@ -22,6 +25,10 @@ class ProjectTimelineScreen extends ConsumerStatefulWidget {
 
 class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
   static final unProgressColor = Colors.grey.shade200;
+
+  late Future<List<ProgressLog>> progressLogs;
+
+  late TimelineRefreshManager refreshManager;
 
   _showModalSheet({
     required context,
@@ -319,18 +326,13 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                                 log.isCompleted
                                                     ? null
                                                     : () async {
-                                                      log.isCompleted = true;
                                                       await ref
                                                           .read(
-                                                            projectNotifierProvider
+                                                            progressLogNotifierProvider
                                                                 .notifier,
                                                           )
-                                                          .updateProgressLog(
-                                                            projectId:
-                                                                widget
-                                                                    .projectId,
-                                                            updatedLog: log,
-                                                          );
+                                                          .markAsCompleted(log);
+                                                      log.isCompleted = true;
                                                       Navigator.pop(context);
                                                     },
                                             style: FilledButton.styleFrom(
@@ -392,6 +394,21 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    refreshManager = TimelineRefreshManager();
+    Future.microtask(() {
+      progressLogs = ref.read(
+        progressLogsByProjectProvider(
+          ProgressLogsByProviderArgs(widget.projectId),
+        ),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
@@ -404,11 +421,19 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
       return Scaffold(body: Center(child: Text("Project not found: E70")));
     }
 
-    final progressLogs =
-        ref
-            .watch(projectNotifierProvider)
-            .firstWhere((p) => p.id == project.id)
-            .progressLogs;
+    /// refresh data only if it's been been specified interval since the last refresh
+    if (refreshManager.reset(widget.projectId)) {
+      print("reset, project id: ${widget.projectId}");
+
+      progressLogs = ref.watch(
+        progressLogsByProjectProvider(
+          ProgressLogsByProviderArgs(
+            widget.projectId,
+            ensureLatestProgressLogData: false,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -447,20 +472,34 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
-                child: ListView(
-                  children: [
-                    SizedBox(height: 30),
-                    ...List.generate(progressLogs.length, (index) {
-                      final log = progressLogs[index];
+                child: FutureBuilder(
+                  future: progressLogs,
+                  builder: (context, snapshot) {
+                    final logs = snapshot.data;
+                    return ListView(
+                      children: [
+                        SizedBox(height: 30),
+                        if (logs != null)
+                          ...List.generate(logs.length, (index) {
+                            final log = logs.elementAt(index);
 
-                      return _buildStep(
-                        context,
-                        progressLogs.length,
-                        index,
-                        log: log,
-                      );
-                    }),
-                  ],
+                            return _buildStep(
+                              context,
+                              logs.length,
+                              index,
+                              log: log,
+                            );
+                          })
+                        else
+                          CardLoading(
+                            height: 100,
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                            margin: EdgeInsets.only(bottom: 10),
+                          ),
+                        // TODO: show cards loading animation
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

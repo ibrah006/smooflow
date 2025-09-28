@@ -10,3 +10,5 @@ const backgroundDarker = Color(0xFFf8fafc);
 const colorPending = Color(0xFFf59e0b);
 const colorError = Color(0xFFd53d3c);
 const colorErrorBackground = Color(0xFFfbebec);
+
+const timelineRefreshIntervalSecs = 60;

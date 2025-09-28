@@ -44,28 +44,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
           if (project.id == projectId) {
             return project
               ..status = log.status.name
-              ..progressLogs.add(log);
-          } else {
-            return project;
-          }
-        }).toList();
-  }
-
-  // update progress log
-  Future<void> updateProgressLog({
-    required String projectId,
-    required ProgressLog updatedLog,
-  }) async {
-    await _repo.updateProgressLog(updatedLog);
-
-    state =
-        state.map((project) {
-          if (project.id == projectId) {
-            return project
-              ..status = updatedLog.status.name
-              ..progressLogs.map((l) {
-                return l.id == updatedLog.id ? updatedLog : l;
-              });
+              ..progressLogs.add(log.id);
           } else {
             return project;
           }

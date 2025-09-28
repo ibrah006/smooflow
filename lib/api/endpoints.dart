@@ -61,9 +61,16 @@ class ApiEndpoints {
   static String projectProgressLogs(String projectId) =>
       "/projects/$projectId/progressLogs";
 
-  static String updateProgressLog(String logId) =>
-      "/projects/progressLogs/$logId";
+  static String updateProgressLog(String logId) => "/progressLogs/$logId";
 
   // Company endpoints
   static const companies = "/companies";
+
+  // Progress log endpoints
+  static String getProgressLogById(String logId) => '/progressLogs/$logId';
+  static String getProgressLogByProject(String projectId, {DateTime? since}) =>
+      '/projects/$projectId/progressLogs${since != null ? '?since=$since' : ''}';
+
+  static String getProjectProgressLogLastModified(String projectId) =>
+      '/projects/$projectId/progressLogs/last-modified';
 }

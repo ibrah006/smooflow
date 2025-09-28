@@ -4,8 +4,11 @@ import 'package:uuid/uuid.dart';
 
 class ProgressLog {
   final String id;
-  final String projectId; // Assuming you'll pass the project ID only
-  final Status status;
+  final String projectId;
+
+  Status _status;
+  Status get status => _status;
+  // set status(Status newValue) => _status = newValue;
 
   String? _description;
   String? get description => _description;
@@ -15,7 +18,12 @@ class ProgressLog {
 
   final DateTime? dueDate;
   final DateTime startDate;
-  final ProgressIssue? issue;
+
+  ProgressIssue? _issue;
+  ProgressIssue? get issue => _issue;
+  set issue(ProgressIssue? newIssue) {
+    _issue = newIssue;
+  }
 
   late bool _isCompleted;
   bool get isCompleted => _isCompleted;
@@ -28,30 +36,33 @@ class ProgressLog {
   ProgressLog({
     required this.id,
     required this.projectId,
-    required this.status,
+    required Status status,
     required String? description,
     required this.startDate,
     this.dueDate,
-    this.issue,
+    ProgressIssue? issue,
     required bool isCompleted,
-  }) {
+  }) : _status = status,
+       _issue = issue {
     _description = description;
     _isCompleted = isCompleted;
   }
 
   ProgressLog.create({
     required this.projectId,
-    required this.status,
+    required Status status,
     required String? description,
     required this.dueDate,
-    required this.issue,
+    required ProgressIssue issue,
   }) : id = const Uuid().v4(),
        startDate = DateTime.now(),
-       _isCompleted = false {
+       _isCompleted = false,
+       _status = status,
+       _issue = issue {
     _description = description;
   }
 
-  factory ProgressLog.fromJson(String projectId, Map<String, dynamic> json) {
+  factory ProgressLog.fromJson(Map<String, dynamic> json) {
     late final ProgressIssue? issue;
     try {
       issue = ProgressIssue.values.byName(json['issue']);
@@ -61,7 +72,7 @@ class ProgressLog {
 
     return ProgressLog(
       id: json['id'],
-      projectId: projectId, // supports both direct and nested
+      projectId: json["project"]["id"],
       status: Status.values.byName(json['status']),
       description: json['description'],
       issue: issue,

@@ -7,6 +7,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
 class AddProjectProgressScreen extends ConsumerStatefulWidget {
@@ -301,12 +302,13 @@ class _AddProjectProgressScreenState
   void validateAndSave() async {
     if (widget.isReadMode) {
       // TODO: Update Log if any changes made
-      widget.progressLog.description = _descriptionController.text;
+      // widget.progressLog.description = _descriptionController.text;
       ref
-          .read(projectNotifierProvider.notifier)
+          .read(progressLogNotifierProvider.notifier)
           .updateProgressLog(
-            projectId: widget.projectId,
-            updatedLog: widget.progressLog,
+            widget.progressLog,
+            updateDescription: _descriptionController.text,
+            updatedIssue: selectedIssue,
           );
       return;
     }

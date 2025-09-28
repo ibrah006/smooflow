@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
@@ -27,6 +29,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   final List<String> priorities = ["Low", "Medium", "High", "Critical"];
   final List<String> assignees = ["Ali Yusuf", "Liam Scott", "Emma Brown"];
+
+  late final Future<List<ProgressLog>> progressLogs;
 
   // Show a snackbar with error message
   void _showError(String message) {
@@ -113,8 +117,20 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     // This project's progress logs
-    final progressLogs =
-        ref.watch(projectByIdProvider(widget.projectId))!.progressLogs;
+
+    try {
+      progressLogs = ref.read(
+        progressLogsByProjectProvider(
+          ProgressLogsByProviderArgs(
+            widget.projectId,
+            ensureLatestProgressLogData: false,
+          ),
+        ),
+      );
+    } catch (e) {
+      // Not initialized yet
+      Scaffold(body: Center(child: Text("Loading...")));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -149,26 +165,35 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _selectedProgressLogId,
-                    items:
-                        progressLogs
-                            .map(
-                              (log) => DropdownMenuItem(
-                                value: log.id,
-                                child: Text(
-                                  "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
+                  FutureBuilder(
+                    future: progressLogs,
+                    builder: (context, snapshot) {
+                      return DropdownButtonFormField<String>(
+                        value: _selectedProgressLogId,
+                        items:
+                            (snapshot.data?.map(
+                                      (log) => DropdownMenuItem(
+                                        value: log.id,
+                                        child: Text(
+                                          "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
+                                        ),
+                                      ),
+                                    ) ??
+                                    [])
+                                .toList(),
+                        onChanged:
+                            snapshot.data == null
+                                ? null
+                                : (val) => setState(
+                                  () => _selectedProgressLogId = val,
                                 ),
-                              ),
-                            )
-                            .toList(),
-                    onChanged:
-                        (val) => setState(() => _selectedProgressLogId = val),
-                    decoration: _inputDecoration(""),
-                    icon: Transform.rotate(
-                      angle: pi / 2,
-                      child: Icon(Icons.chevron_right_rounded),
-                    ),
+                        decoration: _inputDecoration(""),
+                        icon: Transform.rotate(
+                          angle: pi / 2,
+                          child: Icon(Icons.chevron_right_rounded),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 

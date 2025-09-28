@@ -18,7 +18,10 @@ class Project {
   final DateTime dateStarted;
   final Company client;
   final int priority;
-  final List<ProgressLog> progressLogs;
+  // Progress logs' ids
+  final List<String> progressLogs;
+
+  final DateTime progressLogLastModifiedAt;
 
   set status(String newStatus) {
     _status = newStatus;
@@ -43,7 +46,8 @@ class Project {
     required this.client,
     required this.priority,
     required this.progressLogs,
-  }) : _status = status;
+  }) : _status = status,
+       progressLogLastModifiedAt = DateTime.now();
 
   Project.create({
     required this.name,
@@ -59,7 +63,8 @@ class Project {
        _status = "Pending",
        tasks = [],
        dateStarted = DateTime.now(),
-       progressLogs = [];
+       progressLogs = [],
+       progressLogLastModifiedAt = DateTime.now();
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(
@@ -90,7 +95,11 @@ class Project {
       priority: json['priority'],
       progressLogs:
           (json['progressLogs'] as List?)
-              ?.map((e) => ProgressLog.fromJson(json['id'], e))
+              ?.map(
+                (e) =>
+                    // Progress log id
+                    e["id"].toString(),
+              )
               .toList() ??
           [],
     );
@@ -139,7 +148,7 @@ class Project {
       // 'dateStarted': dateStarted.toIso8601String(),
       'client': client.toJson(),
       'priority': priority,
-      'progressLogs': progressLogs.map((log) => log.toJson()).toList(),
+      'progressLogs': progressLogs.map((logId) => {"id": logId}).toList(),
     };
   }
 }

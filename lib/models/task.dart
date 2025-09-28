@@ -105,7 +105,7 @@ class Task {
     name: json['name'],
     progressLogId: json["progressLog"]["id"],
     description: json['description'],
-    dueDate: DateTime.parse(json['dueDate']),
+    dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
     dateCompleted:
         json['dateCompleted'] != null
             ? DateTime.parse(json['dateCompleted'])

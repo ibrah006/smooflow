@@ -58,9 +58,7 @@ class ProjectRepo {
 
     final body = jsonDecode(response.body);
 
-    return (body as List)
-        .map((e) => ProgressLog.fromJson(projectId, e))
-        .toList();
+    return (body as List).map((e) => ProgressLog.fromJson(e)).toList();
   }
 
   // Create progress log
@@ -75,20 +73,6 @@ class ProjectRepo {
     }
 
     // Successfully created progress log entry
-  }
-
-  // Create progress log
-  Future<void> updateProgressLog(ProgressLog updatedLog) async {
-    final response = await ApiClient.http.put(
-      ApiEndpoints.updateProgressLog(updatedLog.id),
-      body: updatedLog.toUpdateJson(),
-    );
-
-    if (response.statusCode != 200) {
-      throw "Failed to update progress log, STATUS ${response.statusCode}: ${response.body}";
-    }
-
-    // Successfully updated progress log
   }
 
   // Create task
