@@ -34,8 +34,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    final activeProjectsLength =
-        ref.watch(projectNotifierProvider.notifier).activeProjectsLength;
+    final project = ref.watch(projectNotifierProvider.notifier);
+
+    final activeProjectsLength = project.activeProjectsLength;
+    final projectsCompletionRate = project.projectsProgressRate;
 
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +80,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     value: activeProjectsLength.toString(),
                   ),
                 ),
-                Expanded(child: SizedBox()),
+                Expanded(
+                  child: OverviewCard(
+                    title: "Completion Rate",
+                    color: colorPurple,
+                    icon: Icon(
+                      CupertinoIcons.chart_bar_square_fill,
+                      color: colorPurple,
+                    ),
+                    value:
+                        "${(projectsCompletionRate * 100).toStringAsFixed(0)}%",
+                  ),
+                ),
               ],
             ),
             // Quick actions

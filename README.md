@@ -46,6 +46,7 @@ The app focuses on **project management, team collaboration, and production moni
 
 ## Screenshots
 
+<img src="assets/screenshots/dashboard.png" alt="Description" width="400"/>
 <img src="assets/screenshots/new_project.png" alt="Description" width="400"/>
 <img src="assets/screenshots/new_project_2.png" alt="Description" width="400"/>
 <img src="assets/screenshots/project_info.png" alt="Description" width="400"/>

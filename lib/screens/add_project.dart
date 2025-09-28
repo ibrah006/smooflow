@@ -163,6 +163,14 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
               .watch(projectNotifierProvider)
               .firstWhere((p) => p.id == project.id)
               .status;
+
+      try {
+        project.progressRate;
+      } catch (e) {
+        ref
+            .read(projectNotifierProvider.notifier)
+            .getProjectProgressRate(widget.projectId);
+      }
     }
 
     return _projectScope(
@@ -266,7 +274,10 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                     ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: widget.isReadMode ? 14 : 4),
+                              // Project Progress Rate
+                              if (widget.isReadMode)
+                                ...progressRateSection(project),
                               if (!widget.isReadMode) ...[
                                 const Text(
                                   "Enter basic project details and specifications",
@@ -622,6 +633,41 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
         ),
       ),
     );
+  }
+
+  List<Widget> progressRateSection(Project project) {
+    final textTheme = Theme.of(context).textTheme;
+    try {
+      return [
+        Text("Progress Rate", style: TextStyle(fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        Row(
+          spacing: 12,
+          children: [
+            SizedBox(
+              width: 135,
+              child: LinearProgressIndicator(
+                value: project.progressRate,
+                borderRadius: BorderRadius.circular(10),
+                minHeight: 10,
+                color: colorPrimary,
+                backgroundColor: colorPrimary.withValues(alpha: 0.1),
+              ),
+            ),
+            Text(
+              "${(project.progressRate * 100).toStringAsFixed(0)}%",
+              style: textTheme.titleMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+      ];
+    } catch (e) {
+      return [];
+    }
   }
 
   void validateAndCreate() async {

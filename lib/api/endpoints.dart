@@ -73,4 +73,11 @@ class ApiEndpoints {
 
   static String getProjectProgressLogLastModified(String projectId) =>
       '/projects/$projectId/progressLogs/last-modified';
+
+  // Get project finish rate
+  static String getProjectProgressRate(String id) =>
+      "/projects/$id/progress-rate";
+
+  // Get avg projects finish rate
+  static String getProjectsProgressRate = "/projects/progress-rate";
 }

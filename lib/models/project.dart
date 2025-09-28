@@ -151,4 +151,7 @@ class Project {
       'progressLogs': progressLogs.map((logId) => {"id": logId}).toList(),
     };
   }
+
+  // Only local data
+  late double progressRate;
 }

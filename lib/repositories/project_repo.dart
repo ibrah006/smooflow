@@ -107,4 +107,30 @@ class ProjectRepo {
     // Successfully marked task as completed
     return DateTime.parse((jsonDecode(response.body) as Map)["dateCompleted"]);
   }
+
+  Future<double> getProjectProgressRate(String projectId) async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.getProjectProgressRate(projectId),
+    );
+
+    if (response.statusCode != 200) {
+      throw "Failed to get project's progress rate, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successful
+    return (jsonDecode(response.body)["progressRate"] as num).toDouble();
+  }
+
+  Future<double> getProjectsProgressRate() async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.getProjectsProgressRate,
+    );
+
+    if (response.statusCode != 200) {
+      throw "Failed to get projects' avg progress rate, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successful
+    return (jsonDecode(response.body)["progressRate"] as num).toDouble();
+  }
 }

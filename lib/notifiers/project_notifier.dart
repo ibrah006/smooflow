@@ -10,8 +10,14 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   final ProjectRepo _repo;
 
+  // update on this data won't really notify
+  double projectsProgressRate = 0;
+
   // load projects
   Future<void> load() async {
+    // Don't need to worry about calling this before loading projects
+    // As the progress rate calculation and everything is done in server and returned
+    await _getProjectsProgressRate();
     final projects = await _repo.fetchProjects();
     state = projects;
   }
@@ -107,5 +113,22 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
             return project;
           }
         }).toList();
+  }
+
+  Future<void> getProjectProgressRate(String projectId) async {
+    final progressRate = await _repo.getProjectProgressRate(projectId);
+
+    state =
+        state.map((project) {
+          if (project.id == projectId) {
+            return project..progressRate = progressRate;
+          } else {
+            return project;
+          }
+        }).toList();
+  }
+
+  Future<void> _getProjectsProgressRate() async {
+    projectsProgressRate = await _repo.getProjectsProgressRate();
   }
 }
