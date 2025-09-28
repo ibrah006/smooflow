@@ -92,7 +92,9 @@ class ProjectRepo {
   }
 
   // Mark task as completed
-  Future<void> markTaskAsComplete(int taskId) async {
+  // Returns the date the task was marked 'complete' from server
+  // This approach is to ensure the local datetime task completed doesn't contradict with the one in database (this problem is short term but crucial to consider)
+  Future<DateTime> markTaskAsComplete(int taskId) async {
     final response = await ApiClient.http.put(
       ApiEndpoints.markTaskAsComplete(taskId),
       body: {"placeholder": "null"},
@@ -103,5 +105,6 @@ class ProjectRepo {
     }
 
     // Successfully marked task as completed
+    return DateTime.parse((jsonDecode(response.body) as Map)["dateCompleted"]);
   }
 }

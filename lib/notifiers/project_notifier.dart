@@ -87,7 +87,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   // Update task status
   Future<void> markTaskAsComplete({required Task updatedTask}) async {
-    await _repo.markTaskAsComplete(updatedTask.id);
+    final dateCompleted = await _repo.markTaskAsComplete(updatedTask.id);
 
     // Local changes
     state =
@@ -96,7 +96,9 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
             return project
               ..tasks.map((t) {
                 if (t.id == updatedTask.id) {
-                  return updatedTask..status = "completed";
+                  return updatedTask
+                    ..status = "completed"
+                    ..dateCompleted = dateCompleted;
                 } else {
                   return t;
                 }

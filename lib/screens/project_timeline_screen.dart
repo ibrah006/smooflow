@@ -399,6 +399,7 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     super.initState();
 
     refreshManager = TimelineRefreshManager();
+    print("at init state");
     Future.microtask(() {
       progressLogs = ref.read(
         progressLogsByProjectProvider(

@@ -92,6 +92,10 @@ class Task {
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
   }
 
+  set dateCompleted(DateTime? newDatetime) {
+    _dateCompleted = newDatetime;
+  }
+
   set color(Color? newColor) {
     _color = newColor;
   }
