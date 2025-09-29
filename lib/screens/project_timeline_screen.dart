@@ -71,6 +71,12 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
 
     print("isCompleted: ${log.isCompleted}, hasIssues: ${log.hasIssues}");
 
+    // if it's the tail, then we set below = t
+    final bool nextIsCompleted =
+        isTail ? true : progressLogs[index + 1].isCompleted;
+    final bool isPreviousCompleted =
+        isHead ? true : progressLogs[index - 1].isCompleted;
+
     return Stack(
       children: [
         // Status vertical line
@@ -83,12 +89,19 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
               top: isHead ? Radius.circular(10) : Radius.zero,
               bottom: isTail ? Radius.circular(10) : Radius.zero,
             ),
-            color:
-                log.hasIssues
-                    ? colorError
-                    : isCurrent
-                    ? unProgressColor
-                    : colorPrimary,
+            color: unProgressColor,
+            gradient:
+                log.isCompleted
+                    ? LinearGradient(
+                      colors: [
+                        ...!isPreviousCompleted ? [unProgressColor] : [],
+                        colorPrimary,
+                        nextIsCompleted ? colorPrimary : unProgressColor,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    )
+                    : null,
           ),
         ),
         Row(
