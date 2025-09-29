@@ -26,7 +26,7 @@ class ProjectTimelineScreen extends ConsumerStatefulWidget {
 class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
   static final unProgressColor = Colors.grey.shade200;
 
-  late Future<List<ProgressLog>> progressLogs;
+  late List<ProgressLog> progressLogs;
 
   late TimelineRefreshManager refreshManager;
 
@@ -66,7 +66,7 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     bool isCurrent = progress <= 1 || (index < progressLogsLength);
     String title =
         "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}";
-    String subtitle = "Due ${log.dueDate?.formatDisplay.toString() as String}";
+    String subtitle = "Due ${log.dueDate?.formatDisplay}";
     String? errorText = log.hasIssues ? log.issue?.name : null;
 
     print("isCompleted: ${log.isCompleted}, hasIssues: ${log.hasIssues}");
@@ -327,7 +327,7 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                                     ? null
                                                     : () async {
                                                       await ref
-                                                          .read(
+                                                          .watch(
                                                             progressLogNotifierProvider
                                                                 .notifier,
                                                           )
@@ -401,11 +401,16 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     refreshManager = TimelineRefreshManager();
     print("at init state");
     Future.microtask(() {
-      progressLogs = ref.read(
-        progressLogsByProjectProvider(
-          ProgressLogsByProviderArgs(widget.projectId),
-        ),
-      );
+      ref
+          .read(
+            progressLogsByProjectProvider(
+              ProgressLogsByProviderArgs(widget.projectId),
+            ),
+          )
+          .then((value) {
+            progressLogs = value;
+            setState(() {});
+          });
     });
   }
 
@@ -423,18 +428,13 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     }
 
     /// refresh data only if it's been been specified interval since the last refresh
-    if (refreshManager.reset(widget.projectId)) {
-      print("reset, project id: ${widget.projectId}");
+    // if (refreshManager.reset(widget.projectId)) {
+    print("reset, project id: ${widget.projectId}");
 
-      progressLogs = ref.watch(
-        progressLogsByProjectProvider(
-          ProgressLogsByProviderArgs(
-            widget.projectId,
-            ensureLatestProgressLogData: false,
-          ),
-        ),
-      );
-    }
+    progressLogs = ref.watch(
+      progressLogsByProjectProviderSimple(widget.projectId),
+    );
+    // }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -473,34 +473,20 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
-                child: FutureBuilder(
-                  future: progressLogs,
-                  builder: (context, snapshot) {
-                    final logs = snapshot.data;
-                    return ListView(
-                      children: [
-                        SizedBox(height: 30),
-                        if (logs != null)
-                          ...List.generate(logs.length, (index) {
-                            final log = logs.elementAt(index);
+                child: ListView(
+                  children: [
+                    SizedBox(height: 30),
+                    ...List.generate(progressLogs.length, (index) {
+                      final log = progressLogs.elementAt(index);
 
-                            return _buildStep(
-                              context,
-                              logs.length,
-                              index,
-                              log: log,
-                            );
-                          })
-                        else
-                          CardLoading(
-                            height: 100,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                            margin: EdgeInsets.only(bottom: 10),
-                          ),
-                        // TODO: show cards loading animation
-                      ],
-                    );
-                  },
+                      return _buildStep(
+                        context,
+                        progressLogs.length,
+                        index,
+                        log: log,
+                      );
+                    }),
+                  ],
                 ),
               ),
             ),

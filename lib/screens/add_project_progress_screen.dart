@@ -339,19 +339,19 @@ class _AddProjectProgressScreenState
 
     final projectId = ref.read(projectByIdProvider(widget.projectId))!.id;
 
-    // TODO: Call API
+    final newLog = ProgressLog.create(
+      projectId: projectId,
+      status: selectedStatus!,
+      description: _descriptionController.text,
+      dueDate: dueDate,
+      issue: selectedIssue,
+    );
+
     await ref
-        .read(projectNotifierProvider.notifier)
-        .createProgressLog(
-          projectId: projectId,
-          log: ProgressLog.create(
-            projectId: projectId,
-            status: selectedStatus!,
-            description: _descriptionController.text,
-            dueDate: dueDate,
-            issue: selectedIssue,
-          ),
-        );
+        .watch(progressLogNotifierProvider.notifier)
+        .createProgressLog(projectId: projectId, newLog: newLog);
+    // call project notifier, to update project status and add progress log
+    ref.watch(projectNotifierProvider.notifier).createProgressLog(log: newLog);
 
     Navigator.pop(context);
   }

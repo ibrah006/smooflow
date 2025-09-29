@@ -76,7 +76,7 @@ class ProgressLog {
       status: Status.values.byName(json['status']),
       description: json['description'],
       issue: issue,
-      dueDate: DateTime.parse(json['dueDate']),
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       startDate: DateTime.parse(json['startDate']),
       isCompleted: json['isCompleted'],
     );

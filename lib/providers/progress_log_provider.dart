@@ -21,12 +21,19 @@ final progressLogsByProjectProvider =
     ) async {
       final project = ref.watch(projectByIdProvider(args.projectId))!;
 
-      return (await ref
+      return (ref
           .watch(progressLogNotifierProvider.notifier)
           .getLogsByProject(
             project,
             ensureLatestLogDetails: args.ensureLatestProgressLogData,
           ));
+    });
+
+final progressLogsByProjectProviderSimple =
+    Provider.family<List<ProgressLog>, String>((ref, projectId) {
+      return ref.watch(progressLogNotifierProvider).where((log) {
+        return log.projectId == projectId;
+      }).toList();
     });
 
 class ProgressLogsByProviderArgs {

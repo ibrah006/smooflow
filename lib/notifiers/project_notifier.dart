@@ -38,16 +38,11 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     state = [...state, newProject];
   }
 
-  // create progress log
-  Future<void> createProgressLog({
-    required String projectId,
-    required ProgressLog log,
-  }) async {
-    await _repo.createProgressLog(projectId, log);
-
+  // This function is a must call, when creating the progresslog along with the progress log notifier
+  void createProgressLog({required ProgressLog log}) {
     state =
         state.map((project) {
-          if (project.id == projectId) {
+          if (project.id == log.projectId) {
             return project
               ..status = log.status.name
               ..progressLogs.add(log.id);

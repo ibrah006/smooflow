@@ -5,6 +5,20 @@ import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/progress_log.dart';
 
 class ProgressLogRepo {
+  // Create progress log
+  Future<void> createProgressLog(String projectId, ProgressLog log) async {
+    final response = await ApiClient.http.post(
+      ApiEndpoints.projectProgressLogs(projectId),
+      body: log.toJson(),
+    );
+
+    if (response.statusCode != 201) {
+      throw "Failed to create progress log, STATUS ${response.statusCode}: ${response.body}";
+    }
+
+    // Successfully created progress log entry
+  }
+
   // Get progress log
   Future<ProgressLog> getProgressLog(String id) async {
     final response = await ApiClient.http.get(

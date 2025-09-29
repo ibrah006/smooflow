@@ -61,20 +61,6 @@ class ProjectRepo {
     return (body as List).map((e) => ProgressLog.fromJson(e)).toList();
   }
 
-  // Create progress log
-  Future<void> createProgressLog(String projectId, ProgressLog log) async {
-    final response = await ApiClient.http.post(
-      ApiEndpoints.projectProgressLogs(projectId),
-      body: log.toJson(),
-    );
-
-    if (response.statusCode != 201) {
-      throw "Failed to create progress log, STATUS ${response.statusCode}: ${response.body}";
-    }
-
-    // Successfully created progress log entry
-  }
-
   // Create task
   // return task id
   Future<int> createTask(String projectId, Task task) async {

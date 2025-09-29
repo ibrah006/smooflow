@@ -15,6 +15,16 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
   //   state = logs;
   // }
 
+  // create progress log
+  Future<void> createProgressLog({
+    required String projectId,
+    required ProgressLog newLog,
+  }) async {
+    await _repo.createProgressLog(projectId, newLog);
+
+    state = [...state, newLog];
+  }
+
   // Get Log by Id
   Future<ProgressLog> getLog(String id) async {
     late final ProgressLog log;
@@ -46,15 +56,20 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
             )
             : false;
 
-    // MUST GET LOCAL DATA (this boolean overrides ensureLatestLogDetails [whether t or f])
-    final mustGetLogData =
-        // Although the latest info is not needed, what if the actual progress logs are not even loaded into the memory yet?
-        // We can check to see if the reference progress log (IDs) that are in memory (through project model), is having an actual instance of it in memory
-        !project.progressLogs.every(
-          (item) => (state.map((log) {
-            if (log.projectId == project.id) return log.id;
-          })).toSet().contains(item),
-        );
+    late final bool mustGetLogData;
+    if (localUpdateNeeded == true) {
+      mustGetLogData = true;
+    } else {
+      // MUST GET LOCAL DATA (this boolean overrides ensureLatestLogDetails [whether t or f])
+      mustGetLogData =
+          // Although the latest info is not needed, what if the actual progress logs are not even loaded into the memory yet?
+          // We can check to see if the reference progress log (IDs) that are in memory (through project model), is having an actual instance of it in memory
+          !project.progressLogs.every(
+            (item) => (state.map((log) {
+              if (log.projectId == project.id) return log.id;
+            })).toSet().contains(item),
+          );
+    }
 
     if (localUpdateNeeded == true || mustGetLogData) {
       final updatedProjectProgressLogs = await _repo.getProgressLogByProject(
