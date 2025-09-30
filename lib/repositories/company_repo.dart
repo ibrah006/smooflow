@@ -24,6 +24,31 @@ class CompanyRepo {
     }
   }
 
+  /// returns error message, if any
+  static Future<String?> createCompany(Company company) async {
+    try {
+      final response = await ApiClient.http.post(
+        ApiEndpoints.companies,
+        body: company.toJson(),
+      );
+
+      final body = jsonDecode(response.body) as Map;
+
+      if (response.statusCode != 201) {
+        return body["error"];
+      }
+
+      final createdAt = DateTime.parse(body["company"]["createdAt"]);
+
+      company.createdAt = createdAt;
+
+      companies.add(company);
+    } catch (e) {
+      debugPrint("Error creating company profile,\nerror: $e");
+    }
+    return null;
+  }
+
   // static Future<void> createCompany(Company project) async {
   //   final response = await ApiClient.http.post(
   //     ApiEndpoints.projects,

@@ -12,7 +12,9 @@ class RecentProjectsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projects = ref.watch(projectNotifierProvider);
+    final recent = ref.watch(projectNotifierProvider.notifier).recent;
+
+    print("recent: ${recent}");
 
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16),
@@ -35,32 +37,32 @@ class RecentProjectsSection extends ConsumerWidget {
           const SizedBox(height: 8),
           const Divider(height: 0),
           const SizedBox(height: 8),
-          if (projects.isNotEmpty) ...[
+          if (recent.isNotEmpty) ...[
             _projectTile(
               context,
-              projects.first,
+              ref.read(projectByIdProvider(recent[0]!))!,
               icon: Icons.print,
               iconColor: colorPrimary,
               statusColor: Colors.orange.shade700,
               statusBg: Colors.yellow.shade100,
             ),
           ],
-          if (projects.length > 1) ...[
+          if (recent.length > 1) ...[
             const Divider(height: 0),
             _projectTile(
               context,
-              projects[1],
+              ref.read(projectByIdProvider(recent[1]!))!,
               icon: Icons.image,
               iconColor: colorPositiveStatus,
               statusColor: Colors.green.shade700,
               statusBg: Colors.green.shade100,
             ),
           ],
-          if (projects.length > 2) ...[
+          if (recent.length > 2) ...[
             const Divider(height: 0),
             _projectTile(
               context,
-              projects[2],
+              ref.read(projectByIdProvider(recent[2]!))!,
               icon: Icons.palette,
               iconColor: colorPurple,
               statusColor: Colors.grey.shade700,

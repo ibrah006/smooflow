@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smooflow/components/project_card.dart';
 import 'package:smooflow/constants.dart';
 
+@Deprecated("Not in use")
 class DashboardSection extends StatelessWidget {
   const DashboardSection({super.key});
 

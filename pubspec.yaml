@@ -35,12 +35,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.2.1
-  intl: ^0.20.2
+  intl: ^0.19.0
   shared_preferences: ^2.5.3
   uuid: ^4.5.1
   flutter_riverpod: ^2.6.1
   roundcheckbox: ^2.0.5
   card_loading: ^0.3.2
+  flutter_styled_toast: ^2.2.1
+  lottie: ^3.3.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +59,11 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+flutter_launcher_icons:
+  image_path: "assets/icons/app_icon.png" # Path to your icon image (PNG, 1024x1024 recommended)
+  android: true
+  ios: true
+
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -69,6 +77,11 @@ flutter:
   #   - images/a_dot_burr.jpeg
     - assets/icons/printer.svg
     - assets/icons/flow.svg
+    - assets/images/logo_long.png
+    - assets/animations/loading.json
+    - assets/animations/first_half.json
+    - assets/animations/second_half.json
+    - assets/images/help_timeline.png
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/screens/create_client_screen.dart';
 import 'package:smooflow/screens/projects_screen.dart';
+import 'package:smooflow/screens/settings_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -15,7 +17,11 @@ class QuickActions extends StatelessWidget {
         "label": "All Projects",
         "selected": false,
       },
-      {"icon": Icons.bar_chart_rounded, "label": "Reports", "selected": false},
+      {
+        "icon": Icons.person_add_alt_1_rounded,
+        "label": "Add Client",
+        "selected": false,
+      },
       {"icon": Icons.settings_rounded, "label": "Settings", "selected": false},
     ];
 
@@ -74,6 +80,16 @@ class _GridCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => ProjectsScreen()),
+          );
+        } else if (label == "Settings") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SettingsScreen()),
+          );
+        } else if (label == "Add Client") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CreateClientScreen()),
           );
         }
       },

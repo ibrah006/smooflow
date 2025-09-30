@@ -7,6 +7,7 @@ import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/project_timeline_screen.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -116,8 +117,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // This project's progress logs
+    final textTheme = Theme.of(context).textTheme;
 
+    // This project's progress logs
     try {
       progressLogs = ref.read(
         progressLogsByProjectProvider(
@@ -139,152 +141,253 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Task Title
-                  const Text(
-                    "Task Name*",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _titleController,
-                    decoration: _inputDecoration("Task title"),
-                  ),
-                  const SizedBox(height: 16),
+      body: FutureBuilder(
+        future: progressLogs,
+        builder: (context, snapshot) {
+          return Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Task Title
+                          const Text(
+                            "Task Name*",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _titleController,
+                            decoration: _inputDecoration("Task title"),
+                          ),
+                          const SizedBox(height: 16),
 
-                  // Associated with progress stage
-                  const Text(
-                    "Progress stage*",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  FutureBuilder(
-                    future: progressLogs,
-                    builder: (context, snapshot) {
-                      return DropdownButtonFormField<String>(
-                        value: _selectedProgressLogId,
-                        items:
-                            (snapshot.data?.map(
-                                      (log) => DropdownMenuItem(
-                                        value: log.id,
-                                        child: Text(
-                                          "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
-                                        ),
+                          // Associated with progress stage
+                          const Text(
+                            "Progress stage*",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            value: _selectedProgressLogId,
+                            items:
+                                (snapshot.data?.map(
+                                          (log) => DropdownMenuItem(
+                                            value: log.id,
+                                            child: Text(
+                                              "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
+                                            ),
+                                          ),
+                                        ) ??
+                                        [])
+                                    .toList(),
+                            onChanged:
+                                snapshot.data == null
+                                    ? null
+                                    : (val) => setState(
+                                      () => _selectedProgressLogId = val,
+                                    ),
+                            decoration: _inputDecoration(""),
+                            icon: Transform.rotate(
+                              angle: pi / 2,
+                              child: Icon(Icons.chevron_right_rounded),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Description
+                          const Text(
+                            "Description",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _descController,
+                            maxLines: 4,
+                            decoration: _inputDecoration("Description"),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Priority Dropdown
+                          const Text(
+                            "Priority",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            value: _priority,
+                            items:
+                                priorities
+                                    .map(
+                                      (p) => DropdownMenuItem(
+                                        value: p,
+                                        child: Text(p),
                                       ),
-                                    ) ??
-                                    [])
-                                .toList(),
-                        onChanged:
-                            snapshot.data == null
-                                ? null
-                                : (val) => setState(
-                                  () => _selectedProgressLogId = val,
-                                ),
-                        decoration: _inputDecoration(""),
-                        icon: Transform.rotate(
-                          angle: pi / 2,
-                          child: Icon(Icons.chevron_right_rounded),
+                                    )
+                                    .toList(),
+                            onChanged: (val) => setState(() => _priority = val),
+                            decoration: _inputDecoration(""),
+                            icon: Transform.rotate(
+                              angle: pi / 2,
+                              child: Icon(Icons.chevron_right_rounded),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Assignee Dropdown
+                          const Text(
+                            "Project Head",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            value: _assignee,
+                            items:
+                                assignees
+                                    .map(
+                                      (p) => DropdownMenuItem(
+                                        value: p,
+                                        child: Text(p),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (val) => setState(() => _priority = val),
+                            decoration: _inputDecoration(""),
+                            icon: Transform.rotate(
+                              angle: pi / 2,
+                              child: Icon(Icons.chevron_right_rounded),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                    // No Timeline found Info/Warning
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: colorPending.withValues(alpha: 0.08),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade100,
+                              blurRadius: 3,
+                              offset: Offset(0, -2),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Description
-                  const Text(
-                    "Description",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _descController,
-                    maxLines: 4,
-                    decoration: _inputDecoration("Description"),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Priority Dropdown
-                  const Text(
-                    "Priority",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _priority,
-                    items:
-                        priorities
-                            .map(
-                              (p) => DropdownMenuItem(value: p, child: Text(p)),
-                            )
-                            .toList(),
-                    onChanged: (val) => setState(() => _priority = val),
-                    decoration: _inputDecoration(""),
-                    icon: Transform.rotate(
-                      angle: pi / 2,
-                      child: Icon(Icons.chevron_right_rounded),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.error_outline, color: colorPending),
+                            SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Create Timelines",
+                                  style: textTheme.titleMedium!.copyWith(
+                                    color: colorPending,
+                                  ),
+                                ),
+                                SizedBox(height: 5),
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width - 80,
+                                  child: Text(
+                                    "Cannot create Tasks without any active progress timeline(s)",
+                                    style: textTheme.bodySmall,
+                                    overflow: TextOverflow.fade,
+                                    maxLines: 3,
+                                  ),
+                                ),
+                                SizedBox(height: 17),
+                                GestureDetector(
+                                  child: Text(
+                                    "Try again after adding timelines",
+                                    style: textTheme.bodySmall!.copyWith(
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: colorPending,
+                                      color: colorPending,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Assignee Dropdown
-                  const Text(
-                    "Project Head",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _assignee,
-                    items:
-                        assignees
-                            .map(
-                              (p) => DropdownMenuItem(value: p, child: Text(p)),
-                            )
-                            .toList(),
-                    onChanged: (val) => setState(() => _priority = val),
-                    decoration: _inputDecoration(""),
-                    icon: Transform.rotate(
-                      angle: pi / 2,
-                      child: Icon(Icons.chevron_right_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.symmetric(
-                horizontal: BorderSide(color: Colors.grey.shade200),
-              ),
-            ),
-            padding: EdgeInsets.symmetric(
-              vertical: 15,
-              horizontal: 20,
-            ).copyWith(bottom: 35),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  padding: EdgeInsets.all(18),
-                  textStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.symmetric(
+                    horizontal: BorderSide(color: Colors.grey.shade200),
                   ),
                 ),
-                onPressed: validateAndCreate,
-                child: Text("Create Task"),
+                padding: EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 20,
+                ).copyWith(bottom: 35),
+                child: Row(
+                  spacing: 10,
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          disabledBackgroundColor: Colors.grey.shade200,
+                          padding: EdgeInsets.symmetric(vertical: 18),
+                          textStyle: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed:
+                            snapshot.data != null && snapshot.data!.isNotEmpty
+                                ? validateAndCreate
+                                : null,
+                        child: Text("Create Task"),
+                      ),
+                    ),
+                    if (!(snapshot.data != null && snapshot.data!.isNotEmpty))
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            disabledBackgroundColor: Colors.grey.shade200,
+                            padding: EdgeInsets.symmetric(vertical: 18),
+                            textStyle: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => ProjectTimelineScreen(
+                                      projectId: widget.projectId,
+                                    ),
+                              ),
+                              (Route<dynamic> route) => route.isFirst,
+                            );
+                          },
+
+                          child: Text("Add Timeline"),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

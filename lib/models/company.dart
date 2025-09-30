@@ -1,3 +1,6 @@
+import 'package:smooflow/services/login_service.dart';
+import 'package:uuid/uuid.dart';
+
 import 'user.dart';
 import 'project.dart';
 
@@ -6,8 +9,7 @@ class Company {
   final String name;
   final String description;
   final bool isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  late final DateTime createdAt;
   final User createdBy;
   final List<Project> projects;
 
@@ -17,10 +19,15 @@ class Company {
     required this.description,
     required this.isActive,
     required this.createdAt,
-    required this.updatedAt,
     required this.createdBy,
     required this.projects,
   });
+
+  Company.create({required this.name, required this.description})
+    : id = Uuid().v1(),
+      isActive = true,
+      createdBy = LoginService.currentUser!,
+      projects = [];
 
   factory Company.fromJson(Map<String, dynamic> json) {
     return Company(
@@ -29,7 +36,6 @@ class Company {
       description: json['description'],
       isActive: json['isActive'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
       createdBy: User.fromJson(json['createdBy']),
       projects:
           ((json['projects'] ?? []) as List<dynamic>)
@@ -44,8 +50,6 @@ class Company {
       'name': name,
       'description': description,
       'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
       'createdBy': createdBy.toJson(),
       'projects': projects.map((p) => p.toJson()).toList(),
     };

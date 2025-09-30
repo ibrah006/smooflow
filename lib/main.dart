@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
+import 'package:smooflow/screens/login_screen.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,25 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
-        primaryColor: colorPrimary,
+        colorScheme: ColorScheme(
+          brightness: Brightness.light, // You can choose light or dark here
+          // primary: Colors.indigo, // Main button color
+          primary: colorPrimary,
+          onPrimary:
+              Colors
+                  .white, // Text/icons on primary color (White text for buttons)
+          secondary: Color(0xFF00bcd4), // Secondary color, you can adjust this
+          onSecondary: Colors.black, // Text/icons on secondary color
+          error: Colors.red, // Error color, can use red or any color you prefer
+          onError:
+              Colors.white, // Text/icons on error color (White text for error)
+          surface: Colors.white, // Surface background color (e.g., cards)
+          onSurface:
+              Colors.black, // Text/icons on surface background (Black text)
+          background: Colors.grey[50]!, // Background color (light grey)
+          onBackground:
+              Colors.black, // Text/icons on background color (Black text)
+        ),
         dividerTheme: DividerThemeData(color: colorLight),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
@@ -65,7 +85,7 @@ class App extends StatelessWidget {
           ),
         ),
       ),
-      home: HomeScreen(),
+      home: FlashScreen(),
     );
   }
 }

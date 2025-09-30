@@ -14,8 +14,6 @@ class TasksScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final textTheme = Theme.of(context).textTheme;
-
     final tasks = ref.watch(projectByIdProvider(projectId))!.tasks;
 
     return Scaffold(

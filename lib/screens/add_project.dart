@@ -44,23 +44,9 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
 
   // bool _isFormDisabled = false;
 
-  TextEditingController get _projectNameController {
-    final project =
-        widget.isReadMode
-            ? ref.read(projectByIdProvider(widget.projectId))
-            : null;
-    return TextEditingController(text: widget.isReadMode ? project!.name : '');
-  }
+  late final TextEditingController _projectNameController;
 
-  TextEditingController get _projectDescriptionController {
-    final project =
-        widget.isReadMode
-            ? ref.read(projectByIdProvider(widget.projectId))
-            : null;
-    return TextEditingController(
-      text: widget.isReadMode ? project!.description : '',
-    );
-  }
+  late final TextEditingController _projectDescriptionController;
 
   Company? selectedClient;
   String? selectedProjectType = "Digital Advertising";
@@ -119,6 +105,18 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    final project =
+        widget.isReadMode
+            ? ref.read(projectByIdProvider(widget.projectId))
+            : null;
+
+    _projectNameController = TextEditingController(
+      text: widget.isReadMode ? project!.name : '',
+    );
+    _projectDescriptionController = TextEditingController(
+      text: widget.isReadMode ? project!.description : '',
+    );
   }
 
   _projectScope({Project? project, required Widget content}) {
@@ -523,7 +521,9 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                             key: projectTimelineMilestoneSectionKey,
                           )
                         else
-                          ProjectTimelineMilestonesSection(),
+                          ProjectTimelineMilestonesSection(
+                            key: projectTimelineMilestoneSectionKey,
+                          ),
                       ],
                     ),
 
@@ -708,6 +708,8 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
             priority: PriorityLevel.values.indexOf(selectedPriority),
           ),
         );
+
+    Navigator.pop(context);
   }
 
   bool validateTimelineSection() {

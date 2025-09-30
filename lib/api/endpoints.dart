@@ -1,5 +1,6 @@
 class ApiEndpoints {
   static const login = "/login";
+  static const register = "/register";
 
   static const getCurrentUserInfo = "/users/me";
 
@@ -56,6 +57,7 @@ class ApiEndpoints {
   // Projects endpoints
   static const projects = "/projects";
   static String updateProjectStatus(String projectId) => "/projects/$projectId";
+  static const getRecentProjects = "/projects/get-recent";
 
   // POST this endpoint for log creation and GET for getting logs by project id
   static String projectProgressLogs(String projectId) =>

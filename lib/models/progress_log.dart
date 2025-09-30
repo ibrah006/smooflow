@@ -33,6 +33,8 @@ class ProgressLog {
     return (issue != null && issue != ProgressIssue.none);
   }
 
+  DateTime? completedAt;
+
   ProgressLog({
     required this.id,
     required this.projectId,
@@ -42,6 +44,7 @@ class ProgressLog {
     this.dueDate,
     ProgressIssue? issue,
     required bool isCompleted,
+    required this.completedAt,
   }) : _status = status,
        _issue = issue {
     _description = description;
@@ -79,6 +82,10 @@ class ProgressLog {
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       startDate: DateTime.parse(json['startDate']),
       isCompleted: json['isCompleted'],
+      completedAt:
+          json['completedAt'] != null
+              ? DateTime.parse(json['completedAt'])
+              : null,
     );
   }
 
@@ -91,6 +98,7 @@ class ProgressLog {
       'issue': issue?.name,
       'dueDate': dueDate?.toIso8601String(),
       'isCompleted': isCompleted,
+      'completedAt': completedAt?.toIso8601String(),
     };
   }
 

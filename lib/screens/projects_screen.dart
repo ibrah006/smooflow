@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/project_card_v2.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -52,7 +53,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final projects = ref.watch(projectNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Color(0xFFf7f9fb),
       appBar: AppBar(
         backgroundColor: Colors.grey.shade50,
         title: Text("Projects"),
@@ -83,7 +84,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               ),
             ),
             ...projects.map((project) {
-              return Container(
+              return ProjectCardV2(project);
+              Container(
                 padding: EdgeInsets.all(15),
                 decoration: BoxDecoration(
                   color: Colors.white,

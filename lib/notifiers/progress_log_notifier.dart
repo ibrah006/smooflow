@@ -97,7 +97,8 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
     required ProgressIssue? issue,
     required String? description,
   }) async {
-    await _repo.updateProgressLog(
+    // This Api call function will return completedAt datetime if the request was to mark this log as completed
+    final completedAt = await _repo.updateProgressLog(
       updateLogId,
       update: {
         'description': description,
@@ -112,7 +113,8 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
             return log
               ..description = description
               ..issue = issue
-              ..isCompleted = markAsCompleted;
+              ..isCompleted = markAsCompleted
+              ..completedAt = completedAt;
           } else {
             return log;
           }

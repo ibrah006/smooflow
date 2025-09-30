@@ -2,6 +2,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/data/timeline_refresh_manager.dart';
@@ -66,8 +67,24 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     bool isCurrent = progress <= 1 || (index < progressLogsLength);
     String title =
         "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}";
-    String subtitle = "Due ${log.dueDate?.formatDisplay}";
-    String? errorText = log.hasIssues ? log.issue?.name : null;
+    bool isDelayedCompletion =
+        log.completedAt != null &&
+        log.dueDate != null &&
+        log.dueDate!.isBefore(log.completedAt!);
+    String subtitle =
+        log.isCompleted
+            ? (isDelayedCompletion
+                ? "Delayed Completion"
+                : (log.dueDate != null
+                    ? "Completed before due"
+                    : "Completed${log.completedAt != null ? '${['yesterday', 'today', 'tomorrow'].contains(log.completedAt.formatDisplay?.split(" ").first.toLowerCase()) ? '' : ' on'} ${log.completedAt.formatDisplay}' : ''}"))
+            : "Due ${log.dueDate?.formatDisplay}";
+    String? errorText =
+        log.hasIssues
+            ? (log.isCompleted
+                ? "Completed after Issue(s)"
+                : "${log.issue?.name[0].toUpperCase()}${log.issue?.name.substring(1)}")
+            : null;
 
     print("isCompleted: ${log.isCompleted}, hasIssues: ${log.hasIssues}");
 
@@ -114,20 +131,22 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
               decoration: BoxDecoration(
                 color:
                     !log.isCompleted
-                        ? Theme.of(context).scaffoldBackgroundColor
-                        : (log.hasIssues ? colorError : colorPrimary),
+                        ? (log.hasIssues
+                            ? Colors.red
+                            : Theme.of(context).scaffoldBackgroundColor)
+                        : (colorPrimary),
                 shape: BoxShape.circle,
                 border:
-                    !log.isCompleted
+                    !log.isCompleted && !log.hasIssues
                         ? Border.all(color: unProgressColor, width: 2.5)
                         : null,
               ),
               child:
-                  log.isCompleted
+                  log.isCompleted || log.hasIssues
                       ? Icon(
-                        log.hasIssues
-                            ? Icons.priority_high_rounded
-                            : Icons.check,
+                        log.isCompleted
+                            ? Icons.check
+                            : Icons.priority_high_rounded,
                         color: Colors.white,
                       )
                       : null,
@@ -167,9 +186,13 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             color:
-                                log.hasIssues
-                                    ? Colors.red
-                                    : Colors.grey.shade700,
+                                log.isCompleted
+                                    ? (isDelayedCompletion
+                                        ? colorPending
+                                        : colorPrimary)
+                                    : (log.hasIssues
+                                        ? Colors.red
+                                        : Colors.grey.shade700),
                             fontWeight: log.hasIssues ? FontWeight.w500 : null,
                           ),
                         ),
@@ -242,6 +265,156 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                                       ),
                                                 ),
                                                 SizedBox(height: 30),
+                                                if (log.hasIssues &&
+                                                    log.isCompleted) ...[
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    spacing: 5,
+                                                    children: [
+                                                      SizedBox(
+                                                        height: 75,
+                                                        child: Stack(
+                                                          children: [
+                                                            Container(
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    colorPrimary,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      10,
+                                                                    ),
+                                                              ),
+                                                              margin:
+                                                                  EdgeInsets.only(
+                                                                    left: 9,
+                                                                  ),
+                                                              height: 75,
+                                                              width: 7,
+                                                            ),
+                                                            Container(
+                                                              padding:
+                                                                  EdgeInsets.all(
+                                                                    3,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    colorError,
+                                                                border: Border.all(
+                                                                  color:
+                                                                      Colors
+                                                                          .white,
+                                                                  width: 2,
+                                                                ),
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      50,
+                                                                    ),
+                                                              ),
+                                                              child: Icon(
+                                                                Icons
+                                                                    .priority_high_rounded,
+                                                                size: 17,
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+                                                            ),
+                                                            Align(
+                                                              alignment:
+                                                                  Alignment
+                                                                      .bottomCenter,
+                                                              child: Container(
+                                                                padding:
+                                                                    EdgeInsets.all(
+                                                                      3,
+                                                                    ),
+                                                                decoration: BoxDecoration(
+                                                                  color:
+                                                                      colorPrimary,
+                                                                  border: Border.all(
+                                                                    color:
+                                                                        Colors
+                                                                            .white,
+                                                                    width: 2,
+                                                                  ),
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        50,
+                                                                      ),
+                                                                ),
+                                                                child: Icon(
+                                                                  Icons
+                                                                      .check_rounded,
+                                                                  size: 17,
+                                                                  color:
+                                                                      Colors
+                                                                          .white,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: List.generate(
+                                                          2,
+                                                          (index) => Container(
+                                                            margin:
+                                                                index == 0
+                                                                    ? EdgeInsets.only(
+                                                                      bottom:
+                                                                          22.5,
+                                                                    )
+                                                                    : null,
+                                                            padding:
+                                                                EdgeInsets.symmetric(
+                                                                  vertical: 5,
+                                                                  horizontal:
+                                                                      12,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: [
+                                                                    colorError,
+                                                                    colorPrimary,
+                                                                  ][index]
+                                                                  .withValues(
+                                                                    alpha: 0.08,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    5,
+                                                                  ),
+                                                            ),
+                                                            child: Text(
+                                                              [
+                                                                    log
+                                                                        .issue!
+                                                                        .name,
+                                                                    "Completed",
+                                                                  ][index]
+                                                                  .toString(),
+                                                              style: textTheme
+                                                                  .labelMedium!
+                                                                  .copyWith(
+                                                                    color:
+                                                                        [
+                                                                          colorError,
+                                                                          colorPrimary,
+                                                                        ][index],
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                ],
                                                 Text(
                                                   "Assignees",
                                                   style: textTheme.titleMedium!
@@ -486,56 +659,60 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
-                child: ListView(
-                  children: [
-                    SizedBox(height: 30),
-                    ...List.generate(progressLogs.length, (index) {
-                      final log = progressLogs.elementAt(index);
+                child:
+                    progressLogs.isNotEmpty
+                        ? ListView(
+                          children: [
+                            SizedBox(height: 30),
+                            ...List.generate(progressLogs.length, (index) {
+                              final log = progressLogs.elementAt(index);
 
-                      return _buildStep(
-                        context,
-                        progressLogs.length,
-                        index,
-                        log: log,
-                      );
-                    }),
-                  ],
-                ),
+                              return _buildStep(
+                                context,
+                                progressLogs.length,
+                                index,
+                                log: log,
+                              );
+                            }),
+                          ],
+                        )
+                        : HelpTimeline(projectId: project.id),
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // View Project Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => AddProjectProgressScreen(project.id),
+            // Add Progress Button
+            if (progressLogs.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
-                child: const Text(
-                  "Add Progress",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => AddProjectProgressScreen(project.id),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Add Progress",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

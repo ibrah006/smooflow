@@ -41,6 +41,7 @@ class LocalHttp {
       Uri.parse('$baseUrl$endpoint'),
       headers: {
         ...headers ?? {},
+        ...await getHeaders(),
         ...hasJsonHeaders ? {'Content-Type': 'application/json'} : {},
       },
       body: jsonEncode(body),

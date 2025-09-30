@@ -310,6 +310,7 @@ class _AddProjectProgressScreenState
             updateDescription: _descriptionController.text,
             updatedIssue: selectedIssue,
           );
+      Navigator.pop(context);
       return;
     }
 

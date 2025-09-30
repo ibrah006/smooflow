@@ -73,7 +73,7 @@ class ProgressLogRepo {
   }
 
   // Create progress log
-  Future<void> updateProgressLog(
+  Future<DateTime?> updateProgressLog(
     String progressLogId, {
 
     /// refer to ProgressLog().toUpdateJson()
@@ -84,10 +84,14 @@ class ProgressLogRepo {
       body: update,
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 201) {
       throw "Failed to update progress log, STATUS ${response.statusCode}: ${response.body}";
     }
 
+    final completedAtRaw =
+        (jsonDecode(response.body) as Map<String, dynamic>)["completedAt"];
+
     // Successfully updated progress log
+    return (completedAtRaw == true ? DateTime.parse(completedAtRaw!) : null);
   }
 }

@@ -23,6 +23,21 @@ class ProjectRepo {
     return projects;
   }
 
+  Future<Map<int, String>> getRecentProjects() async {
+    final response = await ApiClient.http.get(ApiEndpoints.getRecentProjects);
+    final body = (jsonDecode(response.body) as Map).map(
+      (k, projectId) => MapEntry(int.parse(k), projectId.toString()),
+    );
+
+    print("body received: ${body}");
+
+    if (response.statusCode != 200) {
+      throw "Failed to fetch projects: ${response.body}";
+    }
+
+    return body;
+  }
+
   Future<void> createProject(Project project) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.projects,
