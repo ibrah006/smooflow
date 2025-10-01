@@ -267,62 +267,64 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       ),
                     ),
                     // No Timeline found Info/Warning
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: colorPending.withValues(alpha: 0.08),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade100,
-                              blurRadius: 3,
-                              offset: Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.error_outline, color: colorPending),
-                            SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Create Timelines",
-                                  style: textTheme.titleMedium!.copyWith(
-                                    color: colorPending,
-                                  ),
-                                ),
-                                SizedBox(height: 5),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width - 80,
-                                  child: Text(
-                                    "Cannot create Tasks without any active progress timeline(s)",
-                                    style: textTheme.bodySmall,
-                                    overflow: TextOverflow.fade,
-                                    maxLines: 3,
-                                  ),
-                                ),
-                                SizedBox(height: 17),
-                                GestureDetector(
-                                  child: Text(
-                                    "Try again after adding timelines",
-                                    style: textTheme.bodySmall!.copyWith(
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: colorPending,
+                    if (!(snapshot.data != null && snapshot.data!.isNotEmpty))
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: colorPending.withValues(alpha: 0.08),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade100,
+                                blurRadius: 3,
+                                offset: Offset(0, -2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.error_outline, color: colorPending),
+                              SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "Create Timelines",
+                                    style: textTheme.titleMedium!.copyWith(
                                       color: colorPending,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width - 80,
+                                    child: Text(
+                                      "Cannot create Tasks without any active progress timeline(s)",
+                                      style: textTheme.bodySmall,
+                                      overflow: TextOverflow.fade,
+                                      maxLines: 3,
+                                    ),
+                                  ),
+                                  SizedBox(height: 17),
+                                  GestureDetector(
+                                    child: Text(
+                                      "Try again after adding timelines",
+                                      style: textTheme.bodySmall!.copyWith(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: colorPending,
+                                        color: colorPending,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

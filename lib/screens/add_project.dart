@@ -106,6 +106,8 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
     // TODO: implement initState
     super.initState();
 
+    print("calling init");
+
     final project =
         widget.isReadMode
             ? ref.read(projectByIdProvider(widget.projectId))
@@ -135,6 +137,10 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    debugPrint(
+      "start date: ${projectTimelineMilestoneSectionKey.currentState?.data.startDate}",
+    );
 
     late final Project project;
     try {

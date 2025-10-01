@@ -7,6 +7,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
 import 'package:smooflow/sections/recent_projects_section.dart';
@@ -43,11 +44,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Text("Smooflow"),
         actions: [
-          IconButton(
-            color: colorPrimary,
-            onPressed: () {},
-            iconSize: 43,
-            icon: Icon(Icons.person_pin_sharp),
+          IconButton.filled(
+            color: Colors.black,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsProfileScreen(),
+                ),
+              );
+            },
+            iconSize: 27,
+            style: IconButton.styleFrom(
+              backgroundColor: colorPrimary.withValues(alpha: 0.08),
+            ),
+            icon: Icon(Icons.person_rounded),
           ),
         ],
       ),

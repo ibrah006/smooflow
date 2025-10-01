@@ -333,7 +333,17 @@ class ProjectTimelineMilestonesSectionState
 }
 
 class ProjectTimelineMilestonesData {
-  DateTime? startDate;
+  DateTime? _startDate;
+
+  // Getter
+  DateTime? get startDate => _startDate;
+
+  // Setter
+  set startDate(DateTime? value) {
+    print("we're setting the value of start date: ${value}");
+    _startDate = value;
+  }
+
   DateTime? deadline;
 
   // Optional: duration fields if they are editable
