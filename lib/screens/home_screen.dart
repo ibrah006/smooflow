@@ -5,7 +5,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
-import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/search_bar.dart' as search_bar;
