@@ -1,8 +1,10 @@
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/enums/status.dart';
@@ -46,6 +48,8 @@ class _AddProjectProgressScreenState
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _descriptionController = TextEditingController();
+
+  bool _isLoading = false;
 
   InputDecoration _inputDecoration(String hint, {Color? backgroundColor}) {
     return InputDecoration(
@@ -141,158 +145,165 @@ class _AddProjectProgressScreenState
       // value already set
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: kToolbarHeight + 15,
-        title: Column(
-          children: [
-            // Title
-            const Text(
-              "Add Project Progress",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-            const Text(
-              "Track the progress of your project",
-              style: TextStyle(fontSize: 15, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: kToolbarHeight + 15,
+          title: Column(
             children: [
-              // Timeline Status
+              // Title
               const Text(
-                "Timeline Status*",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<Status>(
-                value: selectedStatus,
-                items:
-                    statuses.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(
-                          "${status.name[0].toUpperCase()}${status.name.substring(1)}",
-                        ),
-                      );
-                    }).toList(),
-                onChanged:
-                    widget.isReadMode
-                        ? null
-                        : (value) {
-                          setState(() => selectedStatus = value);
-                        },
-                decoration: _inputDecoration("Select updated status"),
-                icon: Transform.rotate(
-                  angle: pi / 2,
-                  child: Icon(Icons.chevron_right_rounded),
+                "Add Project Progress",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // Description
               const Text(
-                "Description",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                maxLines: 4,
-                controller: _descriptionController,
-                decoration: _inputDecoration("Enter update description"),
-                validator: (value) {
-                  if (value != null && value.length > 500) {
-                    return "Description can't exceed 500 characters.";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Due date optional
-              const Text(
-                "Deadline",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              GestureDetector(
-                onTap: widget.isReadMode ? null : () => _pickDate(context),
-                child: AbsorbPointer(
-                  child: TextField(
-                    enabled: !widget.isReadMode,
-                    decoration: _dateDecoration(
-                      "dd / mm / yyyy",
-                      hintColor: Colors.black87,
-                      backgroundColor: Colors.white,
-                    ),
-                    controller: TextEditingController(
-                      text:
-                          dueDate == null
-                              ? ""
-                              : DateFormat("dd / MM / yyyy").format(dueDate!),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Issues
-              const Text(
-                "Issues",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<ProgressIssue>(
-                value: selectedIssue,
-                items:
-                    ProgressIssue.values.map((issue) {
-                      return DropdownMenuItem(
-                        value: issue,
-                        child: Text(
-                          "${issue.name[0].toUpperCase()}${issue.name.substring(1)}",
-                        ),
-                      );
-                    }).toList(),
-                onChanged: (value) {
-                  setState(() => selectedIssue = value ?? selectedIssue);
-                },
-                decoration: _inputDecoration(""),
-                icon: Transform.rotate(
-                  angle: pi / 2,
-                  child: Icon(Icons.chevron_right_rounded),
-                ),
-              ),
-              const Spacer(),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: validateAndSave,
-                  child: const Text(
-                    "Save",
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                "Track the progress of your project",
+                style: TextStyle(fontSize: 15, color: Colors.grey),
               ),
             ],
+          ),
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Timeline Status
+                  const Text(
+                    "Timeline Status*",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<Status>(
+                    value: selectedStatus,
+                    items:
+                        statuses.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              "${status.name[0].toUpperCase()}${status.name.substring(1)}",
+                            ),
+                          );
+                        }).toList(),
+                    onChanged:
+                        widget.isReadMode
+                            ? null
+                            : (value) {
+                              setState(() => selectedStatus = value);
+                            },
+                    decoration: _inputDecoration("Select updated status"),
+                    icon: Transform.rotate(
+                      angle: pi / 2,
+                      child: Icon(Icons.chevron_right_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Description
+                  const Text(
+                    "Description",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    maxLines: 4,
+                    controller: _descriptionController,
+                    decoration: _inputDecoration("Enter update description"),
+                    validator: (value) {
+                      if (value != null && value.length > 500) {
+                        return "Description can't exceed 500 characters.";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Due date optional
+                  const Text(
+                    "Deadline",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: widget.isReadMode ? null : () => _pickDate(context),
+                    child: AbsorbPointer(
+                      child: TextField(
+                        enabled: !widget.isReadMode,
+                        decoration: _dateDecoration(
+                          "dd / mm / yyyy",
+                          hintColor: Colors.black87,
+                          backgroundColor: Colors.white,
+                        ),
+                        controller: TextEditingController(
+                          text:
+                              dueDate == null
+                                  ? ""
+                                  : DateFormat(
+                                    "dd / MM / yyyy",
+                                  ).format(dueDate!),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Issues
+                  const Text(
+                    "Issues",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<ProgressIssue>(
+                    value: selectedIssue,
+                    items:
+                        ProgressIssue.values.map((issue) {
+                          return DropdownMenuItem(
+                            value: issue,
+                            child: Text(
+                              "${issue.name[0].toUpperCase()}${issue.name.substring(1)}",
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      setState(() => selectedIssue = value ?? selectedIssue);
+                    },
+                    decoration: _inputDecoration(""),
+                    icon: Transform.rotate(
+                      angle: pi / 2,
+                      child: Icon(Icons.chevron_right_rounded),
+                    ),
+                  ),
+                  const Spacer(),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: validateAndSave,
+                      child: const Text(
+                        "Save",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -328,6 +339,10 @@ class _AddProjectProgressScreenState
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     // Proceed with save logic
     final payload = {
       "status": selectedStatus!.name,
@@ -348,12 +363,30 @@ class _AddProjectProgressScreenState
       issue: selectedIssue,
     );
 
-    await ref
-        .watch(progressLogNotifierProvider.notifier)
-        .createProgressLog(projectId: projectId, newLog: newLog);
-    // call project notifier, to update project status and add progress log
-    ref.watch(projectNotifierProvider.notifier).createProgressLog(log: newLog);
+    try {
+      await ref
+          .watch(progressLogNotifierProvider.notifier)
+          .createProgressLog(projectId: projectId, newLog: newLog);
+      // call project notifier, to update project status and add progress log
+      ref
+          .watch(projectNotifierProvider.notifier)
+          .createProgressLog(log: newLog);
 
-    Navigator.pop(context);
+      setState(() {
+        _isLoading = false;
+      });
+
+      await Future.delayed(Duration(milliseconds: 50));
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      Future.delayed(Duration(milliseconds: 50));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to add Timeline")));
+    }
   }
 }

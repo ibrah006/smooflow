@@ -1,6 +1,8 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -23,10 +25,11 @@ class _LoginScreenState extends State<LoginScreen>
       confirmPasswordController = TextEditingController(),
       nameController = TextEditingController();
 
-  bool isLoading = false;
   bool isAuthenticated = false;
 
   bool obscurePassword = true;
+
+  bool _isLoading = false;
 
   void showStyledToast({required bool isSuccess}) {
     showToast(
@@ -91,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen>
               if (!isSignIn) ...[
                 TextField(
                   controller: nameController,
-                  enabled: !isLoading,
+                  enabled: !_isLoading,
                   decoration: const InputDecoration(
                     hintText: 'Name',
                     prefixIcon: Icon(Icons.person_outline),
@@ -110,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const SizedBox(height: 20),
               ],
               TextFormField(
-                enabled: !isLoading,
+                enabled: !_isLoading,
                 controller: emailController,
                 // Might need later on (not of any use as of now)
                 validator: (value) {
@@ -134,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 10),
               TextField(
-                enabled: !isLoading,
+                enabled: !_isLoading,
                 controller: passwordController,
                 obscureText: obscurePassword,
                 decoration: InputDecoration(
@@ -163,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen>
               if (!isSignIn) ...[
                 const SizedBox(height: 20),
                 TextField(
-                  enabled: !isLoading,
+                  enabled: !_isLoading,
                   controller: confirmPasswordController,
                   obscureText: obscurePassword,
                   decoration: const InputDecoration(
@@ -186,25 +189,62 @@ class _LoginScreenState extends State<LoginScreen>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    onPressed: isLoading ? null : () {},
+                    onPressed: _isLoading ? null : () {},
+                    style: TextButton.styleFrom(
+                      disabledForegroundColor: Colors.grey,
+                    ),
                     child: const Text('Forgot password?'),
                   ),
                 ),
               SizedBox(height: 20),
-              isLoading
-                  ? Lottie.asset(
-                    'assets/animations/loading.json',
-                    width: 150,
-                    height: 150,
-                  )
-                  : AnimatedContainer(
-                    duration: Duration(milliseconds: 250),
-                    width: width,
-                    child: FilledButton(
-                      onPressed: authenticate,
-                      child: Text(isSignIn ? "Log in" : "Sign up"),
+              if (_isLoading) ...[
+                Lottie.asset(
+                  'assets/animations/loading.json',
+                  width: 150,
+                  height: 150,
+                ),
+                SizedBox(
+                  width: 250.0,
+                  height: 20,
+                  child: DefaultTextStyle(
+                    style: const TextStyle(fontSize: 14, color: colorPrimary),
+                    child: Center(
+                      child: AnimatedTextKit(
+                        totalRepeatCount: 2,
+                        pause: Duration(milliseconds: 2000),
+                        animatedTexts: [
+                          ...List.generate(
+                            5,
+                            (index) => FadeAnimatedText('Please wait'),
+                          ),
+                          ...List.generate(
+                            9,
+                            (index) => FadeAnimatedText('One Moment...'),
+                          ),
+                          ...List.generate(
+                            16,
+                            (index) => FadeAnimatedText('Logging you in...'),
+                          ),
+                        ],
+                        onTap: () {
+                          print("Tap Event");
+                        },
+                      ),
                     ),
                   ),
+                ),
+              ] else
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 250),
+                  width: width,
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : authenticate,
+                    style: FilledButton.styleFrom(
+                      disabledBackgroundColor: Colors.grey.shade200,
+                    ),
+                    child: Text(isSignIn ? "Log in" : "Sign up"),
+                  ),
+                ),
 
               // Forgot password
               Row(
@@ -215,7 +255,10 @@ class _LoginScreenState extends State<LoginScreen>
                     style: textTheme.titleSmall,
                   ),
                   TextButton(
-                    onPressed: isLoading ? null : toggleAuthMethod,
+                    onPressed: _isLoading ? null : toggleAuthMethod,
+                    style: TextButton.styleFrom(
+                      disabledForegroundColor: Colors.grey,
+                    ),
                     child: Text(isSignIn ? "Sign up" : "Sign in"),
                   ),
                 ],
@@ -257,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() {
-      isLoading = true;
+      _isLoading = true;
     });
 
     late final bool isLoginSuccess;
@@ -288,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() {
-      isLoading = false;
+      _isLoading = false;
       isAuthenticated = isLoginSuccess;
     });
 

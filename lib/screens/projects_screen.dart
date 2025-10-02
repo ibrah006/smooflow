@@ -6,6 +6,7 @@ import 'package:smooflow/components/project_card_v2.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/add_project.dart';
 
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
@@ -59,7 +60,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         title: Text("Projects"),
         actions: [
           IconButton.filled(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddProjectScreen()),
+              );
+            },
             icon: Icon(Icons.add_rounded),
             style: ButtonStyle(
               backgroundColor: WidgetStatePropertyAll(
