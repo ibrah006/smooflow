@@ -376,14 +376,12 @@ class _AddProjectProgressScreenState
         _isLoading = false;
       });
 
-      await Future.delayed(Duration(milliseconds: 50));
       Navigator.pop(context);
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
 
-      Future.delayed(Duration(milliseconds: 50));
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Failed to add Timeline")));

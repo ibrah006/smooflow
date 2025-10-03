@@ -54,9 +54,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final projects = ref.watch(projectNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xFFf7f9fb),
       appBar: AppBar(
-        backgroundColor: Colors.grey.shade50,
         title: Text("Projects"),
         actions: [
           IconButton.filled(
@@ -82,69 +80,36 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         child: Column(
           spacing: 15,
           children: [
-            TextField(
-              decoration: _inputDecoration(
-                "Search Projects...",
-                icon: Icons.search_rounded,
-                backgroundColor: Colors.white,
+            if (projects.isEmpty) ...[
+              SizedBox(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10,
+                children: [
+                  Icon(Icons.folder_open, color: Colors.grey.shade700),
+                  Text("No Projects Found", style: textTheme.bodyMedium),
+                ],
               ),
-            ),
-            ...projects.map((project) {
-              return ProjectCardV2(project);
-              Container(
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10,
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.grey.shade700),
+                  Text("Click on + to create a project"),
+                ],
+              ),
+            ] else ...[
+              TextField(
+                decoration: _inputDecoration(
+                  "Search Projects...",
+                  icon: Icons.search_rounded,
+                  backgroundColor: Colors.white,
                 ),
-                child: Column(
-                  spacing: 10,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            project.name,
-                            style: textTheme.titleLarge,
-                          ),
-                        ),
-                        Flexible(
-                          child: Text(
-                            project.dueDate?.formatDisplay ?? "NA",
-                            style: textTheme.bodyMedium!.copyWith(
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: colorPrimary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        project.status,
-                        style: textTheme.labelMedium!.copyWith(
-                          color: colorPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    LinearProgressIndicator(
-                      value: 0.60,
-                      color: colorPrimary,
-                      backgroundColor: colorPrimary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ],
-                ),
-              );
-            }),
+              ),
+              ...projects.map((project) {
+                return ProjectCardV2(project);
+              }),
+            ],
           ],
         ),
       ),

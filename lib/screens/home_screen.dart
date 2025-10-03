@@ -42,6 +42,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Smooflow"),
+        leading: Padding(
+          padding: const EdgeInsets.all(10).copyWith(right: 0),
+          child: SvgPicture.asset("assets/icons/app_icon.svg", width: 100),
+        ),
         actions: [
           IconButton.filled(
             color: Colors.black,
@@ -59,6 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             icon: Icon(Icons.person_rounded),
           ),
+          SizedBox(width: 15),
         ],
       ),
       body: SingleChildScrollView(
@@ -99,7 +104,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: colorPurple,
                     ),
                     value:
-                        "${(projectsCompletionRate * 100).toStringAsFixed(0)}%",
+                        projectsCompletionRate == 0
+                            ? "N/a"
+                            : "${(projectsCompletionRate * 100).toStringAsFixed(0)}%",
                   ),
                 ),
               ],

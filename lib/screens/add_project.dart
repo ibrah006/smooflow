@@ -11,6 +11,7 @@ import 'package:smooflow/enums/priorities.dart';
 import 'package:smooflow/models/company.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/create_client_screen.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/screens/tasks_screen.dart';
@@ -359,32 +360,82 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                     style: textTheme.titleLarge,
                                   )
                                 else
-                                  DropdownButtonFormField<Company>(
-                                    value: selectedClient,
-                                    hint: const Text("Select or add client"),
-                                    decoration: _inputDecoration(""),
-                                    icon: Transform.rotate(
-                                      angle: pi / 2,
-                                      child: Icon(Icons.chevron_right_rounded),
-                                    ),
-                                    validator:
-                                        (value) =>
-                                            value == null
-                                                ? "Client is required"
-                                                : null,
-                                    items:
-                                        clients
-                                            .map(
-                                              (client) => DropdownMenuItem(
-                                                value: client,
-                                                child: Text(client.name),
+                                  Row(
+                                    spacing: 10,
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: DropdownButtonFormField<Company>(
+                                          value: selectedClient,
+                                          hint: const Text(
+                                            "Select or add client",
+                                          ),
+                                          decoration: _inputDecoration(""),
+                                          disabledHint: Text(
+                                            "No Clients found",
+                                            style: textTheme.titleMedium!
+                                                .copyWith(
+                                                  color: Colors.grey.shade400,
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                          icon: Transform.rotate(
+                                            angle: pi / 2,
+                                            child: Icon(
+                                              Icons.chevron_right_rounded,
+                                            ),
+                                          ),
+                                          validator:
+                                              (value) =>
+                                                  value == null
+                                                      ? "Client is required"
+                                                      : null,
+                                          items:
+                                              clients
+                                                  .map(
+                                                    (client) =>
+                                                        DropdownMenuItem(
+                                                          value: client,
+                                                          child: Text(
+                                                            client.name,
+                                                          ),
+                                                        ),
+                                                  )
+                                                  .toList(),
+                                          onChanged:
+                                              (value) => setState(
+                                                () => selectedClient = value,
                                               ),
-                                            )
-                                            .toList(),
-                                    onChanged:
-                                        (value) => setState(
-                                          () => selectedClient = value,
                                         ),
+                                      ),
+                                      if (clients.isEmpty)
+                                        FilledButton(
+                                          style: FilledButton.styleFrom(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 13,
+                                              horizontal: 10,
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        CreateClientScreen(),
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            "Add Client",
+                                            style: textTheme.titleMedium!
+                                                .copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 const SizedBox(height: 20),
 

@@ -79,6 +79,7 @@ flutter:
   #   - images/a_dot_burr.jpeg
     - assets/icons/printer.svg
     - assets/icons/flow.svg
+    - assets/icons/app_icon.svg
     - assets/images/logo_long.png
     - assets/animations/loading.json
     - assets/animations/first_half.json

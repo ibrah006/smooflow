@@ -12,6 +12,8 @@ class RecentProjectsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+
     final recent = ref.watch(projectNotifierProvider.notifier).recent;
 
     print("recent: ${recent}");
@@ -37,7 +39,7 @@ class RecentProjectsSection extends ConsumerWidget {
           const SizedBox(height: 8),
           const Divider(height: 0),
           const SizedBox(height: 8),
-          if (recent.isNotEmpty) ...[
+          if (recent.isNotEmpty)
             _projectTile(
               context,
               ref.read(projectByIdProvider(recent[0]!))!,
@@ -45,8 +47,21 @@ class RecentProjectsSection extends ConsumerWidget {
               iconColor: colorPrimary,
               statusColor: Colors.orange.shade700,
               statusBg: Colors.yellow.shade100,
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 10,
+              children: [
+                Icon(Icons.folder_open, color: Colors.grey.shade700),
+                Text(
+                  "No Recent Projects",
+                  style: textTheme.bodyMedium!.copyWith(
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ],
             ),
-          ],
           if (recent.length > 1) ...[
             const Divider(height: 0),
             _projectTile(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smooflow/repositories/company_repo.dart';
+import 'package:smooflow/repositories/project_repo.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -12,12 +14,17 @@ class FlashScreen extends StatefulWidget {
 }
 
 class _FlashScreenState extends State<FlashScreen> {
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() {
-      LoginService.isLoggedIn().then((isLoggedIn) {
+      LoginService.isLoggedIn().then((isLoggedIn) async {
+        await CompanyRepo.fetchCompanies();
+        await ProjectRepo().fetchProjects();
+
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => isLoggedIn ? HomeScreen() : LoginScreen(),

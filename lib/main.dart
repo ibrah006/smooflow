@@ -10,9 +10,6 @@ import 'package:smooflow/screens/login_screen.dart';
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await CompanyRepo.fetchCompanies();
-  await ProjectRepo().fetchProjects();
-
   runApp(ProviderScope(child: App()));
 }
 

@@ -4,6 +4,8 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/user.dart';
+import 'package:smooflow/repositories/company_repo.dart';
+import 'package:smooflow/repositories/project_repo.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/services/login_service.dart';
 
@@ -330,17 +332,19 @@ class _LoginScreenState extends State<LoginScreen>
       showStyledToast(isSuccess: false);
     }
 
-    setState(() {
-      _isLoading = false;
-      isAuthenticated = isLoginSuccess;
-    });
+    isAuthenticated = isLoginSuccess;
 
     if (isLoginSuccess) {
+      await CompanyRepo.fetchCompanies();
+      await ProjectRepo().fetchProjects();
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => HomeScreen()),
         (Route<dynamic> route) => false,
       );
     }
+
+    _isLoading = false;
   }
 
   bool isValidEmail(String email) {
