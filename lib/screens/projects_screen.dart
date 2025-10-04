@@ -2,11 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smooflow/components/project_card_v2.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/search_bar.dart' as search_bar;
 
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
@@ -55,64 +56,83 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Projects"),
+        title: projects.isNotEmpty ? Text("Projects") : null,
         actions: [
-          IconButton.filled(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddProjectScreen()),
-              );
-            },
-            icon: Icon(Icons.add_rounded),
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(
-                colorPrimary.withValues(alpha: .15),
+          if (projects.isNotEmpty)
+            IconButton.filled(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddProjectScreen()),
+                );
+              },
+              icon: Icon(Icons.add_rounded),
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(
+                  colorPrimary.withValues(alpha: .15),
+                ),
+                iconColor: WidgetStatePropertyAll(colorPrimary),
               ),
-              iconColor: WidgetStatePropertyAll(colorPrimary),
             ),
-          ),
           SizedBox(width: 20),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 25),
-        child: Column(
-          spacing: 15,
-          children: [
-            if (projects.isEmpty) ...[
-              SizedBox(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 10,
-                children: [
-                  Icon(Icons.folder_open, color: Colors.grey.shade700),
-                  Text("No Projects Found", style: textTheme.bodyMedium),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 10,
-                children: [
-                  Icon(Icons.info_outline_rounded, color: Colors.grey.shade700),
-                  Text("Click on + to create a project"),
-                ],
-              ),
-            ] else ...[
-              TextField(
-                decoration: _inputDecoration(
-                  "Search Projects...",
-                  icon: Icons.search_rounded,
-                  backgroundColor: Colors.white,
+      body:
+          projects.isEmpty
+              ? Center(
+                child: SizedBox(
+                  width: 200,
+                  child: Column(
+                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset("assets/icons/no_projects_icon.svg"),
+                      Text(
+                        "No projects",
+                        style: textTheme.headlineLarge!.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(),
+                      Text(
+                        "Click the button below to add a new project.",
+                        textAlign: TextAlign.center,
+                        style: textTheme.titleMedium!.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddProjectScreen(),
+                              ),
+                            );
+                          },
+                          child: Text("Add Project"),
+                        ),
+                      ),
+                      SizedBox(height: kToolbarHeight),
+                    ],
+                  ),
+                ),
+              )
+              : SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 25),
+                child: Column(
+                  spacing: 15,
+                  children: [
+                    search_bar.SearchBar(),
+                    ...projects.map((project) {
+                      return ProjectCardV2(project);
+                    }),
+                  ],
                 ),
               ),
-              ...projects.map((project) {
-                return ProjectCardV2(project);
-              }),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

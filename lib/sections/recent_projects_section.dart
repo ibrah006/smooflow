@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
@@ -49,18 +50,48 @@ class RecentProjectsSection extends ConsumerWidget {
               statusBg: Colors.yellow.shade100,
             )
           else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 10,
-              children: [
-                Icon(Icons.folder_open, color: Colors.grey.shade700),
-                Text(
-                  "No Recent Projects",
-                  style: textTheme.bodyMedium!.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
+            Center(
+              child: SizedBox(
+                width: 200,
+                child: Column(
+                  spacing: 5,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/icons/no_projects_icon.svg",
+                      height: 50,
+                    ),
+                    Text(
+                      "No projects",
+                      style: textTheme.titleLarge!.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(),
+                    Text(
+                      "Click the button below to add a new project.",
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyMedium!.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddProjectScreen(),
+                            ),
+                          );
+                        },
+                        child: Text("Add Project"),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           if (recent.length > 1) ...[
             const Divider(height: 0),

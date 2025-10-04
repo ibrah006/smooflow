@@ -66,13 +66,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(width: 15),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          spacing: 20,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ).copyWith(top: 15, bottom: 25),
+            child: Row(
               spacing: 12,
               children: [
                 Expanded(child: search_bar.SearchBar()),
@@ -82,43 +82,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
             ),
-            // Dashboard content
-            // Overview info
-            Row(
-              spacing: 15,
-              children: [
-                Expanded(
-                  child: OverviewCard(
-                    title: "Active Projects",
-                    color: colorPrimary,
-                    icon: SvgPicture.asset("assets/icons/flow.svg", width: 23),
-                    value: activeProjectsLength.toString(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                spacing: 20,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Dashboard content
+                  // Overview info
+                  Row(
+                    spacing: 15,
+                    children: [
+                      Expanded(
+                        child: OverviewCard(
+                          title: "Active Projects",
+                          color: colorPrimary,
+                          icon: SvgPicture.asset(
+                            "assets/icons/flow.svg",
+                            width: 23,
+                          ),
+                          value: activeProjectsLength.toString(),
+                        ),
+                      ),
+                      Expanded(
+                        child: OverviewCard(
+                          title: "Completion Rate",
+                          color: colorPurple,
+                          icon: Icon(
+                            CupertinoIcons.chart_bar_square_fill,
+                            color: colorPurple,
+                          ),
+                          value:
+                              projectsCompletionRate == 0
+                                  ? "N/a"
+                                  : "${(projectsCompletionRate * 100).toStringAsFixed(0)}%",
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Expanded(
-                  child: OverviewCard(
-                    title: "Completion Rate",
-                    color: colorPurple,
-                    icon: Icon(
-                      CupertinoIcons.chart_bar_square_fill,
-                      color: colorPurple,
-                    ),
-                    value:
-                        projectsCompletionRate == 0
-                            ? "N/a"
-                            : "${(projectsCompletionRate * 100).toStringAsFixed(0)}%",
-                  ),
-                ),
-              ],
-            ),
-            // Quick actions
-            Text("Quick Actions", style: textTheme.titleMedium),
-            QuickActions(),
+                  // Quick actions
+                  Text("Quick Actions", style: textTheme.titleMedium),
+                  QuickActions(),
 
-            RecentProjectsSection(),
-            SafeArea(child: SizedBox()),
-          ],
-        ),
+                  RecentProjectsSection(),
+                  SafeArea(child: SizedBox()),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
