@@ -417,13 +417,16 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                             ),
                                           ),
                                           onPressed: () {
-                                            Navigator.push(
+                                            Navigator.of(
                                               context,
+                                            ).pushAndRemoveUntil(
                                               MaterialPageRoute(
                                                 builder:
                                                     (context) =>
                                                         CreateClientScreen(),
                                               ),
+                                              (Route<dynamic> route) =>
+                                                  route.isFirst,
                                             );
                                           },
                                           child: Text(

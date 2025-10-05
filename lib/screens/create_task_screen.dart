@@ -1,13 +1,16 @@
 import 'dart:math';
 
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/repositories/users_repo.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
@@ -25,12 +28,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   final _descController = TextEditingController();
 
   String? _priority;
-  String? _assignee;
   DateTime? _dueDate;
   String? _selectedProgressLogId;
+  List<User> _selectedAssignees = [];
 
   final List<String> priorities = ["Low", "Medium", "High", "Critical"];
-  final List<String> assignees = ["Ali Yusuf", "Liam Scott", "Emma Brown"];
+  // final List<String> assignees = ["Ali Yusuf", "Liam Scott", "Emma Brown"];
+
+  late final Future<List<User>> users;
 
   late final Future<List<ProgressLog>> progressLogs;
 
@@ -72,8 +77,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       name: _titleController.text.trim(),
       description: _descController.text.trim(),
       progressLogId: _selectedProgressLogId!,
-      // TODO
-      assignees: [],
+      assignees: _selectedAssignees,
       projectId: widget.projectId,
       // TODO
       // priority: _priority,
@@ -109,7 +113,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     _titleController.clear();
     _descController.clear();
     _priority = null;
-    _assignee = null;
+    _selectedAssignees = [];
     _dueDate = null;
     _selectedProgressLogId = null;
   }
@@ -138,6 +142,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
         borderSide: const BorderSide(color: colorBorderDark, width: 1.2),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    users = UsersRepo.getUsers();
   }
 
   @override
@@ -194,35 +205,100 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             const SizedBox(height: 16),
 
                             // Associated with progress stage
-                            const Text(
-                              "Progress stage*",
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              value: _selectedProgressLogId,
-                              items:
-                                  (snapshot.data?.map(
-                                            (log) => DropdownMenuItem(
-                                              value: log.id,
-                                              child: Text(
-                                                "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
-                                              ),
+                            Row(
+                              spacing: 10,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        spacing: 5,
+                                        children: [
+                                          Icon(Icons.timeline_rounded),
+                                          const Text(
+                                            "Progress Stage*",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
                                             ),
-                                          ) ??
-                                          [])
-                                      .toList(),
-                              onChanged:
-                                  snapshot.data == null
-                                      ? null
-                                      : (val) => setState(
-                                        () => _selectedProgressLogId = val,
+                                          ),
+                                        ],
                                       ),
-                              decoration: _inputDecoration(""),
-                              icon: Transform.rotate(
-                                angle: pi / 2,
-                                child: Icon(Icons.chevron_right_rounded),
-                              ),
+                                      const SizedBox(height: 6),
+                                      DropdownButtonFormField<String>(
+                                        value: _selectedProgressLogId,
+                                        items:
+                                            (snapshot.data?.map(
+                                                      (log) => DropdownMenuItem(
+                                                        value: log.id,
+                                                        child: Text(
+                                                          "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}",
+                                                        ),
+                                                      ),
+                                                    ) ??
+                                                    [])
+                                                .toList(),
+                                        onChanged:
+                                            snapshot.data == null
+                                                ? null
+                                                : (val) => setState(
+                                                  () =>
+                                                      _selectedProgressLogId =
+                                                          val,
+                                                ),
+                                        decoration: _inputDecoration(""),
+                                        icon: Transform.rotate(
+                                          angle: pi / 2,
+                                          child: Icon(
+                                            Icons.chevron_right_rounded,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      // Priority Dropdown
+                                      const Row(
+                                        spacing: 5,
+                                        children: [
+                                          Icon(Icons.low_priority),
+                                          Text(
+                                            "Priority",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      DropdownButtonFormField<String>(
+                                        value: _priority,
+                                        items:
+                                            priorities
+                                                .map(
+                                                  (p) => DropdownMenuItem(
+                                                    value: p,
+                                                    child: Text(p),
+                                                  ),
+                                                )
+                                                .toList(),
+                                        onChanged:
+                                            (val) =>
+                                                setState(() => _priority = val),
+                                        decoration: _inputDecoration(""),
+                                        icon: Transform.rotate(
+                                          angle: pi / 2,
+                                          child: Icon(
+                                            Icons.chevron_right_rounded,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
 
@@ -239,57 +315,43 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Priority Dropdown
-                            const Text(
-                              "Priority",
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              value: _priority,
-                              items:
-                                  priorities
-                                      .map(
-                                        (p) => DropdownMenuItem(
-                                          value: p,
-                                          child: Text(p),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged:
-                                  (val) => setState(() => _priority = val),
-                              decoration: _inputDecoration(""),
-                              icon: Transform.rotate(
-                                angle: pi / 2,
-                                child: Icon(Icons.chevron_right_rounded),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
                             // Assignee Dropdown
-                            const Text(
-                              "Project Head",
-                              style: TextStyle(fontWeight: FontWeight.w500),
+                            const Row(
+                              spacing: 5,
+                              children: [
+                                Icon(Icons.people_rounded),
+                                Text(
+                                  "Assignees",
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              value: _assignee,
-                              items:
-                                  assignees
-                                      .map(
-                                        (p) => DropdownMenuItem(
-                                          value: p,
-                                          child: Text(p),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged:
-                                  (val) => setState(() => _priority = val),
-                              decoration: _inputDecoration(""),
-                              icon: Transform.rotate(
-                                angle: pi / 2,
-                                child: Icon(Icons.chevron_right_rounded),
-                              ),
+                            FutureBuilder(
+                              future: users,
+                              builder: (context, snapshot) {
+                                return snapshot.data == null
+                                    ? Text("No Users found")
+                                    : DropdownSearch<User>.multiSelection(
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: _inputDecoration(""),
+                                      ),
+                                      itemAsString: (usr) => usr.name,
+                                      compareFn:
+                                          (User a, User b) => a.id == b.id,
+                                      items:
+                                          (str, loadProps) =>
+                                              snapshot.data?.toList() ?? [],
+                                      selectedItems: _selectedAssignees,
+                                      onChanged:
+                                          (usrs) => setState(
+                                            () => _selectedAssignees = usrs,
+                                          ),
+                                      // dropdownBuilder: (context, selectedItems) {
+                                      //   // return Text();
+                                      // },
+                                    );
+                              },
                             ),
                             const SizedBox(height: 24),
                           ],

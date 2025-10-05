@@ -21,7 +21,12 @@ class LocalHttp {
     }
   }
 
-  Future<http.Response> get(String endpoint, {String queries = ""}) async {
+  Future<http.Response> get(
+    String endpoint, {
+    String queries = "",
+    Map<String, dynamic>? body,
+  }) async {
+    if (body != null) throw "Don't pass in body for get method";
     final headers = await getHeaders();
     print("headers: ${headers}");
     return await http.get(

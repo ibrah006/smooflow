@@ -14,8 +14,6 @@ class FlashScreen extends StatefulWidget {
 }
 
 class _FlashScreenState extends State<FlashScreen> {
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -37,15 +35,27 @@ class _FlashScreenState extends State<FlashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: 100),
-            Image.asset(
-              width: MediaQuery.of(context).size.width * 0.6,
-              "assets/images/logo_long.png",
+            Row(
+              spacing: 10,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(width: 60, "assets/icons/app_icon.png"),
+                Text(
+                  "Smooflow",
+                  style: textTheme.headlineLarge!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 40,
+                  ),
+                ),
+              ],
             ),
             Lottie.asset(
               'assets/animations/loading.json',

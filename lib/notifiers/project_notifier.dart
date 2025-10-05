@@ -39,11 +39,16 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   // create project
   Future<void> create(Project newProject) async {
     await _repo.createProject(newProject);
+
+    _pushRecentProjectToTop(newProject.id);
+
     state = [...state, newProject];
   }
 
   // This function is a must call, when creating the progresslog along with the progress log notifier
   void createProgressLog({required ProgressLog log}) {
+    _pushRecentProjectToTop(log.projectId);
+
     state =
         state.map((project) {
           if (project.id == log.projectId) {
@@ -129,5 +134,17 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   Future<void> _getProjectsProgressRate() async {
     projectsProgressRate = await _repo.getProjectsProgressRate();
+  }
+
+  void _pushRecentProjectToTop(String projectId) {
+    // If it's already at the top, do nothing
+    if (recent.isNotEmpty && recent[0] == projectId) return;
+
+    // Remove from its current position (if it exists)
+    recent.removeWhere((i, pId) => pId == projectId);
+
+    // Add it to the top
+    final temp = recent.values.toList()..insert(0, projectId);
+    recent = temp.asMap();
   }
 }

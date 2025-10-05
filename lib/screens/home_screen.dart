@@ -7,7 +7,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
-import 'package:smooflow/search_bar.dart' as search_bar;
+import 'package:smooflow/components/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
 import 'package:smooflow/sections/recent_projects_section.dart';
 
@@ -44,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: Text("Smooflow"),
         leading: Padding(
           padding: const EdgeInsets.all(10).copyWith(right: 0),
-          child: SvgPicture.asset("assets/icons/app_icon.svg", width: 100),
+          child: Image.asset("assets/icons/app_icon.png"),
         ),
         actions: [
           IconButton.filled(

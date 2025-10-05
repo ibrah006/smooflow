@@ -33,11 +33,12 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _isLoading = false;
 
-  void showStyledToast({required bool isSuccess}) {
+  void showStyledToast({required bool isSuccess, String? message}) {
     showToast(
-      isSuccess
-          ? (isSignIn ? "Login Successful" : "Registration Successful")
-          : "Authentication Failed",
+      message ??
+          (isSuccess
+              ? (isSignIn ? "Login Successful" : "Registration Successful")
+              : "Authentication Failed"),
       context: context,
       animation: StyledToastAnimation.fadeScale,
       reverseAnimation: StyledToastAnimation.fade,
@@ -76,104 +77,96 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset("assets/images/logo_long.png", height: 27),
-              const SizedBox(height: 15),
-              Text(
-                isSignIn ? "Log in" : "Register",
-                style: textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Track your team’s productivity & optimize efficiency',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 40),
-              if (!isSignIn) ...[
-                TextField(
-                  controller: nameController,
-                  enabled: !_isLoading,
-                  decoration: const InputDecoration(
-                    hintText: 'Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 215, 219, 227),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  spacing: 10,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(width: 42, "assets/icons/app_icon.png"),
+                    Text(
+                      "Smooflow",
+                      style: textTheme.headlineMedium!.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  isSignIn ? "Log in" : "Register",
+                  style: textTheme.headlineLarge,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Track your team’s productivity & optimize efficiency',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 40),
+                if (!isSignIn) ...[
+                  TextField(
+                    controller: nameController,
+                    enabled: !_isLoading,
+                    decoration: const InputDecoration(
+                      hintText: 'Name',
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color.fromARGB(255, 215, 219, 227),
+                        ),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color.fromARGB(255, 215, 219, 227),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                TextFormField(
+                  enabled: !_isLoading,
+                  controller: emailController,
+                  // Might need later on (not of any use as of now)
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    } else if (!isValidEmail(value)) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Email',
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
                     ),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 215, 219, 227),
-                      ),
+                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
                     ),
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
                 ),
-                const SizedBox(height: 20),
-              ],
-              TextFormField(
-                enabled: !_isLoading,
-                controller: emailController,
-                // Might need later on (not of any use as of now)
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  } else if (!isValidEmail(value)) {
-                    return 'Enter a valid email';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Email',
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                  ),
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                enabled: !_isLoading,
-                controller: passwordController,
-                obscureText: obscurePassword,
-                decoration: InputDecoration(
-                  suffix: IconButton(
-                    onPressed: toggleObscurePassword,
-                    icon: Icon(
-                      obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                  ),
-                  hintText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outline),
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 215, 219, 227),
-                    ),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 215, 219, 227),
-                    ),
-                  ),
-                ),
-              ),
-              if (!isSignIn) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 TextField(
                   enabled: !_isLoading,
-                  controller: confirmPasswordController,
+                  controller: passwordController,
                   obscureText: obscurePassword,
-                  decoration: const InputDecoration(
-                    hintText: 'Confirm Password',
-                    prefixIcon: Icon(Icons.lock),
+                  decoration: InputDecoration(
+                    suffix: IconButton(
+                      onPressed: toggleObscurePassword,
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                    ),
+                    hintText: 'Password',
+                    prefixIcon: Icon(Icons.lock_outline),
                     border: UnderlineInputBorder(
                       borderSide: BorderSide(
                         color: Color.fromARGB(255, 215, 219, 227),
@@ -186,86 +179,110 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
-              ],
-              if (isSignIn)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _isLoading ? null : () {},
-                    style: TextButton.styleFrom(
-                      disabledForegroundColor: Colors.grey,
-                    ),
-                    child: const Text('Forgot password?'),
-                  ),
-                ),
-              SizedBox(height: 20),
-              if (_isLoading) ...[
-                Lottie.asset(
-                  'assets/animations/loading.json',
-                  width: 150,
-                  height: 150,
-                ),
-                SizedBox(
-                  width: 250.0,
-                  height: 20,
-                  child: DefaultTextStyle(
-                    style: const TextStyle(fontSize: 14, color: colorPrimary),
-                    child: Center(
-                      child: AnimatedTextKit(
-                        totalRepeatCount: 2,
-                        pause: Duration(milliseconds: 2000),
-                        animatedTexts: [
-                          ...List.generate(
-                            5,
-                            (index) => FadeAnimatedText('Please wait'),
-                          ),
-                          ...List.generate(
-                            9,
-                            (index) => FadeAnimatedText('One Moment...'),
-                          ),
-                          ...List.generate(
-                            16,
-                            (index) => FadeAnimatedText('Logging you in...'),
-                          ),
-                        ],
-                        onTap: () {
-                          print("Tap Event");
-                        },
+                if (!isSignIn) ...[
+                  const SizedBox(height: 20),
+                  TextField(
+                    enabled: !_isLoading,
+                    controller: confirmPasswordController,
+                    obscureText: obscurePassword,
+                    decoration: const InputDecoration(
+                      hintText: 'Confirm Password',
+                      prefixIcon: Icon(Icons.lock),
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color.fromARGB(255, 215, 219, 227),
+                        ),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color.fromARGB(255, 215, 219, 227),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ] else
-                AnimatedContainer(
-                  duration: Duration(milliseconds: 250),
-                  width: width,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : authenticate,
-                    style: FilledButton.styleFrom(
-                      disabledBackgroundColor: Colors.grey.shade200,
-                    ),
-                    child: Text(isSignIn ? "Log in" : "Sign up"),
-                  ),
-                ),
-
-              // Forgot password
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    isSignIn ? "Don't have an account?" : "Already registered?",
-                    style: textTheme.titleSmall,
-                  ),
-                  TextButton(
-                    onPressed: _isLoading ? null : toggleAuthMethod,
-                    style: TextButton.styleFrom(
-                      disabledForegroundColor: Colors.grey,
-                    ),
-                    child: Text(isSignIn ? "Sign up" : "Sign in"),
                   ),
                 ],
-              ),
-            ],
+                if (isSignIn)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : () {},
+                      style: TextButton.styleFrom(
+                        disabledForegroundColor: Colors.grey,
+                      ),
+                      child: const Text('Forgot password?'),
+                    ),
+                  ),
+                SizedBox(height: 20),
+                if (_isLoading) ...[
+                  Lottie.asset(
+                    'assets/animations/loading.json',
+                    width: 150,
+                    height: 150,
+                  ),
+                  SizedBox(
+                    width: 250.0,
+                    height: 20,
+                    child: DefaultTextStyle(
+                      style: const TextStyle(fontSize: 14, color: colorPrimary),
+                      child: Center(
+                        child: AnimatedTextKit(
+                          totalRepeatCount: 2,
+                          pause: Duration(milliseconds: 2000),
+                          animatedTexts: [
+                            ...List.generate(
+                              5,
+                              (index) => FadeAnimatedText('Please wait'),
+                            ),
+                            ...List.generate(
+                              9,
+                              (index) => FadeAnimatedText('One Moment...'),
+                            ),
+                            ...List.generate(
+                              16,
+                              (index) => FadeAnimatedText('Logging you in...'),
+                            ),
+                          ],
+                          onTap: () {
+                            print("Tap Event");
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 250),
+                    width: width,
+                    child: FilledButton(
+                      onPressed: _isLoading ? null : authenticate,
+                      style: FilledButton.styleFrom(
+                        disabledBackgroundColor: Colors.grey.shade200,
+                      ),
+                      child: Text(isSignIn ? "Log in" : "Sign up"),
+                    ),
+                  ),
+
+                // Forgot password
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isSignIn
+                          ? "Don't have an account?"
+                          : "Already registered?",
+                      style: textTheme.titleSmall,
+                    ),
+                    TextButton(
+                      onPressed: _isLoading ? null : toggleAuthMethod,
+                      style: TextButton.styleFrom(
+                        disabledForegroundColor: Colors.grey,
+                      ),
+                      child: Text(isSignIn ? "Sign up" : "Sign in"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -280,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen>
     print("email: ${email}, password: ${password}");
 
     if (!isSignIn) {
-      if (name.trim().isEmpty) {
+      if (name.trim().length < 4) {
         // showSnackBar("Please enter your Display name", isError: true);
         showStyledToast(isSuccess: false);
         print("W're here 1 signup invalid name");
@@ -323,13 +340,13 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       print("error: $e");
       isLoginSuccess = false;
+
+      showStyledToast(isSuccess: false, message: e.toString());
     }
 
     if (isLoginSuccess) {
       showStyledToast(isSuccess: true);
       await Future.delayed(LoginScreen.toastFeedbackDuration);
-    } else {
-      showStyledToast(isSuccess: false);
     }
 
     isAuthenticated = isLoginSuccess;
@@ -345,6 +362,9 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     _isLoading = false;
+    if (!isLoginSuccess) {
+      setState(() {});
+    }
   }
 
   bool isValidEmail(String email) {

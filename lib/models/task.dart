@@ -246,7 +246,7 @@ class Task {
       'description': description,
       'dueDate': dueDate?.toIso8601String(),
       'status': status,
-      'assignees': assignees.map((user) => user.toJson()).toList(),
+      'assignees': assignees.map((user) => user.id).toList(),
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
       'estimatedMaterials': _estimatedMaterials.map((m) => m.toJson()).toList(),
@@ -256,7 +256,6 @@ class Task {
     try {
       return {'id': id, ...json};
     } catch (e) {
-      print("error caught: $e");
       return json;
     }
   }

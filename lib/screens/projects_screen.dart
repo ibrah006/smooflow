@@ -7,7 +7,7 @@ import 'package:smooflow/components/project_card_v2.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project.dart';
-import 'package:smooflow/search_bar.dart' as search_bar;
+import 'package:smooflow/components/search_bar.dart' as search_bar;
 
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
@@ -66,13 +66,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   MaterialPageRoute(builder: (context) => AddProjectScreen()),
                 );
               },
-              icon: Icon(Icons.add_rounded),
-              style: ButtonStyle(
-                backgroundColor: WidgetStatePropertyAll(
-                  colorPrimary.withValues(alpha: .15),
-                ),
-                iconColor: WidgetStatePropertyAll(colorPrimary),
-              ),
+              icon: Icon(Icons.add_rounded, color: Colors.white),
             ),
           SizedBox(width: 20),
         ],
@@ -121,17 +115,29 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   ),
                 ),
               )
-              : SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  spacing: 15,
-                  children: [
-                    search_bar.SearchBar(),
-                    ...projects.map((project) {
-                      return ProjectCardV2(project);
-                    }),
-                  ],
-                ),
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 25,
+                      vertical: 15,
+                    ),
+                    child: search_bar.SearchBar(),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Column(
+                        spacing: 15,
+                        children: [
+                          ...projects.map((project) {
+                            return ProjectCardV2(project);
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
     );
   }

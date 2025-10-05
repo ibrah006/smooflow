@@ -36,7 +36,8 @@ class SettingsProfileScreen extends StatelessWidget {
                     ListTileItem(
                       icon: Icons.person_rounded,
                       title: "Name",
-                      infoText: currentUser.name,
+                      infoText:
+                          "${currentUser.name[0]}${currentUser.name.substring(1)}",
                     ),
                     ListTileItem(
                       icon: Icons.email_rounded,

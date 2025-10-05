@@ -8,25 +8,44 @@ import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 
-class TasksScreen extends ConsumerWidget {
+class TasksScreen extends ConsumerStatefulWidget {
   final String projectId;
   const TasksScreen({super.key, required this.projectId});
 
   @override
-  Widget build(BuildContext context, ref) {
-    final tasks = ref.watch(projectByIdProvider(projectId))!.tasks;
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  bool isEditingMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tasks = ref.watch(projectByIdProvider(widget.projectId))!.tasks;
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Tasks"),
         actions: [
-          CustomButton.icon(
-            icon: Icons.add_rounded,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CreateTaskScreen(projectId: projectId),
+          PopupMenuButton(
+            icon: Icon(Icons.more_vert),
+            itemBuilder: (context) {
+              return List.generate(
+                2,
+                (index) => PopupMenuItem(
+                  onTap: () {
+                    if (index == 0) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  CreateTaskScreen(projectId: widget.projectId),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(["Create Task", "Edit"][index]),
                 ),
               );
             },

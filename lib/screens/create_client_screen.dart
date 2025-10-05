@@ -63,7 +63,6 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Center(
               child: Wrap(
-                // alignment: WrapAlignment.center,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,13 +166,9 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
                         });
 
                         if (errorMessage != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "A Client with this name already exists",
-                              ),
-                            ),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(errorMessage)));
                           return;
                         }
 
