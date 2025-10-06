@@ -39,6 +39,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   late final Future<List<ProgressLog>> progressLogs;
 
+  // loading will also be true for progressLogs future snapshot.data == null
   bool _isLoading = false;
 
   // Show a snackbar with error message
@@ -170,19 +171,19 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       Scaffold(body: Center(child: Text("Loading...")));
     }
 
-    return LoadingOverlay(
-      isLoading: _isLoading,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Create Task"),
-          elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-        ),
-        body: FutureBuilder(
-          future: progressLogs,
-          builder: (context, snapshot) {
-            return Column(
+    return FutureBuilder(
+      future: progressLogs,
+      builder: (context, snapshot) {
+        return LoadingOverlay(
+          isLoading: _isLoading || snapshot.data == null,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text("Create Task"),
+              elevation: 0,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+            ),
+            body: Column(
               children: [
                 Expanded(
                   child: Stack(
@@ -358,7 +359,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                         ),
                       ),
                       // No Timeline found Info/Warning
-                      if (!(snapshot.data != null && snapshot.data!.isNotEmpty))
+                      if (snapshot.data != null && snapshot.data!.isEmpty)
                         Align(
                           alignment: Alignment.bottomCenter,
                           child: Container(
@@ -480,10 +481,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                   ),
                 ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
