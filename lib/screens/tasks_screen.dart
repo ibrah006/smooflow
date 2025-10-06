@@ -30,24 +30,21 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           PopupMenuButton(
             icon: Icon(Icons.more_vert),
             itemBuilder: (context) {
-              return List.generate(
-                2,
-                (index) => PopupMenuItem(
+              return [
+                PopupMenuItem(
                   onTap: () {
-                    if (index == 0) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  CreateTaskScreen(projectId: widget.projectId),
-                        ),
-                      );
-                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                CreateTaskScreen(projectId: widget.projectId),
+                      ),
+                    );
                   },
-                  child: Text(["Create Task", "Edit"][index]),
+                  child: Text("Create Task"),
                 ),
-              );
+              ];
             },
           ),
           SizedBox(width: 15),
