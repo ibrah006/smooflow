@@ -51,10 +51,7 @@ class ProjectCardV2 extends StatelessWidget {
     final assigneeCount =
         '${assignees.isEmpty ? 'No' : assignees.length} ${assignees.length == 1 ? 'Member' : 'Members'}';
     // final priority = project.pro;
-    final taskProgress = project.completedTasks.length / project.tasks.length;
     final dueDate = project.dueDate?.formatDisplay;
-
-    print("task prog: $taskProgress");
 
     double indicatorValue;
     try {
@@ -114,17 +111,6 @@ class ProjectCardV2 extends StatelessWidget {
             backgroundColor: colorPrimary.withValues(alpha: 0.07),
           ),
           SizedBox(height: 13),
-          Row(
-            children: [
-              Text("Tasks progress: "),
-              Text(
-                getProgressDisplay(taskProgress),
-                style: textTheme.labelLarge!.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
           Align(
             alignment: Alignment.centerLeft,
             child: Text("Deadline: $dueDate"),

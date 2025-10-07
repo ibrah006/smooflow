@@ -65,7 +65,7 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
 
     bool isHead = index == 0;
     bool isTail = index == progressLogsLength - 1;
-    bool isCurrent = progress <= 1 || (index < progressLogsLength);
+    // bool isCurrent = progress <= 1 || (index < progressLogsLength);
     String title =
         "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}";
     bool isDelayedCompletion =

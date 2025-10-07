@@ -2,9 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/task_tile.dart';
-import 'package:smooflow/constants.dart';
-import 'package:smooflow/custom_button.dart';
-import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 

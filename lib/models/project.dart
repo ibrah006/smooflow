@@ -1,5 +1,4 @@
 import 'package:smooflow/models/company.dart';
-import 'package:smooflow/models/progress_log.dart';
 import 'package:uuid/uuid.dart';
 
 import 'task.dart';
