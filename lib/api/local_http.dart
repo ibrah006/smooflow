@@ -28,7 +28,6 @@ class LocalHttp {
   }) async {
     if (body != null) throw "Don't pass in body for get method";
     final headers = await getHeaders();
-    print("headers: ${headers}");
     return await http.get(
       Uri.parse('$baseUrl$endpoint$queries'),
       headers: headers,

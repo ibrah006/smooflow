@@ -88,7 +88,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
         state.map((project) {
           if (project.id == task.projectId) {
             task.initializeId(taskId);
-            return project..tasks.add(task);
+            return project..tasks.add(taskId);
           } else {
             return project;
           }
@@ -104,15 +104,16 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
         state.map((project) {
           if (project.id == updatedTask.projectId) {
             return project
-              ..tasks.map((t) {
-                if (t.id == updatedTask.id) {
+              ..tasks.map((tId) {
+                if (tId == updatedTask.id) {
                   return updatedTask
                     ..status = "completed"
                     ..dateCompleted = dateCompleted;
                 } else {
-                  return t;
+                  return tId;
                 }
-              });
+              })
+              ..taskLastModifiedAt = DateTime.now();
           } else {
             return project;
           }

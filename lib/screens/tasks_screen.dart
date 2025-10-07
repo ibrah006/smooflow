@@ -2,8 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/task_tile.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
+import 'package:smooflow/screens/task_screen.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -16,9 +19,24 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   bool isEditingMode = false;
 
+  late final Future<List<Task>> tasks;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final tasks = ref.watch(projectByIdProvider(widget.projectId))!.tasks;
+    try {
+      tasks = ref.watch(tasksByProjectProvider(widget.projectId));
+
+      ref.watch(tasksByProjectProvider(widget.projectId)).then((value) {
+        print("value: $value");
+      });
+    } catch (e) {
+      // Already initialized
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -47,14 +65,20 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           SizedBox(width: 15),
         ],
       ),
-      body: Column(
-        spacing: 10,
-        children: [
-          SizedBox(),
-          ...tasks.map((task) {
-            return TaskTile(task);
-          }),
-        ],
+      body: FutureBuilder(
+        future: tasks,
+        builder: (context, snapshot) {
+          return Column(
+            spacing: 10,
+            children: [
+              SizedBox(),
+              if (snapshot.data != null)
+                ...snapshot.data!.map((task) {
+                  return TaskTile(task);
+                }),
+            ],
+          );
+        },
       ),
     );
   }

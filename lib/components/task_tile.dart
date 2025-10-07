@@ -115,13 +115,19 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                             horizontal: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: colorPrimary.withValues(alpha: 0.08),
+                            color:
+                                widget.task.dateCompleted == null
+                                    ? colorPrimary.withValues(alpha: 0.08)
+                                    : colorPrimary,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             "${widget.task.status[0].toUpperCase()}${widget.task.status.substring(1)}",
                             style: textTheme.labelMedium!.copyWith(
-                              color: colorPrimary,
+                              color:
+                                  widget.task.dateCompleted == null
+                                      ? colorPrimary
+                                      : Colors.white,
                             ),
                           ),
                         ),

@@ -4,22 +4,27 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 
-class TaskScreen extends ConsumerWidget {
+class TaskScreen extends ConsumerStatefulWidget {
   final Task task;
   const TaskScreen(this.task, {super.key});
 
   @override
-  Widget build(BuildContext context, ref) {
+  ConsumerState<TaskScreen> createState() => _TaskScreenState();
+}
+
+class _TaskScreenState extends ConsumerState<TaskScreen> {
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     final progressLog = ref
-        .watch(progressLogsByProjectProviderSimple(task.projectId))
-        .firstWhere((log) => log.id == task.progressLogId);
+        .watch(progressLogsByProjectProviderSimple(widget.task.projectId))
+        .firstWhere((log) => log.id == widget.task.progressLogId);
 
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        title: Text(task.name),
+        title: Text(widget.task.name),
         actions: [
           Container(
             padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
@@ -28,7 +33,7 @@ class TaskScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(5),
             ),
             child: Text(
-              task.status,
+              widget.task.status,
               style: textTheme.labelMedium!.copyWith(color: colorPrimary),
             ),
           ),
@@ -54,11 +59,11 @@ class TaskScreen extends ConsumerWidget {
               ],
             ),
             SizedBox(height: 8),
-            if (task.description.trim().isNotEmpty)
+            if (widget.task.description.trim().isNotEmpty)
               SizedBox(
                 width: MediaQuery.of(context).size.width / 3,
                 child: Text(
-                  task.description,
+                  widget.task.description,
                   style: textTheme.bodyMedium!.copyWith(
                     color: Colors.grey.shade900,
                   ),
@@ -86,8 +91,8 @@ class TaskScreen extends ConsumerWidget {
               ],
             ),
             SizedBox(height: 8),
-            if (task.assignees.isNotEmpty)
-              ...task.assignees.map((assignee) {
+            if (widget.task.assignees.isNotEmpty)
+              ...widget.task.assignees.map((assignee) {
                 return Row(
                   children: [
                     Icon(Icons.account_circle_rounded, size: 30),
@@ -239,7 +244,7 @@ class TaskScreen extends ConsumerWidget {
               child: Row(
                 spacing: 11,
                 children: [
-                  if (task.dateCompleted == null)
+                  if (widget.task.dateCompleted == null)
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {},
@@ -263,7 +268,8 @@ class TaskScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      onPressed: task.dateCompleted == null ? () {} : null,
+                      onPressed:
+                          widget.task.dateCompleted == null ? startTask : null,
                       child: Text("Start"),
                     ),
                   ),
@@ -276,5 +282,5 @@ class TaskScreen extends ConsumerWidget {
     );
   }
 
-  void startTask() {}
+  void startTask() async {}
 }

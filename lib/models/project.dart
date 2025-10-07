@@ -1,7 +1,6 @@
 import 'package:smooflow/models/company.dart';
 import 'package:uuid/uuid.dart';
 
-import 'task.dart';
 import 'user.dart';
 
 class Project {
@@ -12,7 +11,7 @@ class Project {
   final DateTime? dueDate;
   final DateTime? estimatedProductionStart;
   final DateTime? estimatedSiteFixing;
-  final List<Task> tasks;
+  final List<int> tasks;
   final List<User> assignedManagers;
   final DateTime dateStarted;
   final Company client;
@@ -21,6 +20,8 @@ class Project {
   final List<String> progressLogs;
 
   final DateTime progressLogLastModifiedAt;
+
+  DateTime? taskLastModifiedAt;
 
   set status(String newStatus) {
     _status = newStatus;
@@ -46,7 +47,8 @@ class Project {
     required this.priority,
     required this.progressLogs,
   }) : _status = status,
-       progressLogLastModifiedAt = DateTime.now();
+       progressLogLastModifiedAt = DateTime.now(),
+       taskLastModifiedAt = null;
 
   Project.create({
     required this.name,
@@ -63,7 +65,8 @@ class Project {
        tasks = [],
        dateStarted = DateTime.now(),
        progressLogs = [],
-       progressLogLastModifiedAt = DateTime.now();
+       progressLogLastModifiedAt = DateTime.now(),
+       taskLastModifiedAt = null;
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(
@@ -82,8 +85,8 @@ class Project {
               : null,
       tasks:
           ((json['tasks'] ?? []) as List<dynamic>).map((e) {
-            e["project"] = {"id": json["id"]};
-            return Task.fromJson(e);
+            // e["project"] = {"id": json["id"]};
+            return e["id"] as int;
           }).toList(),
       assignedManagers:
           ((json['assignedManagers'] ?? []) as List<dynamic>)
@@ -104,34 +107,6 @@ class Project {
     );
   }
 
-  List<User> get assignees {
-    final List<User> projectAssignees = [];
-    for (Task task in tasks) {
-      for (User assignee in task.assignees) {
-        if (!projectAssignees.contains(assignee)) {
-          projectAssignees.add(assignee);
-        }
-      }
-    }
-
-    return projectAssignees;
-  }
-
-  Iterable<Task> get completedTasks {
-    return tasks.where((task) => task.dateCompleted != null);
-  }
-
-  Iterable<String> get uniqueTaskStatuses {
-    final List<String> uniqueStatuses = [];
-    for (Task task in tasks) {
-      if (!uniqueStatuses.contains(task.status)) {
-        uniqueStatuses.add(task.status);
-      }
-    }
-
-    return uniqueStatuses;
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -141,7 +116,7 @@ class Project {
       'dueDate': dueDate?.toIso8601String(),
       'estimatedProductionStart': estimatedProductionStart?.toIso8601String(),
       'estimatedSiteFixing': estimatedSiteFixing?.toIso8601String(),
-      'tasks': tasks.map((task) => task.toJson()).toList(),
+      'tasks': tasks,
       'assignedManagers':
           assignedManagers.map((manager) => manager.toJson()).toList(),
       // 'dateStarted': dateStarted.toIso8601String(),

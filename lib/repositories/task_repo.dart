@@ -25,6 +25,31 @@ class TaskRepo {
     return body.map((taskJson) => Task.fromJson(taskJson)).toList();
   }
 
+  /// GET /tasks/:projectId — fetch all tasks for a specific project
+  Future<List<Task>> getTasksByProject(
+    String projectId, {
+    DateTime? since,
+  }) async {
+    final response = await ApiClient.http.get(
+      '/tasks/project/$projectId${since != null ? '?since=$since' : ''}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch tasks: ${response.body}');
+    }
+    final List<dynamic> body = jsonDecode(response.body);
+    return body.map((e) => Task.fromJson(e)).toList();
+  }
+
+  Future<DateTime?> getProjectTasksLastModified(String projectId) async {
+    // Optional endpoint like: GET /tasks/:projectId/last-modified
+    final response = await ApiClient.http.get(
+      '/tasks/$projectId/last-modified',
+    );
+    if (response.statusCode != 200) return null;
+    final body = jsonDecode(response.body);
+    return DateTime.parse(body['lastModified']);
+  }
+
   /// GET /tasks/active — get the current active task for the user
   Future<Task?> fetchActiveTask() async {
     final response = await ApiClient.http.get('/tasks/active');

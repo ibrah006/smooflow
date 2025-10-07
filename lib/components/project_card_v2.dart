@@ -47,9 +47,6 @@ class ProjectCardV2 extends StatelessWidget {
     final title = project.name;
     final status =
         "${project.status[0].toUpperCase()}${project.status.substring(1)}";
-    final assignees = project.assignees;
-    final assigneeCount =
-        '${assignees.isEmpty ? 'No' : assignees.length} ${assignees.length == 1 ? 'Member' : 'Members'}';
     // final priority = project.pro;
     final dueDate = project.dueDate?.formatDisplay;
 
@@ -88,7 +85,7 @@ class ProjectCardV2 extends StatelessWidget {
             children: [
               CircleAvatar(radius: 15, child: Icon(Icons.person_rounded)),
               SizedBox(width: 15),
-              Text(assigneeCount, style: textTheme.bodyLarge),
+              // Text(assigneeCount, style: textTheme.bodyLarge),
               Expanded(child: SizedBox()),
               // Project Priority
               tagCard(

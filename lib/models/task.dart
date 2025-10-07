@@ -23,6 +23,8 @@ class Task {
 
   final String progressLogId;
 
+  DateTime? updatedAt;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -47,6 +49,7 @@ class Task {
        _usedMaterials = usedMaterials {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
+    updatedAt = DateTime.now();
   }
 
   Task.create({
@@ -66,7 +69,8 @@ class Task {
        _assignees = assignees,
        _estimatedMaterials = estimatedMaterials,
        _usedMaterials = usedMaterials,
-       _projectId = projectId;
+       _projectId = projectId,
+       updatedAt = DateTime.now();
 
   void initializeId(int id) {
     _id = id;
@@ -146,6 +150,7 @@ class Task {
       _estimatedMaterials = List.from(original._estimatedMaterials),
       _usedMaterials = List.from(original._usedMaterials),
       progressLogId = original.progressLogId {
+    updatedAt = original.updatedAt;
     String status = original._status;
     _status = status;
     color = original.color;
