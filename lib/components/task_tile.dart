@@ -6,6 +6,7 @@ import 'package:roundcheckbox/roundcheckbox.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/task_screen.dart';
 
 class TaskTile extends ConsumerStatefulWidget {
   final Task task;
@@ -51,6 +52,13 @@ class _TaskTileState extends ConsumerState<TaskTile> {
             child: InkWell(
               onTap: () {
                 HapticFeedback.lightImpact();
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TaskScreen(widget.task),
+                  ),
+                );
               },
               splashColor: Colors.grey.withValues(alpha: 0.01),
               borderRadius: BorderRadius.circular(10),
