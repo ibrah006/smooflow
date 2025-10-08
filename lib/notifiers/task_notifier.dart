@@ -83,8 +83,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       );
 
       // Remove the updated tasks from memory (state)
-      final tasksIds = updatedProjectTasks.map((log) => log.id);
-      state.removeWhere((log) => tasksIds.contains(log.id));
+      final tasksIds = updatedProjectTasks.map((task) => task.id);
+      state.removeWhere((task) => tasksIds.contains(task.id));
 
       // Add the updated tasks to memory (state)
       state = [...state, ...updatedProjectTasks];

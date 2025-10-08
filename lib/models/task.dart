@@ -29,6 +29,8 @@ class Task {
 
   DateTime? updatedAt;
 
+  DateTime? activityLogLastModified;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -55,6 +57,7 @@ class Task {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
     updatedAt = DateTime.now();
+    activityLogLastModified = null;
   }
 
   Task.create({
@@ -76,7 +79,8 @@ class Task {
        _usedMaterials = usedMaterials,
        _projectId = projectId,
        updatedAt = DateTime.now(),
-       workActivityLogs = [];
+       workActivityLogs = [],
+       activityLogLastModified = null;
 
   void initializeId(int id) {
     _id = id;

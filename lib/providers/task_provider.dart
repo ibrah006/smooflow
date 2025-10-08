@@ -30,3 +30,12 @@ final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
         projectTaskIds: project.tasks,
       );
 });
+
+final taskByIdProvider = Provider.family<Task?, int>((ref, taskId) {
+  final tasks = ref.watch(taskNotifierProvider);
+  try {
+    return tasks.firstWhere((task) => task.id == taskId);
+  } catch (e) {
+    return null;
+  }
+});

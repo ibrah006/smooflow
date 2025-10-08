@@ -14,6 +14,68 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   set activeLog(WorkActivityLog? log) => _activeLog = log;
 
   /// Load all logs for a specific task
+  Future<List<WorkActivityLog>> loadTaskActivityLogs({
+    required int taskId,
+    bool forceReload = false,
+    // Pass in the local task work-activity-log last modified
+    // This is the datetime of the last modified work-activity-log of [taskId]
+    required DateTime? taskActivityLogsLastModifiedLocal,
+    // Task work-activity-log Ids (ensure all the ids are included)
+    required List<int> taskActivityLogIds,
+  }) async {
+    // try {
+    final DateTime? taskActivityLogsLastModifiedServer =
+        !forceReload
+            ? null
+            : await _repo.getTaskActivityLogsLastModified(taskId);
+
+    final localUpdateNeeded =
+        forceReload && taskActivityLogsLastModifiedLocal != null
+            ? taskActivityLogsLastModifiedServer?.isAfter(
+              taskActivityLogsLastModifiedLocal,
+            )
+            : false;
+
+    late final bool mustGetLogData;
+    if (localUpdateNeeded == true) {
+      mustGetLogData = true;
+    } else {
+      // MUST GET LOCAL DATA (this boolean overrides ensureLatestLogDetails [whether t or f])
+      mustGetLogData =
+          // Although the latest info is not needed, what if the actual work-activity-logs are not even loaded into the memory yet?
+          // We can check to see if the reference work-activity-logs (IDs) that are in memory (through task model), is having an actual instance of it in memory
+          !taskActivityLogIds.every(
+            (item) => (state.map((workActivityLog) {
+              if (workActivityLog.taskId == taskId) return workActivityLog.id;
+            })).toSet().contains(item),
+          );
+    }
+
+    if (localUpdateNeeded == true || mustGetLogData) {
+      final updatedTaskWorkActivityLogs = await _repo.getLogsByTask(
+        taskId,
+        since: mustGetLogData ? null : taskActivityLogsLastModifiedLocal,
+      );
+
+      // Remove the updated work-activity-logs from memory (state)
+      final tasksIds = updatedTaskWorkActivityLogs.map((log) => log.id);
+      state.removeWhere((log) => tasksIds.contains(log.id));
+
+      // Add the updated work-activity-logs to memory (state)
+      state = [...state, ...updatedTaskWorkActivityLogs];
+
+      return updatedTaskWorkActivityLogs;
+    } else {
+      return state.where((log) => log.taskId == taskId).toList();
+    }
+    // } catch (e) {
+    //   debugPrint("Error loading project tasks,\nerror: $e");
+    //   // state = state.copyWith(error: e.toString());
+    //   return state;
+    // }
+  }
+
+  /// Load all logs for a specific task
   Future<void> loadLogsByTask(int taskId) async {
     final logs = await _repo.getLogsByTask(taskId);
 
