@@ -84,6 +84,8 @@ flutter:
     - assets/icons/app_icon.svg
     - assets/icons/no_projects_icon.svg
     - assets/icons/no_activity_logs.svg
+    - assets/icons/no_tasks_icon.svg
+    - assets/icons/no_tasks_icon_dark.svg
     - assets/icons/app_icon.png
     - assets/images/logo_long.png
     - assets/animations/loading.json

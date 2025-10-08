@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/components/task_tile.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -26,8 +27,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     super.initState();
   }
 
+  gotoCreateTaskScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTaskScreen(projectId: widget.projectId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     try {
       tasks = ref.watch(tasksByProjectProvider(widget.projectId));
     } catch (e) {
@@ -43,16 +55,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             itemBuilder: (context) {
               return [
                 PopupMenuItem(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                CreateTaskScreen(projectId: widget.projectId),
-                      ),
-                    );
-                  },
+                  onTap: gotoCreateTaskScreen,
                   child: Text("Create Task"),
                 ),
               ];
@@ -64,10 +67,48 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       body: FutureBuilder(
         future: tasks,
         builder: (context, snapshot) {
-          return Column(
-            spacing: 10,
+          if (snapshot.data != null && snapshot.data!.isEmpty) {
+            return Center(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width / 1.65,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 20,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/icons/no_tasks_icon.svg",
+                      width: 100,
+                    ),
+                    Text(
+                      "No tasks",
+                      style: textTheme.headlineLarge!.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "Click the button below to create a task",
+                      style: textTheme.titleMedium!.copyWith(
+                        color: Colors.grey.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: gotoCreateTaskScreen,
+                        child: Text("Create Task"),
+                      ),
+                    ),
+                    SizedBox(height: kToolbarHeight),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView(
             children: [
-              SizedBox(),
+              SizedBox(height: 20),
               if (snapshot.data != null)
                 ...snapshot.data!.map((task) {
                   return TaskTile(task);
