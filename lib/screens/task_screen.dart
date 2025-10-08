@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/components/work_activity_tile.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 
@@ -17,6 +19,9 @@ class TaskScreen extends ConsumerStatefulWidget {
 
 class _TaskScreenState extends ConsumerState<TaskScreen> {
   late Future<ProgressLog> progressLogFuture;
+
+  /// This Task's work-activity-logs
+  late final Future<List<WorkActivityLog>> workActivityLogsFuture;
 
   @override
   void initState() {
@@ -37,6 +42,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 )
                 : ProgressLog.deleted(widget.task.progressLogId);
           });
+
+      workActivityLogsFuture = ref.watch(
+        workActivityLogsByTaskProvider(widget.task.id),
+      );
       setState(() {});
     });
   }
@@ -48,10 +57,13 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     late final bool showLoadingOverlay;
     try {
       progressLogFuture;
+      workActivityLogsFuture;
       showLoadingOverlay = false;
     } catch (e) {
       showLoadingOverlay = true;
     }
+
+    bool showPageContents = !showLoadingOverlay;
 
     return Scaffold(
       appBar: AppBar(
@@ -77,9 +89,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child:
-              showLoadingOverlay
-                  ? null
-                  : Column(
+              showPageContents
+                  ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 15),
@@ -98,12 +109,13 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                       SizedBox(height: 8),
                       if (widget.task.description.trim().isNotEmpty)
                         SizedBox(
-                          width: MediaQuery.of(context).size.width / 3,
+                          width: MediaQuery.of(context).size.width / 1.35,
                           child: Text(
                             widget.task.description,
                             style: textTheme.bodyMedium!.copyWith(
                               color: Colors.grey.shade900,
                             ),
+                            overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                           ),
                         )
@@ -134,7 +146,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                             children: [
                               Icon(Icons.account_circle_rounded, size: 30),
                               SizedBox(width: 7),
-                              Text(assignee.name, style: textTheme.titleMedium),
+                              Text(
+                                "${assignee.name[0].toUpperCase()}${assignee.name.substring(1)}",
+                                style: textTheme.titleMedium,
+                              ),
                             ],
                           );
                         })
@@ -242,56 +257,21 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                         ],
                       ),
                       Expanded(
-                        child: ListView(
-                          children: [
-                            SizedBox(height: 20),
-                            Row(
-                              spacing: 15,
+                        child: FutureBuilder(
+                          future: workActivityLogsFuture,
+                          builder: (context, snapshot) {
+                            final workActivityLogs = snapshot.data;
+
+                            return ListView(
                               children: [
-                                CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: colorPrimary.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  child: Icon(
-                                    Icons.person_rounded,
-                                    color: colorPrimary,
-                                    size: 28,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Yusuf",
-                                        style: textTheme.titleMedium,
-                                      ),
-                                      Row(
-                                        spacing: 15,
-                                        children: [
-                                          Expanded(
-                                            child: LinearProgressIndicator(
-                                              value: 0.4,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              backgroundColor: colorPrimary
-                                                  .withValues(alpha: 0.15),
-                                            ),
-                                          ),
-                                          Text(
-                                            "1h 10m",
-                                            style: textTheme.titleMedium,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                SizedBox(height: 20),
+                                if (workActivityLogs != null)
+                                  ...workActivityLogs.map((log) {
+                                    return WorkActivityTile(log);
+                                  }),
                               ],
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
                       Container(
@@ -342,7 +322,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                         ),
                       ),
                     ],
-                  ),
+                  )
+                  : null,
         ),
       ),
     );
