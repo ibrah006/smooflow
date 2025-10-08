@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roundcheckbox/roundcheckbox.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/task_screen.dart';
@@ -21,6 +22,12 @@ class _TaskTileState extends ConsumerState<TaskTile> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+
+    print("task status: ${widget.task.status.toLowerCase() == "completed"}");
+
+    final isCompleted =
+        widget.task.dateCompleted != null ||
+        widget.task.status.toLowerCase() == "completed";
 
     return Row(
       children: [
@@ -94,7 +101,9 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                             padding: const EdgeInsets.only(right: 5),
                             child: Text(
                               widget.task.description.isEmpty
-                                  ? "Pending completion"
+                                  ? (!isCompleted
+                                      ? "Pending completion"
+                                      : "Finished ${widget.task.dateCompleted.formatDisplay ?? 'N/a'}")
                                   : widget.task.description,
                               style: textTheme.bodyMedium!.copyWith(
                                 color: Colors.grey.shade800,
@@ -116,7 +125,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                           ),
                           decoration: BoxDecoration(
                             color:
-                                widget.task.dateCompleted == null
+                                !isCompleted
                                     ? colorPrimary.withValues(alpha: 0.08)
                                     : colorPrimary,
                             borderRadius: BorderRadius.circular(20),
@@ -124,10 +133,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                           child: Text(
                             "${widget.task.status[0].toUpperCase()}${widget.task.status.substring(1)}",
                             style: textTheme.labelMedium!.copyWith(
-                              color:
-                                  widget.task.dateCompleted == null
-                                      ? colorPrimary
-                                      : Colors.white,
+                              color: !isCompleted ? colorPrimary : Colors.white,
                             ),
                           ),
                         ),

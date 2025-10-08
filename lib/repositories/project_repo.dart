@@ -30,8 +30,6 @@ class ProjectRepo {
       (k, projectId) => MapEntry(int.parse(k), projectId.toString()),
     );
 
-    print("body received: ${body}");
-
     if (response.statusCode != 200) {
       throw "Failed to fetch projects: ${response.body}";
     }

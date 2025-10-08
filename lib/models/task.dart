@@ -1,12 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/models/material_log.dart';
 import 'package:smooflow/models/user.dart';
+import 'package:smooflow/models/work_activity_log.dart';
 
 class Task {
   late final int _id;
   late String _name;
   late String _description;
   late DateTime? _dueDate;
+
+  // Ids of work activity logs associated with this task
+  List<int> workActivityLogs;
 
   late String _status;
   late List<User> _assignees;
@@ -38,6 +42,7 @@ class Task {
     required List<MaterialLog> usedMaterials,
     required String projectId,
     required DateTime? dateCompleted,
+    required this.workActivityLogs,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -70,7 +75,8 @@ class Task {
        _estimatedMaterials = estimatedMaterials,
        _usedMaterials = usedMaterials,
        _projectId = projectId,
-       updatedAt = DateTime.now();
+       updatedAt = DateTime.now(),
+       workActivityLogs = [];
 
   void initializeId(int id) {
     _id = id;
@@ -136,6 +142,10 @@ class Task {
         ((json["materialsUsed"] ?? []) as List)
             .map((rawMaterialLog) => MaterialLog.fromJson(rawMaterialLog))
             .toList(),
+    workActivityLogs:
+        (json["workActivityLogs"] as List).map((activityLogJson) {
+          return WorkActivityLog.getIdFromJson(activityLogJson);
+        }).toList(),
   );
 
   // Copy constructor
@@ -149,7 +159,8 @@ class Task {
       _dateCompleted = original._dateCompleted,
       _estimatedMaterials = List.from(original._estimatedMaterials),
       _usedMaterials = List.from(original._usedMaterials),
-      progressLogId = original.progressLogId {
+      progressLogId = original.progressLogId,
+      workActivityLogs = original.workActivityLogs {
     updatedAt = original.updatedAt;
     String status = original._status;
     _status = status;
@@ -158,9 +169,15 @@ class Task {
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
-  Task.empty() : progressLogId = "";
+  @Deprecated(
+    "This constructor is deprecated and will be removed in future versions",
+  )
+  Task.empty() : progressLogId = "", workActivityLogs = [];
 
   // Copy With method
+  @Deprecated(
+    "This constructor is deprecated and will be removed in future versions",
+  )
   Task copyWithSafe({
     int? id,
     String? name,

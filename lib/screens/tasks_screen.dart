@@ -30,10 +30,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget build(BuildContext context) {
     try {
       tasks = ref.watch(tasksByProjectProvider(widget.projectId));
-
-      ref.watch(tasksByProjectProvider(widget.projectId)).then((value) {
-        print("value: $value");
-      });
     } catch (e) {
       // Already initialized
     }

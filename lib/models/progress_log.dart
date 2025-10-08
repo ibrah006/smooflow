@@ -89,6 +89,29 @@ class ProgressLog {
     );
   }
 
+  factory ProgressLog.deleted(String progressId) {
+    return ProgressLog(
+      id: progressId,
+      projectId: "<deleted>",
+      status: Status.values.first, // or a specific deleted-like status
+      description: "<deleted_progress_log_desc>",
+      startDate: DateTime.fromMillisecondsSinceEpoch(0),
+      dueDate: null,
+      issue: ProgressIssue.none,
+      isCompleted: false,
+      completedAt: null,
+    );
+  }
+
+  bool get isDeleted {
+    return projectId == "<deleted>" &&
+        description == "<deleted_progress_log_desc>" &&
+        startDate == DateTime.fromMillisecondsSinceEpoch(0) &&
+        issue == ProgressIssue.none &&
+        !isCompleted &&
+        completedAt == null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

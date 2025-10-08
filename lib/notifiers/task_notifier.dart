@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/task_repo.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
@@ -122,15 +123,13 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     await _repo.endTask(status: status, isCompleted: isCompleted);
 
     if (_activeTask != null) {
-      final updatedTask = _activeTask!.copyWithSafe(
-        status: status ?? 'Stopped',
-        dateCompleted: isCompleted ? DateTime.now() : null,
-      );
+      _activeTask!.status = status ?? "";
+      _activeTask!.dateCompleted = isCompleted ? DateTime.now() : null;
 
       // Replace in the list
       state = [
         for (final t in state)
-          if (t.id == updatedTask.id) updatedTask else t,
+          if (t.id == _activeTask!.id) _activeTask! else t,
       ];
     }
 

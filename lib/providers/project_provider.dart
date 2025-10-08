@@ -15,14 +15,14 @@ final projectNotifierProvider =
 
 final projectByIdProvider = Provider.family<Project?, String>((ref, id) {
   final projects = ref.watch(projectNotifierProvider);
-  try {
-    return projects.firstWhere(
-      (project) => project.id == id,
-      // orElse: () => null,
-    );
-  } catch (e) {
-    return null;
-  }
+  // try {
+  return projects.firstWhere(
+    (project) => project.id == id,
+    // orElse: () => null,
+  );
+  // } catch (e) {
+  //   return null;
+  // }
 });
 
 // It has a placeholder value, it gets overridden in the project screen

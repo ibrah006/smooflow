@@ -17,8 +17,6 @@ class RecentProjectsSection extends ConsumerWidget {
 
     final recent = ref.watch(projectNotifierProvider.notifier).recent;
 
-    print("recent: ${recent}");
-
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
