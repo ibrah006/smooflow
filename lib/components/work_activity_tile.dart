@@ -5,8 +5,13 @@ import 'package:smooflow/models/work_activity_log.dart';
 
 class WorkActivityTile extends StatelessWidget {
   final WorkActivityLog log;
+  final double totalTaskContributionSeconds;
 
-  const WorkActivityTile(this.log, {super.key});
+  const WorkActivityTile(
+    this.log, {
+    super.key,
+    required this.totalTaskContributionSeconds,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +20,17 @@ class WorkActivityTile extends StatelessWidget {
     final duration = log.end?.difference(log.start);
     final durationDisplay =
         duration != null ? duration.formatHoursMinutes : "Ongoing";
+
+    double contributionPercent =
+        (log.end?.difference(log.start).inSeconds ?? 0) /
+        totalTaskContributionSeconds;
+
+    contributionPercent =
+        contributionPercent.isNaN
+            ? 0
+            : contributionPercent.isInfinite
+            ? 100
+            : contributionPercent;
 
     return Row(
       spacing: 15,
@@ -34,7 +50,7 @@ class WorkActivityTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: LinearProgressIndicator(
-                      value: 0.4,
+                      value: contributionPercent,
                       borderRadius: BorderRadius.circular(10),
                       backgroundColor: colorPrimary.withValues(alpha: 0.15),
                     ),

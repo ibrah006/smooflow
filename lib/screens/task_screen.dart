@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/work_activity_tile.dart';
 import 'package:smooflow/constants.dart';
@@ -46,6 +47,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       workActivityLogsFuture = ref.watch(
         workActivityLogsByTaskProvider(widget.task.id),
       );
+
       setState(() {});
     });
   }
@@ -262,64 +264,136 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                           builder: (context, snapshot) {
                             final workActivityLogs = snapshot.data;
 
-                            return ListView(
-                              children: [
-                                SizedBox(height: 20),
-                                if (workActivityLogs != null)
-                                  ...workActivityLogs.map((log) {
-                                    return WorkActivityTile(log);
-                                  }),
-                              ],
+                            if (workActivityLogs != null) {
+                              final totalLogDurationSeconds = ref
+                                  .read(
+                                    workActivityLogNotifierProvider.notifier,
+                                  )
+                                  .getTotalLogDurationSeconds(widget.task.id);
+
+                              return workActivityLogs.isNotEmpty
+                                  ? ListView(
+                                    children: [
+                                      SizedBox(height: 20),
+                                      ...workActivityLogs.map((log) {
+                                        return WorkActivityTile(
+                                          log,
+                                          totalTaskContributionSeconds:
+                                              totalLogDurationSeconds,
+                                        );
+                                      }),
+                                    ],
+                                  )
+                                  :
+                                  // No Activity logs message
+                                  Center(
+                                    child: SizedBox(
+                                      width:
+                                          MediaQuery.of(context).size.width /
+                                          1.75,
+                                      child: Column(
+                                        spacing: 15,
+                                        children: [
+                                          SizedBox(height: 10),
+                                          SvgPicture.asset(
+                                            "assets/icons/no_activity_logs.svg",
+                                            width: 100,
+                                          ),
+                                          Text(
+                                            "No activity logs recorded for this task yet",
+                                            style: textTheme.titleLarge!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: FilledButton(
+                                              style: FilledButton.styleFrom(
+                                                disabledBackgroundColor:
+                                                    Colors.grey.shade200,
+                                                padding: EdgeInsets.all(10),
+                                              ),
+                                              onPressed:
+                                                  widget.task.dateCompleted ==
+                                                          null
+                                                      ? startTask
+                                                      : null,
+                                              child: Text("Add Activity Log"),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                            }
+                            return LoadingOverlay(
+                              isLoading: true,
+                              child: SizedBox(),
                             );
                           },
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.symmetric(
-                            horizontal: BorderSide(color: Colors.grey.shade200),
-                          ),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 20,
-                        ).copyWith(bottom: 20),
-                        child: Row(
-                          spacing: 11,
-                          children: [
-                            if (widget.task.dateCompleted == null)
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () {},
-                                  style: OutlinedButton.styleFrom(
-                                    padding: EdgeInsets.all(10),
-                                    side: BorderSide(
-                                      color: Colors.grey.shade300,
-                                      width: 1.25,
-                                    ),
-                                  ),
-                                  child: Text("Add Log"),
+                      FutureBuilder(
+                        future: workActivityLogsFuture,
+                        builder: (context, snapshot) {
+                          final workActivityLog = snapshot.data;
+                          if (workActivityLog != null &&
+                              workActivityLog.isEmpty) {
+                            return SizedBox();
+                          }
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border.symmetric(
+                                horizontal: BorderSide(
+                                  color: Colors.grey.shade200,
                                 ),
-                              ),
-                            Expanded(
-                              child: FilledButton(
-                                style: FilledButton.styleFrom(
-                                  disabledBackgroundColor: Colors.grey.shade200,
-                                  padding: EdgeInsets.all(10),
-                                  textStyle: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                onPressed:
-                                    widget.task.dateCompleted == null
-                                        ? startTask
-                                        : null,
-                                child: Text("Start"),
                               ),
                             ),
-                          ],
-                        ),
+                            padding: EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 20,
+                            ).copyWith(bottom: 20),
+                            child: Row(
+                              spacing: 11,
+                              children: [
+                                if (widget.task.dateCompleted == null)
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {},
+                                      style: OutlinedButton.styleFrom(
+                                        padding: EdgeInsets.all(10),
+                                        side: BorderSide(
+                                          color: Colors.grey.shade300,
+                                          width: 1.25,
+                                        ),
+                                      ),
+                                      child: Text("Add Log"),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      disabledBackgroundColor:
+                                          Colors.grey.shade200,
+                                      padding: EdgeInsets.all(10),
+                                      textStyle: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    onPressed:
+                                        widget.task.dateCompleted == null
+                                            ? startTask
+                                            : null,
+                                    child: Text("Start"),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   )

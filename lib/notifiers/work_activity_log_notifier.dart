@@ -13,6 +13,16 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
 
   set activeLog(WorkActivityLog? log) => _activeLog = log;
 
+  double getTotalLogDurationSeconds(int taskId) {
+    double seconds = 0;
+    for (WorkActivityLog log in state) {
+      if (log.taskId == taskId) {
+        seconds += log.end?.difference(log.start).inSeconds ?? 0;
+      }
+    }
+    return seconds;
+  }
+
   /// Load all logs for a specific task
   Future<List<WorkActivityLog>> loadTaskActivityLogs({
     required int taskId,
