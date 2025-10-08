@@ -75,23 +75,6 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     // }
   }
 
-  /// Load all logs for a specific task
-  Future<void> loadLogsByTask(int taskId) async {
-    final logs = await _repo.getLogsByTask(taskId);
-
-    // Remove previous logs of the same task
-    final filtered = state.where((log) => log.taskId != taskId).toList();
-
-    // Add the new logs
-    state = [...filtered, ...logs];
-  }
-
-  /// Start a work session for a given user and task
-  Future<void> startWorkSession(WorkActivityLog log) async {
-    _activeLog = log;
-    state = [...state, log];
-  }
-
   /// End an active work session by its ID
   Future<void> endWorkSession(WorkActivityLog endedLog) async {
     if (activeLog == null) {

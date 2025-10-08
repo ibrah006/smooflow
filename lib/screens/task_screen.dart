@@ -5,7 +5,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/providers/work_activity_log_providers.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
   final Task task;
