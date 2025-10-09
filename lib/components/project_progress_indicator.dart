@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/screens/project_timeline_screen.dart';
 
 class ProjectProgressIndicator extends ConsumerStatefulWidget {
   const ProjectProgressIndicator();
