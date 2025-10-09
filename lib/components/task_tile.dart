@@ -1,3 +1,4 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/screens/task_screen.dart';
 
 class TaskTile extends ConsumerStatefulWidget {
@@ -28,6 +30,10 @@ class _TaskTileState extends ConsumerState<TaskTile> {
     final isCompleted =
         widget.task.dateCompleted != null ||
         widget.task.status.toLowerCase() == "completed";
+
+    final assigneesFuture = ref
+        .read(userNotifierProvider.notifier)
+        .getTaskUsers(task: widget.task);
 
     return Padding(
       // margin
@@ -144,33 +150,60 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                           if (widget.task.assignees.isEmpty)
                             Icon(Icons.no_accounts_rounded, size: 20)
                           else
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(1),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    gradient: LinearGradient(
-                                      colors: [Colors.black, Colors.black54],
+                            FutureBuilder(
+                              future: assigneesFuture,
+                              builder: (context, snapshot) {
+                                final assignees = snapshot.data;
+                                if (assignees == null) {
+                                  return Row(
+                                    spacing: 5,
+                                    children: [
+                                      CardLoading(
+                                        height: 20,
+                                        width: 20,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      CardLoading(
+                                        height: 20,
+                                        width: 60,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(1),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(50),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.black,
+                                            Colors.black54,
+                                          ],
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 13,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 13,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(width: 3),
-                                Text(
-                                  widget.task.assignees.first,
-                                  style: textTheme.labelSmall,
-                                ),
-                                if (widget.task.assignees.length > 1)
-                                  Text(
-                                    ", ${widget.task.assignees.length} more assigned",
-                                    style: textTheme.labelSmall,
-                                  ),
-                              ],
+                                    SizedBox(width: 3),
+                                    Text(
+                                      "${assignees.first.name[0].toUpperCase()}${assignees.first.name.substring(1)}",
+                                      style: textTheme.labelSmall,
+                                    ),
+                                    if (widget.task.assignees.length > 1)
+                                      Text(
+                                        ", ${widget.task.assignees.length - 1} more",
+                                        style: textTheme.labelSmall,
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                         ],
                       ),

@@ -103,6 +103,11 @@ class Task {
   List<MaterialLog> get estimatedMaterials => _estimatedMaterials;
   List<MaterialLog> get usedMaterials => _usedMaterials;
 
+  void addAssignee(String userId) {
+    _assignees.add(userId);
+    assigneeLastAdded = DateTime.now();
+  }
+
   // Setters (make sure only Task can modify these)
   set status(String newStatus) {
     _status = newStatus.replaceAll(RegExp(r"_"), " ");

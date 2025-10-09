@@ -1,3 +1,4 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,8 +7,10 @@ import 'package:smooflow/components/work_activity_tile.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
+import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
@@ -70,6 +73,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     final isCompleted =
         widget.task.dateCompleted != null ||
         widget.task.status.toLowerCase() == "completed";
+
+    final assigneesFuture = ref
+        .watch(userNotifierProvider.notifier)
+        .getTaskUsers(task: widget.task);
 
     return Scaffold(
       appBar: AppBar(
@@ -147,20 +154,39 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                       ),
                       SizedBox(height: 8),
                       if (widget.task.assignees.isNotEmpty)
-                        ...widget.task.assignees.map((assignee) {
-                          return Row(
-                            children: [
-                              Icon(Icons.account_circle_rounded, size: 30),
-                              SizedBox(width: 7),
-                              Text(
-                                // "${assignee.name[0].toUpperCase()}${assignee.name.substring(1)}",
-                                // assignee Id
-                                assignee,
-                                style: textTheme.titleMedium,
-                              ),
-                            ],
-                          );
-                        })
+                        FutureBuilder(
+                          future: assigneesFuture,
+                          builder: (context, snapshot) {
+                            final assignees = snapshot.data;
+
+                            if (assignees == null) {
+                              return CardLoading(
+                                height: 25,
+                                width: MediaQuery.of(context).size.width / 2.5,
+                                borderRadius: BorderRadius.circular(20),
+                              );
+                            }
+
+                            return Column(
+                              children:
+                                  assignees!.map((assignee) {
+                                    return Row(
+                                      children: [
+                                        Icon(
+                                          Icons.account_circle_rounded,
+                                          size: 30,
+                                        ),
+                                        SizedBox(width: 7),
+                                        Text(
+                                          "${assignee.name[0].toUpperCase()}${assignee.name.substring(1)}",
+                                          style: textTheme.titleMedium,
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
+                            );
+                          },
+                        )
                       else
                         Text(
                           "None assigned",
