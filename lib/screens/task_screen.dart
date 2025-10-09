@@ -149,7 +149,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                               Icon(Icons.account_circle_rounded, size: 30),
                               SizedBox(width: 7),
                               Text(
-                                "${assignee.name[0].toUpperCase()}${assignee.name.substring(1)}",
+                                // "${assignee.name[0].toUpperCase()}${assignee.name.substring(1)}",
+                                // assignee Id
+                                assignee,
                                 style: textTheme.titleMedium,
                               ),
                             ],

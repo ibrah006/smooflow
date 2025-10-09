@@ -78,7 +78,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       name: _titleController.text.trim(),
       description: _descController.text.trim(),
       progressLogId: _selectedProgressLogId!,
-      assignees: _selectedAssignees,
+      assignees: _selectedAssignees.map((user) => user.id).toList(),
       projectId: widget.projectId,
       // TODO
       // priority: _priority,
