@@ -95,13 +95,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: 25),
-                      child: Column(
-                        spacing: 15,
-                        children: [
-                          ...projects.map((project) {
-                            return ProjectCardV2(project);
-                          }),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 30),
+                        child: Column(
+                          spacing: 15,
+                          children: [
+                            ...projects.map((project) {
+                              return ProjectCardV2(project);
+                            }),
+                          ],
+                        ),
                       ),
                     ),
                   ),

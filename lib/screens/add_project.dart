@@ -253,6 +253,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                     alignment: Alignment.bottomCenter,
                     children: [
                       ListView(
+                        physics: ClampingScrollPhysics(),
                         children: [
                           const SizedBox(height: 16),
 
