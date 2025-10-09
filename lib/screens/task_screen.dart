@@ -67,6 +67,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
     bool showPageContents = !showLoadingOverlay;
 
+    final isCompleted =
+        widget.task.dateCompleted != null ||
+        widget.task.status.toLowerCase() == "completed";
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -360,7 +364,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                             child: Row(
                               spacing: 11,
                               children: [
-                                if (widget.task.dateCompleted == null)
+                                if (!isCompleted)
                                   Expanded(
                                     child: OutlinedButton(
                                       onPressed: () {},
@@ -385,10 +389,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    onPressed:
-                                        widget.task.dateCompleted == null
-                                            ? startTask
-                                            : null,
+                                    onPressed: !isCompleted ? startTask : null,
                                     child: Text("Start"),
                                   ),
                                 ),
