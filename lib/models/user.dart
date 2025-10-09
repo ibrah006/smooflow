@@ -45,6 +45,10 @@ class User {
     createdAt: DateTime.parse(json['createdAt']),
   );
 
+  static String getIdFromJson(userJson) {
+    return userJson["id"];
+  }
+
   Map<String, dynamic> toJson() {
     final json = {
       'name': name,

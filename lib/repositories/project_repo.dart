@@ -12,7 +12,6 @@ class ProjectRepo {
 
   Future<List<Project>> fetchProjects() async {
     final response = await ApiClient.http.get(ApiEndpoints.projects);
-    print("fetch projects response body: ${response.body}");
     final body = jsonDecode(response.body);
 
     if (response.statusCode != 200) {

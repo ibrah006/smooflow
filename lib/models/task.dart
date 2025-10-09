@@ -13,7 +13,7 @@ class Task {
   List<int> workActivityLogs;
 
   late String _status;
-  late List<User> _assignees;
+  late List<String> _assignees;
   late String _projectId;
 
   // Material logs
@@ -31,6 +31,8 @@ class Task {
 
   DateTime? activityLogLastModified;
 
+  DateTime? assigneeLastAdded;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -39,7 +41,7 @@ class Task {
     required String description,
     required DateTime? dueDate,
     String status = "pending",
-    required List<User> assignees,
+    required List<String> assignees,
     required List<MaterialLog> estimatedMaterials,
     required List<MaterialLog> usedMaterials,
     required String projectId,
@@ -66,7 +68,7 @@ class Task {
     required String description,
     required DateTime? dueDate,
     String status = "pending",
-    required List<User> assignees,
+    required List<String> assignees,
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],
     required String projectId,
@@ -92,7 +94,8 @@ class Task {
   String get description => _description;
   DateTime? get dueDate => _dueDate;
   String get status => _status;
-  List<User> get assignees => _assignees;
+  // ids of assigned users
+  List<String> get assignees => _assignees;
   String get projectId => _projectId;
   DateTime? get dateCompleted => _dateCompleted;
   Color? get color => _color;
@@ -134,7 +137,7 @@ class Task {
     //     .firstWhere((e) => e.toString().split('.').last == json['status']),
     assignees:
         (json['assignees'] as List).map((assigneeRaw) {
-          return User.fromJson(assigneeRaw);
+          return User.getIdFromJson(assigneeRaw);
         }).toList(),
     projectId: json['project']?['id'],
     // Material logs
@@ -170,6 +173,7 @@ class Task {
     _status = status;
     color = original.color;
     icon = original.icon;
+    assigneeLastAdded = original.assigneeLastAdded;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
@@ -188,7 +192,7 @@ class Task {
     String? description,
     DateTime? dueDate,
     String? status,
-    List<User>? assignees,
+    List<String>? assignees,
     String? projectId,
     DateTime? dateCompleted,
     Color? color,
@@ -272,7 +276,7 @@ class Task {
       'description': description,
       'dueDate': dueDate?.toIso8601String(),
       'status': status,
-      'assignees': assignees.map((user) => user.id).toList(),
+      'assignees': assignees,
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
       'estimatedMaterials': _estimatedMaterials.map((m) => m.toJson()).toList(),

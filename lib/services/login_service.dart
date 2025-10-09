@@ -95,7 +95,6 @@ class LoginService {
 
       currentUser = User.fromJson(userRaw);
 
-      print("status code: ${response.statusCode}");
       return response.statusCode == 200;
     } catch (e) {
       print("error: $e");
