@@ -785,7 +785,8 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
 
     print("Submitting project: $newProject");
 
-    // TODO: Call API
+    final timelineData = projectTimelineMilestoneSectionKey.currentState!.data;
+
     try {
       await ref
           .read(projectNotifierProvider.notifier)
@@ -797,6 +798,8 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
               assignedManagers: [],
               client: selectedClient!,
               priority: PriorityLevel.values.indexOf(selectedPriority),
+              dueDate: timelineData.deadline,
+              estimatedProductionStart: timelineData.startDate,
             ),
           );
     } catch (e) {

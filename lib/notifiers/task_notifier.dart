@@ -73,8 +73,6 @@ class TaskNotifier extends StateNotifier<List<Task>> {
               if (task.projectId == projectId) return task.id;
             })).toSet().contains(item),
           );
-
-      print("MUST GET LOCAL DATA: $mustGetLogData");
     }
 
     if (localUpdateNeeded == true || mustGetLogData) {
@@ -90,7 +88,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       // Add the updated tasks to memory (state)
       state = [...state, ...updatedProjectTasks];
 
-      return updatedProjectTasks;
+      return state;
     } else {
       return state.where((task) => task.projectId == projectId).toList();
     }
