@@ -39,7 +39,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             ),
           )
           .then((progressLogs) {
-            print("progressLogs ln: ${progressLogs.length}");
             return progressLogs.isNotEmpty
                 ? progressLogs.firstWhere(
                   (log) => log.id == widget.task.progressLogId,

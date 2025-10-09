@@ -1,8 +1,10 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_launcher_icons/ios.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/task_tile.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -23,11 +25,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   late final Future<List<Task>> tasks;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   gotoCreateTaskScreen() {
     Navigator.push(
       context,
@@ -38,13 +35,27 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      try {
+        tasks = ref.watch(tasksByProjectProvider(widget.projectId));
+        setState(() {});
+      } catch (e) {
+        // Already initialized
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     try {
-      tasks = ref.watch(tasksByProjectProvider(widget.projectId));
+      tasks;
     } catch (e) {
-      // Already initialized
+      return LoadingOverlay(isLoading: true, child: SizedBox());
     }
 
     return Scaffold(
@@ -68,7 +79,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       body: FutureBuilder(
         future: tasks,
         builder: (context, snapshot) {
-          print("tasks snapshot data: ${snapshot.data}");
           if (snapshot.data != null && snapshot.data!.isEmpty) {
             return Center(
               child: SizedBox(

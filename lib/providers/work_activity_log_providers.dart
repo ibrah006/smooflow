@@ -37,5 +37,7 @@ final workActivityLogsByTaskProvider =
         ref.read(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
       }
 
-      return ref.read(workActivityLogNotifierProvider);
+      return ref.read(workActivityLogNotifierProvider).where((log) {
+        return log.taskId == taskId;
+      }).toList();
     });

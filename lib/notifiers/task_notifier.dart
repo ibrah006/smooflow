@@ -46,7 +46,6 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     // project task Ids (ensure all the ids are included)
     required List<int> projectTaskIds,
   }) async {
-    print("force reload: $forceReload");
     // try {
     final DateTime? projectTasksLastModifiedServer =
         !forceReload
@@ -88,7 +87,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       // Add the updated tasks to memory (state)
       state = [...state, ...updatedProjectTasks];
 
-      return state;
+      return updatedProjectTasks;
     } else {
       return state.where((task) => task.projectId == projectId).toList();
     }

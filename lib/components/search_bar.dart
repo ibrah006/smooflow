@@ -111,8 +111,6 @@ class _MySearchDelegate extends SearchDelegate<String> {
                 .whereType<SearchResult>()
                 .toList();
 
-    print("suggestions: ${suggestions}");
-
     suggestions.addAll(
       List.generate(2, (index) {
         return SearchResult(

@@ -84,8 +84,8 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
       // This includes all the users who have an updated work-activity-log in this task
       // NOTE: below may NOT include every user who have a work activity log in this task
       return updatedTaskWorkActivityLogs
+          .where((log) => log.taskId == taskId)
           .map((log) => log.user)
-          .toList()
           // To ensure no duplicates
           .toSet()
           .toList();

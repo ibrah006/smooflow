@@ -25,8 +25,6 @@ class _TaskTileState extends ConsumerState<TaskTile> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    print("task status: ${widget.task.status.toLowerCase() == "completed"}");
-
     final isCompleted =
         widget.task.dateCompleted != null ||
         widget.task.status.toLowerCase() == "completed";
@@ -48,7 +46,6 @@ class _TaskTileState extends ConsumerState<TaskTile> {
             checkedColor: colorPrimary,
             onTap: (newVal) async {
               setState(() {
-                print("status: $newVal");
                 if (newVal == true) {
                   widget.task.status = "completed";
                 }

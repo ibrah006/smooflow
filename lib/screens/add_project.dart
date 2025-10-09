@@ -774,16 +774,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
     FocusScope.of(context).unfocus();
 
     // Proceed with form submission
-    final newProject = {
-      "name": _projectNameController.text.trim(),
-      "description": _projectDescriptionController.text.trim(),
-      "client": selectedClient,
-      "type": selectedProjectType,
-      "priority": selectedPriority,
-      // Add other data as needed
-    };
-
-    print("Submitting project: $newProject");
 
     final timelineData = projectTimelineMilestoneSectionKey.currentState!.data;
 
