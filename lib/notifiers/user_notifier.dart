@@ -3,10 +3,21 @@ import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/repositories/user_repo.dart';
 
+// Beware of removing users from memory randomly
+// To ensure there's isn't too many users in memory, we will need to remove som
+// but in order to do that, we need to ensure their corresponding work-activity-lots associated with them are also removed
+// If not work activity logs are associated with a user, they can be freely removed from memory
+
 class UserNotifier extends StateNotifier<List<User>> {
   final UserRepo _repo;
 
   UserNotifier(this._repo) : super([]);
+
+  updateUsers(List<User> users) {
+    final List<User> temp = [...state, ...users].toSet().toList();
+
+    state = temp;
+  }
 
   /// Fetch all users (assignees) for a task.
   ///

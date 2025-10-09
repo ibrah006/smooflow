@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/work_activity_log_notifier.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
 
 /// Repository provider — handles API calls for work activity logs
@@ -24,11 +25,17 @@ final workActivityLogsByTaskProvider =
 
       if (task == null) throw "Task not found";
 
-      return await ref
+      final updatedLogsUsers = await ref
           .watch(workActivityLogNotifierProvider.notifier)
           .loadTaskActivityLogs(
             taskId: taskId,
             taskActivityLogsLastModifiedLocal: task.activityLogLastModified,
             taskActivityLogIds: task.workActivityLogs,
           );
+
+      if (updatedLogsUsers != null) {
+        ref.read(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
+      }
+
+      return ref.read(workActivityLogNotifierProvider);
     });

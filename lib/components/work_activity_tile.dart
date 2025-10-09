@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/duration_format.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/providers/user_provider.dart';
 
-class WorkActivityTile extends StatelessWidget {
+class WorkActivityTile extends ConsumerWidget {
   final WorkActivityLog log;
   final double totalTaskContributionSeconds;
 
@@ -14,7 +16,7 @@ class WorkActivityTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final textTheme = Theme.of(context).textTheme;
 
     final duration = log.end?.difference(log.start);
@@ -32,36 +34,52 @@ class WorkActivityTile extends StatelessWidget {
             ? 100
             : contributionPercent;
 
-    return Row(
-      spacing: 15,
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: colorPrimary.withValues(alpha: 0.1),
-          child: Icon(Icons.person_rounded, color: colorPrimary, size: 28),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(log.userId, style: textTheme.titleMedium),
-              Row(
-                spacing: 15,
-                children: [
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: contributionPercent,
-                      borderRadius: BorderRadius.circular(10),
-                      backgroundColor: colorPrimary.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  Text(durationDisplay, style: textTheme.titleMedium),
-                ],
-              ),
-            ],
+    // users in memory
+    final users = ref.read(userNotifierProvider);
+    final logUser = users.firstWhere((user) => user.id == log.userId);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        spacing: 15,
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: colorPrimary.withValues(alpha: 0.1),
+            child: Icon(Icons.person_rounded, color: colorPrimary, size: 28),
           ),
-        ),
-      ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${logUser.name[0].toUpperCase()}${logUser.name.substring(1)}",
+                  style: textTheme.titleMedium,
+                ),
+                Row(
+                  spacing: 15,
+                  children: [
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: contributionPercent,
+                        borderRadius: BorderRadius.circular(10),
+                        backgroundColor: colorPrimary.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 75,
+                      child: Text(
+                        durationDisplay,
+                        style: textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

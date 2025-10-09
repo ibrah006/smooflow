@@ -169,7 +169,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
                             return Column(
                               children:
-                                  assignees!.map((assignee) {
+                                  assignees.map((assignee) {
                                     return Row(
                                       children: [
                                         Icon(
@@ -371,10 +371,12 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                         future: workActivityLogsFuture,
                         builder: (context, snapshot) {
                           final workActivityLog = snapshot.data;
+
                           if (workActivityLog != null &&
                               workActivityLog.isEmpty) {
                             return SizedBox();
                           }
+
                           return Container(
                             decoration: BoxDecoration(
                               border: Border.symmetric(

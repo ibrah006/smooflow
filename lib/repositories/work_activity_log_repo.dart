@@ -6,7 +6,7 @@ import 'package:smooflow/models/work_activity_log.dart';
 class WorkActivityLogRepo {
   /// Fetch all work activity logs for a specific task.
   /// Optionally filters logs updated since the provided timestamp.
-  Future<List<WorkActivityLog>> getLogsByTask(
+  Future<List<WorkActivityLogTemp>> getLogsByTask(
     int taskId, {
     DateTime? since,
   }) async {
@@ -25,7 +25,7 @@ class WorkActivityLogRepo {
     }
 
     final List<dynamic> jsonList = jsonDecode(response.body);
-    return jsonList.map((json) => WorkActivityLog.fromJson(json)).toList();
+    return jsonList.map((json) => WorkActivityLogTemp.fromJson(json)).toList();
   }
 
   Future<DateTime?> getTaskActivityLogsLastModified(int taskId) async {

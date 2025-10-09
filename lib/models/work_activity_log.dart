@@ -1,3 +1,5 @@
+import 'package:smooflow/models/user.dart';
+
 class WorkActivityLog {
   final int id;
   final String userId;
@@ -35,5 +37,27 @@ class WorkActivityLog {
       'start': start.toIso8601String(),
       'end': end?.toIso8601String(),
     };
+  }
+}
+
+class WorkActivityLogTemp extends WorkActivityLog {
+  final User user;
+
+  WorkActivityLogTemp({
+    required super.id,
+    required this.user,
+    required super.taskId,
+    required super.start,
+    required super.end,
+  }) : super(userId: user.id);
+
+  factory WorkActivityLogTemp.fromJson(Map<String, dynamic> json) {
+    return WorkActivityLogTemp(
+      id: json['id'] as int,
+      user: User.fromJson(json['user']),
+      taskId: json['task'] != null ? json['task']["id"] : null,
+      start: DateTime.parse(json['start']),
+      end: json['end'] != null ? DateTime.parse(json['end']) : null,
+    );
   }
 }

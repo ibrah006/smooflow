@@ -22,6 +22,14 @@ class User {
     required this.createdAt,
   });
 
+  // To ensure toSet gives no duplicates
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is User && runtimeType == other.runtimeType && id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+
   // User.currentUser()
   //     : id = LocalHttp.prefs.get(SharedStorageOptions.uuid.name).toString(),
   //       email = LocalHttp.prefs.get(SharedStorageOptions.email.name).toString(),

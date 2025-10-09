@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
 
@@ -24,7 +25,9 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   }
 
   /// Load all logs for a specific task
-  Future<List<WorkActivityLog>> loadTaskActivityLogs({
+  /// returns the users for these work-activity-logs
+  /// returns null if no call to the server is made
+  Future<List<User>?> loadTaskActivityLogs({
     required int taskId,
     bool forceReload = false,
     // Pass in the local task work-activity-log last modified
@@ -72,11 +75,24 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
       state.removeWhere((log) => tasksIds.contains(log.id));
 
       // Add the updated work-activity-logs to memory (state)
-      state = [...state, ...updatedTaskWorkActivityLogs];
+      state = [
+        ...state,
+        ...updatedTaskWorkActivityLogs.cast<WorkActivityLog>(),
+      ];
 
-      return updatedTaskWorkActivityLogs;
+      // return the users who's work activity log is updated
+      // This includes all the users who have an updated work-activity-log in this task
+      // NOTE: below may NOT include every user who have a work activity log in this task
+      return updatedTaskWorkActivityLogs
+          .map((log) => log.user)
+          .toList()
+          // To ensure no duplicates
+          .toSet()
+          .toList();
     } else {
-      return state.where((log) => log.taskId == taskId).toList();
+      // No need to call the server, all the work-activity-logs of this task exist in memory
+      // But the user instances of these work-activity-logs may or may not exist in memory
+      return null;
     }
     // } catch (e) {
     //   debugPrint("Error loading project tasks,\nerror: $e");
