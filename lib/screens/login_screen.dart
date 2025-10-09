@@ -111,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen>
                   TextField(
                     controller: nameController,
                     enabled: !_isLoading,
+                    keyboardType: TextInputType.name,
                     decoration: const InputDecoration(
                       hintText: 'Name',
                       prefixIcon: Icon(Icons.person_outline),
@@ -130,6 +131,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
                 TextFormField(
                   enabled: !_isLoading,
+                  keyboardType: TextInputType.emailAddress,
                   controller: emailController,
                   // Might need later on (not of any use as of now)
                   validator: (value) {

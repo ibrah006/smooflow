@@ -267,48 +267,48 @@ class ProjectTimelineMilestonesSectionState
           const SizedBox(height: 20),
 
           // Key Milestones
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-            decoration: BoxDecoration(
-              border: Border.all(color: colorBorderDark),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        "Key Milestones",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: Row(
-                        children: [
-                          Icon(Icons.add_rounded, size: 22),
-                          const Text(
-                            "Add Milestone",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...data.milestones.map(_milestoneItem).toList(),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+          //   decoration: BoxDecoration(
+          //     border: Border.all(color: colorBorderDark),
+          //     borderRadius: BorderRadius.circular(12),
+          //     color: Colors.white,
+          //   ),
+          //   child: Column(
+          //     children: [
+          //       Row(
+          //         children: [
+          //           const Expanded(
+          //             child: Text(
+          //               "Key Milestones",
+          //               style: TextStyle(
+          //                 fontWeight: FontWeight.w600,
+          //                 fontSize: 15,
+          //               ),
+          //             ),
+          //           ),
+          //           TextButton(
+          //             onPressed: () {},
+          //             child: Row(
+          //               children: [
+          //                 Icon(Icons.add_rounded, size: 22),
+          //                 const Text(
+          //                   "Add Milestone",
+          //                   style: TextStyle(
+          //                     fontWeight: FontWeight.bold,
+          //                     fontSize: 15,
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //       const SizedBox(height: 12),
+          //       ...data.milestones.map(_milestoneItem).toList(),
+          //     ],
+          //   ),
+          // ),
           const SizedBox(height: 24),
 
           // Estimated Duration

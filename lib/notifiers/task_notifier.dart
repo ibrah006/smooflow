@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/task.dart';
-import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/task_repo.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
@@ -48,6 +46,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     // project task Ids (ensure all the ids are included)
     required List<int> projectTaskIds,
   }) async {
+    print("force reload: $forceReload");
     // try {
     final DateTime? projectTasksLastModifiedServer =
         !forceReload
@@ -74,6 +73,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
               if (task.projectId == projectId) return task.id;
             })).toSet().contains(item),
           );
+
+      print("MUST GET LOCAL DATA: $mustGetLogData");
     }
 
     if (localUpdateNeeded == true || mustGetLogData) {

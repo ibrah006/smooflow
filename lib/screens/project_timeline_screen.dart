@@ -87,8 +87,6 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                 : "${log.issue?.name[0].toUpperCase()}${log.issue?.name.substring(1)}")
             : null;
 
-    print("isCompleted: ${log.isCompleted}, hasIssues: ${log.hasIssues}");
-
     // if it's the tail, then we set below = t
     final bool nextIsCompleted =
         isTail ? true : progressLogs[index + 1].isCompleted;
@@ -660,7 +658,6 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     super.initState();
 
     refreshManager = TimelineRefreshManager();
-    print("at init state");
     Future.microtask(() {
       ref
           .read(
@@ -691,7 +688,6 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
 
     /// refresh data only if it's been been specified interval since the last refresh
     // if (refreshManager.reset(widget.projectId)) {
-    print("reset, project id: ${widget.projectId}");
 
     progressLogs = ref.watch(
       progressLogsByProjectProviderSimple(widget.projectId),

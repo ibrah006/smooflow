@@ -1,3 +1,4 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +68,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       body: FutureBuilder(
         future: tasks,
         builder: (context, snapshot) {
+          print("tasks snapshot data: ${snapshot.data}");
           if (snapshot.data != null && snapshot.data!.isEmpty) {
             return Center(
               child: SizedBox(
@@ -103,6 +105,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   ],
                 ),
               ),
+            );
+          }
+
+          if (snapshot.data == null) {
+            return Column(
+              children: [
+                SizedBox(height: 20),
+                ...List.generate(3, (index) {
+                  return CardLoading(
+                    height: 65,
+                    width: double.infinity,
+                    margin: EdgeInsets.symmetric(
+                      horizontal: 20,
+                    ).copyWith(bottom: 10),
+                    borderRadius: BorderRadius.circular(20),
+                  );
+                }),
+              ],
             );
           }
 
