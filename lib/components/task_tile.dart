@@ -162,7 +162,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                                 ),
                                 SizedBox(width: 3),
                                 Text(
-                                  widget.task.assignees.first.name,
+                                  widget.task.assignees.first,
                                   style: textTheme.labelSmall,
                                 ),
                                 if (widget.task.assignees.length > 1)
