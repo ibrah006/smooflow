@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/task_repo.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
@@ -104,16 +105,27 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   /// Start a task
-  Future<void> startTask(Task task) async {
-    await _repo.startTask(task.id);
+  Future<WorkActivityLog> startTask(int taskId) async {
+    final workActivityLog = await _repo.startTask(taskId);
 
     // Update local state
-    task.status = "in-progress";
-    final updated = [
-      for (final t in state)
-        if (t.id == task.id) _activeTask! else t,
-    ];
-    state = updated;
+    state =
+        state.map((t) {
+          if (t.id == taskId) {
+            // Update task state - add work activity log and update status
+            t
+              ..workActivityLogs.add(workActivityLog.id)
+              ..activityLogLastModified = DateTime.now()
+              ..status = "in-progress";
+            _activeTask = t;
+          }
+          return t;
+        }).toList();
+
+    if (_activeTask == null)
+      throw "Task to activate not found in memory, unexpected exception";
+
+    return workActivityLog;
   }
 
   /// End currently active task
@@ -121,7 +133,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     await _repo.endTask(status: status, isCompleted: isCompleted);
 
     if (_activeTask != null) {
-      _activeTask!.status = status ?? "";
+      _activeTask!.status = status ?? _activeTask!.status;
       _activeTask!.dateCompleted = isCompleted ? DateTime.now() : null;
 
       // Replace in the list

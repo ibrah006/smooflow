@@ -110,7 +110,7 @@ class Task {
 
   // Setters (make sure only Task can modify these)
   set status(String newStatus) {
-    _status = newStatus.replaceAll(RegExp(r"_"), " ");
+    _status = newStatus.replaceAll(RegExp(r"-"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
   }
 

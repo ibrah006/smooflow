@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class TaskRepo {
   /// GET /tasks — fetch all tasks
@@ -69,12 +71,25 @@ class TaskRepo {
   }
 
   /// POST /tasks/:taskId/start — start working on a task
-  Future<void> startTask(int taskId) async {
-    final response = await ApiClient.http.post('/tasks/$taskId/start');
+  Future<WorkActivityLog> startTask(int taskId) async {
+    final response = await ApiClient.http.post(
+      '/tasks/$taskId/start',
+      body: {"placeholder": "null"},
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to start task $taskId: ${response.body}');
     }
+
+    print(
+      "returned response body: ${jsonDecode(response.body)["workActivityLog"]}",
+    );
+
+    return WorkActivityLog.fromJson({
+      ...(jsonDecode(response.body))["workActivityLog"],
+      "user": {"id": LoginService.currentUser!.id},
+      "taskId": {"id": taskId},
+    });
   }
 
   /// POST /tasks/end — stop working on a task (clock out)
@@ -89,7 +104,10 @@ class TaskRepo {
             : '?' +
                 queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
 
-    final response = await ApiClient.http.post('/tasks/end$queryString');
+    final response = await ApiClient.http.post(
+      '/tasks/end$queryString',
+      body: {"placeholder": "null"},
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to end task: ${response.body}');

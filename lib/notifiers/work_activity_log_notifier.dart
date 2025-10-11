@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/extensions/duration_format.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
@@ -22,6 +23,12 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
       }
     }
     return seconds;
+  }
+
+  String get activeActivityLogDuration {
+    final duration = DateTime.now().difference(_activeLog!.start);
+
+    return "${duration.inHours}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}";
   }
 
   /// Load all logs for a specific task
@@ -101,11 +108,27 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     // }
   }
 
-  /// End an active work session by its ID
-  Future<void> endWorkSession(WorkActivityLog endedLog) async {
+  // Start work session
+  Future<void> startWorkSession({
+    required int newLogId,
+    required int taskId,
+  }) async {
+    if (activeLog != null) {
+      throw "Failed to start work activity session ${activeLog!.id}: An active log already exists!\nEnd it before starting another";
+    }
+
+    activeLog = WorkActivityLog.create(id: newLogId, taskId: taskId);
+
+    state = [...state, activeLog!];
+  }
+
+  /// End an active work session
+  Future<void> endWorkSession() async {
     if (activeLog == null) {
       throw "Failed to end work activity session: No Active log to end!";
     }
+
+    final endedLog = WorkActivityLog.end(activeLog!);
 
     // Replace the old log entry with the updated one
     state = [

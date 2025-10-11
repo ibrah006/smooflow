@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/work_activity_log_notifier.dart';
@@ -37,7 +38,19 @@ final workActivityLogsByTaskProvider =
         ref.read(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
       }
 
+      print(
+        "work activity logs: ${ref.watch(workActivityLogNotifierProvider)}",
+      );
+
       return ref.read(workActivityLogNotifierProvider).where((log) {
+        return log.taskId == taskId;
+      }).toList();
+    });
+
+final workActivityLogsByTaskProviderSimple =
+    Provider.family<List<WorkActivityLog>, int>((ref, taskId) {
+      return ref.read(workActivityLogNotifierProvider).where((log) {
+        print("activtiy log: ${log}");
         return log.taskId == taskId;
       }).toList();
     });

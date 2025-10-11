@@ -1,4 +1,5 @@
 import 'package:smooflow/models/user.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class WorkActivityLog {
   final int id;
@@ -14,6 +15,18 @@ class WorkActivityLog {
     required this.start,
     required this.end,
   });
+
+  WorkActivityLog.create({required this.id, required this.taskId})
+    : end = null,
+      userId = LoginService.currentUser!.id,
+      start = DateTime.now();
+
+  WorkActivityLog.end(WorkActivityLog log)
+    : id = log.id,
+      userId = log.userId,
+      taskId = log.taskId,
+      start = log.start,
+      end = DateTime.now();
 
   static int getIdFromJson(workActivityLogJson) {
     return workActivityLogJson["id"];
