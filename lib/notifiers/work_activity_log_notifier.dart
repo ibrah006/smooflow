@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/extensions/duration_format.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
 
 class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
@@ -13,6 +14,9 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
 
   WorkActivityLog? get activeLog => _activeLog;
 
+  // duration in seconds
+  EventNotifier<int>? activeLogDurationNotifier;
+
   set activeLog(WorkActivityLog? log) => _activeLog = log;
 
   double getTotalLogDurationSeconds(int taskId) {
@@ -23,12 +27,6 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
       }
     }
     return seconds;
-  }
-
-  String get activeActivityLogDuration {
-    final duration = DateTime.now().difference(_activeLog!.start);
-
-    return "${duration.inHours}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}";
   }
 
   /// Load all logs for a specific task
@@ -119,6 +117,8 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
 
     activeLog = WorkActivityLog.create(id: newLogId, taskId: taskId);
 
+    activeLogDurationNotifier = EventNotifier<int>();
+
     state = [...state, activeLog!];
   }
 
@@ -129,6 +129,10 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     }
 
     final endedLog = WorkActivityLog.end(activeLog!);
+
+    await activeLogDurationNotifier!.dispose();
+
+    activeLogDurationNotifier = null;
 
     // Replace the old log entry with the updated one
     state = [

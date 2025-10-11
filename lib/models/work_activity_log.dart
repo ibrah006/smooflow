@@ -16,6 +16,11 @@ class WorkActivityLog {
     required this.end,
   });
 
+  // derived, not a database attribute
+  Duration get duration {
+    return (end ?? DateTime.now()).difference(start);
+  }
+
   WorkActivityLog.create({required this.id, required this.taskId})
     : end = null,
       userId = LoginService.currentUser!.id,

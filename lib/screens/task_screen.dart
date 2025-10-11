@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:card_loading/card_loading.dart';
@@ -11,6 +12,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
@@ -33,6 +35,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   bool isStartTaskLoading = false;
 
   bool _isLoading = false;
+
+  Timer? _timer;
+
+  // late EventNotifier<int>? activeLogDurationSecondsNotifier;
 
   @override
   void initState() {
@@ -59,6 +65,15 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
       setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    if (_timer != null) {
+      _timer!.cancel();
+    }
   }
 
   @override
@@ -90,6 +105,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     workActivityLogsFuture = ref.watch(
       workActivityLogsByTaskProvider(widget.task.id),
     );
+
+    final durationNotifier =
+        ref
+            .watch(workActivityLogNotifierProvider.notifier)
+            .activeLogDurationNotifier;
 
     return LoadingOverlay(
       isLoading: _isLoading,
@@ -421,7 +441,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                     style: FilledButton.styleFrom(
                                       backgroundColor: Colors.grey.shade100,
                                       padding: EdgeInsets.symmetric(
-                                        vertical: 7.25,
+                                        vertical: 3,
                                         horizontal: 10,
                                       ).copyWith(right: 0),
                                       textStyle: TextStyle(
@@ -441,23 +461,30 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                         ),
                                         Expanded(
                                           child: Text(
-                                            activeWorkActivityLog.userId,
+                                            "You",
                                             style: textTheme.titleMedium,
                                             overflow: TextOverflow.fade,
                                             maxLines: 2,
                                           ),
                                         ),
-                                        Text(
-                                          ref
-                                              .watch(
-                                                workActivityLogNotifierProvider
-                                                    .notifier,
-                                              )
-                                              .activeActivityLogDuration,
-                                          style: textTheme.titleLarge!.copyWith(
-                                            fontWeight: FontWeight.bold,
+                                        if (durationNotifier != null)
+                                          StreamBuilder<int>(
+                                            stream: durationNotifier.stream,
+                                            builder: (context, snapshot) {
+                                              final seconds =
+                                                  snapshot.data ?? 0;
+                                              return Text(
+                                                activeActivityLogDuration(
+                                                  seconds,
+                                                ),
+                                                style: textTheme.titleLarge!
+                                                    .copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                              );
+                                            },
                                           ),
-                                        ),
                                         Spacer(),
                                         TextButton(
                                           onPressed: stopTask,
@@ -527,6 +554,12 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     );
   }
 
+  String activeActivityLogDuration(int seconds) {
+    final duration = Duration(seconds: seconds);
+
+    return "${duration.inHours}:${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${duration.inSeconds.remainder(60).toString().padLeft(2, '0')}";
+  }
+
   void startTask() async {
     setState(() {
       isStartTaskLoading = true;
@@ -540,6 +573,31 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     await ref
         .read(workActivityLogNotifierProvider.notifier)
         .startWorkSession(taskId: widget.task.id, newLogId: workActivityLog.id);
+
+    final WorkActivityLog? activeWorkActivityLog =
+        ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
+
+    // Duration event handler
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      Future.delayed(Duration(seconds: 1)).then((value) {
+        try {
+          ref
+              .read(workActivityLogNotifierProvider.notifier)
+              .activeLogDurationNotifier!
+              .sink
+              .add(activeWorkActivityLog!.duration.inSeconds);
+        } catch (e) {
+          // already disposed / ended the work activity log
+          return;
+        }
+      });
+      if (ref
+              .read(workActivityLogNotifierProvider.notifier)
+              .activeLogDurationNotifier ==
+          null) {
+        return;
+      }
+    });
 
     setState(() {
       isStartTaskLoading = false;

@@ -20,8 +20,7 @@ class WorkActivityTile extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final duration = log.end?.difference(log.start);
-    final durationDisplay =
-        duration != null ? duration.formatHoursMinutes : "Ongoing";
+    final durationDisplay = duration != null ? duration.formatTime : "Ongoing";
 
     double contributionPercent =
         (log.end?.difference(log.start).inSeconds ?? 0) /
