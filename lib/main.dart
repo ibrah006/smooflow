@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/screens/flash_screen.dart';
-import 'package:smooflow/screens/home_screen.dart';
-import 'package:smooflow/repositories/company_repo.dart';
-import 'package:smooflow/repositories/project_repo.dart';
-import 'package:smooflow/screens/login_screen.dart';
+
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +18,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme(

@@ -10,6 +10,7 @@ import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/repositories/users_repo.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 
@@ -86,9 +87,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     );
 
     try {
-      await ref
-          .read(projectNotifierProvider.notifier)
-          .createTask(task: newTask);
+      await ref.read(createProjectTaskProvider(newTask));
     } catch (e) {
       setState(() {
         _isLoading = false;

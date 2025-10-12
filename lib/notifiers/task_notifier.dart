@@ -14,6 +14,10 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   bool get loading => _loading;
   Task? get activeTask => _activeTask;
 
+  loadTaskToMemory(Task task) {
+    state = [...state, task];
+  }
+
   /// Load all tasks (admin or global list)
   Future<void> loadAll() async {
     _loading = true;
@@ -47,6 +51,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     // project task Ids (ensure all the ids are included)
     required List<int> projectTaskIds,
   }) async {
+    print("tasks ln (from task notifier): ${projectTaskIds.length}");
     // try {
     final DateTime? projectTasksLastModifiedServer =
         !forceReload

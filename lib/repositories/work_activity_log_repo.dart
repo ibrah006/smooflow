@@ -54,8 +54,6 @@ class WorkActivityLogRepo {
       "user": {"id": LoginService.currentUser!.id},
     };
 
-    print("active work activity log: $json");
-
     return WorkActivityLog.fromJson(json);
   }
 }

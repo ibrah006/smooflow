@@ -160,8 +160,6 @@ class _ActiveWorkActivityLogCardState
     WorkActivityLog? activeWorkActivityLog =
         await ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
 
-    print("active work activity log: ${activeWorkActivityLog?.id}");
-
     // work activity log ended
     if (_timer?.isActive == true && activeWorkActivityLog == null) {
       print("called end");

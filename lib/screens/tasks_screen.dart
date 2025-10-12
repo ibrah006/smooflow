@@ -1,16 +1,16 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_launcher_icons/ios.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/task_tile.dart';
+import 'package:smooflow/main.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
-import 'package:smooflow/screens/task_screen.dart';
+import 'package:flutter/widgets.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -20,10 +20,10 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen> {
+class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
   bool isEditingMode = false;
 
-  late final Future<List<Task>> tasks;
+  late Future<List<Task>> tasks;
 
   gotoCreateTaskScreen() {
     Navigator.push(
@@ -35,16 +35,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // Called when coming back to this screen
+  @override
+  void didPopNext() {
+    super.didPopNext();
 
     Future.microtask(() {
-      try {
-        tasks = ref.watch(tasksByProjectProvider(widget.projectId));
-        setState(() {});
-      } catch (e) {
-        // Already initialized
-      }
+      setState(() {});
     });
   }
 
@@ -52,10 +60,25 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    final project = ref.watch(projectByIdProvider(widget.projectId));
+
+    if (project == null) {
+      return Scaffold(body: Center(child: Text("Project Not found")));
+    }
+
+    tasks = ref
+        .watch(taskNotifierProvider.notifier)
+        .loadProjectTasks(
+          projectId: project.id,
+          projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
+          projectTaskIds: project.tasks,
+        );
+
     try {
       tasks;
     } catch (e) {
-      return LoadingOverlay(isLoading: true, child: SizedBox());
+      // not initialized yet
+      return Scaffold(body: LoadingOverlay(isLoading: true, child: SizedBox()));
     }
 
     return Scaffold(

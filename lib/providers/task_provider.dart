@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/notifiers/task_notifier.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -14,18 +15,15 @@ final taskNotifierProvider = StateNotifierProvider<TaskNotifier, List<Task>>((
 });
 
 /// pass in projectId as input
-final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
+final tasksByProjectProvider = Provider.family<Future<List<Task>>, Project>((
   ref,
-  projectId,
+  project,
 ) async {
-  final project = ref.watch(projectByIdProvider(projectId));
-
-  if (project == null) throw "Project not found";
-
+  print("tasks ln (from tasksByProjectProvider): ${project.tasks.length}");
   return await ref
       .watch(taskNotifierProvider.notifier)
       .loadProjectTasks(
-        projectId: projectId,
+        projectId: project.id,
         projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
         projectTaskIds: project.tasks,
       );
