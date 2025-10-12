@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 
 class WorkActivityLogRepo {
@@ -36,5 +37,17 @@ class WorkActivityLogRepo {
     if (response.statusCode != 200) return null;
     final body = jsonDecode(response.body);
     return DateTime.parse(body['lastModified']);
+  }
+
+  Future<WorkActivityLog?> getActiveLog() async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.getUserActiveWorkActivityLog,
+    );
+
+    if (response.statusCode != 200) {
+      return null;
+    }
+
+    return WorkActivityLog.fromJson(jsonDecode(response.body)["active"]);
   }
 }

@@ -99,7 +99,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
         .watch(userNotifierProvider.notifier)
         .getTaskUsers(task: widget.task);
 
-    final WorkActivityLog? activeWorkActivityLog =
+    final Future<WorkActivityLog?> activeWorkActivityLogFuture =
         ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
 
     workActivityLogsFuture = ref.watch(
@@ -418,131 +418,145 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                             vertical: 15,
                             horizontal: 20,
                           ).copyWith(bottom: 20),
-                          child: Row(
-                            spacing: 11,
-                            children: [
-                              if (activeWorkActivityLog == null && !isCompleted)
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {},
-                                    style: OutlinedButton.styleFrom(
-                                      padding: EdgeInsets.all(10),
-                                      side: BorderSide(
-                                        color: Colors.grey.shade300,
-                                        width: 1.25,
-                                      ),
-                                    ),
-                                    child: Text("Add Log"),
-                                  ),
-                                ),
-                              if (activeWorkActivityLog != null)
-                                Expanded(
-                                  child: FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.grey.shade100,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 3,
-                                        horizontal: 10,
-                                      ).copyWith(right: 0),
-                                      textStyle: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    // Do nothing
-                                    onPressed: () {},
-                                    child: Row(
-                                      spacing: 10,
-                                      children: [
-                                        Icon(
-                                          Icons.account_circle_rounded,
-                                          size: 24,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                        Expanded(
-                                          child: Text(
-                                            "You",
-                                            style: textTheme.titleMedium,
-                                            overflow: TextOverflow.fade,
-                                            maxLines: 2,
+                          child: FutureBuilder(
+                            future: activeWorkActivityLogFuture,
+                            builder: (context, snapshot) {
+                              final WorkActivityLog? activeWorkActivityLog =
+                                  snapshot.data;
+
+                              return Row(
+                                spacing: 11,
+                                children: [
+                                  if (activeWorkActivityLog == null &&
+                                      !isCompleted)
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {},
+                                        style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.all(10),
+                                          side: BorderSide(
+                                            color: Colors.grey.shade300,
+                                            width: 1.25,
                                           ),
                                         ),
-                                        if (durationNotifier != null)
-                                          StreamBuilder<int>(
-                                            stream: durationNotifier.stream,
-                                            builder: (context, snapshot) {
-                                              final seconds =
-                                                  snapshot.data ?? 0;
-                                              return Text(
-                                                activeActivityLogDuration(
-                                                  seconds,
-                                                ),
-                                                style: textTheme.titleLarge!
+                                        child: Text("Add Log"),
+                                      ),
+                                    ),
+                                  if (activeWorkActivityLog != null)
+                                    Expanded(
+                                      child: FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Colors.grey.shade100,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 3,
+                                            horizontal: 10,
+                                          ).copyWith(right: 0),
+                                          textStyle: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        // Do nothing
+                                        onPressed: () {},
+                                        child: Row(
+                                          spacing: 10,
+                                          children: [
+                                            Icon(
+                                              Icons.account_circle_rounded,
+                                              size: 24,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                "You",
+                                                style: textTheme.titleMedium,
+                                                overflow: TextOverflow.fade,
+                                                maxLines: 2,
+                                              ),
+                                            ),
+                                            if (durationNotifier != null)
+                                              StreamBuilder<int>(
+                                                stream: durationNotifier.stream,
+                                                builder: (context, snapshot) {
+                                                  final seconds =
+                                                      snapshot.data ?? 0;
+                                                  return Text(
+                                                    activeActivityLogDuration(
+                                                      seconds,
+                                                    ),
+                                                    style: textTheme.titleLarge!
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  );
+                                                },
+                                              ),
+                                            Spacer(),
+                                            TextButton(
+                                              onPressed: stopTask,
+                                              child: Text(
+                                                "Stop",
+                                                style: textTheme.titleMedium!
                                                     .copyWith(
                                                       fontWeight:
                                                           FontWeight.bold,
+                                                      color: colorPrimary,
                                                     ),
-                                              );
-                                            },
-                                          ),
-                                        Spacer(),
-                                        TextButton(
-                                          onPressed: stopTask,
-                                          child: Text(
-                                            "Stop",
-                                            style: textTheme.titleMedium!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: colorPrimary,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              else
-                                Expanded(
-                                  child: FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      disabledBackgroundColor:
-                                          Colors.grey.shade100,
-                                      padding: EdgeInsets.all(10),
-                                      textStyle: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      iconSize: 24,
-                                    ),
-                                    onPressed:
-                                        !isCompleted
-                                            ? (isStartTaskLoading
-                                                ? null
-                                                : startTask)
-                                            : null,
-                                    child: Stack(
-                                      children: [
-                                        if (isStartTaskLoading)
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 3,
-                                                color: Colors.grey.shade400,
                                               ),
                                             ),
-                                          ),
-                                        Align(
-                                          alignment: Alignment.center,
-                                          child: Text("Start"),
+                                          ],
                                         ),
-                                      ],
+                                      ),
+                                    )
+                                  else
+                                    Expanded(
+                                      child: FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          disabledBackgroundColor:
+                                              Colors.grey.shade100,
+                                          padding: EdgeInsets.all(10),
+                                          textStyle: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          iconSize: 24,
+                                        ),
+                                        onPressed:
+                                            !isCompleted
+                                                ? (isStartTaskLoading
+                                                    ? null
+                                                    : startTask)
+                                                : null,
+                                        child: Stack(
+                                          children: [
+                                            if (isStartTaskLoading)
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: SizedBox(
+                                                  height: 20,
+                                                  width: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 3,
+                                                        color:
+                                                            Colors
+                                                                .grey
+                                                                .shade400,
+                                                      ),
+                                                ),
+                                              ),
+                                            Align(
+                                              alignment: Alignment.center,
+                                              child: Text("Start"),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                            ],
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -574,8 +588,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
         .read(workActivityLogNotifierProvider.notifier)
         .startWorkSession(taskId: widget.task.id, newLogId: workActivityLog.id);
 
-    final WorkActivityLog? activeWorkActivityLog =
-        ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
+    // .activeLog (attrib) won't be null at this point because a previous function call .startTask (at work-activity-log notifier) sets it = An Instance of active work-activity-log
+    final WorkActivityLog activeWorkActivityLog =
+        (await ref.watch(workActivityLogNotifierProvider.notifier).activeLog)!;
 
     // Duration event handler
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -585,7 +600,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
               .read(workActivityLogNotifierProvider.notifier)
               .activeLogDurationNotifier!
               .sink
-              .add(activeWorkActivityLog!.duration.inSeconds);
+              .add(activeWorkActivityLog.duration.inSeconds);
         } catch (e) {
           // already disposed / ended the work activity log
           return;

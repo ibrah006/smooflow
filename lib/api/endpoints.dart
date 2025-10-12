@@ -40,7 +40,7 @@ class ApiEndpoints {
   // WorkActivity logs
 
   static const getUserActiveWorkActivityLog =
-      "/activity/me/workActivity/active";
+      "/activity/me/work-activity/active";
 
   // Layoff logs
   static const getLayoffLogs = "/activity/layoff";

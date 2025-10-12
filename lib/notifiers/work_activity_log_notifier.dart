@@ -6,18 +6,20 @@ import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
 
 class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
-  WorkActivityLogNotifier(this._repo) : super([]);
+  WorkActivityLogNotifier(this._repo) : super([]) {
+    _activeLog = Future.delayed(Duration.zero).then((val) {
+      return null;
+    });
+  }
 
   final WorkActivityLogRepo _repo;
 
-  WorkActivityLog? _activeLog;
-
-  WorkActivityLog? get activeLog => _activeLog;
+  late Future<WorkActivityLog?> _activeLog;
 
   // duration in seconds
   EventNotifier<int>? activeLogDurationNotifier;
 
-  set activeLog(WorkActivityLog? log) => _activeLog = log;
+  set activeLog(Future<WorkActivityLog?> log) => _activeLog = log;
 
   double getTotalLogDurationSeconds(int taskId) {
     double seconds = 0;
@@ -106,29 +108,47 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     // }
   }
 
+  bool activeActivityLogInitialized = false;
+
+  // Get Current user active work-activity-log
+  // value assigned to [_activeLog]
+  // Accessed from getter activeLog
+  Future<WorkActivityLog?> get activeLog async {
+    if (!activeActivityLogInitialized) {
+      _activeLog = _repo.getActiveLog();
+      activeActivityLogInitialized = true;
+    }
+
+    return _activeLog;
+  }
+
   // Start work session
   Future<void> startWorkSession({
     required int newLogId,
     required int taskId,
   }) async {
-    if (activeLog != null) {
-      throw "Failed to start work activity session ${activeLog!.id}: An active log already exists!\nEnd it before starting another";
+    if (await activeLog != null) {
+      throw "Failed to start work activity session: An active log already exists!\nEnd it before starting another";
     }
 
-    activeLog = WorkActivityLog.create(id: newLogId, taskId: taskId);
+    activeLog = Future.delayed(
+      Duration.zero,
+    ).then((val) => WorkActivityLog.create(id: newLogId, taskId: taskId));
 
     activeLogDurationNotifier = EventNotifier<int>();
 
-    state = [...state, activeLog!];
+    state = [...state, (await activeLog)!];
   }
 
   /// End an active work session
   Future<void> endWorkSession() async {
-    if (activeLog == null) {
+    final aaLog = await activeLog;
+
+    if (aaLog == null) {
       throw "Failed to end work activity session: No Active log to end!";
     }
 
-    final endedLog = WorkActivityLog.end(activeLog!);
+    final endedLog = WorkActivityLog.end(aaLog);
 
     await activeLogDurationNotifier!.dispose();
 
@@ -137,9 +157,9 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     // Replace the old log entry with the updated one
     state = [
       for (final log in state)
-        if (log.id == activeLog!.id) endedLog else log,
+        if (log.id == aaLog.id) endedLog else log,
     ];
 
-    activeLog = null;
+    activeLog = Future.delayed(Duration.zero).then((val) => null);
   }
 }
