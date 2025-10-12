@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/components/active_work_activity_log_card.dart';
 import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
@@ -98,6 +99,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Dashboard content
+                    // Active work activity log card, if any
+                    ActiveWorkActivityLogCard(),
                     // Overview info
                     Row(
                       spacing: 15,

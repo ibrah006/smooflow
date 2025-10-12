@@ -451,11 +451,16 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                     Expanded(
                                       child: FilledButton(
                                         style: FilledButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
+                                          ),
                                           backgroundColor: Colors.grey.shade100,
                                           padding: EdgeInsets.symmetric(
                                             vertical: 3,
-                                            horizontal: 10,
-                                          ).copyWith(right: 0),
+                                            horizontal: 15,
+                                          ).copyWith(right: 5),
                                           textStyle: TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.bold,
@@ -498,15 +503,21 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                                 },
                                               ),
                                             Spacer(),
-                                            TextButton(
+                                            FilledButton(
                                               onPressed: stopTask,
+                                              style: FilledButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
+                                                ),
+                                              ),
                                               child: Text(
                                                 "Stop",
                                                 style: textTheme.titleMedium!
                                                     .copyWith(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: colorPrimary,
+                                                      color: Colors.white,
                                                     ),
                                               ),
                                             ),
