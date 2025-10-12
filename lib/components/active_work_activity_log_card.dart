@@ -129,6 +129,7 @@ class _ActiveWorkActivityLogCardState
     if (_timer?.isActive == true && activeWorkActivityLog == null) {
       _timer!.cancel();
       _timer == null;
+      return;
     }
 
     if ((_timer?.isActive == true) || activeWorkActivityLog == null) {

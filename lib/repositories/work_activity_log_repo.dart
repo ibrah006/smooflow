@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class WorkActivityLogRepo {
   /// Fetch all work activity logs for a specific task.
@@ -48,6 +49,13 @@ class WorkActivityLogRepo {
       return null;
     }
 
-    return WorkActivityLog.fromJson(jsonDecode(response.body)["active"]);
+    final Map<String, dynamic> json = {
+      ...jsonDecode(response.body)["active"],
+      "user": {"id": LoginService.currentUser!.id},
+    };
+
+    print("active work activity log: $json");
+
+    return WorkActivityLog.fromJson(json);
   }
 }
