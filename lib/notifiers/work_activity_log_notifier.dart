@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/extensions/duration_format.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
@@ -17,9 +16,19 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   late Future<WorkActivityLog?> _activeLog;
 
   // duration in seconds
-  EventNotifier<int>? activeLogDurationNotifier;
+  EventNotifier<int>? _activeLogDurationNotifier;
 
-  set activeLog(Future<WorkActivityLog?> log) => _activeLog = log;
+  EventNotifier<int>? get activeLogDurationNotifier =>
+      _activeLogDurationNotifier;
+
+  set __activeLogDurationNotifier(EventNotifier<int>? newVal) {
+    _activeLogDurationNotifier = newVal;
+  }
+
+  set activeLog(Future<WorkActivityLog?> log) {
+    __activeLogDurationNotifier = EventNotifier<int>();
+    _activeLog = log;
+  }
 
   double getTotalLogDurationSeconds(int taskId) {
     double seconds = 0;
@@ -116,6 +125,11 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   Future<WorkActivityLog?> get activeLog async {
     if (!_activeActivityLogInitialized) {
       _activeLog = _repo.getActiveLog();
+
+      if ((await _activeLog) != null) {
+        __activeLogDurationNotifier = EventNotifier<int>();
+      }
+
       _activeActivityLogInitialized = true;
     }
 
@@ -135,7 +149,7 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
       Duration.zero,
     ).then((val) => WorkActivityLog.create(id: newLogId, taskId: taskId));
 
-    activeLogDurationNotifier = EventNotifier<int>();
+    __activeLogDurationNotifier = EventNotifier<int>();
 
     state = [...state, (await activeLog)!];
   }
@@ -152,7 +166,7 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
 
     await activeLogDurationNotifier!.dispose();
 
-    activeLogDurationNotifier = null;
+    __activeLogDurationNotifier = null;
 
     // Replace the old log entry with the updated one
     state = [

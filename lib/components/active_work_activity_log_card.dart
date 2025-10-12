@@ -126,16 +126,21 @@ class _ActiveWorkActivityLogCardState
     WorkActivityLog? activeWorkActivityLog =
         await ref.read(workActivityLogNotifierProvider.notifier).activeLog;
 
+    print("active work activity log: ${activeWorkActivityLog?.id}");
+
+    // work activity log ended
     if (_timer?.isActive == true && activeWorkActivityLog == null) {
+      print("called end");
       _timer!.cancel();
       _timer == null;
       return;
     }
 
-    if ((_timer?.isActive == true) || activeWorkActivityLog == null) {
+    if (_timer?.isActive == true || activeWorkActivityLog == null) {
       // No active work-activity-log found || or already running timer for an active work activity log
       return;
     }
+    print("got passed the checks");
 
     // .activeLog (attrib) won't be null at this point because at this point we assume a work activity log is already active
     activeWorkActivityLog =
