@@ -108,15 +108,15 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
     // }
   }
 
-  bool activeActivityLogInitialized = false;
+  bool _activeActivityLogInitialized = false;
 
   // Get Current user active work-activity-log
   // value assigned to [_activeLog]
   // Accessed from getter activeLog
   Future<WorkActivityLog?> get activeLog async {
-    if (!activeActivityLogInitialized) {
+    if (!_activeActivityLogInitialized) {
       _activeLog = _repo.getActiveLog();
-      activeActivityLogInitialized = true;
+      _activeActivityLogInitialized = true;
     }
 
     return _activeLog;
