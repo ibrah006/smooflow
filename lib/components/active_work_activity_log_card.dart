@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/services/login_service.dart';
 
@@ -17,6 +19,8 @@ class ActiveWorkActivityLogCard extends ConsumerStatefulWidget {
 class _ActiveWorkActivityLogCardState
     extends ConsumerState<ActiveWorkActivityLogCard> {
   Timer? _timer;
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -41,15 +45,12 @@ class _ActiveWorkActivityLogCardState
       startDurationEventHandler();
     });
 
-    try {
-      ref
-          .read(workActivityLogNotifierProvider.notifier)
-          .activeLogDurationNotifier!;
-    } catch (e) {
+    if (_timer?.isActive != true) {
       return SizedBox();
     }
 
     return Container(
+      margin: EdgeInsets.only(bottom: 20),
       width: MediaQuery.of(context).size.width - 40 > 280 ? 280 : null,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -101,7 +102,7 @@ class _ActiveWorkActivityLogCardState
               Text(name, style: textTheme.titleMedium),
               Spacer(),
               FilledButton(
-                onPressed: () {},
+                onPressed: stopTask,
                 style: FilledButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 7, horizontal: 12),
                   minimumSize: Size.zero,
@@ -124,7 +125,7 @@ class _ActiveWorkActivityLogCardState
   /// start the active work-activity-log duration event handler
   Future<void> startDurationEventHandler() async {
     WorkActivityLog? activeWorkActivityLog =
-        await ref.read(workActivityLogNotifierProvider.notifier).activeLog;
+        await ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
 
     print("active work activity log: ${activeWorkActivityLog?.id}");
 
@@ -157,6 +158,7 @@ class _ActiveWorkActivityLogCardState
               .add(activeWorkActivityLog!.duration.inSeconds);
         } catch (e) {
           // already disposed / ended the work activity log
+          setState(() {});
           return;
         }
       });
@@ -170,5 +172,22 @@ class _ActiveWorkActivityLogCardState
 
     // If we got this far, assume that there exists an active work activity log
     setState(() {});
+  }
+
+  void stopTask() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Update task status
+    await ref.read(taskNotifierProvider.notifier).endActiveTask();
+
+    await ref.read(workActivityLogNotifierProvider.notifier).endWorkSession();
+
+    setState(() {
+      _isLoading = false;
+      _timer!.cancel();
+      _timer = null;
+    });
   }
 }

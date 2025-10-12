@@ -95,7 +95,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
-                  spacing: 20,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Dashboard content
@@ -132,11 +131,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ],
                     ),
+                    SizedBox(height: 20),
                     // Quick actions
                     Text("Quick Actions", style: textTheme.titleMedium),
+                    SizedBox(height: 20),
                     QuickActions(),
+                    SizedBox(height: 20),
 
                     RecentProjectsSection(),
+                    SizedBox(height: 20),
                     SafeArea(child: SizedBox()),
                   ],
                 ),
