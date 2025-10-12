@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -49,9 +51,14 @@ class _ActiveWorkActivityLogCardState
       return SizedBox();
     }
 
+    final activeTask = ref.watch(taskNotifierProvider.notifier).activeTask!;
+    final taskProgressLogFuture = ref
+        .watch(progressLogNotifierProvider.notifier)
+        .getLog(activeTask.progressLogId);
+
     return Container(
       margin: EdgeInsets.only(bottom: 20),
-      width: MediaQuery.of(context).size.width - 40 > 280 ? 280 : null,
+      width: MediaQuery.of(context).size.width - 40 > 310 ? 310 : null,
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -90,9 +97,35 @@ class _ActiveWorkActivityLogCardState
               );
             },
           ),
-          Text(
-            "Task: Vinyl Print | Dept: Printing",
-            style: textTheme.bodyMedium!.copyWith(color: Colors.grey.shade900),
+          Row(
+            children: [
+              Text(
+                "Task: ${activeTask.name} | ",
+                style: textTheme.bodyMedium!.copyWith(
+                  color: Colors.grey.shade900,
+                ),
+              ),
+              FutureBuilder(
+                future: taskProgressLogFuture,
+                builder: (context, snapshot) {
+                  final taskProgressLog = snapshot.data;
+                  if (taskProgressLog == null) {
+                    return CardLoading(
+                      height: 15,
+                      width: 50,
+                      borderRadius: BorderRadius.circular(10),
+                    );
+                  }
+
+                  return Text(
+                    "Dept: ${taskProgressLog.status.name}",
+                    style: textTheme.bodyMedium!.copyWith(
+                      color: Colors.grey.shade900,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           SizedBox(height: 3),
           Row(
