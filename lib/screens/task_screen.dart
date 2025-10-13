@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/work_activity_tile.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/main.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/work_activity_log.dart';
@@ -24,7 +25,7 @@ class TaskScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskScreen> createState() => _TaskScreenState();
 }
 
-class _TaskScreenState extends ConsumerState<TaskScreen> {
+class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
   late Future<ProgressLog> progressLogFuture;
 
   /// This Task's work-activity-logs
@@ -39,6 +40,28 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   // late EventNotifier<int>? activeLogDurationSecondsNotifier;
 
   Task get task => ref.watch(taskByIdProvider(widget.taskId))!;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // Called when this screen is closed
+  @override
+  void didPop() {
+    if (_timer != null) {
+      _timer!.cancel();
+      _timer = null;
+    }
+    super.didPop();
+  }
 
   @override
   void initState() {
@@ -69,16 +92,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
       setState(() {});
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    if (_timer != null) {
-      _timer!.cancel();
-      _timer = null;
-    }
   }
 
   @override
@@ -583,36 +596,49 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   /// start the active work-activity-log duration event handler
   Future<void> startDurationEventHandler() async {
-    if ((await ref.read(workActivityLogNotifierProvider.notifier).activeLog) ==
-        null) {
-      // No active work-activity-log found
-      throw "No active work-activity-log";
+    WorkActivityLog? activeWorkActivityLog =
+        await ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
+
+    // work activity log ended
+    if (_timer?.isActive == true && activeWorkActivityLog == null) {
+      _timer!.cancel();
+      _timer == null;
+      return;
+    }
+
+    if (_timer?.isActive == true || activeWorkActivityLog == null) {
+      // No active work-activity-log found || or already running timer for an active work activity log
+      return;
     }
 
     // .activeLog (attrib) won't be null at this point because at this point we assume a work activity log is already active
-    final WorkActivityLog activeWorkActivityLog =
+    activeWorkActivityLog =
         (await ref.watch(workActivityLogNotifierProvider.notifier).activeLog)!;
 
     // Duration event handler
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       Future.delayed(Duration(seconds: 1)).then((value) {
         try {
+          if (ref
+                  .read(workActivityLogNotifierProvider.notifier)
+                  .activeLogDurationNotifier ==
+              null) {
+            _timer!.cancel();
+            _timer = null;
+            return;
+          }
+
           ref
               .read(workActivityLogNotifierProvider.notifier)
               .activeLogDurationNotifier!
               .sink
-              .add(activeWorkActivityLog.duration.inSeconds);
+              .add(activeWorkActivityLog!.duration.inSeconds);
         } catch (e) {
           // already disposed / ended the work activity log
+          setState(() {});
           return;
         }
       });
-      if (ref
-              .read(workActivityLogNotifierProvider.notifier)
-              .activeLogDurationNotifier ==
-          null) {
-        return;
-      }
     });
   }
 
@@ -627,7 +653,16 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       isStartTaskLoading = true;
     });
 
-    await ref.watch(createTaskActivityLogProvider(task.id));
+    // await ref.watch(createTaskActivityLogProvider(task.id));
+    // Update task status
+    final workActivityLog = await ref
+        .read(taskNotifierProvider.notifier)
+        .startTask(task.id);
+
+    // Add Work activity log
+    await ref
+        .read(workActivityLogNotifierProvider.notifier)
+        .startWorkSession(taskId: task.id, newLogId: workActivityLog.id);
 
     startDurationEventHandler();
 
@@ -640,6 +675,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     setState(() {
       _isLoading = true;
     });
+
+    _timer!.cancel();
+    _timer = null;
 
     // Update task status
     await ref.read(taskNotifierProvider.notifier).endActiveTask();
