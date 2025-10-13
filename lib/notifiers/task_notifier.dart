@@ -104,15 +104,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   /// Get user’s currently active task
-  Future<void> loadActiveTask({
+  Future<void> loadActiveTask(
+    // {
     // This is not really required, but if the active task is already in memory it helps us save some time without having need to call to the api endpoint
-    required int taskId,
-  }) async {
-    try {
-      _activeTask = state.firstWhere((t) => t.id == taskId);
-    } catch (e) {
-      _activeTask = await _repo.fetchActiveTask();
-    }
+    // depreacted
+    // required int taskId,
+    // }
+  ) async {
+    _activeTask = await _repo.fetchActiveTask();
   }
 
   /// Start a task
