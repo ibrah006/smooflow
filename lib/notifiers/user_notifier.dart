@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/repositories/user_repo.dart';
+import 'package:smooflow/services/login_service.dart';
 
 // Beware of removing users from memory randomly
 // To ensure there's isn't too many users in memory, we will need to remove som
@@ -11,7 +12,7 @@ import 'package:smooflow/repositories/user_repo.dart';
 class UserNotifier extends StateNotifier<List<User>> {
   final UserRepo _repo;
 
-  UserNotifier(this._repo) : super([]);
+  UserNotifier(this._repo) : super([LoginService.currentUser!]);
 
   updateUsers(List<User> users) {
     final List<User> temp = [...state, ...users].toSet().toList();

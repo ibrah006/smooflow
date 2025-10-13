@@ -16,6 +16,9 @@ final taskNotifierProvider = StateNotifierProvider<TaskNotifier, List<Task>>((
 });
 
 /// pass in projectId as input
+@Deprecated(
+  "Just do the same from the same component/screen widget you want this functionality/access",
+)
 final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
   ref,
   projectId,

@@ -23,7 +23,19 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
   bool isEditingMode = false;
 
-  late Future<List<Task>> tasks;
+  Future<List<Task>> get tasks {
+    final project = ref.watch(projectByIdProvider(widget.projectId));
+
+    if (project == null) throw "Project not found";
+
+    return ref
+        .watch(taskNotifierProvider.notifier)
+        .loadProjectTasks(
+          projectId: widget.projectId,
+          projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
+          projectTaskIds: project.tasks,
+        );
+  }
 
   gotoCreateTaskScreen() {
     Navigator.push(
@@ -66,7 +78,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
       return Scaffold(body: Center(child: Text("Project Not found")));
     }
 
-    tasks = ref.watch(tasksByProjectProvider(widget.projectId));
+    // ref
+    //     .watch(taskNotifierProvider.notifier)
+    //     .loadProjectTasks(
+    //       projectId: project.id,
+    //       projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
+    //       projectTaskIds: project.tasks,
+    //     )
+    //     .then((val) {
+    //       print("tasks from tasks screen: $val");
+    //     });
 
     try {
       tasks;
