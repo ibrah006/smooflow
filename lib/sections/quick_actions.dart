@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_client_screen.dart';
@@ -71,6 +72,7 @@ class _GridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         if (label == "New Project") {
           Navigator.push(
             context,

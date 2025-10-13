@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smooflow/constants.dart';
 
 class SettingsSection extends StatelessWidget {
@@ -73,7 +74,13 @@ class SettingsSection extends StatelessWidget {
                         bottom: isTail ? Radius.circular(13) : Radius.zero,
                       ),
                     ),
-                    onPressed: item.onPressed,
+                    onPressed:
+                        item.onPressed != null
+                            ? () {
+                              HapticFeedback.lightImpact();
+                              item.onPressed!();
+                            }
+                            : null,
                     child: Ink(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(

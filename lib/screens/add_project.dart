@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/project_progress_indicator.dart';
@@ -204,6 +205,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                       PopupMenuButton(
                         icon: Icon(Icons.more_vert),
                         itemBuilder: (context) {
+                          HapticFeedback.lightImpact();
                           return List.generate(
                             3,
                             (index) => PopupMenuItem(
