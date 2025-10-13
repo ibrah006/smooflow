@@ -26,7 +26,6 @@ class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   }
 
   set activeLog(Future<WorkActivityLog?> log) {
-    __activeLogDurationNotifier = EventNotifier<int>();
     _activeLog = log;
   }
 
