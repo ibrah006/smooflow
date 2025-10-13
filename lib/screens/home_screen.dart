@@ -7,8 +7,9 @@ import 'package:smooflow/components/active_work_activity_log_card.dart';
 import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
+import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/work_activity_log_providers.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
@@ -21,7 +22,7 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   bool _isLoading = true;
 
   @override
@@ -29,12 +30,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
 
     Future.microtask(() {
-      ref.read(projectNotifierProvider.notifier).load().then((value) {
+      ref.read(projectNotifierProvider.notifier).load().then((value) async {
+        await ref.read(taskNotifierProvider.notifier).loadActiveTask();
         setState(() {
           _isLoading = false;
         });
       });
     });
+  }
+
+  // Called when coming back to this screen
+  @override
+  void didPopNext() {
+    super.didPopNext();
+
+    Future.microtask(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
   }
 
   @override

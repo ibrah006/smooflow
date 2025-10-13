@@ -63,6 +63,8 @@ class TaskRepo {
       throw Exception('Failed to fetch active task: ${response.body}');
     }
 
+    print("active task: ${jsonDecode(response.body)}");
+
     final Map<String, dynamic> body = jsonDecode(response.body);
     if (body['active'] == null) return null;
     return Task.fromJson(body['active']);
