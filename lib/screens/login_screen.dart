@@ -296,8 +296,6 @@ class _LoginScreenState extends State<LoginScreen>
     final password = passwordController.text;
     final name = nameController.text.trim();
 
-    print("email: ${email}, password: ${password}");
-
     if (!isSignIn) {
       if (name.trim().length < 4) {
         // showSnackBar("Please enter your Display name", isError: true);

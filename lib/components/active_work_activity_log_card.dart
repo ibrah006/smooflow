@@ -47,11 +47,12 @@ class _ActiveWorkActivityLogCardState
       startDurationEventHandler();
     });
 
-    if (_timer?.isActive != true) {
+    final activeTask = ref.watch(taskNotifierProvider.notifier).activeTask;
+
+    if (_timer?.isActive != true || activeTask == null) {
       return SizedBox();
     }
 
-    final activeTask = ref.watch(taskNotifierProvider.notifier).activeTask!;
     final taskProgressLogFuture = ref
         .watch(progressLogNotifierProvider.notifier)
         .getLog(activeTask.progressLogId);
@@ -162,7 +163,6 @@ class _ActiveWorkActivityLogCardState
 
     // work activity log ended
     if (_timer?.isActive == true && activeWorkActivityLog == null) {
-      print("called end");
       _timer!.cancel();
       _timer == null;
       return;
@@ -172,7 +172,6 @@ class _ActiveWorkActivityLogCardState
       // No active work-activity-log found || or already running timer for an active work activity log
       return;
     }
-    print("got passed the checks");
 
     // .activeLog (attrib) won't be null at this point because at this point we assume a work activity log is already active
     activeWorkActivityLog =

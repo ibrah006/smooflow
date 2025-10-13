@@ -41,8 +41,6 @@ class TaskRepo {
 
     final List<dynamic> body = jsonDecode(response.body);
 
-    print("project tasks: ${body}");
-
     return body.map((e) => Task.fromJson(e)).toList();
   }
 
@@ -80,10 +78,6 @@ class TaskRepo {
     if (response.statusCode != 200) {
       throw Exception('Failed to start task $taskId: ${response.body}');
     }
-
-    print(
-      "returned response body: ${jsonDecode(response.body)["workActivityLog"]}",
-    );
 
     return WorkActivityLog.fromJson({
       ...(jsonDecode(response.body))["workActivityLog"],

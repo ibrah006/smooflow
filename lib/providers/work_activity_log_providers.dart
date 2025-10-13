@@ -38,10 +38,6 @@ final workActivityLogsByTaskProvider =
         ref.read(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
       }
 
-      print(
-        "work activity logs: ${ref.watch(workActivityLogNotifierProvider)}",
-      );
-
       return ref.read(workActivityLogNotifierProvider).where((log) {
         return log.taskId == taskId;
       }).toList();
@@ -50,7 +46,6 @@ final workActivityLogsByTaskProvider =
 final workActivityLogsByTaskProviderSimple =
     Provider.family<List<WorkActivityLog>, int>((ref, taskId) {
       return ref.read(workActivityLogNotifierProvider).where((log) {
-        print("activtiy log: ${log}");
         return log.taskId == taskId;
       }).toList();
     });

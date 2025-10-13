@@ -19,7 +19,6 @@ final tasksByProjectProvider = Provider.family<Future<List<Task>>, Project>((
   ref,
   project,
 ) async {
-  print("tasks ln (from tasksByProjectProvider): ${project.tasks.length}");
   return await ref
       .watch(taskNotifierProvider.notifier)
       .loadProjectTasks(

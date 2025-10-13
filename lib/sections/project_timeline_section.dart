@@ -340,7 +340,6 @@ class ProjectTimelineMilestonesData {
 
   // Setter
   set startDate(DateTime? value) {
-    print("we're setting the value of start date: ${value}");
     _startDate = value;
   }
 
