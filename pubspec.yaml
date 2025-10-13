@@ -49,6 +49,7 @@ dependencies:
   dropdown_search: ^6.0.2
   flutter_slidable: ^4.0.3
   google_fonts: ^6.3.2
+  super_context_menu: ^0.9.1
 
 dev_dependencies:
   flutter_test:

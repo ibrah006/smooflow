@@ -16,6 +16,7 @@ import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
+import 'package:super_context_menu/super_context_menu.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
   final int taskId;
@@ -459,79 +460,101 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                     ),
                                   if (activeWorkActivityLog != null)
                                     Expanded(
-                                      child: FilledButton(
-                                        style: FilledButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              30,
+                                      child: ContextMenuWidget(
+                                        contextMenuIsAllowed:
+                                            (offset) =>
+                                                activeWorkActivityLog.taskId !=
+                                                task.id,
+                                        // force to use dark brightness
+                                        // mobileMenuWidgetBuilder: DefaultMobileMenuWidgetBuilder(brightness: Brightness.dark),
+                                        menuProvider: (_) {
+                                          return Menu(
+                                            children: [
+                                              MenuAction(
+                                                title: 'Go to Task',
+                                                callback: () {},
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                        child: FilledButton(
+                                          style: FilledButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                            ),
+                                            backgroundColor:
+                                                Colors.grey.shade100,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 3,
+                                              horizontal: 15,
+                                            ).copyWith(right: 5),
+                                            textStyle: TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          backgroundColor: Colors.grey.shade100,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 3,
-                                            horizontal: 15,
-                                          ).copyWith(right: 5),
-                                          textStyle: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        // Do nothing
-                                        onPressed: () {},
-                                        child: Row(
-                                          spacing: 10,
-                                          children: [
-                                            Icon(
-                                              Icons.account_circle_rounded,
-                                              size: 24,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                            Expanded(
-                                              child: Text(
-                                                "You",
-                                                style: textTheme.titleMedium,
-                                                overflow: TextOverflow.fade,
-                                                maxLines: 2,
+                                          // Do nothing
+                                          onPressed: () {},
+                                          child: Row(
+                                            spacing: 10,
+                                            children: [
+                                              Icon(
+                                                Icons.account_circle_rounded,
+                                                size: 24,
+                                                color: Colors.grey.shade700,
                                               ),
-                                            ),
-                                            if (durationNotifier != null)
-                                              StreamBuilder<int>(
-                                                stream: durationNotifier.stream,
-                                                builder: (context, snapshot) {
-                                                  final seconds =
-                                                      snapshot.data ?? 0;
-                                                  return Text(
-                                                    activeActivityLogDuration(
-                                                      seconds,
-                                                    ),
-                                                    style: textTheme.titleLarge!
-                                                        .copyWith(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                  );
-                                                },
-                                              ),
-                                            Spacer(),
-                                            FilledButton(
-                                              onPressed: stopTask,
-                                              style: FilledButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
+                                              Expanded(
+                                                child: Text(
+                                                  "You",
+                                                  style: textTheme.titleMedium,
+                                                  overflow: TextOverflow.fade,
+                                                  maxLines: 2,
                                                 ),
                                               ),
-                                              child: Text(
-                                                "Stop",
-                                                style: textTheme.titleMedium!
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
+                                              if (durationNotifier != null)
+                                                StreamBuilder<int>(
+                                                  stream:
+                                                      durationNotifier.stream,
+                                                  builder: (context, snapshot) {
+                                                    final seconds =
+                                                        snapshot.data ?? 0;
+                                                    return Text(
+                                                      activeActivityLogDuration(
+                                                        seconds,
+                                                      ),
+                                                      style: textTheme
+                                                          .titleLarge!
+                                                          .copyWith(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                    );
+                                                  },
+                                                ),
+                                              Spacer(),
+                                              FilledButton(
+                                                onPressed: stopTask,
+                                                style: FilledButton.styleFrom(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          30,
+                                                        ),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  "Stop",
+                                                  style: textTheme.titleMedium!
+                                                      .copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     )
