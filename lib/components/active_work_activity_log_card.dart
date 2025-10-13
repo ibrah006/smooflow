@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/notifiers/work_activity_log_notifier.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
@@ -40,14 +41,19 @@ class _ActiveWorkActivityLogCardState
     final name =
         "${currentUser.name[0].toUpperCase()}${currentUser.name.substring(1)}";
 
-    final Future<WorkActivityLog?> activeWorkActivityLogFuture =
-        ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
+    final Future<WorkActivityLog?> activeWorkActivityLogFuture = ref.watch(
+      activeLog,
+    );
 
     activeWorkActivityLogFuture.then((value) {
       startDurationEventHandler();
     });
 
     final activeTask = ref.watch(taskNotifierProvider.notifier).activeTask;
+
+    ref.watch(activeLog).then((val) {
+      print("activeLog: ${val}");
+    });
 
     if (_timer?.isActive != true || activeTask == null) {
       return SizedBox();
@@ -163,8 +169,7 @@ class _ActiveWorkActivityLogCardState
 
   /// start the active work-activity-log duration event handler
   Future<void> startDurationEventHandler() async {
-    WorkActivityLog? activeWorkActivityLog =
-        await ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
+    WorkActivityLog? activeWorkActivityLog = await ref.watch(activeLog);
 
     // work activity log ended
     if (_timer?.isActive == true && activeWorkActivityLog == null) {
@@ -180,7 +185,7 @@ class _ActiveWorkActivityLogCardState
 
     // .activeLog (attrib) won't be null at this point because at this point we assume a work activity log is already active
     activeWorkActivityLog =
-        (await ref.watch(workActivityLogNotifierProvider.notifier).activeLog)!;
+        await (ref.watch(activeLog) as Future<WorkActivityLog?>);
 
     // Duration event handler
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {

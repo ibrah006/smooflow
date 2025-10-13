@@ -8,6 +8,7 @@ import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
