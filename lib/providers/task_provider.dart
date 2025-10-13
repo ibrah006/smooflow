@@ -24,8 +24,6 @@ final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
 
   if (project == null) throw "Project not found";
 
-  print("tasks: ${[project.tasks]}");
-
   return await ref
       .watch(taskNotifierProvider.notifier)
       .loadProjectTasks(
@@ -57,8 +55,4 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
   await ref
       .read(workActivityLogNotifierProvider.notifier)
       .startWorkSession(taskId: taskId, newLogId: workActivityLog.id);
-
-  print(
-    "active activity log from task provider: ${await ref.watch(workActivityLogNotifierProvider.notifier).activeLog}",
-  );
 });

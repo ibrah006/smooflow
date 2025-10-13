@@ -51,8 +51,6 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     // project task Ids (ensure all the ids are included)
     required List<int> projectTaskIds,
   }) async {
-    print("we right here");
-
     // try {
     final DateTime? projectTasksLastModifiedServer =
         !forceReload

@@ -97,7 +97,6 @@ class LoginService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print("error: $e");
       throw "Error caught: $e";
     }
   }

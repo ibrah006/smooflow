@@ -628,7 +628,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
             return;
           }
-          print("right here for log: ${activeWorkActivityLog?.id}");
 
           ref
               .read(workActivityLogNotifierProvider.notifier)
