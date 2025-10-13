@@ -16,6 +16,12 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   // 0 depicts most recent
   Map<int, String> recent = {};
 
+  Project? _selectedProject;
+
+  Project? get selectedProject => _selectedProject;
+
+  set selectedProject(Project? newVal) => _selectedProject = newVal;
+
   // load projects
   Future<void> load() async {
     // Don't need to worry about calling this before loading projects

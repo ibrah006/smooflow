@@ -23,20 +23,6 @@ class _ProjectProgressIndicatorState
     value: (element) => _getIndicatorValue(element),
   );
 
-  @deprecated
-  void _showStatusBottomSheet(BuildContext context, String currentStatus) {
-    final project = ref.read(currentProjectProvider);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => StatusBottomSheet(project: project),
-    );
-  }
-
   // Get the progress indicator value for the specific status
   double _getIndicatorValue(Status status) {
     switch (status) {
@@ -61,7 +47,8 @@ class _ProjectProgressIndicatorState
 
     final textTheme = Theme.of(context).textTheme;
 
-    final project = ref.watch(currentProjectProvider);
+    final project =
+        ref.watch(projectNotifierProvider.notifier).selectedProject!;
 
     final status =
         ref

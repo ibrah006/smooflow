@@ -162,7 +162,7 @@ class ProjectTimelineMilestonesSectionState
   Widget build(BuildContext context) {
     late final Project project;
     try {
-      project = ref.watch(currentProjectProvider);
+      project = ref.watch(projectNotifierProvider.notifier).selectedProject!;
     } catch (e) {
       // Project "Add" Mode
     }

@@ -27,11 +27,6 @@ final projectByIdProvider = Provider.family<Project?, String>((ref, id) {
   }
 });
 
-// It has a placeholder value, it gets overridden in the project screen
-final currentProjectProvider = Provider<Project>((ref) {
-  throw UnimplementedError('Override this in your screen.');
-});
-
 final createProjectTaskProvider = Provider.family<Future<void>, Task>((
   ref,
   task,

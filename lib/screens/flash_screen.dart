@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:smooflow/main.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
 import 'package:smooflow/screens/home_screen.dart';

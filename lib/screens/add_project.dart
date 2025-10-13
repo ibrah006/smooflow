@@ -129,12 +129,10 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
       throw "Forbidden use of _projectScope function, no (selected) project instance passed into the function to view project in just view mode (ie., Project details screen)";
     }
 
-    return widget.isReadMode
-        ? ProviderScope(
-          overrides: [currentProjectProvider.overrideWithValue(project!)],
-          child: content,
-        )
-        : content;
+    if (widget.isReadMode) {
+      ref.watch(projectNotifierProvider.notifier).selectedProject = project!;
+    }
+    return content;
   }
 
   @override

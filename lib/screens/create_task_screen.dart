@@ -10,7 +10,6 @@ import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/repositories/users_repo.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 
