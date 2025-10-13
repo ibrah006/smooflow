@@ -102,7 +102,7 @@ class _ActiveWorkActivityLogCardState
             children: [
               Flexible(
                 child: Text(
-                  "Task: ${activeTask.name} | ",
+                  "Task: ${activeTask.name}",
                   style: textTheme.bodyMedium!.copyWith(
                     color: Colors.grey.shade900,
                   ),
@@ -123,7 +123,7 @@ class _ActiveWorkActivityLogCardState
                     }
 
                     return Text(
-                      "Dept: ${taskProgressLog.status.name}",
+                      " | Dept: ${taskProgressLog.status.name}",
                       style: textTheme.bodyMedium!.copyWith(
                         color: Colors.grey.shade900,
                       ),

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:card_loading/card_loading.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/components/native_button.dart';
 import 'package:smooflow/components/work_activity_tile.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/main.dart';
@@ -462,25 +464,40 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                     ),
                                   if (activeWorkActivityLog != null)
                                     Expanded(
-                                      child: FilledButton(
-                                        style: FilledButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              30,
+                                      child: NativeButton(
+                                        onPressed: () {
+                                          if (activeWorkActivityLog.taskId !=
+                                              task.id) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) => TaskScreen(
+                                                      activeWorkActivityLog
+                                                          .taskId!,
+                                                    ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        trailingAction: FilledButton(
+                                          onPressed: stopTask,
+                                          style: FilledButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
                                             ),
                                           ),
-                                          backgroundColor: Colors.grey.shade100,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 3,
-                                            horizontal: 15,
-                                          ).copyWith(right: 5),
-                                          textStyle: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
+                                          child: Text(
+                                            "Stop",
+                                            style: textTheme.titleMedium!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
                                           ),
                                         ),
-                                        // Do nothing
-                                        onPressed: () {},
+
                                         child: Row(
                                           spacing: 10,
                                           children: [
@@ -516,24 +533,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                                 },
                                               ),
                                             Spacer(),
-                                            FilledButton(
-                                              onPressed: stopTask,
-                                              style: FilledButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                "Stop",
-                                                style: textTheme.titleMedium!
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                              ),
-                                            ),
                                           ],
                                         ),
                                       ),
