@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:card_loading/card_loading.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -50,6 +49,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _timer = null;
+
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -460,101 +462,79 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                     ),
                                   if (activeWorkActivityLog != null)
                                     Expanded(
-                                      child: ContextMenuWidget(
-                                        contextMenuIsAllowed:
-                                            (offset) =>
-                                                activeWorkActivityLog.taskId !=
-                                                task.id,
-                                        // force to use dark brightness
-                                        // mobileMenuWidgetBuilder: DefaultMobileMenuWidgetBuilder(brightness: Brightness.dark),
-                                        menuProvider: (_) {
-                                          return Menu(
-                                            children: [
-                                              MenuAction(
-                                                title: 'Go to Task',
-                                                callback: () {},
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                        child: FilledButton(
-                                          style: FilledButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(30),
-                                            ),
-                                            backgroundColor:
-                                                Colors.grey.shade100,
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 3,
-                                              horizontal: 15,
-                                            ).copyWith(right: 5),
-                                            textStyle: TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.bold,
+                                      child: FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              30,
                                             ),
                                           ),
-                                          // Do nothing
-                                          onPressed: () {},
-                                          child: Row(
-                                            spacing: 10,
-                                            children: [
-                                              Icon(
-                                                Icons.account_circle_rounded,
-                                                size: 24,
-                                                color: Colors.grey.shade700,
+                                          backgroundColor: Colors.grey.shade100,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 3,
+                                            horizontal: 15,
+                                          ).copyWith(right: 5),
+                                          textStyle: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        // Do nothing
+                                        onPressed: () {},
+                                        child: Row(
+                                          spacing: 10,
+                                          children: [
+                                            Icon(
+                                              Icons.account_circle_rounded,
+                                              size: 24,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                "You",
+                                                style: textTheme.titleMedium,
+                                                overflow: TextOverflow.fade,
+                                                maxLines: 2,
                                               ),
-                                              Expanded(
-                                                child: Text(
-                                                  "You",
-                                                  style: textTheme.titleMedium,
-                                                  overflow: TextOverflow.fade,
-                                                  maxLines: 2,
-                                                ),
-                                              ),
-                                              if (durationNotifier != null)
-                                                StreamBuilder<int>(
-                                                  stream:
-                                                      durationNotifier.stream,
-                                                  builder: (context, snapshot) {
-                                                    final seconds =
-                                                        snapshot.data ?? 0;
-                                                    return Text(
-                                                      activeActivityLogDuration(
-                                                        seconds,
-                                                      ),
-                                                      style: textTheme
-                                                          .titleLarge!
-                                                          .copyWith(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                    );
-                                                  },
-                                                ),
-                                              Spacer(),
-                                              FilledButton(
-                                                onPressed: stopTask,
-                                                style: FilledButton.styleFrom(
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          30,
+                                            ),
+                                            if (durationNotifier != null)
+                                              StreamBuilder<int>(
+                                                stream: durationNotifier.stream,
+                                                builder: (context, snapshot) {
+                                                  final seconds =
+                                                      snapshot.data ?? 0;
+                                                  return Text(
+                                                    activeActivityLogDuration(
+                                                      seconds,
+                                                    ),
+                                                    style: textTheme.titleLarge!
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                         ),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  "Stop",
-                                                  style: textTheme.titleMedium!
-                                                      .copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.white,
-                                                      ),
+                                                  );
+                                                },
+                                              ),
+                                            Spacer(),
+                                            FilledButton(
+                                              onPressed: stopTask,
+                                              style: FilledButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                              child: Text(
+                                                "Stop",
+                                                style: textTheme.titleMedium!
+                                                    .copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     )
@@ -659,7 +639,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
               .add(activeWorkActivityLog!.duration.inSeconds);
         } catch (e) {
           // already disposed / ended the work activity log
-          setState(() {});
+          // setState(() {});
           return;
         }
       });
