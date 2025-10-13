@@ -17,8 +17,8 @@ import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
-  final Task task;
-  const TaskScreen(this.task, {super.key});
+  final int taskId;
+  const TaskScreen(this.taskId, {super.key});
 
   @override
   ConsumerState<TaskScreen> createState() => _TaskScreenState();
@@ -38,6 +38,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   // late EventNotifier<int>? activeLogDurationSecondsNotifier;
 
+  Task get task => ref.watch(taskByIdProvider(widget.taskId))!;
+
   @override
   void initState() {
     super.initState();
@@ -46,20 +48,18 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       progressLogFuture = ref
           .watch(
             progressLogsByProjectProvider(
-              ProgressLogsByProviderArgs(widget.task.projectId),
+              ProgressLogsByProviderArgs(task.projectId),
             ),
           )
           .then((progressLogs) {
             return progressLogs.isNotEmpty
-                ? progressLogs.firstWhere(
-                  (log) => log.id == widget.task.progressLogId,
-                )
-                : ProgressLog.deleted(widget.task.progressLogId);
+                ? progressLogs.firstWhere((log) => log.id == task.progressLogId)
+                : ProgressLog.deleted(task.progressLogId);
           });
 
-      workActivityLogsFuture = ref.watch(
-        workActivityLogsByTaskProvider(widget.task.id),
-      );
+      // workActivityLogsFuture = ref.watch(
+      //   workActivityLogsByTaskProvider(task.id),
+      // );
 
       try {
         await startDurationEventHandler();
@@ -97,19 +97,16 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     bool showPageContents = !showLoadingOverlay;
 
     final isCompleted =
-        widget.task.dateCompleted != null ||
-        widget.task.status.toLowerCase() == "completed";
+        task.dateCompleted != null || task.status.toLowerCase() == "completed";
 
     final assigneesFuture = ref
         .watch(userNotifierProvider.notifier)
-        .getTaskUsers(task: widget.task);
+        .getTaskUsers(task: task);
 
     final Future<WorkActivityLog?> activeWorkActivityLogFuture =
         ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
 
-    workActivityLogsFuture = ref.watch(
-      workActivityLogsByTaskProvider(widget.task.id),
-    );
+    workActivityLogsFuture = ref.watch(workActivityLogsByTaskProvider(task.id));
 
     final durationNotifier =
         ref
@@ -121,7 +118,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: false,
-          title: Text(widget.task.name),
+          title: Text(task.name),
           actions: [
             Container(
               padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
@@ -130,7 +127,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                widget.task.status,
+                task.status,
                 style: textTheme.labelMedium!.copyWith(color: colorPrimary),
               ),
             ),
@@ -160,11 +157,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                           ],
                         ),
                         SizedBox(height: 8),
-                        if (widget.task.description.trim().isNotEmpty)
+                        if (task.description.trim().isNotEmpty)
                           SizedBox(
                             width: MediaQuery.of(context).size.width / 1.35,
                             child: Text(
-                              widget.task.description,
+                              task.description,
                               style: textTheme.bodyMedium!.copyWith(
                                 color: Colors.grey.shade900,
                               ),
@@ -193,7 +190,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                           ],
                         ),
                         SizedBox(height: 8),
-                        if (widget.task.assignees.isNotEmpty)
+                        if (task.assignees.isNotEmpty)
                           FutureBuilder(
                             future: assigneesFuture,
                             builder: (context, snapshot) {
@@ -345,7 +342,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                     .read(
                                       workActivityLogNotifierProvider.notifier,
                                     )
-                                    .getTotalLogDurationSeconds(widget.task.id);
+                                    .getTotalLogDurationSeconds(task.id);
 
                                 return workActivityLogs.isNotEmpty
                                     ? ListView(
@@ -630,14 +627,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       isStartTaskLoading = true;
     });
 
-    // Update task status
-    final workActivityLog = await ref
-        .read(taskNotifierProvider.notifier)
-        .startTask(widget.task.id);
-    // Add Work activity log
-    await ref
-        .read(workActivityLogNotifierProvider.notifier)
-        .startWorkSession(taskId: widget.task.id, newLogId: workActivityLog.id);
+    await ref.watch(createTaskActivityLogProvider(task.id));
 
     startDurationEventHandler();
 

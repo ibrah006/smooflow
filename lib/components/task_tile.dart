@@ -8,30 +8,32 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/screens/task_screen.dart';
 
 class TaskTile extends ConsumerStatefulWidget {
-  final Task task;
+  final int taskId;
 
-  const TaskTile(this.task, {super.key});
+  const TaskTile(this.taskId, {super.key});
 
   @override
   ConsumerState<TaskTile> createState() => _TaskTileState();
 }
 
 class _TaskTileState extends ConsumerState<TaskTile> {
+  Task get task => ref.watch(taskByIdProvider(widget.taskId))!;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     final isCompleted =
-        widget.task.dateCompleted != null ||
-        widget.task.status.toLowerCase() == "completed";
+        task.dateCompleted != null || task.status.toLowerCase() == "completed";
 
     final assigneesFuture = ref
         .read(userNotifierProvider.notifier)
-        .getTaskUsers(task: widget.task);
+        .getTaskUsers(task: task);
 
     return Padding(
       // margin
@@ -40,14 +42,14 @@ class _TaskTileState extends ConsumerState<TaskTile> {
         children: [
           SizedBox(width: 10),
           RoundCheckBox(
-            isChecked: widget.task.status.toLowerCase() == "completed",
+            isChecked: task.status.toLowerCase() == "completed",
             animationDuration: Durations.medium1,
             size: 27,
             checkedColor: colorPrimary,
             onTap: (newVal) async {
               setState(() {
                 if (newVal == true) {
-                  widget.task.status = "completed";
+                  task.status = "completed";
                 }
               });
 
@@ -56,7 +58,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                   // We're not really passing in the updated task for the backend to track the new state of the task
                   // As the endpoint that's to be called just has one function and only one end state
                   // We're just passing it for the called function to know about the projectId and taskId
-                  .markTaskAsComplete(updatedTask: widget.task);
+                  .markTaskAsComplete(updatedTask: task);
             },
           ),
           Expanded(
@@ -69,7 +71,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TaskScreen(widget.task),
+                      builder: (context) => TaskScreen(task.id),
                     ),
                   );
                 },
@@ -96,7 +98,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                           spacing: 5,
                           children: [
                             Text(
-                              widget.task.name,
+                              task.name,
                               style: textTheme.titleLarge!.copyWith(
                                 fontWeight: FontWeight.w500,
                                 fontSize: textTheme.titleLarge!.fontSize! - 2,
@@ -106,11 +108,11 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                             Padding(
                               padding: const EdgeInsets.only(right: 5),
                               child: Text(
-                                widget.task.description.isEmpty
+                                task.description.isEmpty
                                     ? (!isCompleted
                                         ? "Pending completion"
-                                        : "Finished ${widget.task.dateCompleted.formatDisplay ?? 'N/a'}")
-                                    : widget.task.description,
+                                        : "Finished ${task.dateCompleted.formatDisplay ?? 'N/a'}")
+                                    : task.description,
                                 style: textTheme.bodyMedium!.copyWith(
                                   color: Colors.grey.shade800,
                                 ),
@@ -137,14 +139,14 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              "${widget.task.status[0].toUpperCase()}${widget.task.status.substring(1)}",
+                              "${task.status[0].toUpperCase()}${task.status.substring(1)}",
                               style: textTheme.labelMedium!.copyWith(
                                 color:
                                     !isCompleted ? colorPrimary : Colors.white,
                               ),
                             ),
                           ),
-                          if (widget.task.assignees.isEmpty)
+                          if (task.assignees.isEmpty)
                             Icon(Icons.no_accounts_rounded, size: 20)
                           else
                             FutureBuilder(
@@ -193,9 +195,9 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                                       "${assignees.first.name[0].toUpperCase()}${assignees.first.name.substring(1)}",
                                       style: textTheme.labelSmall,
                                     ),
-                                    if (widget.task.assignees.length > 1)
+                                    if (task.assignees.length > 1)
                                       Text(
-                                        ", ${widget.task.assignees.length - 1} more",
+                                        ", ${task.assignees.length - 1} more",
                                         style: textTheme.labelSmall,
                                       ),
                                   ],

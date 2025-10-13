@@ -100,31 +100,36 @@ class _ActiveWorkActivityLogCardState
           ),
           Row(
             children: [
-              Text(
-                "Task: ${activeTask.name} | ",
-                style: textTheme.bodyMedium!.copyWith(
-                  color: Colors.grey.shade900,
+              Flexible(
+                child: Text(
+                  "Task: ${activeTask.name} | ",
+                  style: textTheme.bodyMedium!.copyWith(
+                    color: Colors.grey.shade900,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              FutureBuilder(
-                future: taskProgressLogFuture,
-                builder: (context, snapshot) {
-                  final taskProgressLog = snapshot.data;
-                  if (taskProgressLog == null) {
-                    return CardLoading(
-                      height: 15,
-                      width: 50,
-                      borderRadius: BorderRadius.circular(10),
-                    );
-                  }
+              Expanded(
+                child: FutureBuilder(
+                  future: taskProgressLogFuture,
+                  builder: (context, snapshot) {
+                    final taskProgressLog = snapshot.data;
+                    if (taskProgressLog == null) {
+                      return CardLoading(
+                        height: 15,
+                        width: 50,
+                        borderRadius: BorderRadius.circular(10),
+                      );
+                    }
 
-                  return Text(
-                    "Dept: ${taskProgressLog.status.name}",
-                    style: textTheme.bodyMedium!.copyWith(
-                      color: Colors.grey.shade900,
-                    ),
-                  );
-                },
+                    return Text(
+                      "Dept: ${taskProgressLog.status.name}",
+                      style: textTheme.bodyMedium!.copyWith(
+                        color: Colors.grey.shade900,
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),

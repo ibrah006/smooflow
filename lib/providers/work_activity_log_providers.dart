@@ -34,10 +34,10 @@ final workActivityLogsByTaskProvider =
           );
 
       if (updatedLogsUsers != null) {
-        ref.read(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
+        ref.watch(userNotifierProvider.notifier).updateUsers(updatedLogsUsers);
       }
 
-      return ref.read(workActivityLogNotifierProvider).where((log) {
+      return ref.watch(workActivityLogNotifierProvider).where((log) {
         return log.taskId == taskId;
       }).toList();
     });

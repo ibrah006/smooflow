@@ -51,6 +51,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     // project task Ids (ensure all the ids are included)
     required List<int> projectTaskIds,
   }) async {
+    print("we right here");
+
     // try {
     final DateTime? projectTasksLastModifiedServer =
         !forceReload
@@ -117,10 +119,9 @@ class TaskNotifier extends StateNotifier<List<Task>> {
         state.map((t) {
           if (t.id == taskId) {
             // Update task state - add work activity log and update status
-            t
-              ..workActivityLogs.add(workActivityLog.id)
-              ..activityLogLastModified = DateTime.now()
-              ..status = "in-progress";
+            t.workActivityLogs.add(workActivityLog.id);
+            t.activityLogLastModified = DateTime.now();
+            t.status = "in-progress";
             _activeTask = t;
           }
           return t;

@@ -66,13 +66,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
       return Scaffold(body: Center(child: Text("Project Not found")));
     }
 
-    tasks = ref
-        .watch(taskNotifierProvider.notifier)
-        .loadProjectTasks(
-          projectId: project.id,
-          projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
-          projectTaskIds: project.tasks,
-        );
+    tasks = ref.watch(tasksByProjectProvider(widget.projectId));
 
     try {
       tasks;
@@ -164,7 +158,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
               SizedBox(height: 20),
               if (snapshot.data != null)
                 ...snapshot.data!.map((task) {
-                  return TaskTile(task);
+                  return TaskTile(task.id);
                 }),
             ],
           );
