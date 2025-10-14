@@ -335,7 +335,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                                       decoratorProps: DropDownDecoratorProps(
                                         decoration: _inputDecoration(""),
                                       ),
-                                      itemAsString: (usr) => usr.name,
+                                      itemAsString:
+                                          (usr) => "${usr.name}\n${usr.email}",
                                       compareFn:
                                           (User a, User b) => a.id == b.id,
                                       items:
@@ -346,9 +347,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                                           (usrs) => setState(
                                             () => _selectedAssignees = usrs,
                                           ),
-                                      // dropdownBuilder: (context, selectedItems) {
-                                      //   // return Text();
-                                      // },
                                     );
                               },
                             ),
