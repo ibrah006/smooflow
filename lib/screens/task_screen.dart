@@ -17,7 +17,6 @@ import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
-import 'package:super_context_menu/super_context_menu.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
   final int taskId;

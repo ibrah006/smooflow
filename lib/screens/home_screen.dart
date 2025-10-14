@@ -9,7 +9,6 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
@@ -31,7 +30,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
 
     Future.microtask(() {
       ref.read(projectNotifierProvider.notifier).load().then((value) async {
-        await ref.read(taskNotifierProvider.notifier).loadActiveTask();
         setState(() {
           _isLoading = false;
         });
