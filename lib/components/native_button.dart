@@ -10,22 +10,35 @@ class NativeButton extends StatelessWidget {
   /// Only for iOS
   final Widget? trailingAction;
 
+  final BoxDecoration? decoration;
+
+  @Deprecated(
+    "This will be completely removed in newer versions, so that this component would only be a native-only button component",
+  )
+  final bool hasNativeFunctionality;
+
   const NativeButton({
     super.key,
     required this.onPressed,
     required this.child,
     this.trailingAction,
+    this.decoration,
+    this.hasNativeFunctionality = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isIOS) {
+    final borderRadius =
+        (decoration?.borderRadius as BorderRadius?) ??
+        BorderRadius.circular(30);
+
+    if (hasNativeFunctionality && Platform.isIOS) {
       return Stack(
         alignment: Alignment.centerRight,
         children: [
           CupertinoButton(
             onPressed: onPressed,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: borderRadius,
             color: Colors.grey.shade100,
             padding: EdgeInsets.symmetric(
               vertical: 3 + 10,
@@ -49,16 +62,18 @@ class NativeButton extends StatelessWidget {
     } else {
       return InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: borderRadius,
         child: Ink(
           padding: EdgeInsets.symmetric(
             vertical: 3,
             horizontal: 15,
           ).copyWith(right: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            color: Colors.grey.shade100,
-          ),
+          decoration:
+              decoration ??
+              BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.grey.shade100,
+              ),
           child: Row(
             children: [
               Expanded(child: child),
