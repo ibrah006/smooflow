@@ -32,6 +32,10 @@ class Project {
   // You can add computed/derived fields here as needed
   // e.g., double? projectEfficiency;
 
+  static String getIdFromJson(Map<String, dynamic> projectJson) {
+    return projectJson["id"];
+  }
+
   Project({
     required this.id,
     required this.name,

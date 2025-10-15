@@ -10,8 +10,13 @@ class Company {
   final String description;
   final bool isActive;
   late final DateTime createdAt;
-  final User createdBy;
-  final List<Project> projects;
+  final String createdByUserId;
+  final List<String> projects;
+
+  final bool _isSample; // private flag for sample data
+
+  // Sample data check
+  bool get isSample => _isSample;
 
   Company({
     required this.id,
@@ -19,15 +24,27 @@ class Company {
     required this.description,
     required this.isActive,
     required this.createdAt,
-    required this.createdBy,
+    required this.createdByUserId,
     required this.projects,
-  });
+  }) : _isSample = false;
 
   Company.create({required this.name, required this.description})
     : id = Uuid().v1(),
       isActive = true,
-      createdBy = LoginService.currentUser!,
-      projects = [];
+      createdByUserId = LoginService.currentUser!.id,
+      projects = [],
+      _isSample = false;
+
+  // Sample constructor
+  Company.sample()
+    : id = 'sample-company-id',
+      name = 'Sample Company',
+      description = 'This is a sample company for demo/testing purposes.',
+      isActive = true,
+      createdAt = DateTime.now(),
+      createdByUserId = "SAMPLE",
+      projects = [],
+      _isSample = true;
 
   factory Company.fromJson(Map<String, dynamic> json) {
     return Company(
@@ -36,10 +53,10 @@ class Company {
       description: json['description'],
       isActive: json['isActive'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
-      createdBy: User.fromJson(json['createdBy']),
+      createdByUserId: User.getIdFromJson(json['createdBy']),
       projects:
           ((json['projects'] ?? []) as List<dynamic>)
-              .map((projectJson) => Project.fromJson(projectJson))
+              .map((projectJson) => Project.getIdFromJson(projectJson))
               .toList(),
     );
   }
@@ -50,8 +67,8 @@ class Company {
       'name': name,
       'description': description,
       'isActive': isActive,
-      'createdBy': createdBy.toJson(),
-      'projects': projects.map((p) => p.toJson()).toList(),
+      'createdBy': createdByUserId,
+      'projects': projects,
     };
   }
 }

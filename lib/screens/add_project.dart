@@ -58,7 +58,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
   String? selectedProjectType = "Digital Advertising";
   late PriorityLevel selectedPriority;
 
-  final List<Company> clients = CompanyRepo.companies;
   final List<String> projectTypes = [
     "Digital Advertising",
     "Web Development",
@@ -136,8 +135,17 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
     return content;
   }
 
+  gotoCreateClientScreen() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => CreateClientScreen()),
+      (Route<dynamic> route) => route.isFirst,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<Company> clients = [...CompanyRepo.companies, Company.sample()];
+
     final textTheme = Theme.of(context).textTheme;
 
     late final Project project;
@@ -388,19 +396,40 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                           items:
                                               clients
                                                   .map(
-                                                    (client) =>
-                                                        DropdownMenuItem(
-                                                          value: client,
-                                                          child: Text(
-                                                            client.name,
+                                                    (
+                                                      client,
+                                                    ) => DropdownMenuItem(
+                                                      value: client,
+                                                      child: Row(
+                                                        children: [
+                                                          Text(
+                                                            client.isSample
+                                                                ? "Add New Client"
+                                                                : client.name,
+                                                            style:
+                                                                !client.isSample
+                                                                    ? null
+                                                                    : textTheme
+                                                                        .titleMedium!
+                                                                        .copyWith(
+                                                                          color:
+                                                                              colorPrimary,
+                                                                        ),
                                                           ),
-                                                        ),
+                                                        ],
+                                                      ),
+                                                    ),
                                                   )
                                                   .toList(),
-                                          onChanged:
-                                              (value) => setState(
-                                                () => selectedClient = value,
-                                              ),
+                                          onChanged: (value) {
+                                            if (value?.isSample == true) {
+                                              gotoCreateClientScreen();
+                                              return;
+                                            }
+                                            setState(
+                                              () => selectedClient = value,
+                                            );
+                                          },
                                         ),
                                       ),
                                       if (clients.isEmpty)
@@ -411,19 +440,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                               horizontal: 10,
                                             ),
                                           ),
-                                          onPressed: () {
-                                            Navigator.of(
-                                              context,
-                                            ).pushAndRemoveUntil(
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (context) =>
-                                                        CreateClientScreen(),
-                                              ),
-                                              (Route<dynamic> route) =>
-                                                  route.isFirst,
-                                            );
-                                          },
+                                          onPressed: gotoCreateClientScreen,
                                           child: Text(
                                             "Add Client",
                                             style: textTheme.titleMedium!
