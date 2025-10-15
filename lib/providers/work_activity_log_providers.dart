@@ -21,7 +21,7 @@ final workActivityLogNotifierProvider =
 
 final workActivityLogsByTaskProvider =
     Provider.family<Future<List<WorkActivityLog>>, int>((ref, taskId) async {
-      final task = ref.watch(taskByIdProvider(taskId));
+      final task = ref.watch(taskByIdProviderSimple(taskId));
 
       if (task == null) throw "Task not found";
 

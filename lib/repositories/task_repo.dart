@@ -16,6 +16,40 @@ class TaskRepo {
     return body.map((taskJson) => Task.fromJson(taskJson)).toList();
   }
 
+  Future<Task?> getTaskById({
+    required int taskId,
+    DateTime? updatedAt,
+    DateTime? activityLogLastModified,
+    DateTime? assigneeLastAdded,
+  }) async {
+    final queryParams = <String, String>{};
+    if (updatedAt != null) {
+      queryParams['updatedAt'] = updatedAt.toIso8601String();
+    }
+    if (activityLogLastModified != null) {
+      queryParams['activityLogLastModified'] =
+          activityLogLastModified.toIso8601String();
+    }
+    if (assigneeLastAdded != null) {
+      queryParams['assigneeLastAdded'] = assigneeLastAdded.toIso8601String();
+    }
+
+    final uri = Uri(
+      path: '/tasks/$taskId',
+      queryParameters: queryParams.isEmpty ? null : queryParams,
+    );
+
+    final response = await ApiClient.http.get(uri.toString());
+
+    if (response.statusCode == 204) {
+      return null; // Up to date
+    } else if (response.statusCode == 200) {
+      return Task.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to fetch task: ${response.body}');
+    }
+  }
+
   /// GET /tasks/me — fetch all tasks assigned to current user
   Future<List<Task>> fetchMyTasks() async {
     final response = await ApiClient.http.get('/tasks/me');

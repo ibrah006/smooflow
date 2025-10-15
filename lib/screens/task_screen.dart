@@ -40,7 +40,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
   // late EventNotifier<int>? activeLogDurationSecondsNotifier;
 
-  Task get task => ref.watch(taskByIdProvider(widget.taskId))!;
+  Task get task => ref.watch(taskByIdProviderSimple(widget.taskId))!;
 
   @override
   void didChangeDependencies() {

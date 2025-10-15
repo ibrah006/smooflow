@@ -11,6 +11,8 @@ class ApiEndpoints {
 
   static String createTask(String projectId) => "/projects/$projectId";
 
+  static String getTaskById(int taskId) => "/tasks/$taskId";
+
   // Endpoint for getting tasks assigned for current user
   static String getUserTasks = "/tasks/me";
 

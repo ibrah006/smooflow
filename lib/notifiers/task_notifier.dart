@@ -8,6 +8,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   final TaskRepo _repo;
 
+  static const _dataReloadMinInterval = Duration(seconds: 30);
+
   Task? _activeTask;
   bool _loading = false;
 
@@ -38,6 +40,63 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       state = tasks;
     } finally {
       _loading = false;
+    }
+  }
+
+  Future<Task?> getTaskById(int taskId, {bool forceReload = false}) async {
+    try {
+      // Find the local version of the task (if any)
+      late final Task? localTask;
+      try {
+        localTask = state.firstWhere((task) => task.id == taskId);
+      } catch (e) {
+        localTask = null;
+      }
+
+      // Prepare timestamps for delta-based sync
+      final updatedAt = !forceReload ? localTask?.updatedAt : null;
+      final activityLogLastModified =
+          !forceReload ? localTask?.activityLogLastModified : null;
+      final assigneeLastAdded =
+          !forceReload ? localTask?.assigneeLastAdded : null;
+
+      if (localTask != null) {
+        final now = DateTime.now();
+        if (now.difference(updatedAt!) < _dataReloadMinInterval &&
+            now.difference(activityLogLastModified!) < _dataReloadMinInterval &&
+            now.difference(assigneeLastAdded!) < _dataReloadMinInterval) {
+          // Preventing too frequent calls to server
+          return localTask;
+        }
+      }
+
+      // Call the backend repo function
+      final fetchedTask = await _repo.getTaskById(
+        taskId: taskId,
+        updatedAt: updatedAt,
+        activityLogLastModified: activityLogLastModified,
+        assigneeLastAdded: assigneeLastAdded,
+      );
+
+      // If backend says everything is up-to-date
+      if (fetchedTask == null) {
+        return localTask; // No update needed
+      }
+
+      // Update in-memory state (replace or insert)
+      final updatedList = [...state];
+      final index = updatedList.indexWhere((t) => t.id == taskId);
+      if (index != -1) {
+        updatedList[index].replaceWith(fetchedTask);
+      } else {
+        updatedList.add(fetchedTask);
+      }
+
+      state = updatedList;
+      return fetchedTask;
+    } catch (e, st) {
+      print('Error loading task by ID: $e\n$st');
+      rethrow;
     }
   }
 

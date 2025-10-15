@@ -22,7 +22,7 @@ class TaskTile extends ConsumerStatefulWidget {
 }
 
 class _TaskTileState extends ConsumerState<TaskTile> {
-  Task get task => ref.watch(taskByIdProvider(widget.taskId))!;
+  Task get task => ref.watch(taskByIdProviderSimple(widget.taskId))!;
 
   @override
   Widget build(BuildContext context) {
