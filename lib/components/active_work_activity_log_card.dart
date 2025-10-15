@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
+import 'package:smooflow/main.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -18,21 +21,76 @@ class ActiveWorkActivityLogCard extends ConsumerStatefulWidget {
 }
 
 class _ActiveWorkActivityLogCardState
-    extends ConsumerState<ActiveWorkActivityLogCard> {
+    extends ConsumerState<ActiveWorkActivityLogCard>
+    with RouteAware {
   Timer? _timer;
 
   bool _isLoading = false;
 
+  late Future<Task?> activeTaskFuture;
+
+  late WorkActivityLog? activeLog;
+
+  // Called when coming back to this screen
+  @override
+  void didPopNext() {
+    super.didPopNext();
+
+    Future.microtask(() {
+      // Navigating back to this screen, check for new active task (new work activity log, if any)
+      activeTaskFuture = Future.delayed(Duration.zero).then((val) {
+        return ref.watch(taskNotifierProvider.notifier).activeTask;
+      });
+
+      setState(() {});
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
   @override
   void dispose() {
-    super.dispose();
-
     _timer!.cancel();
     _timer = null;
+
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      activeTaskFuture =
+          ref.watch(taskNotifierProvider.notifier).loadActiveTask();
+      setState(() {});
+    });
+  }
+
+  Widget loading() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10).copyWith(bottom: 12),
+      child: LinearProgressIndicator(
+        backgroundColor: colorPrimary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    try {
+      activeTaskFuture;
+    } catch (e) {
+      // not initialized yet
+      return loading();
+    }
+
     final textTheme = Theme.of(context).textTheme;
 
     final currentUser = LoginService.currentUser!;
@@ -46,123 +104,143 @@ class _ActiveWorkActivityLogCardState
       startDurationEventHandler();
     });
 
-    final activeTask = ref.watch(taskNotifierProvider.notifier).activeTask;
+    return FutureBuilder(
+      future: activeTaskFuture,
+      builder: (context, snapshot) {
+        final activeTask = snapshot.data;
 
-    if (_timer?.isActive != true || activeTask == null) {
-      return SizedBox();
-    }
+        if (!ref.watch(taskNotifierProvider.notifier).activeTaskInitialized) {
+          return loading();
+        }
 
-    final taskProgressLogFuture = ref
-        .watch(progressLogNotifierProvider.notifier)
-        .getLog(activeTask.progressLogId);
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 20),
-      width: MediaQuery.of(context).size.width - 40 > 310 ? 310 : null,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            spreadRadius: 2,
-            blurRadius: 7,
-            color: Colors.grey.shade100,
-          ),
-        ],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text("Active Work Log", style: textTheme.titleMedium)],
-          ),
-          SizedBox(height: 3),
-          StreamBuilder<int>(
-            stream:
-                ref
+        // If we reached this point, then we already tried getting active task from database and it's either null or not null depending on whether there's an active work activity log
+        if (ref
                     .read(workActivityLogNotifierProvider.notifier)
-                    .activeLogDurationNotifier!
-                    .stream,
-            builder: (context, snapshot) {
-              return Text(
-                snapshot.data != null
-                    ? activeActivityLogDuration(snapshot.data!)
-                    : "00:00:00",
-                style: textTheme.headlineLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.75,
-                ),
-              );
-            },
-          ),
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  "Task: ${activeTask.name}",
-                  style: textTheme.bodyMedium!.copyWith(
-                    color: Colors.grey.shade900,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Expanded(
-                child: FutureBuilder(
-                  future: taskProgressLogFuture,
-                  builder: (context, snapshot) {
-                    final taskProgressLog = snapshot.data;
-                    if (taskProgressLog == null) {
-                      return CardLoading(
-                        height: 15,
-                        width: 50,
-                        borderRadius: BorderRadius.circular(10),
-                      );
-                    }
+                    .activeLogDurationNotifier ==
+                null ||
+            _timer?.isActive != true ||
+            activeTask == null) {
+          return SizedBox();
+        }
 
-                    return Text(
-                      " | Dept: ${taskProgressLog.status.name}",
+        final taskProgressLogFuture = ref
+            .watch(progressLogNotifierProvider.notifier)
+            .getLog(activeTask.progressLogId);
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 20),
+          width: MediaQuery.of(context).size.width - 40 > 310 ? 310 : null,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                spreadRadius: 2,
+                blurRadius: 7,
+                color: Colors.grey.shade100,
+              ),
+            ],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Active Work Log", style: textTheme.titleMedium),
+                ],
+              ),
+              SizedBox(height: 3),
+              StreamBuilder<int>(
+                stream:
+                    ref
+                        .read(workActivityLogNotifierProvider.notifier)
+                        .activeLogDurationNotifier!
+                        .stream,
+                builder: (context, snapshot) {
+                  return Text(
+                    snapshot.data != null
+                        ? activeActivityLogDuration(snapshot.data!)
+                        : "00:00:00",
+                    style: textTheme.headlineLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.75,
+                    ),
+                  );
+                },
+              ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      "Task: ${activeTask.name}",
                       style: textTheme.bodyMedium!.copyWith(
                         color: Colors.grey.shade900,
                       ),
-                    );
-                  },
-                ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Expanded(
+                    child: FutureBuilder(
+                      future: taskProgressLogFuture,
+                      builder: (context, snapshot) {
+                        final taskProgressLog = snapshot.data;
+                        if (taskProgressLog == null) {
+                          return CardLoading(
+                            height: 15,
+                            width: 50,
+                            borderRadius: BorderRadius.circular(10),
+                          );
+                        }
+
+                        return Text(
+                          " | Dept: ${taskProgressLog.status.name}",
+                          style: textTheme.bodyMedium!.copyWith(
+                            color: Colors.grey.shade900,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          SizedBox(height: 3),
-          Row(
-            spacing: 5,
-            children: [
-              Icon(Icons.account_circle_rounded, size: 42),
-              Text(name, style: textTheme.titleMedium),
-              Spacer(),
-              FilledButton(
-                onPressed: _isLoading ? null : stopTask,
-                style: FilledButton.styleFrom(
-                  disabledBackgroundColor: Colors.grey.shade200,
-                  padding: EdgeInsets.symmetric(vertical: 7, horizontal: 12),
-                  minimumSize: Size.zero,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isLoading)
-                      SizedBox(
-                        height: 25,
-                        width: 25,
-                        child: CircularProgressIndicator(),
+              SizedBox(height: 3),
+              Row(
+                spacing: 5,
+                children: [
+                  Icon(Icons.account_circle_rounded, size: 42),
+                  Text(name, style: textTheme.titleMedium),
+                  Spacer(),
+                  FilledButton(
+                    onPressed: _isLoading ? null : stopTask,
+                    style: FilledButton.styleFrom(
+                      disabledBackgroundColor: Colors.grey.shade200,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 7,
+                        horizontal: 12,
                       ),
-                    Text("Stop"),
-                  ],
-                ),
+                      minimumSize: Size.zero,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isLoading)
+                          SizedBox(
+                            height: 25,
+                            width: 25,
+                            child: CircularProgressIndicator(),
+                          ),
+                        Text("Stop"),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -215,6 +293,8 @@ class _ActiveWorkActivityLogCardState
         return;
       }
     });
+
+    activeLog = activeWorkActivityLog;
 
     // If we got this far, assume that there exists an active work activity log
     setState(() {});

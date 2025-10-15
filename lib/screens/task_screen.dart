@@ -102,6 +102,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    print("activeTask: ${ref.watch(taskNotifierProvider.notifier).activeTask}");
+
     late final bool showLoadingOverlay;
     try {
       progressLogFuture;
