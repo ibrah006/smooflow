@@ -141,12 +141,24 @@ class _ActiveWorkActivityLogCardState
               Text(name, style: textTheme.titleMedium),
               Spacer(),
               FilledButton(
-                onPressed: stopTask,
+                onPressed: _isLoading ? null : stopTask,
                 style: FilledButton.styleFrom(
+                  disabledBackgroundColor: Colors.grey.shade200,
                   padding: EdgeInsets.symmetric(vertical: 7, horizontal: 12),
                   minimumSize: Size.zero,
                 ),
-                child: Text("Stop"),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isLoading)
+                      SizedBox(
+                        height: 25,
+                        width: 25,
+                        child: CircularProgressIndicator(),
+                      ),
+                    Text("Stop"),
+                  ],
+                ),
               ),
             ],
           ),
