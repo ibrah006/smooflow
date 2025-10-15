@@ -62,9 +62,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
       if (localTask != null) {
         final now = DateTime.now();
-        if (now.difference(updatedAt!) < _dataReloadMinInterval &&
-            now.difference(activityLogLastModified!) < _dataReloadMinInterval &&
-            now.difference(assigneeLastAdded!) < _dataReloadMinInterval) {
+        final sampleFuture = now.add(Duration(days: 1));
+
+        if (now.difference(updatedAt ?? sampleFuture) <
+                _dataReloadMinInterval &&
+            now.difference(activityLogLastModified ?? sampleFuture) <
+                _dataReloadMinInterval &&
+            now.difference(assigneeLastAdded ?? sampleFuture) <
+                _dataReloadMinInterval) {
           // Preventing too frequent calls to server
           return localTask;
         }

@@ -40,7 +40,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
   // late EventNotifier<int>? activeLogDurationSecondsNotifier;
 
-  Task get task => ref.watch(taskByIdProviderSimple(widget.taskId))!;
+  late Task task;
 
   @override
   void didChangeDependencies() {
@@ -72,6 +72,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
     super.initState();
 
     Future.microtask(() async {
+      task = (await ref.watch(taskByIdProvider(widget.taskId)))!;
+
       progressLogFuture = ref
           .watch(
             progressLogsByProjectProvider(
@@ -100,15 +102,27 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      task;
+    } catch (e) {
+      // Still loading up task
+      return LoadingOverlay(isLoading: true, child: Scaffold());
+    }
+
+    print("right here with task: $task");
+
     final textTheme = Theme.of(context).textTheme;
 
-    print("activeTask: ${ref.watch(taskNotifierProvider.notifier).activeTask}");
+    workActivityLogsFuture = ref.watch(workActivityLogsByTaskProvider(task.id));
 
     late final bool showLoadingOverlay;
     try {
       progressLogFuture;
+      print("progressLogFuture: $progressLogFuture");
       workActivityLogsFuture;
+      print("workActivityLogsFuture: $workActivityLogsFuture");
       showLoadingOverlay = false;
+      print("showLoadingOverlay: $showLoadingOverlay");
     } catch (e) {
       showLoadingOverlay = true;
     }
@@ -124,8 +138,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
     final Future<WorkActivityLog?> activeWorkActivityLogFuture =
         ref.watch(workActivityLogNotifierProvider.notifier).activeLog;
-
-    workActivityLogsFuture = ref.watch(workActivityLogsByTaskProvider(task.id));
 
     final durationNotifier =
         ref

@@ -47,6 +47,7 @@ class Task {
     required String projectId,
     required DateTime? dateCompleted,
     required this.workActivityLogs,
+    required this.updatedAt,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -58,7 +59,6 @@ class Task {
        _usedMaterials = usedMaterials {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
-    updatedAt = DateTime.now();
     activityLogLastModified = null;
   }
 
@@ -132,6 +132,8 @@ class Task {
     progressLogId: json["progressLog"]["id"],
     description: json['description'],
     dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+    updatedAt:
+        json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
     dateCompleted:
         json['dateCompleted'] != null
             ? DateTime.parse(json['dateCompleted'])

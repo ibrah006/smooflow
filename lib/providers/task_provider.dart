@@ -37,19 +37,20 @@ final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
 });
 
 // This ensures we get an instance of task with the latest info
-final taskByIdProvider = Provider.family<Future<Task>?, int>((ref, taskId) {
+final taskByIdProvider = Provider.family<Future<Task?>, int>((
+  ref,
+  taskId,
+) async {
   // TODO: Ensure latest task and its relations from database
 
-  ref
+  return await ref
       .watch(taskNotifierProvider.notifier)
       .getTaskById(taskId, forceReload: true);
-
-  return;
 });
 
 // When calling this, make sure the task is already loaded in memory
 @Deprecated(
-  "taskByIdProviderSimple (-> Task) is deprecated and will be completely replaced by taskByIdProvider (-> Future<Task?>)",
+  "taskByIdProviderSimple (-> Task) is deprecated and will be completely replaced by taskByIdProvider (-> Future<Task?>) in future commits",
 )
 final taskByIdProviderSimple = Provider.family<Task?, int>((ref, taskId) {
   final tasks = ref.watch(taskNotifierProvider);
