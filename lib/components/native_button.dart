@@ -59,6 +59,12 @@ class NativeButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
             color: Colors.grey.shade100,
           ),
+          child: Row(
+            children: [
+              Expanded(child: child),
+              if (trailingAction != null) trailingAction!,
+            ],
+          ),
         ),
       );
     }
