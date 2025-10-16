@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/bottom_sheets.dart';
 import 'package:smooflow/components/project_progress_indicator.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/project.dart';
@@ -183,7 +184,9 @@ class ProductionProjectScreen extends ConsumerWidget {
                 SizedBox(height: 15),
                 SizedBox(
                   child: FilledButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      showMaterialLogSheet(context);
+                    },
                     style: FilledButton.styleFrom(
                       padding: EdgeInsets.symmetric(
                         vertical: 8,

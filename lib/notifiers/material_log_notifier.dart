@@ -10,13 +10,13 @@ class MaterialLogNotifier extends StateNotifier<List<MaterialLog>> {
   /// Load all material logs for a project (optionally delta-sync)
   Future<List<MaterialLog>> loadLogsByProject({
     required String projectId,
-    bool ensureLatest = true,
+    bool forceReload = true,
     DateTime? lastLocalUpdate,
   }) async {
     try {
       final logs = await _repo.getMaterialLogsByProject(
         projectId: projectId,
-        since: ensureLatest ? lastLocalUpdate : null,
+        since: forceReload ? lastLocalUpdate : null,
       );
 
       if (logs.isEmpty) return state;
