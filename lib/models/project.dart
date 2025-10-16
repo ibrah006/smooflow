@@ -18,6 +18,8 @@ class Project {
   final int priority;
   // Progress logs' ids
   final List<String> progressLogs;
+  // Project's material logs
+  final List<int> materialLogs;
 
   final DateTime progressLogLastModifiedAt;
 
@@ -50,6 +52,7 @@ class Project {
     required this.client,
     required this.priority,
     required this.progressLogs,
+    required this.materialLogs,
   }) : _status = status,
        progressLogLastModifiedAt = DateTime.now(),
        taskLastModifiedAt = null;
@@ -70,7 +73,8 @@ class Project {
        dateStarted = DateTime.now(),
        progressLogs = [],
        progressLogLastModifiedAt = DateTime.now(),
-       taskLastModifiedAt = null;
+       taskLastModifiedAt = null,
+       materialLogs = [];
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(
@@ -105,6 +109,15 @@ class Project {
                 (e) =>
                     // Progress log id
                     e["id"].toString(),
+              )
+              .toList() ??
+          [],
+      materialLogs:
+          (json['materialLogs'] as List?)
+              ?.map(
+                (e) =>
+                    // Progress log id
+                    e["id"] as int,
               )
               .toList() ??
           [],
