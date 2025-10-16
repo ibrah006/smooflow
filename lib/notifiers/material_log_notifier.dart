@@ -33,4 +33,15 @@ class MaterialLogNotifier extends StateNotifier<List<MaterialLog>> {
       rethrow;
     }
   }
+
+  /// Add a new MaterialLog and update the state
+  Future<void> addMaterialLog(MaterialLog log) async {
+    try {
+      final newLog = await _repo.addMaterialLog(log);
+      state = [...state, newLog];
+    } catch (e) {
+      print('Error adding material log (notifier): $e');
+      rethrow;
+    }
+  }
 }

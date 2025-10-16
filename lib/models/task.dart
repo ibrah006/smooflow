@@ -277,6 +277,10 @@ class Task {
     return newTask;
   }
 
+  static int getIdFromJson(Map<String, dynamic> taskJson) {
+    return taskJson["id"];
+  }
+
   Map<String, dynamic> toJson() {
     final json = {
       'name': name,

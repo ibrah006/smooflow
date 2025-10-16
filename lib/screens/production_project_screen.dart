@@ -31,12 +31,6 @@ class ProductionProjectScreen extends ConsumerWidget {
     // Necessary for project details screen
     ref.watch(projectNotifierProvider.notifier).selectedProject = project;
 
-    final status =
-        ref
-            .watch(projectNotifierProvider)
-            .firstWhere((p) => p.id == project.id)
-            .status;
-
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: true,
