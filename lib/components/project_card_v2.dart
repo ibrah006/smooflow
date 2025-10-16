@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smooflow/components/border_button.dart';
 import 'package:smooflow/components/custom_card.dart';
 import 'package:smooflow/constants.dart';
@@ -60,6 +61,7 @@ class ProjectCardV2 extends StatelessWidget {
 
     return BorderButton(
       onPressed: () {
+        HapticFeedback.lightImpact();
         Navigator.push(
           context,
           MaterialPageRoute(

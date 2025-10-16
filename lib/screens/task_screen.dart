@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -683,6 +684,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
   }
 
   void stopTask() async {
+    HapticFeedback.lightImpact();
     setState(() {
       _isLoading = true;
     });
