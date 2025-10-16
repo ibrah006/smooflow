@@ -132,7 +132,10 @@ class RecentProjectsSection extends ConsumerWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AddProjectScreen.view(projectId: project.id),
+            builder:
+                (context) => ProductionProjectScreen(
+                  projectId: project.id,
+                ), //AddProjectScreen.view(projectId: project.id),
           ),
         );
       },

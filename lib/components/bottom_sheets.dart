@@ -217,6 +217,10 @@ void showMaterialLogSheet(
                               setState(() {
                                 _isLogLoading = false;
                               });
+
+                              await Future.delayed(Duration(milliseconds: 5));
+
+                              Navigator.pop(context);
                             },
                             child: Text("Save"),
                           ),

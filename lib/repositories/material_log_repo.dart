@@ -36,7 +36,7 @@ class MaterialLogRepo {
         body: log.toJson(),
       );
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
+      if (response.statusCode != 201) {
         throw Exception('Failed to create material log: ${response.body}');
       }
 
