@@ -21,7 +21,9 @@ import 'package:smooflow/repositories/company_repo.dart';
 
 const DEFAULT_PRIORITY = PriorityLevel.low;
 
+// Can screen to create project or view project (project details)
 class AddProjectScreen extends ConsumerStatefulWidget {
+  // Add project screen
   AddProjectScreen({Key? key}) : super(key: key) {
     isReadMode = false;
   }
@@ -31,6 +33,7 @@ class AddProjectScreen extends ConsumerStatefulWidget {
   late final bool isReadMode;
 
   // Open Project screen in read mode (ie., just view project info)
+  // Project details screen
   AddProjectScreen.view({Key? key, required this.projectId}) {
     isReadMode = true;
   }

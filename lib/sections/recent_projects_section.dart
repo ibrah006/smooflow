@@ -7,6 +7,7 @@ import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/screens/production_project_screen.dart';
 
 class RecentProjectsSection extends ConsumerWidget {
   const RecentProjectsSection({super.key});
