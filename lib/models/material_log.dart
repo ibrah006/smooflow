@@ -1,5 +1,6 @@
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/user.dart';
+import 'package:smooflow/services/login_service.dart';
 
 enum MaterialLogType { added, removed, transferred }
 
@@ -18,9 +19,12 @@ class MaterialLog {
   final int quantity;
   final double width;
   final double height;
-  final User loggedBy;
-  final int? taskId;
+  final String loggedById;
+  final String? projectId;
   final DateTime dateCreated;
+  @Deprecated(
+    "This is deprecated and is planned to be removed in future versions as this isn't having any function in the latest app",
+  )
   final MaterialLogType type;
 
   MaterialLog({
@@ -29,8 +33,8 @@ class MaterialLog {
     required this.quantity,
     required this.width,
     required this.height,
-    required this.loggedBy,
-    this.taskId,
+    required this.loggedById,
+    this.projectId,
     required this.dateCreated,
     required this.type,
   });
@@ -42,12 +46,24 @@ class MaterialLog {
       quantity: json['quantity'],
       width: (json['width'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
-      loggedBy: User.fromJson(json['loggedBy']),
-      taskId: json['task'] != null ? Task.getIdFromJson(json['task']) : null,
+      loggedById: User.getIdFromJson(json['loggedBy']),
+      projectId:
+          json['task'] != null ? Project.getIdFromJson(json['task']) : null,
       dateCreated: DateTime.parse(json['dateCreated']),
       type: MaterialLogTypeExtension.fromString(json['type']),
     );
   }
+
+  MaterialLog.create({
+    required this.description,
+    required this.quantity,
+    required this.width,
+    required this.height,
+    required this.projectId,
+  }) : id = -1,
+       dateCreated = DateTime.now(),
+       type = MaterialLogType.added,
+       loggedById = LoginService.currentUser!.id;
 
   Map<String, dynamic> toJson() {
     return {
@@ -56,8 +72,8 @@ class MaterialLog {
       'quantity': quantity,
       'width': width,
       'height': height,
-      'loggedBy': loggedBy.toJson(),
-      'task': {"id": taskId},
+      'loggedBy': {"id": loggedById},
+      'task': {"id": projectId},
       'dateCreated': dateCreated.toIso8601String(),
       'type': type.name,
     };

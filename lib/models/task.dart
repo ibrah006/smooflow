@@ -16,10 +16,6 @@ class Task {
   late List<String> _assignees;
   late String _projectId;
 
-  // Material logs
-  late List<MaterialLog> _estimatedMaterials;
-  late List<MaterialLog> _usedMaterials;
-
   DateTime? _dateCompleted;
 
   Color? _color;
@@ -54,9 +50,7 @@ class Task {
        _dueDate = dueDate,
        _assignees = assignees,
        _projectId = projectId,
-       _dateCompleted = dateCompleted,
-       _estimatedMaterials = estimatedMaterials,
-       _usedMaterials = usedMaterials {
+       _dateCompleted = dateCompleted {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
     activityLogLastModified = null;
@@ -77,8 +71,6 @@ class Task {
        _dueDate = dueDate,
        _status = status,
        _assignees = assignees,
-       _estimatedMaterials = estimatedMaterials,
-       _usedMaterials = usedMaterials,
        _projectId = projectId,
        updatedAt = DateTime.now(),
        workActivityLogs = [],
@@ -100,8 +92,6 @@ class Task {
   DateTime? get dateCompleted => _dateCompleted;
   Color? get color => _color;
   IconData? get icon => _icon;
-  List<MaterialLog> get estimatedMaterials => _estimatedMaterials;
-  List<MaterialLog> get usedMaterials => _usedMaterials;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -171,8 +161,6 @@ class Task {
       _assignees = List.from(original.assignees),
       _projectId = original.projectId,
       _dateCompleted = original._dateCompleted,
-      _estimatedMaterials = List.from(original._estimatedMaterials),
-      _usedMaterials = List.from(original._usedMaterials),
       progressLogId = original.progressLogId,
       workActivityLogs = original.workActivityLogs {
     updatedAt = original.updatedAt;
@@ -257,23 +245,6 @@ class Task {
     newTask._color = color ?? _color;
     newTask._icon = icon ?? _icon;
 
-    try {
-      newTask._estimatedMaterials =
-          estimatedMaterials ?? List.from(_estimatedMaterials);
-    } catch (_) {
-      if (estimatedMaterials != null) {
-        newTask._estimatedMaterials = estimatedMaterials;
-      }
-    }
-
-    try {
-      newTask._usedMaterials = usedMaterials ?? List.from(_usedMaterials);
-    } catch (_) {
-      if (usedMaterials != null) {
-        newTask._usedMaterials = usedMaterials;
-      }
-    }
-
     return newTask;
   }
 
@@ -290,8 +261,6 @@ class Task {
       'assignees': assignees,
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
-      'estimatedMaterials': _estimatedMaterials.map((m) => m.toJson()).toList(),
-      'usedMaterials': _usedMaterials.map((m) => m.toJson()).toList(),
       'progressLog': {'id': progressLogId},
     };
     try {
@@ -313,7 +282,5 @@ class Task {
     _dateCompleted = newTask._dateCompleted;
     _color = newTask._color;
     _icon = newTask._icon;
-    _estimatedMaterials = List.from(newTask._estimatedMaterials);
-    _usedMaterials = List.from(newTask._usedMaterials);
   }
 }

@@ -179,7 +179,7 @@ class ProductionProjectScreen extends ConsumerWidget {
                 SizedBox(
                   child: FilledButton(
                     onPressed: () {
-                      showMaterialLogSheet(context);
+                      showMaterialLogSheet(context, ref, projectId: project.id);
                     },
                     style: FilledButton.styleFrom(
                       padding: EdgeInsets.symmetric(
