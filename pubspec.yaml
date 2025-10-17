@@ -92,6 +92,8 @@ flutter:
     - assets/animations/second_half.json
     - assets/images/help_timeline.png
     - assets/images/box_open.png
+    # Google Service Account Key
+    - assets/credentials.json
     
 
   # An image asset can refer to one or more resolution-specific "variants", see
