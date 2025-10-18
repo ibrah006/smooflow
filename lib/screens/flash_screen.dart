@@ -21,7 +21,7 @@ class _FlashScreenState extends State<FlashScreen> {
     Future.microtask(() {
       LoginService.isLoggedIn().then((isLoggedIn) async {
         await CompanyRepo.fetchCompanies();
-        await ProjectRepo().fetchProjects();
+        // await ProjectRepo().fetchProjects();
 
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(

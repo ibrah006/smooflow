@@ -46,6 +46,10 @@ class Company {
       projects = [],
       _isSample = true;
 
+  static String getIdFromJson(Map<String, dynamic> companyJson) {
+    return companyJson["id"];
+  }
+
   factory Company.fromJson(Map<String, dynamic> json) {
     return Company(
       id: json['id'],

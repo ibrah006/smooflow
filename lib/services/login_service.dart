@@ -41,6 +41,15 @@ class LoginService {
     await prefs.setString(SharedStorageOptions.email.name, user.email);
     await prefs.setString(SharedStorageOptions.userRole.name, user.role);
 
+    try {
+      await prefs.setString(
+        SharedStorageOptions.organizationId.name,
+        user.organizationId,
+      );
+    } catch (e) {
+      await prefs.remove(SharedStorageOptions.organizationId.name);
+    }
+
     return response.statusCode == 200;
   }
 

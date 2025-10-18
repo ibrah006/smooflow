@@ -2,6 +2,7 @@
 // import 'package:workflow/core/enums/shared_storage_options.dart';
 
 import 'package:flutter/cupertino.dart';
+import 'organization.dart';
 
 class User {
   late final String id;
@@ -11,16 +12,23 @@ class User {
   final int? phone;
   final String? departmentId; // Reference to Team
   late final DateTime createdAt;
+  // Set once, the user joins/creates an organization
+  late final String organizationId;
 
   User({
-    required this.id,
+    required String? userId,
     required this.name,
     required this.role,
     required this.email,
     this.phone,
     this.departmentId,
     required this.createdAt,
-  });
+    required this.organizationId,
+  }) {
+    if (userId != null) {
+      id = userId;
+    }
+  }
 
   // To ensure toSet gives no duplicates
   @override
@@ -43,15 +51,32 @@ class User {
     : departmentId = null,
       phone = null;
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
-    id: json['id'],
-    name: json['name'],
-    role: json['role'],
-    email: json['email'],
-    phone: json['phone'],
-    departmentId: json['departmentId'],
-    createdAt: DateTime.parse(json['createdAt']),
-  );
+  factory User.fromJson(Map<String, dynamic> json) {
+    try {
+      return User(
+        userId: json['id'],
+        name: json['name'],
+        role: json['role'],
+        email: json['email'],
+        phone: json['phone'],
+        departmentId: json['departmentId'],
+        createdAt: DateTime.parse(json['createdAt']),
+        organizationId: Organization.getIdFromJson(json["organization"]),
+      );
+    } catch (e) {
+      // not part of any organization yet
+      return User(
+        userId: null,
+        name: json['name'],
+        role: json['role'],
+        email: json['email'],
+        phone: json['phone'],
+        departmentId: json['departmentId'],
+        createdAt: DateTime.parse(json['createdAt']),
+        organizationId: Organization.getIdFromJson(json["organization"]),
+      );
+    }
+  }
 
   static String getIdFromJson(userJson) {
     return userJson["id"];
@@ -64,6 +89,7 @@ class User {
       'email': email,
       'phone': phone,
       'department': {"id": departmentId},
+      "organization": {"id": organizationId},
     };
 
     try {
