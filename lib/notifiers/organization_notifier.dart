@@ -7,12 +7,12 @@ import 'package:smooflow/services/login_service.dart';
 class OrganizationState {
   final bool isLoading;
   final String? error;
-  final List<Organization> organizations;
+  final Organization? organization;
 
   const OrganizationState({
     this.isLoading = false,
     this.error,
-    this.organizations = const [],
+    this.organization,
   });
 
   OrganizationState copyWith({
@@ -23,10 +23,7 @@ class OrganizationState {
     return OrganizationState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      organizations: [
-        ...organizations,
-        ...organization != null ? [organization] : [],
-      ],
+      organization: organization ?? this.organization,
     );
   }
 }
@@ -35,14 +32,12 @@ class OrganizationState {
 class OrganizationNotifier extends StateNotifier<OrganizationState> {
   final OrganizationRepo repo;
 
-  OrganizationNotifier(this.repo) : super(const OrganizationState());
+  OrganizationNotifier(this.repo) : super(OrganizationState());
 
   Future<Organization> get getCurrentOrganization async {
     late final Organization organization;
     try {
-      organization = state.organizations.firstWhere(
-        (org) => org.id == LoginService.currentUser!.organizationId,
-      );
+      organization = state.organization!;
     } catch (e) {
       state.copyWith(isLoading: true);
 
@@ -99,6 +94,6 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   }
 
   void reset() {
-    state = const OrganizationState();
+    state = OrganizationState();
   }
 }

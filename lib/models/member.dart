@@ -1,0 +1,42 @@
+// Minimal version of USER class for simplicity, but not used for current user
+class Member {
+  final String id;
+  final String name;
+  final String email;
+  final String role;
+  final DateTime createdAt;
+  final List<String> skills;
+
+  Member({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.role,
+    required this.createdAt,
+    required this.skills,
+  });
+
+  // Factory constructor for creating a User from JSON
+  factory Member.fromJson(Map<String, dynamic> json) {
+    return Member(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] ?? '',
+      createdAt: DateTime.parse(json['createdAt']),
+      skills: List<String>.from(json['skills'] ?? []),
+    );
+  }
+
+  // Convert User to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'role': role,
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'skills': skills,
+    };
+  }
+}

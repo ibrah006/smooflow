@@ -94,4 +94,6 @@ class ApiEndpoints {
   static const String joinOrg = createOrg;
 
   static const String getCurrentOrg = "${createOrg}/current";
+
+  static const String getCurrentOrgMembers = "${createOrg}/members";
 }
