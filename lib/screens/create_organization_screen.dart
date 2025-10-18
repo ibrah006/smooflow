@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 
-class CreateOrganizationScreen extends StatelessWidget {
+class CreateOrganizationScreen extends ConsumerWidget {
   CreateOrganizationScreen({super.key});
 
-  final nameController = TextEditingController();
+  final nameController = TextEditingController(),
+      descriptionController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final textTheme = Theme.of(context).textTheme;
 
     final screenSize = MediaQuery.of(context).size;
@@ -67,8 +70,9 @@ class CreateOrganizationScreen extends StatelessWidget {
                 TextFormField(
                   keyboardType: TextInputType.emailAddress,
                   controller: nameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Name',
+                    hintStyle: TextStyle(color: Colors.grey.shade600),
                     border: UnderlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFFe7eaf0)),
                     ),
@@ -78,6 +82,29 @@ class CreateOrganizationScreen extends StatelessWidget {
                     prefixIcon: Icon(Icons.apartment_rounded),
                   ),
                 ),
+                SizedBox(height: 25),
+                Row(
+                  spacing: 10,
+                  children: [
+                    Icon(Icons.description_outlined),
+                    Text("Description", style: textTheme.titleMedium),
+                  ],
+                ),
+                TextFormField(
+                  keyboardType: TextInputType.emailAddress,
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Enter description about your Organization',
+                    hintStyle: TextStyle(color: Colors.grey.shade600),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 50),
                 SizedBox(
                   width: double.infinity,
@@ -85,7 +112,9 @@ class CreateOrganizationScreen extends StatelessWidget {
                     onPressed: () async {
                       final name = nameController.text;
 
-                      // await
+                      await ref
+                          .watch(organizationNotifierProvider.notifier)
+                          .createOrganization(name);
                     },
                     style: FilledButton.styleFrom(
                       disabledBackgroundColor: Colors.grey.shade200,

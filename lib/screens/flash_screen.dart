@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/screens/create_join_organization_screen.dart';
+import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -27,7 +28,7 @@ class _FlashScreenState extends State<FlashScreen> {
           MaterialPageRoute(
             builder:
                 (context) =>
-                    isLoggedIn ? HomeScreen() : CreateJoinOrganizationScreen(),
+                    isLoggedIn ? HomeScreen() : CreateOrganizationScreen(),
           ),
           (Route<dynamic> route) => false,
         );
