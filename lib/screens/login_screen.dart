@@ -7,6 +7,7 @@ import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
+import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/services/login_service.dart';
 
@@ -358,7 +359,11 @@ class _LoginScreenState extends State<LoginScreen>
         (Route<dynamic> route) => false,
       );
     } else if (loginStatus == LoginStatus.noOrganization) {
-      // TODO: show create/join organization screen
+      // Show create/join organization screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CreateJoinOrganizationScreen()),
+      );
     }
 
     _isLoading = false;
