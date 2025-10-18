@@ -4,6 +4,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 
 class SettingsManageUsersScreen extends ConsumerWidget {
@@ -15,6 +16,10 @@ class SettingsManageUsersScreen extends ConsumerWidget {
 
     final Future<Organization> currentOrgFuture =
         ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
+
+    final members = ref.watch(memberNotifierProvider.notifier).members;
+
+    members.then((val) => print("members: $val"));
 
     return FutureBuilder(
       future: currentOrgFuture,
@@ -44,7 +49,6 @@ class SettingsManageUsersScreen extends ConsumerWidget {
                           spacing: 30,
                           children: [
                             SizedBox(),
-
                             // Personal info
                           ],
                         ),

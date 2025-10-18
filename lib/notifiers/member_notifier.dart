@@ -33,11 +33,10 @@ class MemberNotifier extends StateNotifier<MemberState> {
 
   /// ✅ Fetch all members from the backend
   Future<List<Member>> get members async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
       if (state.members.isEmpty) {
         final members = await repo.getOrganizationMembers();
+        print("we here");
         state = state.copyWith(isLoading: false, members: members);
       }
     } catch (e) {
