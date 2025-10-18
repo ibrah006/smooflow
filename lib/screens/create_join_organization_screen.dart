@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
+import 'package:smooflow/screens/join_organization_screen.dart';
 
 class CreateJoinOrganizationScreen extends StatelessWidget {
   const CreateJoinOrganizationScreen({super.key});
@@ -86,7 +87,14 @@ class CreateJoinOrganizationScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => JoinOrganizationScreen(),
+                        ),
+                      );
+                    },
                     style: OutlinedButton.styleFrom(
                       iconSize: 28,
                       foregroundColor: Colors.black,
