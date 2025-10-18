@@ -32,7 +32,7 @@ class Organization {
       id: json['id'],
       name: json['name'],
       description: json['description'],
-      createdById: json['createdById'],
+      createdById: User.getIdFromJson(json['createdBy']),
       createdBy: User.fromJson(json['createdBy']),
       users:
           (json['users'] as List<dynamic>)
@@ -43,8 +43,10 @@ class Organization {
               .map((projJson) => Project.getIdFromJson(projJson))
               .toList(),
       companies:
-          (json['companies'] as List<dynamic>)
-              .map((compJson) => Company.getIdFromJson(compJson))
+          ((json['companies'] as List<dynamic>?)?.map(
+                    (compJson) => Company.getIdFromJson(compJson),
+                  ) ??
+                  [])
               .toList(),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),

@@ -1,17 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
+import 'package:smooflow/services/login_service.dart';
 
 /// --- STATE MODEL --- ///
 class OrganizationState {
   final bool isLoading;
   final String? error;
-  final Organization? organization;
+  final List<Organization> organizations;
 
   const OrganizationState({
     this.isLoading = false,
     this.error,
-    this.organization,
+    this.organizations = const [],
   });
 
   OrganizationState copyWith({
@@ -22,7 +23,10 @@ class OrganizationState {
     return OrganizationState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      organization: organization ?? this.organization,
+      organizations: [
+        ...organizations,
+        ...organization != null ? [organization] : [],
+      ],
     );
   }
 }
@@ -32,6 +36,33 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   final OrganizationRepo repo;
 
   OrganizationNotifier(this.repo) : super(const OrganizationState());
+
+  Future<Organization> get getCurrentOrganization async {
+    late final Organization organization;
+    try {
+      organization = state.organizations.firstWhere(
+        (org) => org.id == LoginService.currentUser!.organizationId,
+      );
+    } catch (e) {
+      state.copyWith(isLoading: true);
+
+      late final String? error;
+      try {
+        organization = await repo.getCurrentOrganization();
+        error = null;
+      } catch (e) {
+        error = e.toString();
+        print("error: $e");
+      }
+      state.copyWith(
+        isLoading: false,
+        error: error,
+        organization: organization,
+      );
+    }
+
+    return organization;
+  }
 
   Future<Organization?> createOrganization(
     String name, {

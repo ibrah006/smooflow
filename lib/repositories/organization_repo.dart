@@ -46,4 +46,25 @@ class OrganizationRepo {
       throw Exception(data['message'] ?? 'Failed to join organization');
     }
   }
+
+  /// ✅ Fetch the current user's organization details
+  Future<Organization> getCurrentOrganization() async {
+    final response = await ApiClient.http.get(ApiEndpoints.getCurrentOrg);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return Organization.fromJson(data);
+    } else if (response.statusCode == 404) {
+      throw Exception(
+        jsonDecode(response.body)['message'] ??
+            'You are not part of any organization',
+      );
+    } else if (response.statusCode == 401) {
+      throw Exception('Authentication required');
+    } else {
+      throw Exception(
+        'Failed to fetch current organization: ${response.statusCode}',
+      );
+    }
+  }
 }

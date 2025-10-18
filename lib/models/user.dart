@@ -11,7 +11,8 @@ class User {
   final String email;
   final int? phone;
   final String? departmentId; // Reference to Team
-  late final DateTime createdAt;
+  @Deprecated("Will be removed in future versions")
+  late final DateTime? createdAt;
   // Set once, the user joins/creates an organization
   late final String organizationId;
 
@@ -76,7 +77,8 @@ class User {
       email: json['email'],
       phone: json['phone'],
       departmentId: json['departmentId'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       userOrganizationId: userOrganizationId,
     );
   }
@@ -105,7 +107,7 @@ class User {
     }
 
     try {
-      json["createdAt"] = createdAt.toIso8601String();
+      json["createdAt"] = createdAt?.toIso8601String();
     } catch (e) {
       // Can't return with ID because ID isn't initialized yet
       debugPrint(
