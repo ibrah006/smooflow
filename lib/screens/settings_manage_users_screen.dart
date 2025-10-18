@@ -1,3 +1,4 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -6,6 +7,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class SettingsManageUsersScreen extends ConsumerWidget {
   const SettingsManageUsersScreen({super.key});
@@ -17,9 +19,7 @@ class SettingsManageUsersScreen extends ConsumerWidget {
     final Future<Organization> currentOrgFuture =
         ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
 
-    final members = ref.watch(memberNotifierProvider.notifier).members;
-
-    members.then((val) => print("members: $val"));
+    final membersFuture = ref.watch(memberNotifierProvider.notifier).members;
 
     return FutureBuilder(
       future: currentOrgFuture,
@@ -48,8 +48,37 @@ class SettingsManageUsersScreen extends ConsumerWidget {
                         child: Column(
                           spacing: 30,
                           children: [
-                            SizedBox(),
-                            // Personal info
+                            // Members list
+                            FutureBuilder(
+                              future: membersFuture,
+                              builder: (context, snapshot) {
+                                final members = snapshot.data;
+
+                                return members == null
+                                    ? CardLoading(
+                                      height: 120,
+                                      borderRadius: BorderRadius.circular(15),
+                                    )
+                                    : SettingsSection(
+                                      title: "MEMBERS",
+                                      items: List.generate(members.length, (
+                                        index,
+                                      ) {
+                                        return ListTileItem(
+                                          icon: Icons.account_circle_rounded,
+                                          title: members[index].name,
+                                          selectedOption:
+                                              members[index].id ==
+                                                      LoginService
+                                                          .currentUser!
+                                                          .id
+                                                  ? "You/${members[index].role}"
+                                                  : members[index].role,
+                                        );
+                                      }),
+                                    );
+                              },
+                            ),
                           ],
                         ),
                       ),
