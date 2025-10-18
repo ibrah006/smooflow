@@ -44,9 +44,10 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   // create project
   Future<void> create(Project newProject) async {
-    await _repo.createProject(newProject);
+    final createdProjectId = await _repo.createProject(newProject);
 
-    _pushRecentProjectToTop(newProject.id);
+    newProject.initializeId(createdProjectId);
+    _pushRecentProjectToTop(createdProjectId);
 
     state = [...state, newProject];
   }

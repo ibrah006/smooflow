@@ -36,7 +36,8 @@ class ProjectRepo {
     return body;
   }
 
-  Future<void> createProject(Project project) async {
+  // Returns Project ID
+  Future<String> createProject(Project project) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.projects,
       body: project.toJson(),
@@ -46,6 +47,8 @@ class ProjectRepo {
     if (response.statusCode != 201) {
       throw "Failed to create project: ${response.body}\nbody: $body";
     }
+
+    return (body as Map)["id"];
   }
 
   Future<void> updateStatus(String projectId, String newStatus) async {

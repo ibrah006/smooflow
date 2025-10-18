@@ -1,10 +1,9 @@
 import 'package:smooflow/models/company.dart';
-import 'package:uuid/uuid.dart';
 
 import 'user.dart';
 
 class Project {
-  final String id;
+  late final String id;
   final String name;
   final String? description;
   String _status;
@@ -38,6 +37,10 @@ class Project {
     return projectJson["id"];
   }
 
+  initializeId(String newId) {
+    id = newId;
+  }
+
   Project({
     required this.id,
     required this.name,
@@ -67,8 +70,7 @@ class Project {
     required this.assignedManagers,
     required this.client,
     required this.priority,
-  }) : id = Uuid().v1(),
-       _status = "Pending",
+  }) : _status = "Pending",
        tasks = [],
        dateStarted = DateTime.now(),
        progressLogs = [],
@@ -124,9 +126,9 @@ class Project {
     );
   }
 
+  // Only create json
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
       'description': description,
       'status': _status,
