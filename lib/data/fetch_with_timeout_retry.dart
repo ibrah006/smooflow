@@ -25,7 +25,7 @@ Future<http.Response?> fetchWithTimeoutAndRetry({
         return response; // ✅ Success
       } else {
         print("Server responded with ${response.statusCode}");
-        return null;
+        return response;
       }
     } on TimeoutException catch (_) {
       print("Attempt $attempt: Request timed out");

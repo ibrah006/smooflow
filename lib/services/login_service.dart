@@ -25,13 +25,15 @@ class LoginService {
       throw "Server Down, Failed to Login";
     }
 
+    if (response.statusCode != 200) {
+      throw "Invalid Credentials";
+    }
+
     final body = jsonDecode(response.body);
 
     final userRaw = (body as Map)["user"];
 
     currentUser = User.fromJson(userRaw);
-
-    print("response code: ${response.statusCode}, body: ${response.body}");
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(SharedStorageOptions.jwtToken.name, body["token"]);
@@ -43,6 +45,7 @@ class LoginService {
     await prefs.setString(SharedStorageOptions.userRole.name, user.role);
 
     try {
+      print("user organization: ${user.organizationId}");
       await prefs.setString(
         SharedStorageOptions.organizationId.name,
         user.organizationId,

@@ -23,11 +23,12 @@ class User {
     this.phone,
     this.departmentId,
     required this.createdAt,
-    required this.organizationId,
+    required String? userOrganizationId,
   }) {
     if (userId != null) {
       id = userId;
     }
+    if (userOrganizationId != null) organizationId = userOrganizationId;
   }
 
   // To ensure toSet gives no duplicates
@@ -52,30 +53,32 @@ class User {
       phone = null;
 
   factory User.fromJson(Map<String, dynamic> json) {
+    late final userId;
     try {
-      return User(
-        userId: json['id'],
-        name: json['name'],
-        role: json['role'],
-        email: json['email'],
-        phone: json['phone'],
-        departmentId: json['departmentId'],
-        createdAt: DateTime.parse(json['createdAt']),
-        organizationId: Organization.getIdFromJson(json["organization"]),
-      );
+      json['id']!;
+      userId = json['id'];
     } catch (e) {
-      // not part of any organization yet
-      return User(
-        userId: null,
-        name: json['name'],
-        role: json['role'],
-        email: json['email'],
-        phone: json['phone'],
-        departmentId: json['departmentId'],
-        createdAt: DateTime.parse(json['createdAt']),
-        organizationId: Organization.getIdFromJson(json["organization"]),
-      );
+      userId = null;
     }
+
+    late final userOrganizationId;
+    try {
+      json['organization']!;
+      userOrganizationId = json['organization']['id'];
+    } catch (e) {
+      userOrganizationId = null;
+    }
+
+    return User(
+      userId: userId,
+      name: json['name'],
+      role: json['role'],
+      email: json['email'],
+      phone: json['phone'],
+      departmentId: json['departmentId'],
+      createdAt: DateTime.parse(json['createdAt']),
+      userOrganizationId: userOrganizationId,
+    );
   }
 
   static String getIdFromJson(userJson) {
@@ -89,11 +92,11 @@ class User {
       'email': email,
       'phone': phone,
       'department': {"id": departmentId},
-      "organization": {"id": organizationId},
     };
 
     try {
       json["id"] = id;
+      json["organization"] = {"id": organizationId};
     } catch (e) {
       // Can't return with ID because ID isn't initialized yet
       debugPrint(

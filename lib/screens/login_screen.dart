@@ -343,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen>
       showStyledToast(isSuccess: false, message: e.toString());
     }
 
-    if (loginStatus == LoginStatus.success) {
+    if (loginStatus != LoginStatus.failed) {
       showStyledToast(isSuccess: true);
       await Future.delayed(LoginScreen.toastFeedbackDuration);
     }
@@ -359,15 +359,19 @@ class _LoginScreenState extends State<LoginScreen>
         (Route<dynamic> route) => false,
       );
     } else if (loginStatus == LoginStatus.noOrganization) {
+      await CompanyRepo.fetchCompanies();
       // Show create/join organization screen
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => CreateJoinOrganizationScreen()),
+        (Route<dynamic> route) => false,
       );
     }
 
+    print("login status: ${loginStatus}");
+
     _isLoading = false;
-    if (loginStatus != LoginStatus.failed) {
+    if (loginStatus == LoginStatus.failed) {
       setState(() {});
     }
   }
