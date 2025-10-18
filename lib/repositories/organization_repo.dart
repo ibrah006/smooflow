@@ -1,26 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/api/endpoints.dart';
 
 class OrganizationRepo {
-  final String baseUrl;
-  final String token;
-
-  OrganizationRepo({required this.baseUrl, required this.token});
-
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+  OrganizationRepo();
 
   /// Create a new organization
   Future<Map<String, dynamic>> createOrganization({
     required String name,
     String? description,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/organizations'),
-      headers: _headers,
-      body: jsonEncode({'name': name, 'description': description}),
+    final response = await ApiClient.http.post(
+      ApiEndpoints.createOrg,
+      body: {'name': name, 'description': description},
     );
 
     final data = jsonDecode(response.body);
@@ -37,13 +29,12 @@ class OrganizationRepo {
     String? organizationId,
     String? organizationName,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/organizations/join'),
-      headers: _headers,
-      body: jsonEncode({
+    final response = await ApiClient.http.post(
+      ApiEndpoints.joinOrg,
+      body: {
         if (organizationId != null) 'organizationId': organizationId,
         if (organizationName != null) 'organizationName': organizationName,
-      }),
+      },
     );
 
     final data = jsonDecode(response.body);

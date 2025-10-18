@@ -85,5 +85,9 @@ class ApiEndpoints {
       "/projects/$id/progress-rate";
 
   // Get avg projects finish rate
-  static String getProjectsProgressRate = "/projects/progress-rate";
+  static const String getProjectsProgressRate = "/projects/progress-rate";
+
+  static const String createOrg = "/organizations";
+
+  static const String joinOrg = createOrg;
 }

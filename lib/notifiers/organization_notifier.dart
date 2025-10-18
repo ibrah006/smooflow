@@ -1,60 +1,66 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 
-class OrganizationNotifier extends ChangeNotifier {
+/// --- STATE MODEL --- ///
+class OrganizationState {
+  final bool isLoading;
+  final String? error;
+  final Map<String, dynamic>? organization;
+
+  const OrganizationState({
+    this.isLoading = false,
+    this.error,
+    this.organization,
+  });
+
+  OrganizationState copyWith({
+    bool? isLoading,
+    String? error,
+    Map<String, dynamic>? organization,
+  }) {
+    return OrganizationState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      organization: organization ?? this.organization,
+    );
+  }
+}
+
+/// --- STATE NOTIFIER --- ///
+class OrganizationNotifier extends StateNotifier<OrganizationState> {
   final OrganizationRepo repo;
 
-  bool _isLoading = false;
-  String? _error;
-  Map<String, dynamic>? _organization;
-
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  Map<String, dynamic>? get organization => _organization;
-
-  OrganizationNotifier(this.repo);
+  OrganizationNotifier(this.repo) : super(const OrganizationState());
 
   Future<void> createOrganization(String name, {String? description}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       final org = await repo.createOrganization(
         name: name,
         description: description,
       );
-      _organization = org;
+      state = state.copyWith(isLoading: false, organization: org);
     } catch (e) {
-      _error = e.toString();
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> joinOrganization({String? id, String? name}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       final org = await repo.joinOrganization(
         organizationId: id,
         organizationName: name,
       );
-      _organization = org;
+      state = state.copyWith(isLoading: false, organization: org);
     } catch (e) {
-      _error = e.toString();
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   void reset() {
-    _error = null;
-    _organization = null;
-    notifyListeners();
+    state = const OrganizationState();
   }
 }
