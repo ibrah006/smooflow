@@ -20,7 +20,21 @@ class CreateJoinOrganizationHelpScreen extends StatelessWidget {
           child: Column(
             spacing: 30,
             children: [
-              SizedBox(height: height / 15),
+              SizedBox(height: height / 30),
+              Row(
+                spacing: 10,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(width: 42, "assets/icons/app_icon.png"),
+                  Text(
+                    "Smooflow",
+                    style: textTheme.headlineMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 16,
@@ -31,7 +45,6 @@ class CreateJoinOrganizationHelpScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 10,
                       children: [
-                        SizedBox(),
                         Text(
                           "Create An Organization",
                           style: textTheme.titleLarge!.copyWith(
@@ -49,7 +62,6 @@ class CreateJoinOrganizationHelpScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 16,
