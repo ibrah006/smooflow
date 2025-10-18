@@ -22,10 +22,17 @@ class SettingsSection extends StatelessWidget {
       if (item.selectedOption != null) {
         return Padding(
           padding: const EdgeInsets.only(right: 8.0),
-          child: Text(
-            item.selectedOption!,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 17),
-          ),
+          child:
+              item.isLoading == true
+                  ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(),
+                  )
+                  : Text(
+                    item.selectedOption!,
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 17),
+                  ),
         );
       } else if (item.infoText != null) {
         return Text(
@@ -130,6 +137,9 @@ class ListTileItem {
 
   final String? infoText;
 
+  //// Will need to keep [selectedOption] != null
+  bool? isLoading;
+
   ListTileItem({
     required this.icon,
     required this.title,
@@ -137,6 +147,7 @@ class ListTileItem {
     this.selectedOption,
     this.onPressed,
     this.infoText,
+    this.isLoading,
   }) {
     if (initialSwitchState != null) switchState = initialSwitchState;
   }

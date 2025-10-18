@@ -4,7 +4,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/settings_manage_users_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -15,19 +17,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    Future.microtask(() async {
-      final currentOrg =
-          await ref
-              .watch(organizationNotifierProvider.notifier)
-              .getCurrentOrganization;
-      print("current org: $currentOrg");
-    });
-  }
+  Future<Organization> get currentOrgFuture =>
+      ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
 
   @override
   Widget build(BuildContext context) {
@@ -85,20 +76,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
 
               // Organization section
-              SettingsSection(
-                title: "Organization",
-                items: [
-                  ListTileItem(
-                    icon: CupertinoIcons.building_2_fill,
+              FutureBuilder(
+                future: currentOrgFuture,
+                builder: (context, snapshot) {
+                  final currentOrg = snapshot.data;
+
+                  return SettingsSection(
                     title: "Organization",
-                    selectedOption: "Organization Name",
-                  ),
-                  ListTileItem(
-                    icon: Icons.language_rounded,
-                    title: "Language",
-                    selectedOption: "English",
-                  ),
-                ],
+                    items: [
+                      ListTileItem(
+                        icon: CupertinoIcons.building_2_fill,
+                        title: "Organization",
+                        selectedOption: currentOrg?.name ?? "",
+                        isLoading: currentOrg == null,
+                      ),
+                      ListTileItem(
+                        icon: Icons.manage_accounts_outlined,
+                        title: "Manage Users",
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SettingsManageUsersScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
