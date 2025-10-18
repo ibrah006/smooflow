@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
@@ -322,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen>
       _isLoading = true;
     });
 
-    late final bool isLoginSuccess;
+    late final LoginStatus loginStatus;
     try {
       if (!isSignIn) {
         final User newUser = User.register(
@@ -333,25 +334,22 @@ class _LoginScreenState extends State<LoginScreen>
 
         await LoginService.register(user: newUser, password: password);
       }
-      isLoginSuccess = await LoginService.login(
-        email: email,
-        password: password,
-      );
+      loginStatus = await LoginService.login(email: email, password: password);
     } catch (e) {
       print("error: $e");
-      isLoginSuccess = false;
+      loginStatus = LoginStatus.failed;
 
       showStyledToast(isSuccess: false, message: e.toString());
     }
 
-    if (isLoginSuccess) {
+    if (loginStatus == LoginStatus.success) {
       showStyledToast(isSuccess: true);
       await Future.delayed(LoginScreen.toastFeedbackDuration);
     }
 
-    isAuthenticated = isLoginSuccess;
+    isAuthenticated = loginStatus != LoginStatus.failed;
 
-    if (isLoginSuccess) {
+    if (loginStatus == LoginStatus.success) {
       await CompanyRepo.fetchCompanies();
       await ProjectRepo().fetchProjects();
 
@@ -359,10 +357,12 @@ class _LoginScreenState extends State<LoginScreen>
         MaterialPageRoute(builder: (context) => HomeScreen()),
         (Route<dynamic> route) => false,
       );
+    } else if (loginStatus == LoginStatus.noOrganization) {
+      // TODO: show create/join organization screen
     }
 
     _isLoading = false;
-    if (!isLoginSuccess) {
+    if (loginStatus != LoginStatus.failed) {
       setState(() {});
     }
   }

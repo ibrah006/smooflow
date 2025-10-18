@@ -4,13 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/data/fetch_with_timeout_retry.dart';
+import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/models/user.dart';
 
 class LoginService {
   static User? currentUser;
 
-  static Future<bool> login({
+  static Future<LoginStatus> login({
     required String email,
     required String password,
   }) async {
@@ -47,10 +48,18 @@ class LoginService {
         user.organizationId,
       );
     } catch (e) {
+      // Not part of any organization yet
+
       await prefs.remove(SharedStorageOptions.organizationId.name);
+
+      if (response.statusCode == 200) {
+        return LoginStatus.noOrganization;
+      }
     }
 
-    return response.statusCode == 200;
+    return response.statusCode == 200
+        ? LoginStatus.success
+        : LoginStatus.failed;
   }
 
   // static Future<void> logout() async {
