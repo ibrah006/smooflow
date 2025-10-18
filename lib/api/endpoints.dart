@@ -1,5 +1,6 @@
 class ApiEndpoints {
   static const login = "/login";
+  static const relogin = "/users/me/re-login";
   static const register = "/register";
   static const logout = "/logout";
 

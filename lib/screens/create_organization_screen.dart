@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/enums/login_status.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/home_screen.dart';
+import 'package:smooflow/screens/login_screen.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class CreateOrganizationScreen extends ConsumerStatefulWidget {
   CreateOrganizationScreen({super.key});
@@ -125,7 +130,7 @@ class _CreateOrganizationScreenState
                       onPressed: () async {
                         final name = nameController.text.trim();
 
-                        if (name.length > 3) {
+                        if (name.length < 3) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -140,9 +145,42 @@ class _CreateOrganizationScreenState
                           _isLoading = true;
                         });
 
-                        await ref
-                            .watch(organizationNotifierProvider.notifier)
-                            .createOrganization(name);
+                        try {
+                          final org = await ref
+                              .watch(organizationNotifierProvider.notifier)
+                              .createOrganization(name);
+
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString(
+                            SharedStorageOptions.organizationId.name,
+                            org!.id,
+                          );
+                        } catch (e) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Failed to create Organization"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        late final LoginStatus loginStatus;
+
+                        loginStatus = await LoginService.relogin();
+
+                        final isSuccess = loginStatus == LoginStatus.success;
+
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    isSuccess ? HomeScreen() : LoginScreen(),
+                          ),
+                          (Route<dynamic> route) => false,
+                        );
 
                         setState(() {
                           _isLoading = false;

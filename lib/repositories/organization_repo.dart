@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/models/organization.dart';
 
 class OrganizationRepo {
   OrganizationRepo();
 
   /// Create a new organization
-  Future<Map<String, dynamic>> createOrganization({
+  Future<Organization> createOrganization({
     required String name,
     String? description,
   }) async {
@@ -18,14 +19,14 @@ class OrganizationRepo {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 201) {
-      return data['organization'];
+      return Organization.fromJson(data['organization']);
     } else {
       throw Exception(data['message'] ?? 'Failed to create organization');
     }
   }
 
   /// Join an existing organization (by id or name)
-  Future<Map<String, dynamic>> joinOrganization({
+  Future<Organization> joinOrganization({
     String? organizationId,
     String? organizationName,
   }) async {

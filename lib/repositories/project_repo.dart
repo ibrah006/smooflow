@@ -25,13 +25,15 @@ class ProjectRepo {
 
   Future<Map<int, String>> getRecentProjects() async {
     final response = await ApiClient.http.get(ApiEndpoints.getRecentProjects);
-    final body = (jsonDecode(response.body) as Map).map(
-      (k, projectId) => MapEntry(int.parse(k), projectId.toString()),
-    );
+    print("recent projects: ${jsonDecode(response.body)}");
 
     if (response.statusCode != 200) {
       throw "Failed to fetch projects: ${response.body}";
     }
+
+    final body = (jsonDecode(response.body) as Map).map(
+      (k, projectId) => MapEntry(int.parse(k), projectId.toString()),
+    );
 
     return body;
   }
@@ -129,7 +131,7 @@ class ProjectRepo {
     );
 
     if (response.statusCode != 200) {
-      throw "Failed to get projects' avg progress rate, STATUS ${response.statusCode}: ${response.body}";
+      return 0.0;
     }
 
     // Successful

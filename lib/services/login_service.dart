@@ -11,9 +11,23 @@ import 'package:smooflow/models/user.dart';
 class LoginService {
   static User? currentUser;
 
+  static Future<LoginStatus> relogin() async {
+    final response = await ApiClient.http.post(
+      ApiEndpoints.relogin,
+      body: {"placeholder": "null"},
+    );
+
+    if (response.statusCode != 200) {
+      // Failed re-logging user in
+      return LoginStatus.failed;
+    }
+
+    return LoginStatus.success;
+  }
+
   static Future<LoginStatus> login({
     required String email,
-    required String password,
+    required String? password,
   }) async {
     final response = await fetchWithTimeoutAndRetry(
       methodCall: ApiClient.http.post,

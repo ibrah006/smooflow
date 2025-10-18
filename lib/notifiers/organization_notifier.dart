@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 
 /// --- STATE MODEL --- ///
 class OrganizationState {
   final bool isLoading;
   final String? error;
-  final Map<String, dynamic>? organization;
+  final Organization? organization;
 
   const OrganizationState({
     this.isLoading = false,
@@ -16,7 +17,7 @@ class OrganizationState {
   OrganizationState copyWith({
     bool? isLoading,
     String? error,
-    Map<String, dynamic>? organization,
+    Organization? organization,
   }) {
     return OrganizationState(
       isLoading: isLoading ?? this.isLoading,
@@ -32,7 +33,10 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
 
   OrganizationNotifier(this.repo) : super(const OrganizationState());
 
-  Future<void> createOrganization(String name, {String? description}) async {
+  Future<Organization?> createOrganization(
+    String name, {
+    String? description,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -40,9 +44,12 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
         name: name,
         description: description,
       );
+
       state = state.copyWith(isLoading: false, organization: org);
+      return org;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+      return null;
     }
   }
 
