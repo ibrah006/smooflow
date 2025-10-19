@@ -55,35 +55,6 @@ class SettingsManageUsersScreen extends ConsumerWidget {
                               builder: (context, snapshot) {
                                 final members = snapshot.data;
 
-                                if (members != null && members.length < 2) {
-                                  members.addAll([
-                                    Member(
-                                      id: "id",
-                                      name: "Yusuf",
-                                      email: "",
-                                      role: "admin",
-                                      createdAt: DateTime.now(),
-                                      skills: [],
-                                    ),
-                                    Member(
-                                      id: "id",
-                                      name: "Tim Tom",
-                                      email: "",
-                                      role: "production",
-                                      createdAt: DateTime.now(),
-                                      skills: [],
-                                    ),
-                                    Member(
-                                      id: "id",
-                                      name: "John Doe",
-                                      email: "",
-                                      role: "design",
-                                      createdAt: DateTime.now(),
-                                      skills: [],
-                                    ),
-                                  ]);
-                                }
-
                                 return members == null
                                     ? CardLoading(
                                       height: 120,

@@ -5,7 +5,6 @@ class Member {
   final String email;
   final String role;
   final DateTime createdAt;
-  final List<String> skills;
 
   Member({
     required this.id,
@@ -13,7 +12,6 @@ class Member {
     required this.email,
     required this.role,
     required this.createdAt,
-    required this.skills,
   });
 
   // Factory constructor for creating a User from JSON
@@ -24,7 +22,6 @@ class Member {
       email: json['email'] ?? '',
       role: json['role'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
-      skills: List<String>.from(json['skills'] ?? []),
     );
   }
 
@@ -36,7 +33,6 @@ class Member {
       'email': email,
       'role': role,
       'createdAt': createdAt.toUtc().toIso8601String(),
-      'skills': skills,
     };
   }
 }
