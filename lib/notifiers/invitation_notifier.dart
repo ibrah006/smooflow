@@ -57,6 +57,8 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
 
+      print("e: $e");
+
       return InvitationSendStatus.failed;
     }
   }
@@ -65,6 +67,7 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.cancelInvitation(invitationId);
+
       // update local state
 
       final invitation = state.invitations.firstWhere(
@@ -80,6 +83,8 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+
+      rethrow;
     }
   }
 
@@ -116,16 +121,9 @@ class InvitationState {
     final invs = invitations ?? this.invitations;
 
     if (invitation != null) {
-      bool updated = false;
-      invs.map((inv) {
-        if (inv.id == invitation.id) {
-          updated = true;
-          return invitation;
-        }
-        return inv;
-      });
+      invs.removeWhere((inv) => inv.id == invitation.id);
 
-      if (!updated) invs.add(invitation);
+      invs.add(invitation);
     }
 
     return InvitationState(

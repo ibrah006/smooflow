@@ -18,6 +18,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
   bool _isLoading = false;
 
   final emailController = TextEditingController();
+  String? selectedRole;
 
   @override
   void initState() {
@@ -41,8 +42,6 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
-    String? selectedRole;
 
     final invitations = ref.watch(invitationNotifierProvider).invitations;
 
@@ -125,6 +124,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
 
                     // Role Dropdown
                     DropdownButtonFormField<String>(
+                      value: selectedRole,
                       decoration: InputDecoration(
                         hintText: "Select role ",
                         filled: true,
@@ -207,7 +207,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
 
                           final invitationResponse = await ref
                               .watch(invitationNotifierProvider.notifier)
-                              .sendInvitation(email: email);
+                              .sendInvitation(email: email, role: selectedRole);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -225,6 +225,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             ),
                           );
                           emailController.clear();
+                          selectedRole = null;
 
                           setState(() {
                             _isLoading = false;
@@ -287,15 +288,18 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(message)),
                                 );
+
+                                setState(() {});
                               },
                       style: TextButton.styleFrom(
                         overlayColor: Colors.redAccent.shade100,
+                        disabledForegroundColor: Colors.grey,
+                        foregroundColor: Colors.redAccent,
                       ),
                       child: Text(
                         invite.status == InvitationStatus.cancelled
                             ? "Cancelled"
                             : "Cancel",
-                        style: TextStyle(color: Colors.redAccent),
                       ),
                     ),
                   );

@@ -63,6 +63,7 @@ class LocalHttp {
   Future<http.Response> delete(String endpoint, {Map? body}) async {
     return await http.delete(
       Uri.parse('$baseUrl$endpoint'),
+      headers: await getHeaders(),
       body: jsonEncode(body),
     );
   }

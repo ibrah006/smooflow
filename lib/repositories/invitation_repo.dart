@@ -28,9 +28,11 @@ class InvitationRepository {
     );
 
     // CODE 208 means invitation to that user, from this organization is already pending
-    if (response.statusCode != 201 || response.statusCode != 208) {
+    if (response.statusCode != 201 && response.statusCode != 208) {
       throw "Error sending Invitations";
     }
+
+    print("response received: ${response.statusCode}");
 
     final data = jsonDecode(response.body)['data'];
     return InvitationResponse(
@@ -62,6 +64,8 @@ class InvitationRepository {
     final response = await ApiClient.http.delete(
       '${ApiEndpoints.invitations}/$invitationId',
     );
+
+    print("cancel inv STATUS ${response.statusCode},\n${response.body}");
 
     if (response.statusCode != 200) {
       throw "Error Cancelling Invitation";
