@@ -2,6 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/invitation.dart';
 import 'package:smooflow/repositories/invitation_repo.dart';
 
+enum InvitationSendStatus {
+  success,
+  failed,
+  // A request is already pending from this organization
+  alreadyPending,
+}
+
 class InvitationNotifier extends StateNotifier<InvitationState> {
   final InvitationRepository _repository;
 
@@ -10,13 +17,13 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
   bool _isInitialized = false;
 
   Future<List<Invitation>> fetchInvitations({bool forceReload = false}) async {
-    state = state.copyWith(isLoading: true);
+    // state = state.copyWith(isLoading: true);
 
     try {
       late final List<Invitation>? invitations;
       if ((state.invitations.isEmpty && !_isInitialized) || forceReload) {
         invitations = await _repository.getOrganizationInvitations();
-        _isInitialized = true;
+        if (!_isInitialized) _isInitialized = true;
       } else {
         invitations = null;
       }
@@ -29,11 +36,13 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     return state.invitations;
   }
 
-  // TODO: return back invitation send status like success, fail or alreadyPending and depending on that give response to user
-  Future<void> sendInvitation({required String email, String? role}) async {
+  Future<InvitationSendStatus> sendInvitation({
+    required String email,
+    String? role,
+  }) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
     try {
-      final invitation = await _repository.sendInvitation(
+      final invitationResponse = await _repository.sendInvitation(
         email: email,
         role: role,
       );
@@ -41,10 +50,14 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
       state = state.copyWith(
         isLoading: false,
         success: true,
-        invitation: invitation,
+        invitation: invitationResponse.invitation,
       );
+
+      return invitationResponse.invitationSendStatus;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+
+      return InvitationSendStatus.failed;
     }
   }
 

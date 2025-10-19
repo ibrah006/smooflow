@@ -3,11 +3,22 @@ import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/invitation.dart';
+import 'package:smooflow/notifiers/invitation_notifier.dart';
+
+class InvitationResponse {
+  InvitationResponse({
+    required this.invitation,
+    required this.invitationSendStatus,
+  });
+
+  Invitation invitation;
+  InvitationSendStatus invitationSendStatus;
+}
 
 class InvitationRepository {
   InvitationRepository();
 
-  Future<Invitation> sendInvitation({
+  Future<InvitationResponse> sendInvitation({
     required String email,
     String? role,
   }) async {
@@ -22,7 +33,15 @@ class InvitationRepository {
     }
 
     final data = jsonDecode(response.body)['data'];
-    return Invitation.fromJson(data);
+    return InvitationResponse(
+      invitation: Invitation.fromJson(data),
+      invitationSendStatus:
+          response.statusCode == 201
+              ? InvitationSendStatus.success
+              : response.statusCode == 208
+              ? InvitationSendStatus.alreadyPending
+              : InvitationSendStatus.failed,
+    );
   }
 
   Future<List<Invitation>> getOrganizationInvitations({String? status}) async {

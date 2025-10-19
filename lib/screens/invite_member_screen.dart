@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 
 class InviteMemberScreen extends ConsumerStatefulWidget {
@@ -14,10 +15,34 @@ class InviteMemberScreen extends ConsumerStatefulWidget {
 class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
   bool _isLoading = false;
 
+  final emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await ref
+          .watch(invitationNotifierProvider.notifier)
+          .fetchInvitations(forceReload: false);
+
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController();
+    final textTheme = Theme.of(context).textTheme;
+
     String? selectedRole;
+
+    final invitations = ref.watch(invitationNotifierProvider).invitations;
 
     return LoadingOverlay(
       isLoading: _isLoading,
@@ -166,13 +191,22 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             _isLoading = true;
                           });
 
-                          await ref
+                          final invitationResponse = await ref
                               .watch(invitationNotifierProvider.notifier)
                               .sendInvitation(email: email);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Invitation sent to $email'),
+                              duration: Duration(seconds: 8),
+                              content: Text(
+                                invitationResponse ==
+                                        InvitationSendStatus.success
+                                    ? 'Successfully sent invite'
+                                    : invitationResponse ==
+                                        InvitationSendStatus.alreadyPending
+                                    ? 'An invite to this user is already pending from your organization'
+                                    : 'Failed to send invite to user',
+                              ),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -204,49 +238,33 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
               const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount:
+                    invitations.length, // TODO: replace with pending invites
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final invite = invitations[index];
+                  return ListTile(
+                    leading: const Icon(Icons.mail_rounded, size: 20),
+                    title: Text(invite.email, style: textTheme.labelLarge),
+                    subtitle: Text(
+                      invite.role!,
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                  ],
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 2, // TODO: replace with pending invites
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final mockInvites = [
-                      {"email": "alex@company.com", "role": "design"},
-                      {"email": "jane@company.com", "role": "admin"},
-                    ];
-                    final invite = mockInvites[index];
-                    return ListTile(
-                      leading: const Icon(Icons.mail_rounded, size: 20),
-                      title: Text(invite['email']!),
-                      subtitle: Text(
-                        invite['role']!,
-                        style: const TextStyle(color: Colors.grey),
+                    trailing: TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        overlayColor: Colors.redAccent.shade100,
                       ),
-                      trailing: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                          overlayColor: Colors.redAccent.shade100,
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: Colors.redAccent),
-                        ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(color: Colors.redAccent),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
