@@ -8,6 +8,7 @@ import 'package:smooflow/models/member.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class SettingsManageUsersScreen extends ConsumerWidget {
@@ -36,6 +37,15 @@ class SettingsManageUsersScreen extends ConsumerWidget {
                     backgroundColor: backgroundDarker2,
                   )
                   : null,
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => InviteMemberScreen()),
+              );
+            },
+            child: Icon(Icons.add_rounded),
+          ),
           body:
               currentOrg == null
                   ? LoadingOverlay(isLoading: true, child: SizedBox())

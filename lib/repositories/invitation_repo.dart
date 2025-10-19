@@ -9,12 +9,11 @@ class InvitationRepository {
 
   Future<Invitation> sendInvitation({
     required String email,
-    required String organizationId,
     String? role,
   }) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.invitations,
-      body: {'email': email, 'organizationId': organizationId, 'role': role},
+      body: {'email': email, 'role': role},
     );
 
     if (response.statusCode != 201) {
@@ -25,12 +24,9 @@ class InvitationRepository {
     return Invitation.fromJson(data);
   }
 
-  Future<List<Invitation>> getOrganizationInvitations(
-    String organizationId, {
-    String? status,
-  }) async {
+  Future<List<Invitation>> getOrganizationInvitations({String? status}) async {
     final response = await ApiClient.http.get(
-      '${ApiEndpoints.invitations}/organization/$organizationId',
+      '${ApiEndpoints.invitations}/organization',
       queries: status != null ? '?status=$status' : '',
     );
 

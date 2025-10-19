@@ -7,32 +7,29 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
 
   InvitationNotifier(this._repository) : super(const InvitationState());
 
-  Future<void> fetchInvitations(String organizationId) async {
+  Future<void> fetchInvitations() async {
     state = state.copyWith(isLoading: true);
     try {
-      final invitations = await _repository.getOrganizationInvitations(
-        organizationId,
-      );
+      final invitations = await _repository.getOrganizationInvitations();
       state = state.copyWith(isLoading: false, invitations: invitations);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> sendInvitation({
-    required String email,
-    required String organizationId,
-    String? role,
-  }) async {
+  Future<void> sendInvitation({required String email, String? role}) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
     try {
-      await _repository.sendInvitation(
+      final invitation = await _repository.sendInvitation(
         email: email,
-        organizationId: organizationId,
         role: role,
       );
-      state = state.copyWith(isLoading: false, success: true);
-      await fetchInvitations(organizationId);
+      // Update local state
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        invitation: invitation,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -45,7 +42,19 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.cancelInvitation(invitationId);
-      await fetchInvitations(organizationId);
+      // update local state
+
+      final invitation = state.invitations.firstWhere(
+        (inv) => inv.id == invitationId,
+      );
+
+      invitation.status = InvitationStatus.cancelled;
+
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        invitation: invitation,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -76,12 +85,29 @@ class InvitationState {
   InvitationState copyWith({
     bool? isLoading,
     List<Invitation>? invitations,
+    // Adds (to state) if an invitation with this id doesn't exist in state, otherwise updates its existing state
+    Invitation? invitation,
     String? error,
     bool? success,
   }) {
+    final invs = invitations ?? this.invitations;
+
+    if (invitation != null) {
+      bool updated = false;
+      invs.map((inv) {
+        if (inv.id == invitation.id) {
+          updated = true;
+          return invitation;
+        }
+        return inv;
+      });
+
+      if (!updated) invs.add(invitation);
+    }
+
     return InvitationState(
       isLoading: isLoading ?? this.isLoading,
-      invitations: invitations ?? this.invitations,
+      invitations: invs,
       error: error,
       success: success ?? this.success,
     );

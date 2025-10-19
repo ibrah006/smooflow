@@ -98,7 +98,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => InviteMemberScreen(),
+                              builder: (context) => SettingsManageUsersScreen(),
                             ),
                           );
                         },

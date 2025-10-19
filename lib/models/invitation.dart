@@ -3,14 +3,14 @@ enum InvitationStatus { pending, accepted, cancelled, expired }
 class Invitation {
   final String id;
   final String email;
-  final InvitationStatus status;
+  InvitationStatus status;
   final String? role;
   final DateTime? expiresAt;
   final String? invitedBy;
   final String? organizationId;
   final DateTime? createdAt;
 
-  const Invitation({
+  Invitation({
     required this.id,
     required this.email,
     required this.status,
