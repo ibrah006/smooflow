@@ -2,8 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class InviteMemberScreen extends ConsumerStatefulWidget {
   const InviteMemberScreen({super.key});
@@ -167,6 +169,18 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                         onPressed: () async {
                           final email = emailController.text.trim();
 
+                          if (email == LoginService.currentUser!.email) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Please enter a valid email address that's not your own.",
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+
                           if (email.isEmpty || !email.contains('@')) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -254,12 +268,33 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                       style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: TextButton(
-                      onPressed: () {},
+                      onPressed:
+                          invite.status == InvitationStatus.cancelled
+                              ? null
+                              : () async {
+                                late final String message;
+                                try {
+                                  await ref
+                                      .watch(
+                                        invitationNotifierProvider.notifier,
+                                      )
+                                      .cancelInvitation(invite.id);
+                                  message = "Successfully cancelled invitation";
+                                } catch (e) {
+                                  message = e.toString();
+                                }
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)),
+                                );
+                              },
                       style: TextButton.styleFrom(
                         overlayColor: Colors.redAccent.shade100,
                       ),
-                      child: const Text(
-                        "Cancel",
+                      child: Text(
+                        invite.status == InvitationStatus.cancelled
+                            ? "Cancelled"
+                            : "Cancel",
                         style: TextStyle(color: Colors.redAccent),
                       ),
                     ),

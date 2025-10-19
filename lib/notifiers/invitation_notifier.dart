@@ -61,10 +61,7 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     }
   }
 
-  Future<void> cancelInvitation(
-    String invitationId,
-    String organizationId,
-  ) async {
+  Future<void> cancelInvitation(String invitationId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.cancelInvitation(invitationId);
