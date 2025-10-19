@@ -6,6 +6,7 @@ import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/settings_manage_users_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 
@@ -97,7 +98,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SettingsManageUsersScreen(),
+                              builder: (context) => InviteMemberScreen(),
                             ),
                           );
                         },

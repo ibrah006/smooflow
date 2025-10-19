@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/models/member.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
@@ -53,6 +54,35 @@ class SettingsManageUsersScreen extends ConsumerWidget {
                               future: membersFuture,
                               builder: (context, snapshot) {
                                 final members = snapshot.data;
+
+                                if (members != null && members.length < 2) {
+                                  members.addAll([
+                                    Member(
+                                      id: "id",
+                                      name: "Yusuf",
+                                      email: "",
+                                      role: "admin",
+                                      createdAt: DateTime.now(),
+                                      skills: [],
+                                    ),
+                                    Member(
+                                      id: "id",
+                                      name: "Tim Tom",
+                                      email: "",
+                                      role: "production",
+                                      createdAt: DateTime.now(),
+                                      skills: [],
+                                    ),
+                                    Member(
+                                      id: "id",
+                                      name: "John Doe",
+                                      email: "",
+                                      role: "design",
+                                      createdAt: DateTime.now(),
+                                      skills: [],
+                                    ),
+                                  ]);
+                                }
 
                                 return members == null
                                     ? CardLoading(

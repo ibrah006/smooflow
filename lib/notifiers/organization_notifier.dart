@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
-import 'package:smooflow/services/login_service.dart';
 
 /// --- STATE MODEL --- ///
 class OrganizationState {
