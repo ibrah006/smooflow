@@ -16,7 +16,8 @@ class InvitationRepository {
       body: {'email': email, 'role': role},
     );
 
-    if (response.statusCode != 201) {
+    // CODE 208 means invitation to that user, from this organization is already pending
+    if (response.statusCode != 201 || response.statusCode != 208) {
       throw "Error sending Invitations";
     }
 

@@ -7,16 +7,29 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
 
   InvitationNotifier(this._repository) : super(const InvitationState());
 
-  Future<void> fetchInvitations() async {
+  bool _isInitialized = false;
+
+  Future<List<Invitation>> fetchInvitations({bool forceReload = false}) async {
     state = state.copyWith(isLoading: true);
+
     try {
-      final invitations = await _repository.getOrganizationInvitations();
+      late final List<Invitation>? invitations;
+      if ((state.invitations.isEmpty && !_isInitialized) || forceReload) {
+        invitations = await _repository.getOrganizationInvitations();
+        _isInitialized = true;
+      } else {
+        invitations = null;
+      }
+
       state = state.copyWith(isLoading: false, invitations: invitations);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+
+    return state.invitations;
   }
 
+  // TODO: return back invitation send status like success, fail or alreadyPending and depending on that give response to user
   Future<void> sendInvitation({required String email, String? role}) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
     try {
