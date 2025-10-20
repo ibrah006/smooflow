@@ -1,5 +1,7 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 
@@ -34,98 +36,141 @@ class _JoinOrganizationScreenState
 
     final paddingValue = width / 14.2909;
 
+    final state = ref.watch(invitationNotifierProvider);
+
+    // Current user invitations
+    final userInvitations = state.getUserInvitations;
+
+    final isLoading = state.isLoading;
+
     return Scaffold(
       backgroundColor: Color(0xFFf7f9fb),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: screenSize.height / 60),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: paddingValue),
-                padding: EdgeInsets.all(paddingValue),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.02),
-                      spreadRadius: 5,
-                      blurRadius: 10,
-                      offset: Offset(0, 3), // changes position of shadow
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        spacing: 10,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(width: 42, "assets/icons/app_icon.png"),
-                          Text(
-                            "Smooflow",
-                            style: textTheme.headlineMedium!.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: paddingValue),
+              padding: EdgeInsets.all(paddingValue),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.02),
+                    spreadRadius: 5,
+                    blurRadius: 10,
+                    offset: Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      spacing: 10,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(width: 42, "assets/icons/app_icon.png"),
+                        Text(
+                          "Smooflow",
+                          style: textTheme.headlineMedium!.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      "Join your Organization",
+                      style: textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Text(
+                        'Join Organization and Collaborate on projects',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    TextFormField(
+                      keyboardType: TextInputType.emailAddress,
+                      controller: invitationIdController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter invitation ID',
+                        hintStyle: TextStyle(color: Colors.grey.shade600),
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                        ),
+                        prefixIcon: Icon(Icons.apartment_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 50),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () async {
+                          // final name = nameController.text;
+                        },
+                        style: FilledButton.styleFrom(
+                          disabledBackgroundColor: Colors.grey.shade200,
+                        ),
+                        child: Text("Join"),
+                      ),
+                    ),
+
+                    // Invitations for current user
+                    SizedBox(height: 20),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        Text("Your Invitations", style: textTheme.titleMedium),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(50),
+                          onTap: () {
+                            // Refresh current user invitations
+                            invitationNotifier.fetchMyInvitations();
+                          },
+                          child: Icon(
+                            Icons.refresh_rounded,
+                            color: colorPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    if (isLoading)
+                      CardLoading(
+                        height: 60,
+                        borderRadius: BorderRadius.circular(10),
+                        margin: EdgeInsets.only(top: 10),
+                      )
+                    else if (userInvitations.isEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 10,
+                        children: [
+                          Icon(Icons.mark_email_read, color: colorPrimary),
+                          Text("No Invitations"),
                         ],
                       ),
-                      const SizedBox(height: 15),
-                      Text(
-                        "Join your Organization",
-                        style: textTheme.headlineMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Text(
-                          'Join Organization and Collaborate on projects',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      TextFormField(
-                        keyboardType: TextInputType.emailAddress,
-                        controller: invitationIdController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter invitation ID',
-                          hintStyle: TextStyle(color: Colors.grey.shade600),
-                          border: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                          ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                          ),
-                          prefixIcon: Icon(Icons.apartment_rounded),
-                        ),
-                      ),
-                      const SizedBox(height: 50),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () async {
-                            // final name = nameController.text;
-                          },
-                          style: FilledButton.styleFrom(
-                            disabledBackgroundColor: Colors.grey.shade200,
-                          ),
-                          child: Text("Join"),
-                        ),
-                      ),
-
-                      // Invitations for current user
-                    ],
-                  ),
+                    ...List.generate(userInvitations.length, (index) {
+                      final invite = userInvitations[index];
+                      return ListTile(title: Text(invite.organizationName));
+                    }),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

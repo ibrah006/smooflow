@@ -2,6 +2,7 @@ enum InvitationStatus { pending, accepted, cancelled, expired }
 
 class Invitation {
   final String id;
+  // Invitation-to email
   final String email;
   InvitationStatus status;
   final String? role;
@@ -9,6 +10,7 @@ class Invitation {
   final String? invitedBy;
   final String? organizationId;
   final DateTime? createdAt;
+  final String organizationName;
 
   Invitation({
     required this.id,
@@ -19,6 +21,7 @@ class Invitation {
     this.invitedBy,
     this.organizationId,
     this.createdAt,
+    required this.organizationName,
   });
 
   factory Invitation.fromJson(Map<String, dynamic> json) {
@@ -35,11 +38,12 @@ class Invitation {
               ? DateTime.tryParse(json['expiresAt'])
               : null,
       invitedBy: json['invitedBy']?['id'],
-      organizationId: json['organizationId'],
+      organizationId: (json['organization'] as Map)["id"],
       createdAt:
           json['createdAt'] != null
               ? DateTime.tryParse(json['createdAt'])
               : null,
+      organizationName: (json["organization"] as Map)["name"],
     );
   }
 
@@ -49,7 +53,7 @@ class Invitation {
     'status': status.name,
     'role': role,
     'expiresAt': expiresAt?.toIso8601String(),
-    'organizationId': organizationId,
+    'organization': {'name': organizationName, 'id': organizationId},
   };
 
   // @override
