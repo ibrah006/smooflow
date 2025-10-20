@@ -25,6 +25,7 @@ class Invitation {
   });
 
   factory Invitation.fromJson(Map<String, dynamic> json) {
+    print("inv json: $json");
     return Invitation(
       id: json['id'],
       email: json['email'],

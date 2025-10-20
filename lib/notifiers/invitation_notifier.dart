@@ -18,7 +18,7 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
   bool _isInitialized = false;
 
   Future<List<Invitation>> fetchInvitations({bool forceReload = false}) async {
-    // state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true);
 
     try {
       late final List<Invitation>? invitations;
@@ -42,24 +42,25 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     String? role,
   }) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
-    try {
-      final invitationResponse = await _repository.sendInvitation(
-        email: email,
-        role: role,
-      );
-      // Update local state
-      state = state.copyWith(
-        isLoading: false,
-        success: true,
-        invitation: invitationResponse.invitation,
-      );
+    // try {
+    final invitationResponse = await _repository.sendInvitation(
+      email: email,
+      role: role,
+    );
+    // Update local state
+    state = state.copyWith(
+      isLoading: false,
+      success: true,
+      invitation: invitationResponse.invitation,
+    );
 
-      return invitationResponse.invitationSendStatus;
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+    return invitationResponse.invitationSendStatus;
+    // } catch (e) {
+    //   print("error: $e");
+    //   state = state.copyWith(isLoading: false, error: e.toString());
 
-      return InvitationSendStatus.failed;
-    }
+    //   return InvitationSendStatus.failed;
+    // }
   }
 
   Future<void> cancelInvitation(String invitationId) async {
@@ -143,8 +144,8 @@ class InvitationState {
 
   bool get canFetchCurrentUserInvitations =>
       _lastGetUserInvitations != null
-          ? (DateTime.now().difference(_lastGetUserInvitations) >
-              intervalBetweenFetchUserInvitationsCalls)
+          ? DateTime.now().difference(_lastGetUserInvitations) >
+              intervalBetweenFetchUserInvitationsCalls
           : true;
 
   InvitationState copyWith({
@@ -156,7 +157,7 @@ class InvitationState {
     bool? success,
     DateTime? lastGetUserInvitations,
   }) {
-    final invs = invitations ?? this.invitations;
+    final invs = List<Invitation>.from(invitations ?? this.invitations);
 
     if (invitation != null) {
       invs.removeWhere((inv) => inv.id == invitation.id);

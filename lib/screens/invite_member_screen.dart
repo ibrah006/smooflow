@@ -15,8 +15,6 @@ class InviteMemberScreen extends ConsumerStatefulWidget {
 }
 
 class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
-  bool _isLoading = false;
-
   final emailController = TextEditingController();
   String? selectedRole;
 
@@ -24,18 +22,10 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() async {
-      setState(() {
-        _isLoading = true;
-      });
-
-      await ref
+    Future.microtask(() {
+      ref
           .watch(invitationNotifierProvider.notifier)
           .fetchInvitations(forceReload: false);
-
-      setState(() {
-        _isLoading = false;
-      });
     });
   }
 
@@ -43,10 +33,12 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    final invitations = ref.watch(invitationNotifierProvider).invitations;
+    final state = ref.watch(invitationNotifierProvider);
+
+    final invitations = state.invitations;
 
     return LoadingOverlay(
-      isLoading: _isLoading,
+      isLoading: state.isLoading,
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -201,10 +193,6 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             return;
                           }
 
-                          setState(() {
-                            _isLoading = true;
-                          });
-
                           final invitationResponse = await ref
                               .watch(invitationNotifierProvider.notifier)
                               .sendInvitation(email: email, role: selectedRole);
@@ -226,10 +214,6 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                           );
                           emailController.clear();
                           selectedRole = null;
-
-                          setState(() {
-                            _isLoading = false;
-                          });
                         },
                         icon: const Icon(Icons.send_rounded, size: 20),
                         label: const Text(
