@@ -118,8 +118,10 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      _repository.acceptInvitation(invitation.token);
+      await _repository.acceptInvitation(invitation.token);
+
       invitation.status = InvitationStatus.accepted;
+
       state = state.copyWith(isLoading: false, invitation: invitation);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
