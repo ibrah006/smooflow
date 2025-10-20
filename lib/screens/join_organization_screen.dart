@@ -19,86 +19,94 @@ class JoinOrganizationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Color(0xFFf7f9fb),
       body: Center(
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: paddingValue),
-          padding: EdgeInsets.all(paddingValue),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.02),
-                spreadRadius: 5,
-                blurRadius: 10,
-                offset: Offset(0, 3), // changes position of shadow
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  spacing: 10,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(width: 42, "assets/icons/app_icon.png"),
-                    Text(
-                      "Smooflow",
-                      style: textTheme.headlineMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(height: screenSize.height / 60),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: paddingValue),
+                padding: EdgeInsets.all(paddingValue),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.02),
+                      spreadRadius: 5,
+                      blurRadius: 10,
+                      offset: Offset(0, 3), // changes position of shadow
                     ),
                   ],
                 ),
-                const SizedBox(height: 15),
-                Text("Join your Organization", style: textTheme.headlineMedium),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Text(
-                    'Join Organization and Collaborate on projects',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 40),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        spacing: 10,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(width: 42, "assets/icons/app_icon.png"),
+                          Text(
+                            "Smooflow",
+                            style: textTheme.headlineMedium!.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      Text(
+                        "Join your Organization",
+                        style: textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Text(
+                          'Join Organization and Collaborate on projects',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
 
-                TextFormField(
-                  keyboardType: TextInputType.emailAddress,
-                  controller: invitationIdController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter invitation ID',
-                    hintStyle: TextStyle(color: Colors.grey.shade600),
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                    ),
-                    prefixIcon: Icon(Icons.apartment_rounded),
-                  ),
-                ),
-                const SizedBox(height: 50),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () async {
-                      // final name = nameController.text;
+                      TextFormField(
+                        keyboardType: TextInputType.emailAddress,
+                        controller: invitationIdController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter invitation ID',
+                          hintStyle: TextStyle(color: Colors.grey.shade600),
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                          ),
+                          prefixIcon: Icon(Icons.apartment_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 50),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () async {
+                            // final name = nameController.text;
+                          },
+                          style: FilledButton.styleFrom(
+                            disabledBackgroundColor: Colors.grey.shade200,
+                          ),
+                          child: Text("Join"),
+                        ),
+                      ),
 
-                      // await ref
-                      //     .watch(organizationNotifierProvider.notifier)
-                      //     .createOrganization(name);
-                    },
-                    style: FilledButton.styleFrom(
-                      disabledBackgroundColor: Colors.grey.shade200,
-                    ),
-                    child: Text("Join"),
+                      // Invitations for current user
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

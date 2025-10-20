@@ -86,6 +86,16 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     }
   }
 
+  Future<void> fetchMyInvitations() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final invitations = await _repository.getMyInvitations();
+      state = state.copyWith(isLoading: false, invitations: invitations);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
   void clearError() {
     state = state.copyWith(error: null);
   }

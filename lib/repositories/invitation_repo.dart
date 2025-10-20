@@ -93,4 +93,17 @@ class InvitationRepository {
 
     return jsonDecode(response.body)['data'];
   }
+
+  Future<List<Invitation>> getMyInvitations() async {
+    final response = await ApiClient.http.get('${ApiEndpoints.invitations}/me');
+
+    final body = jsonDecode(response.body) as Map;
+
+    if (response.statusCode != 200) {
+      throw body["message"];
+    }
+
+    final List list = body['data'];
+    return list.map((e) => Invitation.fromJson(e)).toList();
+  }
 }

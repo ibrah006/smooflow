@@ -3,7 +3,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/repositories/company_repo.dart';
-import 'package:smooflow/screens/create_organization_screen.dart';
+import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -48,7 +48,7 @@ class _FlashScreenState extends State<FlashScreen> {
             // Not linked to any organization
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) => CreateOrganizationScreen(),
+                builder: (context) => CreateJoinOrganizationScreen(),
               ),
               (Route<dynamic> route) => false,
             );
