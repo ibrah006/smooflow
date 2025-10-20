@@ -73,8 +73,10 @@ class InvitationRepository {
   }
 
   Future<void> acceptInvitation(String token) async {
+    print("accept-token: $token");
     final response = await ApiClient.http.post(
       '${ApiEndpoints.invitations}/accept/$token',
+      body: {"placeholder": null},
     );
 
     if (response.statusCode != 200) {

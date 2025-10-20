@@ -42,25 +42,25 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     String? role,
   }) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
-    // try {
-    final invitationResponse = await _repository.sendInvitation(
-      email: email,
-      role: role,
-    );
-    // Update local state
-    state = state.copyWith(
-      isLoading: false,
-      success: true,
-      invitation: invitationResponse.invitation,
-    );
+    try {
+      final invitationResponse = await _repository.sendInvitation(
+        email: email,
+        role: role,
+      );
+      // Update local state
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        invitation: invitationResponse.invitation,
+      );
 
-    return invitationResponse.invitationSendStatus;
-    // } catch (e) {
-    //   print("error: $e");
-    //   state = state.copyWith(isLoading: false, error: e.toString());
+      return invitationResponse.invitationSendStatus;
+    } catch (e) {
+      print("error: $e");
+      state = state.copyWith(isLoading: false, error: e.toString());
 
-    //   return InvitationSendStatus.failed;
-    // }
+      return InvitationSendStatus.failed;
+    }
   }
 
   Future<void> cancelInvitation(String invitationId) async {

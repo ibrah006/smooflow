@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 
@@ -203,31 +204,44 @@ class _JoinOrganizationScreenState
                         ),
                         leading: Icon(CupertinoIcons.building_2_fill),
                         trailing: FilledButton(
-                          onPressed: () async {
-                            await ref
-                                .read(invitationNotifierProvider.notifier)
-                                .acceptInvitation(invite);
+                          onPressed:
+                              invite.status != InvitationStatus.pending
+                                  ? null
+                                  : () async {
+                                    await ref
+                                        .read(
+                                          invitationNotifierProvider.notifier,
+                                        )
+                                        .acceptInvitation(invite);
 
-                            final state = ref.read(invitationNotifierProvider);
+                                    final state = ref.read(
+                                      invitationNotifierProvider,
+                                    );
 
-                            if (!state.success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    state.error ?? "Error accepting invitation",
-                                  ),
-                                ),
-                              );
-                            }
-                          },
+                                    if (!state.success) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            state.error ??
+                                                "Error accepting invitation",
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
                           style: FilledButton.styleFrom(
                             minimumSize: Size.zero,
+                            disabledBackgroundColor: Colors.grey.shade200,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             textStyle: textTheme.labelLarge!.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          child: Text("Accept"),
+                          child: Text(
+                            "${invite.status.name[0].toUpperCase()}${invite.status.name.substring(1)}",
+                          ),
                         ),
                       );
                     }),
