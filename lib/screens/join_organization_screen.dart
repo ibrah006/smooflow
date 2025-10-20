@@ -208,6 +208,7 @@ class _JoinOrganizationScreenState
                               invite.status != InvitationStatus.pending
                                   ? null
                                   : () async {
+                                    // Accept invitation
                                     await ref
                                         .read(
                                           invitationNotifierProvider.notifier,
@@ -229,7 +230,10 @@ class _JoinOrganizationScreenState
                                           ),
                                         ),
                                       );
+                                      return;
                                     }
+
+                                    // navigate to home screen
                                   },
                           style: FilledButton.styleFrom(
                             minimumSize: Size.zero,
@@ -240,7 +244,9 @@ class _JoinOrganizationScreenState
                             ),
                           ),
                           child: Text(
-                            "${invite.status.name[0].toUpperCase()}${invite.status.name.substring(1)}",
+                            invite.status == InvitationStatus.pending
+                                ? "Accept"
+                                : "${invite.status.name[0].toUpperCase()}${invite.status.name.substring(1)}",
                           ),
                         ),
                       );

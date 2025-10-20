@@ -7,7 +7,6 @@ class Organization {
   final String name;
   final String? description;
   final String createdById;
-  final User createdBy;
   final List<String> users;
   final List<String> projects;
   final List<String> companies;
@@ -19,7 +18,6 @@ class Organization {
     required this.name,
     this.description,
     required this.createdById,
-    required this.createdBy,
     required this.users,
     required this.projects,
     required this.companies,
@@ -33,7 +31,6 @@ class Organization {
       name: json['name'],
       description: json['description'],
       createdById: User.getIdFromJson(json['createdBy']),
-      createdBy: User.fromJson(json['createdBy']),
       users:
           (json['users'] as List<dynamic>)
               .map((userJson) => User.getIdFromJson(userJson))
@@ -63,7 +60,6 @@ class Organization {
       'name': name,
       'description': description,
       'createdById': createdById,
-      'createdBy': createdBy.toJson(),
       'users': users,
       'projects': projects,
       'companies': companies,
