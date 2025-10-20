@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/notifiers/invitation_notifier.dart';
+import 'package:smooflow/providers/invitation_provider.dart';
 
-class JoinOrganizationScreen extends ConsumerWidget {
+class JoinOrganizationScreen extends ConsumerStatefulWidget {
   JoinOrganizationScreen({super.key});
 
+  @override
+  ConsumerState<JoinOrganizationScreen> createState() =>
+      _JoinOrganizationScreenState();
+}
+
+class _JoinOrganizationScreenState
+    extends ConsumerState<JoinOrganizationScreen> {
   final invitationIdController = TextEditingController();
 
+  InvitationNotifier get invitationNotifier =>
+      ref.read(invitationNotifierProvider.notifier);
+
   @override
-  Widget build(BuildContext context, ref) {
+  void initState() {
+    super.initState();
+    Future.microtask(() => invitationNotifier.fetchMyInvitations());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     final screenSize = MediaQuery.of(context).size;
