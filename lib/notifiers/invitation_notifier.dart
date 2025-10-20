@@ -169,7 +169,7 @@ class InvitationState {
       invitations: invs,
       error: error,
       success: success ?? this.success,
-      lastGetUserInvitations: lastGetUserInvitations,
+      lastGetUserInvitations: lastGetUserInvitations ?? _lastGetUserInvitations,
     );
   }
 }

@@ -151,16 +151,19 @@ class _JoinOrganizationScreenState
                       CardLoading(
                         height: 60,
                         borderRadius: BorderRadius.circular(10),
-                        margin: EdgeInsets.only(top: 10),
                       )
                     else if (userInvitations.isEmpty)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 10,
-                        children: [
-                          Icon(Icons.mark_email_read, color: colorPrimary),
-                          Text("No Invitations"),
-                        ],
+                      SizedBox(
+                        height: 60,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 10,
+                          children: [
+                            Icon(Icons.mark_email_read, color: colorPrimary),
+                            Text("No Invitations"),
+                          ],
+                        ),
                       ),
                     ...List.generate(userInvitations.length, (index) {
                       final invite = userInvitations[index];
