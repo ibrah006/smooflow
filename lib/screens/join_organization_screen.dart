@@ -1,4 +1,5 @@
 import 'package:card_loading/card_loading.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
@@ -193,7 +194,26 @@ class _JoinOrganizationScreenState
                       ),
                     ...List.generate(userInvitations.length, (index) {
                       final invite = userInvitations[index];
-                      return ListTile(title: Text(invite.organizationName));
+                      return ListTile(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 0),
+                        title: Text(
+                          invite.organizationName,
+                          maxLines: 2,
+                          overflow: TextOverflow.fade,
+                        ),
+                        leading: Icon(CupertinoIcons.building_2_fill),
+                        trailing: FilledButton(
+                          onPressed: () {},
+                          style: FilledButton.styleFrom(
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            textStyle: textTheme.labelLarge!.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          child: Text("Accept"),
+                        ),
+                      );
                     }),
                   ],
                 ),

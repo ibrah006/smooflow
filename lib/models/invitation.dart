@@ -11,6 +11,7 @@ class Invitation {
   final String? organizationId;
   final DateTime? createdAt;
   final String organizationName;
+  final String token;
 
   Invitation({
     required this.id,
@@ -22,10 +23,10 @@ class Invitation {
     this.organizationId,
     this.createdAt,
     required this.organizationName,
+    required this.token,
   });
 
   factory Invitation.fromJson(Map<String, dynamic> json) {
-    print("inv json: $json");
     return Invitation(
       id: json['id'],
       email: json['email'],
@@ -45,6 +46,7 @@ class Invitation {
               ? DateTime.tryParse(json['createdAt'])
               : null,
       organizationName: (json["organization"] as Map)["name"],
+      token: json["token"],
     );
   }
 
@@ -55,6 +57,7 @@ class Invitation {
     'role': role,
     'expiresAt': expiresAt?.toIso8601String(),
     'organization': {'name': organizationName, 'id': organizationId},
+    'token': token,
   };
 
   // @override

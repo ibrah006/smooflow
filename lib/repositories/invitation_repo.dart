@@ -78,7 +78,7 @@ class InvitationRepository {
     );
 
     if (response.statusCode != 200) {
-      throw "Error Accepting Invitation";
+      throw jsonDecode(response.body)["message"];
     }
   }
 
@@ -98,6 +98,8 @@ class InvitationRepository {
     final response = await ApiClient.http.get('${ApiEndpoints.invitations}/me');
 
     final body = jsonDecode(response.body) as Map;
+
+    print("get my invitations response body: $body");
 
     if (response.statusCode != 200) {
       throw body["message"];
