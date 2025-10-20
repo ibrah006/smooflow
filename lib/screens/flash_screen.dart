@@ -25,21 +25,17 @@ class _FlashScreenState extends State<FlashScreen> {
         await CompanyRepo.fetchCompanies();
         // await ProjectRepo().fetchProjects();
 
+        // final status = await LoginService.relogin();
+
+        // print("statu: ${status}");
+
+        // return;
+
         final prefs = await SharedPreferences.getInstance();
         final orgId = prefs.getString(SharedStorageOptions.organizationId.name);
 
-        print("orgId from shared pref: ${orgId}");
-
         if (isLoggedIn && orgId == null) {
           try {
-            final orgId = LoginService.currentUser!.organizationId;
-
-            // User corresponds to an Organization, just not saved in shared preferences yet
-            await prefs.setString(
-              SharedStorageOptions.organizationId.name,
-              orgId,
-            );
-
             await LoginService.relogin();
 
             Navigator.of(context).pushAndRemoveUntil(

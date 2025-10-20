@@ -22,6 +22,17 @@ class LoginService {
       return LoginStatus.failed;
     }
 
+    final orgId = LoginService.currentUser!.organizationId;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // User corresponds to an Organization, just not saved in shared preferences yet
+    await prefs.setString(SharedStorageOptions.organizationId.name, orgId);
+    await prefs.setString(
+      SharedStorageOptions.jwtToken.name,
+      jsonDecode(response.body)["token"],
+    );
+
     return LoginStatus.success;
   }
 
