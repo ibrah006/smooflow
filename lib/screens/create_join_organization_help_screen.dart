@@ -90,6 +90,34 @@ class CreateJoinOrganizationHelpScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  Icon(Icons.explore_rounded, size: 42, color: colorPrimary),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 10,
+                      children: [
+                        SizedBox(),
+                        Text(
+                          "Decide later",
+                          style: textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          "Explore the app with a sample company. You can still join or create your own organization later.",
+                          style: textTheme.bodyMedium!.copyWith(
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(height: height / 12),
               SizedBox(
                 width: double.infinity,

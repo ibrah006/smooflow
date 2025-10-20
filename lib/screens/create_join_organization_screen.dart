@@ -112,6 +112,35 @@ class CreateJoinOrganizationScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => JoinOrganizationScreen(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      iconSize: 28,
+                      foregroundColor: Colors.black,
+                      side: BorderSide(width: 1, color: Colors.grey.shade200),
+                      textStyle: textTheme.titleMedium,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 17,
+                      ).copyWith(left: 25),
+                      alignment: Alignment.centerLeft,
+                    ),
+                    label: Text("Decide later"),
+                    icon: Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Icon(Icons.explore_outlined),
+                    ),
+                  ),
+                ),
                 SizedBox(height: 70),
                 Text("Need help with this?"),
                 TextButton(

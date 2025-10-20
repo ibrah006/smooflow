@@ -57,8 +57,6 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
 
-      print("e: $e");
-
       return InvitationSendStatus.failed;
     }
   }
