@@ -5,6 +5,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class InviteMemberScreen extends ConsumerStatefulWidget {

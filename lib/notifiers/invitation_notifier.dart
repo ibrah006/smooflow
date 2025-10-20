@@ -8,6 +8,8 @@ enum InvitationSendStatus {
   failed,
   // A request is already pending from this organization
   alreadyPending,
+  // The requested user is already part of the organization the invitation is being sent from
+  alreadyPartOfThisOrg,
 }
 
 class InvitationNotifier extends StateNotifier<InvitationState> {
@@ -190,7 +192,9 @@ class InvitationState {
     final invs = List<Invitation>.from(invitations ?? this.invitations);
 
     if (invitation != null) {
-      invs.removeWhere((inv) => inv.id == invitation.id);
+      invs.removeWhere((inv) {
+        return inv.id == invitation.id;
+      });
 
       invs.add(invitation);
     }

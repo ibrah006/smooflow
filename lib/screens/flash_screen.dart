@@ -28,6 +28,8 @@ class _FlashScreenState extends State<FlashScreen> {
         final prefs = await SharedPreferences.getInstance();
         final orgId = prefs.getString(SharedStorageOptions.organizationId.name);
 
+        print("orgId from shared pref: ${orgId}");
+
         if (isLoggedIn && orgId == null) {
           try {
             final orgId = LoginService.currentUser!.organizationId;

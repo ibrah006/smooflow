@@ -6,6 +6,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
+import 'package:smooflow/screens/flash_screen.dart';
 
 class JoinOrganizationScreen extends ConsumerStatefulWidget {
   JoinOrganizationScreen({super.key});
@@ -233,7 +234,13 @@ class _JoinOrganizationScreenState
                                       return;
                                     }
 
-                                    // navigate to home screen
+                                    // navigate
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                        builder: (context) => FlashScreen(),
+                                      ),
+                                      (Route<dynamic> route) => false,
+                                    );
                                   },
                           style: FilledButton.styleFrom(
                             minimumSize: Size.zero,
