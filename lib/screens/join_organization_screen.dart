@@ -135,9 +135,35 @@ class _JoinOrganizationScreenState
                         Text("Your Invitations", style: textTheme.titleMedium),
                         InkWell(
                           borderRadius: BorderRadius.circular(50),
-                          onTap: () {
+                          onTap: () async {
+                            if (!ref
+                                .read(invitationNotifierProvider)
+                                .canFetchCurrentUserInvitations) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "Please refresh after some time",
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
                             // Refresh current user invitations
-                            invitationNotifier.fetchMyInvitations();
+                            await invitationNotifier.fetchMyInvitations();
+
+                            if (ref
+                                .read(invitationNotifierProvider)
+                                .getUserInvitations
+                                .isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "No Invitations found, please try again after a minute",
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           child: Icon(
                             Icons.refresh_rounded,

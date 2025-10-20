@@ -143,8 +143,8 @@ class InvitationState {
 
   bool get canFetchCurrentUserInvitations =>
       _lastGetUserInvitations != null
-          ? DateTime.now().difference(_lastGetUserInvitations) >
-              intervalBetweenFetchUserInvitationsCalls
+          ? (DateTime.now().difference(_lastGetUserInvitations) >
+              intervalBetweenFetchUserInvitationsCalls)
           : true;
 
   InvitationState copyWith({
