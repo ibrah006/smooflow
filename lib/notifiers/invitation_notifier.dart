@@ -115,6 +115,10 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
   }
 
   Future<void> acceptInvitation(Invitation invitation) async {
+    while (state.isLoading) {
+      print("waiting for another invitation task to finish");
+      await Future.delayed(Duration(milliseconds: 1000));
+    }
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -122,10 +126,21 @@ class InvitationNotifier extends StateNotifier<InvitationState> {
 
       invitation.status = InvitationStatus.accepted;
 
-      state = state.copyWith(isLoading: false, invitation: invitation);
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        invitation: invitation,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      rethrow;
+      // Could be either expired or cancelled invitation
+      invitation.status = InvitationStatus.cancelled;
+
+      state = state.copyWith(
+        isLoading: false,
+        success: false,
+        invitation: invitation,
+        error: e.toString(),
+      );
     }
   }
 }

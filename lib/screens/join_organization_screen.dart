@@ -203,7 +203,23 @@ class _JoinOrganizationScreenState
                         ),
                         leading: Icon(CupertinoIcons.building_2_fill),
                         trailing: FilledButton(
-                          onPressed: () {},
+                          onPressed: () async {
+                            await ref
+                                .read(invitationNotifierProvider.notifier)
+                                .acceptInvitation(invite);
+
+                            final state = ref.read(invitationNotifierProvider);
+
+                            if (!state.success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    state.error ?? "Error accepting invitation",
+                                  ),
+                                ),
+                              );
+                            }
+                          },
                           style: FilledButton.styleFrom(
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
