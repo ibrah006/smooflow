@@ -159,7 +159,8 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                           padding: EdgeInsets.symmetric(vertical: 8),
                         ),
                         onPressed: () async {
-                          final email = emailController.text.trim();
+                          final email =
+                              emailController.text.toLowerCase().trim();
 
                           if (email == LoginService.currentUser!.email) {
                             ScaffoldMessenger.of(context).showSnackBar(

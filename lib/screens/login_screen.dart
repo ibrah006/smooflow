@@ -294,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void authenticate() async {
-    final email = emailController.text.trim();
+    final email = emailController.text.toLowerCase().trim();
     final password = passwordController.text;
     final name = nameController.text.trim();
 
