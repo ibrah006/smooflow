@@ -82,7 +82,7 @@ class App extends StatelessWidget {
           ),
         ),
       ),
-      home: ClaimOrganizationScreen(privateDomain: "compactad.com"),
+      home: FlashScreen(),
     );
   }
 }
