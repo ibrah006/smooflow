@@ -37,6 +37,14 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
 
   OrganizationNotifier(this.repo) : super(OrganizationState());
 
+  Future<void> claimDomainOwnership() async {
+    final isSuccess = await repo.claimDomainOwnership();
+
+    if (!isSuccess) {
+      throw "Failed to claim ownership. Perhaps, an organization already holds ownership of this domain";
+    }
+  }
+
   Future<Organization> get getCurrentOrganization async {
     late final Organization organization;
     try {

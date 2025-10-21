@@ -1,9 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/home_screen.dart';
 
-class ClaimOrganizationScreen extends StatelessWidget {
+class ClaimOrganizationScreen extends ConsumerStatefulWidget {
   final String privateDomain;
   const ClaimOrganizationScreen({super.key, required this.privateDomain});
+
+  @override
+  ConsumerState<ClaimOrganizationScreen> createState() =>
+      _ClaimOrganizationScreenState();
+}
+
+class _ClaimOrganizationScreenState
+    extends ConsumerState<ClaimOrganizationScreen> {
+  bool hasAgreedToTerms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +78,7 @@ class ClaimOrganizationScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 16),
                   children: <TextSpan>[
                     TextSpan(
-                      text: '@${privateDomain}',
+                      text: '@${widget.privateDomain}',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
@@ -88,7 +102,7 @@ class ClaimOrganizationScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    privateDomain,
+                    widget.privateDomain,
                     style: textTheme.titleLarge!.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 20,
@@ -121,7 +135,101 @@ class ClaimOrganizationScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final content = StatefulBuilder(
+                      builder: (context, setState) {
+                        onAgreeTermsToggled(bool? newValue) {
+                          setState(() {
+                            hasAgreedToTerms = newValue ?? false;
+                          });
+                        }
+
+                        return SizedBox(
+                          height: 400,
+                          child: AlertDialog(
+                            content: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    width: 42,
+                                    "assets/icons/app_icon.png",
+                                  ),
+                                  SizedBox(height: 15),
+                                  Text(
+                                    "Domain Ownership Guideline",
+                                    style: textTheme.headlineSmall!.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    "By accepting ownership of this company domain, you agree that if an authorized representative or official owner of this domain submits a verified claim, our team will review and transfer domain ownership accordingly.",
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodyMedium!.copyWith(
+                                      color: Colors.grey.shade900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 15),
+                                  Text(
+                                    "In such a case, your organization will no longer be registered under this private domain, and automatic onboarding for new members using this domain will be disabled.",
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodyMedium!.copyWith(
+                                      color: Colors.grey.shade900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Row(
+                                    children: [
+                                      if (Platform.isIOS)
+                                        CupertinoCheckbox(
+                                          value: hasAgreedToTerms,
+                                          onChanged: onAgreeTermsToggled,
+                                        )
+                                      else
+                                        Checkbox(
+                                          value: hasAgreedToTerms,
+                                          onChanged: onAgreeTermsToggled,
+                                        ),
+                                      Expanded(
+                                        child: Text(
+                                          "I agree to the above terms",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        disabledBackgroundColor:
+                                            Colors.grey.shade200,
+                                      ),
+                                      onPressed:
+                                          !hasAgreedToTerms
+                                              ? null
+                                              : acceptAndClaimDomainOwnership,
+                                      child: Text("Accept & Continue"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+
+                    showCupertinoDialog(
+                      context: context,
+                      barrierDismissible: true,
+                      builder: (context) {
+                        return content;
+                      },
+                    );
+                  },
                   style: FilledButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 10),
                   ),
@@ -138,7 +246,12 @@ class ClaimOrganizationScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      (Route<dynamic> route) => false,
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey.shade200),
                     padding: EdgeInsets.symmetric(vertical: 10),
@@ -156,5 +269,24 @@ class ClaimOrganizationScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void acceptAndClaimDomainOwnership() async {
+    late final message;
+    try {
+      await ref
+          .read(organizationNotifierProvider.notifier)
+          .claimDomainOwnership();
+
+      message = "Successfully claimed ownership to this domain";
+    } catch (e) {
+      Navigator.pop(context);
+
+      message = e.toString();
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

@@ -107,6 +107,16 @@ class OrganizationRepo {
         ? null
         : DateTime.parse(projectsLastAddedRaw);
   }
+
+  // true: success
+  Future<bool> claimDomainOwnership() async {
+    final response = await ApiClient.http.put(
+      ApiEndpoints.claimOrganizationDomainOwnership,
+      body: {"placeholder": null},
+    );
+
+    return response.statusCode == 200;
+  }
 }
 
 class CreateOrganizationResponse {
