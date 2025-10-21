@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smooflow/components/project_card_v2.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
@@ -16,6 +17,14 @@ class ProjectsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
+  Future<void> _refreshProjects() async {
+    final projectsLastAdded =
+        ref.watch(organizationNotifierProvider).projectsLastAdded;
+    await ref
+        .watch(projectNotifierProvider.notifier)
+        .load(projectsLastAddedLocal: projectsLastAdded);
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -93,17 +102,21 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     child: search_bar.SearchBar(),
                   ),
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 25),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 30),
-                        child: Column(
-                          spacing: 15,
-                          children: [
-                            ...projects.map((project) {
-                              return ProjectCardV2(project);
-                            }),
-                          ],
+                    child: RefreshIndicator(
+                      onRefresh: _refreshProjects,
+                      child: SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.symmetric(horizontal: 25),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 30),
+                          child: Column(
+                            spacing: 15,
+                            children: [
+                              ...projects.map((project) {
+                                return ProjectCardV2(project);
+                              }),
+                            ],
+                          ),
                         ),
                       ),
                     ),
