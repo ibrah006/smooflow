@@ -62,20 +62,24 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
     return organization;
   }
 
-  Future<Organization?> createOrganization(
+  Future<CreateOrganizationResponse?> createOrganization(
     String name, {
     String? description,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final org = await repo.createOrganization(
+      final organizationResponse = await repo.createOrganization(
         name: name,
         description: description,
       );
 
-      state = state.copyWith(isLoading: false, organization: org);
-      return org;
+      state = state.copyWith(
+        isLoading: false,
+        organization: organizationResponse.organization,
+      );
+
+      return organizationResponse;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       return null;

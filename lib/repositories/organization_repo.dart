@@ -8,7 +8,7 @@ class OrganizationRepo {
   OrganizationRepo();
 
   /// Create a new organization
-  Future<Organization> createOrganization({
+  Future<CreateOrganizationResponse> createOrganization({
     required String name,
     String? description,
   }) async {
@@ -20,7 +20,11 @@ class OrganizationRepo {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 201) {
-      return Organization.fromJson(data['organization']);
+      return CreateOrganizationResponse(
+        organization: Organization.fromJson(data['organization']),
+        privateDomainAvailable: data['privateDomainAvailable'],
+        privateDomain: data['privateDomain'],
+      );
     } else {
       throw Exception(data['message'] ?? 'Failed to create organization');
     }
@@ -102,5 +106,22 @@ class OrganizationRepo {
     return projectsLastAddedRaw == null
         ? null
         : DateTime.parse(projectsLastAddedRaw);
+  }
+}
+
+class CreateOrganizationResponse {
+  final Organization organization;
+  final bool privateDomainAvailable;
+  final String? privateDomain;
+
+  CreateOrganizationResponse({
+    required this.organization,
+    required this.privateDomainAvailable,
+    required this.privateDomain,
+  }) {
+    if (privateDomainAvailable && privateDomain == null) {
+      // If this error is ever thrown then it's probably in the frontend and just th developer's fault in modifying the create organization repo function
+      throw "ERROR: Private domain can't be available on a null private domain";
+    }
   }
 }

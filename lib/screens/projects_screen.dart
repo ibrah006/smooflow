@@ -104,20 +104,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _refreshProjects,
-                      child: SingleChildScrollView(
+                      child: ListView(
                         physics: AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: 25),
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 30),
-                          child: Column(
-                            spacing: 15,
-                            children: [
-                              ...projects.map((project) {
-                                return ProjectCardV2(project);
-                              }),
-                            ],
-                          ),
-                        ),
+                        children:
+                            projects.map((project) {
+                              return ProjectCardV2(project);
+                            }).toList(),
                       ),
                     ),
                   ),

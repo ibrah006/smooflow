@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/repositories/organization_repo.dart';
+import 'package:smooflow/screens/claim_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -145,15 +147,17 @@ class _CreateOrganizationScreenState
                           _isLoading = true;
                         });
 
+                        late final CreateOrganizationResponse orgResponse;
                         try {
-                          final org = await ref
-                              .watch(organizationNotifierProvider.notifier)
-                              .createOrganization(name);
+                          orgResponse =
+                              (await ref
+                                  .watch(organizationNotifierProvider.notifier)
+                                  .createOrganization(name))!;
 
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setString(
                             SharedStorageOptions.organizationId.name,
-                            org!.id,
+                            orgResponse.organization.id,
                           );
                         } catch (e) {
                           setState(() {
@@ -164,6 +168,7 @@ class _CreateOrganizationScreenState
                               content: Text("Failed to create Organization"),
                             ),
                           );
+                          // Without this return; the org response will be accessed in the following code without being initialized
                           return;
                         }
 
@@ -173,25 +178,33 @@ class _CreateOrganizationScreenState
 
                         final isSuccess = loginStatus == LoginStatus.success;
 
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    isSuccess ? HomeScreen() : LoginScreen(),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
+                        // If relogin not success, re-direct to login screen to login manually
+                        if (!isSuccess) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => LoginScreen(),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                        }
+
+                        if (orgResponse.privateDomainAvailable) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ClaimOrganizationScreen(
+                                    privateDomain: orgResponse.privateDomain!,
+                                  ),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                        }
 
                         setState(() {
                           _isLoading = false;
                         });
 
                         await Future.delayed(Duration(milliseconds: 5));
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomeScreen()),
-                        );
                       },
                       style: FilledButton.styleFrom(
                         disabledBackgroundColor: Colors.grey.shade200,
