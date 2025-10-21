@@ -19,6 +19,8 @@ class OrganizationRepo {
 
     final data = jsonDecode(response.body);
 
+    print("create organization: $data");
+
     if (response.statusCode == 201) {
       return CreateOrganizationResponse(
         organization: Organization.fromJson(data['organization']),
@@ -114,6 +116,8 @@ class OrganizationRepo {
       ApiEndpoints.claimOrganizationDomainOwnership,
       body: {"placeholder": null},
     );
+
+    print("response status: ${response.statusCode}, body: ${response.body}");
 
     return response.statusCode == 200;
   }

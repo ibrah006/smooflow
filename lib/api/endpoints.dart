@@ -102,5 +102,5 @@ class ApiEndpoints {
   static const String invitations = "/invitations";
 
   static const String claimOrganizationDomainOwnership =
-      "/organization/claim-ownership";
+      "/organizations/claim-ownership";
 }

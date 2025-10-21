@@ -91,6 +91,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         selectedOption: currentOrg?.name ?? "",
                         isLoading: currentOrg == null,
                       ),
+                      if (currentOrg != null &&
+                          (currentOrg.isDomainOwner &&
+                              currentOrg.privateDomain != null))
+                        ListTileItem(
+                          icon: Icons.domain,
+                          title: "Private Domain",
+                          selectedOption: currentOrg.privateDomain,
+                        ),
                       ListTileItem(
                         icon: Icons.manage_accounts_outlined,
                         title: "Manage Users",

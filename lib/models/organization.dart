@@ -12,6 +12,9 @@ class Organization {
   final List<String> companies;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // if the organization owns a custom domain
+  final bool isDomainOwner;
+  final String? privateDomain;
 
   Organization({
     required this.id,
@@ -23,6 +26,8 @@ class Organization {
     required this.companies,
     required this.createdAt,
     required this.updatedAt,
+    required this.isDomainOwner,
+    required this.privateDomain,
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) {
@@ -47,6 +52,8 @@ class Organization {
               .toList(),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      isDomainOwner: json['isDomainOwner'],
+      privateDomain: json['privateDomain'],
     );
   }
 
@@ -65,6 +72,7 @@ class Organization {
       'companies': companies,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      // isDomainOwner and privateDomain don't need to be passed in here as they are only updated from server as of now
     };
   }
 }

@@ -154,32 +154,32 @@ class _ClaimOrganizationScreenState
                             _isLoading = true;
                           });
 
-                          try {
-                            await ref
-                                .read(organizationNotifierProvider.notifier)
-                                .claimDomainOwnership();
+                          // try {
+                          await ref
+                              .read(organizationNotifierProvider.notifier)
+                              .claimDomainOwnership();
 
-                            message =
-                                "Successfully claimed ownership to this domain";
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(message)));
+                          message =
+                              "Successfully claimed ownership to this domain";
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(message)));
 
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (context) => HomeScreen(),
-                              ),
-                              (Route<dynamic> route) => false,
-                            );
-                          } catch (e) {
-                            Navigator.pop(context);
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen(),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                          // } catch (e) {
+                          //   Navigator.pop(context);
 
-                            message = e.toString();
+                          //   message = e.toString();
 
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(message)));
-                          }
+                          //   ScaffoldMessenger.of(
+                          //     context,
+                          //   ).showSnackBar(SnackBar(content: Text(message)));
+                          // }
 
                           setState(() {
                             _isLoading = false;

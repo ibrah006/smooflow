@@ -4,6 +4,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
+import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 import 'package:smooflow/screens/claim_organization_screen.dart';
@@ -148,6 +149,7 @@ class _CreateOrganizationScreenState
                         });
 
                         late final CreateOrganizationResponse orgResponse;
+                        late final bool isSuccess;
                         try {
                           orgResponse =
                               (await ref
@@ -159,7 +161,21 @@ class _CreateOrganizationScreenState
                             SharedStorageOptions.organizationId.name,
                             orgResponse.organization.id,
                           );
+
+                          LoginService.currentUser = User(
+                            userId: LoginService.currentUser!.id,
+                            name: LoginService.currentUser!.name,
+                            role: LoginService.currentUser!.role,
+                            email: LoginService.currentUser!.email,
+                            createdAt: LoginService.currentUser!.createdAt,
+                            userOrganizationId: orgResponse.organization.id,
+                          );
+
+                          final loginStatus = await LoginService.relogin();
+                          isSuccess = loginStatus == LoginStatus.success;
                         } catch (e) {
+                          print("exception: $e");
+
                           setState(() {
                             _isLoading = false;
                           });
@@ -171,12 +187,6 @@ class _CreateOrganizationScreenState
                           // Without this return; the org response will be accessed in the following code without being initialized
                           return;
                         }
-
-                        late final LoginStatus loginStatus;
-
-                        loginStatus = await LoginService.relogin();
-
-                        final isSuccess = loginStatus == LoginStatus.success;
 
                         // If relogin not success, re-direct to login screen to login manually
                         if (!isSuccess) {
