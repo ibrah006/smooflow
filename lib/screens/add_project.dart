@@ -11,6 +11,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/priorities.dart';
 import 'package:smooflow/models/company.dart';
 import 'package:smooflow/models/project.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_client_screen.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
@@ -815,6 +816,9 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
               estimatedProductionStart: timelineData.startDate,
             ),
           );
+
+      // Notify organization state about this adding of a project to update projectsLastAdded
+      ref.read(organizationNotifierProvider.notifier).projectAdded();
     } catch (e) {
       setState(() {
         _isLoading = false;

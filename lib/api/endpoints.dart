@@ -8,7 +8,6 @@ class ApiEndpoints {
   static const getUsers = "/users";
 
   // Tasks
-  static const getTasks = "/tasks";
 
   static String createTask(String projectId) => "/projects/$projectId";
 
@@ -96,6 +95,8 @@ class ApiEndpoints {
   static const String getCurrentOrg = "${createOrg}/current";
 
   static const String getCurrentOrgMembers = "${createOrg}/members";
+
+  static const String getProjectsLastAdded = "${createOrg}/projects-last-added";
 
   // invitations
   static const String invitations = "/invitations";

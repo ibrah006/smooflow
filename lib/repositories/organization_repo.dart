@@ -87,4 +87,16 @@ class OrganizationRepo {
       );
     }
   }
+
+  Future<DateTime> get getProjectsLastAdded async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.getProjectsLastAdded,
+    );
+
+    if (response.statusCode != 200) {
+      throw "Error getting Projects Last Added (datetime) for this organization";
+    }
+
+    return DateTime.parse(jsonDecode(response.body)["projectsLastAdded"]);
+  }
 }

@@ -3,10 +3,13 @@ import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/repositories/organization_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
 
 class ProjectNotifier extends StateNotifier<List<Project>> {
-  ProjectNotifier(this._repo) : super([]);
+  ProjectNotifier(this._repo) : super([]) {
+    _orgRepo = OrganizationRepo();
+  }
 
   final ProjectRepo _repo;
 
@@ -21,6 +24,8 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   Project? get selectedProject => _selectedProject;
 
   set selectedProject(Project? newVal) => _selectedProject = newVal;
+
+  late final OrganizationRepo _orgRepo;
 
   // load projects
   Future<void> load() async {

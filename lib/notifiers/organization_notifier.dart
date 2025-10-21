@@ -7,22 +7,26 @@ class OrganizationState {
   final bool isLoading;
   final String? error;
   final Organization? organization;
+  final DateTime? projectsLastAdded;
 
   const OrganizationState({
     this.isLoading = false,
     this.error,
     this.organization,
+    this.projectsLastAdded,
   });
 
   OrganizationState copyWith({
     bool? isLoading,
     String? error,
     Organization? organization,
+    DateTime? projectsLastAdded,
   }) {
     return OrganizationState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
       organization: organization ?? this.organization,
+      projectsLastAdded: this.projectsLastAdded ?? projectsLastAdded,
     );
   }
 }
@@ -90,6 +94,10 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  void projectAdded() {
+    state = state.copyWith(projectsLastAdded: DateTime.now());
   }
 
   void reset() {
