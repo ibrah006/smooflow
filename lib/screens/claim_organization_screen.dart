@@ -144,91 +144,96 @@ class _ClaimOrganizationScreenState
                           });
                         }
 
-                        return SizedBox(
-                          height: 400,
-                          child: AlertDialog(
-                            content: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    width: 42,
-                                    "assets/icons/app_icon.png",
+                        return AlertDialog(
+                          content: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  width: 42,
+                                  "assets/icons/app_icon.png",
+                                ),
+                                SizedBox(height: 15),
+                                Text(
+                                  "Domain Ownership Guideline",
+                                  style: textTheme.headlineSmall!.copyWith(
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  SizedBox(height: 15),
-                                  Text(
-                                    "Domain Ownership Guideline",
-                                    style: textTheme.headlineSmall!.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                ),
+                                SizedBox(height: 20),
+                                Text(
+                                  "By accepting ownership of this company domain, you agree that if an authorized representative or official owner of this domain submits a verified claim, our team will review and transfer domain ownership accordingly.",
+                                  textAlign: TextAlign.center,
+                                  style: textTheme.bodyMedium!.copyWith(
+                                    color: Colors.grey.shade900,
                                   ),
-                                  SizedBox(height: 20),
-                                  Text(
-                                    "By accepting ownership of this company domain, you agree that if an authorized representative or official owner of this domain submits a verified claim, our team will review and transfer domain ownership accordingly.",
-                                    textAlign: TextAlign.center,
-                                    style: textTheme.bodyMedium!.copyWith(
-                                      color: Colors.grey.shade900,
-                                    ),
+                                ),
+                                SizedBox(height: 15),
+                                Text(
+                                  "In such a case, your organization will no longer be registered under this private domain, and automatic onboarding for new members into this organization will be disabled.",
+                                  textAlign: TextAlign.center,
+                                  style: textTheme.bodyMedium!.copyWith(
+                                    color: Colors.grey.shade900,
                                   ),
-                                  SizedBox(height: 15),
-                                  Text(
-                                    "In such a case, your organization will no longer be registered under this private domain, and automatic onboarding for new members using this domain will be disabled.",
-                                    textAlign: TextAlign.center,
-                                    style: textTheme.bodyMedium!.copyWith(
-                                      color: Colors.grey.shade900,
-                                    ),
-                                  ),
-                                  SizedBox(height: 20),
-                                  Row(
-                                    children: [
-                                      if (Platform.isIOS)
-                                        CupertinoCheckbox(
-                                          value: hasAgreedToTerms,
-                                          onChanged: onAgreeTermsToggled,
-                                        )
-                                      else
-                                        Checkbox(
-                                          value: hasAgreedToTerms,
-                                          onChanged: onAgreeTermsToggled,
-                                        ),
-                                      Expanded(
-                                        child: Text(
-                                          "I agree to the above terms",
-                                        ),
+                                ),
+                                SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    if (Platform.isIOS)
+                                      CupertinoCheckbox(
+                                        value: hasAgreedToTerms,
+                                        onChanged: onAgreeTermsToggled,
+                                      )
+                                    else
+                                      Checkbox(
+                                        value: hasAgreedToTerms,
+                                        onChanged: onAgreeTermsToggled,
                                       ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: FilledButton(
-                                      style: FilledButton.styleFrom(
-                                        disabledBackgroundColor:
-                                            Colors.grey.shade200,
-                                      ),
-                                      onPressed:
-                                          !hasAgreedToTerms
-                                              ? null
-                                              : acceptAndClaimDomainOwnership,
-                                      child: Text("Accept & Continue"),
+                                    Expanded(
+                                      child: Text("I agree to the above terms"),
                                     ),
+                                  ],
+                                ),
+                                SizedBox(height: 5),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      disabledBackgroundColor:
+                                          Colors.grey.shade200,
+                                    ),
+                                    onPressed:
+                                        !hasAgreedToTerms
+                                            ? null
+                                            : acceptAndClaimDomainOwnership,
+                                    child: Text("Accept & Continue"),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         );
                       },
                     );
 
-                    showCupertinoDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (context) {
-                        return content;
-                      },
-                    );
+                    if (Platform.isIOS) {
+                      showCupertinoDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) {
+                          return content;
+                        },
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) {
+                          return content;
+                        },
+                      );
+                    }
                   },
                   style: FilledButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 10),
@@ -279,14 +284,22 @@ class _ClaimOrganizationScreenState
           .claimDomainOwnership();
 
       message = "Successfully claimed ownership to this domain";
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       Navigator.pop(context);
 
       message = e.toString();
-    }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 }
