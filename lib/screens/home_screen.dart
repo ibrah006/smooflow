@@ -29,11 +29,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
     super.initState();
 
     Future.microtask(() {
-      ref.read(projectNotifierProvider.notifier).load().then((value) async {
-        setState(() {
-          _isLoading = false;
-        });
-      });
+      ref
+          .read(projectNotifierProvider.notifier)
+          .load(projectsLastAddedLocal: null)
+          .then((value) async {
+            setState(() {
+              _isLoading = false;
+            });
+          });
     });
   }
 

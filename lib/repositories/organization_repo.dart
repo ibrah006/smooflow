@@ -88,7 +88,7 @@ class OrganizationRepo {
     }
   }
 
-  Future<DateTime> get getProjectsLastAdded async {
+  Future<DateTime?> get getProjectsLastAdded async {
     final response = await ApiClient.http.get(
       ApiEndpoints.getProjectsLastAdded,
     );
@@ -97,6 +97,10 @@ class OrganizationRepo {
       throw "Error getting Projects Last Added (datetime) for this organization";
     }
 
-    return DateTime.parse(jsonDecode(response.body)["projectsLastAdded"]);
+    final projectsLastAddedRaw = jsonDecode(response.body)["projectsLastAdded"];
+
+    return projectsLastAddedRaw == null
+        ? null
+        : DateTime.parse(projectsLastAddedRaw);
   }
 }

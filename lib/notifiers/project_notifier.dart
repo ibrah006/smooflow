@@ -28,13 +28,19 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   late final OrganizationRepo _orgRepo;
 
   // load projects
-  Future<void> load() async {
-    // Don't need to worry about calling this before loading projects
-    // As the progress rate calculation and everything is done in server and returned
-    await _getProjectsProgressRate();
-    recent = await _repo.getRecentProjects();
-    final projects = await _repo.fetchProjects();
-    state = projects;
+  Future<void> load({required DateTime? projectsLastAddedLocal}) async {
+    final projectsLastAddedServer = await _orgRepo.getProjectsLastAdded;
+
+    if (projectsLastAddedLocal == null ||
+        (projectsLastAddedServer?.isAfter(projectsLastAddedLocal) ?? false)) {
+      // Don't need to worry about calling this before loading projects
+      // As the progress rate calculation and everything is done in server and returned
+      await _getProjectsProgressRate();
+      recent = await _repo.getRecentProjects();
+
+      final projects = await _repo.fetchProjects();
+      state = projects;
+    }
   }
 
   int get activeProjectsLength {
