@@ -1,12 +1,11 @@
 import 'dart:convert';
-
-import 'package:googleapis/cloudresourcemanager/v3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/data/fetch_with_timeout_retry.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
+import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/models/user.dart';
 
 class LoginService {
@@ -145,36 +144,38 @@ class LoginService {
   }
 
   static Future<IsLoggedInStatus> isLoggedIn() async {
-    try {
-      final response = await fetchWithTimeoutAndRetry(
-        methodCall: ApiClient.http.get,
-        url: ApiEndpoints.getCurrentUserInfo,
-      );
+    // try {
+    final response = await fetchWithTimeoutAndRetry(
+      methodCall: ApiClient.http.get,
+      url: ApiEndpoints.getCurrentUserInfo,
+    );
 
-      if (response?.statusCode != 200) {
-        return IsLoggedInStatus(loginStatus: LoginStatus.failed);
-      }
-
-      final body = (jsonDecode(response!.body) as Map);
-      final userRaw = body["user"];
-
-      currentUser = User.fromJson(userRaw);
-
-      final autoInviteOrganizationRaw = body['autoInviteOrganization'];
-
-      if (autoInviteOrganizationRaw != null) {
-        return IsLoggedInStatus(
-          loginStatus: LoginStatus.noOrganization,
-          autoInviteOrganization: Organization.fromJson(
-            autoInviteOrganizationRaw,
-          ),
-        );
-      }
-
-      return IsLoggedInStatus(loginStatus: LoginStatus.success);
-    } catch (e) {
-      throw "Error caught: $e";
+    if (response?.statusCode != 200) {
+      return IsLoggedInStatus(loginStatus: LoginStatus.failed);
     }
+
+    final body = (jsonDecode(response!.body) as Map);
+    final userRaw = body["user"];
+
+    currentUser = User.fromJson(userRaw);
+
+    final autoInviteOrganizationRaw = body['autoInviteOrganization'];
+
+    print("autoInviteOrganizationRaw: $autoInviteOrganizationRaw");
+
+    if (autoInviteOrganizationRaw != null) {
+      return IsLoggedInStatus(
+        loginStatus: LoginStatus.noOrganization,
+        autoInviteOrganization: Organization.fromJson(
+          autoInviteOrganizationRaw,
+        ),
+      );
+    }
+
+    return IsLoggedInStatus(loginStatus: LoginStatus.success);
+    // } catch (e) {
+    //   throw "Error caught: $e";
+    // }
   }
 }
 

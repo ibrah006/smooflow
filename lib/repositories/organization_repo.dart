@@ -34,15 +34,11 @@ class OrganizationRepo {
 
   /// Join an existing organization (by id or name)
   Future<Organization> joinOrganization({
-    String? organizationId,
-    String? organizationName,
+    required String organizationId,
   }) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.joinOrg,
-      body: {
-        if (organizationId != null) 'organizationId': organizationId,
-        if (organizationName != null) 'organizationName': organizationName,
-      },
+      body: {'organizationId': organizationId},
     );
 
     final data = jsonDecode(response.body);
@@ -116,8 +112,6 @@ class OrganizationRepo {
       ApiEndpoints.claimOrganizationDomainOwnership,
       body: {"placeholder": null},
     );
-
-    print("response status: ${response.statusCode}, body: ${response.body}");
 
     return response.statusCode == 200;
   }

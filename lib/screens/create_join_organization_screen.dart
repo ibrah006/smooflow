@@ -1,16 +1,20 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:googleapis/cloudresourcemanager/v3.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/welcome_to_organization_dialog.dart';
+import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/join_organization_screen.dart';
 
-class CreateJoinOrganizationScreen extends StatelessWidget {
+class CreateJoinOrganizationScreen extends ConsumerWidget {
   const CreateJoinOrganizationScreen({super.key, this.autoInviteOrganization});
 
   final Organization? autoInviteOrganization;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final textTheme = Theme.of(context).textTheme;
 
     final screenSize = MediaQuery.of(context).size;
@@ -149,7 +153,16 @@ class CreateJoinOrganizationScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () {},
+                      onPressed: () async {
+                        showCupertinoModalPopup(
+                          context: context,
+                          builder: (context) {
+                            return WelcomeToOrganizationDialog(
+                              organization: autoInviteOrganization!,
+                            );
+                          },
+                        );
+                      },
                       style: OutlinedButton.styleFrom(
                         iconSize: 28,
                         textStyle: textTheme.titleMedium,
@@ -158,7 +171,7 @@ class CreateJoinOrganizationScreen extends StatelessWidget {
                         ).copyWith(left: 25),
                         alignment: Alignment.centerLeft,
                       ),
-                      label: Text("Join Compact"),
+                      label: Text("Join ${autoInviteOrganization!.name}"),
                       icon: Padding(
                         padding: const EdgeInsets.only(right: 10),
                         child: Icon(Icons.domain_rounded),

@@ -41,7 +41,7 @@ class _FlashScreenState extends State<FlashScreen> {
 
         if (isLoggedIn && orgId == null) {
           try {
-            // Take care of orgId == null, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
+            // orgId == null is taken care of, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
             await LoginService.relogin();
 
             Navigator.of(context).pushAndRemoveUntil(
