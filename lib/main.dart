@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/screens/claim_organization_screen.dart';
+import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();

@@ -144,7 +144,29 @@ class CreateJoinOrganizationScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 70),
+                if (autoInviteOrganization != null) ...[
+                  SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        iconSize: 28,
+                        textStyle: textTheme.titleMedium,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 17,
+                        ).copyWith(left: 25),
+                        alignment: Alignment.centerLeft,
+                      ),
+                      label: Text("Join Compact"),
+                      icon: Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Icon(Icons.domain_rounded),
+                      ),
+                    ),
+                  ),
+                ],
+                SizedBox(height: autoInviteOrganization == null ? 70 : 60),
                 Text("Need help with this?"),
                 TextButton(
                   onPressed: () {
