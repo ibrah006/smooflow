@@ -13,7 +13,7 @@ final _publicDomains = {
   'gmx.com',
 };
 
-extension on String {
+extension EmailStringExtension on String {
   bool get isPrivateEmail {
     try {
       final domain = this.split('@').last.toLowerCase();
@@ -21,5 +21,22 @@ extension on String {
     } catch (e) {
       return false; // invalid email
     }
+  }
+
+  bool get isEmail {
+    final parts = this.split('@');
+    if (parts.length != 2) return false;
+
+    return true;
+  }
+
+  String? get getEmailDomain {
+    if (!this.isEmail) {
+      return null;
+    }
+
+    final parts = this.split('@');
+
+    return parts[1].toLowerCase();
   }
 }

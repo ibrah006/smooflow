@@ -7,6 +7,7 @@ import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/services/login_service.dart';
+import '../extensions/email.dart';
 
 class InviteMemberScreen extends ConsumerStatefulWidget {
   const InviteMemberScreen({super.key});
@@ -37,6 +38,9 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
     final state = ref.watch(invitationNotifierProvider);
 
     final invitations = state.invitations;
+
+    final currentOrganization =
+        ref.watch(organizationNotifierProvider).organization!;
 
     return LoadingOverlay(
       isLoading: state.isLoading,
@@ -175,7 +179,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             return;
                           }
 
-                          if (email.isEmpty || !email.contains('@')) {
+                          if (email.isEmpty || !email.isEmail) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Enter a valid email'),
@@ -183,6 +187,18 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                               ),
                             );
                             return;
+                          } else if (email.isPrivateEmail &&
+                              currentOrganization.privateDomain != null &&
+                              email != currentOrganization.privateDomain) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  // Cannot send invitation to a user with different private domain while your organization has a private domain
+                                  'Cannot send invitation to a user with different private domain',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
                           }
 
                           if (selectedRole == null) {

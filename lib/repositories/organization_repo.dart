@@ -42,10 +42,10 @@ class OrganizationRepo {
       body: {'organizationId': organizationId, 'role': role},
     );
 
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body) as Map;
 
     if (response.statusCode == 200) {
-      return data['organization'];
+      return Organization.fromJson(data['organization']);
     } else {
       throw Exception(data['message'] ?? 'Failed to join organization');
     }

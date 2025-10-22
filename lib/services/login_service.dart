@@ -133,6 +133,8 @@ class LoginService {
 
     if (response == null) {
       throw "Server Down, Failed to Register";
+    } else if (response.statusCode == 400) {
+      throw "Failed to Sign up, Make sure your email address is correct";
     }
 
     final userRaw = (jsonDecode(response.body) as Map)["user"];
