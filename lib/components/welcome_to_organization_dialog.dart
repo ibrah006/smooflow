@@ -30,6 +30,8 @@ class _WelcomeToOrganizationDialogState
       return item != Status.cancelled;
     });
 
+    final state = ref.read(organizationNotifierProvider);
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: borderRadius),
       contentPadding: EdgeInsets.zero,
@@ -136,10 +138,22 @@ class _WelcomeToOrganizationDialogState
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       onPressed: () async {
+                        selectedRole = selectedRole?.trim();
+
+                        if (selectedRole == null ||
+                            (selectedRole?.isEmpty ?? false)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Please select a Role")),
+                          );
+                          return;
+                        }
                         // join organization
                         await ref
                             .read(organizationNotifierProvider.notifier)
-                            .joinOrganization(widget.organization.id);
+                            .joinOrganization(
+                              widget.organization.id,
+                              role: selectedRole!,
+                            );
 
                         final state = ref.read(organizationNotifierProvider);
 

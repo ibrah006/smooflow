@@ -94,11 +94,14 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
     // }
   }
 
-  Future<void> joinOrganization(String orgId) async {
+  Future<void> joinOrganization(String orgId, {required String role}) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final org = await repo.joinOrganization(organizationId: orgId);
+      final org = await repo.joinOrganization(
+        organizationId: orgId,
+        role: role,
+      );
       state = state.copyWith(isLoading: false, organization: org);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

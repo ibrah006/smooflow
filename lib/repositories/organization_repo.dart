@@ -35,10 +35,11 @@ class OrganizationRepo {
   /// Join an existing organization (by id or name)
   Future<Organization> joinOrganization({
     required String organizationId,
+    required String role,
   }) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.joinOrg,
-      body: {'organizationId': organizationId},
+      body: {'organizationId': organizationId, 'role': role},
     );
 
     final data = jsonDecode(response.body);
