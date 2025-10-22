@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:googleapis/cloudresourcemanager/v3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
@@ -11,29 +12,37 @@ import 'package:smooflow/models/user.dart';
 class LoginService {
   static User? currentUser;
 
+  /// re-login is meant to run properly when user is already part of an organization
+  /// As the core idea this was developed, was to sign JWT token with organizationId
   static Future<LoginStatus> relogin() async {
-    final response = await ApiClient.http.post(
-      ApiEndpoints.relogin,
-      body: {"placeholder": "null"},
-    );
+    try {
+      final response = await ApiClient.http.post(
+        ApiEndpoints.relogin,
+        body: {"placeholder": "null"},
+      );
 
-    if (response.statusCode != 200) {
-      // Failed re-logging user in
-      return LoginStatus.failed;
+      if (response.statusCode != 200) {
+        // Failed re-logging user in
+        return LoginStatus.failed;
+      }
+
+      // Will throw late initialization if user is not part of any organization yet
+      final orgId = LoginService.currentUser!.organizationId;
+
+      final prefs = await SharedPreferences.getInstance();
+
+      // User corresponds to an Organization, just not saved in shared preferences yet
+      await prefs.setString(SharedStorageOptions.organizationId.name, orgId);
+      await prefs.setString(
+        SharedStorageOptions.jwtToken.name,
+        jsonDecode(response.body)["token"],
+      );
+
+      return LoginStatus.success;
+    } catch (e) {
+      // Not part of any organization
+      throw "User is not part of any organization";
     }
-
-    final orgId = LoginService.currentUser!.organizationId;
-
-    final prefs = await SharedPreferences.getInstance();
-
-    // User corresponds to an Organization, just not saved in shared preferences yet
-    await prefs.setString(SharedStorageOptions.organizationId.name, orgId);
-    await prefs.setString(
-      SharedStorageOptions.jwtToken.name,
-      jsonDecode(response.body)["token"],
-    );
-
-    return LoginStatus.success;
   }
 
   static Future<LoginStatus> login({
@@ -126,7 +135,7 @@ class LoginService {
     currentUser = user;
   }
 
-  static Future<bool> isLoggedIn() async {
+  static Future<IsLoggedInStatus> isLoggedIn() async {
     try {
       final response = await fetchWithTimeoutAndRetry(
         methodCall: ApiClient.http.get,
@@ -134,16 +143,40 @@ class LoginService {
       );
 
       if (response?.statusCode != 200) {
-        return false;
+        return IsLoggedInStatus(loginStatus: LoginStatus.failed);
       }
 
-      final userRaw = (jsonDecode(response!.body) as Map)["user"];
+      final body = (jsonDecode(response!.body) as Map);
+      final userRaw = body["user"];
 
       currentUser = User.fromJson(userRaw);
 
-      return response.statusCode == 200;
+      final autoInviteOrganizationRaw = body['autoInviteOrganization'];
+
+      if (autoInviteOrganizationRaw != null) {
+        return IsLoggedInStatus(
+          loginStatus: LoginStatus.noOrganization,
+          autoInviteOrganization: Organization.fromJson(
+            autoInviteOrganizationRaw,
+          ),
+        );
+      }
+
+      return IsLoggedInStatus(loginStatus: LoginStatus.success);
     } catch (e) {
       throw "Error caught: $e";
+    }
+  }
+}
+
+/// [autoInviteOrganization] != null only when [loginStatus] == [LoginStatus.noOrganization]
+class IsLoggedInStatus {
+  final Organization? autoInviteOrganization;
+  final LoginStatus loginStatus;
+  IsLoggedInStatus({required this.loginStatus, this.autoInviteOrganization}) {
+    if (autoInviteOrganization != null &&
+        loginStatus != LoginStatus.noOrganization) {
+      throw "autoInviteOrganization can only be passed in (!= null) when loginStatus == LoginStatus.noOrganization";
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/screens/create_join_organization_screen.dart';
@@ -21,7 +22,7 @@ class _FlashScreenState extends State<FlashScreen> {
     super.initState();
 
     Future.microtask(() {
-      LoginService.isLoggedIn().then((isLoggedIn) async {
+      LoginService.isLoggedIn().then((IsLoggedInStatus isLoggedInStatus) async {
         await CompanyRepo.fetchCompanies();
         // await ProjectRepo().fetchProjects();
 
@@ -31,11 +32,16 @@ class _FlashScreenState extends State<FlashScreen> {
 
         // return;
 
+        final isLoggedIn =
+            isLoggedInStatus.loginStatus == LoginStatus.success ||
+            isLoggedInStatus.loginStatus == LoginStatus.noOrganization;
+
         final prefs = await SharedPreferences.getInstance();
         final orgId = prefs.getString(SharedStorageOptions.organizationId.name);
 
         if (isLoggedIn && orgId == null) {
           try {
+            // Take care of orgId == null, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
             await LoginService.relogin();
 
             Navigator.of(context).pushAndRemoveUntil(
@@ -44,9 +50,14 @@ class _FlashScreenState extends State<FlashScreen> {
             );
           } catch (e) {
             // Not linked to any organization
+
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) => CreateJoinOrganizationScreen(),
+                builder:
+                    (context) => CreateJoinOrganizationScreen(
+                      autoInviteOrganization:
+                          isLoggedInStatus.autoInviteOrganization,
+                    ),
               ),
               (Route<dynamic> route) => false,
             );
