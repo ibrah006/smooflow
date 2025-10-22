@@ -324,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen>
       _isLoading = true;
     });
 
-    late final LoginStatus loginStatus;
+    late final IsLoggedInStatus isLoggedInStatus;
     try {
       if (!isSignIn) {
         final User newUser = User.register(
@@ -335,22 +335,25 @@ class _LoginScreenState extends State<LoginScreen>
 
         await LoginService.register(user: newUser, password: password);
       }
-      loginStatus = await LoginService.login(email: email, password: password);
+      isLoggedInStatus = await LoginService.login(
+        email: email,
+        password: password,
+      );
     } catch (e) {
       print("error: $e");
-      loginStatus = LoginStatus.failed;
+      isLoggedInStatus = IsLoggedInStatus(loginStatus: LoginStatus.failed);
 
       showStyledToast(isSuccess: false, message: e.toString());
     }
 
-    if (loginStatus != LoginStatus.failed) {
+    if (isLoggedInStatus.loginStatus != LoginStatus.failed) {
       showStyledToast(isSuccess: true);
       await Future.delayed(LoginScreen.toastFeedbackDuration);
     }
 
-    isAuthenticated = loginStatus != LoginStatus.failed;
+    isAuthenticated = isLoggedInStatus.loginStatus != LoginStatus.failed;
 
-    if (loginStatus == LoginStatus.success) {
+    if (isLoggedInStatus.loginStatus == LoginStatus.success) {
       await CompanyRepo.fetchCompanies();
       await ProjectRepo().fetchProjects();
 
@@ -358,20 +361,25 @@ class _LoginScreenState extends State<LoginScreen>
         MaterialPageRoute(builder: (context) => HomeScreen()),
         (Route<dynamic> route) => false,
       );
-    } else if (loginStatus == LoginStatus.noOrganization) {
+    } else if (isLoggedInStatus.loginStatus == LoginStatus.noOrganization) {
       await CompanyRepo.fetchCompanies();
       // Show create/join organization screen
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => CreateJoinOrganizationScreen()),
+        MaterialPageRoute(
+          builder:
+              (context) => CreateJoinOrganizationScreen(
+                autoInviteOrganization: isLoggedInStatus.autoInviteOrganization,
+              ),
+        ),
         (Route<dynamic> route) => false,
       );
     }
 
-    print("login status: ${loginStatus}");
+    print("login status: ${isLoggedInStatus.loginStatus}");
 
     _isLoading = false;
-    if (loginStatus == LoginStatus.failed) {
+    if (isLoggedInStatus.loginStatus == LoginStatus.failed) {
       setState(() {});
     }
   }

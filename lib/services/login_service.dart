@@ -45,7 +45,7 @@ class LoginService {
     }
   }
 
-  static Future<LoginStatus> login({
+  static Future<IsLoggedInStatus> login({
     required String email,
     required String? password,
   }) async {
@@ -89,14 +89,23 @@ class LoginService {
 
       await prefs.remove(SharedStorageOptions.organizationId.name);
 
+      final autoInviteOrganizationRaw = body['autoInviteOrganization'];
+
       if (response.statusCode == 200) {
-        return LoginStatus.noOrganization;
+        return IsLoggedInStatus(
+          loginStatus: LoginStatus.noOrganization,
+          autoInviteOrganization:
+              autoInviteOrganizationRaw != null
+                  ? Organization.fromJson(autoInviteOrganizationRaw)
+                  : null,
+        );
       }
     }
 
-    return response.statusCode == 200
-        ? LoginStatus.success
-        : LoginStatus.failed;
+    return IsLoggedInStatus(
+      loginStatus:
+          response.statusCode == 200 ? LoginStatus.success : LoginStatus.failed,
+    );
   }
 
   // static Future<void> logout() async {
