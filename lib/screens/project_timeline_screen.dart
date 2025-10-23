@@ -93,6 +93,9 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     final bool isPreviousCompleted =
         isHead ? true : progressLogs[index - 1].isCompleted;
 
+    final isOverdue =
+        log.dueDate != null ? DateTime.now().isAfter(log.dueDate!) : false;
+
     return Stack(
       children: [
         // Status vertical line
@@ -191,15 +194,19 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     color:
-                                        log.isCompleted
-                                            ? (isDelayedCompletion
-                                                ? colorPending
-                                                : colorPrimary)
-                                            : (log.hasIssues
-                                                ? Colors.red
-                                                : Colors.grey.shade700),
+                                        isOverdue
+                                            ? Colors.red.shade500
+                                            : (log.isCompleted
+                                                ? (isDelayedCompletion
+                                                    ? colorPending
+                                                    : colorPrimary)
+                                                : (log.hasIssues
+                                                    ? Colors.red
+                                                    : Colors.grey.shade700)),
                                     fontWeight:
-                                        log.hasIssues ? FontWeight.w500 : null,
+                                        log.hasIssues || isOverdue
+                                            ? FontWeight.w500
+                                            : null,
                                   ),
                                 ),
                                 // const SizedBox(height: 8),
