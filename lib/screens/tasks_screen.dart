@@ -32,8 +32,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
         .watch(taskNotifierProvider.notifier)
         .loadProjectTasks(
           projectId: widget.projectId,
-          projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
+          projectTasksLastModifiedLocal: project.taskLastModifiedAt,
           projectTaskIds: project.tasks,
+          forceReload: true,
         );
 
     return tasksResponse.then((response) {
