@@ -65,7 +65,9 @@ class ProgressLogRepo {
     }
 
     final progressLogLastModifiedAt =
-        jsonDecode(response.body)['progressLogLastModifiedAt'];
+        jsonDecode(response.body)['lastModifiedAt'];
+
+    print("progressLogLastModifiedAt: $progressLogLastModifiedAt");
 
     return progressLogLastModifiedAt != null
         ? DateTime.parse(progressLogLastModifiedAt)

@@ -182,7 +182,6 @@ class _AddProjectProgressScreenState
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<Status>(
-                    value: selectedStatus,
                     items:
                         statuses.map((status) {
                           return DropdownMenuItem(

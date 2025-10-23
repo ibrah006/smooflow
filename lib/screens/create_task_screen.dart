@@ -88,6 +88,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     try {
       await ref.read(createProjectTaskProvider(newTask));
     } catch (e) {
+      print("task creation error: $e");
       setState(() {
         _isLoading = false;
       });
@@ -156,14 +157,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
     // This project's progress logs
     try {
-      progressLogs = ref.read(
-        progressLogsByProjectProvider(
-          ProgressLogsByProviderArgs(
-            widget.projectId,
-            ensureLatestProgressLogData: false,
-          ),
-        ),
-      );
+      progressLogs = ref
+          .read(
+            progressLogsByProjectProvider(
+              ProgressLogsByProviderArgs(
+                widget.projectId,
+                ensureLatestProgressLogData: false,
+              ),
+            ),
+          )
+          .then((value) {
+            return value.progressLogs;
+          });
     } catch (e) {
       // Not initialized yet
       Scaffold(body: Center(child: Text("Loading...")));

@@ -40,7 +40,9 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
     return log;
   }
 
-  Future<List<ProgressLog>> getLogsByProject(
+  // Returns updated logs found in database for selected project or returns all progress logs for selected project
+  // And updates the local state (if any)
+  Future<ProgressLogsResponse> getLogsByProject(
     Project project, {
     bool ensureLatestLogDetails = true,
   }) async {
@@ -48,6 +50,11 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
         !ensureLatestLogDetails
             ? null
             : await _repo.getProjectProgressLogLastModified(project.id);
+
+    // Debug
+    print(
+      "progressLogLastModifiedAtLocal: ${project.progressLogLastModifiedAt}, update needed: ${progressLogLastModifiedAt?.isAfter(project.progressLogLastModifiedAt)}",
+    );
 
     final localUpdateNeeded =
         ensureLatestLogDetails
@@ -84,9 +91,16 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
       // Add the updated progress logs to memory (state)
       state = [...state, ...updatedProjectProgressLogs];
 
-      return updatedProjectProgressLogs;
+      return ProgressLogsResponse(
+        progressLogs: updatedProjectProgressLogs,
+        isUpdatedFromDatabase: true,
+      );
     } else {
-      return state.where((log) => log.projectId == project.id).toList();
+      return ProgressLogsResponse(
+        progressLogs:
+            state.where((log) => log.projectId == project.id).toList(),
+        isUpdatedFromDatabase: false,
+      );
     }
   }
 
@@ -144,4 +158,13 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
       description: updateDescription,
     );
   }
+}
+
+class ProgressLogsResponse {
+  final List<ProgressLog> progressLogs;
+  final bool isUpdatedFromDatabase;
+  ProgressLogsResponse({
+    required this.progressLogs,
+    required this.isUpdatedFromDatabase,
+  });
 }

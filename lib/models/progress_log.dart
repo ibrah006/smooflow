@@ -53,7 +53,7 @@ class ProgressLog {
 
   ProgressLog.create({
     required this.projectId,
-    required Status status,
+    required final Status status,
     required String? description,
     required this.dueDate,
     required ProgressIssue issue,

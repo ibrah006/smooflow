@@ -50,46 +50,58 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       ),
       body:
           projects.isEmpty
-              ? Center(
-                child: SizedBox(
-                  width: 200,
-                  child: Column(
-                    spacing: 10,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset("assets/icons/no_projects_icon.svg"),
-                      Text(
-                        "No projects",
-                        style: textTheme.headlineLarge!.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(),
-                      Text(
-                        "Click the button below to add a new project.",
-                        textAlign: TextAlign.center,
-                        style: textTheme.titleMedium!.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddProjectScreen(),
+              ? RefreshIndicator(
+                onRefresh: _refreshProjects,
+                child: ListView(
+                  children: [
+                    SizedBox(
+                      height: (MediaQuery.of(context).size.height / 2) - 265,
+                    ),
+                    Center(
+                      child: SizedBox(
+                        width: 200,
+                        child: Column(
+                          spacing: 10,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/no_projects_icon.svg",
+                            ),
+                            Text(
+                              "No projects",
+                              style: textTheme.headlineLarge!.copyWith(
+                                fontWeight: FontWeight.w500,
                               ),
-                            );
-                          },
-                          child: Text("Add Project"),
+                            ),
+                            SizedBox(),
+                            Text(
+                              "Click the button below to add a new project.",
+                              textAlign: TextAlign.center,
+                              style: textTheme.titleMedium!.copyWith(
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddProjectScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text("Add Project"),
+                              ),
+                            ),
+                            SizedBox(height: kToolbarHeight),
+                          ],
                         ),
                       ),
-                      SizedBox(height: kToolbarHeight),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               )
               : Column(

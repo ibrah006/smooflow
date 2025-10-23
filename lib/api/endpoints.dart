@@ -9,7 +9,7 @@ class ApiEndpoints {
 
   // Tasks
 
-  static String createTask(String projectId) => "/projects/$projectId";
+  static String createTask(String projectId) => "/projects/$projectId/tasks";
 
   static String getTaskById(int taskId) => "/tasks/$taskId";
 

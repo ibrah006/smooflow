@@ -665,8 +665,9 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
               ProgressLogsByProviderArgs(widget.projectId),
             ),
           )
-          .then((value) {
-            progressLogs = value;
+          .then((updatedFromDatabase) {
+            progressLogs = updatedFromDatabase.progressLogs;
+
             _isLoading = false;
             setState(() {});
           });

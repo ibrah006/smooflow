@@ -20,7 +20,7 @@ class Project {
   // Project's material logs
   final List<int> materialLogs;
 
-  final DateTime progressLogLastModifiedAt;
+  DateTime progressLogLastModifiedAt;
 
   DateTime? taskLastModifiedAt;
 
@@ -56,8 +56,8 @@ class Project {
     required this.priority,
     required this.progressLogs,
     required this.materialLogs,
+    required this.progressLogLastModifiedAt,
   }) : _status = status,
-       progressLogLastModifiedAt = DateTime.now(),
        taskLastModifiedAt = null;
 
   Project.create({
@@ -85,6 +85,10 @@ class Project {
       description: json['description'],
       status: json['status'],
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+      progressLogLastModifiedAt:
+          json['progressLogLastModifiedAt'] == null
+              ? DateTime.parse(json['progressLogLastModifiedAt'])
+              : DateTime.now(),
       estimatedProductionStart:
           json['estimatedProductionStart'] != null
               ? DateTime.parse(json['estimatedProductionStart'])

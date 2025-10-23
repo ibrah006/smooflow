@@ -36,7 +36,6 @@ class MemberNotifier extends StateNotifier<MemberState> {
     try {
       if (state.members.isEmpty) {
         final members = await repo.getOrganizationMembers();
-        print("we here");
         state = state.copyWith(isLoading: false, members: members);
       }
     } catch (e) {

@@ -193,12 +193,13 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  // Cannot send invitation to a user with different private domain while your organization has a private domain
-                                  'Cannot send invitation to a user with different private domain',
+                                  // Cannot send invitation to a user with a different private domain while your organization has a private domain
+                                  'Cannot send invitation to a user with a different private domain',
                                 ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
+                            return;
                           }
 
                           if (selectedRole == null) {

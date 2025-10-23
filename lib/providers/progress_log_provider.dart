@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/models/project.dart';
 import 'package:smooflow/notifiers/progress_log_notifier.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/repositories/progress_log_repo.dart';
@@ -15,18 +16,26 @@ final progressLogNotifierProvider =
     });
 
 final progressLogsByProjectProvider =
-    Provider.family<Future<List<ProgressLog>>, ProgressLogsByProviderArgs>((
+    Provider.family<Future<ProgressLogsResponse>, ProgressLogsByProviderArgs>((
       ref,
       args,
     ) async {
-      final project = ref.watch(projectByIdProvider(args.projectId))!;
+      Project project = ref.watch(projectByIdProvider(args.projectId))!;
 
-      return (ref
+      final projectLogsResponse = (ref
           .watch(progressLogNotifierProvider.notifier)
           .getLogsByProject(
             project,
             ensureLatestLogDetails: args.ensureLatestProgressLogData,
           ));
+
+      projectLogsResponse.then((response) {
+        if (response.isUpdatedFromDatabase) {
+          project.progressLogLastModifiedAt = DateTime.now();
+        }
+      });
+
+      return projectLogsResponse;
     });
 
 final progressLogsByProjectProviderSimple =

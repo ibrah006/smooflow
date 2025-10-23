@@ -81,9 +81,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
               ProgressLogsByProviderArgs(task.projectId),
             ),
           )
-          .then((progressLogs) {
-            return progressLogs.isNotEmpty
-                ? progressLogs.firstWhere((log) => log.id == task.progressLogId)
+          .then((value) {
+            return value.progressLogs.isNotEmpty
+                ? value.progressLogs.firstWhere(
+                  (log) => log.id == task.progressLogId,
+                )
                 : ProgressLog.deleted(task.progressLogId);
           });
 

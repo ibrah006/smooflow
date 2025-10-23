@@ -220,7 +220,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                         itemBuilder: (context) {
                           HapticFeedback.lightImpact();
                           return List.generate(
-                            4,
+                            3,
                             (index) => PopupMenuItem(
                               onTap: () {
                                 Navigator.push(
@@ -238,7 +238,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                               TasksScreen(
                                                 projectId: widget.projectId,
                                               ),
-                                              GoogleSheetViewer(),
                                             ][index],
                                   ),
                                 );
@@ -248,7 +247,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                   "View Timelines",
                                   "Create Task",
                                   "View Tasks",
-                                  "Open Sheets",
                                 ][index],
                               ),
                             ),
