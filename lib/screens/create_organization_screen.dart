@@ -89,7 +89,7 @@ class _CreateOrganizationScreenState
                   const SizedBox(height: 40),
 
                   TextFormField(
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.name,
                     controller: nameController,
                     decoration: InputDecoration(
                       hintText: 'Name',
