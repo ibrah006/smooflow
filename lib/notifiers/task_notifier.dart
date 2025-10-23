@@ -106,7 +106,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   /// Load all tasks for a given project
-  Future<List<Task>> loadProjectTasks({
+  /// update local tasksLastModifiedAt
+  Future<TasksResponse> loadProjectTasks({
     required String projectId,
     bool forceReload = false,
     // Pass in the local project tasks last modified
@@ -156,9 +157,17 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       // Add the updated tasks to memory (state)
       state = [...state, ...updatedProjectTasks];
 
-      return updatedProjectTasks;
+      return TasksResponse(
+        tasks: updatedProjectTasks,
+        isUpdatedFromDatabase: true,
+        tasksLastModifiedAt: projectTasksLastModifiedServer,
+      );
     } else {
-      return state.where((task) => task.projectId == projectId).toList();
+      return TasksResponse(
+        tasks: state.where((task) => task.projectId == projectId).toList(),
+        isUpdatedFromDatabase: false,
+        tasksLastModifiedAt: projectTasksLastModifiedServer,
+      );
     }
     // } catch (e) {
     //   debugPrint("Error loading project tasks,\nerror: $e");
@@ -223,4 +232,16 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
     _activeTask = null;
   }
+}
+
+class TasksResponse {
+  final List<Task> tasks;
+  final bool isUpdatedFromDatabase;
+  // for a specific project
+  final DateTime? tasksLastModifiedAt;
+  TasksResponse({
+    required this.tasks,
+    required this.isUpdatedFromDatabase,
+    this.tasksLastModifiedAt,
+  });
 }

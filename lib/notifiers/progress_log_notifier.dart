@@ -94,12 +94,14 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
       return ProgressLogsResponse(
         progressLogs: updatedProjectProgressLogs,
         isUpdatedFromDatabase: true,
+        progressLogLastModifiedAt: progressLogLastModifiedAt,
       );
     } else {
       return ProgressLogsResponse(
         progressLogs:
             state.where((log) => log.projectId == project.id).toList(),
         isUpdatedFromDatabase: false,
+        progressLogLastModifiedAt: progressLogLastModifiedAt,
       );
     }
   }
@@ -163,8 +165,11 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
 class ProgressLogsResponse {
   final List<ProgressLog> progressLogs;
   final bool isUpdatedFromDatabase;
+  // For a specific project
+  final DateTime? progressLogLastModifiedAt;
   ProgressLogsResponse({
     required this.progressLogs,
     required this.isUpdatedFromDatabase,
+    this.progressLogLastModifiedAt,
   });
 }

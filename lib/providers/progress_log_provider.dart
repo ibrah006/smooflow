@@ -15,28 +15,27 @@ final progressLogNotifierProvider =
       return ProgressLogNotifier(repo);
     });
 
-final progressLogsByProjectProvider =
-    Provider.family<Future<ProgressLogsResponse>, ProgressLogsByProviderArgs>((
-      ref,
-      args,
-    ) async {
-      Project project = ref.watch(projectByIdProvider(args.projectId))!;
+final progressLogsByProjectProvider = Provider.family<
+  Future<ProgressLogsResponse>,
+  ProgressLogsByProviderArgs
+>((ref, args) async {
+  Project project = ref.watch(projectByIdProvider(args.projectId))!;
 
-      final projectLogsResponse = (ref
-          .watch(progressLogNotifierProvider.notifier)
-          .getLogsByProject(
-            project,
-            ensureLatestLogDetails: args.ensureLatestProgressLogData,
-          ));
+  final projectLogsResponse = (ref
+      .watch(progressLogNotifierProvider.notifier)
+      .getLogsByProject(
+        project,
+        ensureLatestLogDetails: args.ensureLatestProgressLogData,
+      ));
 
-      projectLogsResponse.then((response) {
-        if (response.isUpdatedFromDatabase) {
-          project.progressLogLastModifiedAt = DateTime.now();
-        }
-      });
+  projectLogsResponse.then((response) {
+    if (response.progressLogLastModifiedAt != null) {
+      project.progressLogLastModifiedAt = response.progressLogLastModifiedAt!;
+    }
+  });
 
-      return projectLogsResponse;
-    });
+  return projectLogsResponse;
+});
 
 final progressLogsByProjectProviderSimple =
     Provider.family<List<ProgressLog>, String>((ref, projectId) {

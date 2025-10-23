@@ -19,7 +19,7 @@ final taskNotifierProvider = StateNotifierProvider<TaskNotifier, List<Task>>((
 @Deprecated(
   "Just do the same from the same component/screen widget you want this functionality/access",
 )
-final tasksByProjectProvider = Provider.family<Future<List<Task>>, String>((
+final tasksByProjectProvider = Provider.family<Future<TasksResponse>, String>((
   ref,
   projectId,
 ) async {

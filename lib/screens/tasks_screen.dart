@@ -28,13 +28,21 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
 
     if (project == null) throw "Project not found";
 
-    return ref
+    final tasksResponse = ref
         .watch(taskNotifierProvider.notifier)
         .loadProjectTasks(
           projectId: widget.projectId,
           projectTasksLastModifiedLocal: project.progressLogLastModifiedAt,
           projectTaskIds: project.tasks,
         );
+
+    return tasksResponse.then((response) {
+      if (response.tasksLastModifiedAt != null) {
+        project.taskLastModifiedAt = response.tasksLastModifiedAt;
+      }
+
+      return response.tasks;
+    });
   }
 
   gotoCreateTaskScreen() {
