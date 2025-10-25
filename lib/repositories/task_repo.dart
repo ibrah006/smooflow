@@ -85,7 +85,9 @@ class TaskRepo {
     );
     if (response.statusCode != 200) return null;
     final body = jsonDecode(response.body);
-    return DateTime.parse(body['lastModified']);
+    return body['lastModified'] != null
+        ? DateTime.parse(body['lastModified'])
+        : null;
   }
 
   /// GET /tasks/active — get the current active task for the user

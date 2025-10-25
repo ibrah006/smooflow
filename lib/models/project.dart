@@ -86,7 +86,7 @@ class Project {
       status: json['status'],
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       progressLogLastModifiedAt:
-          json['progressLogLastModifiedAt'] == null
+          json['progressLogLastModifiedAt'] != null
               ? DateTime.parse(json['progressLogLastModifiedAt'])
               : DateTime.now(),
       estimatedProductionStart:
