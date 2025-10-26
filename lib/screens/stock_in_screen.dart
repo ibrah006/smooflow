@@ -76,7 +76,7 @@ class _StockInScreenState extends State<StockInScreen> {
                   SizedBox(height: 20),
                   // Info Card
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F0FE),
                       borderRadius: BorderRadius.circular(12),
