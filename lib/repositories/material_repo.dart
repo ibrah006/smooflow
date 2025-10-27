@@ -14,8 +14,11 @@ class MaterialRepo {
     }
   }
 
-  Future<MaterialModel> createMaterial(Map<String, dynamic> data) async {
-    final res = await ApiClient.http.post('/materials', body: data);
+  Future<MaterialModel> createMaterial(MaterialModel material) async {
+    final res = await ApiClient.http.post(
+      '/materials',
+      body: material.toCreateJson(),
+    );
     if (res.statusCode == 201) {
       return MaterialModel.fromJson(jsonDecode(res.body));
     } else {

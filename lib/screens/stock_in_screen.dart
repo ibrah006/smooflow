@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/models/material.dart';
+import 'package:smooflow/providers/material_provider.dart';
 
-class StockInScreen extends StatefulWidget {
+class StockInScreen extends ConsumerStatefulWidget {
   const StockInScreen({Key? key}) : super(key: key);
 
   @override
-  State<StockInScreen> createState() => _StockInScreenState();
+  ConsumerState<StockInScreen> createState() => _StockInScreenState();
 }
 
-class _StockInScreenState extends State<StockInScreen> {
+class _StockInScreenState extends ConsumerState<StockInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _materialTypeController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -361,17 +364,47 @@ class _StockInScreenState extends State<StockInScreen> {
                   Expanded(
                     flex: 2,
                     child: FilledButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final materialType =
+                            _materialTypeController.text.trim();
+                        final description = _descriptionController.text.trim();
+                        // Measure / quantity
+                        final measure = num.parse(_measureController.text);
+
                         if (_formKey.currentState!.validate()) {
+                          // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
+                          final material = await ref
+                              .read(materialNotifierProvider.notifier)
+                              .createMaterial(
+                                MaterialModel.create(
+                                  name: materialType,
+                                  description: description,
+                                  measureType: MeasureType.values.byName(
+                                    _selectedMeasureType,
+                                  ),
+                                ),
+                              );
                           // Process stock in
                           // Generate barcode
+                          await ref
+                              .read(materialNotifierProvider.notifier)
+                              .stockIn(material.id, measure.toDouble());
                           // Show success message
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Stock added successfully'),
                             ),
                           );
+                          return;
                         }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Make sure to fill in all the required inputs',
+                            ),
+                          ),
+                        );
                       },
                       style: FilledButton.styleFrom(
                         padding: EdgeInsets.all(18),

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:smooflow/services/login_service.dart';
+
 enum MeasureType {
   running_meter,
   item_quantity,
@@ -18,7 +20,7 @@ MeasureType measureTypeFromString(String type) {
 String measureTypeToString(MeasureType type) => type.name;
 
 class MaterialModel {
-  final String id;
+  late final String id;
   final String name;
   final String? description;
   final MeasureType measureType;
@@ -26,13 +28,8 @@ class MaterialModel {
   final double minStockLevel;
   final String organizationId;
   final String createdById;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  // Optional relations (you can fill these when fetching nested data)
-  final Map<String, dynamic>? organization;
-  final Map<String, dynamic>? createdBy;
-  final List<Map<String, dynamic>>? transactions;
+  late final DateTime createdAt;
+  late final DateTime updatedAt;
 
   MaterialModel({
     required this.id,
@@ -45,15 +42,22 @@ class MaterialModel {
     required this.createdById,
     required this.createdAt,
     required this.updatedAt,
-    this.organization,
-    this.createdBy,
-    this.transactions,
   });
+
+  MaterialModel.create({
+    required String name,
+    required this.description,
+    required this.measureType,
+    this.minStockLevel = 0,
+  }) : currentStock = 0.0,
+       organizationId = LoginService.currentUser!.organizationId,
+       name = name.toLowerCase(),
+       createdById = LoginService.currentUser!.id;
 
   factory MaterialModel.fromJson(Map<String, dynamic> json) {
     return MaterialModel(
       id: json['id'],
-      name: json['name'],
+      name: json['name'].toString().toLowerCase(),
       description: json['description'],
       measureType: measureTypeFromString(json['measureType']),
       currentStock: (json['currentStock'] as num?)?.toDouble() ?? 0.0,
@@ -62,12 +66,6 @@ class MaterialModel {
       createdById: json['createdById'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      organization: json['organization'],
-      createdBy: json['createdBy'],
-      transactions:
-          (json['transactions'] as List?)
-              ?.map((t) => Map<String, dynamic>.from(t))
-              .toList(),
     );
   }
 
@@ -83,9 +81,16 @@ class MaterialModel {
       'createdById': createdById,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'organization': organization,
-      'createdBy': createdBy,
-      'transactions': transactions,
+    };
+  }
+
+  Map<String, dynamic> toCreateJson({int initialStock = 0}) {
+    return {
+      'name': name,
+      'description': description,
+      'measureType': measureTypeToString(measureType),
+      'initialStock': initialStock,
+      'minStockLevel': minStockLevel,
     };
   }
 
@@ -120,9 +125,6 @@ class MaterialModel {
       createdById: createdById ?? this.createdById,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      organization: organization ?? this.organization,
-      createdBy: createdBy ?? this.createdBy,
-      transactions: transactions ?? this.transactions,
     );
   }
 }

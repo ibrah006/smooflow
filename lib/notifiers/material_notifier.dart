@@ -20,15 +20,30 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     }
   }
 
-  // Create new material
-  Future<void> createMaterial(Map<String, dynamic> data) async {
+  // Creates new material if it doesn't already exist
+  // NOT material item name are not case-sensitive within organization
+  Future<MaterialModel> createMaterial(MaterialModel material) async {
     state = state.copyWith(isLoading: true);
+    // Check to see if it already exists
     try {
-      final newMaterial = await _repo.createMaterial(data);
-      final updatedList = [...state.materials, newMaterial];
-      state = state.copyWith(materials: updatedList, isLoading: false);
+      final existingMaterial = state.materials.firstWhere(
+        (m) => m.name == material.name.toLowerCase(),
+      );
+      // Material already exists - creation aborted
+      return existingMaterial;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      // Material doesn't exist in memory
+      // Can still call the create material endpoint because it will only be created if it doesn't exist already
+      try {
+        final newMaterial = await _repo.createMaterial(material);
+        final updatedList = [...state.materials, newMaterial];
+        state = state.copyWith(materials: updatedList, isLoading: false);
+
+        return newMaterial;
+      } catch (e) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+        rethrow;
+      }
     }
   }
 
@@ -76,8 +91,12 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }) async {
     state = state.copyWith(isLoading: true);
     try {
-      await _repo.stockIn(materialId, quantity, notes: notes);
-      await fetchMaterials();
+      final transaction = await _repo.stockIn(
+        materialId,
+        quantity,
+        notes: notes,
+      );
+      state = state.copyWith(isLoading: false, transaction: transaction);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
@@ -151,10 +170,18 @@ class MaterialState {
     List<StockTransaction>? transactions,
     bool? isLoading,
     String? errorMessage,
+    StockTransaction? transaction,
   }) {
+    transactions = List.from(transactions ?? this.transactions);
+
+    if (transaction != null) {
+      transactions.removeWhere((transac) => transac.id == transaction.id);
+      transactions.add(transaction);
+    }
+
     return MaterialState(
       materials: materials ?? this.materials,
-      transactions: transactions ?? this.transactions,
+      transactions: transactions,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );
