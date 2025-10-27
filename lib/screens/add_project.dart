@@ -249,7 +249,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                   "View Timelines",
                                   "Create Task",
                                   "View Tasks",
-                                  "Add Material Stock in",
+                                  "Add Material Stock Entry",
                                 ][index],
                               ),
                             ),
