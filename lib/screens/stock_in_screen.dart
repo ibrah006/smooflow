@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
 
@@ -20,6 +21,8 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
 
   MeasureType _selectedMeasureType = MeasureType.running_meter;
   List<MeasureType> get _measureTypes => MeasureType.values.toList();
+
+  bool isStockIn = true;
 
   @override
   void dispose() {
@@ -41,9 +44,9 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
               Platform.isIOS
                   ? CrossAxisAlignment.center
                   : CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
-              'Stock In',
+              isStockIn ? 'Stock In' : 'Stock out',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 20,
@@ -60,6 +63,17 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                isStockIn = !isStockIn;
+              });
+            },
+            color: !isStockIn ? colorPrimary : colorError,
+            icon: Icon(isStockIn ? Icons.upload : Icons.download),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -372,11 +386,14 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                     flex: 2,
                     child: FilledButton(
                       onPressed: () async {
+                        // Add Stock in/out
+
                         final materialType =
                             _materialTypeController.text.trim();
                         final description = _descriptionController.text.trim();
                         // Measure / quantity
-                        final measure = num.parse(_measureController.text);
+                        final measure =
+                            num.parse(_measureController.text).toDouble();
 
                         if (_formKey.currentState!.validate()) {
                           // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
@@ -389,14 +406,23 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                                   measureType: _selectedMeasureType,
                                 ),
                               );
-                          // Process stock in
-                          await ref
-                              .read(materialNotifierProvider.notifier)
-                              .stockIn(material.id, measure.toDouble());
+
+                          // Process stock in/out
+                          if (isStockIn) {
+                            await ref
+                                .read(materialNotifierProvider.notifier)
+                                .stockIn(material.id, measure);
+                          } else {
+                            await ref
+                                .read(materialNotifierProvider.notifier)
+                                .stockOut(material.id, measure);
+                          }
                           // Show success message
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Stock added successfully'),
+                            SnackBar(
+                              content: Text(
+                                'Stock ${isStockIn ? 'in' : 'out'} Entry added successfully',
+                              ),
                             ),
                           );
 
@@ -417,13 +443,14 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                         );
                       },
                       style: FilledButton.styleFrom(
+                        backgroundColor: isStockIn ? null : colorError,
                         padding: EdgeInsets.all(18),
                         textStyle: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text('Add to Stock'),
+                      child: Text(isStockIn ? 'Add to Stock' : 'Add Stock out'),
                     ),
                   ),
                 ],

@@ -111,13 +111,13 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }) async {
     state = state.copyWith(isLoading: true);
     try {
-      await _repo.stockOut(
+      final transaction = await _repo.stockOut(
         materialId,
         quantity,
         notes: notes,
         projectId: projectId,
       );
-      await fetchMaterials();
+      state = state.copyWith(isLoading: false, transaction: transaction);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
