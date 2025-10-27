@@ -17,7 +17,7 @@ MeasureType measureTypeFromString(String type) {
 
 String measureTypeToString(MeasureType type) => type.name;
 
-class Material {
+class MaterialModel {
   final String id;
   final String name;
   final String? description;
@@ -34,7 +34,7 @@ class Material {
   final Map<String, dynamic>? createdBy;
   final List<Map<String, dynamic>>? transactions;
 
-  Material({
+  MaterialModel({
     required this.id,
     required this.name,
     this.description,
@@ -50,8 +50,8 @@ class Material {
     this.transactions,
   });
 
-  factory Material.fromJson(Map<String, dynamic> json) {
-    return Material(
+  factory MaterialModel.fromJson(Map<String, dynamic> json) {
+    return MaterialModel(
       id: json['id'],
       name: json['name'],
       description: json['description'],
@@ -89,12 +89,12 @@ class Material {
     };
   }
 
-  static List<Material> listFromJson(String jsonString) {
+  static List<MaterialModel> listFromJson(String jsonString) {
     final data = jsonDecode(jsonString) as List;
-    return data.map((e) => Material.fromJson(e)).toList();
+    return data.map((e) => MaterialModel.fromJson(e)).toList();
   }
 
-  Material copyWith({
+  MaterialModel copyWith({
     String? id,
     String? name,
     String? description,
@@ -109,7 +109,7 @@ class Material {
     Map<String, dynamic>? createdBy,
     List<Map<String, dynamic>>? transactions,
   }) {
-    return Material(
+    return MaterialModel(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,

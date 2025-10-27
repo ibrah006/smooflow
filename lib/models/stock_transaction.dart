@@ -97,7 +97,7 @@ class StockTransaction {
     String? projectId,
     String? createdById,
     DateTime? createdAt,
-    Material? material,
+    MaterialModel? material,
   }) {
     return StockTransaction(
       id: id ?? this.id,
