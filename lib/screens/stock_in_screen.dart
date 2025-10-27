@@ -385,7 +385,6 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                                 ),
                               );
                           // Process stock in
-                          // Generate barcode
                           await ref
                               .read(materialNotifierProvider.notifier)
                               .stockIn(material.id, measure.toDouble());
