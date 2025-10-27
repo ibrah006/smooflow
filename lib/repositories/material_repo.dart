@@ -16,7 +16,7 @@ class MaterialRepo {
 
   Future<MaterialModel> createMaterial(MaterialModel material) async {
     final res = await ApiClient.http.post(
-      '/materials',
+      '/material/materials',
       body: material.toCreateJson(),
     );
     if (res.statusCode == 201) {
@@ -66,7 +66,7 @@ class MaterialRepo {
     String? notes,
   }) async {
     final res = await ApiClient.http.post(
-      '/materials/$materialId/stock-in',
+      'material/materials/$materialId/stock-in',
 
       body: {'quantity': quantity, 'notes': notes},
     );

@@ -18,14 +18,8 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
   final _descriptionController = TextEditingController();
   final _measureController = TextEditingController();
 
-  String _selectedMeasureType = 'Running Meter';
-  final List<String> _measureTypes = [
-    'Running Meter',
-    'Item Quantity',
-    'Liters',
-    'Square Meter',
-    'Kilograms',
-  ];
+  MeasureType _selectedMeasureType = MeasureType.running_meter;
+  List<MeasureType> get _measureTypes => MeasureType.values.toList();
 
   @override
   void dispose() {
@@ -226,7 +220,7 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                                 ),
                               ),
                               child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
+                                child: DropdownButton<MeasureType>(
                                   value: _selectedMeasureType,
                                   isExpanded: true,
                                   icon: const Icon(
@@ -234,21 +228,34 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                                     color: Colors.black,
                                   ),
                                   items:
-                                      _measureTypes.map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
+                                      _measureTypes.map((MeasureType type) {
+                                        final measureType = type.name
+                                            .replaceAll("_", " ")
+                                            .split(' ') // split into words
+                                            .map(
+                                              (word) =>
+                                                  word.isNotEmpty
+                                                      ? word[0].toUpperCase() +
+                                                          word
+                                                              .substring(1)
+                                                              .toLowerCase()
+                                                      : '',
+                                            )
+                                            .join(' ');
+                                        return DropdownMenuItem<MeasureType>(
+                                          value: type,
                                           child: Text(
-                                            value,
+                                            measureType,
                                             style: const TextStyle(
                                               fontSize: 14,
                                             ),
                                           ),
                                         );
                                       }).toList(),
-                                  onChanged: (String? newValue) {
-                                    if (newValue != null) {
+                                  onChanged: (MeasureType? type) {
+                                    if (type != null) {
                                       setState(() {
-                                        _selectedMeasureType = newValue;
+                                        _selectedMeasureType = type;
                                       });
                                     }
                                   },
@@ -379,9 +386,7 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                                 MaterialModel.create(
                                   name: materialType,
                                   description: description,
-                                  measureType: MeasureType.values.byName(
-                                    _selectedMeasureType,
-                                  ),
+                                  measureType: _selectedMeasureType,
                                 ),
                               );
                           // Process stock in
@@ -394,6 +399,12 @@ class _StockInScreenState extends ConsumerState<StockInScreen> {
                               content: Text('Stock added successfully'),
                             ),
                           );
+
+                          _materialTypeController.clear();
+                          _descriptionController.clear();
+                          _measureTypes.clear();
+                          _measureController.clear();
+
                           return;
                         }
 
