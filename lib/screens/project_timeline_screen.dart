@@ -64,11 +64,13 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
       progress = 0;
     }
 
+    final isFinished = log.status == Status.finished;
+
     bool isHead = index == 0;
     bool isTail = index == progressLogsLength - 1;
     // bool isCurrent = progress <= 1 || (index < progressLogsLength);
     String title =
-        "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}";
+        "${log.status.name[0].toUpperCase()}${log.status.name.substring(1)}${isFinished ? ' Project' : ''}";
     bool isDelayedCompletion =
         log.completedAt != null &&
         log.dueDate != null &&
@@ -96,8 +98,6 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
 
     final isOverdue =
         log.dueDate != null ? DateTime.now().isAfter(log.dueDate!) : false;
-
-    final isFinished = log.status == Status.finished;
 
     return Stack(
       children: [
@@ -135,21 +135,21 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
               width: 32,
               decoration: BoxDecoration(
                 color:
-                    !log.isCompleted
+                    !log.isCompleted && !isFinished
                         ? (log.hasIssues
                             ? Colors.red
                             : Theme.of(context).scaffoldBackgroundColor)
                         : (colorPrimary),
                 shape: BoxShape.circle,
                 border:
-                    !log.isCompleted && !log.hasIssues
+                    !log.isCompleted && !log.hasIssues && !isFinished
                         ? Border.all(color: unProgressColor, width: 2.5)
                         : null,
               ),
               child:
-                  log.isCompleted || log.hasIssues
+                  log.isCompleted || log.hasIssues || isFinished
                       ? Icon(
-                        log.isCompleted
+                        log.isCompleted || isFinished
                             ? Icons.check
                             : Icons.priority_high_rounded,
                         color: Colors.white,
@@ -164,21 +164,22 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                         height: 65,
                         borderRadius: BorderRadius.circular(10),
                       )
-                      : isFinished
-                      ? SizedBox()
                       : Container(
                         padding: EdgeInsets.all(13),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              spreadRadius: 1,
-                              blurRadius: 7,
-                              color: Colors.grey.shade100,
-                            ),
-                          ],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        decoration:
+                            isFinished
+                                ? null
+                                : BoxDecoration(
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      spreadRadius: 1,
+                                      blurRadius: 7,
+                                      color: Colors.grey.shade100,
+                                    ),
+                                  ],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,26 +195,27 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                   ),
                                 ),
                                 SizedBox(height: 3),
-                                Text(
-                                  errorText ?? subtitle,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color:
-                                        isOverdue
-                                            ? Colors.red.shade500
-                                            : (log.isCompleted
-                                                ? (isDelayedCompletion
-                                                    ? colorPending
-                                                    : colorPrimary)
-                                                : (log.hasIssues
-                                                    ? Colors.red
-                                                    : Colors.grey.shade700)),
-                                    fontWeight:
-                                        log.hasIssues || isOverdue
-                                            ? FontWeight.w500
-                                            : null,
+                                if (!isFinished)
+                                  Text(
+                                    errorText ?? subtitle,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color:
+                                          isOverdue
+                                              ? Colors.red.shade500
+                                              : (log.isCompleted
+                                                  ? (isDelayedCompletion
+                                                      ? colorPending
+                                                      : colorPrimary)
+                                                  : (log.hasIssues
+                                                      ? Colors.red
+                                                      : Colors.grey.shade700)),
+                                      fontWeight:
+                                          log.hasIssues || isOverdue
+                                              ? FontWeight.w500
+                                              : null,
+                                    ),
                                   ),
-                                ),
                                 // const SizedBox(height: 8),
                                 // LinearProgressIndicator(
                                 //   value: progress,
@@ -225,161 +227,135 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                 // const SizedBox(height: 20),
                               ],
                             ),
-                            CustomButton.icon(
-                              icon: Icons.more_horiz,
-                              onPressed: () {
-                                _showModalSheet(
-                                  context: context,
-                                  builder: (context) {
-                                    final textTheme =
-                                        Theme.of(context).textTheme;
+                            if (!isFinished)
+                              CustomButton.icon(
+                                icon: Icons.more_horiz,
+                                onPressed: () {
+                                  _showModalSheet(
+                                    context: context,
+                                    builder: (context) {
+                                      final textTheme =
+                                          Theme.of(context).textTheme;
 
-                                    return StatefulBuilder(
-                                      builder: (
-                                        BuildContext context,
-                                        StateSetter setState,
-                                      ) {
-                                        return LoadingOverlay(
-                                          isLoading: _isLogUpdateLoading,
-                                          child: Column(
-                                            children: [
-                                              Expanded(
-                                                child: GestureDetector(
-                                                  onTap:
-                                                      _isLogUpdateLoading
-                                                          ? null
-                                                          : () => Navigator.pop(
-                                                            context,
-                                                          ),
+                                      return StatefulBuilder(
+                                        builder: (
+                                          BuildContext context,
+                                          StateSetter setState,
+                                        ) {
+                                          return LoadingOverlay(
+                                            isLoading: _isLogUpdateLoading,
+                                            child: Column(
+                                              children: [
+                                                Expanded(
+                                                  child: GestureDetector(
+                                                    onTap:
+                                                        _isLogUpdateLoading
+                                                            ? null
+                                                            : () =>
+                                                                Navigator.pop(
+                                                                  context,
+                                                                ),
+                                                  ),
                                                 ),
-                                              ),
-                                              BottomSheet(
-                                                backgroundColor:
-                                                    Colors.grey.shade50,
-                                                enableDrag: false,
-                                                onClosing: () {},
-                                                builder:
-                                                    (context) => Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            30,
-                                                          ),
-                                                      child: Wrap(
-                                                        // main: MainAxisAlignment.end,
-                                                        alignment:
-                                                            WrapAlignment.end,
-                                                        children: [
-                                                          Row(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            spacing: 15,
-                                                            children: [
-                                                              Icon(
-                                                                log.isCompleted
-                                                                    ? Icons
-                                                                        .check_circle_rounded
-                                                                    : Icons
-                                                                        .remove_circle_rounded,
-                                                                color:
-                                                                    log.isCompleted
-                                                                        ? colorPrimary
-                                                                        : colorPending,
-                                                                size: 37,
-                                                              ),
-                                                              Column(
-                                                                spacing: 3,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Text(
-                                                                    title,
-                                                                    style: textTheme
-                                                                        .titleLarge!
-                                                                        .copyWith(
-                                                                          fontWeight:
-                                                                              FontWeight.w600,
-                                                                        ),
-                                                                  ),
-                                                                  Text(
-                                                                    subtitle,
-                                                                    style: textTheme
-                                                                        .bodyMedium!
-                                                                        .copyWith(
-                                                                          color:
-                                                                              Colors.grey.shade800,
-                                                                        ),
-                                                                  ),
-                                                                  SizedBox(
-                                                                    height: 30,
-                                                                  ),
-                                                                  if (log.hasIssues &&
-                                                                      log.isCompleted) ...[
-                                                                    Row(
-                                                                      crossAxisAlignment:
-                                                                          CrossAxisAlignment
-                                                                              .start,
-                                                                      spacing:
-                                                                          5,
-                                                                      children: [
-                                                                        SizedBox(
-                                                                          height:
-                                                                              75,
-                                                                          child: Stack(
-                                                                            children: [
-                                                                              Container(
-                                                                                decoration: BoxDecoration(
-                                                                                  color:
-                                                                                      colorPrimary,
-                                                                                  borderRadius: BorderRadius.circular(
-                                                                                    10,
-                                                                                  ),
-                                                                                ),
-                                                                                margin: EdgeInsets.only(
-                                                                                  left:
-                                                                                      9,
-                                                                                ),
-                                                                                height:
-                                                                                    75,
-                                                                                width:
-                                                                                    7,
-                                                                              ),
-                                                                              Container(
-                                                                                padding: EdgeInsets.all(
-                                                                                  3,
-                                                                                ),
-                                                                                decoration: BoxDecoration(
-                                                                                  color:
-                                                                                      colorError,
-                                                                                  border: Border.all(
+                                                BottomSheet(
+                                                  backgroundColor:
+                                                      Colors.grey.shade50,
+                                                  enableDrag: false,
+                                                  onClosing: () {},
+                                                  builder:
+                                                      (context) => Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              30,
+                                                            ),
+                                                        child: Wrap(
+                                                          // main: MainAxisAlignment.end,
+                                                          alignment:
+                                                              WrapAlignment.end,
+                                                          children: [
+                                                            Row(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              spacing: 15,
+                                                              children: [
+                                                                Icon(
+                                                                  log.isCompleted
+                                                                      ? Icons
+                                                                          .check_circle_rounded
+                                                                      : Icons
+                                                                          .remove_circle_rounded,
+                                                                  color:
+                                                                      log.isCompleted
+                                                                          ? colorPrimary
+                                                                          : colorPending,
+                                                                  size: 37,
+                                                                ),
+                                                                Column(
+                                                                  spacing: 3,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Text(
+                                                                      title,
+                                                                      style: textTheme
+                                                                          .titleLarge!
+                                                                          .copyWith(
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                          ),
+                                                                    ),
+                                                                    Text(
+                                                                      subtitle,
+                                                                      style: textTheme
+                                                                          .bodyMedium!
+                                                                          .copyWith(
+                                                                            color:
+                                                                                Colors.grey.shade800,
+                                                                          ),
+                                                                    ),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          30,
+                                                                    ),
+                                                                    if (log.hasIssues &&
+                                                                        log.isCompleted) ...[
+                                                                      Row(
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.start,
+                                                                        spacing:
+                                                                            5,
+                                                                        children: [
+                                                                          SizedBox(
+                                                                            height:
+                                                                                75,
+                                                                            child: Stack(
+                                                                              children: [
+                                                                                Container(
+                                                                                  decoration: BoxDecoration(
                                                                                     color:
-                                                                                        Colors.white,
-                                                                                    width:
-                                                                                        2,
+                                                                                        colorPrimary,
+                                                                                    borderRadius: BorderRadius.circular(
+                                                                                      10,
+                                                                                    ),
                                                                                   ),
-                                                                                  borderRadius: BorderRadius.circular(
-                                                                                    50,
+                                                                                  margin: EdgeInsets.only(
+                                                                                    left:
+                                                                                        9,
                                                                                   ),
+                                                                                  height:
+                                                                                      75,
+                                                                                  width:
+                                                                                      7,
                                                                                 ),
-                                                                                child: Icon(
-                                                                                  Icons.priority_high_rounded,
-                                                                                  size:
-                                                                                      17,
-                                                                                  color:
-                                                                                      Colors.white,
-                                                                                ),
-                                                                              ),
-                                                                              Align(
-                                                                                alignment:
-                                                                                    Alignment.bottomCenter,
-                                                                                child: Container(
+                                                                                Container(
                                                                                   padding: EdgeInsets.all(
                                                                                     3,
                                                                                   ),
                                                                                   decoration: BoxDecoration(
                                                                                     color:
-                                                                                        colorPrimary,
+                                                                                        colorError,
                                                                                     border: Border.all(
                                                                                       color:
                                                                                           Colors.white,
@@ -391,224 +367,255 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                                                                                     ),
                                                                                   ),
                                                                                   child: Icon(
-                                                                                    Icons.check_rounded,
+                                                                                    Icons.priority_high_rounded,
                                                                                     size:
                                                                                         17,
                                                                                     color:
                                                                                         Colors.white,
                                                                                   ),
                                                                                 ),
-                                                                              ),
-                                                                            ],
+                                                                                Align(
+                                                                                  alignment:
+                                                                                      Alignment.bottomCenter,
+                                                                                  child: Container(
+                                                                                    padding: EdgeInsets.all(
+                                                                                      3,
+                                                                                    ),
+                                                                                    decoration: BoxDecoration(
+                                                                                      color:
+                                                                                          colorPrimary,
+                                                                                      border: Border.all(
+                                                                                        color:
+                                                                                            Colors.white,
+                                                                                        width:
+                                                                                            2,
+                                                                                      ),
+                                                                                      borderRadius: BorderRadius.circular(
+                                                                                        50,
+                                                                                      ),
+                                                                                    ),
+                                                                                    child: Icon(
+                                                                                      Icons.check_rounded,
+                                                                                      size:
+                                                                                          17,
+                                                                                      color:
+                                                                                          Colors.white,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              ],
+                                                                            ),
                                                                           ),
-                                                                        ),
-                                                                        Column(
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.start,
-                                                                          children: List.generate(
-                                                                            2,
-                                                                            (
-                                                                              index,
-                                                                            ) => Container(
-                                                                              margin:
-                                                                                  index ==
-                                                                                          0
-                                                                                      ? EdgeInsets.only(
-                                                                                        bottom:
-                                                                                            22.5,
-                                                                                      )
-                                                                                      : null,
-                                                                              padding: EdgeInsets.symmetric(
-                                                                                vertical:
+                                                                          Column(
+                                                                            crossAxisAlignment:
+                                                                                CrossAxisAlignment.start,
+                                                                            children: List.generate(
+                                                                              2,
+                                                                              (
+                                                                                index,
+                                                                              ) => Container(
+                                                                                margin:
+                                                                                    index ==
+                                                                                            0
+                                                                                        ? EdgeInsets.only(
+                                                                                          bottom:
+                                                                                              22.5,
+                                                                                        )
+                                                                                        : null,
+                                                                                padding: EdgeInsets.symmetric(
+                                                                                  vertical:
+                                                                                      5,
+                                                                                  horizontal:
+                                                                                      12,
+                                                                                ),
+                                                                                decoration: BoxDecoration(
+                                                                                  color: [
+                                                                                    colorError,
+                                                                                    colorPrimary,
+                                                                                  ][index].withValues(
+                                                                                    alpha:
+                                                                                        0.08,
+                                                                                  ),
+                                                                                  borderRadius: BorderRadius.circular(
                                                                                     5,
-                                                                                horizontal:
-                                                                                    12,
-                                                                              ),
-                                                                              decoration: BoxDecoration(
-                                                                                color: [
-                                                                                  colorError,
-                                                                                  colorPrimary,
-                                                                                ][index].withValues(
-                                                                                  alpha:
-                                                                                      0.08,
+                                                                                  ),
                                                                                 ),
-                                                                                borderRadius: BorderRadius.circular(
-                                                                                  5,
-                                                                                ),
-                                                                              ),
-                                                                              child: Text(
-                                                                                [
-                                                                                  log.issue!.name,
-                                                                                  "Completed",
-                                                                                ][index].toString(),
-                                                                                style: textTheme.labelMedium!.copyWith(
-                                                                                  color:
-                                                                                      [
-                                                                                        colorError,
-                                                                                        colorPrimary,
-                                                                                      ][index],
+                                                                                child: Text(
+                                                                                  [
+                                                                                    log.issue!.name,
+                                                                                    "Completed",
+                                                                                  ][index].toString(),
+                                                                                  style: textTheme.labelMedium!.copyWith(
+                                                                                    color:
+                                                                                        [
+                                                                                          colorError,
+                                                                                          colorPrimary,
+                                                                                        ][index],
+                                                                                  ),
                                                                                 ),
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                        ),
-                                                                      ],
+                                                                        ],
+                                                                      ),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            10,
+                                                                      ),
+                                                                    ],
+                                                                    Text(
+                                                                      "Assignees",
+                                                                      style: textTheme
+                                                                          .titleMedium!
+                                                                          .copyWith(
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
+                                                                          ),
+                                                                    ),
+                                                                    // Assignees list - Unimplemented as of now
+                                                                    Text(
+                                                                      "-",
+                                                                      style: textTheme
+                                                                          .bodyMedium!
+                                                                          .copyWith(
+                                                                            color:
+                                                                                Colors.grey.shade700,
+                                                                          ),
+                                                                    ),
+                                                                    if (log.description !=
+                                                                            null &&
+                                                                        log
+                                                                            .description!
+                                                                            .isNotEmpty) ...[
+                                                                      SizedBox(
+                                                                        height:
+                                                                            5,
+                                                                      ),
+                                                                      Text(
+                                                                        log.description!,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                        maxLines:
+                                                                            3,
+                                                                      ),
+                                                                    ],
+                                                                    SizedBox(
+                                                                      height:
+                                                                          30,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width:
+                                                                          MediaQuery.of(
+                                                                            context,
+                                                                          ).size.width -
+                                                                          115,
+                                                                      child: Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                              "Add Crucial Alert",
+                                                                            ),
+                                                                          ),
+                                                                          CupertinoButton.tinted(
+                                                                            onPressed:
+                                                                                log.isCompleted
+                                                                                    ? null
+                                                                                    : () {
+                                                                                      addCrucialAlert(
+                                                                                        log,
+                                                                                      );
+                                                                                    },
+                                                                            // borderRadius: 8,
+                                                                            disabledColor:
+                                                                                log.isCompleted
+                                                                                    ? Colors.grey.shade100
+                                                                                    : CupertinoColors.tertiarySystemFill,
+                                                                            padding: EdgeInsets.symmetric(
+                                                                              horizontal:
+                                                                                  14,
+                                                                              vertical:
+                                                                                  8,
+                                                                            ),
+                                                                            color:
+                                                                                Colors.grey,
+                                                                            child: Text(
+                                                                              "Add",
+                                                                              style: textTheme.labelLarge!.copyWith(
+                                                                                color:
+                                                                                    log.isCompleted
+                                                                                        ? Colors.grey.shade300
+                                                                                        : null,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ),
                                                                     SizedBox(
                                                                       height:
-                                                                          10,
+                                                                          20,
                                                                     ),
                                                                   ],
-                                                                  Text(
-                                                                    "Assignees",
-                                                                    style: textTheme
-                                                                        .titleMedium!
-                                                                        .copyWith(
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                        ),
-                                                                  ),
-                                                                  // Assignees list - Unimplemented as of now
-                                                                  Text(
-                                                                    "-",
-                                                                    style: textTheme
-                                                                        .bodyMedium!
-                                                                        .copyWith(
-                                                                          color:
-                                                                              Colors.grey.shade700,
-                                                                        ),
-                                                                  ),
-                                                                  if (log.description !=
-                                                                          null &&
-                                                                      log
-                                                                          .description!
-                                                                          .isNotEmpty) ...[
-                                                                    SizedBox(
-                                                                      height: 5,
-                                                                    ),
-                                                                    Text(
-                                                                      log.description!,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      maxLines:
-                                                                          3,
-                                                                    ),
-                                                                  ],
-                                                                  SizedBox(
-                                                                    height: 30,
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width:
-                                                                        MediaQuery.of(
-                                                                          context,
-                                                                        ).size.width -
-                                                                        115,
-                                                                    child: Row(
-                                                                      children: [
-                                                                        Expanded(
-                                                                          child: Text(
-                                                                            "Add Crucial Alert",
-                                                                          ),
-                                                                        ),
-                                                                        CupertinoButton.tinted(
-                                                                          onPressed:
-                                                                              log.isCompleted
-                                                                                  ? null
-                                                                                  : () {
-                                                                                    addCrucialAlert(
-                                                                                      log,
-                                                                                    );
-                                                                                  },
-                                                                          // borderRadius: 8,
-                                                                          disabledColor:
-                                                                              log.isCompleted
-                                                                                  ? Colors.grey.shade100
-                                                                                  : CupertinoColors.tertiarySystemFill,
-                                                                          padding: EdgeInsets.symmetric(
-                                                                            horizontal:
-                                                                                14,
-                                                                            vertical:
-                                                                                8,
-                                                                          ),
-                                                                          color:
-                                                                              Colors.grey,
-                                                                          child: Text(
-                                                                            "Add",
-                                                                            style: textTheme.labelLarge!.copyWith(
-                                                                              color:
-                                                                                  log.isCompleted
-                                                                                      ? Colors.grey.shade300
-                                                                                      : null,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(
-                                                                    height: 20,
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          SizedBox(
-                                                            width:
-                                                                double.infinity,
-                                                            child: FilledButton.tonal(
-                                                              onPressed:
-                                                                  log.isCompleted
-                                                                      ? null
-                                                                      : () {
-                                                                        onMarkLogAsCompleted(
-                                                                          log,
-                                                                        );
-                                                                      },
-                                                              style: FilledButton.styleFrom(
-                                                                backgroundColor:
-                                                                    Theme.of(
-                                                                      context,
-                                                                    ).scaffoldBackgroundColor,
-                                                                disabledBackgroundColor:
-                                                                    Colors.grey
-                                                                        .withValues(
-                                                                          alpha:
-                                                                              0.1,
-                                                                        ),
-                                                              ),
-                                                              child: Text(
-                                                                log.isCompleted
-                                                                    ? "Completed"
-                                                                    : "Mark as Completed",
-                                                                style:
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(
+                                                              width:
+                                                                  double
+                                                                      .infinity,
+                                                              child: FilledButton.tonal(
+                                                                onPressed:
                                                                     log.isCompleted
-                                                                        ? TextStyle(
-                                                                          color:
-                                                                              colorPrimary,
-                                                                        )
-                                                                        : null,
+                                                                        ? null
+                                                                        : () {
+                                                                          onMarkLogAsCompleted(
+                                                                            log,
+                                                                          );
+                                                                        },
+                                                                style: FilledButton.styleFrom(
+                                                                  backgroundColor:
+                                                                      Theme.of(
+                                                                        context,
+                                                                      ).scaffoldBackgroundColor,
+                                                                  disabledBackgroundColor: Colors
+                                                                      .grey
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.1,
+                                                                      ),
+                                                                ),
+                                                                child: Text(
+                                                                  log.isCompleted
+                                                                      ? "Completed"
+                                                                      : "Mark as Completed",
+                                                                  style:
+                                                                      log.isCompleted
+                                                                          ? TextStyle(
+                                                                            color:
+                                                                                colorPrimary,
+                                                                          )
+                                                                          : null,
+                                                                ),
                                                               ),
                                                             ),
-                                                          ),
-                                                        ],
+                                                          ],
+                                                        ),
                                                       ),
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              },
-                              height: 33,
-                              width: 33,
-                              iconSize: 23,
-                              backgroundColor: Colors.grey.shade100,
-                              iconColor: Colors.black87,
-                            ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                                height: 33,
+                                width: 33,
+                                iconSize: 23,
+                                backgroundColor: Colors.grey.shade100,
+                                iconColor: Colors.black87,
+                              ),
                           ],
                         ),
                       ),
