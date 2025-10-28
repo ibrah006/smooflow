@@ -16,13 +16,18 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
   // }
 
   // create progress log
-  Future<void> createProgressLog({
+  // update the project status aswell in this endpoint
+  // returns: success code
+  // 201 success, 209 can't add two consecutive logs of same status
+  Future<int> createProgressLog({
     required String projectId,
     required ProgressLog newLog,
   }) async {
-    await _repo.createProgressLog(projectId, newLog);
+    final successCode = await _repo.createProgressLog(projectId, newLog);
 
     state = [...state, newLog];
+
+    return successCode;
   }
 
   // Get Log by Id

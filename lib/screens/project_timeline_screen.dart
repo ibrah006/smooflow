@@ -7,6 +7,7 @@ import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/data/timeline_refresh_manager.dart';
+import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
@@ -96,6 +97,8 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     final isOverdue =
         log.dueDate != null ? DateTime.now().isAfter(log.dueDate!) : false;
 
+    final isFinished = log.status == Status.finished;
+
     return Stack(
       children: [
         // Status vertical line
@@ -161,6 +164,8 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                         height: 65,
                         borderRadius: BorderRadius.circular(10),
                       )
+                      : isFinished
+                      ? SizedBox()
                       : Container(
                         padding: EdgeInsets.all(13),
                         decoration: BoxDecoration(
@@ -702,6 +707,8 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
     );
     // }
 
+    final isFinished = project.status == "finished";
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -783,15 +790,19 @@ class _ProjectTimelineScreenState extends ConsumerState<ProjectTimelineScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => AddProjectProgressScreen(project.id),
-                      ),
-                    );
-                  },
+                  onPressed:
+                      isFinished
+                          ? null
+                          : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        AddProjectProgressScreen(project.id),
+                              ),
+                            );
+                          },
                   child: const Text(
                     "Add Progress",
                     style: TextStyle(

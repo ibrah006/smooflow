@@ -362,13 +362,24 @@ class _AddProjectProgressScreenState
     );
 
     try {
-      await ref
+      final successCode = await ref
           .watch(progressLogNotifierProvider.notifier)
           .createProgressLog(projectId: projectId, newLog: newLog);
       // call project notifier, to update project status and add progress log
-      ref
-          .watch(projectNotifierProvider.notifier)
-          .createProgressLog(log: newLog);
+      if (successCode == 201) {
+        // Only update status of project if successfully created progress log
+        ref
+            .watch(projectNotifierProvider.notifier)
+            .createProgressLog(log: newLog);
+      } else if (successCode == 209) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Previous Timeline already corresponds to the new Timeline requested",
+            ),
+          ),
+        );
+      }
 
       setState(() {
         _isLoading = false;

@@ -5,18 +5,22 @@ import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/models/progress_log.dart';
 
 class ProgressLogRepo {
+  // returns: success code
+  // 201 success, 209 can't add two consecutive logs of same status
+  // Doesn't return code for 400 status, throws error instead
   // Create progress log
-  Future<void> createProgressLog(String projectId, ProgressLog log) async {
+  Future<int> createProgressLog(String projectId, ProgressLog log) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.projectProgressLogs(projectId),
       body: log.toJson(),
     );
 
-    if (response.statusCode != 201) {
+    if (response.statusCode != 201 && response.statusCode != 209) {
       throw "Failed to create progress log, STATUS ${response.statusCode}: ${response.body}";
     }
 
     // Successfully created progress log entry
+    return response.statusCode;
   }
 
   // Get progress log
