@@ -84,26 +84,25 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Stock In
-  Future<void> stockIn(
+  Future<StockTransaction> stockIn(
     String materialId,
     double quantity, {
     String? notes,
   }) async {
     state = state.copyWith(isLoading: true);
-    try {
-      final transaction = await _repo.stockIn(
-        materialId,
-        quantity,
-        notes: notes,
-      );
-      state = state.copyWith(isLoading: false, transaction: transaction);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
-    }
+    // try {
+    final transaction = await _repo.stockIn(materialId, quantity, notes: notes);
+    state = state.copyWith(isLoading: false, transaction: transaction);
+
+    return transaction;
+    // } catch (e) {
+    //   state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    //   rethrow;
+    // }
   }
 
   // Stock Out
-  Future<void> stockOut(
+  Future<StockTransaction> stockOut(
     String materialId,
     double quantity, {
     String? notes,
@@ -118,8 +117,11 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         projectId: projectId,
       );
       state = state.copyWith(isLoading: false, transaction: transaction);
+
+      return transaction;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      rethrow;
     }
   }
 

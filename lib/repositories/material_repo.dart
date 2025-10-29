@@ -66,7 +66,7 @@ class MaterialRepo {
     String? notes,
   }) async {
     final res = await ApiClient.http.post(
-      'material/materials/$materialId/stock-in',
+      '/material/materials/$materialId/stock-in',
 
       body: {'quantity': quantity, 'notes': notes},
     );
@@ -84,7 +84,7 @@ class MaterialRepo {
     String? projectId,
   }) async {
     final res = await ApiClient.http.post(
-      '/materials/$materialId/stock-out',
+      'material/materials/$materialId/stock-out',
       body: {'quantity': quantity, 'notes': notes, 'projectId': projectId},
     );
     if (res.statusCode == 201) {

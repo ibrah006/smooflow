@@ -2,20 +2,24 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/product_barcode.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
-import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 
-class StockEntryScreen extends ConsumerStatefulWidget {
-  const StockEntryScreen({Key? key}) : super(key: key);
+class StockEntryCheckoutScreen extends ConsumerStatefulWidget {
+  final StockTransaction transaction;
+
+  const StockEntryCheckoutScreen(this.transaction, {Key? key})
+    : super(key: key);
 
   @override
-  ConsumerState<StockEntryScreen> createState() => _StockInScreenState();
+  ConsumerState<StockEntryCheckoutScreen> createState() =>
+      _StockInScreenState();
 }
 
-class _StockInScreenState extends ConsumerState<StockEntryScreen> {
+class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _materialTypeController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -24,7 +28,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   MeasureType _selectedMeasureType = MeasureType.running_meter;
   List<MeasureType> get _measureTypes => MeasureType.values.toList();
 
-  bool isStockIn = true;
+  bool get isStockIn => widget.transaction.type == TransactionType.stockIn;
 
   @override
   void dispose() {
@@ -41,41 +45,14 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment:
-              Platform.isIOS
-                  ? CrossAxisAlignment.center
-                  : CrossAxisAlignment.start,
-          children: [
-            Text(
-              isStockIn ? 'Stock In' : 'Stock out',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'Add new inventory to stock',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                isStockIn = !isStockIn;
-              });
-            },
-            color: !isStockIn ? colorPrimary : colorError,
-            icon: Icon(isStockIn ? Icons.upload : Icons.download),
+        title: Text(
+          '${isStockIn ? 'Stock In' : 'Stock out'} Transaction',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
       ),
       body: Stack(
         children: [
@@ -88,135 +65,33 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                 children: [
                   SizedBox(height: 20),
                   // Info Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F0FE),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(
-                          Icons.info_outline,
-                          color: Color(0xFF4461F2),
-                          size: 24,
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'A unique barcode will be generated for this stock entry',
-                            style: TextStyle(
-                              color: Color(0xFF1F1F1F),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Material Information Section
-                  const Text(
-                    'Material Information',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Enter material details and specifications',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+                  ProductBarcode(productId: "PRD-1220-233"),
 
                   const SizedBox(height: 20),
 
                   // Material Type
                   const Text(
-                    'Material Type*',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
+                    'Material Type',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE5E5E5)),
-                    ),
-                    child: TextFormField(
-                      controller: _materialTypeController,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter material type',
-                        hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 13,
-                          horizontal: 16,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter material type';
-                        }
-                        return null;
-                      },
-                    ),
+                  Text(
+                    'Permanent Vinyl 3.2',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Description
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE5E5E5)),
-                    ),
-                    child: TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Describe material specifications, color, brand, etc.',
-                        hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 20),
 
                   // Measure Type and Quantity Row
                   Row(
                     children: [
-                      // Measure Type
+                      // Measure Typer
                       Expanded(
                         flex: 3,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Measure Type*',
+                              'Measure Type',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -229,20 +104,19 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 horizontal: 16,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF5F6FA),
+                                color: Color(0xFFF5F6FA).withValues(alpha: .6),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFE5E5E5),
+                                  color: const Color(
+                                    0xFFE5E5E5,
+                                  ).withValues(alpha: .6),
                                 ),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<MeasureType>(
                                   value: _selectedMeasureType,
                                   isExpanded: true,
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: Colors.black,
-                                  ),
+                                  icon: SizedBox(),
                                   items:
                                       _measureTypes.map((MeasureType type) {
                                         final measureType = type.name
@@ -262,19 +136,14 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                           value: type,
                                           child: Text(
                                             measureType,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14,
+                                              color: Colors.grey.shade700,
                                             ),
                                           ),
                                         );
                                       }).toList(),
-                                  onChanged: (MeasureType? type) {
-                                    if (type != null) {
-                                      setState(() {
-                                        _selectedMeasureType = type;
-                                      });
-                                    }
-                                  },
+                                  onChanged: null,
                                 ),
                               ),
                             ),
@@ -291,7 +160,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Quantity*',
+                              'Quantity',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -309,6 +178,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                               ),
                               child: TextFormField(
                                 controller: _measureController,
+                                enabled: false,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,
@@ -339,6 +209,29 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Description
+                  const Text(
+                    'Description',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No Description',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 100),
@@ -410,33 +303,21 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                               );
 
                           // Process stock in/out
-                          late final StockTransaction transaction;
-                          // try {
                           if (isStockIn) {
-                            transaction = await ref
+                            await ref
                                 .read(materialNotifierProvider.notifier)
                                 .stockIn(material.id, measure);
                           } else {
-                            transaction = await ref
+                            await ref
                                 .read(materialNotifierProvider.notifier)
                                 .stockOut(material.id, measure);
                           }
-                          // } catch (e) {
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //     SnackBar(
-                          //       content: Text("Failed: ${e.toString()}"),
-                          //     ),
-                          //   );
-                          //   return;
-                          // }
-
-                          // Show stock transaction details page
-                          Navigator.of(context).pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      StockEntryCheckoutScreen(transaction),
+                          // Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Stock ${isStockIn ? 'in' : 'out'} Entry added successfully',
+                              ),
                             ),
                           );
 
