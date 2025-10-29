@@ -66,7 +66,7 @@ class MaterialRepo {
     String? notes,
   }) async {
     final res = await ApiClient.http.post(
-      'material/materials/$materialId/stock-in',
+      '/material/materials/$materialId/stock-in',
 
       body: {'quantity': quantity, 'notes': notes},
     );
@@ -84,7 +84,7 @@ class MaterialRepo {
     String? projectId,
   }) async {
     final res = await ApiClient.http.post(
-      '/materials/$materialId/stock-out',
+      'material/materials/$materialId/stock-out',
       body: {'quantity': quantity, 'notes': notes, 'projectId': projectId},
     );
     if (res.statusCode == 201) {
@@ -116,9 +116,11 @@ class MaterialRepo {
     }
   }
 
+  // TODO: Going to need Stock transaction and the material associated with it returned from this function
   Future<StockTransaction> getTransactionByBarcode(String barcode) async {
     final res = await ApiClient.http.get('/transactions/barcode/$barcode');
     if (res.statusCode == 200) {
+      // return MaterialResponse
       return StockTransaction.fromJson(jsonDecode(res.body));
     } else {
       throw Exception('Transaction not found: ${res.body}');
