@@ -143,13 +143,26 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Get transaction by barcode
-  Future<void> fetchTransactionByBarcode(String barcode) async {
+  Future<StockTransaction> fetchTransactionByBarcode(String barcode) async {
+    try {
+      return state.transactions.firstWhere(
+        (transaction) => transaction.barcode == barcode,
+      );
+    } catch (e) {
+      // Not found in memory
+      // Proceed to find that in database
+    }
+
     state = state.copyWith(isLoading: true);
     try {
       final transaction = await _repo.getTransactionByBarcode(barcode);
       state = state.copyWith(transactions: [transaction], isLoading: false);
+
+      return transaction;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+
+      rethrow;
     }
   }
 }

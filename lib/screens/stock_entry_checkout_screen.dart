@@ -7,12 +7,12 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 
-class StockEntryCheckoutScreen extends ConsumerStatefulWidget {
+class StockEntryDetailsScreen extends ConsumerStatefulWidget {
   final StockTransaction transaction;
   final String materialType;
   final MeasureType measureType;
 
-  const StockEntryCheckoutScreen(
+  const StockEntryDetailsScreen(
     this.transaction, {
     Key? key,
     required this.materialType,
@@ -20,11 +20,10 @@ class StockEntryCheckoutScreen extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<StockEntryCheckoutScreen> createState() =>
-      _StockInScreenState();
+  ConsumerState<StockEntryDetailsScreen> createState() => _StockInScreenState();
 }
 
-class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
+class _StockInScreenState extends ConsumerState<StockEntryDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   late final String _description;
   late final double _measure;
