@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/notifiers/material_notifier.dart';
 
 class MaterialRepo {
   Future<List<MaterialModel>> getAllMaterials() async {
@@ -57,6 +58,16 @@ class MaterialRepo {
       return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch transactions: ${res.body}');
+    }
+  }
+
+  Future<MaterialModel> getMaterialById(String materialId) async {
+    final res = await ApiClient.http.get('/material/materials/$materialId');
+
+    if (res.statusCode == 200) {
+      return MaterialModel.fromJson(jsonDecode(res.body));
+    } else {
+      throw Exception('Material not found: ${res.body}');
     }
   }
 
@@ -117,11 +128,15 @@ class MaterialRepo {
   }
 
   // TODO: Going to need Stock transaction and the material associated with it returned from this function
-  Future<StockTransaction> getTransactionByBarcode(String barcode) async {
+  Future<MaterialResponse> getTransactionByBarcode(String barcode) async {
     final res = await ApiClient.http.get('/transactions/barcode/$barcode');
     if (res.statusCode == 200) {
       // return MaterialResponse
-      return StockTransaction.fromJson(jsonDecode(res.body));
+      final body = jsonDecode(res.body);
+      return MaterialResponse(
+        material: MaterialModel.fromJson(body["material"]),
+        stockTransaction: StockTransaction.fromJson(body),
+      );
     } else {
       throw Exception('Transaction not found: ${res.body}');
     }
