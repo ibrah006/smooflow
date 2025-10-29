@@ -202,3 +202,10 @@ class MaterialState {
     );
   }
 }
+
+class MaterialResponse {
+  final MaterialModel material;
+  final StockTransaction stockTransaction;
+  // For a specific project
+  MaterialResponse({required this.material, required this.stockTransaction});
+}
