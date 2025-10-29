@@ -6,13 +6,18 @@ import 'package:smooflow/components/product_barcode.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
-import 'package:smooflow/providers/material_provider.dart';
 
 class StockEntryCheckoutScreen extends ConsumerStatefulWidget {
   final StockTransaction transaction;
+  final String materialType;
+  final MeasureType measureType;
 
-  const StockEntryCheckoutScreen(this.transaction, {Key? key})
-    : super(key: key);
+  const StockEntryCheckoutScreen(
+    this.transaction, {
+    Key? key,
+    required this.materialType,
+    required this.measureType,
+  }) : super(key: key);
 
   @override
   ConsumerState<StockEntryCheckoutScreen> createState() =>
@@ -21,21 +26,19 @@ class StockEntryCheckoutScreen extends ConsumerStatefulWidget {
 
 class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _materialTypeController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _measureController = TextEditingController();
+  late final String _description;
+  late final double _measure;
 
-  MeasureType _selectedMeasureType = MeasureType.running_meter;
   List<MeasureType> get _measureTypes => MeasureType.values.toList();
 
   bool get isStockIn => widget.transaction.type == TransactionType.stockIn;
 
   @override
-  void dispose() {
-    _materialTypeController.dispose();
-    _descriptionController.dispose();
-    _measureController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+
+    _description = widget.transaction.notes?.toString() ?? "No Description";
+    _measure = widget.transaction.quantity;
   }
 
   @override
@@ -65,9 +68,11 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                 children: [
                   SizedBox(height: 20),
                   // Info Card
-                  ProductBarcode(productId: "PRD-1220-233"),
+                  ProductBarcode(
+                    barcode: widget.transaction.barcode.toString(),
+                  ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Material Type
                   const Text(
@@ -76,10 +81,10 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Permanent Vinyl 3.2',
+                    widget.materialType,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 23),
 
                   // Measure Type and Quantity Row
                   Row(
@@ -114,7 +119,7 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<MeasureType>(
-                                  value: _selectedMeasureType,
+                                  value: widget.measureType,
                                   isExpanded: true,
                                   icon: SizedBox(),
                                   items:
@@ -177,7 +182,9 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                                 ),
                               ),
                               child: TextFormField(
-                                controller: _measureController,
+                                controller: TextEditingController(
+                                  text: _measure.toString(),
+                                ),
                                 enabled: false,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -211,7 +218,7 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   // Description
                   const Text(
@@ -224,7 +231,7 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'No Description',
+                    _description,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -253,102 +260,20 @@ class _StockInScreenState extends ConsumerState<StockEntryCheckoutScreen> {
                 vertical: 15,
                 horizontal: 20,
               ).copyWith(bottom: 35),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.grey.shade300,
-                          width: 1.25,
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {},
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isStockIn ? null : colorError,
+                    padding: EdgeInsets.all(18),
+                    textStyle: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: () async {
-                        // Add Stock in/out
-
-                        final materialType =
-                            _materialTypeController.text.trim();
-                        final description = _descriptionController.text.trim();
-                        // Measure / quantity
-                        final measure =
-                            num.parse(_measureController.text).toDouble();
-
-                        if (_formKey.currentState!.validate()) {
-                          // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
-                          final material = await ref
-                              .read(materialNotifierProvider.notifier)
-                              .createMaterial(
-                                MaterialModel.create(
-                                  name: materialType,
-                                  description: description,
-                                  measureType: _selectedMeasureType,
-                                ),
-                              );
-
-                          // Process stock in/out
-                          if (isStockIn) {
-                            await ref
-                                .read(materialNotifierProvider.notifier)
-                                .stockIn(material.id, measure);
-                          } else {
-                            await ref
-                                .read(materialNotifierProvider.notifier)
-                                .stockOut(material.id, measure);
-                          }
-                          // Show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Stock ${isStockIn ? 'in' : 'out'} Entry added successfully',
-                              ),
-                            ),
-                          );
-
-                          _materialTypeController.clear();
-                          _descriptionController.clear();
-                          _measureTypes.clear();
-                          _measureController.clear();
-
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Make sure to fill in all the required inputs',
-                            ),
-                          ),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: isStockIn ? null : colorError,
-                        padding: EdgeInsets.all(18),
-                        textStyle: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      child: Text(isStockIn ? 'Add to Stock' : 'Add Stock out'),
-                    ),
-                  ),
-                ],
+                  child: Text("Done"),
+                ),
               ),
             ),
           ),

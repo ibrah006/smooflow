@@ -2,15 +2,15 @@ import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/cupertino.dart';
 
 class ProductBarcode extends StatelessWidget {
-  final String productId;
+  final String barcode;
 
-  const ProductBarcode({super.key, required this.productId});
+  const ProductBarcode({super.key, required this.barcode});
 
   @override
   Widget build(BuildContext context) {
     return BarcodeWidget(
       barcode: Barcode.code128(), // or Barcode.qrCode()
-      data: productId, // e.g. "PROD-001"
+      data: barcode, // e.g. "PROD-001"
       height: 80,
       drawText: true, // shows productId under barcode
     );

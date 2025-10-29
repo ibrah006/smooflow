@@ -435,8 +435,11 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder:
-                                  (context) =>
-                                      StockEntryCheckoutScreen(transaction),
+                                  (context) => StockEntryCheckoutScreen(
+                                    transaction,
+                                    materialType: materialType,
+                                    measureType: _selectedMeasureType,
+                                  ),
                             ),
                           );
 
