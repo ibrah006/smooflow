@@ -82,11 +82,12 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
                 isStockIn = !isStockIn;
               });
 
+              await requestCameraPermission();
               Navigator.of(context).pop(context);
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => BarcodeScanScreen()),
