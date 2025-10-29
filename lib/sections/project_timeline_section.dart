@@ -237,7 +237,7 @@ class ProjectTimelineMilestonesSectionState
                     ),
                     const SizedBox(height: 6),
                     if (widget.isReadMode)
-                      Text(project.estimatedSiteFixing?.formatDisplay ?? "N/A")
+                      Text(project.dueDate?.formatDisplay ?? "N/A")
                     else
                       GestureDetector(
                         onTap: () => _pickDate(context, false),
