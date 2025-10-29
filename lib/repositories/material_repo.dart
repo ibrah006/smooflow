@@ -116,9 +116,11 @@ class MaterialRepo {
     }
   }
 
+  // TODO: Going to need Stock transaction and the material associated with it returned from this function
   Future<StockTransaction> getTransactionByBarcode(String barcode) async {
     final res = await ApiClient.http.get('/transactions/barcode/$barcode');
     if (res.statusCode == 200) {
+      // return MaterialResponse
       return StockTransaction.fromJson(jsonDecode(res.body));
     } else {
       throw Exception('Transaction not found: ${res.body}');

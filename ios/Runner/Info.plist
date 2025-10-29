@@ -48,6 +48,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-    <string>This app needs camera access to take photos.</string>
+    <string>This app needs camera access to Scan Barcodes.</string>
 </dict>
 </plist>
