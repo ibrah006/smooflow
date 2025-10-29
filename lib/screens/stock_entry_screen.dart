@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
@@ -40,13 +41,10 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
     if (status.isGranted) {
       // Camera permission granted, proceed with camera functionality
-      print("Camera permission granted");
     } else if (status.isDenied) {
       // Camera permission denied
-      print("Camera permission denied");
     } else if (status.isPermanentlyDenied) {
       // Camera permission permanently denied, guide user to app settings
-      print("Camera permission permanently denied. Open app settings.");
       openAppSettings(); // Opens the app's settings page
     }
   }
