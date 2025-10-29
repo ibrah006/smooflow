@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
+import 'package:smooflow/screens/stock_entry_screen.dart';
 
 class BarcodeScanScreen extends ConsumerStatefulWidget {
   const BarcodeScanScreen({super.key});
@@ -22,20 +23,18 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       print("scanned barcode: $code");
 
       try {
-        final transaction = await ref
+        final materialResponse = await ref
             .watch(materialNotifierProvider.notifier)
-            .fetchTransactionByBarcode(code);
+            .fetchMaterialResponseByBarcode(code);
 
         // on Success
         Navigator.of(context).pop(context);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder:
-                (context) => StockEntryDetailsScreen(
-                  transaction,
-                  materialType: transaction.materialId,
-                  // Sample
-                  measureType: MeasureType.running_meter,
+                (context) => StockEntryScreen.stockOut(
+                  material: materialResponse.material,
+                  transaction: materialResponse.stockTransaction,
                 ),
           ),
         );

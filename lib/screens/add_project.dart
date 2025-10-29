@@ -239,7 +239,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                               TasksScreen(
                                                 projectId: widget.projectId,
                                               ),
-                                              StockEntryScreen(),
+                                              StockEntryScreen.stockin(),
                                             ][index],
                                   ),
                                 );

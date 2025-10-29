@@ -162,13 +162,16 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Get transaction by barcode
-  Future<StockTransaction> fetchTransactionByBarcode(String barcode) async {
+  Future<MaterialResponse> fetchMaterialResponseByBarcode(
+    String barcode,
+  ) async {
     try {
       final transactionInMemory = state.transactions.firstWhere(
         (transaction) => transaction.barcode == barcode,
       );
 
       // Make sure the corresponding Material exists in memory as well
+      late final MaterialModel material;
       try {
         state.materials.firstWhere(
           (material) => material.id == transactionInMemory.materialId,
@@ -177,9 +180,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         state = state.copyWith(isLoading: true);
         // Material doesn't exist in memory
         try {
-          final material = await getMaterialById(
-            transactionInMemory.materialId,
-          );
+          material = await getMaterialById(transactionInMemory.materialId);
 
           // Update memory about this material
           state = state.copyWith(isLoading: false, material: material);
@@ -194,7 +195,10 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         }
       }
 
-      return transactionInMemory;
+      return MaterialResponse(
+        material: material,
+        stockTransaction: transactionInMemory,
+      );
     } catch (e) {
       // Not found in memory
     }
@@ -208,7 +212,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         isLoading: false,
       );
 
-      return materialResponse.stockTransaction;
+      return materialResponse;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
 

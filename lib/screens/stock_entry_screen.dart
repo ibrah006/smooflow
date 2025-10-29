@@ -12,7 +12,22 @@ import 'package:smooflow/screens/barcode_scan_page.dart';
 import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 
 class StockEntryScreen extends ConsumerStatefulWidget {
-  const StockEntryScreen({Key? key}) : super(key: key);
+  late final bool isStockIn;
+
+  StockEntryScreen.stockin({Key? key}) : super(key: key) {
+    isStockIn = true;
+  }
+
+  late final MaterialModel material;
+  late final StockTransaction transaction;
+
+  StockEntryScreen.stockOut({
+    Key? key,
+    required this.material,
+    required this.transaction,
+  }) : super(key: key) {
+    isStockIn = false;
+  }
 
   @override
   ConsumerState<StockEntryScreen> createState() => _StockInScreenState();
@@ -27,7 +42,32 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   MeasureType _selectedMeasureType = MeasureType.running_meter;
   List<MeasureType> get _measureTypes => MeasureType.values.toList();
 
-  bool isStockIn = true;
+  getMeasureTypeDisplayName(MeasureType type) => type.name
+      .replaceAll("_", " ")
+      .split(' ') // split into words
+      .map(
+        (word) =>
+            word.isNotEmpty
+                ? word[0].toUpperCase() + word.substring(1).toLowerCase()
+                : '',
+      )
+      .join(' ');
+
+  @override
+  void initState() {
+    super.initState();
+
+    _materialTypeController.text = "Sample Type Name";
+    _descriptionController.text = "no description";
+    _selectedMeasureType = MeasureType.item_quantity;
+
+    // if (!widget.isStockIn) {
+    //   _materialTypeController.text = widget.material.name;
+    //   _descriptionController.text =
+    //       widget.transaction.notes ?? "No Description";
+    //   _selectedMeasureType = widget.material.measureType;
+    // }
+  }
 
   @override
   void dispose() {
@@ -66,7 +106,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                     : CrossAxisAlignment.start,
             children: [
               Text(
-                isStockIn ? 'Stock In' : 'Stock out',
+                widget.isStockIn ? 'Stock In' : 'Stock out',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 20,
@@ -86,18 +126,14 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
           actions: [
             IconButton(
               onPressed: () async {
-                setState(() {
-                  isStockIn = !isStockIn;
-                });
-
                 await requestCameraPermission();
                 Navigator.of(context).pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => BarcodeScanScreen()),
                 );
               },
-              color: !isStockIn ? colorPrimary : colorError,
-              icon: Icon(isStockIn ? Icons.upload : Icons.download),
+              color: !widget.isStockIn ? colorPrimary : colorError,
+              icon: Icon(widget.isStockIn ? Icons.upload : Icons.download),
             ),
           ],
         ),
@@ -151,16 +187,18 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Enter material details and specifications',
+                    Text(
+                      widget.isStockIn
+                          ? 'Enter material details and specifications'
+                          : 'Please input the quantity you want to stock out',
                       style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
 
                     const SizedBox(height: 20),
 
                     // Material Type
-                    const Text(
-                      'Material Type*',
+                    Text(
+                      'Material Type${widget.isStockIn ? '*' : ''}',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -168,31 +206,40 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E5E5)),
-                      ),
-                      child: TextFormField(
-                        controller: _materialTypeController,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter material type',
-                          hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 13,
-                            horizontal: 16,
-                          ),
+                    if (!widget.isStockIn)
+                      Text(
+                        _materialTypeController.text,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter material type';
-                          }
-                          return null;
-                        },
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E5E5)),
+                        ),
+                        child: TextFormField(
+                          controller: _materialTypeController,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter material type',
+                            hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 13,
+                              horizontal: 16,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter material type';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
-                    ),
 
                     const SizedBox(height: 20),
 
@@ -206,29 +253,35 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E5E5)),
-                      ),
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        maxLines: 4,
-                        decoration: const InputDecoration(
-                          hintText:
-                              'Describe material specifications, color, brand, etc.',
-                          hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
+                    if (!widget.isStockIn)
+                      Text(
+                        _descriptionController.text,
+                        style: TextStyle(color: Colors.grey.shade700),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E5E5)),
+                        ),
+                        child: TextFormField(
+                          controller: _descriptionController,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Describe material specifications, color, brand, etc.',
+                            hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 13,
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                    if (widget.isStockIn) SizedBox(height: 20),
 
                     // Measure Type and Quantity Row
                     Row(
@@ -239,8 +292,8 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Measure Type*',
+                              Text(
+                                'Measure Type${widget.isStockIn ? '*' : ''}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -248,61 +301,62 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F6FA),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFFE5E5E5),
+                              if (!widget.isStockIn)
+                                Text(
+                                  getMeasureTypeDisplayName(
+                                    _selectedMeasureType,
                                   ),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<MeasureType>(
-                                    value: _selectedMeasureType,
-                                    isExpanded: true,
-                                    icon: const Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: Colors.black,
+                                  style: TextStyle(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F6FA),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E5E5),
                                     ),
-                                    items:
-                                        _measureTypes.map((MeasureType type) {
-                                          final measureType = type.name
-                                              .replaceAll("_", " ")
-                                              .split(' ') // split into words
-                                              .map(
-                                                (word) =>
-                                                    word.isNotEmpty
-                                                        ? word[0]
-                                                                .toUpperCase() +
-                                                            word
-                                                                .substring(1)
-                                                                .toLowerCase()
-                                                        : '',
-                                              )
-                                              .join(' ');
-                                          return DropdownMenuItem<MeasureType>(
-                                            value: type,
-                                            child: Text(
-                                              measureType,
-                                              style: const TextStyle(
-                                                fontSize: 14,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<MeasureType>(
+                                      value: _selectedMeasureType,
+                                      isExpanded: true,
+                                      icon: const Icon(
+                                        Icons.keyboard_arrow_down,
+                                        color: Colors.black,
+                                      ),
+                                      items:
+                                          _measureTypes.map((MeasureType type) {
+                                            final measureType =
+                                                getMeasureTypeDisplayName(type);
+                                            return DropdownMenuItem<
+                                              MeasureType
+                                            >(
+                                              value: type,
+                                              child: Text(
+                                                measureType,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                    onChanged: (MeasureType? type) {
-                                      if (type != null) {
-                                        setState(() {
-                                          _selectedMeasureType = type;
-                                        });
-                                      }
-                                    },
+                                            );
+                                          }).toList(),
+                                      onChanged: (MeasureType? type) {
+                                        if (type != null) {
+                                          setState(() {
+                                            _selectedMeasureType = type;
+                                          });
+                                        }
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -311,10 +365,11 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
                         // Quantity
                         Expanded(
-                          flex: 2,
+                          flex: widget.isStockIn ? 2 : 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              if (!widget.isStockIn) SizedBox(height: 27),
                               const Text(
                                 'Quantity*',
                                 style: TextStyle(
@@ -438,7 +493,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                             // Process stock in/out
                             late final StockTransaction transaction;
                             // try {
-                            if (isStockIn) {
+                            if (widget.isStockIn) {
                               transaction = await ref
                                   .read(materialNotifierProvider.notifier)
                                   .stockIn(material.id, measure);
@@ -486,7 +541,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           );
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: isStockIn ? null : colorError,
+                          backgroundColor: widget.isStockIn ? null : colorError,
                           padding: EdgeInsets.all(18),
                           textStyle: TextStyle(
                             fontSize: 17,
@@ -494,7 +549,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           ),
                         ),
                         child: Text(
-                          isStockIn ? 'Add to Stock' : 'Add Stock out',
+                          widget.isStockIn ? 'Add to Stock' : 'Add Stock out',
                         ),
                       ),
                     ),
