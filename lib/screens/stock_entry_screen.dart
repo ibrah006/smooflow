@@ -6,6 +6,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/screens/barcode_scan_page.dart';
 import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 
 class StockEntryScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,22 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
     _descriptionController.dispose();
     _measureController.dispose();
     super.dispose();
+  }
+
+  Future<void> requestCameraPermission() async {
+    final status = await Permission.camera.request();
+
+    if (status.isGranted) {
+      // Camera permission granted, proceed with camera functionality
+      print("Camera permission granted");
+    } else if (status.isDenied) {
+      // Camera permission denied
+      print("Camera permission denied");
+    } else if (status.isPermanentlyDenied) {
+      // Camera permission permanently denied, guide user to app settings
+      print("Camera permission permanently denied. Open app settings.");
+      openAppSettings(); // Opens the app's settings page
+    }
   }
 
   @override
@@ -71,6 +88,11 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
               setState(() {
                 isStockIn = !isStockIn;
               });
+
+              Navigator.of(context).pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => BarcodeScanScreen()),
+              );
             },
             color: !isStockIn ? colorPrimary : colorError,
             icon: Icon(isStockIn ? Icons.upload : Icons.download),

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ScanPage extends StatefulWidget {
-  const ScanPage({super.key});
+class BarcodeScanScreen extends StatefulWidget {
+  const BarcodeScanScreen({super.key});
 
   @override
-  State<ScanPage> createState() => _ScanPageState();
+  State<BarcodeScanScreen> createState() => _BarcodeScanScreenState();
 }
 
-class _ScanPageState extends State<ScanPage> {
+class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
   final MobileScannerController cameraController = MobileScannerController();
 
   void _onDetect(BarcodeCapture barcode) {
