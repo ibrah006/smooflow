@@ -12,11 +12,16 @@ class StockEntryDetailsScreen extends ConsumerStatefulWidget {
   final String materialType;
   final MeasureType measureType;
 
+  @Deprecated("for stock out, temporary")
+  /// only for stock out
+  final String? barcode;
+
   const StockEntryDetailsScreen(
     this.transaction, {
     Key? key,
     required this.materialType,
     required this.measureType,
+    required this.barcode,
   }) : super(key: key);
 
   @override
@@ -68,7 +73,8 @@ class _StockInScreenState extends ConsumerState<StockEntryDetailsScreen> {
                   SizedBox(height: 20),
                   // Info Card
                   ProductBarcode(
-                    barcode: widget.transaction.barcode.toString(),
+                    barcode:
+                        widget.barcode ?? widget.transaction.barcode.toString(),
                   ),
 
                   const SizedBox(height: 30),
@@ -262,9 +268,10 @@ class _StockInScreenState extends ConsumerState<StockEntryDetailsScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () async {},
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
                   style: FilledButton.styleFrom(
-                    backgroundColor: isStockIn ? null : colorError,
                     padding: EdgeInsets.all(18),
                     textStyle: TextStyle(
                       fontSize: 17,

@@ -80,7 +80,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
       // Camera permission granted, proceed with camera functionality
     } else if (status.isDenied) {
       // Camera permission denied
-    } else if (status.isPermanentlyDenied) {
+    } else if (status.isRestricted) {
       // Camera permission permanently denied, guide user to app settings
       openAppSettings(); // Opens the app's settings page
     }
@@ -496,7 +496,10 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                             } else {
                               transaction = await ref
                                   .read(materialNotifierProvider.notifier)
-                                  .stockOut(material.id, measure);
+                                  .stockOut(
+                                    widget.transaction.barcode!,
+                                    measure,
+                                  );
                             }
                             // } catch (e) {
                             //   ScaffoldMessenger.of(context).showSnackBar(
@@ -516,6 +519,10 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                       transaction,
                                       materialType: materialType,
                                       measureType: _selectedMeasureType,
+                                      barcode:
+                                          widget.isStockIn
+                                              ? null
+                                              : widget.transaction.barcode,
                                     ),
                               ),
                             );

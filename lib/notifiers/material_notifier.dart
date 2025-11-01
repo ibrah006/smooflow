@@ -103,7 +103,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
 
   // Stock Out
   Future<StockTransaction> stockOut(
-    String materialId,
+    String barcode,
     double quantity, {
     String? notes,
     String? projectId,
@@ -111,7 +111,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     state = state.copyWith(isLoading: true);
     try {
       final transaction = await _repo.stockOut(
-        materialId,
+        barcode,
         quantity,
         notes: notes,
         projectId: projectId,
@@ -165,59 +165,59 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   Future<MaterialResponse> fetchMaterialResponseByBarcode(
     String barcode,
   ) async {
-    try {
-      final transactionInMemory = state.transactions.firstWhere(
-        (transaction) => transaction.barcode == barcode,
-      );
+    // try {
+    //   final transactionInMemory = state.transactions.firstWhere(
+    //     (transaction) => transaction.barcode == barcode,
+    //   );
 
-      // Make sure the corresponding Material exists in memory as well
-      late final MaterialModel material;
-      try {
-        state.materials.firstWhere(
-          (material) => material.id == transactionInMemory.materialId,
-        );
-      } catch (e) {
-        state = state.copyWith(isLoading: true);
-        // Material doesn't exist in memory
-        try {
-          material = await getMaterialById(transactionInMemory.materialId);
+    //   // Make sure the corresponding Material exists in memory as well
+    //   late final MaterialModel material;
+    //   try {
+    //     state.materials.firstWhere(
+    //       (material) => material.id == transactionInMemory.materialId,
+    //     );
+    //   } catch (e) {
+    //     state = state.copyWith(isLoading: true);
+    //     // Material doesn't exist in memory
+    //     try {
+    //       material = await getMaterialById(transactionInMemory.materialId);
 
-          // Update memory about this material
-          state = state.copyWith(isLoading: false, material: material);
-        } catch (e) {
-          // Was able to get transaction but not able to get material, retrying should fix
-          state = state.copyWith(
-            isLoading: false,
-            errorMessage:
-                "Failed to get Material info for the Stock Transaction. Please Retry",
-          );
-          rethrow;
-        }
-      }
+    //       // Update memory about this material
+    //       state = state.copyWith(isLoading: false, material: material);
+    //     } catch (e) {
+    //       // Was able to get transaction but not able to get material, retrying should fix
+    //       state = state.copyWith(
+    //         isLoading: false,
+    //         errorMessage:
+    //             "Failed to get Material info for the Stock Transaction. Please Retry",
+    //       );
+    //       rethrow;
+    //     }
+    //   }
 
-      return MaterialResponse(
-        material: material,
-        stockTransaction: transactionInMemory,
-      );
-    } catch (e) {
-      // Not found in memory
-    }
+    //   return MaterialResponse(
+    //     material: material,
+    //     stockTransaction: transactionInMemory,
+    //   );
+    // } catch (e) {
+    //   // Not found in memory
+    // }
     // Proceed to find that in database
     state = state.copyWith(isLoading: true);
-    try {
-      final materialResponse = await _repo.getTransactionByBarcode(barcode);
-      state = state.copyWith(
-        transaction: materialResponse.stockTransaction,
-        material: materialResponse.material,
-        isLoading: false,
-      );
+    // try {
+    final materialResponse = await _repo.getTransactionByBarcode(barcode);
+    state = state.copyWith(
+      transaction: materialResponse.stockTransaction,
+      material: materialResponse.material,
+      isLoading: false,
+    );
 
-      return materialResponse;
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    return materialResponse;
+    // } catch (e) {
+    //   state = state.copyWith(isLoading: false, errorMessage: e.toString());
 
-      rethrow;
-    }
+    //   rethrow;
+    // }
   }
 }
 

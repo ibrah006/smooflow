@@ -39,8 +39,8 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
 
     final invitations = state.invitations;
 
-    final currentOrganization =
-        ref.watch(organizationNotifierProvider).organization!;
+    final currentOrganizationFuture =
+        ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
 
     return LoadingOverlay(
       isLoading: state.isLoading,
@@ -178,6 +178,9 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             );
                             return;
                           }
+
+                          final currentOrganization =
+                              await currentOrganizationFuture;
 
                           if (email.isEmpty || !email.isEmail) {
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -34,7 +34,7 @@ class CompanyRepo {
 
       final body = jsonDecode(response.body) as Map;
 
-      if (response.statusCode != 201) {
+      if (response.statusCode != 201 && response.statusCode != 209) {
         return body["error"];
       }
 
@@ -43,6 +43,11 @@ class CompanyRepo {
       company.createdAt = createdAt;
 
       companies.add(company);
+
+      // Client company already exists in this organization
+      if (response.statusCode == 209) {
+        companies.add(body["company"]);
+      }
     } catch (e) {
       debugPrint("Error creating company profile,\nerror: $e");
     }

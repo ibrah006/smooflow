@@ -89,13 +89,13 @@ class MaterialRepo {
   }
 
   Future<StockTransaction> stockOut(
-    String materialId,
+    String barcode,
     double quantity, {
     String? notes,
     String? projectId,
   }) async {
     final res = await ApiClient.http.post(
-      'material/materials/$materialId/stock-out',
+      '/material/materials/$barcode/stock-out',
       body: {'quantity': quantity, 'notes': notes, 'projectId': projectId},
     );
     if (res.statusCode == 201) {
@@ -118,7 +118,7 @@ class MaterialRepo {
   Future<List<StockTransaction>> getProjectMaterialUsage(
     String projectId,
   ) async {
-    final res = await ApiClient.http.get('/projects/$projectId/materials');
+    final res = await ApiClient.http.get('projects/$projectId/materials');
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
@@ -129,7 +129,9 @@ class MaterialRepo {
 
   // TODO: Going to need Stock transaction and the material associated with it returned from this function
   Future<MaterialResponse> getTransactionByBarcode(String barcode) async {
-    final res = await ApiClient.http.get('/transactions/barcode/$barcode');
+    final res = await ApiClient.http.get(
+      '/material/transactions/barcode/$barcode',
+    );
     if (res.statusCode == 200) {
       // return MaterialResponse
       final body = jsonDecode(res.body);

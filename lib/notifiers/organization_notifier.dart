@@ -6,15 +6,15 @@ import 'package:smooflow/repositories/organization_repo.dart';
 class OrganizationState {
   final bool isLoading;
   final String? error;
-  final Organization? organization;
+  final Organization? _organization;
   final DateTime? projectsLastAdded;
 
   const OrganizationState({
     this.isLoading = false,
     this.error,
-    this.organization,
+    Organization? organization,
     this.projectsLastAdded,
-  });
+  }) : _organization = organization;
 
   OrganizationState copyWith({
     bool? isLoading,
@@ -25,7 +25,7 @@ class OrganizationState {
     return OrganizationState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      organization: organization ?? this.organization,
+      organization: organization ?? this._organization,
       projectsLastAdded: this.projectsLastAdded ?? projectsLastAdded,
     );
   }
@@ -48,7 +48,7 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   Future<Organization> get getCurrentOrganization async {
     late final Organization organization;
     try {
-      organization = state.organization!;
+      organization = state._organization!;
     } catch (e) {
       state.copyWith(isLoading: true);
 
