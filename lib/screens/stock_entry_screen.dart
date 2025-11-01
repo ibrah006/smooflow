@@ -57,16 +57,12 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   void initState() {
     super.initState();
 
-    _materialTypeController.text = "Sample Type Name";
-    _descriptionController.text = "no description";
-    _selectedMeasureType = MeasureType.item_quantity;
-
-    // if (!widget.isStockIn) {
-    //   _materialTypeController.text = widget.material.name;
-    //   _descriptionController.text =
-    //       widget.transaction.notes ?? "No Description";
-    //   _selectedMeasureType = widget.material.measureType;
-    // }
+    if (!widget.isStockIn) {
+      _materialTypeController.text = widget.material.name;
+      _descriptionController.text =
+          widget.transaction.notes ?? "No Description";
+      _selectedMeasureType = widget.material.measureType;
+    }
   }
 
   @override
