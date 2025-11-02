@@ -49,18 +49,29 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
     final selectedTab = _tabController.index;
     if (selectedTab == 1) {
       filtered =
-          filtered
-              .where((p) => p.status.toLowerCase() == 'in progress')
-              .toList();
+          filtered.where((p) => p.status.toLowerCase() == 'pending').toList();
     } else if (selectedTab == 2) {
       filtered =
-          filtered.where((p) => p.status.toLowerCase() == 'pending').toList();
+          filtered.where((p) => p.status.toLowerCase() == 'design').toList();
     } else if (selectedTab == 3) {
       filtered =
-          filtered.where((p) => p.status.toLowerCase() == 'completed').toList();
+          filtered
+              .where((p) => p.status.toLowerCase() == 'production')
+              .toList();
     } else if (selectedTab == 4) {
       filtered =
-          filtered.where((p) => p.status.toLowerCase() == 'on hold').toList();
+          filtered.where((p) => p.status.toLowerCase() == 'finishing').toList();
+    } else if (selectedTab == 5) {
+      filtered =
+          filtered
+              .where((p) => p.status.toLowerCase() == 'application')
+              .toList();
+    } else if (selectedTab == 6) {
+      filtered =
+          filtered.where((p) => p.status.toLowerCase() == 'completed').toList();
+    } else if (selectedTab == 7) {
+      filtered =
+          filtered.where((p) => p.status.toLowerCase() == 'cancelled').toList();
     }
 
     return filtered;
@@ -301,7 +312,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
             child: RefreshIndicator(
               onRefresh: _refreshProjects,
               child:
-                  _filteredProjects.isEmpty
+                  _filteredProjects.isEmpty && _selectedSort == "All"
                       ? Center(
                         child: SizedBox(
                           width: 200,
