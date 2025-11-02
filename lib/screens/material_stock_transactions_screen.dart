@@ -1,14 +1,22 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/components/product_barcode.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/member.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
+import 'dart:ui' as ui;
 
 class MaterialStockTransactionsScreen extends ConsumerStatefulWidget {
   final String materialId;
@@ -639,6 +647,8 @@ class _StockTransactionsScreenState
   }
 
   void _showTransactionDetails(StockTransaction transaction) {
+    final GlobalKey _barcodeKey = GlobalKey();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -675,7 +685,10 @@ class _StockTransactionsScreenState
                 ),
                 const SizedBox(height: 20),
                 if (transaction.barcode != null) ...[
-                  ProductBarcode(barcode: transaction.barcode!),
+                  ProductBarcode(
+                    key: _barcodeKey,
+                    barcode: transaction.barcode!,
+                  ),
                   const SizedBox(height: 20),
                 ],
                 _buildDetailRow(
@@ -702,7 +715,11 @@ class _StockTransactionsScreenState
                     final member = snapshot.data;
 
                     if (member == null) {
-                      return CardLoading(height: 10);
+                      return CardLoading(
+                        height: 10,
+                        borderRadius: BorderRadius.circular(10),
+                        margin: EdgeInsets.only(bottom: 5),
+                      );
                     }
                     return _buildDetailRow('Created By', member.name);
                   },
@@ -711,6 +728,30 @@ class _StockTransactionsScreenState
                   'Date',
                   '${transaction.createdAt.day}/${transaction.createdAt.month}/${transaction.createdAt.year} ${transaction.createdAt.hour}:${transaction.createdAt.minute.toString().padLeft(2, '0')}',
                 ),
+                const SizedBox(height: 10),
+                if (transaction.type == TransactionType.stockIn)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _exportToJpg(_barcodeKey);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 15,
+                        ),
+                        side: BorderSide(color: colorPrimary),
+                        foregroundColor: colorPrimary,
+                        textStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      icon: Icon(Icons.file_upload_outlined),
+                      label: Text("Barcode"),
+                    ),
+                  ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -766,5 +807,98 @@ class _StockTransactionsScreenState
         ],
       ),
     );
+  }
+
+  Future<void> saveImageToGallery(Uint8List imageBytes) async {
+    // Check and request storage permission
+    var status = await Permission.storage.request();
+
+    if (Platform.isIOS) {
+      status = await Permission.photosAddOnly.request();
+    }
+
+    // For Android 13+ (API 33+) you might request Permission.photos or Permission.mediaLibrary
+    // The 'storage' permission handler typically abstracts this for you.
+    if (status.isGranted) {
+      final result = await ImageGallerySaver.saveImage(
+        imageBytes,
+        name: "barcode_${DateTime.now().millisecondsSinceEpoch}",
+      );
+      print("Image saved: $result");
+      // Handle success/failure
+    } else {
+      print("Permission denied");
+      // Optionally, show a dialogue to guide the user to app settings
+      openAppSettings();
+    }
+  }
+
+  Future<void> _exportToJpg(GlobalKey barcodeKey) async {
+    final status = await Permission.storage.request();
+
+    if (status.isGranted) {
+      // Camera permission granted, proceed with camera functionality
+    } else if (status.isDenied) {
+      // Camera permission denied
+    } else if (status.isRestricted) {
+      // Camera permission permanently denied, guide user to app settings
+      openAppSettings(); // Opens the app's settings page
+    }
+
+    try {
+      // Get RenderRepaintBoundary
+      RenderRepaintBoundary boundary =
+          barcodeKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
+
+      // Convert to Image
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+
+      // Convert to byte data (PNG first)
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      // Convert to JPEG with white background
+      Uint8List jpgBytes = await _convertPngToJpgWithWhiteBg(pngBytes);
+
+      // (Optional) Save to gallery
+      await saveImageToGallery(jpgBytes);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Barcode exported as JPG!')));
+    } catch (e) {
+      print('Error exporting barcode: $e');
+    }
+  }
+
+  /// Converts transparent PNG bytes into JPEG with white background
+  Future<Uint8List> _convertPngToJpgWithWhiteBg(Uint8List pngBytes) async {
+    final codec = await ui.instantiateImageCodec(pngBytes);
+    final frame = await codec.getNextFrame();
+    final image = frame.image;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    // Fill background white
+    final paint = Paint()..color = Colors.white;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      paint,
+    );
+
+    // Draw the original image on top
+    canvas.drawImage(image, Offset.zero, Paint());
+
+    final picture = recorder.endRecording();
+    final finalImage = await picture.toImage(image.width, image.height);
+    final byteData = await finalImage.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    return byteData!.buffer.asUint8List();
   }
 }
