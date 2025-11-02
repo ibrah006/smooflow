@@ -127,4 +127,7 @@ class MaterialModel {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  bool get isLowStock => currentStock < minStockLevel;
+  bool get isCriticalStock => currentStock <= 0;
 }

@@ -81,21 +81,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
             child: Image.asset("assets/icons/app_icon.png"),
           ),
           actions: [
-            IconButton.filled(
-              color: Colors.black,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsProfileScreen(),
-                  ),
-                );
-              },
-              iconSize: 27,
-              style: IconButton.styleFrom(
-                backgroundColor: colorPrimary.withValues(alpha: 0.08),
+            Ink(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F6FA),
+                borderRadius: BorderRadius.circular(12),
               ),
-              icon: Icon(Icons.person_rounded),
+              child: IconButton(
+                icon: const Icon(Icons.person_outline),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SettingsProfileScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
             SizedBox(width: 15),
           ],
