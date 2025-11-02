@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/priorities.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/project.dart';
@@ -87,16 +91,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4461F2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.folder_outlined,
-                          color: Colors.white,
-                          size: 24,
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Platform.isIOS
+                              ? Icons.arrow_back_ios
+                              : Icons.arrow_back,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -111,13 +111,15 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                         ),
                       ),
                       Container(
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F6FA),
-                          borderRadius: BorderRadius.circular(12),
+                          color: colorPrimary,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.person_outline),
-                          onPressed: () {},
+                        child: const Icon(
+                          Icons.folder_outlined,
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
                     ],
@@ -158,7 +160,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                         child: IconButton(
                           icon: const Icon(
                             Icons.notifications_outlined,
-                            color: Color(0xFF4461F2),
+                            color: colorPrimary,
                           ),
                           onPressed: () {},
                         ),
@@ -180,7 +182,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                     icon: Icons.work_outline,
                     title: '${_projects.length}',
                     subtitle: 'Active Projects',
-                    color: const Color(0xFF4461F2),
+                    color: colorPrimary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -203,9 +205,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
-              indicatorColor: const Color(0xFF4461F2),
+              indicatorColor: colorPrimary,
               indicatorWeight: 3,
-              labelColor: const Color(0xFF4461F2),
+              labelColor: colorPrimary,
               unselectedLabelColor: Colors.grey,
               dividerColor: Colors.grey.shade200,
               labelStyle: const TextStyle(
@@ -365,7 +367,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
             MaterialPageRoute(builder: (context) => AddProjectScreen()),
           );
         },
-        backgroundColor: const Color(0xFF4461F2),
+        backgroundColor: colorPrimary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'New Project',
@@ -473,6 +475,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
         child: InkWell(
           onTap: () {
             // Navigate to project details
+            HapticFeedback.lightImpact();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => AddProjectScreen.view(projectId: project.id),
+              ),
+            );
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
@@ -692,7 +702,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF4461F2),
+                                  color: colorPrimary,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Colors.white,

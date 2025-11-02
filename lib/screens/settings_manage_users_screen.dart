@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/models/member.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';

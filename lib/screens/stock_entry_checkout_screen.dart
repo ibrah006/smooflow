@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/product_barcode.dart';
-import 'package:smooflow/constants.dart';
+
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 

@@ -72,10 +72,13 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Platform.isIOS
-                              ? Icons.arrow_back_ios
-                              : Icons.arrow_back,
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Platform.isIOS
+                                ? Icons.arrow_back_ios
+                                : Icons.arrow_back,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
