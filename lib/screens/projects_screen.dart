@@ -536,7 +536,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        project.status,
+                        "${project.status[0].toUpperCase()}${project.status.substring(1)}",
                         style: TextStyle(
                           color: project.statusColor,
                           fontSize: 12,
