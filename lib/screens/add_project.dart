@@ -16,6 +16,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_client_screen.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/screens/google_sheet_viewer.dart';
+import 'package:smooflow/screens/materials_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 import 'package:smooflow/screens/tasks_screen.dart';
@@ -221,7 +222,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                         itemBuilder: (context) {
                           HapticFeedback.lightImpact();
                           return List.generate(
-                            4,
+                            5,
                             (index) => PopupMenuItem(
                               onTap: () {
                                 Navigator.push(
@@ -240,6 +241,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                                 projectId: widget.projectId,
                                               ),
                                               StockEntryScreen.stockin(),
+                                              MaterialsScreen(),
                                             ][index],
                                   ),
                                 );
@@ -250,6 +252,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                   "Create Task",
                                   "View Tasks",
                                   "Add Material Stock Entry",
+                                  "Materials",
                                 ][index],
                               ),
                             ),

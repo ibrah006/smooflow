@@ -161,47 +161,58 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     }
   }
 
+  // Fetch all transactions for current organization
+  Future<void> fetchTransactions() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final transactions = await _repo.getTransactions();
+      state = state.copyWith(transactions: transactions, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+
   // Get transaction by barcode
   Future<MaterialResponse> fetchMaterialResponseByBarcode(
     String barcode,
   ) async {
-    // try {
-    //   final transactionInMemory = state.transactions.firstWhere(
-    //     (transaction) => transaction.barcode == barcode,
-    //   );
+    try {
+      final transactionInMemory = state.transactions.firstWhere(
+        (transaction) => transaction.barcode == barcode,
+      );
 
-    //   // Make sure the corresponding Material exists in memory as well
-    //   late final MaterialModel material;
-    //   try {
-    //     state.materials.firstWhere(
-    //       (material) => material.id == transactionInMemory.materialId,
-    //     );
-    //   } catch (e) {
-    //     state = state.copyWith(isLoading: true);
-    //     // Material doesn't exist in memory
-    //     try {
-    //       material = await getMaterialById(transactionInMemory.materialId);
+      // Make sure the corresponding Material exists in memory as well
+      late final MaterialModel material;
+      try {
+        state.materials.firstWhere(
+          (material) => material.id == transactionInMemory.materialId,
+        );
+      } catch (e) {
+        state = state.copyWith(isLoading: true);
+        // Material doesn't exist in memory
+        try {
+          material = await getMaterialById(transactionInMemory.materialId);
 
-    //       // Update memory about this material
-    //       state = state.copyWith(isLoading: false, material: material);
-    //     } catch (e) {
-    //       // Was able to get transaction but not able to get material, retrying should fix
-    //       state = state.copyWith(
-    //         isLoading: false,
-    //         errorMessage:
-    //             "Failed to get Material info for the Stock Transaction. Please Retry",
-    //       );
-    //       rethrow;
-    //     }
-    //   }
+          // Update memory about this material
+          state = state.copyWith(isLoading: false, material: material);
+        } catch (e) {
+          // Was able to get transaction but not able to get material, retrying should fix
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage:
+                "Failed to get Material info for the Stock Transaction. Please Retry",
+          );
+          rethrow;
+        }
+      }
 
-    //   return MaterialResponse(
-    //     material: material,
-    //     stockTransaction: transactionInMemory,
-    //   );
-    // } catch (e) {
-    //   // Not found in memory
-    // }
+      return MaterialResponse(
+        material: material,
+        stockTransaction: transactionInMemory,
+      );
+    } catch (e) {
+      // Not found in memory
+    }
     // Proceed to find that in database
     state = state.copyWith(isLoading: true);
     // try {

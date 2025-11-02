@@ -61,6 +61,16 @@ class MaterialRepo {
     }
   }
 
+  Future<List<StockTransaction>> getTransactions({int limit = 50}) async {
+    final res = await ApiClient.http.get('/transactions?limit=$limit');
+    if (res.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(res.body);
+      return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch transactions: ${res.body}');
+    }
+  }
+
   Future<MaterialModel> getMaterialById(String materialId) async {
     final res = await ApiClient.http.get('/material/materials/$materialId');
 
