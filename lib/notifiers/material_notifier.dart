@@ -90,15 +90,28 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     String? notes,
   }) async {
     state = state.copyWith(isLoading: true);
-    // try {
-    final transaction = await _repo.stockIn(materialId, quantity, notes: notes);
-    state = state.copyWith(isLoading: false, transaction: transaction);
+    try {
+      final transaction = await _repo.stockIn(
+        materialId,
+        quantity,
+        notes: notes,
+      );
+      state = state.copyWith(isLoading: false, transaction: transaction);
 
-    return transaction;
-    // } catch (e) {
-    //   state = state.copyWith(isLoading: false, errorMessage: e.toString());
-    //   rethrow;
-    // }
+      try {
+        state
+            .materials
+            .firstWhere((material) => material.id == materialId)
+            .currentStock += quantity;
+      } catch (e) {
+        // The corresponding material doesn't exist in memory
+      }
+
+      return transaction;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      rethrow;
+    }
   }
 
   // Stock Out
@@ -117,6 +130,15 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         projectId: projectId,
       );
       state = state.copyWith(isLoading: false, transaction: transaction);
+
+      try {
+        state
+            .materials
+            .firstWhere((material) => material.id == transaction.materialId)
+            .currentStock += quantity;
+      } catch (e) {
+        // The corresponding material doesn't exist in memory
+      }
 
       return transaction;
     } catch (e) {

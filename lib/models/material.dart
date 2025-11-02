@@ -24,32 +24,35 @@ class MaterialModel {
   final String name;
   final String? description;
   final MeasureType measureType;
-  final double currentStock;
+  double _currentStock;
   final double minStockLevel;
   final String organizationId;
   final String createdById;
   late final DateTime createdAt;
   late final DateTime updatedAt;
 
+  double get currentStock => _currentStock;
+  set currentStock(double newStockValue) => _currentStock = newStockValue;
+
   MaterialModel({
     required this.id,
     required this.name,
     this.description,
     required this.measureType,
-    required this.currentStock,
+    required double currentStock,
     required this.minStockLevel,
     required this.organizationId,
     required this.createdById,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : _currentStock = currentStock;
 
   MaterialModel.create({
     required String name,
     required this.description,
     required this.measureType,
     this.minStockLevel = 0,
-  }) : currentStock = 0.0,
+  }) : _currentStock = 0.0,
        organizationId = LoginService.currentUser!.organizationId,
        name = name.toLowerCase(),
        createdById = LoginService.currentUser!.id;

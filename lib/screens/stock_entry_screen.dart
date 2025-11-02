@@ -14,17 +14,19 @@ import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 class StockEntryScreen extends ConsumerStatefulWidget {
   late final bool isStockIn;
 
-  StockEntryScreen.stockin({Key? key}) : super(key: key) {
+  StockEntryScreen.stockin({Key? key}) : projectId = null, super(key: key) {
     isStockIn = true;
   }
 
   late final MaterialModel material;
   late final StockTransaction transaction;
+  final String? projectId;
 
   StockEntryScreen.stockOut({
     Key? key,
     required this.material,
     required this.transaction,
+    required this.projectId,
   }) : super(key: key) {
     isStockIn = false;
   }
@@ -125,7 +127,11 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                 await requestCameraPermission();
                 Navigator.of(context).pop(context);
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => BarcodeScanScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            BarcodeScanScreen(projectId: widget.projectId),
+                  ),
                 );
               },
               color: !widget.isStockIn ? colorPrimary : colorError,
@@ -499,6 +505,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                   .stockOut(
                                     widget.transaction.barcode!,
                                     measure,
+                                    projectId: widget.projectId,
                                   );
                             }
                             // } catch (e) {

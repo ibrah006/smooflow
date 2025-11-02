@@ -15,6 +15,7 @@ import 'package:smooflow/models/member.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 import 'dart:ui' as ui;
 
@@ -649,6 +650,11 @@ class _StockTransactionsScreenState
   void _showTransactionDetails(StockTransaction transaction) {
     final GlobalKey _barcodeKey = GlobalKey();
 
+    final project =
+        transaction.projectId != null
+            ? ref.watch(projectByIdProvider(transaction.projectId!))
+            : null;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -685,9 +691,9 @@ class _StockTransactionsScreenState
                 ),
                 const SizedBox(height: 20),
                 if (transaction.barcode != null) ...[
-                  ProductBarcode(
+                  RepaintBoundary(
                     key: _barcodeKey,
-                    barcode: transaction.barcode!,
+                    child: ProductBarcode(barcode: transaction.barcode!),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -728,6 +734,9 @@ class _StockTransactionsScreenState
                   'Date',
                   '${transaction.createdAt.day}/${transaction.createdAt.month}/${transaction.createdAt.year} ${transaction.createdAt.hour}:${transaction.createdAt.minute.toString().padLeft(2, '0')}',
                 ),
+                if (project != null) _buildDetailRow('Project', project.name),
+                if (project != null)
+                  _buildDetailRow('Client', project.client.name),
                 const SizedBox(height: 10),
                 if (transaction.type == TransactionType.stockIn)
                   Align(

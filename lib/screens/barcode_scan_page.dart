@@ -6,7 +6,9 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 
 class BarcodeScanScreen extends ConsumerStatefulWidget {
-  const BarcodeScanScreen({super.key});
+  final String? projectId;
+
+  const BarcodeScanScreen({super.key, required this.projectId});
 
   @override
   ConsumerState<BarcodeScanScreen> createState() => _BarcodeScanScreenState();
@@ -33,6 +35,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
                 (context) => StockEntryScreen.stockOut(
                   material: materialResponse.material,
                   transaction: materialResponse.stockTransaction,
+                  projectId: widget.projectId,
                 ),
           ),
         );
