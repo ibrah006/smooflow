@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/company.dart';
 
 import 'user.dart';
@@ -151,4 +154,28 @@ class Project {
 
   // Only local data
   late double progressRate;
+
+  Color get statusColor {
+    switch (_status) {
+      case "application":
+        return colorPrimary;
+      case "finished":
+        return colorPositiveStatus;
+      case "cancelled":
+        return colorError;
+      default:
+        return colorPending;
+    }
+  }
+
+  Color get priorityColor {
+    switch (priority) {
+      case 0:
+        return colorPositiveStatus;
+      case 1:
+        return colorPrimary;
+      default:
+        return colorError;
+    }
+  }
 }

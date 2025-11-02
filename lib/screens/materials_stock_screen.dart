@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,17 +72,10 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4461F2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.inventory_2_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
+                        Icon(
+                          Platform.isIOS
+                              ? Icons.arrow_back_ios
+                              : Icons.arrow_back,
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
@@ -91,6 +86,18 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
                             ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorPrimary,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.inventory_2_outlined,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
                       ],
@@ -131,7 +138,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                           child: IconButton(
                             icon: const Icon(
                               Icons.notifications_outlined,
-                              color: Color(0xFF4461F2),
+                              color: colorPrimary,
                             ),
                             onPressed: () {},
                           ),
@@ -151,7 +158,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                   Expanded(
                     child: _buildStatCard(
                       icon: Icons.inventory_2,
-                      iconColor: const Color(0xFF4461F2),
+                      iconColor: colorPrimary,
                       title: '${_materials.length}',
                       subtitle: 'Total Materials',
                     ),
@@ -210,7 +217,12 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                   itemCount: _filteredMaterials.length,
                   itemBuilder: (context, index) {
                     final material = _filteredMaterials[index];
-                    return _buildMaterialCard(material);
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == _filteredMaterials.length - 1 ? 45 : 0,
+                      ),
+                      child: _buildMaterialCard(material),
+                    );
                   },
                 ),
               ),
@@ -221,7 +233,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
         //   onPressed: () {
         //     // Navigate to Stock In screen
         //   },
-        //   backgroundColor: const Color(0xFF4461F2),
+        //   backgroundColor: colorPrimary,
         //   icon: const Icon(Icons.add, color: Colors.white),
         //   label: const Text(
         //     'Stock In',
@@ -285,7 +297,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4461F2) : Colors.white,
+          color: isSelected ? colorPrimary : Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
