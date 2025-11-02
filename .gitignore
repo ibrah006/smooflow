@@ -122,3 +122,5 @@ app.*.symbols
 
 # Google Service Account Key
 assets/credentials.json
+
+.env

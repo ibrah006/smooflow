@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:card_loading/card_loading.dart';
@@ -614,7 +613,7 @@ class _StockTransactionsScreenState
 
                         return Text(
                           // transaction.created
-                          'By ${member!.name}',
+                          'By ${member.name}',
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.grey,

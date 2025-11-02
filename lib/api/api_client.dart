@@ -1,7 +1,8 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:smooflow/api/local_http.dart';
 
 class ApiClient {
-  static const liveServerUrl = "https://workflow-backend-1-rihm.onrender.com";
+  static get liveServerUrl => dotenv.env['API_URL'];
   static const baseUrl = 'http://localhost:3000';
 
   static final LocalHttp http = LocalHttp(baseUrl: "http://192.168.0.146:3000");
