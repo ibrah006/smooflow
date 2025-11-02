@@ -822,10 +822,6 @@ class _StockTransactionsScreenState
     // Check and request storage permission
     var status = await Permission.storage.request();
 
-    if (Platform.isIOS) {
-      status = await Permission.photosAddOnly.request();
-    }
-
     // For Android 13+ (API 33+) you might request Permission.photos or Permission.mediaLibrary
     // The 'storage' permission handler typically abstracts this for you.
     if (status.isGranted) {
@@ -834,7 +830,11 @@ class _StockTransactionsScreenState
         name: "barcode_${DateTime.now().millisecondsSinceEpoch}",
       );
       print("Image saved: $result");
-      // Handle success/failure
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Barcode exported to gallery successfully")),
+      );
     } else {
       print("Permission denied");
       // Optionally, show a dialogue to guide the user to app settings
@@ -874,10 +874,6 @@ class _StockTransactionsScreenState
 
       // (Optional) Save to gallery
       await saveImageToGallery(jpgBytes);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Barcode exported as JPG!')));
     } catch (e) {
       print('Error exporting barcode: $e');
     }
