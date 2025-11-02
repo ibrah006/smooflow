@@ -6,11 +6,14 @@ import 'package:smooflow/notifiers/material_notifier.dart';
 
 class MaterialRepo {
   Future<List<MaterialModel>> getAllMaterials() async {
-    final res = await ApiClient.http.get('/materials');
+    final res = await ApiClient.http.get('/material/materials');
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => MaterialModel.fromJson(e)).toList();
     } else {
+      print(
+        "ERROR fetching materials STATUS ${res.statusCode}, body: ${res.body}",
+      );
       throw Exception('Failed to load materials: ${res.body}');
     }
   }
@@ -31,7 +34,7 @@ class MaterialRepo {
     String id,
     Map<String, dynamic> data,
   ) async {
-    final res = await ApiClient.http.put('/materials/$id', body: data);
+    final res = await ApiClient.http.put('/material/materials/$id', body: data);
     if (res.statusCode == 200) {
       return MaterialModel.fromJson(jsonDecode(res.body));
     } else {
@@ -40,7 +43,7 @@ class MaterialRepo {
   }
 
   Future<void> deleteMaterial(String id) async {
-    final res = await ApiClient.http.delete('/materials/$id');
+    final res = await ApiClient.http.delete('/material/materials/$id');
     if (res.statusCode != 204) {
       throw Exception('Failed to delete material: ${res.body}');
     }
@@ -51,7 +54,7 @@ class MaterialRepo {
     int limit = 50,
   }) async {
     final res = await ApiClient.http.get(
-      '/materials/$materialId/transactions?limit=$limit',
+      '/material/materials/$materialId/transactions?limit=$limit',
     );
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
@@ -62,7 +65,7 @@ class MaterialRepo {
   }
 
   Future<List<StockTransaction>> getTransactions({int limit = 50}) async {
-    final res = await ApiClient.http.get('/transactions?limit=$limit');
+    final res = await ApiClient.http.get('/material/transactions?limit=$limit');
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
@@ -116,7 +119,9 @@ class MaterialRepo {
   }
 
   Future<List<MaterialModel>> getLowStockMaterials() async {
-    final res = await ApiClient.http.get('/materials/alerts/low-stock');
+    final res = await ApiClient.http.get(
+      '/material/materials/alerts/low-stock',
+    );
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => MaterialModel.fromJson(e)).toList();
@@ -128,7 +133,7 @@ class MaterialRepo {
   Future<List<StockTransaction>> getProjectMaterialUsage(
     String projectId,
   ) async {
-    final res = await ApiClient.http.get('projects/$projectId/materials');
+    final res = await ApiClient.http.get('/projects/$projectId/materials');
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
