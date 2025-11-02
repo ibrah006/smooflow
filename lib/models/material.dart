@@ -130,4 +130,36 @@ class MaterialModel {
 
   bool get isLowStock => currentStock < minStockLevel;
   bool get isCriticalStock => currentStock <= 0;
+
+  String get unit {
+    switch (measureType) {
+      case MeasureType.running_meter:
+        return "meters";
+      case MeasureType.item_quantity:
+        return "units";
+      case MeasureType.kilograms:
+        return "kgs";
+      case MeasureType.liters:
+        MeasureType.liters.name;
+      default:
+        return "sqm";
+    }
+    return "";
+  }
+
+  String get unitShort {
+    switch (measureType) {
+      case MeasureType.running_meter:
+        return "m";
+      case MeasureType.item_quantity:
+        return "u";
+      case MeasureType.kilograms:
+        return "kgs";
+      case MeasureType.liters:
+        MeasureType.liters.name;
+      default:
+        return "sqm";
+    }
+    return "";
+  }
 }

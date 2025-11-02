@@ -53,6 +53,16 @@ class StockTransaction {
     this.projectId,
   });
 
+  // To ensure toSet gives no duplicates
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StockTransaction &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+
   /// Factory constructor to parse from backend JSON
   factory StockTransaction.fromJson(Map<String, dynamic> json) {
     return StockTransaction(

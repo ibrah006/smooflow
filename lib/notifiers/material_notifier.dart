@@ -127,6 +127,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
 
   Future<MaterialModel> getMaterialById(String materialId) async {
     try {
+      // check local memory
       return state.materials.firstWhere(
         (material) => material.id == materialId,
       );
@@ -253,7 +254,12 @@ class MaterialState {
     String? errorMessage,
     StockTransaction? transaction,
   }) {
-    transactions = List.from(transactions ?? this.transactions);
+    final temp = List<StockTransaction>.from(this.transactions);
+
+    temp.addAll(transactions ?? []);
+
+    // toSet will ensure there are no duplicates (by ID comparison)
+    transactions = temp.toSet().toList();
 
     if (transaction != null) {
       transactions.removeWhere((transac) => transac.id == transaction.id);
@@ -272,6 +278,12 @@ class MaterialState {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );
+  }
+
+  List<StockTransaction> byMaterial(String materialId) {
+    return transactions.where((transaction) {
+      return transaction.materialId == materialId;
+    }).toList();
   }
 }
 

@@ -7,6 +7,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/screens/material_stock_transactions_screen.dart';
 
 class MaterialsStockScreen extends ConsumerStatefulWidget {
   const MaterialsStockScreen({Key? key}) : super(key: key);
@@ -340,22 +341,6 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
     );
   }
 
-  String getUnit(MeasureType type) {
-    switch (type) {
-      case MeasureType.running_meter:
-        return "meters";
-      case MeasureType.item_quantity:
-        return "units";
-      case MeasureType.kilograms:
-        return "kgs";
-      case MeasureType.liters:
-        MeasureType.liters.name;
-      default:
-        return "sqm";
-    }
-    return "";
-  }
-
   Widget _buildMaterialCard(MaterialModel material) {
     Color statusColor = colorPositiveStatus;
     String statusText = 'Good';
@@ -382,6 +367,15 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
         child: InkWell(
           onTap: () {
             // Navigate to material details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => MaterialStockTransactionsScreen(
+                      materialId: material.id,
+                    ),
+              ),
+            );
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
@@ -450,7 +444,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${material.currentStock} ${getUnit(material.measureType)}',
+                            '${material.currentStock} ${material.unit}',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -476,7 +470,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${material.minStockLevel} ${getUnit(material.measureType)}',
+                            '${material.minStockLevel} ${material.unit}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

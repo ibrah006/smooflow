@@ -24,4 +24,22 @@ class MemberRepo {
       );
     }
   }
+
+  // Fetch organization member by ID
+  Future<Member> getMemberById(String memberId) async {
+    final response = await ApiClient.http.get(
+      ApiEndpoints.getCurrentOrgMember(memberId),
+    );
+
+    if (response.statusCode == 200) {
+      final memberRaw = (jsonDecode(response.body) as Map)["member"];
+      return Member.fromJson(memberRaw);
+    } else if (response.statusCode == 401) {
+      throw Exception('Organization context required');
+    } else {
+      throw Exception(
+        'Failed to fetch organization members: ${response.statusCode}',
+      );
+    }
+  }
 }

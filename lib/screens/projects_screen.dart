@@ -30,7 +30,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 8, vsync: this);
   }
 
   @override
@@ -85,7 +85,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
           // Header
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.all(20).copyWith(bottom: 0),
+            padding: const EdgeInsets.all(20).copyWith(bottom: 0, top: 5),
             child: SafeArea(
               child: Column(
                 children: [
@@ -192,7 +192,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                     title:
                         '${_projects.where((p) => p.dueDate != null && p.dueDate!.isBefore(DateTime.now().add(const Duration(days: 7)))).length}',
                     subtitle: 'Due This Week',
-                    color: const Color(0xFFFF9800),
+                    color: colorPending,
                   ),
                 ),
               ],
@@ -258,7 +258,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
           // Sort Bar
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
             child: Row(
               children: [
                 const Text(
@@ -552,7 +552,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                 const SizedBox(height: 16),
 
                 // Progress Bar
-                if (project.tasks.isNotEmpty) ...[
+                ...[
                   Row(
                     children: [
                       Expanded(
@@ -609,9 +609,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                             size: 14,
                             color:
                                 isOverdue
-                                    ? const Color(0xFFE53935)
+                                    ? colorError
                                     : isDueSoon
-                                    ? const Color(0xFFFF9800)
+                                    ? colorPending
                                     : Colors.grey,
                           ),
                           const SizedBox(width: 6),
@@ -635,9 +635,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
                                     fontWeight: FontWeight.w600,
                                     color:
                                         isOverdue
-                                            ? const Color(0xFFE53935)
+                                            ? colorError
                                             : isDueSoon
-                                            ? const Color(0xFFFF9800)
+                                            ? colorPending
                                             : Colors.black,
                                   ),
                                 ),

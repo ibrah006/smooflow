@@ -95,6 +95,8 @@ class ApiEndpoints {
   static const String getCurrentOrg = "${createOrg}/current";
 
   static const String getCurrentOrgMembers = "${createOrg}/members";
+  static String getCurrentOrgMember(String memberId) =>
+      "${createOrg}/members/$memberId";
 
   static const String getProjectsLastAdded = "${createOrg}/projects-last-added";
 
