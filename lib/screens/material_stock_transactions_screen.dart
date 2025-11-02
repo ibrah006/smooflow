@@ -4,7 +4,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/components/product_barcode.dart';
@@ -824,7 +824,7 @@ class _StockTransactionsScreenState
     // For Android 13+ (API 33+) you might request Permission.photos or Permission.mediaLibrary
     // The 'storage' permission handler typically abstracts this for you.
     if (status.isGranted) {
-      final result = await ImageGallerySaver.saveImage(
+      final result = await ImageGallerySaverPlus.saveImage(
         imageBytes,
         name: "barcode_${DateTime.now().millisecondsSinceEpoch}",
       );
