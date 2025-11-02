@@ -7,9 +7,8 @@ import 'package:smooflow/screens/flash_screen.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main(List<String> args) async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
 
   runApp(ProviderScope(child: App()));
 }

@@ -101,6 +101,8 @@ flutter:
     - assets/images/box_open.png
     # Google Service Account Key
     - assets/credentials.json
+    # Environment variables
+    - .env
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

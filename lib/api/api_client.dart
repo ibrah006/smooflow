@@ -5,5 +5,5 @@ class ApiClient {
   static get liveServerUrl => dotenv.env['API_URL'];
   static const baseUrl = 'http://localhost:3000';
 
-  static final LocalHttp http = LocalHttp(baseUrl: "http://192.168.0.146:3000");
+  static final LocalHttp http = LocalHttp(baseUrl: liveServerUrl);
 }
