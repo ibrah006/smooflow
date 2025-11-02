@@ -123,9 +123,9 @@ class TaskNotifier extends StateNotifier<List<Task>> {
             : await _repo.getProjectTasksLastModified(projectId);
 
     // Debug
-    print(
-      "tasksLastModifiedAtLocal: ${projectTasksLastModifiedLocal}, update needed: ${projectTasksLastModifiedServer?.isAfter(projectTasksLastModifiedLocal!)}",
-    );
+    // print(
+    //   "tasksLastModifiedAtLocal: ${projectTasksLastModifiedLocal}, update needed: ${projectTasksLastModifiedServer?.isAfter(projectTasksLastModifiedLocal!)}",
+    // );
 
     final localUpdateNeeded =
         forceReload && projectTasksLastModifiedLocal != null
