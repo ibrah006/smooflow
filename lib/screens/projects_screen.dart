@@ -312,7 +312,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
             child: RefreshIndicator(
               onRefresh: _refreshProjects,
               child:
-                  _filteredProjects.isEmpty && _selectedSort == "All"
+                  _filteredProjects.isEmpty && _tabController.index == 0
                       ? Center(
                         child: SizedBox(
                           width: 200,
@@ -370,21 +370,27 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Navigate to Create Project screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddProjectScreen()),
-          );
-        },
-        backgroundColor: colorPrimary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'New Project',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
-      ),
+      floatingActionButton:
+          _filteredProjects.isEmpty && _tabController.index == 0
+              ? null
+              : FloatingActionButton.extended(
+                onPressed: () {
+                  // Navigate to Create Project screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddProjectScreen()),
+                  );
+                },
+                backgroundColor: colorPrimary,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text(
+                  'New Project',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
     );
   }
 
