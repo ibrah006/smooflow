@@ -46,6 +46,8 @@ class ProjectRepo {
     );
     final body = jsonDecode(response.body);
 
+    print("create project response: ${response.statusCode}");
+
     if (response.statusCode != 201) {
       throw "Failed to create project: ${response.body}\nbody: $body";
     }

@@ -804,33 +804,33 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
 
     final timelineData = projectTimelineMilestoneSectionKey.currentState!.data;
 
-    try {
-      await ref
-          .read(projectNotifierProvider.notifier)
-          .create(
-            Project.create(
-              name: _projectNameController.text,
-              description: _projectDescriptionController.text,
-              // TODO: let user assign incharge men when creating project
-              assignedManagers: [],
-              client: selectedClient!,
-              priority: PriorityLevel.values.indexOf(selectedPriority),
-              dueDate: timelineData.deadline,
-              estimatedProductionStart: timelineData.startDate,
-            ),
-          );
+    // try {
+    await ref
+        .read(projectNotifierProvider.notifier)
+        .create(
+          Project.create(
+            name: _projectNameController.text,
+            description: _projectDescriptionController.text,
+            // TODO: let user assign incharge men when creating project
+            assignedManagers: [],
+            client: selectedClient!,
+            priority: PriorityLevel.values.indexOf(selectedPriority),
+            dueDate: timelineData.deadline,
+            estimatedProductionStart: timelineData.startDate,
+          ),
+        );
 
-      // Notify organization state about this adding of a project to update projectsLastAdded
-      ref.read(organizationNotifierProvider.notifier).projectAdded();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to Create Project")));
-      return;
-    }
+    // Notify organization state about this adding of a project to update projectsLastAdded
+    ref.read(organizationNotifierProvider.notifier).projectAdded();
+    // } catch (e) {
+    //   setState(() {
+    //     _isLoading = false;
+    //   });
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text("Failed to Create Project")));
+    //   return;
+    // }
 
     setState(() {
       _isLoading = false;

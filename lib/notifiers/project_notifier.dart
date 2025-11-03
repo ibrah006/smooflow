@@ -39,7 +39,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
       // Don't need to worry about calling this before loading projects
       // As the progress rate calculation and everything is done in server and returned
       await _getProjectsProgressRate();
-      recent = await _repo.getRecentProjects();
+      recent = Map<int, String>.from(await _repo.getRecentProjects());
 
       final projects = await _repo.fetchProjects();
       state = projects;
@@ -167,6 +167,6 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
     // Add it to the top
     final temp = recent.values.toList()..insert(0, projectId);
-    recent = temp.asMap();
+    recent = Map<int, String>.from(temp.asMap());
   }
 }
