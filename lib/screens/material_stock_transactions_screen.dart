@@ -342,22 +342,6 @@ class _StockTransactionsScreenState
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Navigate to Stock In screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => StockEntryScreen.stockin()),
-          );
-        },
-        backgroundColor: const Color(0xFF4461F2),
-        heroTag: 'stock_in',
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Stock Entry',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
-      ),
     );
   }
 

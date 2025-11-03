@@ -8,6 +8,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/material_stock_transactions_screen.dart';
+import 'package:smooflow/screens/stock_entry_screen.dart';
 
 class MaterialsStockScreen extends ConsumerStatefulWidget {
   const MaterialsStockScreen({Key? key}) : super(key: key);
@@ -244,6 +245,24 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
         //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         //   ),
         // ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            // Navigate to Stock In screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StockEntryScreen.stockin(),
+              ),
+            );
+          },
+          backgroundColor: const Color(0xFF4461F2),
+          heroTag: 'stock_in',
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text(
+            'Stock Entry',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
     );
   }
