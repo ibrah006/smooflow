@@ -145,24 +145,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
-        appBar: AppBar(
-          centerTitle: false,
-          title: Text(task.name),
-          actions: [
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
-              decoration: BoxDecoration(
-                color: colorPrimary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                task.status,
-                style: textTheme.labelMedium!.copyWith(color: colorPrimary),
-              ),
-            ),
-            SizedBox(width: 20),
-          ],
-        ),
+        appBar: AppBar(centerTitle: false, title: Text(task.name)),
         body: LoadingOverlay(
           isLoading: showLoadingOverlay,
           child: Padding(
@@ -172,6 +155,23 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                     ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorPrimary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            task.status,
+                            style: textTheme.labelMedium!.copyWith(
+                              color: colorPrimary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 20),
                         SizedBox(height: 15),
                         Row(
                           spacing: 7,
