@@ -46,10 +46,13 @@ The app focuses on **project management, team collaboration, and production moni
 
 ## Screenshots
 
+<img src="assets/screenshots/login.png" alt="Description" width="400"/>
 <img src="assets/screenshots/dashboard.png" alt="Description" width="400"/>
-<img src="assets/screenshots/new_project.png" alt="Description" width="400"/>
-<img src="assets/screenshots/new_project_2.png" alt="Description" width="400"/>
+<img src="assets/screenshots/material_stock.png" alt="Description" width="400"/>
+<img src="assets/screenshots/material_transactions.png" alt="Description" width="400"/>
+<img src="assets/screenshots/stock_in_info.png" alt="Description" width="400"/>
 <img src="assets/screenshots/project_info.png" alt="Description" width="400"/>
+<img src="assets/screenshots/task_info.png" alt="Description" width="400"/>
 <img src="assets/screenshots/timline.png" alt="Description" width="400"/>
 <img src="assets/screenshots/timeline_stage_info.png" alt="Description" width="400"/>
 
