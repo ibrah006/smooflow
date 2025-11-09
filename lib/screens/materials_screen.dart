@@ -270,82 +270,82 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
   }
 
   Future<void> _pickCSVFile() async {
-    try {
-      // Pick CSV file
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
-      );
+    // try {
+    // Pick CSV file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    );
 
-      if (result == null || result.files.isEmpty) {
-        return; // User cancelled
-      }
+    if (result == null || result.files.isEmpty) {
+      return; // User cancelled
+    }
 
-      // Show loading dialog
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder:
-            (context) => const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4461F2)),
-              ),
+    // Show loading dialog
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4461F2)),
             ),
-      );
+          ),
+    );
 
-      // Read file
-      final file = File(result.files.single.path!);
-      final csvString = await file.readAsString();
+    // Read file
+    final file = File(result.files.single.path!);
+    final csvString = await file.readAsString();
 
-      // Parse CSV
-      final List<List<dynamic>> csvData = const CsvToListConverter().convert(
-        csvString,
-        eol: '\n',
-        shouldParseNumbers: false,
-      );
+    // Parse CSV
+    final List<List<dynamic>> csvData = const CsvToListConverter().convert(
+      csvString,
+      eol: '\n',
+      shouldParseNumbers: false,
+    );
 
-      if (csvData.isEmpty) {
-        if (!mounted) return;
-        Navigator.pop(context); // Close loading
-        _showErrorDialog('Empty CSV', 'The CSV file is empty.');
-        return;
-      }
-
-      // Parse and validate materials
-      final parsedMaterials = await _parseCSVData(csvData);
-
-      await ref
-          .watch(materialNotifierProvider.notifier)
-          .createMaterials(parsedMaterials);
-
+    if (csvData.isEmpty) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-
-      if (parsedMaterials.isEmpty) {
-        _showErrorDialog(
-          'No Valid Materials',
-          'No valid materials found in the CSV file.',
-        );
-        return;
-      }
-
-      // Navigate to preview screen
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => MaterialsPreviewScreen(materials: parsedMaterials),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context); // Close loading if open
-      _showErrorDialog(
-        'Import Error',
-        'Failed to import CSV file: ${e.toString()}',
-      );
+      _showErrorDialog('Empty CSV', 'The CSV file is empty.');
+      return;
     }
+
+    // Parse and validate materials
+    final parsedMaterials = await _parseCSVData(csvData);
+
+    await ref
+        .watch(materialNotifierProvider.notifier)
+        .createMaterials(parsedMaterials);
+
+    if (!mounted) return;
+    Navigator.pop(context); // Close loading
+
+    if (parsedMaterials.isEmpty) {
+      _showErrorDialog(
+        'No Valid Materials',
+        'No valid materials found in the CSV file.',
+      );
+      return;
+    }
+
+    // Navigate to preview screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => MaterialsPreviewScreen(materials: parsedMaterials),
+      ),
+    );
+    // } catch (e) {
+    //   if (!mounted) return;
+    //   Navigator.pop(context); // Close loading if open
+    //   _showErrorDialog(
+    //     'Import Error',
+    //     'Failed to import CSV file: ${e.toString()}',
+    //   );
+    // }
   }
 
   Future<List<MaterialModel>> _parseCSVData(List<List<dynamic>> csvData) async {

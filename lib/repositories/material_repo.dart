@@ -39,7 +39,7 @@ class MaterialRepo {
     );
     if (res.statusCode == 201) {
       return (jsonDecode(res.body) as List).map((materialRaw) {
-        return MaterialModel.fromJson(jsonDecode(materialRaw));
+        return MaterialModel.fromJson(materialRaw as Map<String, dynamic>);
       }).toList();
     } else {
       throw Exception('Failed to create materials: ${res.body}');
