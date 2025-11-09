@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
 
@@ -15,18 +16,22 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
   String _selectedFilter = 'All';
 
   // Sample data
-  late final List<MaterialModel> _materials;
+  List<MaterialModel> get _materials =>
+      ref.watch(materialNotifierProvider).materials;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+    });
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-
-    Future.microtask(() async {
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-
-      _materials = ref.watch(materialNotifierProvider).materials;
-    });
   }
 
   List<MaterialModel> get _filteredMaterials {
@@ -281,98 +286,105 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      body: SafeArea(
-        child: Column(
+    print(
+      "materials ln: ${ref.watch(materialNotifierProvider).materials.length}",
+    );
+
+    return LoadingOverlay(
+      isLoading: ref.watch(materialNotifierProvider).isLoading,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F6FA),
+        body: Column(
           children: [
             // Header
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4461F2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.category_outlined,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Materials',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
+              padding: const EdgeInsets.all(20).copyWith(bottom: 0),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4461F2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.category_outlined,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F6FA),
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Materials',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.person_outline),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
+                        Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFF5F6FA),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Search',
-                              hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Color(0xFFB0B0B0),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
+                          child: IconButton(
+                            icon: const Icon(Icons.person_outline),
+                            onPressed: () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5F6FA),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: const InputDecoration(
+                                hintText: 'Search',
+                                hintStyle: TextStyle(color: Color(0xFFB0B0B0)),
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  color: Color(0xFFB0B0B0),
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F0FE),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.notifications_outlined,
-                            color: Color(0xFF4461F2),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F0FE),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: () {},
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.notifications_outlined,
+                              color: Color(0xFF4461F2),
+                            ),
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -432,41 +444,41 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: _showImportCSVEducationDialog,
-            backgroundColor: Colors.white,
-            heroTag: 'import_csv',
-            icon: const Icon(Icons.upload_file, color: Color(0xFF4461F2)),
-            label: const Text(
-              'Import CSV',
-              style: TextStyle(
-                color: Color(0xFF4461F2),
-                fontWeight: FontWeight.w600,
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton.extended(
+              onPressed: _showImportCSVEducationDialog,
+              backgroundColor: Colors.white,
+              heroTag: 'import_csv',
+              icon: const Icon(Icons.upload_file, color: Color(0xFF4461F2)),
+              label: const Text(
+                'Import CSV',
+                style: TextStyle(
+                  color: Color(0xFF4461F2),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            onPressed: () {
-              // Navigate to Add Material screen
-            },
-            backgroundColor: const Color(0xFF4461F2),
-            heroTag: 'add_material',
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'Add Material',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+            const SizedBox(height: 12),
+            FloatingActionButton.extended(
+              onPressed: () {
+                // Navigate to Add Material screen
+              },
+              backgroundColor: const Color(0xFF4461F2),
+              heroTag: 'add_material',
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'Add Material',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
