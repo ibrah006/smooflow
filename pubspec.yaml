@@ -54,6 +54,8 @@ dependencies:
   permission_handler: ^12.0.1
   flutter_dotenv: ^6.0.0
   image_gallery_saver_plus: ^4.0.1
+  file_picker: ^10.3.3
+  csv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
