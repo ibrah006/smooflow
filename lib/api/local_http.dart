@@ -34,9 +34,10 @@ class LocalHttp {
     );
   }
 
-  Future<http.Response> post(
+  // T can be Map<String, dynamic> or decodable List
+  Future<http.Response> post<T>(
     String endpoint, {
-    Map<String, dynamic>? body,
+    T? body,
     Map<String, dynamic>? headers,
     bool hasJsonHeaders = true,
     String queries = "",

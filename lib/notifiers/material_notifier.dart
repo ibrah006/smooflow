@@ -47,6 +47,32 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     }
   }
 
+  Future<List<MaterialModel>> createMaterials(
+    List<MaterialModel> materials,
+  ) async {
+    state = state.copyWith(isLoading: true);
+    // TODO: Do this in the backend
+    // Check to see if it already exists
+    try {
+      // Material already exists - removed from create materials list
+    } catch (e) {
+      // Material doesn't exist in memory
+      // Can still call the create material endpoint because it will only be created if it doesn't exist already
+    }
+
+    try {
+      final newMaterials = await _repo.createMaterials(materials);
+      final updatedList = [...state.materials, ...newMaterials];
+      // Assuming db creates no duplicates
+      state = state.copyWith(materials: updatedList, isLoading: false);
+
+      return updatedList;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      rethrow;
+    }
+  }
+
   // Update material
   Future<void> updateMaterial(String id, Map<String, dynamic> data) async {
     state = state.copyWith(isLoading: true);

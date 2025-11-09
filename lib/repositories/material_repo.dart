@@ -30,6 +30,22 @@ class MaterialRepo {
     }
   }
 
+  Future<List<MaterialModel>> createMaterials(
+    List<MaterialModel> materials,
+  ) async {
+    final res = await ApiClient.http.post<List>(
+      '/material/materials',
+      body: (materials.map((m) => m.toCreateJson())).toList(),
+    );
+    if (res.statusCode == 201) {
+      return (jsonDecode(res.body) as List).map((materialRaw) {
+        return MaterialModel.fromJson(jsonDecode(materialRaw));
+      }).toList();
+    } else {
+      throw Exception('Failed to create materials: ${res.body}');
+    }
+  }
+
   Future<MaterialModel> updateMaterial(
     String id,
     Map<String, dynamic> data,

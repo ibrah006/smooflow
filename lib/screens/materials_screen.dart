@@ -714,10 +714,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "materials ln: ${ref.watch(materialNotifierProvider).materials.length}",
-    );
-
     return LoadingOverlay(
       isLoading: ref.watch(materialNotifierProvider).isLoading,
       child: Scaffold(
