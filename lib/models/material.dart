@@ -30,6 +30,7 @@ class MaterialModel {
   final String createdById;
   late final DateTime createdAt;
   late final DateTime updatedAt;
+  // Material barcodes are auto generated upon insert in database
   late final String barcode;
 
   double get currentStock => _currentStock;
