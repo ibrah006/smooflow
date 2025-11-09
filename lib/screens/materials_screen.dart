@@ -1009,6 +1009,144 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
     );
   }
 
+  void _showTransactionDetails(MaterialModel material) {
+    final GlobalKey _barcodeKey = GlobalKey();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Material Details',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (material.barcode != null) ...[
+                  RepaintBoundary(
+                    key: _barcodeKey,
+                    child: ProductBarcode(barcode: transaction.barcode!),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                _buildDetailRow(
+                  'Type',
+                  transaction.type == TransactionType.stockIn
+                      ? 'Stock In'
+                      : 'Stock Out',
+                ),
+                _buildDetailRow(
+                  'Quantity',
+                  '${transaction.quantity} ${material.unit}',
+                ),
+                _buildDetailRow(
+                  'Balance After',
+                  '${transaction.balanceAfter} ${material.unit}',
+                ),
+                // if (transaction.projectName != null)
+                //   _buildDetailRow('Project', transaction.projectName!),
+                if (transaction.notes != null)
+                  _buildDetailRow('Notes', transaction.notes!),
+                FutureBuilder(
+                  future: getTransactionCreatedBy(transaction.createdById),
+                  builder: (context, snapshot) {
+                    final member = snapshot.data;
+
+                    if (member == null) {
+                      return CardLoading(
+                        height: 10,
+                        borderRadius: BorderRadius.circular(10),
+                        margin: EdgeInsets.only(bottom: 5),
+                      );
+                    }
+                    return _buildDetailRow('Created By', member.name);
+                  },
+                ),
+                _buildDetailRow(
+                  'Date',
+                  '${transaction.createdAt.day}/${transaction.createdAt.month}/${transaction.createdAt.year} ${transaction.createdAt.hour}:${transaction.createdAt.minute.toString().padLeft(2, '0')}',
+                ),
+                if (project != null) _buildDetailRow('Project', project.name),
+                if (project != null)
+                  _buildDetailRow('Client', project.client.name),
+                const SizedBox(height: 10),
+                if (transaction.type == TransactionType.stockIn)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _exportToJpg(_barcodeKey);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 15,
+                        ),
+                        side: BorderSide(color: colorPrimary),
+                        foregroundColor: colorPrimary,
+                        textStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      icon: Icon(Icons.file_upload_outlined),
+                      label: Text("Barcode"),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4461F2),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
   Widget _buildMaterialCard(MaterialModel material) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1021,6 +1159,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
         child: InkWell(
           onTap: () {
             // Navigate to material details or stock transactions
+            _showTransactionDetails(material);
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(

@@ -30,6 +30,7 @@ class MaterialModel {
   final String createdById;
   late final DateTime createdAt;
   late final DateTime updatedAt;
+  late final String barcode;
 
   double get currentStock => _currentStock;
   set currentStock(double newStockValue) => _currentStock = newStockValue;
@@ -45,6 +46,7 @@ class MaterialModel {
     required this.createdById,
     required this.createdAt,
     required this.updatedAt,
+    required this.barcode,
   }) : _currentStock = currentStock;
 
   MaterialModel.create({
@@ -69,6 +71,7 @@ class MaterialModel {
       createdById: json['createdById'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      barcode: json["barcode"],
     );
   }
 
@@ -126,6 +129,7 @@ class MaterialModel {
     Map<String, dynamic>? organization,
     Map<String, dynamic>? createdBy,
     List<Map<String, dynamic>>? transactions,
+    String? barcode,
   }) {
     return MaterialModel(
       id: id ?? this.id,
@@ -138,6 +142,7 @@ class MaterialModel {
       createdById: createdById ?? this.createdById,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      barcode: barcode ?? this.barcode,
     );
   }
 
