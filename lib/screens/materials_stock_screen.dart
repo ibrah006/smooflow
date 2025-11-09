@@ -255,7 +255,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
               ),
             );
           },
-          backgroundColor: const Color(0xFF4461F2),
+          backgroundColor: colorPrimary,
           heroTag: 'stock_in',
           icon: const Icon(Icons.add, color: Colors.white),
           label: const Text(

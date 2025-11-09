@@ -76,7 +76,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                     ),
                     child: const Icon(
                       Icons.upload_file,
-                      color: Color(0xFF4461F2),
+                      color: colorPrimary,
                       size: 32,
                     ),
                   ),
@@ -185,7 +185,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                             _pickCSVFile();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4461F2),
+                            backgroundColor: colorPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -295,7 +295,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
       builder:
           (context) => const Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4461F2)),
+              valueColor: AlwaysStoppedAnimation<Color>(colorPrimary),
             ),
           ),
     );
@@ -576,7 +576,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4461F2),
+                        backgroundColor: colorPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -698,7 +698,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4461F2),
+                        backgroundColor: colorPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -743,17 +743,12 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4461F2),
-                            borderRadius: BorderRadius.circular(12),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black,
                           ),
-                          child: const Icon(
-                            Icons.category_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
+                          onPressed: () => Navigator.pop(context),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
@@ -767,13 +762,15 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                           ),
                         ),
                         Container(
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(12),
+                            color: colorPrimary,
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.person_outline),
-                            onPressed: () {},
+                          child: const Icon(
+                            Icons.category_outlined,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
                       ],
@@ -814,7 +811,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                           child: IconButton(
                             icon: const Icon(
                               Icons.notifications_outlined,
-                              color: Color(0xFF4461F2),
+                              color: colorPrimary,
                             ),
                             onPressed: () {},
                           ),
@@ -836,7 +833,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                       icon: Icons.category,
                       title: '${_materials.length}',
                       subtitle: 'Total Materials',
-                      color: const Color(0xFF4461F2),
+                      color: colorPrimary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -890,11 +887,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
               onPressed: _showImportCSVEducationDialog,
               backgroundColor: Colors.white,
               heroTag: 'import_csv',
-              icon: const Icon(Icons.upload_file, color: Color(0xFF4461F2)),
+              icon: const Icon(Icons.upload_file, color: colorPrimary),
               label: const Text(
                 'Import CSV',
                 style: TextStyle(
-                  color: Color(0xFF4461F2),
+                  color: colorPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -904,7 +901,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
               onPressed: () {
                 // Navigate to Add Material screen
               },
-              backgroundColor: const Color(0xFF4461F2),
+              backgroundColor: colorPrimary,
               heroTag: 'add_material',
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
@@ -979,7 +976,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4461F2) : Colors.white,
+          color: isSelected ? colorPrimary : Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -1120,7 +1117,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4461F2),
+                      backgroundColor: colorPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1232,7 +1229,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                       child: Text(
                         material.unit,
                         style: const TextStyle(
-                          color: Color(0xFF4461F2),
+                          color: colorPrimary,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
