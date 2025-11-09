@@ -364,13 +364,13 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
     Color statusColor = colorPositiveStatus;
     String statusText = 'Good';
 
-    // if (material.isCriticalStock) {
-    //   statusColor = const Color(0xFFE53935);
-    //   statusText = 'Critical';
-    // } else if (material.isLowStock) {
-    //   statusColor = const Color(0xFFFF9800);
-    //   statusText = 'Low';
-    // }
+    if (material.isCriticalStock) {
+      statusColor = const Color(0xFFE53935);
+      statusText = 'Critical';
+    } else if (material.isLowStock) {
+      statusColor = const Color(0xFFFF9800);
+      statusText = 'Low';
+    }
 
     final title =
         "${material.name[0].toUpperCase()}${material.name.substring(1)}";
