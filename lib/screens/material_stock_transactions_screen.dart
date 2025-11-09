@@ -15,8 +15,9 @@ import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/screens/stock_entry_screen.dart';
 import 'dart:ui' as ui;
+
+import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
 class MaterialStockTransactionsScreen extends ConsumerStatefulWidget {
   final String materialId;
@@ -726,7 +727,7 @@ class _StockTransactionsScreenState
                     alignment: Alignment.centerRight,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        _exportToJpg(_barcodeKey);
+                        exportToJpg(context, _barcodeKey);
                       },
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(
@@ -799,94 +800,5 @@ class _StockTransactionsScreenState
         ],
       ),
     );
-  }
-
-  Future<void> saveImageToGallery(Uint8List imageBytes) async {
-    // Check and request storage permission
-    var status = await Permission.storage.request();
-
-    // For Android 13+ (API 33+) you might request Permission.photos or Permission.mediaLibrary
-    // The 'storage' permission handler typically abstracts this for you.
-    if (status.isGranted) {
-      final result = await ImageGallerySaverPlus.saveImage(
-        imageBytes,
-        name: "barcode_${DateTime.now().millisecondsSinceEpoch}",
-      );
-      print("Image saved: $result");
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Barcode exported to gallery successfully")),
-      );
-    } else {
-      print("Permission denied");
-      // Optionally, show a dialogue to guide the user to app settings
-      openAppSettings();
-    }
-  }
-
-  Future<void> _exportToJpg(GlobalKey barcodeKey) async {
-    final status = await Permission.storage.request();
-
-    if (status.isGranted) {
-      // Camera permission granted, proceed with camera functionality
-    } else if (status.isDenied) {
-      // Camera permission denied
-    } else if (status.isRestricted) {
-      // Camera permission permanently denied, guide user to app settings
-      openAppSettings(); // Opens the app's settings page
-    }
-
-    try {
-      // Get RenderRepaintBoundary
-      RenderRepaintBoundary boundary =
-          barcodeKey.currentContext!.findRenderObject()
-              as RenderRepaintBoundary;
-
-      // Convert to Image
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-
-      // Convert to byte data (PNG first)
-      ByteData? byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-      // Convert to JPEG with white background
-      Uint8List jpgBytes = await _convertPngToJpgWithWhiteBg(pngBytes);
-
-      // (Optional) Save to gallery
-      await saveImageToGallery(jpgBytes);
-    } catch (e) {
-      print('Error exporting barcode: $e');
-    }
-  }
-
-  /// Converts transparent PNG bytes into JPEG with white background
-  Future<Uint8List> _convertPngToJpgWithWhiteBg(Uint8List pngBytes) async {
-    final codec = await ui.instantiateImageCodec(pngBytes);
-    final frame = await codec.getNextFrame();
-    final image = frame.image;
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    // Fill background white
-    final paint = Paint()..color = Colors.white;
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      paint,
-    );
-
-    // Draw the original image on top
-    canvas.drawImage(image, Offset.zero, Paint());
-
-    final picture = recorder.endRecording();
-    final finalImage = await picture.toImage(image.width, image.height);
-    final byteData = await finalImage.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-
-    return byteData!.buffer.asUint8List();
   }
 }

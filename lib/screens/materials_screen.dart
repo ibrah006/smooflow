@@ -13,6 +13,7 @@ import 'package:smooflow/models/member.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/materials_preview_screen.dart';
+import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
   const MaterialsScreen({Key? key}) : super(key: key);
@@ -1061,6 +1062,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                   child: ProductBarcode(barcode: material.barcode),
                 ),
                 const SizedBox(height: 20),
+                _buildDetailRow('Material', material.name),
                 _buildDetailRow('Unit', material.unit),
                 _buildDetailRow(
                   'Quantity',
@@ -1094,7 +1096,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
                   alignment: Alignment.centerRight,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      // _exportToJpg(_barcodeKey);
+                      exportToJpg(context, _barcodeKey);
                     },
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(

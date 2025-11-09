@@ -21,7 +21,7 @@ String measureTypeToString(MeasureType type) => type.name;
 
 class MaterialModel {
   late final String id;
-  final String name;
+  final String _name;
   final String? description;
   final MeasureType measureType;
   double _currentStock;
@@ -36,9 +36,12 @@ class MaterialModel {
   double get currentStock => _currentStock;
   set currentStock(double newStockValue) => _currentStock = newStockValue;
 
+  // This is for reading from UI
+  String get name => "${_name[0].toUpperCase()}${_name.substring(1)}";
+
   MaterialModel({
     required this.id,
-    required this.name,
+    required String name,
     this.description,
     required this.measureType,
     required double currentStock,
@@ -48,7 +51,8 @@ class MaterialModel {
     required this.createdAt,
     required this.updatedAt,
     required this.barcode,
-  }) : _currentStock = currentStock;
+  }) : _currentStock = currentStock,
+       _name = name;
 
   MaterialModel.create({
     required String name,
@@ -57,7 +61,7 @@ class MaterialModel {
     this.minStockLevel = 0,
   }) : _currentStock = 0.0,
        organizationId = LoginService.currentUser!.organizationId,
-       name = name.toLowerCase(),
+       _name = name.toLowerCase(),
        createdById = LoginService.currentUser!.id;
 
   factory MaterialModel.fromJson(Map<String, dynamic> json) {
@@ -89,7 +93,7 @@ class MaterialModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'name': _name,
       'description': description,
       'measureType': measureTypeToString(measureType),
       'currentStock': currentStock,
@@ -103,7 +107,7 @@ class MaterialModel {
 
   Map<String, dynamic> toCreateJson({int initialStock = 0}) {
     return {
-      'name': name,
+      'name': _name,
       'description': description,
       'measureType': measureTypeToString(measureType),
       'initialStock': initialStock,
@@ -134,7 +138,7 @@ class MaterialModel {
   }) {
     return MaterialModel(
       id: id ?? this.id,
-      name: name ?? this.name,
+      name: name ?? _name,
       description: description ?? this.description,
       measureType: measureType ?? this.measureType,
       currentStock: currentStock ?? this.currentStock,
