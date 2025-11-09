@@ -62,8 +62,9 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
 
     try {
       final newMaterials = await _repo.createMaterials(materials);
-      final updatedList = [...state.materials, ...newMaterials];
-      // Assuming db creates no duplicates
+      // Converting from set, because set will ensure there are no duplicates
+      final updatedList = {...state.materials, ...newMaterials}.toList();
+      // Assuming db does not return duplicates
       state = state.copyWith(materials: updatedList, isLoading: false);
 
       return updatedList;

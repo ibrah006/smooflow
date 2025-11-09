@@ -315,6 +315,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> {
       // Parse and validate materials
       final parsedMaterials = await _parseCSVData(csvData);
 
+      await ref
+          .watch(materialNotifierProvider.notifier)
+          .createMaterials(parsedMaterials);
+
       if (!mounted) return;
       Navigator.pop(context); // Close loading
 
