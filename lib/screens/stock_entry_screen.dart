@@ -14,8 +14,11 @@ import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 class StockEntryScreen extends ConsumerStatefulWidget {
   late final bool isStockIn;
 
-  StockEntryScreen.stockin({Key? key}) : projectId = null, super(key: key) {
+  StockEntryScreen.stockin({Key? key, MaterialModel? material})
+    : projectId = null,
+      super(key: key) {
     isStockIn = true;
+    if (material != null) this.material = material;
   }
 
   late final MaterialModel material;
@@ -44,6 +47,8 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   MeasureType _selectedMeasureType = MeasureType.running_meter;
   List<MeasureType> get _measureTypes => MeasureType.values.toList();
 
+  late final bool isManualEntry;
+
   getMeasureTypeDisplayName(MeasureType type) => type.name
       .replaceAll("_", " ")
       .split(' ') // split into words
@@ -59,11 +64,27 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   void initState() {
     super.initState();
 
-    if (!widget.isStockIn) {
+    try {
+      widget.material;
+      isManualEntry = true;
+      if (!widget.isStockIn) {
+        // Stock out
+        // widget.transaction is initialized
+
+        _descriptionController.text =
+            widget.transaction.notes ?? "No Description";
+      } else {
+        _descriptionController.text =
+            widget.material.description ?? "No Description";
+      }
+
+      // Whether stock in or stock out
       _materialTypeController.text = widget.material.name;
-      _descriptionController.text =
-          widget.transaction.notes ?? "No Description";
       _selectedMeasureType = widget.material.measureType;
+    } catch (e) {
+      // Do nothing
+      // No initial parameters passed in
+      isManualEntry = false;
     }
   }
 
@@ -122,21 +143,23 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
             ],
           ),
           actions: [
-            IconButton(
-              onPressed: () async {
-                await requestCameraPermission();
-                Navigator.of(context).pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            BarcodeScanScreen(projectId: widget.projectId),
-                  ),
-                );
-              },
-              color: !widget.isStockIn ? colorPrimary : colorError,
-              icon: Icon(widget.isStockIn ? Icons.upload : Icons.download),
-            ),
+            if (widget.isStockIn)
+              IconButton(
+                onPressed: () async {
+                  await requestCameraPermission();
+                  Navigator.of(context).pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder:
+                          (context) => BarcodeScanScreen.stockOut(
+                            projectId: widget.projectId,
+                          ),
+                    ),
+                  );
+                },
+                color: !widget.isStockIn ? colorPrimary : colorError,
+                icon: Icon(widget.isStockIn ? Icons.upload : Icons.download),
+              ),
           ],
         ),
         body: Stack(
@@ -150,32 +173,53 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                   children: [
                     SizedBox(height: 20),
                     // Info Card
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FE),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.info_outline,
-                            color: Color(0xFF4461F2),
-                            size: 24,
-                          ),
-                          SizedBox(width: 12),
+                    if (widget.isStockIn)
+                      Row(
+                        children: [
                           Expanded(
-                            child: Text(
-                              'A unique barcode will be generated for this stock entry',
-                              style: TextStyle(
-                                color: Color(0xFF1F1F1F),
-                                fontSize: 13,
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F0FE),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Color(0xFF4461F2),
+                                    size: 24,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'A unique barcode will be generated for this stock entry',
+                                      style: TextStyle(
+                                        color: Color(0xFF1F1F1F),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                          SizedBox(width: 5),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => BarcodeScanScreen.stockIn(),
+                                ),
+                              );
+                            },
+                            color: colorPrimary,
+                            icon: Icon(Icons.qr_code_scanner_rounded),
+                          ),
                         ],
                       ),
-                    ),
 
                     const SizedBox(height: 24),
 
@@ -255,7 +299,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (!widget.isStockIn)
+                    if (!isManualEntry)
                       Text(
                         _descriptionController.text,
                         style: TextStyle(color: Colors.grey.shade700),
@@ -283,7 +327,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                         ),
                       ),
 
-                    if (widget.isStockIn) SizedBox(height: 20),
+                    if (isManualEntry) SizedBox(height: 20),
 
                     // Measure Type and Quantity Row
                     Row(
@@ -295,7 +339,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Measure Type${widget.isStockIn ? '*' : ''}',
+                                'Measure Type${isManualEntry ? '*' : ''}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -303,7 +347,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              if (!widget.isStockIn)
+                              if (!isManualEntry)
                                 Text(
                                   getMeasureTypeDisplayName(
                                     _selectedMeasureType,
@@ -367,11 +411,11 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
                         // Quantity
                         Expanded(
-                          flex: widget.isStockIn ? 2 : 1,
+                          flex: isManualEntry ? 2 : 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (!widget.isStockIn) SizedBox(height: 27),
+                              if (!isManualEntry) SizedBox(height: 27),
                               const Text(
                                 'Quantity*',
                                 style: TextStyle(

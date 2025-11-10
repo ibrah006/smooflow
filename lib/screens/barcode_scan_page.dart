@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:smooflow/models/material.dart';
+import 'package:smooflow/notifiers/material_notifier.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 
 class BarcodeScanScreen extends ConsumerStatefulWidget {
-  final String? projectId;
+  late final String? projectId;
 
-  const BarcodeScanScreen({super.key, required this.projectId});
+  final bool isStockIn;
+
+  BarcodeScanScreen.stockOut({required this.projectId}) : isStockIn = false;
+
+  BarcodeScanScreen.stockIn() : isStockIn = true;
 
   @override
   ConsumerState<BarcodeScanScreen> createState() => _BarcodeScanScreenState();
@@ -23,20 +29,31 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
       print("scanned barcode: $code");
 
       try {
-        final materialResponse = await ref
-            .watch(materialNotifierProvider.notifier)
-            .fetchMaterialResponseByBarcode(code);
+        late final MaterialResponse materialResponse;
+        late final MaterialModel material;
+        if (!widget.isStockIn) {
+          materialResponse = await ref
+              .watch(materialNotifierProvider.notifier)
+              .fetchMaterialResponseByBarcode(code);
+        } else {
+          material = await ref
+              .watch(materialNotifierProvider.notifier)
+              .fetchMaterialByMaterialBarcode(code);
+        }
 
         // on Success
         Navigator.of(context).pop(context);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder:
-                (context) => StockEntryScreen.stockOut(
-                  material: materialResponse.material,
-                  transaction: materialResponse.stockTransaction,
-                  projectId: widget.projectId,
-                ),
+                (context) =>
+                    !widget.isStockIn
+                        ? StockEntryScreen.stockOut(
+                          material: materialResponse.material,
+                          transaction: materialResponse.stockTransaction,
+                          projectId: widget.projectId,
+                        )
+                        : StockEntryScreen.stockin(material: material),
           ),
         );
       } catch (e) {

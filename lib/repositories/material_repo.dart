@@ -174,4 +174,17 @@ class MaterialRepo {
       throw Exception('Transaction not found: ${res.body}');
     }
   }
+
+  Future<MaterialModel> getMaterialByMaterialBarcode(String barcode) async {
+    final res = await ApiClient.http.get(
+      '/material/materials/barcode/$barcode',
+    );
+    if (res.statusCode == 200) {
+      // return MaterialResponse
+      final body = jsonDecode(res.body);
+      return MaterialModel.fromJson(body["material"]);
+    } else {
+      throw Exception('Material not found: ${res.body}');
+    }
+  }
 }
