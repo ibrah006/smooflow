@@ -1,8 +1,11 @@
 import 'package:data_table_2/data_table_2.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/screens/barcode_export_screen.dart';
 import 'package:smooflow/screens/desktop_material_details.dart';
 
 class DesktopMaterialListScreen extends ConsumerStatefulWidget {
@@ -35,6 +38,35 @@ class _DesktopMaterialListScreenState
         appBar: AppBar(
           title: Text("Materials List"),
           actions: [
+            IconButton(
+              onPressed: () async {
+                await ref
+                    .read(materialNotifierProvider.notifier)
+                    .fetchTransactions();
+
+                final transactions =
+                    ref.read(materialNotifierProvider).transactions;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => ExportBarcodesScreen(
+                          barcodes:
+                              transactions
+                                  .where(
+                                    (transaction) =>
+                                        transaction.type ==
+                                        TransactionType.stockIn,
+                                  )
+                                  .map((transaction) => transaction.barcode!)
+                                  .toList(),
+                        ),
+                  ),
+                );
+              },
+              icon: Icon(Icons.file_upload_rounded),
+            ),
             IconButton(
               onPressed: () async {
                 await ref
