@@ -53,9 +53,9 @@ class _DesktopMaterialListScreenState
           minWidth: 600,
           columns: [
             DataColumn2(label: Text('Material'), size: ColumnSize.L),
-            DataColumn(label: Text('Stock level')),
-            DataColumn(label: Text('Unit')),
-            DataColumn(label: Text('Barcode')),
+            DataColumn2(label: Text('Stock level'), size: ColumnSize.S),
+            DataColumn2(label: Text('Unit'), size: ColumnSize.S),
+            DataColumn2(label: Text('Barcode'), size: ColumnSize.L),
           ],
           rows:
               materials
