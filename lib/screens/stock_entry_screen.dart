@@ -234,7 +234,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.isStockIn
+                      isManualEntry
                           ? 'Enter material details and specifications'
                           : 'Please input the quantity you want to stock out',
                       style: TextStyle(fontSize: 13, color: Colors.grey),
@@ -244,7 +244,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
                     // Material Type
                     Text(
-                      'Material Type${widget.isStockIn ? '*' : ''}',
+                      'Material Type${isManualEntry ? '*' : ''}',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -252,7 +252,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (!widget.isStockIn)
+                    if (isManualEntry)
                       Text(
                         _materialTypeController.text,
                         style: TextStyle(
@@ -299,7 +299,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (!isManualEntry)
+                    if (isManualEntry)
                       Text(
                         _descriptionController.text,
                         style: TextStyle(color: Colors.grey.shade700),
@@ -347,7 +347,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              if (!isManualEntry)
+                              if (isManualEntry)
                                 Text(
                                   getMeasureTypeDisplayName(
                                     _selectedMeasureType,
@@ -525,41 +525,44 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                               num.parse(_measureController.text).toDouble();
 
                           if (_formKey.currentState!.validate()) {
-                            // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
-                            final material = await ref
-                                .read(materialNotifierProvider.notifier)
-                                .createMaterial(
-                                  MaterialModel.create(
-                                    name: materialType,
-                                    description: description,
-                                    measureType: _selectedMeasureType,
-                                  ),
-                                );
+                            final material =
+                                !isManualEntry
+                                    ? widget.material
+                                    : await ref
+                                        .read(materialNotifierProvider.notifier)
+                                        // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
+                                        .createMaterial(
+                                          MaterialModel.create(
+                                            name: materialType,
+                                            description: description,
+                                            measureType: _selectedMeasureType,
+                                          ),
+                                        );
 
                             // Process stock in/out
                             late final StockTransaction transaction;
-                            // try {
-                            if (widget.isStockIn) {
-                              transaction = await ref
-                                  .read(materialNotifierProvider.notifier)
-                                  .stockIn(material.id, measure);
-                            } else {
-                              transaction = await ref
-                                  .read(materialNotifierProvider.notifier)
-                                  .stockOut(
-                                    widget.transaction.barcode!,
-                                    measure,
-                                    projectId: widget.projectId,
-                                  );
+                            try {
+                              if (widget.isStockIn) {
+                                transaction = await ref
+                                    .read(materialNotifierProvider.notifier)
+                                    .stockIn(material.id, measure);
+                              } else {
+                                transaction = await ref
+                                    .read(materialNotifierProvider.notifier)
+                                    .stockOut(
+                                      widget.transaction.barcode!,
+                                      measure,
+                                      projectId: widget.projectId,
+                                    );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Failed: ${e.toString()}"),
+                                ),
+                              );
+                              return;
                             }
-                            // } catch (e) {
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     SnackBar(
-                            //       content: Text("Failed: ${e.toString()}"),
-                            //     ),
-                            //   );
-                            //   return;
-                            // }
 
                             // Show stock transaction details page
                             Navigator.of(context).pop(context);

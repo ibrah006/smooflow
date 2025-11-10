@@ -27,7 +27,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     // Check to see if it already exists
     try {
       final existingMaterial = state.materials.firstWhere(
-        (m) => m.name == material.name.toLowerCase(),
+        (m) => m.name.toLowerCase() == material.name.toLowerCase(),
       );
       // Material already exists - creation aborted
       return existingMaterial;
@@ -117,28 +117,24 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     String? notes,
   }) async {
     state = state.copyWith(isLoading: true);
+    // try {
+    final transaction = await _repo.stockIn(materialId, quantity, notes: notes);
+    state = state.copyWith(isLoading: false, transaction: transaction);
+
     try {
-      final transaction = await _repo.stockIn(
-        materialId,
-        quantity,
-        notes: notes,
-      );
-      state = state.copyWith(isLoading: false, transaction: transaction);
-
-      try {
-        state
-            .materials
-            .firstWhere((material) => material.id == materialId)
-            .currentStock += quantity;
-      } catch (e) {
-        // The corresponding material doesn't exist in memory
-      }
-
-      return transaction;
+      state
+          .materials
+          .firstWhere((material) => material.id == materialId)
+          .currentStock += quantity;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
-      rethrow;
+      // The corresponding material doesn't exist in memory
     }
+
+    return transaction;
+    // } catch (e) {
+    //   state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    //   rethrow;
+    // }
   }
 
   // Stock Out
