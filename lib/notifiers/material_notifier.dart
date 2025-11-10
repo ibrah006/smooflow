@@ -158,7 +158,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         state
             .materials
             .firstWhere((material) => material.id == transaction.materialId)
-            .currentStock += quantity;
+            .currentStock -= quantity;
       } catch (e) {
         // The corresponding material doesn't exist in memory
       }
