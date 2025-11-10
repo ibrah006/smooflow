@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/desktop_material_list_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 
 class ClaimOrganizationScreen extends ConsumerStatefulWidget {
