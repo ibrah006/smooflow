@@ -66,7 +66,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
     try {
       widget.material;
-      isManualEntry = true;
+      isManualEntry = false;
       if (!widget.isStockIn) {
         // Stock out
         // widget.transaction is initialized
@@ -84,7 +84,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
     } catch (e) {
       // Do nothing
       // No initial parameters passed in
-      isManualEntry = false;
+      isManualEntry = true;
     }
   }
 
@@ -207,6 +207,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           SizedBox(width: 5),
                           IconButton(
                             onPressed: () {
+                              Navigator.pop(context);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -252,7 +253,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (isManualEntry)
+                    if (!isManualEntry)
                       Text(
                         _materialTypeController.text,
                         style: TextStyle(
@@ -299,7 +300,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (isManualEntry)
+                    if (!isManualEntry)
                       Text(
                         _descriptionController.text,
                         style: TextStyle(color: Colors.grey.shade700),
@@ -347,7 +348,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              if (isManualEntry)
+                              if (!isManualEntry)
                                 Text(
                                   getMeasureTypeDisplayName(
                                     _selectedMeasureType,
@@ -521,8 +522,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                           final description =
                               _descriptionController.text.trim();
                           // Measure / quantity
-                          final measure =
-                              num.parse(_measureController.text).toDouble();
+                          final measure = double.parse(_measureController.text);
 
                           if (_formKey.currentState!.validate()) {
                             final material =
