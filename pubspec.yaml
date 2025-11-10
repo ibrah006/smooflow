@@ -59,6 +59,7 @@ dependencies:
   data_table_2: ^2.6.0
   screenshot: ^3.0.0
   printing: ^5.14.2
+  file_selector: ^1.0.4
 
 dev_dependencies:
   flutter_test:
@@ -108,6 +109,8 @@ flutter:
     - assets/credentials.json
     # Environment variables
     - .env
+    # Fonts
+    - assets/fonts/Roboto-Regular.ttf
     
 
   # An image asset can refer to one or more resolution-specific "variants", see
