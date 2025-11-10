@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -38,6 +39,10 @@ Future<void> exportToJpg(BuildContext context, GlobalKey barcodeKey) async {
   Future<void> saveImageToGallery(Uint8List imageBytes) async {
     // Check and request storage permission
     var status = await Permission.storage.request();
+
+    if (Platform.isAndroid) {
+      status = await Permission.accessMediaLocation.request();
+    }
 
     // For Android 13+ (API 33+) you might request Permission.photos or Permission.mediaLibrary
     // The 'storage' permission handler typically abstracts this for you.
