@@ -1,3 +1,4 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -45,28 +46,40 @@ class _DesktopMaterialListScreenState
             SizedBox(width: 10),
           ],
         ),
-        body: ListView(
-          children:
-              materials.map((material) {
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                DesktopMaterialDetails(material: material),
-                      ),
-                    );
-                  },
-                  title: Text(material.name),
-                  trailing: Text(
-                    material.barcode,
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                );
-              }).toList(),
+        body: DataTable2(
+          showCheckboxColumn: false,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          minWidth: 600,
+          columns: [
+            DataColumn2(label: Text('Material'), size: ColumnSize.L),
+            DataColumn(label: Text('Stock level')),
+            DataColumn(label: Text('Unit')),
+            DataColumn(label: Text('Barcode')),
+          ],
+          rows:
+              materials
+                  .map(
+                    (material) => DataRow(
+                      onSelectChanged: (selected) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    DesktopMaterialDetails(material: material),
+                          ),
+                        );
+                      },
+                      cells: [
+                        DataCell(Text(material.name)),
+                        DataCell(Text(material.currentStock.toString())),
+                        DataCell(Text(material.unit)),
+                        DataCell(Text(material.barcode)),
+                      ],
+                    ),
+                  )
+                  .toList(),
         ),
       ),
     );
