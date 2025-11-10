@@ -15,6 +15,7 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/materials_preview_screen.dart';
 import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
+@Deprecated("")
 class MaterialsScreen extends ConsumerStatefulWidget {
   const MaterialsScreen({Key? key}) : super(key: key);
 

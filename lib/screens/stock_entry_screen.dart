@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -217,7 +218,10 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                               );
                             },
                             color: colorPrimary,
-                            icon: Icon(Icons.qr_code_scanner_rounded),
+                            icon: Icon(
+                              CupertinoIcons.barcode_viewfinder,
+                              size: 40,
+                            ),
                           ),
                         ],
                       ),

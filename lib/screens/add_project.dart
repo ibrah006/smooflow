@@ -222,7 +222,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                         itemBuilder: (context) {
                           HapticFeedback.lightImpact();
                           return List.generate(
-                            6,
+                            5,
                             (index) => PopupMenuItem(
                               onTap: () {
                                 Navigator.push(
@@ -242,7 +242,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                               ),
                                               StockEntryScreen.stockin(),
                                               MaterialsStockScreen(),
-                                              MaterialsScreen(),
                                             ][index],
                                   ),
                                 );
@@ -253,7 +252,6 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
                                   "Create Task",
                                   "View Tasks",
                                   "Add Material Stock Entry",
-                                  "Current Stock",
                                   "Materials",
                                 ][index],
                               ),
