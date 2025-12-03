@@ -11,6 +11,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/custom_button.dart';
 import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/add_printer_screen.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
@@ -174,6 +175,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
                     Text("Quick Actions", style: textTheme.titleMedium),
                     SizedBox(height: 20),
                     QuickActions(),
+                    FilledButton(
+                      onPressed:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddPrinterScreen(),
+                            ),
+                          ),
+                      child: Text("Add Printer"),
+                    ),
                     SizedBox(height: 20),
 
                     RecentProjectsSection(),

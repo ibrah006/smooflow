@@ -218,6 +218,9 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     state = state.copyWith(isLoading: true);
     try {
       final transactions = await _repo.getTransactions();
+
+      print("transactions: $transactions");
+
       state = state.copyWith(transactions: transactions, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

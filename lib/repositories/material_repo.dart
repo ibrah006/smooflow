@@ -81,7 +81,7 @@ class MaterialRepo {
   }
 
   Future<List<StockTransaction>> getTransactions({int limit = 50}) async {
-    final res = await ApiClient.http.get('/material/transactions?limit=$limit');
+    final res = await ApiClient.http.get('/material/transactions');
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);
       return jsonData.map((e) => StockTransaction.fromJson(e)).toList();
