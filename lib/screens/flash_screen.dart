@@ -7,6 +7,7 @@ import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
+import 'package:smooflow/screens/production_dashboard.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class FlashScreen extends StatefulWidget {
@@ -67,7 +68,9 @@ class _FlashScreenState extends State<FlashScreen> {
 
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => isLoggedIn ? HomeScreen() : LoginScreen(),
+            builder:
+                (context) =>
+                    isLoggedIn ? ProductionDashboardScreen() : LoginScreen(),
           ),
           (Route<dynamic> route) => false,
         );
