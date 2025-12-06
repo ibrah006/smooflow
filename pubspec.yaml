@@ -61,6 +61,7 @@ dependencies:
   printing: ^5.14.2
   file_selector: ^1.0.4
   hawk_fab_menu: ^1.2.0
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:

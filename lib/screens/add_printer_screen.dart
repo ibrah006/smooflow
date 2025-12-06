@@ -35,8 +35,11 @@ class _AddPrinterScreenState extends State<AddPrinterScreen> {
 
     if (widget.printer != null) {
       _selectedStatus = widget.printer!.status;
-      _selectedStaffIds = widget.printer!.assignedStaffIds ?? [];
-      _specifications = widget.printer!.specifications ?? {};
+      // _selectedStaffIds = widget.printer!.assignedStaffIds ?? [];
+      _specifications = {
+        "maxWidth": widget.printer!.maxWidth,
+        "printSpeed": widget.printer!.printSpeed,
+      };
     }
   }
 

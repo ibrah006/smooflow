@@ -6,6 +6,7 @@ import 'package:smooflow/components/hawk_fab.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/screens/add_printer_screen.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
@@ -70,7 +71,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
       location: 'Section A',
       currentJobId: 'job001',
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
     Printer(
       id: '2',
@@ -79,7 +80,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
       status: PrinterStatus.active,
       location: 'Section B',
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
     Printer(
       id: '3',
@@ -88,7 +89,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
       status: PrinterStatus.maintenance,
       location: 'Section A',
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
     Printer(
       id: '4',
@@ -97,7 +98,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
       status: PrinterStatus.offline,
       location: 'Section C',
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
   ];
 
@@ -127,6 +128,19 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
         // iconColor: Colors.green,
         // hawkFabMenuController: hawkFabMenuController,
         items: [
+          HawkFabMenuItem(
+            label: 'Add Printer',
+            ontap: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddPrinterScreen()),
+              );
+            },
+            icon: const Icon(Icons.print_rounded),
+            // color: Colors.red,
+            // labelColor: Colors.blue,
+          ),
           HawkFabMenuItem(
             label: 'Schedule Job',
             ontap: () {

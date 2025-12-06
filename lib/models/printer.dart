@@ -1,5 +1,5 @@
 // lib/models/printer.dart
-enum PrinterStatus { active, offline, maintenance, error }
+// enum PrinterStatus { active, offline, maintenance, error }
 
 enum JobStatus { waiting, printing, completed, paused, delayed, blocked }
 
@@ -7,94 +7,69 @@ enum JobPriority { low, medium, high, urgent }
 
 enum BlockedReason { materials, files, designApproval, other }
 
+enum PrinterStatus {
+  active,
+  maintenance,
+  offline,
+  error;
+
+  static PrinterStatus fromString(String value) {
+    return PrinterStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => PrinterStatus.active,
+    );
+  }
+}
+
 class Printer {
   final String id;
   final String name;
   final String nickname;
-  final PrinterStatus status;
   final String? location;
-  final List<String>? assignedStaffIds;
-  final String? currentJobId;
-  final DateTime? lastMaintenanceDate;
-  final Map<String, dynamic>? specifications;
+  final PrinterStatus status;
+  final double? maxWidth;
+  final double? printSpeed;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? currentJobId;
 
   Printer({
     required this.id,
     required this.name,
     required this.nickname,
-    required this.status,
     this.location,
-    this.assignedStaffIds,
-    this.currentJobId,
-    this.lastMaintenanceDate,
-    this.specifications,
+    required this.status,
+    this.maxWidth,
+    this.printSpeed,
     required this.createdAt,
-    required this.updatedAt,
+    this.currentJobId,
   });
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'nickname': nickname,
-    'status': status.toString().split('.').last,
-    'location': location,
-    'assignedStaffIds': assignedStaffIds,
-    'currentJobId': currentJobId,
-    'lastMaintenanceDate': lastMaintenanceDate?.toIso8601String(),
-    'specifications': specifications,
-    'createdAt': createdAt.toIso8601String(),
-    'updatedAt': updatedAt.toIso8601String(),
-  };
+  factory Printer.fromJson(Map<String, dynamic> json) {
+    return Printer(
+      id: json['id'],
+      name: json['name'],
+      nickname: json['nickname'],
+      location: json['location'],
+      status: PrinterStatus.values.byName(json['status']),
+      maxWidth: (json['maxWidth'] as num?)?.toDouble(),
+      printSpeed: (json['printSpeed'] as num?)?.toDouble(),
+      createdAt: DateTime.parse(json['createdAt']),
+      currentJobId: json['task']['currentTaskId'],
+    );
+  }
 
-  factory Printer.fromJson(Map<String, dynamic> json) => Printer(
-    id: json['id'],
-    name: json['name'],
-    nickname: json['nickname'],
-    status: PrinterStatus.values.firstWhere(
-      (e) => e.toString().split('.').last == json['status'],
-    ),
-    location: json['location'],
-    assignedStaffIds:
-        json['assignedStaffIds'] != null
-            ? List<String>.from(json['assignedStaffIds'])
-            : null,
-    currentJobId: json['currentJobId'],
-    lastMaintenanceDate:
-        json['lastMaintenanceDate'] != null
-            ? DateTime.parse(json['lastMaintenanceDate'])
-            : null,
-    specifications: json['specifications'],
-    createdAt: DateTime.parse(json['createdAt']),
-    updatedAt: DateTime.parse(json['updatedAt']),
-  );
-
-  Printer copyWith({
-    String? id,
-    String? name,
-    String? nickname,
-    PrinterStatus? status,
-    String? location,
-    List<String>? assignedStaffIds,
-    String? currentJobId,
-    DateTime? lastMaintenanceDate,
-    Map<String, dynamic>? specifications,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) => Printer(
-    id: id ?? this.id,
-    name: name ?? this.name,
-    nickname: nickname ?? this.nickname,
-    status: status ?? this.status,
-    location: location ?? this.location,
-    assignedStaffIds: assignedStaffIds ?? this.assignedStaffIds,
-    currentJobId: currentJobId ?? this.currentJobId,
-    lastMaintenanceDate: lastMaintenanceDate ?? this.lastMaintenanceDate,
-    specifications: specifications ?? this.specifications,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-  );
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'nickname': nickname,
+      'location': location,
+      'status': status.name,
+      'maxWidth': maxWidth,
+      'printSpeed': printSpeed,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
 }
 
 // lib/models/print_job.dart

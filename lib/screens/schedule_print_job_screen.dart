@@ -22,6 +22,8 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
   String? _selectedMaterialType;
   JobPriority _selectedPriority = JobPriority.medium;
   int _estimatedDuration = 30;
+  bool _requiresApplication = false;
+  String? _applicationLocation;
 
   final List<Map<String, String>> _mockProjects = [
     {'id': 'proj001', 'name': 'ABC Company - Storefront Signage'},
@@ -36,7 +38,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
       nickname: 'Large Format A',
       status: PrinterStatus.active,
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
     Printer(
       id: '2',
@@ -44,7 +46,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
       nickname: 'Vinyl Master',
       status: PrinterStatus.active,
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
     Printer(
       id: '3',
@@ -52,7 +54,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
       nickname: 'Banner Pro',
       status: PrinterStatus.offline,
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      // updatedAt: DateTime.now(),
     ),
   ];
 
@@ -89,7 +91,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(
-          'Schedule Job',
+          'Schedule Print Job',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -161,7 +163,17 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 6. Estimated Duration
+                  // 6. Application/Installation
+                  _buildSectionCard(
+                    icon: Icons.construction,
+                    iconColor: const Color(0xFF8B5CF6),
+                    title: 'Application / Installation',
+                    child: _buildApplicationToggle(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 7. Estimated Duration
                   _buildSectionCard(
                     icon: Icons.schedule,
                     iconColor: const Color(0xFF2563EB),
@@ -171,7 +183,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 7. Optional Notes
+                  // 8. Optional Notes
                   _buildSectionCard(
                     icon: Icons.notes,
                     iconColor: const Color(0xFF6B7280),
@@ -185,7 +197,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
 
           // Bottom Action Buttons
           Container(
-            padding: const EdgeInsets.all(16).copyWith(bottom: 40),
+            padding: const EdgeInsets.all(16).copyWith(bottom: 30),
             decoration: const BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -663,6 +675,111 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
           hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
         ),
       ),
+    );
+  }
+
+  Widget _buildApplicationToggle() {
+    return Column(
+      children: [
+        // Toggle Switch
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color:
+                _requiresApplication
+                    ? const Color(0xFF8B5CF6).withOpacity(0.1)
+                    : const Color(0xFFF5F7FA),
+            borderRadius: BorderRadius.circular(12),
+            border:
+                _requiresApplication
+                    ? Border.all(color: const Color(0xFF8B5CF6), width: 2)
+                    : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color:
+                      _requiresApplication
+                          ? const Color(0xFF8B5CF6).withOpacity(0.2)
+                          : const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.location_on,
+                  color:
+                      _requiresApplication
+                          ? const Color(0xFF8B5CF6)
+                          : const Color(0xFF9CA3AF),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Requires On-Site Application',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            _requiresApplication
+                                ? const Color(0xFF8B5CF6)
+                                : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Installation at client location',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _requiresApplication,
+                onChanged: (value) {
+                  setState(() {
+                    _requiresApplication = value;
+                    if (!value) _applicationLocation = null;
+                  });
+                },
+                activeColor: const Color(0xFF8B5CF6),
+              ),
+            ],
+          ),
+        ),
+
+        // Location Field (shows when toggle is ON)
+        if (_requiresApplication) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextField(
+              onChanged: (value) => _applicationLocation = value,
+              style: const TextStyle(fontSize: 15, color: Colors.black),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Enter site address or location',
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                prefixIcon: Icon(
+                  Icons.place,
+                  color: Color(0xFF8B5CF6),
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
