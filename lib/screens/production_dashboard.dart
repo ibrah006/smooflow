@@ -1,9 +1,9 @@
 // lib/screens/production/production_dashboard_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 
 class ProductionDashboardScreen extends StatefulWidget {
@@ -337,20 +337,36 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF2563EB),
-        elevation: 4,
-        icon: const Icon(Icons.add, color: Colors.white, size: 24),
-        label: const Text(
-          'Stock Entry',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ScheduleJobScreen()),
+              );
+            },
+            label: Text("Schedule Job"),
           ),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          FloatingActionButton.extended(
+            onPressed: () {},
+            backgroundColor: const Color(0xFF2563EB),
+            elevation: 4,
+            icon: const Icon(Icons.add, color: Colors.white, size: 24),
+            label: const Text(
+              'Stock Entry',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ],
       ),
     );
   }
