@@ -68,9 +68,7 @@ class _FlashScreenState extends State<FlashScreen> {
 
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder:
-                (context) =>
-                    isLoggedIn ? ProductionDashboardScreen() : LoginScreen(),
+            builder: (context) => isLoggedIn ? HomeScreen() : LoginScreen(),
           ),
           (Route<dynamic> route) => false,
         );
