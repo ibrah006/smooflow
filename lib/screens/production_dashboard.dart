@@ -1,10 +1,14 @@
 // lib/screens/production/production_dashboard_screen.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:smooflow/components/hawk_fab.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
+import 'package:smooflow/screens/stock_entry_screen.dart';
 
 class ProductionDashboardScreen extends StatefulWidget {
   const ProductionDashboardScreen({Key? key}) : super(key: key);
@@ -117,256 +121,263 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: CustomScrollView(
-        slivers: [
-          // Simple App Bar (matching Materials Stock style)
-          SliverAppBar(
-            backgroundColor: const Color(0xFFF5F7FA),
-            elevation: 0,
-            pinned: false,
-            toolbarHeight: 80,
-            flexibleSpace: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 45,
-                      padding: const EdgeInsets.all(10).copyWith(right: 0),
-                      child: Image.asset("assets/icons/app_icon.png"),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Text(
-                        'Dashboard',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    Ink(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F6FA),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.person_outline),
-                        iconSize: 28,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SettingsProfileScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Search and notification
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEDF2F7),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(
-                                Icons.search,
-                                color: Color(0xFF9CA3AF),
-                                size: 22,
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Search',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF9CA3AF),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEDF2F7),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.notifications_outlined,
-                          color: Color(0xFF2563EB),
-                          size: 26,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Quick Stats (3 cards like Material Stock)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.inventory_2,
-                          iconBg: const Color(0xFFDCE7FE),
-                          iconColor: const Color(0xFF2563EB),
-                          value: '2',
-                          label: 'Active\nPrinters',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.warning_amber_rounded,
-                          iconBg: const Color(0xFFFEF3C7),
-                          iconColor: const Color(0xFFF59E0B),
-                          value: '0',
-                          label: 'Low Stock',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.error_outline,
-                          iconBg: const Color(0xFFFEE2E2),
-                          iconColor: const Color(0xFFEF4444),
-                          value: '0',
-                          label: 'Critical',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Filter Tabs (like Material Stock)
-                  Row(
-                    children: [
-                      _buildFilterTab('All', true, count: 8),
-                      const SizedBox(width: 12),
-                      _buildFilterTab('Printing', false, count: 2),
-                      const SizedBox(width: 12),
-                      _buildFilterTab('Blocked', false, count: 2),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Urgent Jobs List
-                  if (_urgentJobs.isNotEmpty)
-                    ..._urgentJobs.map((job) => _buildJobCard(job)),
-
-                  // Printer Status Cards
-                  ..._mockPrinters.map((printer) => _buildPrinterCard(printer)),
-
-                  const SizedBox(height: 24),
-
-                  // Today's Schedule
-                  const Text(
-                    'Today\'s Schedule',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildScheduleCard(),
-
-                  const SizedBox(height: 24),
-
-                  // Material Alerts
-                  const Text(
-                    'Material Status',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMaterialCard(
-                    'Cast Vinyl',
-                    '15 rolls',
-                    'Low Stock',
-                    const Color(0xFFF59E0B),
-                  ),
-                  _buildMaterialCard(
-                    'Banner Material',
-                    '8 rolls',
-                    'Critical',
-                    const Color(0xFFEF4444),
-                  ),
-                  _buildMaterialCard(
-                    'Photo Paper',
-                    '42 rolls',
-                    'Good',
-                    const Color(0xFF10B981),
-                  ),
-
-                  const SizedBox(height: 100), // Bottom padding for FAB
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: () {
+      body: HawkFabMenu(
+        icon: AnimatedIcons.menu_close,
+        // fabColor: Colors.yellow,
+        // iconColor: Colors.green,
+        // hawkFabMenuController: hawkFabMenuController,
+        items: [
+          HawkFabMenuItem(
+            label: 'Schedule Job',
+            ontap: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ScheduleJobScreen()),
               );
             },
-            label: Text("Schedule Job"),
+            icon: const Icon(Icons.calendar_month_rounded),
+            color: Colors.red,
+            labelColor: Colors.blue,
           ),
-          FloatingActionButton.extended(
-            onPressed: () {},
-            backgroundColor: const Color(0xFF2563EB),
-            elevation: 4,
-            icon: const Icon(Icons.add, color: Colors.white, size: 24),
-            label: const Text(
-              'Stock Entry',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+          HawkFabMenuItem(
+            label: 'Stock Entry',
+            ontap: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StockEntryScreen.stockin(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add),
+            labelColor: Colors.white,
+            labelBackgroundColor: Colors.blue,
           ),
         ],
+        body: CustomScrollView(
+          slivers: [
+            // Simple App Bar (matching Materials Stock style)
+            SliverAppBar(
+              backgroundColor: const Color(0xFFF5F7FA),
+              elevation: 0,
+              pinned: false,
+              toolbarHeight: 80,
+              flexibleSpace: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 45,
+                        padding: const EdgeInsets.all(10).copyWith(right: 0),
+                        child: Image.asset("assets/icons/app_icon.png"),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Text(
+                          'Dashboard',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      Ink(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F6FA),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.person_outline),
+                          iconSize: 28,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SettingsProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Content
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search and notification
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEDF2F7),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.search,
+                                  color: Color(0xFF9CA3AF),
+                                  size: 22,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Search',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDF2F7),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Color(0xFF2563EB),
+                            size: 26,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Quick Stats (3 cards like Material Stock)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.inventory_2,
+                            iconBg: const Color(0xFFDCE7FE),
+                            iconColor: const Color(0xFF2563EB),
+                            value: '2',
+                            label: 'Active\nPrinters',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.warning_amber_rounded,
+                            iconBg: const Color(0xFFFEF3C7),
+                            iconColor: const Color(0xFFF59E0B),
+                            value: '0',
+                            label: 'Low Stock',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.error_outline,
+                            iconBg: const Color(0xFFFEE2E2),
+                            iconColor: const Color(0xFFEF4444),
+                            value: '0',
+                            label: 'Critical',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Filter Tabs (like Material Stock)
+                    Row(
+                      children: [
+                        _buildFilterTab('All', true, count: 8),
+                        const SizedBox(width: 12),
+                        _buildFilterTab('Printing', false, count: 2),
+                        const SizedBox(width: 12),
+                        _buildFilterTab('Blocked', false, count: 2),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Urgent Jobs List
+                    if (_urgentJobs.isNotEmpty)
+                      ..._urgentJobs.map((job) => _buildJobCard(job)),
+
+                    // Printer Status Cards
+                    ..._mockPrinters.map(
+                      (printer) => _buildPrinterCard(printer),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Today's Schedule
+                    const Text(
+                      'Today\'s Schedule',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildScheduleCard(),
+
+                    const SizedBox(height: 24),
+
+                    // Material Alerts
+                    const Text(
+                      'Material Status',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMaterialCard(
+                      'Cast Vinyl',
+                      '15 rolls',
+                      'Low Stock',
+                      const Color(0xFFF59E0B),
+                    ),
+                    _buildMaterialCard(
+                      'Banner Material',
+                      '8 rolls',
+                      'Critical',
+                      const Color(0xFFEF4444),
+                    ),
+                    _buildMaterialCard(
+                      'Photo Paper',
+                      '42 rolls',
+                      'Good',
+                      const Color(0xFF10B981),
+                    ),
+
+                    const SizedBox(height: 100), // Bottom padding for FAB
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
