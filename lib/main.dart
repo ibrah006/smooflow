@@ -85,7 +85,7 @@ class App extends StatelessWidget {
           ),
         ),
       ),
-      home: ProductionDashboardScreen(),
+      home: AdminDashboardScreen(),
     );
   }
 }

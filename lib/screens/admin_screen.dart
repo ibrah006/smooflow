@@ -9,13 +9,20 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+    with SingleTickerProviderStateMixin {
   Timer? _refreshTimer;
   String _selectedPeriod = 'Today';
+  int _currentTabIndex = 0;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(() {
+      setState(() => _currentTabIndex = _tabController.index);
+    });
     _refreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
       if (mounted) setState(() {});
     });
@@ -23,6 +30,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _refreshTimer?.cancel();
     super.dispose();
   }
@@ -31,36 +39,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // Header
-            SliverAppBar(
-              backgroundColor: const Color(0xFFF5F7FA),
-              elevation: 0,
-              pinned: false,
-              toolbarHeight: 100,
-              flexibleSpace: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+      body: Column(
+        children: [
+          // Modern Header with Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              ),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(20).copyWith(bottom: 0),
+                  child: SafeArea(
+                    child: Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB),
-                            borderRadius: BorderRadius.circular(14),
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(
-                            Icons.dashboard,
+                            Icons.dashboard_rounded,
                             color: Colors.white,
-                            size: 26,
+                            size: 28,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,16 +79,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 'Admin Dashboard',
                                 style: TextStyle(
                                   fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              SizedBox(height: 4),
                               Text(
-                                'Overview & Analytics',
+                                'Smooflow Management',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF9CA3AF),
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -88,15 +99,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Stack(
                             children: [
                               const Center(
                                 child: Icon(
-                                  Icons.notifications_outlined,
-                                  color: Color(0xFF2563EB),
+                                  Icons.notifications_rounded,
+                                  color: Colors.white,
                                   size: 24,
                                 ),
                               ),
@@ -117,407 +128,755 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
 
-            // Content
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Period Filter
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildPeriodTab('Today'),
-                          const SizedBox(width: 8),
-                          _buildPeriodTab('This Week'),
-                          const SizedBox(width: 8),
-                          _buildPeriodTab('This Month'),
-                          const SizedBox(width: 8),
-                          _buildPeriodTab('Custom'),
-                        ],
-                      ),
+                // Tab Bar
+                Container(
+                  color: Colors.white,
+                  child: TabBar(
+                    dividerColor: Colors.black12,
+                    controller: _tabController,
+                    isScrollable: true,
+                    labelColor: const Color(0xFF2563EB),
+                    unselectedLabelColor: const Color(0xFF9CA3AF),
+                    labelStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // Key Metrics Grid
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.attach_money,
-                            iconBg: const Color(0xFFDCFCE7),
-                            iconColor: const Color(0xFF10B981),
-                            value: '\$24,580',
-                            label: 'Revenue',
-                            trend: '+12.5%',
-                            trendUp: true,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.work,
-                            iconBg: const Color(0xFFDCE7FE),
-                            iconColor: const Color(0xFF2563EB),
-                            value: '156',
-                            label: 'Projects',
-                            trend: '+8',
-                            trendUp: true,
-                          ),
-                        ),
-                      ],
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
                     ),
-
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.people,
-                            iconBg: const Color(0xFFFEF3C7),
-                            iconColor: const Color(0xFFF59E0B),
-                            value: '24',
-                            label: 'Team',
-                            trend: '+2',
-                            trendUp: true,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.trending_up,
-                            iconBg: const Color(0xFFE9D5FF),
-                            iconColor: const Color(0xFF9333EA),
-                            value: '94%',
-                            label: 'Efficiency',
-                            trend: '+5%',
-                            trendUp: true,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Quick Actions
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          'Quick Actions',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildQuickActionCard(
-                            icon: Icons.add_box,
-                            label: 'New\nProject',
-                            color: const Color(0xFF2563EB),
-                            onTap: () {},
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildQuickActionCard(
-                            icon: Icons.person_add,
-                            label: 'Add\nStaff',
-                            color: const Color(0xFF10B981),
-                            onTap: () {},
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildQuickActionCard(
-                            icon: Icons.inventory_2,
-                            label: 'Stock\nEntry',
-                            color: const Color(0xFFF59E0B),
-                            onTap: () {},
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildQuickActionCard(
-                            icon: Icons.print,
-                            label: 'Add\nPrinter',
-                            color: const Color(0xFF9333EA),
-                            onTap: () {},
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Active Projects
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Active Projects',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'View All',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2563EB),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildProjectCard(
-                      name: 'ABC Corp - Storefront Signage',
-                      status: 'Production',
-                      statusColor: const Color(0xFF2563EB),
-                      progress: 0.65,
-                      dueDate: 'Due in 3 days',
-                      team: 5,
-                    ),
-
-                    _buildProjectCard(
-                      name: 'XYZ Ltd - Vehicle Wraps',
-                      status: 'Design',
-                      statusColor: const Color(0xFFF59E0B),
-                      progress: 0.40,
-                      dueDate: 'Due in 5 days',
-                      team: 3,
-                    ),
-
-                    _buildProjectCard(
-                      name: 'Local Cafe - Menu Boards',
-                      status: 'Finishing',
-                      statusColor: const Color(0xFF10B981),
-                      progress: 0.85,
-                      dueDate: 'Due tomorrow',
-                      team: 4,
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Production Status
-                    const Text(
-                      'Production Status',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildProductionStatusItem(
-                            icon: Icons.print,
-                            label: 'Printers Active',
-                            value: '4/6',
-                            color: const Color(0xFF10B981),
-                            percentage: 0.67,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProductionStatusItem(
-                            icon: Icons.queue,
-                            label: 'Jobs in Queue',
-                            value: '12',
-                            color: const Color(0xFF2563EB),
-                            percentage: 0.48,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProductionStatusItem(
-                            icon: Icons.inventory_2,
-                            label: 'Material Stock',
-                            value: '86%',
-                            color: const Color(0xFF10B981),
-                            percentage: 0.86,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProductionStatusItem(
-                            icon: Icons.warning_amber,
-                            label: 'Issues',
-                            value: '2',
-                            color: const Color(0xFFF59E0B),
-                            percentage: 0.15,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Team Performance
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Top Performers',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'View All',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2563EB),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildPerformerCard(
-                      name: 'Ibrahim',
-                      role: 'Production Lead',
-                      score: 98,
-                      avatar: '👤',
-                      trend: '+5%',
-                    ),
-
-                    _buildPerformerCard(
-                      name: 'Muhammad Fazaldeen',
-                      role: 'Designer',
-                      score: 95,
-                      avatar: '👤',
-                      trend: '+3%',
-                    ),
-
-                    _buildPerformerCard(
-                      name: 'Sarah Johnson',
-                      role: 'Finishing',
-                      score: 92,
-                      avatar: '👤',
-                      trend: '+7%',
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Recent Alerts
-                    const Text(
-                      'Recent Alerts',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildAlertCard(
-                      icon: Icons.inventory_2,
-                      title: 'Low Stock Alert',
-                      message: 'Cast Vinyl running low - 15 rolls remaining',
-                      color: const Color(0xFFF59E0B),
-                      time: '2 hours ago',
-                    ),
-
-                    _buildAlertCard(
-                      icon: Icons.error,
-                      title: 'Printer Maintenance',
-                      message: 'Banner Pro requires scheduled maintenance',
-                      color: const Color(0xFFEF4444),
-                      time: '5 hours ago',
-                    ),
-
-                    _buildAlertCard(
-                      icon: Icons.check_circle,
-                      title: 'Project Completed',
-                      message: 'Store Opening Banners delivered successfully',
-                      color: const Color(0xFF10B981),
-                      time: '1 day ago',
-                    ),
-
-                    const SizedBox(height: 100),
-                  ],
+                    indicatorColor: const Color(0xFF2563EB),
+                    indicatorWeight: 3,
+                    tabs: const [
+                      Tab(text: 'Dashboard'),
+                      Tab(text: 'Projects'),
+                      Tab(text: 'Team'),
+                      Tab(text: 'Reports'),
+                      Tab(text: 'Settings'),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x0F000000),
-              blurRadius: 8,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.dashboard, 'Dashboard', true),
-                _buildNavItem(Icons.work_outline, 'Projects', false),
-                _buildNavItem(Icons.people_outline, 'Team', false),
-                _buildNavItem(Icons.bar_chart, 'Reports', false),
-                _buildNavItem(Icons.settings_outlined, 'Settings', false),
               ],
             ),
           ),
+
+          // Tab Content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildDashboardTab(),
+                _buildProjectsTab(),
+                _buildTeamTab(),
+                _buildReportsTab(),
+                _buildSettingsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardTab() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        // Period Filter
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildPeriodTab('Today'),
+              const SizedBox(width: 8),
+              _buildPeriodTab('This Week'),
+              const SizedBox(width: 8),
+              _buildPeriodTab('This Month'),
+              const SizedBox(width: 8),
+              _buildPeriodTab('Custom'),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Key Metrics Grid - More Modern Layout
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2563EB).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildGradientMetric('\$24,580', 'Revenue', '+12.5%', true),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Expanded(
+                      child: _buildGradientMetric(
+                        '156',
+                        'Projects',
+                        '+8',
+                        true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildGradientMetric(
+                      '94%',
+                      'Efficiency',
+                      '+5%',
+                      true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Quick Actions - Modern Grid
+        const Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        Row(
+          spacing: 15,
+          children: [
+            Expanded(
+              child: _buildModernActionCard(
+                Icons.add_business,
+                'New Project',
+                const Color(0xFF2563EB),
+                () {},
+              ),
+            ),
+            Expanded(
+              child: _buildModernActionCard(
+                Icons.person_add,
+                'Add Staff',
+                const Color(0xFF10B981),
+                () {},
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 15,)
+        Row(
+          spacing: 15,
+          children: [
+            Expanded(
+              child: _buildModernActionCard(
+                Icons.inventory,
+                'Stock Entry',
+                const Color(0xFFF59E0B),
+                () {},
+              ),
+            ),
+            Expanded(
+              child: _buildModernActionCard(
+                Icons.print,
+                'Add Printer',
+                const Color(0xFF9333EA),
+                () {},
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        // Production Overview
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Production Overview',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Refresh'),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              _buildProductionMetric(
+                Icons.print,
+                'Active Printers',
+                '4/6',
+                0.67,
+                const Color(0xFF10B981),
+              ),
+              const SizedBox(height: 20),
+              _buildProductionMetric(
+                Icons.queue,
+                'Jobs in Queue',
+                '12',
+                0.48,
+                const Color(0xFF2563EB),
+              ),
+              const SizedBox(height: 20),
+              _buildProductionMetric(
+                Icons.inventory_2,
+                'Material Stock',
+                '86%',
+                0.86,
+                const Color(0xFF10B981),
+              ),
+              const SizedBox(height: 20),
+              _buildProductionMetric(
+                Icons.warning_amber,
+                'Issues',
+                '2',
+                0.15,
+                const Color(0xFFF59E0B),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildProjectsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        // Search and Filter
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.search, color: Color(0xFF9CA3AF), size: 22),
+                    SizedBox(width: 12),
+                    Text(
+                      'Search projects...',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.filter_list,
+                color: Color(0xFF2563EB),
+                size: 24,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // Project Stats
+        Row(
+          children: [
+            Expanded(
+              child: _buildProjectStat('24', 'Active', const Color(0xFF2563EB)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildProjectStat('8', 'Pending', const Color(0xFFF59E0B)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildProjectStat(
+                '132',
+                'Completed',
+                const Color(0xFF10B981),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Projects List
+        const Text(
+          'Active Projects',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildProjectCard(
+          name: 'ABC Corp - Storefront Signage',
+          client: 'ABC Corporation',
+          status: 'Production',
+          statusColor: const Color(0xFF2563EB),
+          progress: 0.65,
+          dueDate: 'Due in 3 days',
+          team: 5,
+          stage: 'Production',
+        ),
+
+        _buildProjectCard(
+          name: 'XYZ Ltd - Vehicle Wraps',
+          client: 'XYZ Limited',
+          status: 'Design',
+          statusColor: const Color(0xFFF59E0B),
+          progress: 0.40,
+          dueDate: 'Due in 5 days',
+          team: 3,
+          stage: 'Design',
+        ),
+
+        _buildProjectCard(
+          name: 'Local Cafe - Menu Boards',
+          client: 'Local Cafe',
+          status: 'Finishing',
+          statusColor: const Color(0xFF10B981),
+          progress: 0.85,
+          dueDate: 'Due tomorrow',
+          team: 4,
+          stage: 'Finishing',
+        ),
+
+        _buildProjectCard(
+          name: 'Mall Kiosk - Signage Package',
+          client: 'Shopping Mall',
+          status: 'Planning',
+          statusColor: const Color(0xFF9333EA),
+          progress: 0.20,
+          dueDate: 'Due in 1 week',
+          team: 2,
+          stage: 'Planning',
+        ),
+
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildTeamTab() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        // Team Overview Cards
+        Row(
+          children: [
+            Expanded(
+              child: _buildTeamStat(
+                '24',
+                'Total Staff',
+                Icons.people,
+                const Color(0xFF2563EB),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTeamStat(
+                '18',
+                'Active Today',
+                Icons.check_circle,
+                const Color(0xFF10B981),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildTeamStat(
+                '3',
+                'On Leave',
+                Icons.event_busy,
+                const Color(0xFFF59E0B),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTeamStat(
+                '1',
+                'Sick Leave',
+                Icons.local_hospital,
+                const Color(0xFFEF4444),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+
+        // Department Filter
+        const Text(
+          'Departments',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildDepartmentChip('All', true, 24),
+              const SizedBox(width: 8),
+              _buildDepartmentChip('Design', false, 6),
+              const SizedBox(width: 8),
+              _buildDepartmentChip('Production', false, 8),
+              const SizedBox(width: 8),
+              _buildDepartmentChip('Finishing', false, 5),
+              const SizedBox(width: 8),
+              _buildDepartmentChip('Application', false, 5),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Top Performers
+        const Text(
+          'Top Performers',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildTeamMemberCard(
+          name: 'Ibrahim',
+          role: 'Production Lead',
+          department: 'Production',
+          score: 98,
+          status: 'Active',
+          statusColor: const Color(0xFF10B981),
+          avatar: '👨‍💼',
+          rank: 1,
+        ),
+
+        _buildTeamMemberCard(
+          name: 'Muhammad Fazaldeen',
+          role: 'Senior Designer',
+          department: 'Design',
+          score: 95,
+          status: 'Active',
+          statusColor: const Color(0xFF10B981),
+          avatar: '👨‍🎨',
+          rank: 2,
+        ),
+
+        _buildTeamMemberCard(
+          name: 'Sarah Johnson',
+          role: 'Finishing Specialist',
+          department: 'Finishing',
+          score: 92,
+          status: 'Active',
+          statusColor: const Color(0xFF10B981),
+          avatar: '👩‍🔧',
+          rank: 3,
+        ),
+
+        const SizedBox(height: 24),
+
+        // All Team Members
+        const Text(
+          'All Team Members',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildTeamMemberCard(
+          name: 'Ahmed Ali',
+          role: 'Printer Operator',
+          department: 'Production',
+          score: 88,
+          status: 'Active',
+          statusColor: const Color(0xFF10B981),
+          avatar: '👨‍💻',
+        ),
+
+        _buildTeamMemberCard(
+          name: 'Lisa Chen',
+          role: 'Designer',
+          department: 'Design',
+          score: 86,
+          status: 'Active',
+          statusColor: const Color(0xFF10B981),
+          avatar: '👩‍🎨',
+        ),
+
+        _buildTeamMemberCard(
+          name: 'Mike Brown',
+          role: 'Application Technician',
+          department: 'Application',
+          score: 84,
+          status: 'On Leave',
+          statusColor: const Color(0xFFF59E0B),
+          avatar: '👨‍🔧',
+        ),
+
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildReportsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        // Report Period Selector
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Report Period',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildPeriodButton('This Week', true)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildPeriodButton('This Month', false)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildPeriodButton('This Year', false)),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Revenue Report
+        _buildReportCard(
+          icon: Icons.attach_money,
+          iconColor: const Color(0xFF10B981),
+          title: 'Revenue Report',
+          subtitle: 'Financial overview',
+          value: '\$24,580',
+          change: '+12.5% from last week',
+          changePositive: true,
+          onTap: () {},
+        ),
+
+        // Projects Report
+        _buildReportCard(
+          icon: Icons.work,
+          iconColor: const Color(0xFF2563EB),
+          title: 'Projects Report',
+          subtitle: 'Completed & In Progress',
+          value: '156',
+          change: '+8 new projects',
+          changePositive: true,
+          onTap: () {},
+        ),
+
+        // Production Report
+        _buildReportCard(
+          icon: Icons.print,
+          iconColor: const Color(0xFF9333EA),
+          title: 'Production Report',
+          subtitle: 'Print jobs & efficiency',
+          value: '247 jobs',
+          change: '94% efficiency rate',
+          changePositive: true,
+          onTap: () {},
+        ),
+
+        // Material Usage Report
+        _buildReportCard(
+          icon: Icons.inventory_2,
+          iconColor: const Color(0xFFF59E0B),
+          title: 'Material Usage',
+          subtitle: 'Stock & consumption',
+          value: '86%',
+          change: 'Stock level healthy',
+          changePositive: true,
+          onTap: () {},
+        ),
+
+        // Team Performance Report
+        _buildReportCard(
+          icon: Icons.people,
+          iconColor: const Color(0xFF8B5CF6),
+          title: 'Team Performance',
+          subtitle: 'Staff productivity',
+          value: '92%',
+          change: '+5% this week',
+          changePositive: true,
+          onTap: () {},
+        ),
+
+        const SizedBox(height: 24),
+
+        // Export Options
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Export Reports',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildExportButton(
+                'Export as PDF',
+                Icons.picture_as_pdf,
+                const Color(0xFFEF4444),
+              ),
+              const SizedBox(height: 12),
+              _buildExportButton(
+                'Export as Excel',
+                Icons.table_chart,
+                const Color(0xFF10B981),
+              ),
+              const SizedBox(height: 12),
+              _buildExportButton(
+                'Email Report',
+                Icons.email,
+                const Color(0xFF2563EB),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTab() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Icon(
+                Icons.settings,
+                size: 50,
+                color: Color(0xFF2563EB),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Your custom settings content will appear here',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // Helper Widgets
 
   Widget _buildPeriodTab(String period) {
     final isSelected = _selectedPeriod == period;
@@ -529,6 +888,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF2563EB) : Colors.white,
           borderRadius: BorderRadius.circular(12),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : null,
         ),
         child: Text(
           period,
@@ -542,47 +911,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildMetricCard({
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required String value,
-    required String label,
-    required String trend,
-    required bool trendUp,
-  }) {
+  Widget _buildGradientMetric(
+    String value,
+    String label,
+    String trend,
+    bool trendUp,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(height: 16),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: Colors.black,
+              color: Colors.white,
               height: 1,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -590,19 +951,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Icon(
                 trendUp ? Icons.trending_up : Icons.trending_down,
                 size: 14,
-                color:
-                    trendUp ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                color: Colors.white,
               ),
               const SizedBox(width: 4),
               Text(
                 trend,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color:
-                      trendUp
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444),
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -612,40 +969,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildModernActionCard(
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 12),
             Text(
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
-                height: 1.3,
               ),
             ),
           ],
@@ -654,13 +1018,103 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _buildProductionMetric(
+    IconData icon,
+    String label,
+    String value,
+    double progress,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: const Color(0xFFEDF2F7),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProjectStat(String value, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProjectCard({
     required String name,
+    required String client,
     required String status,
     required Color statusColor,
     required double progress,
     required String dueDate,
     required int team,
+    required String stage,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -675,13 +1129,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      client,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Container(
@@ -694,7 +1161,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  status,
+                  stage,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -717,14 +1184,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.schedule, size: 14, color: Color(0xFF9CA3AF)),
+              const Icon(Icons.schedule, size: 14, color: Color(0xFF9CA3AF)),
               const SizedBox(width: 6),
               Text(
                 dueDate,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.people, size: 14, color: Color(0xFF9CA3AF)),
+              const Icon(Icons.people, size: 14, color: Color(0xFF9CA3AF)),
               const SizedBox(width: 6),
               Text(
                 '$team members',
@@ -746,72 +1213,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildProductionStatusItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    required double percentage,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
+  Widget _buildTeamStat(
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF9CA3AF),
-                    ),
-                  ),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: percentage,
-                  backgroundColor: const Color(0xFFEDF2F7),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                  minHeight: 6,
-                ),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildPerformerCard({
+  Widget _buildDepartmentChip(String label, bool isSelected, int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF2563EB) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color:
+                  isSelected
+                      ? Colors.white.withOpacity(0.3)
+                      : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamMemberCard({
     required String name,
     required String role,
+    required String department,
     required int score,
+    required String status,
+    required Color statusColor,
     required String avatar,
-    required String trend,
+    int? rank,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -819,21 +1314,66 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border:
+            rank != null
+                ? Border.all(
+                  color:
+                      rank == 1
+                          ? const Color(0xFFFFD700)
+                          : rank == 2
+                          ? const Color(0xFFC0C0C0)
+                          : const Color(0xFFCD7F32),
+                  width: 2,
+                )
+                : null,
       ),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCE7FE),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(avatar, style: const TextStyle(fontSize: 24)),
-            ),
+          Stack(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCE7FE),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Center(
+                  child: Text(avatar, style: const TextStyle(fontSize: 28)),
+                ),
+              ),
+              if (rank != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color:
+                          rank == 1
+                              ? const Color(0xFFFFD700)
+                              : rank == 2
+                              ? const Color(0xFFC0C0C0)
+                              : const Color(0xFFCD7F32),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        rank.toString(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,17 +1381,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   role,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF9CA3AF),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
                   ),
                 ),
               ],
@@ -862,30 +1421,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  horizontal: 12,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$score',
+                  score.toString(),
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                     color: Color(0xFF10B981),
                   ),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                trend,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF10B981),
-                ),
+                department,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
               ),
             ],
           ),
@@ -894,89 +1449,155 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildAlertCard({
+  Widget _buildReportCard({
     required IconData icon,
+    required Color iconColor,
     required String title,
-    required String message,
-    required Color color,
-    required String time,
+    required String subtitle,
+    required String value,
+    required String change,
+    required bool changePositive,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: iconColor, size: 28),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9CA3AF),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9CA3AF),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: iconColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        changePositive
+                            ? Icons.trending_up
+                            : Icons.trending_down,
+                        size: 14,
+                        color:
+                            changePositive
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        change,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              changePositive
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFEF4444),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Color(0xFF9CA3AF),
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
-          size: 24,
-        ),
-        const SizedBox(height: 4),
-        Text(
+  Widget _buildPeriodButton(String label, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
           label,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            color: isActive ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF6B7280),
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildExportButton(String label, IconData icon, Color color) {
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
+          ],
+        ),
+      ),
     );
   }
 }
