@@ -56,8 +56,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
     print("printers: $printers");
 
-    print("printer notifier is loading: ${ref.watch(printerNotifierProvider).loading}");
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: PreferredSize(
@@ -157,10 +155,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       ),
       body: Column(
         children: [
-          Text("Printers"),
-          ...printers.map((printer) {
-            return Text(printer.nickname);
-          }),
           // Minimal Header
           Container(
             color: Colors.white,
