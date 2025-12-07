@@ -5,7 +5,7 @@ import 'package:smooflow/states/printer.dart';
 import '../models/printer.dart';
 
 class PrinterNotifier extends StateNotifier<PrinterState> {
-  final PrinterRepository _repo;
+  final PrinterRepo _repo;
 
   PrinterNotifier(this._repo) : super(const PrinterState());
 
@@ -15,12 +15,13 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   Future<void> fetchPrinters() async {
     state = state.copyWith(loading: true, error: null);
 
-    try {
+    // try {
       final result = await _repo.getPrinters();
       state = state.copyWith(printers: result, loading: false);
-    } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
-    }
+    // } catch (e) {
+    //   print("error occurred: $e");
+    //   state = state.copyWith(loading: false, error: e.toString());
+    // }
   }
 
   // -------------------------------

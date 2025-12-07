@@ -4,9 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/providers/organization_provider.dart';
-import 'package:smooflow/screens/desktop_material_list_screen.dart';
-import 'package:smooflow/screens/home_screen.dart';
 
 class ClaimOrganizationScreen extends ConsumerStatefulWidget {
   final String privateDomain;
@@ -166,12 +165,7 @@ class _ClaimOrganizationScreenState
                             context,
                           ).showSnackBar(SnackBar(content: Text(message)));
 
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => HomeScreen(),
-                            ),
-                            (Route<dynamic> route) => false,
-                          );
+                          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
                           // } catch (e) {
                           //   Navigator.pop(context);
 
@@ -300,10 +294,7 @@ class _ClaimOrganizationScreenState
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
-                      (Route<dynamic> route) => false,
-                    );
+                    AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey.shade200),

@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:smooflow/api/api_client.dart';
 import '../models/printer.dart';
 
-class PrinterRepository {
-  PrinterRepository();
+class PrinterRepo {
+  PrinterRepo();
 
   // --------------------------------------------------
   // GET /printers
@@ -11,7 +13,9 @@ class PrinterRepository {
   Future<List<Printer>> getPrinters() async {
     final res = await ApiClient.http.get('/printers');
 
-    return (res.body as List).map((e) => Printer.fromJson(e)).toList();
+    print("fetch printers response body: ${res.statusCode}");
+
+    return (jsonDecode(res.body) as List).map((e) => Printer.fromJson(e)).toList();
   }
 
   // --------------------------------------------------

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_join_organization_args.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/repositories/company_repo.dart';
-import 'package:smooflow/screens/create_join_organization_screen.dart';
-import 'package:smooflow/screens/home_screen.dart';
-import 'package:smooflow/screens/login_screen.dart';
-import 'package:smooflow/screens/production_dashboard.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class FlashScreen extends StatefulWidget {
@@ -45,33 +43,19 @@ class _FlashScreenState extends State<FlashScreen> {
             // orgId == null is taken care of, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
             await LoginService.relogin();
 
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-              (Route<dynamic> route) => false,
-            );
+            AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
           } catch (e) {
             // Not linked to any organization
 
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder:
-                    (context) => CreateJoinOrganizationScreen(
-                      autoInviteOrganization:
-                          isLoggedInStatus.autoInviteOrganization,
-                    ),
-              ),
-              (Route<dynamic> route) => false,
-            );
+            AppRoutes.navigateAndRemoveUntil(context, AppRoutes.createJoinOrg, arguments: CreateJoinOrganizationArgs(autoInviteOrganization:
+                          isLoggedInStatus.autoInviteOrganization), predicate: (Route<dynamic> route) => false);
           }
           return;
         }
 
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => isLoggedIn ? HomeScreen() : LoginScreen(),
-          ),
-          (Route<dynamic> route) => false,
-        );
+        // Temporariliy commented to check the admin screen functionality
+        // AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.home : AppRoutes.login, predicate: (Route<dynamic> route) => false);
+        AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.admin : AppRoutes.login, predicate: (Route<dynamic> route) => false);
       });
     });
   }

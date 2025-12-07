@@ -1,17 +1,19 @@
 // lib/screens/printer/add_printer_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 
-class AddPrinterScreen extends StatefulWidget {
+class AddPrinterScreen extends ConsumerStatefulWidget {
   final Printer? printer; // null for add, non-null for edit
 
   const AddPrinterScreen({Key? key, this.printer}) : super(key: key);
 
   @override
-  State<AddPrinterScreen> createState() => _AddPrinterScreenState();
+  ConsumerState<AddPrinterScreen> createState() => _AddPrinterScreenState();
 }
 
-class _AddPrinterScreenState extends State<AddPrinterScreen> {
+class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _nicknameController;
@@ -513,8 +515,27 @@ class _AddPrinterScreenState extends State<AddPrinterScreen> {
     );
   }
 
-  void _savePrinter() {
+  void _savePrinter() async {
     if (_formKey.currentState!.validate()) {
+      
+      try {
+        await ref.read(printerNotifierProvider.notifier).createPrinter(name: _nameController.text,
+          nickname: _nicknameController.text,
+          location: _locationController.text,
+          // assignedStaffIds: _selectedStaffIds,
+        );
+      } catch(e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to Add Printer. Please try again.'),
+            backgroundColor: const Color(0xFF2563EB),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        return;
+      }
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

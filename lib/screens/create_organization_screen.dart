@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
-import 'package:smooflow/screens/claim_organization_screen.dart';
-import 'package:smooflow/screens/home_screen.dart';
-import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class CreateOrganizationScreen extends ConsumerStatefulWidget {
@@ -190,28 +189,12 @@ class _CreateOrganizationScreenState
 
                         // If relogin not success, re-direct to login screen to login manually
                         if (!isSuccess) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                            (Route<dynamic> route) => false,
-                          );
+                          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login, predicate: (Route<dynamic> route) => false);
                           return;
                         }
 
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    orgResponse.privateDomainAvailable
-                                        ? ClaimOrganizationScreen(
-                                          privateDomain:
-                                              orgResponse.privateDomain!,
-                                        )
-                                        : HomeScreen(),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
+                        AppRoutes.navigateAndRemoveUntil(context, orgResponse.privateDomainAvailable
+                                        ? AppRoutes.claimOrganization : AppRoutes.home, arguments: orgResponse.privateDomainAvailable ? ClaimOrganizationArgs(privateDomain: orgResponse.privateDomain!) : null, predicate: (Route<dynamic> route) => false);
 
                         setState(() {
                           _isLoading = false;

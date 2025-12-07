@@ -6,6 +6,10 @@ import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/screens/add_printer_screen.dart';
 import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/screens/create_join_organization_help_screen.dart';
+import 'package:smooflow/screens/create_organization_screen.dart';
+import 'package:smooflow/screens/flash_screen.dart';
+import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 
 // Auth & Onboarding
@@ -184,11 +188,23 @@ class AppRoutes {
     Widget? screen;
 
     switch (routeName) {
+      case flash:
+        screen = const FlashScreen();
+        break;
       // ===== Organization =====
       case claimOrganization:
         if (args is ClaimOrganizationArgs) {
           screen = ClaimOrganizationScreen(privateDomain: args.privateDomain);
         }
+        break;
+      case createOrganization:
+        screen = CreateOrganizationScreen();
+        break;
+      case joinOrganization:
+        screen = CreateOrganizationScreen();
+        break;
+      case createJoinOrgHelp:
+        screen = const CreateJoinOrganizationHelpScreen();
         break;
 
       // ===== Materials & Stock =====
@@ -300,6 +316,9 @@ class AppRoutes {
         break;
       case addPrinter:
         screen = const AddPrinterScreen();
+        break;
+      case home:
+        screen = HomeScreen();
         break;
     }
 

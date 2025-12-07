@@ -54,7 +54,7 @@ class Printer {
       maxWidth: (json['maxWidth'] as num?)?.toDouble(),
       printSpeed: (json['printSpeed'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
-      currentJobId: json['task']['currentTaskId'],
+      currentJobId: json['currentTaskId'],
     );
   }
 

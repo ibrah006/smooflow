@@ -3,9 +3,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
-import 'package:smooflow/screens/admin_screen.dart';
-import 'package:smooflow/screens/flash_screen.dart';
-import 'package:smooflow/screens/production_dashboard.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -86,7 +83,7 @@ class App extends StatelessWidget {
         ),
       ),
       onGenerateRoute: AppRoutes.onGenerateRoute,
-      initialRoute: AppRoutes.admin,
+      initialRoute: AppRoutes.flash,
     );
   }
 }

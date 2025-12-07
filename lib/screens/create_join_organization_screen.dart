@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/welcome_to_organization_dialog.dart';
 import 'package:smooflow/models/organization.dart';
-import 'package:smooflow/providers/invitation_provider.dart';
-import 'package:smooflow/screens/create_join_organization_help_screen.dart';
-import 'package:smooflow/screens/create_organization_screen.dart';
-import 'package:smooflow/screens/join_organization_screen.dart';
 import 'package:smooflow/core/app_routes.dart';
 
 class CreateJoinOrganizationScreen extends ConsumerWidget {

@@ -5,8 +5,8 @@ import 'dart:async';
 
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
-import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -28,8 +28,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
     // This will initialize current organization on local level
     // So that invite member screen has access to current organization
-    Future.microtask(() {
-      ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
+    Future.microtask(() async {
+      await ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
     });
 
     _tabController = TabController(length: 5, vsync: this);
@@ -50,6 +51,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+
+    final printers = ref.watch(printerNotifierProvider).printers;
+
+    print("printers: $printers");
+
+    print("printer notifier is loading: ${ref.watch(printerNotifierProvider).loading}");
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: PreferredSize(
@@ -149,6 +157,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       ),
       body: Column(
         children: [
+          Text("Printers"),
+          ...printers.map((printer) {
+            return Text(printer.nickname);
+          }),
           // Minimal Header
           Container(
             color: Colors.white,
@@ -328,7 +340,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
         const SizedBox(height: 16),
 
-        Container(
+        Ink(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
