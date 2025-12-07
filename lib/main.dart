@@ -18,20 +18,6 @@ void main(List<String> args) async {
 
 class App extends StatelessWidget {
   const App({super.key});
-
-  Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch(settings.name) {
-      case AppRoutes.: return ;
-    }
-    if (settings.name == '/detail') {
-      final args = settings.arguments as DetailArgs;
-      return MaterialPageRoute(
-        builder: (_) => DetailScreen(args: args),
-      );
-    }
-    throw Exception('Route not found');
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -99,7 +85,7 @@ class App extends StatelessWidget {
           ),
         ),
       ),
-      onGenerateRoute: ,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
       home: AdminDashboardScreen(),
     );
   }

@@ -18,6 +18,8 @@ import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/task_args.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
   final int taskId;
@@ -479,15 +481,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                         onPressed: () {
                                           if (activeWorkActivityLog.taskId !=
                                               task.id) {
-                                            Navigator.push(
+                                            Navigator.pushNamed(
                                               context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (context) => TaskScreen(
-                                                      activeWorkActivityLog
-                                                          .taskId!,
-                                                    ),
-                                              ),
+                                              AppRoutes.task,
+                                              arguments: TaskArgs(
+                                                  activeWorkActivityLog.taskId!),
                                             );
                                           }
                                         },

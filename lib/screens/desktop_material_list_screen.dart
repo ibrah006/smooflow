@@ -7,6 +7,8 @@ import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/barcode_export_screen.dart';
 import 'package:smooflow/screens/desktop_material_details.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/export_barcodes_args.dart';
 
 class DesktopMaterialListScreen extends ConsumerStatefulWidget {
   const DesktopMaterialListScreen({super.key});
@@ -47,21 +49,15 @@ class _DesktopMaterialListScreenState
                 final transactions =
                     ref.read(materialNotifierProvider).transactions;
 
-                Navigator.push(
+                Navigator.pushNamed(
                   context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => ExportBarcodesScreen(
-                          barcodes:
-                              transactions
-                                  .where(
-                                    (transaction) =>
-                                        transaction.type ==
-                                        TransactionType.stockIn,
-                                  )
-                                  .map((transaction) => transaction.barcode!)
-                                  .toList(),
-                        ),
+                  AppRoutes.barcodeExport,
+                  arguments: ExportBarcodesArgs(
+                    barcodes: transactions
+                        .where((transaction) =>
+                            transaction.type == TransactionType.stockIn)
+                        .map((transaction) => transaction.barcode!)
+                        .toList(),
                   ),
                 );
               },
@@ -94,13 +90,10 @@ class _DesktopMaterialListScreenState
                   .map(
                     (material) => DataRow(
                       onSelectChanged: (selected) {
-                        Navigator.push(
+                        Navigator.pushNamed(
                           context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    DesktopMaterialDetails(material: material),
-                          ),
+                          AppRoutes.desktopMaterialView,
+                          arguments: material,
                         );
                       },
                       cells: [

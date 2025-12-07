@@ -7,6 +7,7 @@ import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/join_organization_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
 
 class CreateJoinOrganizationScreen extends ConsumerWidget {
   const CreateJoinOrganizationScreen({super.key, this.autoInviteOrganization});
@@ -66,11 +67,9 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => CreateOrganizationScreen(),
-                        ),
+                        AppRoutes.createOrganization,
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -95,11 +94,9 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => JoinOrganizationScreen(),
-                        ),
+                        AppRoutes.joinOrganization,
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -124,11 +121,9 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => JoinOrganizationScreen(),
-                        ),
+                        AppRoutes.joinOrganization,
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -183,12 +178,9 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                 Text("Need help with this?"),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => CreateJoinOrganizationHelpScreen(),
-                      ),
+                      AppRoutes.createJoinOrgHelp,
                     );
                   },
                   style: TextButton.styleFrom(

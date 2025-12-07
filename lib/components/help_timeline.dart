@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/screens/add_project_progress_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/add_project_progress_args.dart';
 
 class HelpTimeline extends ConsumerWidget {
   final String projectId;
@@ -39,11 +41,10 @@ class HelpTimeline extends ConsumerWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => AddProjectProgressScreen(projectId),
-                    ),
+                    AppRoutes.addProjectProgress,
+                    arguments: AddProjectProgressArgs(projectId),
                   );
                 },
                 style: FilledButton.styleFrom(

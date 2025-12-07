@@ -8,6 +8,8 @@ import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_task_args.dart';
 
 class ProjectCardV2 extends StatelessWidget {
   final Project project;
@@ -62,11 +64,10 @@ class ProjectCardV2 extends StatelessWidget {
     return BorderButton(
       onPressed: () {
         HapticFeedback.lightImpact();
-        Navigator.push(
+        Navigator.pushNamed(
           context,
-          MaterialPageRoute(
-            builder: (context) => AddProjectScreen.view(projectId: project.id),
-          ),
+          AppRoutes.addProject,
+          arguments: project.id,
         );
       },
       child: Column(
@@ -123,13 +124,10 @@ class ProjectCardV2 extends StatelessWidget {
                 Expanded(
                   child: TextButton.icon(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  CreateTaskScreen(projectId: project.id),
-                        ),
+                        AppRoutes.createTask,
+                        arguments: CreateTaskArgs(projectId: project.id),
                       );
                     },
                     icon: Icon(Icons.add_rounded),

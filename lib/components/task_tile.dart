@@ -11,6 +11,8 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
 import 'package:smooflow/screens/task_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/task_args.dart';
 
 class TaskTile extends ConsumerStatefulWidget {
   final int taskId;
@@ -68,11 +70,10 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                 onTap: () {
                   HapticFeedback.lightImpact();
 
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => TaskScreen(task.id),
-                    ),
+                    AppRoutes.task,
+                    arguments: TaskArgs(task.id),
                   );
                 },
                 splashColor: Colors.grey.withValues(alpha: 0.01),

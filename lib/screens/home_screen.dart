@@ -14,6 +14,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_printer_screen.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
 import 'package:smooflow/sections/quick_actions.dart';
 import 'package:smooflow/sections/recent_projects_section.dart';
@@ -35,9 +36,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
     Future.microtask(() {
       if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
         Navigator.pop(context);
-        Navigator.push(
+        Navigator.pushNamed(
           context,
-          MaterialPageRoute(builder: (context) => DesktopMaterialListScreen()),
+          AppRoutes.desktopMaterials,
         );
       }
 
@@ -101,11 +102,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
               child: IconButton(
                 icon: const Icon(Icons.person_outline),
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SettingsProfileScreen(),
-                    ),
+                    AppRoutes.profileSettings,
                   );
                 },
               ),
@@ -177,12 +176,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
                     QuickActions(),
                     FilledButton(
                       onPressed:
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddPrinterScreen(),
-                            ),
-                          ),
+                          () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.addPrinter,
+                                ),
                       child: Text("Add Printer"),
                     ),
                     SizedBox(height: 20),

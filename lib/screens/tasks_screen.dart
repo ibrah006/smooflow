@@ -10,6 +10,8 @@ import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:flutter/widgets.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
@@ -47,11 +49,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
   }
 
   gotoCreateTaskScreen() {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => CreateTaskScreen(projectId: widget.projectId),
-      ),
+      AppRoutes.createTask,
+      arguments: CreateTaskArgs(projectId: widget.projectId),
     );
   }
 
