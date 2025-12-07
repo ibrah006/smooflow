@@ -45,6 +45,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
 
       state = state.copyWith(printers: [...state.printers, printer]);
     } catch (e) {
+      print("error occurred while creating printer: $e");
       state = state.copyWith(error: e.toString());
     }
   }

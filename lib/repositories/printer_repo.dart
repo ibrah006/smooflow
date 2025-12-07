@@ -47,6 +47,10 @@ class PrinterRepo {
       },
     );
 
+    if (res.statusCode != 201) {
+      throw Exception('Failed to create printer');
+    }
+
     return Printer.fromJson(res.body as Map<String, dynamic>);
   }
 
