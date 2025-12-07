@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:smooflow/constants.dart';
+
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
 
@@ -38,106 +40,116 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: Column(
-        children: [
-          // Modern Header with Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-              ),
-            ),
-            child: Column(
+      backgroundColor: const Color(0xFFFAFAFA),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight + 50),
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: SafeArea(
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(20).copyWith(bottom: 0),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.dashboard_rounded,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Admin Dashboard',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Smooflow Management',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Stack(
-                            children: [
-                              const Center(
-                                child: Icon(
-                                  Icons.notifications_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              Positioned(
-                                top: 10,
-                                right: 10,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEF4444),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                      ).copyWith(right: 5),
+                      child: Image.asset("assets/icons/app_icon.png"),
                     ),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      margin: EdgeInsets.only(bottom: 4, right: 2),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 90, 132, 222),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.dashboard_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Admin Dashboard',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Smooflow Management',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-                // Tab Bar
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF64748B),
+                          size: 22,
+                        ),
+                      ),
+                      Positioned(
+                        top: 11,
+                        right: 11,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2563EB),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          // Minimal Header
+          Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                // Clean Tab Bar
                 Container(
                   color: Colors.white,
                   child: TabBar(
-                    dividerColor: Colors.black12,
                     controller: _tabController,
                     isScrollable: true,
+                    dividerColor: Colors.black12,
                     labelColor: const Color(0xFF2563EB),
                     unselectedLabelColor: const Color(0xFF9CA3AF),
                     labelStyle: const TextStyle(
@@ -183,131 +195,87 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildDashboardTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        // Period Filter
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildPeriodTab('Today'),
-              const SizedBox(width: 8),
-              _buildPeriodTab('This Week'),
-              const SizedBox(width: 8),
-              _buildPeriodTab('This Month'),
-              const SizedBox(width: 8),
-              _buildPeriodTab('Custom'),
-            ],
-          ),
+        // Period Filter - Minimal Pills
+        Row(
+          children: [
+            Expanded(child: _buildPeriodTab('Today')),
+            const SizedBox(width: 10),
+            Expanded(child: _buildPeriodTab('This Week')),
+            const SizedBox(width: 10),
+            Expanded(child: _buildPeriodTab('This Month')),
+          ],
         ),
 
         const SizedBox(height: 24),
 
-        // Key Metrics Grid - More Modern Layout
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildGradientMetric('\$24,580', 'Revenue', '+12.5%', true),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Expanded(
-                      child: _buildGradientMetric(
-                        '156',
-                        'Projects',
-                        '+8',
-                        true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildGradientMetric(
-                      '94%',
-                      'Efficiency',
-                      '+5%',
-                      true,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        // Key Metrics - Clean Cards
+        _buildMetricCard('\$24,580', 'Revenue', '+12.5%', true),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(child: _buildMetricCard('156', 'Projects', '+8', true)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildMetricCard('94%', 'Efficiency', '+5%', true)),
+          ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-        // Quick Actions - Modern Grid
+        // Quick Actions
         const Text(
           'Quick Actions',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
 
         const SizedBox(height: 16),
         Row(
-          spacing: 15,
           children: [
             Expanded(
-              child: _buildModernActionCard(
-                Icons.add_business,
+              child: _buildActionCard(
+                Icons.add_business_rounded,
                 'New Project',
-                const Color(0xFF2563EB),
                 () {},
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: _buildModernActionCard(
-                Icons.person_add,
+              child: _buildActionCard(
+                Icons.person_add_rounded,
                 'Add Staff',
-                const Color(0xFF10B981),
                 () {},
               ),
             ),
           ],
         ),
-        SizedBox(height: 15,)
+        const SizedBox(height: 12),
         Row(
-          spacing: 15,
           children: [
             Expanded(
-              child: _buildModernActionCard(
-                Icons.inventory,
+              child: _buildActionCard(
+                Icons.inventory_rounded,
                 'Stock Entry',
-                const Color(0xFFF59E0B),
                 () {},
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: _buildModernActionCard(
-                Icons.print,
+              child: _buildActionCard(
+                Icons.print_rounded,
                 'Add Printer',
-                const Color(0xFF9333EA),
                 () {},
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 32),
 
         // Production Overview
@@ -317,15 +285,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             const Text(
               'Production Overview',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.3,
               ),
             ),
             TextButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Refresh'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF64748B),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
             ),
           ],
         ),
@@ -336,40 +312,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             children: [
               _buildProductionMetric(
-                Icons.print,
+                Icons.print_rounded,
                 'Active Printers',
                 '4/6',
                 0.67,
-                const Color(0xFF10B981),
               ),
               const SizedBox(height: 20),
               _buildProductionMetric(
-                Icons.queue,
+                Icons.queue_rounded,
                 'Jobs in Queue',
                 '12',
                 0.48,
-                const Color(0xFF2563EB),
               ),
               const SizedBox(height: 20),
               _buildProductionMetric(
-                Icons.inventory_2,
+                Icons.inventory_2_rounded,
                 'Material Stock',
                 '86%',
                 0.86,
-                const Color(0xFF10B981),
               ),
               const SizedBox(height: 20),
               _buildProductionMetric(
-                Icons.warning_amber,
+                Icons.warning_amber_rounded,
                 'Issues',
                 '2',
                 0.15,
-                const Color(0xFFF59E0B),
+                color: colorPending,
               ),
             ],
           ),
@@ -382,48 +355,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildProjectsTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        // Search and Filter
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.search, color: Color(0xFF9CA3AF), size: 22),
-                    SizedBox(width: 12),
-                    Text(
-                      'Search projects...',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
-                    ),
-                  ],
-                ),
+        // Search Bar - Minimal
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 22),
+              SizedBox(width: 14),
+              Text(
+                'Search projects...',
+                style: TextStyle(fontSize: 15, color: Color(0xFF94A3B8)),
               ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.filter_list,
-                color: Color(0xFF2563EB),
-                size: 24,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         const SizedBox(height: 20),
@@ -431,33 +381,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         // Project Stats
         Row(
           children: [
-            Expanded(
-              child: _buildProjectStat('24', 'Active', const Color(0xFF2563EB)),
-            ),
+            Expanded(child: _buildProjectStat('24', 'Active')),
             const SizedBox(width: 12),
-            Expanded(
-              child: _buildProjectStat('8', 'Pending', const Color(0xFFF59E0B)),
-            ),
+            Expanded(child: _buildProjectStat('8', 'Pending')),
             const SizedBox(width: 12),
-            Expanded(
-              child: _buildProjectStat(
-                '132',
-                'Completed',
-                const Color(0xFF10B981),
-              ),
-            ),
+            Expanded(child: _buildProjectStat('132', 'Done')),
           ],
         ),
 
         const SizedBox(height: 24),
 
-        // Projects List
         const Text(
           'Active Projects',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
 
@@ -466,45 +406,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _buildProjectCard(
           name: 'ABC Corp - Storefront Signage',
           client: 'ABC Corporation',
-          status: 'Production',
-          statusColor: const Color(0xFF2563EB),
           progress: 0.65,
           dueDate: 'Due in 3 days',
           team: 5,
-          stage: 'Production',
         ),
 
         _buildProjectCard(
           name: 'XYZ Ltd - Vehicle Wraps',
           client: 'XYZ Limited',
-          status: 'Design',
-          statusColor: const Color(0xFFF59E0B),
           progress: 0.40,
           dueDate: 'Due in 5 days',
           team: 3,
-          stage: 'Design',
         ),
 
         _buildProjectCard(
           name: 'Local Cafe - Menu Boards',
           client: 'Local Cafe',
-          status: 'Finishing',
-          statusColor: const Color(0xFF10B981),
           progress: 0.85,
           dueDate: 'Due tomorrow',
           team: 4,
-          stage: 'Finishing',
         ),
 
         _buildProjectCard(
           name: 'Mall Kiosk - Signage Package',
           client: 'Shopping Mall',
-          status: 'Planning',
-          statusColor: const Color(0xFF9333EA),
           progress: 0.20,
           dueDate: 'Due in 1 week',
           team: 2,
-          stage: 'Planning',
         ),
 
         const SizedBox(height: 80),
@@ -514,27 +442,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildTeamTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        // Team Overview Cards
+        // Team Overview
         Row(
           children: [
             Expanded(
-              child: _buildTeamStat(
-                '24',
-                'Total Staff',
-                Icons.people,
-                const Color(0xFF2563EB),
-              ),
+              child: _buildTeamStat('24', 'Total Staff', Icons.people_rounded),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildTeamStat(
-                '18',
-                'Active Today',
-                Icons.check_circle,
-                const Color(0xFF10B981),
-              ),
+              child: _buildTeamStat('18', 'Active', Icons.check_circle_rounded),
             ),
           ],
         ),
@@ -544,65 +462,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         Row(
           children: [
             Expanded(
-              child: _buildTeamStat(
-                '3',
-                'On Leave',
-                Icons.event_busy,
-                const Color(0xFFF59E0B),
-              ),
+              child: _buildTeamStat('3', 'On Leave', Icons.event_busy_rounded),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildTeamStat(
-                '1',
-                'Sick Leave',
-                Icons.local_hospital,
-                const Color(0xFFEF4444),
-              ),
+              child: _buildTeamStat('1', 'Sick', Icons.local_hospital_rounded),
             ),
           ],
         ),
 
         const SizedBox(height: 32),
 
-        // Department Filter
-        const Text(
-          'Departments',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildDepartmentChip('All', true, 24),
-              const SizedBox(width: 8),
-              _buildDepartmentChip('Design', false, 6),
-              const SizedBox(width: 8),
-              _buildDepartmentChip('Production', false, 8),
-              const SizedBox(width: 8),
-              _buildDepartmentChip('Finishing', false, 5),
-              const SizedBox(width: 8),
-              _buildDepartmentChip('Application', false, 5),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Top Performers
         const Text(
           'Top Performers',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
 
@@ -611,10 +488,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _buildTeamMemberCard(
           name: 'Ibrahim',
           role: 'Production Lead',
-          department: 'Production',
           score: 98,
-          status: 'Active',
-          statusColor: const Color(0xFF10B981),
           avatar: '👨‍💼',
           rank: 1,
         ),
@@ -622,10 +496,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _buildTeamMemberCard(
           name: 'Muhammad Fazaldeen',
           role: 'Senior Designer',
-          department: 'Design',
           score: 95,
-          status: 'Active',
-          statusColor: const Color(0xFF10B981),
           avatar: '👨‍🎨',
           rank: 2,
         ),
@@ -633,23 +504,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _buildTeamMemberCard(
           name: 'Sarah Johnson',
           role: 'Finishing Specialist',
-          department: 'Finishing',
           score: 92,
-          status: 'Active',
-          statusColor: const Color(0xFF10B981),
           avatar: '👩‍🔧',
           rank: 3,
         ),
 
         const SizedBox(height: 24),
 
-        // All Team Members
         const Text(
           'All Team Members',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
 
@@ -658,30 +526,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _buildTeamMemberCard(
           name: 'Ahmed Ali',
           role: 'Printer Operator',
-          department: 'Production',
           score: 88,
-          status: 'Active',
-          statusColor: const Color(0xFF10B981),
           avatar: '👨‍💻',
         ),
 
         _buildTeamMemberCard(
           name: 'Lisa Chen',
           role: 'Designer',
-          department: 'Design',
           score: 86,
-          status: 'Active',
-          statusColor: const Color(0xFF10B981),
           avatar: '👩‍🎨',
         ),
 
         _buildTeamMemberCard(
           name: 'Mike Brown',
           role: 'Application Technician',
-          department: 'Application',
           score: 84,
-          status: 'On Leave',
-          statusColor: const Color(0xFFF59E0B),
           avatar: '👨‍🔧',
         ),
 
@@ -692,14 +551,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildReportsTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        // Report Period Selector
+        // Report Period
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,18 +566,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               const Text(
                 'Report Period',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(child: _buildPeriodButton('This Week', true)),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(child: _buildPeriodButton('This Month', false)),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(child: _buildPeriodButton('This Year', false)),
                 ],
               ),
@@ -728,74 +587,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
         const SizedBox(height: 24),
 
-        // Revenue Report
         _buildReportCard(
-          icon: Icons.attach_money,
-          iconColor: const Color(0xFF10B981),
+          icon: Icons.attach_money_rounded,
           title: 'Revenue Report',
-          subtitle: 'Financial overview',
           value: '\$24,580',
-          change: '+12.5% from last week',
-          changePositive: true,
-          onTap: () {},
+          change: '+12.5%',
         ),
 
-        // Projects Report
         _buildReportCard(
-          icon: Icons.work,
-          iconColor: const Color(0xFF2563EB),
+          icon: Icons.work_rounded,
           title: 'Projects Report',
-          subtitle: 'Completed & In Progress',
           value: '156',
-          change: '+8 new projects',
-          changePositive: true,
-          onTap: () {},
+          change: '+8 new',
         ),
 
-        // Production Report
         _buildReportCard(
-          icon: Icons.print,
-          iconColor: const Color(0xFF9333EA),
+          icon: Icons.print_rounded,
           title: 'Production Report',
-          subtitle: 'Print jobs & efficiency',
           value: '247 jobs',
-          change: '94% efficiency rate',
-          changePositive: true,
-          onTap: () {},
+          change: '94% efficiency',
         ),
 
-        // Material Usage Report
         _buildReportCard(
-          icon: Icons.inventory_2,
-          iconColor: const Color(0xFFF59E0B),
+          icon: Icons.inventory_2_rounded,
           title: 'Material Usage',
-          subtitle: 'Stock & consumption',
           value: '86%',
-          change: 'Stock level healthy',
-          changePositive: true,
-          onTap: () {},
+          change: 'Healthy',
         ),
 
-        // Team Performance Report
         _buildReportCard(
-          icon: Icons.people,
-          iconColor: const Color(0xFF8B5CF6),
+          icon: Icons.people_rounded,
           title: 'Team Performance',
-          subtitle: 'Staff productivity',
           value: '92%',
-          change: '+5% this week',
-          changePositive: true,
-          onTap: () {},
+          change: '+5%',
         ),
 
         const SizedBox(height: 24),
 
         // Export Options
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,29 +637,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               const Text(
                 'Export Reports',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 16),
-              _buildExportButton(
-                'Export as PDF',
-                Icons.picture_as_pdf,
-                const Color(0xFFEF4444),
-              ),
-              const SizedBox(height: 12),
-              _buildExportButton(
-                'Export as Excel',
-                Icons.table_chart,
-                const Color(0xFF10B981),
-              ),
-              const SizedBox(height: 12),
-              _buildExportButton(
-                'Email Report',
-                Icons.email,
-                const Color(0xFF2563EB),
-              ),
+              _buildExportButton('Export as PDF', Icons.picture_as_pdf_rounded),
+              const SizedBox(height: 10),
+              _buildExportButton('Export as Excel', Icons.table_chart_rounded),
+              const SizedBox(height: 10),
+              _buildExportButton('Email Report', Icons.email_rounded),
             ],
           ),
         ),
@@ -843,32 +665,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 100,
-              height: 100,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
-                Icons.settings,
-                size: 50,
-                color: Color(0xFF2563EB),
+                Icons.settings_rounded,
+                size: 40,
+                color: Color(0xFF64748B),
               ),
             ),
             const SizedBox(height: 24),
             const Text(
               'Settings',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             const Text(
               'Your custom settings content will appear here',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
             ),
           ],
         ),
@@ -880,38 +703,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildPeriodTab(String period) {
     final isSelected = _selectedPeriod == period;
-
     return InkWell(
+      borderRadius: BorderRadius.circular(30),
       onTap: () => setState(() => _selectedPeriod = period),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF2563EB) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow:
-              isSelected
-                  ? [
-                    BoxShadow(
-                      color: const Color(0xFF2563EB).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                  : null,
+          borderRadius: BorderRadius.circular(30),
         ),
-        child: Text(
-          period,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.black,
+        child: Align(
+          alignment: Alignment.center,
+          child: Text(
+            period,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : const Color(0xFF64748B),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGradientMetric(
+  Widget _buildMetricCard(
     String value,
     String label,
     String trend,
@@ -920,9 +736,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -932,26 +747,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: Color(0xFF0F172A),
               height: 1,
+              letterSpacing: -1,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
-              color: Colors.white.withOpacity(0.9),
+              color: Color(0xFF64748B),
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Icon(
-                trendUp ? Icons.trending_up : Icons.trending_down,
-                size: 14,
-                color: Colors.white,
+                trendUp
+                    ? Icons.trending_up_rounded
+                    : Icons.trending_down_rounded,
+                size: 16,
+                color: const Color(0xFF2563EB),
               ),
               const SizedBox(width: 4),
               Text(
@@ -959,7 +777,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: Color(0xFF2563EB),
                 ),
               ),
             ],
@@ -969,47 +787,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildModernActionCard(
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
+  Widget _buildActionCard(IconData icon, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(18),
               ),
-              child: Icon(icon, color: color, size: 28),
+              child: Icon(icon, color: const Color(0xFF2563EB), size: 26),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               label,
-              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: Color(0xFF0F172A),
               ),
             ),
           ],
@@ -1022,19 +827,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     IconData icon,
     String label,
     String value,
-    double progress,
-    Color color,
-  ) {
+    double progress, {
+    Color color = colorPrimary,
+  }) {
     return Row(
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            color: color.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: color, size: 24),
+          child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -1047,27 +852,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   Text(
                     label,
                     style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Text(
                     value,
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: const TextStyle(
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: color,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: const Color(0xFFEDF2F7),
+                  backgroundColor: const Color(0xFFF1F5F9),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                   minHeight: 6,
                 ),
@@ -1079,27 +884,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildProjectStat(String value, String label, Color color) {
+  Widget _buildProjectStat(String value, String label) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: TextStyle(
-              fontSize: 28,
+            style: const TextStyle(
+              fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
         ],
       ),
@@ -1109,101 +915,76 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _buildProjectCard({
     required String name,
     required String client,
-    required String status,
-    required Color statusColor,
     required double progress,
     required String dueDate,
     required int team,
-    required String stage,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      client,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  stage,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            client,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
           ),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFFEDF2F7),
-              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-              minHeight: 8,
+              backgroundColor: const Color(0xFFF1F5F9),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF2563EB),
+              ),
+              minHeight: 6,
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.schedule, size: 14, color: Color(0xFF9CA3AF)),
+              const Icon(
+                Icons.schedule_rounded,
+                size: 14,
+                color: Color(0xFF94A3B8),
+              ),
               const SizedBox(width: 6),
               Text(
                 dueDate,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.people, size: 14, color: Color(0xFF9CA3AF)),
+              const Icon(
+                Icons.people_rounded,
+                size: 14,
+                color: Color(0xFF94A3B8),
+              ),
               const SizedBox(width: 6),
               Text(
-                '$team members',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                '$team',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
               ),
               const Spacer(),
               Text(
                 '${(progress * 100).toInt()}%',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2563EB),
                 ),
               ),
             ],
@@ -1213,85 +994,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildTeamStat(
-    String value,
-    String label,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildTeamStat(String value, String label, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: const Color(0xFF2563EB), size: 22),
           ),
           const SizedBox(height: 12),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 24,
+            style: const TextStyle(
+              fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDepartmentChip(String label, bool isSelected, int count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF2563EB) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color:
-                  isSelected
-                      ? Colors.white.withOpacity(0.3)
-                      : const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : const Color(0xFF6B7280),
-              ),
-            ),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
         ],
       ),
@@ -1301,61 +1036,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _buildTeamMemberCard({
     required String name,
     required String role,
-    required String department,
     required int score,
-    required String status,
-    required Color statusColor,
     required String avatar,
     int? rank,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border:
-            rank != null
-                ? Border.all(
-                  color:
-                      rank == 1
-                          ? const Color(0xFFFFD700)
-                          : rank == 2
-                          ? const Color(0xFFC0C0C0)
-                          : const Color(0xFFCD7F32),
-                  width: 2,
-                )
-                : null,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
           Stack(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE7FE),
-                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
-                  child: Text(avatar, style: const TextStyle(fontSize: 28)),
+                  child: Text(avatar, style: const TextStyle(fontSize: 26)),
                 ),
               ),
               if (rank != null)
                 Positioned(
-                  top: 0,
-                  right: 0,
+                  top: -2,
+                  right: -2,
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: 18,
+                    height: 18,
                     decoration: BoxDecoration(
-                      color:
-                          rank == 1
-                              ? const Color(0xFFFFD700)
-                              : rank == 2
-                              ? const Color(0xFFC0C0C0)
-                              : const Color(0xFFCD7F32),
+                      color: const Color(0xFF2563EB),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -1363,7 +1078,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       child: Text(
                         rank.toString(),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
@@ -1381,9 +1096,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1391,58 +1106,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   role,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF9CA3AF),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                    ),
+                    color: Color(0xFF94A3B8),
                   ),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  score.toString(),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF10B981),
-                  ),
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              score.toString(),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2563EB),
               ),
-              const SizedBox(height: 4),
-              Text(
-                department,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1451,101 +1134,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildReportCard({
     required IconData icon,
-    required Color iconColor,
     required String title,
-    required String subtitle,
     required String value,
     required String change,
-    required bool changePositive,
-    required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: iconColor, size: 28),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+            child: Icon(icon, color: const Color(0xFF2563EB), size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF9CA3AF),
+                    const SizedBox(width: 8),
+                    Text(
+                      change,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF2563EB),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: iconColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        changePositive
-                            ? Icons.trending_up
-                            : Icons.trending_down,
-                        size: 14,
-                        color:
-                            changePositive
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        change,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color:
-                              changePositive
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFFEF4444),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF9CA3AF),
-              size: 18,
-            ),
-          ],
-        ),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: Color(0xFF94A3B8),
+            size: 16,
+          ),
+        ],
       ),
     );
   }
@@ -1554,8 +1209,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(12),
+        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Center(
         child: Text(
@@ -1563,38 +1218,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+            color: isSelected ? Colors.white : const Color(0xFF64748B),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildExportButton(String label, IconData icon, Color color) {
+  Widget _buildExportButton(String label, IconData icon) {
     return InkWell(
       onTap: () {},
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(width: 12),
+            Icon(icon, color: const Color(0xFF2563EB), size: 22),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 15,
+                style: const TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: color,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: color, size: 16),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFF94A3B8),
+              size: 16,
+            ),
           ],
         ),
       ),
