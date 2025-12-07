@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 
@@ -31,6 +32,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     Future.microtask(() async {
       await ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
       await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+
+      await ref.watch(materialNotifierProvider.notifier).fetchStockPercentage();
     });
 
     _tabController = TabController(length: 5, vsync: this);
@@ -53,6 +56,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   Widget build(BuildContext context) {
 
     final printers = ref.watch(printerNotifierProvider).printers;
+
+    final materialStockPercentage = ref.watch(materialNotifierProvider).stockStats?.percentage;
 
     print("printers: $printers");
 
@@ -197,7 +202,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildDashboardTab(),
+                _buildDashboardTab(materialStockPercentage),
                 _buildProjectsTab(),
                 _buildTeamTab(),
                 _buildReportsTab(),
@@ -210,7 +215,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     );
   }
 
-  Widget _buildDashboardTab() {
+  Widget _buildDashboardTab(double? materialStockPercentage) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -359,8 +364,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               _buildProductionMetric(
                 Icons.inventory_2_rounded,
                 'Material Stock',
-                '86%',
-                0.86,
+                '${materialStockPercentage?.toInt()?? 0}%',
+                materialStockPercentage?? 0,
               ),
               const SizedBox(height: 20),
               _buildProductionMetric(

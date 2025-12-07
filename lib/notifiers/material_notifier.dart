@@ -1,5 +1,6 @@
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/data/material_stats.dart';
 import '../repositories/material_repo.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -213,6 +214,17 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     }
   }
 
+  // Fetch organization stock percentage summary
+  Future<void> fetchStockPercentage() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final stats = await _repo.getStockPercentage();
+      state = state.copyWith(isLoading: false, stockStats: stats);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+
   // Fetch all transactions for current organization
   Future<void> fetchTransactions() async {
     state = state.copyWith(isLoading: true);
@@ -322,12 +334,14 @@ class MaterialState {
   final bool isLoading;
   final String? errorMessage;
   final List<StockTransaction> transactions;
+  final StockPercentageResult? stockStats;
 
   const MaterialState({
     this.materials = const [],
     this.transactions = const [],
     this.isLoading = false,
     this.errorMessage,
+    this.stockStats,
   });
 
   MaterialState copyWith({
@@ -337,6 +351,7 @@ class MaterialState {
     bool? isLoading,
     String? errorMessage,
     StockTransaction? transaction,
+    StockPercentageResult? stockStats,
   }) {
     final temp = List<StockTransaction>.from(this.transactions);
 
@@ -361,6 +376,7 @@ class MaterialState {
       transactions: transactions,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      stockStats: stockStats ?? this.stockStats,
     );
   }
 

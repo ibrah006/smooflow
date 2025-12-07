@@ -3,6 +3,7 @@ import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/notifiers/material_notifier.dart';
+import 'package:smooflow/data/material_stats.dart';
 
 class MaterialRepo {
   Future<List<MaterialModel>> getAllMaterials() async {
@@ -185,6 +186,16 @@ class MaterialRepo {
       return MaterialModel.fromJson(body["material"]);
     } else {
       throw Exception('Material not found: ${res.body}');
+    }
+  }
+
+  Future<StockPercentageResult> getStockPercentage() async {
+    final res = await ApiClient.http.get('/material/stock-percentage');
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      return StockPercentageResult.fromJson(body);
+    } else {
+      throw Exception('Failed to fetch stock percentage: ${res.body}');
     }
   }
 }
