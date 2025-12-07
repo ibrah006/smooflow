@@ -1,17 +1,21 @@
 // lib/screens/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/stock_entry_args.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
+class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  ConsumerState<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     with SingleTickerProviderStateMixin {
   Timer? _refreshTimer;
   String _selectedPeriod = 'Today';
@@ -21,6 +25,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
+
+    // This will initialize current organization on local level
+    // So that invite member screen has access to current organization
+    Future.microtask(() {
+      ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
+    });
+
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       setState(() => _currentTabIndex = _tabController.index);
@@ -242,7 +253,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               child: _buildActionCard(
                 Icons.add_business_rounded,
                 'New Project',
-                () {},
+                () {
+                  AppRoutes.navigateTo(context, AppRoutes.addProject);
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -250,7 +263,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               child: _buildActionCard(
                 Icons.person_add_rounded,
                 'Add Staff',
-                () {},
+                () {
+                  AppRoutes.navigateTo(context, AppRoutes.inviteMember);
+                },
               ),
             ),
           ],
@@ -262,7 +277,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               child: _buildActionCard(
                 Icons.inventory_rounded,
                 'Stock Entry',
-                () {},
+                () {
+                  // Select material before navigating to stock entry screen
+                  // AppRoutes.navigateTo(context, AppRoutes.stockInEntry, arguments: StockEntryArgs.stockIn(material: ));
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -270,7 +288,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               child: _buildActionCard(
                 Icons.print_rounded,
                 'Add Printer',
-                () {},
+                () {
+                  AppRoutes.navigateTo(context, AppRoutes.addPrinter);
+                },
               ),
             ),
           ],

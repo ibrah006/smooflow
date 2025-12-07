@@ -3,6 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
+import 'package:smooflow/core/args/project_args.dart';
+import 'package:smooflow/screens/add_printer_screen.dart';
+import 'package:smooflow/screens/add_project.dart';
+import 'package:smooflow/screens/invite_member_screen.dart';
 
 // Auth & Onboarding
 import '../screens/claim_organization_screen.dart';
@@ -26,6 +30,8 @@ import '../screens/tasks_screen.dart';
 
 // Production / Scheduling
 import '../screens/add_project_progress_screen.dart';
+
+import '../screens/admin_screen.dart';
 
 // Import all args
 import 'package:smooflow/core/args/add_project_progress_args.dart';
@@ -80,6 +86,7 @@ class AppRoutes {
   static const projectProduction = '/projects/production';
   static const timeline = '/projects/timeline';
   static const addProject = '/projects/add';
+  static const viewProject = '/projects/view';
 
   static const addProjectProgress = '/projects/add-progress';
   static const addProjectProgressView = '/projects/add-progress/view';
@@ -276,6 +283,23 @@ class AppRoutes {
         if (args is TasksArgs) {
           screen = TasksScreen(projectId: args.projectId);
         }
+        break;
+      case admin:
+        screen  = const AdminDashboardScreen();
+        break;
+      case addProject:
+        screen = AddProjectScreen();
+        break;
+      case viewProject:
+        if (args is ProjectArgs) {
+          screen = AddProjectScreen.view(projectId: args.projectId);
+        }
+        break;
+      case inviteMember:
+        screen = const InviteMemberScreen();
+        break;
+      case addPrinter:
+        screen = const AddPrinterScreen();
         break;
     }
 

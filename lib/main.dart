@@ -86,7 +86,7 @@ class App extends StatelessWidget {
         ),
       ),
       onGenerateRoute: AppRoutes.onGenerateRoute,
-      home: AdminDashboardScreen(),
+      initialRoute: AppRoutes.admin,
     );
   }
 }
