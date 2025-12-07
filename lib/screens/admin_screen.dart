@@ -791,7 +791,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: Ink(
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
           color: Colors.white,
