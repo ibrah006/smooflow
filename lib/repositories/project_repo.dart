@@ -139,4 +139,27 @@ class ProjectRepo {
     // Successful
     return (jsonDecode(response.body)["progressRate"] as num).toDouble();
   }
+
+  // --------------------------------------------------
+  // GET /projects/active
+  // --------------------------------------------------
+  Future<Map<String, dynamic>> getProjectsOverallStatus() async {
+    final response = await ApiClient.http.get('/projects/projects-overall-status');
+
+    if (response.statusCode != 200) {
+      throw "Failed to fetch projects overall status: ${response.body}";
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+    final activeProjects = (body['activeProjects'] as List)
+        .map((e) => Project.fromJson(e))
+        .toList();
+
+    final activeLength = (body['activeLength'] as num).toInt();
+    final pendingLength = (body['pendingLength'] as num).toInt();
+    final finishedLength = (body['finishedLength'] as num).toInt();
+
+    return {'activeProjects': activeProjects, 'activeLength': activeLength, 'pendingLength': pendingLength, 'finishedLength': finishedLength};
+  }
 }

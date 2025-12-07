@@ -87,4 +87,17 @@ class PrinterRepo {
   Future<void> deletePrinter(String id) async {
     await ApiClient.http.delete('/printers/$id');
   }
+
+  // --------------------------------------------------
+  // GET /printers/active
+  // --------------------------------------------------
+  Future<List<Printer>> getActivePrinters() async {
+    final res = await ApiClient.http.get('/printers/active');
+
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List).map((e) => Printer.fromJson(e)).toList();
+    }
+
+    throw Exception('Failed to fetch active printers: ${res.body}');
+  }
 }

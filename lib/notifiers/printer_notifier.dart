@@ -25,6 +25,19 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   }
 
   // -------------------------------
+  // LOAD ACTIVE PRINTERS
+  // -------------------------------
+  Future<void> fetchActivePrinters() async {
+    state = state.copyWith(loading: true, error: null);
+    try {
+      final result = await _repo.getActivePrinters();
+      state = state.copyWith(activePrinters: result, loading: false);
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+    }
+  }
+
+  // -------------------------------
   // CREATE PRINTER
   // -------------------------------
   Future<void> createPrinter({

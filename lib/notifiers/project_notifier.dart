@@ -25,6 +25,11 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   set selectedProject(Project? newVal) => _selectedProject = newVal;
 
+  // Active projects cache and count
+  List<Project> activeProjects = [];
+
+  int activeProjectsLengthValue = 0, pendingProjectsLengthValue = 0, finishedProjectsLengthValue = 0;
+
   late final OrganizationRepo _orgRepo;
 
   // load projects
@@ -46,6 +51,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     }
   }
 
+  @Deprecated("When there are too many projects to be loaded into the memory, this method won't be efficient. As we may or may not have all the active projects in memory. Use [activeProjectsLengthValue] instead")
   int get activeProjectsLength {
     return state
         .where(
@@ -156,6 +162,20 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   Future<void> _getProjectsProgressRate() async {
     projectsProgressRate = await _repo.getProjectsProgressRate();
+  }
+
+  // Fetch projects overall status from server and store locally on this notifier
+  Future<void> fetchProjectsOverallStatus() async {
+    try {
+      final result = await _repo.getProjectsOverallStatus();
+      activeProjects = (result['activeProjects'] as List<Project>);
+      activeProjectsLengthValue = result['activeLength'] as int;
+      pendingProjectsLengthValue = result['pendingLength'] as int;
+      finishedProjectsLengthValue = result['finishedLength'] as int;
+    } catch (e) {
+      // ignore errors for now; caller can handle
+      rethrow;
+    }
   }
 
   void _pushRecentProjectToTop(String projectId) {

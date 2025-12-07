@@ -8,6 +8,7 @@ import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -34,6 +35,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
 
       await ref.watch(materialNotifierProvider.notifier).fetchStockPercentage();
+
+      // Get active projects (and counts), pending projects counts, finished projects counts
+      await ref.watch(projectNotifierProvider.notifier).fetchProjectsOverallStatus();
+
+      setState(() {
+        
+      });
     });
 
     _tabController = TabController(length: 5, vsync: this);
@@ -385,6 +393,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildProjectsTab() {
+
+    final activeProjects = ref.watch(projectNotifierProvider.notifier).activeProjects;
+    final activeProjectsLength = ref.watch(projectNotifierProvider.notifier).activeProjectsLengthValue;
+    final pendingProjectsLength = ref.watch(projectNotifierProvider.notifier).pendingProjectsLengthValue;
+    final finishedProjectsLength = ref.watch(projectNotifierProvider.notifier).finishedProjectsLengthValue;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -412,11 +426,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         // Project Stats
         Row(
           children: [
-            Expanded(child: _buildProjectStat('24', 'Active')),
+            Expanded(child: _buildProjectStat(activeProjectsLength.toString(), 'Active')),
             const SizedBox(width: 12),
-            Expanded(child: _buildProjectStat('8', 'Pending')),
+            Expanded(child: _buildProjectStat(pendingProjectsLength.toString(), 'Pending')),
             const SizedBox(width: 12),
-            Expanded(child: _buildProjectStat('132', 'Done')),
+            Expanded(child: _buildProjectStat(finishedProjectsLength.toString(), 'Done')),
           ],
         ),
 
@@ -433,6 +447,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         ),
 
         const SizedBox(height: 16),
+
+        ...activeProjects.map((activeProject)=> _buildProjectCard(
+              name: activeProject.name,
+              client: activeProject.client.name,
+              progress: activeProject.progressRate,
+              dueDate: activeProject.dueDate != null
+                  ? 'Due in ${activeProject.dueDate!.difference(DateTime.now()).inDays} days'
+                  : 'No due date',
+              team: activeProject.assignedManagers.length,
+            )),
 
         _buildProjectCard(
           name: 'ABC Corp - Storefront Signage',
