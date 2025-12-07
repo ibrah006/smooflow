@@ -1,0 +1,21 @@
+import 'package:flutter/cupertino.dart';
+import 'package:smooflow/models/material.dart';
+import 'package:smooflow/models/stock_transaction.dart';
+
+class StockEntryArgs {
+  late final bool isStockIn;
+
+  StockEntryArgs.stockIn({Key? key, MaterialModel? material})
+    : projectId = null;
+
+  late final MaterialModel material;
+  late final StockTransaction transaction;
+  final String? projectId;
+
+  StockEntryArgs.stockOut({
+    Key? key,
+    required this.material,
+    required this.transaction,
+    required this.projectId,
+  });
+}

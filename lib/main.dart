@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/screens/admin_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/production_dashboard.dart';
@@ -17,6 +18,19 @@ void main(List<String> args) async {
 
 class App extends StatelessWidget {
   const App({super.key});
+
+  Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    switch(settings.name) {
+      case AppRoutes.: return ;
+    }
+    if (settings.name == '/detail') {
+      final args = settings.arguments as DetailArgs;
+      return MaterialPageRoute(
+        builder: (_) => DetailScreen(args: args),
+      );
+    }
+    throw Exception('Route not found');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +99,7 @@ class App extends StatelessWidget {
           ),
         ),
       ),
+      onGenerateRoute: ,
       home: AdminDashboardScreen(),
     );
   }
