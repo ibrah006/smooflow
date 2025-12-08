@@ -370,7 +370,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                 Icons.print_rounded,
                 'Active Printers',
                 '$activePrintersCount/$totalPrintersCount',
-                0.67,
+                activePrintersCount/(totalPrintersCount==0? 1 : totalPrintersCount),
               ),
               const SizedBox(height: 20),
               _buildProductionMetric(
@@ -390,8 +390,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               _buildProductionMetric(
                 Icons.warning_amber_rounded,
                 'Issues',
-                '2',
-                0.15,
+                '0',
+                0.0,
                 color: colorPending,
               ),
             ],
