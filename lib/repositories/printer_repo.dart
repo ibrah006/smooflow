@@ -91,11 +91,17 @@ class PrinterRepo {
   // --------------------------------------------------
   // GET /printers/active
   // --------------------------------------------------
-  Future<List<Printer>> getActivePrinters() async {
+  /// map content: activePrinters List<Printer>, totalPrintersCount int
+  Future<Map<String, dynamic>> getActivePrinters() async {
     final res = await ApiClient.http.get('/printers/active');
 
     if (res.statusCode == 200) {
-      return (jsonDecode(res.body) as List).map((e) => Printer.fromJson(e)).toList();
+      return {
+        "activePrinters": (jsonDecode(res.body)['activePrinters'] as List)
+            .map((e) => Printer.fromJson(e))
+            .toList(),
+        "totalPrintersCount": (jsonDecode(res.body)['totalPrintersCount'] as num).toInt(),
+      };
     }
 
     throw Exception('Failed to fetch active printers: ${res.body}');

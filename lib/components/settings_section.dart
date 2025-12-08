@@ -8,8 +8,9 @@ import 'package:smooflow/constants.dart';
 class SettingsSection extends StatelessWidget {
   final String title;
   final List<ListTileItem> items;
+  final Color? color;
 
-  const SettingsSection({super.key, required this.title, required this.items});
+  const SettingsSection({super.key, required this.title, required this.items, this.color});
 
   Widget _getTileTrailingWidget(ListTileItem item) {
     try {
@@ -64,7 +65,7 @@ class SettingsSection extends StatelessWidget {
         SizedBox(height: 13),
         Container(
           decoration: BoxDecoration(
-            color: Color(0xFFfefefe),
+            color: color?? Color(0xFFfefefe),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Column(

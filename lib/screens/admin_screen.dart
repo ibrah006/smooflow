@@ -9,6 +9,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/settings_screen.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -224,6 +225,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildDashboardTab(double? materialStockPercentage) {
+
+    final activePrintersCount = ref.watch(printerNotifierProvider).activePrinters.length;
+    final totalPrintersCount = ref.watch(printerNotifierProvider).totalPrintersCount;
+
+    final overallStatus = ref.watch(projectNotifierProvider.notifier).projectsOverallStatus;
+    final projectsThisMonth = overallStatus.countThisMonth;
+    final projectsLastMonth = overallStatus.countLastMonth;
+    final projectsIncreaseWRTPrevMonth = overallStatus.increaseWRTPrevMonth;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -246,7 +256,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
         Row(
           children: [
-            Expanded(child: _buildMetricCard('156', 'Projects', '+8', true)),
+            Expanded(child: _buildMetricCard(projectsThisMonth.toString(), 'Projects', '${projectsIncreaseWRTPrevMonth>0?"+":""}${projectsIncreaseWRTPrevMonth.toString()}', projectsIncreaseWRTPrevMonth>=0)),
             const SizedBox(width: 12),
             Expanded(child: _buildMetricCard('94%', 'Efficiency', '+5%', true)),
           ],
@@ -358,7 +368,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               _buildProductionMetric(
                 Icons.print_rounded,
                 'Active Printers',
-                '4/6',
+                '$activePrintersCount/$totalPrintersCount',
                 0.67,
               ),
               const SizedBox(height: 20),
@@ -395,9 +405,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   Widget _buildProjectsTab() {
 
     final activeProjects = ref.watch(projectNotifierProvider.notifier).activeProjects;
-    final activeProjectsLength = ref.watch(projectNotifierProvider.notifier).activeProjectsLengthValue;
-    final pendingProjectsLength = ref.watch(projectNotifierProvider.notifier).pendingProjectsLengthValue;
-    final finishedProjectsLength = ref.watch(projectNotifierProvider.notifier).finishedProjectsLengthValue;
+    // Project overall status
+    final overallStatus = ref.watch(projectNotifierProvider.notifier).projectsOverallStatus;
+    final activeProjectsLength = overallStatus.activeLength;
+    final pendingProjectsLength = overallStatus.pendingLength;
+    final finishedProjectsLength = overallStatus.finishedLength;
 
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -713,45 +725,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildSettingsTab() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.settings_rounded,
-                size: 40,
-                color: Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Settings',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your custom settings content will appear here',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-            ),
-          ],
-        ),
-      ),
-    );
+    return SettingsScreen(designedForTab: true,);
   }
 
   // Helper Widgets
@@ -1193,69 +1167,77 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     required String value,
     required String change,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          AppRoutes.navigateTo(context, AppRoutes.projectReport);
+        },
         borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: const Color(0xFF2563EB), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 8),
-                Row(
+                child: Icon(icon, color: const Color(0xFF2563EB), size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      value,
+                      title,
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF0F172A),
-                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      change,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          change,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF2563EB),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFF94A3B8),
+                size: 16,
+              ),
+            ],
           ),
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            color: Color(0xFF94A3B8),
-            size: 16,
-          ),
-        ],
+        ),
       ),
     );
   }

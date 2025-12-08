@@ -144,9 +144,10 @@ class ProjectRepo {
   // GET /projects/active
   // --------------------------------------------------
   Future<Map<String, dynamic>> getProjectsOverallStatus() async {
-    final response = await ApiClient.http.get('/projects/projects-overall-status');
+    final response = await ApiClient.http.get('/projects/overall-status');
 
     if (response.statusCode != 200) {
+      print("ERROR fetching projects overall STATUS: ${response.statusCode}");
       throw "Failed to fetch projects overall status: ${response.body}";
     }
 

@@ -10,7 +10,9 @@ import 'package:smooflow/screens/settings_manage_users_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.designedForTab = false});
+
+  final bool designedForTab;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -26,10 +28,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundDarker2,
-      appBar: AppBar(
+      appBar: !widget.designedForTab? AppBar(
         title: Text("Settings"),
         backgroundColor: backgroundDarker2,
-      ),
+      ) : null,
       body: DefaultTextStyle(
         style: textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w500),
         child: Padding(
@@ -41,6 +43,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               SizedBox(),
               // Account section
               SettingsSection(
+                color: widget.designedForTab ? Colors.white: null,
                 title: "Account",
                 items: [
                   ListTileItem(
@@ -60,6 +63,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               // Preferences section
               SettingsSection(
+                color: widget.designedForTab ? Colors.white: null,
                 title: "Preferences",
                 items: [
                   ListTileItem(
@@ -82,6 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   final currentOrg = snapshot.data;
 
                   return SettingsSection(
+                    color: widget.designedForTab ? Colors.white: null,
                     title: "Organization",
                     items: [
                       ListTileItem(

@@ -31,7 +31,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     state = state.copyWith(loading: true, error: null);
     try {
       final result = await _repo.getActivePrinters();
-      state = state.copyWith(activePrinters: result, loading: false);
+      state = state.copyWith(activePrinters: result["activePrinters"], totalPrintersCount: result["totalPrintersCount"], loading: false);
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }
@@ -56,7 +56,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
         printSpeed: printSpeed,
       );
 
-      state = state.copyWith(printers: [...state.printers, printer]);
+      state = state.copyWith(printers: [...state.printers, printer], totalPrintersCount: state.totalPrintersCount + 1);
     } catch (e) {
       print("error occurred while creating printer: $e");
       state = state.copyWith(error: e.toString());
@@ -108,6 +108,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
 
       state = state.copyWith(
         printers: state.printers.where((e) => e.id != id).toList(),
+        totalPrintersCount: state.totalPrintersCount - 1,
       );
     } catch (e) {
       state = state.copyWith(error: e.toString());

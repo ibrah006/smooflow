@@ -11,6 +11,7 @@ import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
+import 'package:smooflow/screens/project_report_screen.dart';
 
 // Auth & Onboarding
 import '../screens/claim_organization_screen.dart';
@@ -107,6 +108,10 @@ class AppRoutes {
   static const createClient = '/clients/create';
 
   static const googleSheetViewer = '/google-sheet';
+
+  // Admin reports
+  static const projectReport = '/admin/project-report';
+  static const productionReport = '/admin/production-report';
 
   // -------------------
   // Route Map
@@ -319,6 +324,9 @@ class AppRoutes {
         break;
       case home:
         screen = HomeScreen();
+        break;
+      case projectReport:
+        screen = const ProjectReportsScreen();
         break;
     }
 

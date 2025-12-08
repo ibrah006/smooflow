@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/data/project_overall_status.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
@@ -28,7 +29,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   // Active projects cache and count
   List<Project> activeProjects = [];
 
-  int activeProjectsLengthValue = 0, pendingProjectsLengthValue = 0, finishedProjectsLengthValue = 0;
+  final ProjectOverallStatus projectsOverallStatus = ProjectOverallStatus();
 
   late final OrganizationRepo _orgRepo;
 
@@ -166,16 +167,17 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   // Fetch projects overall status from server and store locally on this notifier
   Future<void> fetchProjectsOverallStatus() async {
-    try {
+    // try {
       final result = await _repo.getProjectsOverallStatus();
       activeProjects = (result['activeProjects'] as List<Project>);
-      activeProjectsLengthValue = result['activeLength'] as int;
-      pendingProjectsLengthValue = result['pendingLength'] as int;
-      finishedProjectsLengthValue = result['finishedLength'] as int;
-    } catch (e) {
-      // ignore errors for now; caller can handle
-      rethrow;
-    }
+      projectsOverallStatus.activeLength = result['activeLength'] as int;
+      projectsOverallStatus.pendingLength = result['pendingLength'] as int;
+      projectsOverallStatus.finishedLength = result['finishedLength'] as int;
+    // } catch (e) {
+    //   // ignore errors for now; caller can handle
+    //   print("Error fetching projects overall status: $e");
+    //   rethrow;
+    // }
   }
 
   void _pushRecentProjectToTop(String projectId) {
