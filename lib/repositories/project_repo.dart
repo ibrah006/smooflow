@@ -176,7 +176,7 @@ class ProjectRepo {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Failed to fetch production report');
+      throw Exception('Failed to fetch project report, body: ${res.body}');
     }
 
     final data = jsonDecode(res.body);

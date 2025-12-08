@@ -36,13 +36,13 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   late final OrganizationRepo _orgRepo;
 
    /// Default empty state containers
-  ProjectReportDetails ProjectReportDetailsThisWeek =
+  ProjectReportDetails _projectReportDetailsThisWeek =
       ProjectReportDetails(period: Period.thisWeek);
 
-  ProjectReportDetails ProjectReportDetailsThisMonth =
+  ProjectReportDetails _projectReportDetailsThisMonth =
       ProjectReportDetails(period: Period.thisMonth);
 
-  ProjectReportDetails ProjectReportDetailsThisYear =
+  ProjectReportDetails _projectReportDetailsThisYear =
       ProjectReportDetails(period: Period.thisYear);
 
   // load projects
@@ -179,17 +179,17 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   // Fetch projects overall status from server and store locally on this notifier
   Future<void> fetchProjectsOverallStatus() async {
-    // try {
+    try {
       final result = await _repo.getProjectsOverallStatus();
       activeProjects = (result['activeProjects'] as List<Project>);
       projectsOverallStatus.activeLength = result['activeLength'] as int;
       projectsOverallStatus.pendingLength = result['pendingLength'] as int;
       projectsOverallStatus.finishedLength = result['finishedLength'] as int;
-    // } catch (e) {
-    //   // ignore errors for now; caller can handle
-    //   print("Error fetching projects overall status: $e");
-    //   rethrow;
-    // }
+    } catch (e) {
+      // ignore errors for now; caller can handle
+      print("Error fetching projects overall status: $e");
+      rethrow;
+    }
   }
 
   void _pushRecentProjectToTop(String projectId) {
@@ -207,22 +207,22 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   // Project reports section
 
   /// Fetch report for a given period & update notifier
-  Future<void> loadProductionReport(Period period) async {
+  Future<void> fetchReport(Period period) async {
 
     try {
       final report = await _repo.fetchProductionReport(period);
 
       switch (period) {
         case Period.thisWeek:
-          ProjectReportDetailsThisWeek = report;
+          _projectReportDetailsThisWeek = report;
           break;
 
         case Period.thisMonth:
-          ProjectReportDetailsThisMonth = report;
+          _projectReportDetailsThisMonth = report;
           break;
 
         case Period.thisYear:
-          ProjectReportDetailsThisYear = report;
+          _projectReportDetailsThisYear = report;
           break;
       }
     } finally {
@@ -234,11 +234,11 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   ProjectReportDetails getReportForPeriod(Period period) {
     switch (period) {
       case Period.thisWeek:
-        return ProjectReportDetailsThisWeek;
+        return _projectReportDetailsThisWeek;
       case Period.thisMonth:
-        return ProjectReportDetailsThisMonth;
+        return _projectReportDetailsThisMonth;
       case Period.thisYear:
-        return ProjectReportDetailsThisYear;
+        return _projectReportDetailsThisYear;
     }
   }
 
@@ -249,7 +249,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     if (report.projectGroups.isEmpty &&
         report.statusDistribution.isEmpty &&
         report.issues.isEmpty) {
-      await loadProductionReport(period);
+      await fetchReport(period);
     }
   }
 }

@@ -1,18 +1,21 @@
 // lib/screens/reports/project_reports_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/period.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
-class ProjectReportsScreen extends StatefulWidget {
+class ProjectReportsScreen extends ConsumerStatefulWidget {
   const ProjectReportsScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProjectReportsScreen> createState() => _ProjectReportsScreenState();
+  ConsumerState<ProjectReportsScreen> createState() => _ProjectReportsScreenState();
 }
 
-class _ProjectReportsScreenState extends State<ProjectReportsScreen> {
-  String _selectedPeriod = 'This Week';
+class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
+  Period _selectedPeriod = Period.thisWeek;
   
   // Mock data
   final Map<String, int> _statusDistribution = {
@@ -32,7 +35,20 @@ class _ProjectReportsScreenState extends State<ProjectReportsScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
+      setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+
+    // final_statusDistribution = ;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -109,9 +125,9 @@ class _ProjectReportsScreenState extends State<ProjectReportsScreen> {
                   ),
                   child: Row(
                     children: [
-                      _buildPeriodTab('Today'),
-                      _buildPeriodTab('This Week'),
-                      _buildPeriodTab('This Month'),
+                      _buildPeriodTab('this Week'),
+                      _buildPeriodTab('this Month'),
+                      _buildPeriodTab('this Year'),
                     ],
                   ),
                 ),
@@ -280,19 +296,22 @@ class _ProjectReportsScreenState extends State<ProjectReportsScreen> {
   }
 
   Widget _buildPeriodTab(String period) {
-    final isSelected = _selectedPeriod == period;
+    final isSelected = _selectedPeriod == Period.values.byName(period.replaceAll(" ", ""));
+
+    print("is seelcyed: #$isSelected");
     
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _selectedPeriod = period),
-        child: Container(
+        onTap: () => setState(() => _selectedPeriod = Period.values.byName(period.replaceAll(" ", ""))),
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? colorPrimary : Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            period,
+            period[0].toUpperCase() + period.substring(1),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

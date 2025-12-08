@@ -2,7 +2,7 @@ import 'package:smooflow/enums/period.dart';
 
 class ProjectReportDetails {
   final Period period;
-  Map<String, List<dynamic>> projectGroups;
+  Map<String, int> projectGroups;
   Map<String, int> statusDistribution;
   Map<String, int> issues;
 
@@ -19,7 +19,7 @@ class ProjectReportDetails {
       projectGroups: (json['projectGroups'] as Map<String, dynamic>).map(
         (key, value) => MapEntry(
           key,
-          value as List<dynamic>,
+          value,
         ),
       ),
       statusDistribution:
