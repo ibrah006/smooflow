@@ -61,7 +61,12 @@ class SettingsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Account
-        Text(title),
+        Text(title, style:  TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.3,
+              ),),
         SizedBox(height: 13),
         Container(
           decoration: BoxDecoration(

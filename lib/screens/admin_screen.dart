@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -508,111 +509,92 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildTeamTab() {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        // Team Overview
-        Row(
+
+    final membersFuture = ref.watch(memberNotifierProvider.notifier).members;
+
+    return FutureBuilder(
+      future: membersFuture,
+      builder: (context, snapshot) {
+        final members = snapshot.data ?? [];
+        
+        return ListView(
+          padding: const EdgeInsets.all(24),
           children: [
-            Expanded(
-              child: _buildTeamStat('24', 'Total Staff', Icons.people_rounded),
+            // Team Overview
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildTeamStat(members.length.toString(), 'Total Members', Icons.people_rounded),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildTeamStat(members.length.toString(), 'Active', Icons.check_circle_rounded),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTeamStat('18', 'Active', Icons.check_circle_rounded),
+        
+            const SizedBox(height: 12),
+        
+            Row(
+              children: [
+                Expanded(
+                  child: _buildTeamStat('0', 'On Leave', Icons.event_busy_rounded),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildTeamStat('0', 'Sick', Icons.local_hospital_rounded),
+                ),
+              ],
             ),
+        
+            const SizedBox(height: 32),
+        
+            const Text(
+              'All Team Members',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.3,
+              ),
+            ),
+        
+            const SizedBox(height: 16),
+        
+            ... List.generate(members.length, (
+                index,
+              ) {
+                final name = members[index].name;
+                final role = members[index].role;
+                return _buildTeamMemberCard(
+                  name: name,
+                  role: role=='admin'? "Administrator": role[0].toUpperCase() + role.substring(1),
+                  score: 98,
+                  avatar: '👨‍💼'
+                );
+            }),
+
+            const SizedBox(height: 24),
+
+            const Text(
+              'Top Performers',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.3,
+              ),
+            ),
+        
+            const SizedBox(height: 16),      
+
+            const EmptyTopPerformersGraphic(),
+        
+            const SizedBox(height: 80),
           ],
-        ),
-
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: _buildTeamStat('3', 'On Leave', Icons.event_busy_rounded),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTeamStat('1', 'Sick', Icons.local_hospital_rounded),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 32),
-
-        const Text(
-          'Top Performers',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-            letterSpacing: -0.3,
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        _buildTeamMemberCard(
-          name: 'Ibrahim',
-          role: 'Production Lead',
-          score: 98,
-          avatar: '👨‍💼',
-          rank: 1,
-        ),
-
-        _buildTeamMemberCard(
-          name: 'Muhammad Fazaldeen',
-          role: 'Senior Designer',
-          score: 95,
-          avatar: '👨‍🎨',
-          rank: 2,
-        ),
-
-        _buildTeamMemberCard(
-          name: 'Sarah Johnson',
-          role: 'Finishing Specialist',
-          score: 92,
-          avatar: '👩‍🔧',
-          rank: 3,
-        ),
-
-        const SizedBox(height: 24),
-
-        const Text(
-          'All Team Members',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-            letterSpacing: -0.3,
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        _buildTeamMemberCard(
-          name: 'Ahmed Ali',
-          role: 'Printer Operator',
-          score: 88,
-          avatar: '👨‍💻',
-        ),
-
-        _buildTeamMemberCard(
-          name: 'Lisa Chen',
-          role: 'Designer',
-          score: 86,
-          avatar: '👩‍🎨',
-        ),
-
-        _buildTeamMemberCard(
-          name: 'Mike Brown',
-          role: 'Application Technician',
-          score: 84,
-          avatar: '👨‍🔧',
-        ),
-
-        const SizedBox(height: 80),
-      ],
+        );
+      }
     );
   }
 
@@ -1293,6 +1275,59 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class EmptyTopPerformersGraphic extends StatelessWidget {
+  const EmptyTopPerformersGraphic({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 90,
+            width: 90,
+            decoration: BoxDecoration(
+              color: colorPrimary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.emoji_events_outlined,
+              size: 44,
+              color: colorPrimary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            "No top performers yet",
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              "Top performing members will appear here once tasks are completed and progress is tracked.",
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.grey,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
