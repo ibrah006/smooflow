@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/data/project_report_details.dart';
+import 'package:smooflow/enums/period.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/task.dart';
@@ -162,5 +164,23 @@ class ProjectRepo {
     final finishedLength = (body['finishedLength'] as num).toInt();
 
     return {'activeProjects': activeProjects, 'activeLength': activeLength, 'pendingLength': pendingLength, 'finishedLength': finishedLength};
+  }
+
+  /// Fetch production report for a given period
+  Future<ProjectReportDetails> fetchProductionReport(
+    Period period,
+  ) async {
+
+    final res = await ApiClient.http.get(
+      '/reports/projects?for=${period.name}',
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to fetch production report');
+    }
+
+    final data = jsonDecode(res.body);
+
+    return ProjectReportDetails.fromJson(data);
   }
 }

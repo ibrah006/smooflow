@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/data/project_report_details.dart';
 import 'package:smooflow/data/project_overall_status.dart';
+import 'package:smooflow/enums/period.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
@@ -32,6 +34,16 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   final ProjectOverallStatus projectsOverallStatus = ProjectOverallStatus();
 
   late final OrganizationRepo _orgRepo;
+
+   /// Default empty state containers
+  ProjectReportDetails ProjectReportDetailsThisWeek =
+      ProjectReportDetails(period: Period.thisWeek);
+
+  ProjectReportDetails ProjectReportDetailsThisMonth =
+      ProjectReportDetails(period: Period.thisMonth);
+
+  ProjectReportDetails ProjectReportDetailsThisYear =
+      ProjectReportDetails(period: Period.thisYear);
 
   // load projects
   Future<void> load({
@@ -190,5 +202,54 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     // Add it to the top
     final temp = recent.values.toList()..insert(0, projectId);
     recent = Map<int, String>.from(temp.asMap());
+  }
+
+  // Project reports section
+
+  /// Fetch report for a given period & update notifier
+  Future<void> loadProductionReport(Period period) async {
+
+    try {
+      final report = await _repo.fetchProductionReport(period);
+
+      switch (period) {
+        case Period.thisWeek:
+          ProjectReportDetailsThisWeek = report;
+          break;
+
+        case Period.thisMonth:
+          ProjectReportDetailsThisMonth = report;
+          break;
+
+        case Period.thisYear:
+          ProjectReportDetailsThisYear = report;
+          break;
+      }
+    } finally {
+      // loading state = false
+    }
+  }
+
+  /// Helper accessor used by UI
+  ProjectReportDetails getReportForPeriod(Period period) {
+    switch (period) {
+      case Period.thisWeek:
+        return ProjectReportDetailsThisWeek;
+      case Period.thisMonth:
+        return ProjectReportDetailsThisMonth;
+      case Period.thisYear:
+        return ProjectReportDetailsThisYear;
+    }
+  }
+
+  /// Lazy loading (only reload if empty)
+  Future<void> ensureReportLoaded(Period period) async {
+    final report = getReportForPeriod(period);
+
+    if (report.projectGroups.isEmpty &&
+        report.statusDistribution.isEmpty &&
+        report.issues.isEmpty) {
+      await loadProductionReport(period);
+    }
   }
 }
