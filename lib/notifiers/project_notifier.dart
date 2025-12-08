@@ -231,7 +231,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   /// Helper accessor used by UI
-  ProjectReportDetails getReportForPeriod(Period period) {
+  ProjectReportDetails _getReportForPeriod(Period period) {
     switch (period) {
       case Period.thisWeek:
         return _projectReportDetailsThisWeek;
@@ -243,13 +243,14 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   /// Lazy loading (only reload if empty)
-  Future<void> ensureReportLoaded(Period period) async {
-    final report = getReportForPeriod(period);
+  Future<ProjectReportDetails> ensureReportLoaded(Period period) async {
+    final report = _getReportForPeriod(period);
 
     if (report.projectGroups.isEmpty &&
         report.statusDistribution.isEmpty &&
         report.issues.isEmpty) {
       await fetchReport(period);
     }
+    return _getReportForPeriod(period);
   }
 }
