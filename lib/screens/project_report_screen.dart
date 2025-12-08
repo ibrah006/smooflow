@@ -263,6 +263,12 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                             
                             // Bar Chart
                             ..._buildDelayBars(report.issues),
+                            if (report.issues.isEmpty)
+                              const NoDelayedDataGraphic(
+                                title: "No delays recorded",
+                                subtitle: "All projects are on schedule for the selected period.",
+                                icon: Icons.playlist_add_check_circle_rounded,
+                              ),
                           ],
                         ),
                       ),
@@ -615,4 +621,66 @@ class PieChartPainter extends CustomPainter {
   
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class NoDelayedDataGraphic extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const NoDelayedDataGraphic({
+    super.key,
+    this.title = "All caught up!",
+    this.subtitle = "No delays for the selected period.",
+    this.icon = Icons.check_circle_outline,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          // --- Decorative icon bubble ---
+          Container(
+            width: 110,
+            height: 110,
+            decoration: BoxDecoration(
+              color: colorPrimary.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 54,
+                color: colorPrimary,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // --- Title ---
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // --- Subtitle ---
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+          ),
+        ],
+      ),
+    );
+  }
 }
