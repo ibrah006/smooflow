@@ -1,6 +1,7 @@
 // lib/screens/reports/project_reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'dart:math' as math;
 
 import 'package:smooflow/constants.dart';
@@ -50,6 +51,8 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
 
     // final_statusDistribution = ;
 
+    // When a new period is selected, we fetch the report data for that period from database if it doesnt already exist in memory
+    // There is no refreshing of data in the process unless the data doesn't exist in memory - we fetch
     final reportFuture = ref.watch(projectNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
 
     return Scaffold(
@@ -60,246 +63,249 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
 
           final report = snapshot.data?? ProjectReportDetails.sample();
 
-          return Column(
-            children: [
-              // Header
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(20).copyWith(top: MediaQuery.of(context).padding.top + 20),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FA),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.arrow_back, color: Colors.black, size: 22),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Project Reports',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                            ),
+          return LoadingOverlay(
+            isLoading: snapshot.data == null,
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(20).copyWith(top: MediaQuery.of(context).padding.top + 20),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F7FA),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Analytics & Insights',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FA),
-                          borderRadius: BorderRadius.circular(12),
+                          child: const Icon(Icons.arrow_back, color: Colors.black, size: 22),
                         ),
-                        child: const Icon(Icons.file_download, color: Colors.black, size: 22),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Project Reports',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Analytics & Insights',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {},
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F7FA),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.file_download, color: Colors.black, size: 22),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              
-              // Content
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    // Period Filter
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(23),
+                
+                // Content
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // Period Filter
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(23),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildPeriodTab('this Week'),
+                            _buildPeriodTab('this Month'),
+                            _buildPeriodTab('this Year'),
+                          ],
+                        ),
                       ),
-                      child: Row(
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Executive Overview - KPI Strip
+                      const Text(
+                        'Executive Overview',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      Row(
                         children: [
-                          _buildPeriodTab('this Week'),
-                          _buildPeriodTab('this Month'),
-                          _buildPeriodTab('this Year'),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Executive Overview - KPI Strip
-                    const Text(
-                      'Executive Overview',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKPICard(
-                            value: report.activeProjects.toString(),
-                            label: 'Active\nProjects',
-                            icon: Icons.work,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            value: report.completedProjects.toString(),
-                            label: 'Completed\nThis Week',
-                            icon: Icons.check_circle,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            value:  report.delayedProjects.toString(),
-                            label: 'Delayed\nProjects',
-                            icon: Icons.warning,
-                            isWarning: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Project Status Distribution
-                    const Text(
-                      'Project Status Distribution',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        children: [
-                          // Pie Chart
-                          SizedBox(
-                            height: 200,
-                            child: CustomPaint(
-                              painter: PieChartPainter(report.projectGroups),
-                              child: Container(),
+                          Expanded(
+                            child: _buildKPICard(
+                              value: report.activeProjects.toString(),
+                              label: 'Active\nProjects',
+                              icon: Icons.work,
                             ),
                           ),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Legend
-                          ..._buildStatusLegend(report.projectGroups),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Delay Analysis
-                    const Text(
-                      'Delay Analysis',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Delays by Reason',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildKPICard(
+                              value: report.completedProjects.toString(),
+                              label: 'Completed\nThis Week',
+                              icon: Icons.check_circle,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          
-                          // Bar Chart
-                          ..._buildDelayBars(report.issues),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildKPICard(
+                              value:  report.delayedProjects.toString(),
+                              label: 'Delayed\nProjects',
+                              icon: Icons.warning,
+                              isWarning: true,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Quick Stats Grid
-                    const Text(
-                      'Performance Metrics',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Project Status Distribution
+                      const Text(
+                        'Project Status Distribution',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                      
+                      const SizedBox(height: 16),
+                      
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          children: [
+                            // Pie Chart
+                            SizedBox(
+                              height: 200,
+                              child: CustomPaint(
+                                painter: PieChartPainter(report.projectGroups),
+                                child: Container(),
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 24),
+                            
+                            // Legend
+                            ..._buildStatusLegend(report.projectGroups),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          _buildMetricRow('On-Time Delivery', '87%'),
-                          const SizedBox(height: 16),
-                          _buildMetricRow('Avg. Project Duration', '12 days'),
-                          const SizedBox(height: 16),
-                          _buildMetricRow('Client Satisfaction', '94%'),
-                          const SizedBox(height: 16),
-                          _buildMetricRow('Total Revenue', '\$24,580'),
-                        ],
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Delay Analysis
+                      const Text(
+                        'Delay Analysis',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 80),
-                  ],
+                      
+                      const SizedBox(height: 16),
+                      
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Delays by Reason',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            
+                            // Bar Chart
+                            ..._buildDelayBars(report.issues),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Quick Stats Grid
+                      const Text(
+                        'Performance Metrics',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildMetricRow('On-Time Delivery', '87%'),
+                            const SizedBox(height: 16),
+                            _buildMetricRow('Avg. Project Duration', '12 days'),
+                            const SizedBox(height: 16),
+                            _buildMetricRow('Client Satisfaction', '94%'),
+                            const SizedBox(height: 16),
+                            _buildMetricRow('Total Revenue', '\$24,580'),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 80),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         }
       ),
