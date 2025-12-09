@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 class ScheduleJobScreen extends ConsumerStatefulWidget {
   final String? projectId;
@@ -25,6 +27,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
   String? _selectedPrinterId;
   String? _selectedMaterialType;
   JobPriority _selectedPriority = JobPriority.medium;
+  // In Minutes
   int _estimatedDuration = 30;
   bool _requiresApplication = false;
   String? _applicationLocation;
@@ -794,8 +797,25 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
     );
   }
 
-  void _scheduleJob() {
-    if (_formKey.currentState!.validate() && _selectedPrinterId != null) {
+  void _scheduleJob() async {
+    if (_formKey.currentState!.validate() && _selectedPrinterId != null && _selectedProjectId != null) {
+
+      final project = ref.watch(projectByIdProvider(_selectedProjectId!));
+      final material = ref.watch(materialNotifierProvider).materials.firstWhere((mat) => mat.id == _selectedMaterialType);
+
+      await ref.watch(projectNotifierProvider.notifier).createTask(
+        task: Task.create(
+          name: "${material.name} - ${project!.name}",
+          description: _notesController.text,
+          dueDate: null,
+          assignees: [],
+          projectId: _selectedProjectId!,
+          productionDuration: Duration(minutes: _estimatedDuration),
+          printerId: _selectedPrinterId!,
+          status: "production",
+          materialId: _selectedMaterialType!)
+      );
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

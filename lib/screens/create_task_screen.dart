@@ -51,71 +51,72 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
 
   // Validate and Create Function
   void validateAndCreate() async {
-    if (_titleController.text.trim().isEmpty) {
-      _showError("Task name is required.");
-      return;
-    }
-
-    if (_selectedProgressLogId == null) {
-      _showError("Please select a Progress Stage.");
-    }
-
-    // if (_priority == null || _priority!.isEmpty) {
-    //   _showError("Please select a priority.");
+    // if (_titleController.text.trim().isEmpty) {
+    //   _showError("Task name is required.");
     //   return;
     // }
 
-    // if (_assignee == null || _assignee!.isEmpty) {
-    //   _showError("Please select a project head.");
+    // if (_selectedProgressLogId == null) {
+    //   _showError("Please select a Progress Stage.");
+    // }
+
+    // // if (_priority == null || _priority!.isEmpty) {
+    // //   _showError("Please select a priority.");
+    // //   return;
+    // // }
+
+    // // if (_assignee == null || _assignee!.isEmpty) {
+    // //   _showError("Please select a project head.");
+    // //   return;
+    // // }
+
+    // setState(() {
+    //   _isLoading = true;
+    // });
+
+    // final newTask = Task.create(
+    //   name: _titleController.text.trim(),
+    //   description: _descController.text.trim(),
+    //   assignees: _selectedAssignees.map((user) => user.id).toList(),
+    //   projectId: widget.projectId,
+    //   // SAMPLE
+    //   productionDuration: Duration(minutes: 30),
+    //   // TODO
+    //   // priority: _priority,
+    //   dueDate: _dueDate,
+    // );
+
+    // try {
+    //   await ref.read(createProjectTaskProvider(newTask));
+    // } catch (e) {
+    //   print("task creation error: $e");
+    //   setState(() {
+    //     _isLoading = false;
+    //   });
+
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text("Failed to Create Task.")));
+
     //   return;
     // }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // debugPrint("✅ Task Created: $newTask");
 
-    final newTask = Task.create(
-      name: _titleController.text.trim(),
-      description: _descController.text.trim(),
-      progressLogIds: [_selectedProgressLogId!],
-      assignees: _selectedAssignees.map((user) => user.id).toList(),
-      projectId: widget.projectId,
-      // TODO
-      // priority: _priority,
-      dueDate: _dueDate,
-    );
+    // setState(() {
+    //   _isLoading = false;
+    // });
 
-    try {
-      await ref.read(createProjectTaskProvider(newTask));
-    } catch (e) {
-      print("task creation error: $e");
-      setState(() {
-        _isLoading = false;
-      });
+    // // Navigate back
+    // Navigator.pop(context);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to Create Task.")));
-
-      return;
-    }
-
-    debugPrint("✅ Task Created: $newTask");
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    // Navigate back
-    Navigator.pop(context);
-
-    // Optionally: clear the form
-    _titleController.clear();
-    _descController.clear();
-    _priority = null;
-    _selectedAssignees = [];
-    _dueDate = null;
-    _selectedProgressLogId = null;
+    // // Optionally: clear the form
+    // _titleController.clear();
+    // _descController.clear();
+    // _priority = null;
+    // _selectedAssignees = [];
+    // _dueDate = null;
+    // _selectedProgressLogId = null;
   }
 
   InputDecoration _inputDecoration(String hint, {Color? backgroundColor}) {
