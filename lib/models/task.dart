@@ -21,7 +21,7 @@ class Task {
   Color? _color;
   IconData? _icon;
 
-  final String progressLogId;
+  final List<String> progressLogIds;
 
   DateTime? updatedAt;
 
@@ -33,7 +33,7 @@ class Task {
   Task({
     required int id,
     required String name,
-    required this.progressLogId,
+    required this.progressLogIds,
     required String description,
     required DateTime? dueDate,
     String status = "pending",
@@ -58,7 +58,7 @@ class Task {
 
   Task.create({
     required String name,
-    required this.progressLogId,
+    required this.progressLogIds,
     required String description,
     required DateTime? dueDate,
     String status = "pending",
@@ -119,7 +119,7 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) => Task(
     id: json['id'],
     name: json['name'],
-    progressLogId: json["progressLog"]["id"],
+    progressLogIds: (json["progressLogs"] as List).map((log) => log["id"].toString()).toList(),
     description: json['description'],
     dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
     updatedAt:
@@ -161,7 +161,7 @@ class Task {
       _assignees = List.from(original.assignees),
       _projectId = original.projectId,
       _dateCompleted = original._dateCompleted,
-      progressLogId = original.progressLogId,
+      progressLogIds = original.progressLogIds,
       workActivityLogs = original.workActivityLogs {
     updatedAt = original.updatedAt;
     String status = original._status;
@@ -175,7 +175,7 @@ class Task {
   @Deprecated(
     "This constructor is deprecated and will be removed in future versions",
   )
-  Task.empty() : progressLogId = "", workActivityLogs = [];
+  Task.empty() : progressLogIds = [], workActivityLogs = [];
 
   // Copy With method
   @Deprecated(
@@ -261,7 +261,7 @@ class Task {
       'assignees': assignees,
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
-      'progressLog': {'id': progressLogId},
+      // 'progressLogs': progressLogIds.map((id) => {'id': id}).toList(),
     };
     try {
       return {'id': id, ...json};

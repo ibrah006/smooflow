@@ -123,9 +123,9 @@ class _ActiveWorkActivityLogCardState
           return SizedBox();
         }
 
-        final taskProgressLogFuture = ref
-            .watch(progressLogNotifierProvider.notifier)
-            .getLog(activeTask.progressLogId);
+        // final taskProgressLogFuture = ref
+        //     .watch(progressLogNotifierProvider.notifier)
+        //     .getLog(activeTask.progressLogId);
 
         return Container(
           margin: EdgeInsets.only(bottom: 20),
@@ -181,28 +181,29 @@ class _ActiveWorkActivityLogCardState
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Expanded(
-                    child: FutureBuilder(
-                      future: taskProgressLogFuture,
-                      builder: (context, snapshot) {
-                        final taskProgressLog = snapshot.data;
-                        if (taskProgressLog == null) {
-                          return CardLoading(
-                            height: 15,
-                            width: 50,
-                            borderRadius: BorderRadius.circular(10),
-                          );
-                        }
+                  // TODO
+                  // Expanded(
+                  //   child: FutureBuilder(
+                  //     future: taskProgressLogFuture,
+                  //     builder: (context, snapshot) {
+                  //       final taskProgressLog = snapshot.data;
+                  //       if (taskProgressLog == null) {
+                  //         return CardLoading(
+                  //           height: 15,
+                  //           width: 50,
+                  //           borderRadius: BorderRadius.circular(10),
+                  //         );
+                  //       }
 
-                        return Text(
-                          " | Dept: ${taskProgressLog.status.name}",
-                          style: textTheme.bodyMedium!.copyWith(
-                            color: Colors.grey.shade900,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  //       return Text(
+                  //         " | Dept: ${taskProgressLog.status.name}",
+                  //         style: textTheme.bodyMedium!.copyWith(
+                  //           color: Colors.grey.shade900,
+                  //         ),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                 ],
               ),
               SizedBox(height: 3),

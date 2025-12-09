@@ -77,19 +77,19 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
     Future.microtask(() async {
       task = (await ref.watch(taskByIdProvider(widget.taskId)))!;
 
-      progressLogFuture = ref
-          .watch(
-            progressLogsByProjectProvider(
-              ProgressLogsByProviderArgs(task.projectId),
-            ),
-          )
-          .then((value) {
-            return value.progressLogs.isNotEmpty
-                ? value.progressLogs.firstWhere(
-                  (log) => log.id == task.progressLogId,
-                )
-                : ProgressLog.deleted(task.progressLogId);
-          });
+      // progressLogFuture = ref
+      //     .watch(
+      //       progressLogsByProjectProvider(
+      //         ProgressLogsByProviderArgs(task.projectId),
+      //       ),
+      //     )
+      //     .then((value) {
+      //       return value.progressLogs.isNotEmpty
+      //           ? value.progressLogs.firstWhere(
+      //             (log) => log.id == task.progressLogId,
+      //           )
+      //           : ProgressLog.deleted(task.progressLogId);
+      //     });
 
       // workActivityLogsFuture = ref.watch(
       //   workActivityLogsByTaskProvider(task.id),
@@ -285,24 +285,24 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                     ],
                                   ),
                                   SizedBox(height: 8),
-                                  FutureBuilder(
-                                    future: progressLogFuture,
-                                    builder: (context, snapshot) {
-                                      if (snapshot.data == null) {
-                                        return CircularProgressIndicator();
-                                      }
-                                      final status = snapshot.data!.status.name;
+                                  // FutureBuilder(
+                                  //   future: progressLogFuture,
+                                  //   builder: (context, snapshot) {
+                                  //     if (snapshot.data == null) {
+                                  //       return CircularProgressIndicator();
+                                  //     }
+                                  //     final status = snapshot.data!.status.name;
 
-                                      return Text(
-                                        !snapshot.data!.isDeleted
-                                            ? "${status[0].toUpperCase()}${status.substring(1)}"
-                                            :
-                                            // Deleted progress log
-                                            "Deleted Progress Log",
-                                        style: textTheme.titleMedium,
-                                      );
-                                    },
-                                  ),
+                                  //     return Text(
+                                  //       !snapshot.data!.isDeleted
+                                  //           ? "${status[0].toUpperCase()}${status.substring(1)}"
+                                  //           :
+                                  //           // Deleted progress log
+                                  //           "Deleted Progress Log",
+                                  //       style: textTheme.titleMedium,
+                                  //     );
+                                  //   },
+                                  // ),
                                 ],
                               ),
                             ),

@@ -5,6 +5,7 @@ import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/printer_screen.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
@@ -204,6 +205,9 @@ class AppRoutes {
         if (args is ClaimOrganizationArgs) {
           screen = ClaimOrganizationScreen(privateDomain: args.privateDomain);
         }
+        break;
+      case login:
+        screen = LoginScreen();
         break;
       case createOrganization:
         screen = CreateOrganizationScreen();
