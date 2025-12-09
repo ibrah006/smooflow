@@ -1,25 +1,26 @@
 // lib/screens/production/production_dashboard_screen.dart
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
-import 'package:smooflow/screens/add_printer_screen.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 
-class ProductionDashboardScreen extends StatefulWidget {
+class ProductionDashboardScreen extends ConsumerStatefulWidget {
   const ProductionDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProductionDashboardScreen> createState() =>
+  ConsumerState<ProductionDashboardScreen> createState() =>
       _ProductionDashboardScreenState();
 }
 
-class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
+class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardScreen> {
   Timer? _refreshTimer;
 
   // Mock data - replace with actual service calls
@@ -110,6 +111,10 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted) setState(() {});
     });
+
+    Future.microtask(() async {
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    });
   }
 
   @override
@@ -120,6 +125,14 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final activePrintersCount = ref.watch(printerNotifierProvider).activePrinters.length;
+    final totalPrintersCount = ref.watch(printerNotifierProvider).totalPrintersCount;
+
+    final printers = ref.watch(printerNotifierProvider).printers;
+
+    print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: HawkFabMenu(
@@ -132,10 +145,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
             label: 'Add Printer',
             ontap: () {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddPrinterScreen()),
-              );
+              AppRoutes.navigateTo(context, AppRoutes.addPrinter);
             },
             icon: const Icon(Icons.print_rounded),
             // color: Colors.red,
@@ -201,7 +211,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       ),
                       Ink(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F6FA),
+                          color: const Color.fromARGB(255, 251, 251, 251),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
@@ -289,7 +299,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                             icon: Icons.inventory_2,
                             iconBg: const Color(0xFFDCE7FE),
                             iconColor: const Color(0xFF2563EB),
-                            value: '2',
+                            value: activePrintersCount.toString(),
                             label: 'Active\nPrinters',
                           ),
                         ),
@@ -321,7 +331,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                     // Filter Tabs (like Material Stock)
                     Row(
                       children: [
-                        _buildFilterTab('All', true, count: 8),
+                        _buildFilterTab('All', true, count: totalPrintersCount),
                         const SizedBox(width: 12),
                         _buildFilterTab('Printing', false, count: 2),
                         const SizedBox(width: 12),
@@ -336,6 +346,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       ..._urgentJobs.map((job) => _buildJobCard(job)),
 
                     // Printer Status Cards
+                    ...printers.map((printer)=> _buildPrinterCard(printer)),
                     ..._mockPrinters.map(
                       (printer) => _buildPrinterCard(printer),
                     ),
@@ -664,78 +675,90 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
   Widget _buildPrinterCard(Printer printer) {
     final statusColor = _getPrinterStatusColor(printer.status);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: InkWell(
+        onTap: () {
+          AppRoutes.navigateTo(context, AppRoutes.printerDetails,
+              arguments: printer);
+        },
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.print, color: statusColor, size: 28),
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  printer.nickname,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 6),
-                Row(
+                child: Icon(Icons.print, color: statusColor, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Text(
-                      _getPrinterStatusLabel(printer.status),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: statusColor,
-                        fontWeight: FontWeight.w500,
+                      printer.nickname,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
                     ),
-                    if (printer.location != null) ...[
-                      const SizedBox(width: 8),
-                      const Text(
-                        '•',
-                        style: TextStyle(color: Color(0xFF9CA3AF)),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        printer.location!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF9CA3AF),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          _getPrinterStatusLabel(printer.status),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: statusColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (printer.location != null) ...[
+                          const SizedBox(width: 8),
+                          const Text(
+                            '•',
+                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                          ),
+                          const SizedBox(width: 8),
+                          if (printer.location == null || printer.location!.isEmpty) 
+                          ...[Icon(Icons.location_off_outlined, size: 18, color: const Color(0xFF9CA3AF)),
+                          Text(" N/a", style: TextStyle(color: const Color(0xFF9CA3AF)),)]
+                          else Text(
+                            printer.location!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

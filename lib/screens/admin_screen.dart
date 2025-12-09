@@ -232,7 +232,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
     final overallStatus = ref.watch(projectNotifierProvider.notifier).projectsOverallStatus;
     final projectsThisMonth = overallStatus.countThisMonth;
-    final projectsLastMonth = overallStatus.countLastMonth;
     final projectsIncreaseWRTPrevMonth = overallStatus.increaseWRTPrevMonth;
 
     return ListView(

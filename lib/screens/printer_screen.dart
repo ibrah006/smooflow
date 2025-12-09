@@ -4,16 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 
-class AddPrinterScreen extends ConsumerStatefulWidget {
+class PrinterScreen extends ConsumerStatefulWidget {
   final Printer? printer; // null for add, non-null for edit
 
-  const AddPrinterScreen({Key? key, this.printer}) : super(key: key);
+  const PrinterScreen.add({Key? key, this.printer}) : super(key: key);
+
+  const PrinterScreen.details({Key? key, required this.printer}) : super(key: key);
 
   @override
-  ConsumerState<AddPrinterScreen> createState() => _AddPrinterScreenState();
+  ConsumerState<PrinterScreen> createState() => _AddPrinterScreenState();
 }
 
-class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
+class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _nicknameController;
@@ -168,7 +170,7 @@ class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
                         _buildTextField(
                           controller: _locationController,
                           label: 'Location',
-                          hint: 'e.g., Section A',
+                          hint: isEditing? "📍 N/a" : 'e.g., Section A',
                         ),
                       ],
                     ),
@@ -342,6 +344,9 @@ class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
     required String hint,
     String? Function(String?)? validator,
   }) {
+
+    final isEditing = widget.printer != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -357,11 +362,12 @@ class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
         TextFormField(
           controller: controller,
           validator: validator,
+          enabled: !isEditing,
           style: const TextStyle(fontSize: 16, color: Colors.black),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFFD1D5DB)),
-            filled: true,
+            filled: !isEditing,
             fillColor: const Color(0xFFF5F7FA),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -383,7 +389,8 @@ class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            isDense: isEditing,
+            contentPadding: isEditing? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],

@@ -15,13 +15,14 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   Future<void> fetchPrinters() async {
     state = state.copyWith(loading: true, error: null);
 
-    // try {
+    try {
       final result = await _repo.getPrinters();
+      await fetchActivePrinters();
       state = state.copyWith(printers: result, loading: false);
-    // } catch (e) {
-    //   print("error occurred: $e");
-    //   state = state.copyWith(loading: false, error: e.toString());
-    // }
+    } catch (e) {
+      print("error occurred: $e");
+      state = state.copyWith(loading: false, error: e.toString());
+    }
   }
 
   // -------------------------------

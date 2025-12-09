@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
-import 'package:smooflow/screens/add_printer_screen.dart';
+import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/screens/printer_screen.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
+import 'package:smooflow/screens/production_dashboard.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
 
 // Auth & Onboarding
@@ -104,6 +106,7 @@ class AppRoutes {
   static const schedulePrint = '/print-schedule';
 
   static const addPrinter = '/printers/add';
+  static const printerDetails = '/printers/details';
 
   static const createClient = '/clients/create';
 
@@ -320,7 +323,7 @@ class AppRoutes {
         screen = const InviteMemberScreen();
         break;
       case addPrinter:
-        screen = const AddPrinterScreen();
+        screen = const PrinterScreen.add();
         break;
       case home:
         screen = HomeScreen();
@@ -328,6 +331,15 @@ class AppRoutes {
       case projectReport:
         screen = const ProjectReportsScreen();
         break;
+      case productionDashboard:
+        screen = const ProductionDashboardScreen();
+        break;
+      case printerDetails:
+        if (args is Printer) {
+          screen = PrinterScreen.details(printer: args);
+        }
+        break;
+
     }
 
     // If screen was determined, create the route
