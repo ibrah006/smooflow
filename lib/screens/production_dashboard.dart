@@ -7,7 +7,9 @@ import 'package:smooflow/core/app_routes.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
@@ -113,7 +115,9 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     });
 
     Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
       await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
     });
   }
 

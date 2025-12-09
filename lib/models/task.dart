@@ -8,6 +8,7 @@ class Task {
   late String _name;
   late String _description;
   late DateTime? _dueDate;
+  late Duration? _productionDuration;
 
   // Ids of work activity logs associated with this task
   List<int> workActivityLogs;
@@ -44,6 +45,7 @@ class Task {
     required DateTime? dateCompleted,
     required this.workActivityLogs,
     required this.updatedAt,
+    required Duration? productionDuration,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -53,7 +55,7 @@ class Task {
        _dateCompleted = dateCompleted {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
-    activityLogLastModified = null;
+    _productionDuration = productionDuration;
   }
 
   Task.create({
@@ -150,6 +152,9 @@ class Task {
         (json["workActivityLogs"] as List).map((activityLogJson) {
           return WorkActivityLog.getIdFromJson(activityLogJson);
         }).toList(),
+    productionDuration: json['productionDuration'] != null
+        ? Duration(minutes: json['productionDuration'])
+        : null,
   );
 
   // Copy constructor
@@ -169,6 +174,7 @@ class Task {
     color = original.color;
     icon = original.icon;
     assigneeLastAdded = original.assigneeLastAdded;
+    _productionDuration = original._productionDuration;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
@@ -262,6 +268,7 @@ class Task {
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
       // 'progressLogs': progressLogIds.map((id) => {'id': id}).toList(),
+      'estimatedDuration': _productionDuration?.inMinutes,
     };
     try {
       return {'id': id, ...json};
@@ -282,5 +289,6 @@ class Task {
     _dateCompleted = newTask._dateCompleted;
     _color = newTask._color;
     _icon = newTask._icon;
+    _productionDuration = newTask._productionDuration;
   }
 }

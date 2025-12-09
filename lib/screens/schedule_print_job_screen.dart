@@ -1,17 +1,21 @@
 // lib/screens/printer/schedule_job_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
-class ScheduleJobScreen extends StatefulWidget {
+class ScheduleJobScreen extends ConsumerStatefulWidget {
   final String? projectId;
 
   const ScheduleJobScreen({Key? key, this.projectId}) : super(key: key);
 
   @override
-  State<ScheduleJobScreen> createState() => _ScheduleJobScreenState();
+  ConsumerState<ScheduleJobScreen> createState() => _ScheduleJobScreenState();
 }
 
-class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
+class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _runsController;
@@ -87,6 +91,9 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final printers = ref.watch(printerNotifierProvider).printers;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -145,7 +152,7 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
                     title: 'Select Printer',
                     child: Column(
                       children:
-                          _mockPrinters
+                          printers
                               .map((printer) => _buildPrinterOption(printer))
                               .toList(),
                     ),
@@ -306,6 +313,8 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
   }
 
   Widget _buildProjectDropdown() {
+    final projects = ref.watch(projectNotifierProvider);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -321,11 +330,11 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
         ),
         icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
         items:
-            _mockProjects.map((project) {
+            projects.map((project) {
               return DropdownMenuItem(
-                value: project['id'],
+                value: project.id,
                 child: Text(
-                  project['name']!,
+                  project.name,
                   style: const TextStyle(fontSize: 15),
                 ),
               );
@@ -337,6 +346,8 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
   }
 
   Widget _buildMaterialDropdown() {
+    final materials = ref.watch(materialNotifierProvider).materials;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -352,10 +363,10 @@ class _ScheduleJobScreenState extends State<ScheduleJobScreen> {
         ),
         icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
         items:
-            _materialTypes.map((material) {
+            materials.map((material) {
               return DropdownMenuItem(
-                value: material,
-                child: Text(material, style: const TextStyle(fontSize: 15)),
+                value: material.id,
+                child: Text(material.name, style: const TextStyle(fontSize: 15)),
               );
             }).toList(),
         onChanged: (value) => setState(() => _selectedMaterialType = value),
