@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'dart:async';
 
@@ -24,6 +25,9 @@ class ProductionDashboardScreen extends ConsumerStatefulWidget {
 
 class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardScreen> {
   Timer? _refreshTimer;
+
+  // Active Printers, Print Jobs, Low Stock
+  int _selectedSectionIndex = 0;
 
   // Mock data - replace with actual service calls
   final List<PrintJob> _urgentJobs = [
@@ -304,7 +308,19 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             iconBg: const Color(0xFFDCE7FE),
                             iconColor: const Color(0xFF2563EB),
                             value: activePrintersCount.toString(),
-                            label: 'Active\nPrinters',
+                            label: 'Active${_selectedSectionIndex==0? "\n" : " "}Printers',
+                            indexValue: 0
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.schema_rounded,
+                            iconBg: const Color(0xFFDCFCE7),
+                            iconColor: const Color(0xFF22C55E),
+                            value: '0',
+                            label: 'Print${_selectedSectionIndex==1? "\n" : " "}Jobs',
+                            indexValue: 1
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -314,17 +330,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             iconBg: const Color(0xFFFEF3C7),
                             iconColor: const Color(0xFFF59E0B),
                             value: '0',
-                            label: 'Low Stock',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatCard(
-                            icon: Icons.error_outline,
-                            iconBg: const Color(0xFFFEE2E2),
-                            iconColor: const Color(0xFFEF4444),
-                            value: '0',
-                            label: 'Critical',
+                            label: 'Low${_selectedSectionIndex==2? "\n" : " "}Stock',
+                            indexValue: 2
                           ),
                         ),
                       ],
@@ -417,45 +424,57 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     required Color iconColor,
     required String value,
     required String label,
+    required int indexValue,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(16),
+    final isSelected = _selectedSectionIndex == indexValue;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedSectionIndex = indexValue;
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Ink(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected? iconBg : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isSelected? iconColor : iconBg,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: isSelected? iconBg : iconColor, size: 28),
             ),
-            child: Icon(icon, color: iconColor, size: 28),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-              height: 1,
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+                height: 1,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9CA3AF),
-              height: 1.3,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isSelected? 14 : 13,
+                color: isSelected? Colors.black : Color(0xFF9CA3AF),
+                fontWeight: isSelected? FontWeight.w700 : null,
+                height: isSelected? 1.2 : 1.3,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
