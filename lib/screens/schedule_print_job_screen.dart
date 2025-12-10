@@ -874,7 +874,8 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           productionDuration: Duration(minutes: _estimatedDuration),
           printerId: _selectedPrinterId!,
           status: "production",
-          materialId: _selectedMaterialType!)
+          materialId: _selectedMaterialType!,
+          productionStartTime: _selectedStartDateTime)
       );
 
       Navigator.pop(context);
