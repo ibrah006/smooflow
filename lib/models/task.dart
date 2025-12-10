@@ -3,9 +3,6 @@ import 'package:smooflow/models/material_log.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 
-// Add a string attribute printerId to Task class
-// Add a string attribute materialId to Task class
-
 class Task {
   late final int _id;
   late String _name;
@@ -14,6 +11,7 @@ class Task {
   late Duration? _productionDuration;
   late String _printerId;
   late String _materialId;
+  late DateTime? _productionStartTime;
   // Ids of work activity logs associated with this task
   List<int> workActivityLogs;
 
@@ -51,7 +49,8 @@ class Task {
     required this.updatedAt,
     required Duration? productionDuration,
     required String printerId,
-    required String? materialId
+    required String? materialId,
+    required DateTime? productionStartTime,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -59,7 +58,9 @@ class Task {
        _assignees = assignees,
        _projectId = projectId,
        _dateCompleted = dateCompleted,
-       _printerId = printerId {
+       _printerId = printerId,
+       _materialId = materialId ?? "",
+       _productionStartTime = productionStartTime {
     _status = status.replaceAll(RegExp(r"_"), " ");
     _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
     _productionDuration = productionDuration;
@@ -77,6 +78,7 @@ class Task {
     required Duration productionDuration,
     required String printerId,
     required String materialId,
+    required DateTime? productionStartTime,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -89,7 +91,8 @@ class Task {
        progressLogIds = [],
        _productionDuration = productionDuration,
        _printerId = printerId,
-       _materialId = materialId;
+       _materialId = materialId,
+       _productionStartTime = productionStartTime;
 
   void initializeId(int id) {
     _id = id;
@@ -107,6 +110,7 @@ class Task {
   DateTime? get dateCompleted => _dateCompleted;
   Color? get color => _color;
   IconData? get icon => _icon;
+  int get productionDuration => _productionDuration?.inMinutes ?? 0;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -170,6 +174,9 @@ class Task {
         : null,
     printerId: json["printerId"],
     materialId: json["materialId"],
+    productionStartTime: json["productionStartTime"] != null
+        ? DateTime.parse(json["productionStartTime"])
+        : null,
   );
 
   // Copy constructor
@@ -192,6 +199,7 @@ class Task {
     _productionDuration = original._productionDuration;
     _printerId = original._printerId;
     _materialId = original._materialId;
+    _productionStartTime = original._productionStartTime;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
@@ -288,6 +296,7 @@ class Task {
       'estimatedDuration': _productionDuration?.inMinutes,
       'printerId': _printerId,
       'materialId': _materialId,
+      'productionStartTime': _productionStartTime?.toIso8601String(),
     };
     try {
       return {'id': id, ...json};

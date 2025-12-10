@@ -3,14 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
-import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
@@ -122,6 +123,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
       await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
       await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
     });
   }
 
@@ -140,6 +142,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     final printers = ref.watch(printerNotifierProvider).printers;
 
     print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
+
+    final tasks = ref.watch(taskNotifierProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -308,7 +312,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             iconBg: const Color(0xFFDCE7FE),
                             iconColor: const Color(0xFF2563EB),
                             value: activePrintersCount.toString(),
-                            label: 'Active${_selectedSectionIndex==0? "\n" : " "}Printers',
+                            label: 'All${_selectedSectionIndex==0? "\n" : " "}Printers',
                             indexValue: 0
                           ),
                         ),
@@ -353,14 +357,17 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     const SizedBox(height: 20),
 
                     // Urgent Jobs List
-                    if (_urgentJobs.isNotEmpty)
-                      ..._urgentJobs.map((job) => _buildJobCard(job)),
+                    if (_selectedSectionIndex == 0) ... [
+                      if (_urgentJobs.isNotEmpty)
+                        // ..._urgentJobs.map((job) => _buildJobCard(job)),
 
-                    // Printer Status Cards
-                    ...printers.map((printer)=> _buildPrinterCard(printer)),
-                    ..._mockPrinters.map(
-                      (printer) => _buildPrinterCard(printer),
-                    ),
+                      // Printer Status Cards
+                      ...printers.map((printer)=> _buildPrinterCard(printer)),
+                      ..._mockPrinters.map(
+                        (printer) => _buildPrinterCard(printer),
+                      ),
+                    ] else if (_selectedSectionIndex == 1) 
+                      ...tasks.map((task) => _buildJobCard(task)).toList(),
 
                     const SizedBox(height: 24),
 
@@ -428,52 +435,56 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   }) {
     final isSelected = _selectedSectionIndex == indexValue;
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedSectionIndex = indexValue;
-        });
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isSelected? iconBg : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: isSelected? iconColor : iconBg,
-                borderRadius: BorderRadius.circular(16),
+    return AnimatedScale(
+      duration: Duration(milliseconds: 150),
+      scale: isSelected? 1.1: 1,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedSectionIndex = indexValue;
+          });
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isSelected? iconBg : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSelected? iconColor : iconBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: isSelected? iconBg : iconColor, size: 28),
               ),
-              child: Icon(icon, color: isSelected? iconBg : iconColor, size: 28),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-                height: 1,
+              const SizedBox(height: 16),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  height: 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isSelected? 14 : 13,
-                color: isSelected? Colors.black : Color(0xFF9CA3AF),
-                fontWeight: isSelected? FontWeight.w700 : null,
-                height: isSelected? 1.2 : 1.3,
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isSelected? Colors.black : Color(0xFF9CA3AF),
+                  fontWeight: isSelected? FontWeight.w700 : null,
+                  height: isSelected? 1.2 : 1.3,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -523,7 +534,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     );
   }
 
-  Widget _buildJobCard(PrintJob job) {
+  Widget _buildJobCard(Task task) {
+
+    final isStarted = task.status.toLowerCase() == "printing";
+    final isBlocked = task.status.toLowerCase() == "blocked";
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -541,15 +556,15 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                 height: 48,
                 decoration: BoxDecoration(
                   color:
-                      job.isBlocked
+                      isBlocked
                           ? const Color(0xFFFEE2E2)
                           : const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  job.isBlocked ? Icons.block : Icons.arrow_downward,
+                  isBlocked ? Icons.block : Icons.arrow_downward,
                   color:
-                      job.isBlocked
+                      isBlocked
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF10B981),
                   size: 24,
@@ -561,7 +576,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      job.name,
+                      task.name,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -586,18 +601,18 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                 ),
                 decoration: BoxDecoration(
                   color:
-                      job.isBlocked
+                      isBlocked
                           ? const Color(0xFFFEE2E2)
                           : const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  job.isBlocked ? 'Blocked' : 'Printing',
+                  isStarted? "Printing" : task.status,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color:
-                        job.isBlocked
+                        isBlocked
                             ? const Color(0xFFEF4444)
                             : const Color(0xFF10B981),
                   ),
@@ -606,14 +621,14 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             ],
           ),
 
-          if (job.status == JobStatus.printing) ...[
+          if (task.status == "printing") ...[
             const SizedBox(height: 20),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value:
-                    (job.actualDurationMinutes ?? 0) /
-                    job.estimatedDurationMinutes,
+                    0 /
+                    task.productionDuration,
                 backgroundColor: const Color(0xFFEDF2F7),
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   Color(0xFF2563EB),
@@ -626,14 +641,14 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${job.actualDurationMinutes}/${job.estimatedDurationMinutes} min',
+                  '0/${task.productionDuration} min',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
                   ),
                 ),
                 Text(
-                  '${job.remainingMinutes} min left',
+                  '${0-task.productionDuration} min left',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -644,7 +659,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             ),
           ],
 
-          if (job.blockedNote != null) ...[
+          if (task.description.isNotEmpty) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -662,7 +677,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      job.blockedNote!,
+                      task.description,
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFFEF4444),

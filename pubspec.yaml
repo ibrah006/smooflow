@@ -62,6 +62,7 @@ dependencies:
   file_selector: ^1.0.4
   hawk_fab_menu: ^1.2.0
   dio: ^5.9.0
+  cupertino_calendar_picker: ^2.2.6
 
 dev_dependencies:
   flutter_test:

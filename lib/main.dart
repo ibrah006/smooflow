@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -84,6 +85,11 @@ class App extends StatelessWidget {
       ),
       onGenerateRoute: AppRoutes.onGenerateRoute,
       initialRoute: AppRoutes.flash,
+      // localizationsDelegates: const [
+      //   GlobalMaterialLocalizationns.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
     );
   }
 }

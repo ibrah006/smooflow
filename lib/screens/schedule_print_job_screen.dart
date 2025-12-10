@@ -1,4 +1,7 @@
 // lib/screens/printer/schedule_job_screen.dart
+import 'dart:math';
+
+import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/models/printer.dart';
@@ -6,7 +9,6 @@ import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 
 class ScheduleJobScreen extends ConsumerStatefulWidget {
   final String? projectId;
@@ -18,6 +20,9 @@ class ScheduleJobScreen extends ConsumerStatefulWidget {
 }
 
 class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
+
+  static const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _runsController;
@@ -32,50 +37,9 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
   bool _requiresApplication = false;
   String? _applicationLocation;
 
-  final List<Map<String, String>> _mockProjects = [
-    {'id': 'proj001', 'name': 'ABC Company - Storefront Signage'},
-    {'id': 'proj002', 'name': 'XYZ Corp - Vehicle Wraps'},
-    {'id': 'proj003', 'name': 'Local Cafe - Menu Boards'},
-  ];
+  DateTime? _selectedStartDateTime;
 
-  final List<Printer> _mockPrinters = [
-    Printer(
-      id: '1',
-      name: 'Epson SureColor P8000',
-      nickname: 'Large Format A',
-      status: PrinterStatus.active,
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-    ),
-    Printer(
-      id: '2',
-      name: 'HP Latex 570',
-      nickname: 'Vinyl Master',
-      status: PrinterStatus.active,
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-    ),
-    Printer(
-      id: '3',
-      name: 'Roland TrueVIS VG3',
-      nickname: 'Banner Pro',
-      status: PrinterStatus.offline,
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-    ),
-  ];
-
-  final List<String> _materialTypes = [
-    'Vinyl',
-    'Cast Vinyl',
-    'Photo Paper',
-    'Canvas',
-    'Fabric',
-    'Foam Board',
-    'Acrylic',
-    'Mesh',
-    'Clear Film',
-  ];
+  ExpansionTileController _dateTimeExpansionController = ExpansionTileController();
 
   @override
   void initState() {
@@ -609,6 +573,10 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
   }
 
   Widget _buildDurationSlider() {
+
+    final showConfirm = _selectedStartDateTime!=null && _dateTimeExpansionController.isExpanded;
+    final showTime = _selectedStartDateTime!=null && !_dateTimeExpansionController.isExpanded;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -667,6 +635,99 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
+        ),
+        SizedBox(height: 20),
+        Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent, // removes divider
+          ),
+          child: ExpansionTile(
+            controller: _dateTimeExpansionController,
+            dense: true,
+            tilePadding: EdgeInsets.zero,
+            iconColor: Color(0xFFff3b2f),
+            onExpansionChanged: (_) {
+              setState(() {});
+            },
+            trailing: SizedBox(
+              width: 115,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                spacing: 2,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: showConfirm? Color(0xFFff3b2f) : const Color.fromARGB(255, 255, 231, 230),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      showConfirm ? 'Confirm' : (_selectedStartDateTime == null
+                          ? 'Not Set'
+                          : ( '${MONTHS[_selectedStartDateTime!.month - 1]} ${_selectedStartDateTime!.day}, ${_selectedStartDateTime!.hour.toString().padLeft(2, '0')}:${_selectedStartDateTime!.minute.toString().padLeft(2, '0')}')),
+                      style: TextStyle(
+                        fontSize: showTime? 14 : 12,
+                        fontWeight: FontWeight.w700,
+                        color: showConfirm? const Color.fromARGB(255, 255, 231, 230) : Color(0xFFff3b2f),
+                      ),
+                    ),
+                  ),
+                  if (_selectedStartDateTime==null) Transform.rotate(angle: -pi/2, child: Icon(Icons.chevron_left, color: Color(0xFFff3b2f))),
+                ],
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 255, 231, 230),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.calendar_today, color: const Color(0xFFff3b2f), size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  "Start${ !showTime ? " Date & Time" : " Time"}",
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                Spacer(),
+              ],
+            ),
+            children: [
+              SizedBox(
+                width: 350,
+                child: CupertinoCalendar(
+                  onDateTimeChanged: (value) => setState(() => _selectedStartDateTime = value),
+                  minimumDateTime: DateTime.now().subtract(const Duration(days: 1)),
+                  maximumDateTime: DateTime.now().add(const Duration(days: 365)),
+                  initialDateTime: DateTime.now(),
+                  currentDateTime: _selectedStartDateTime,
+                  timeLabel: 'Start Time',
+                  mode: CupertinoCalendarMode.dateTime,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  _selectedStartDateTime = null;
+                  _dateTimeExpansionController.collapse();
+                },
+                child: Text(
+                  'Clear',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: const Color(0xFFff3b2f),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ],
     );
