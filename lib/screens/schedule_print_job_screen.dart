@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/task.dart';
@@ -85,11 +86,15 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
 
     final printers = ref.watch(printerNotifierProvider).printers;
 
+    final projects = ref.watch(projectNotifierProvider);
+
+    final materials = ref.watch(materialNotifierProvider).materials;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(
-          'Schedule Print Job',
+          'Schedule${widget.isDetails? 'd' : ''} Print Job',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -106,33 +111,89 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // 1. Project Selection
-                  _buildSectionCard(
-                    icon: Icons.folder,
-                    iconColor: const Color(0xFF2563EB),
-                    title: 'Project',
-                    child: _buildProjectDropdown(),
+
+                  if (widget.isDetails) Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Print Job Details',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          "Project",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(projects.firstWhere((project)=> project.id==_selectedProjectId).name, style: TextStyle(fontSize: 16, color: Colors.black)),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Material",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(materials.firstWhere((material)=> material.id==_selectedMaterialType).name, style: TextStyle(fontSize: 16, color: Colors.black)),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Runs / Batches",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(_runsController.text),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 16),
+                  if (!widget.isDetails) ...[// 1. Project Selection
+                    _buildSectionCard(
+                      icon: Icons.folder,
+                      iconColor: const Color(0xFF2563EB),
+                      title: 'Project',
+                      child: _buildProjectDropdown(),
+                    ),
 
-                  // 2. Material Selection
-                  _buildSectionCard(
-                    icon: Icons.inventory_2,
-                    iconColor: const Color(0xFF10B981),
-                    title: 'Material',
-                    child: _buildMaterialDropdown(),
-                  ),
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
+                    // 2. Material Selection
+                    _buildSectionCard(
+                      icon: Icons.inventory_2,
+                      iconColor: const Color(0xFF10B981),
+                      title: 'Material',
+                      child: _buildMaterialDropdown(),
+                    ),
 
-                  // 3. Runs/Batches
-                  _buildSectionCard(
-                    icon: Icons.layers,
-                    iconColor: const Color(0xFFF59E0B),
-                    title: 'Runs / Batches',
-                    child: _buildRunsField(),
-                  ),
+                    const SizedBox(height: 16),
+
+                    // 3. Runs/Batches
+                    _buildSectionCard(
+                      icon: Icons.layers,
+                      iconColor: const Color(0xFFF59E0B),
+                      title: 'Runs / Batches',
+                      child: _buildRunsField(),
+                    ),
+                  ],
 
                   const SizedBox(height: 16),
 
@@ -140,8 +201,8 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
                   _buildSectionCard(
                     icon: Icons.print,
                     iconColor: const Color(0xFF9333EA),
-                    title: 'Select Printer',
-                    child: Column(
+                    title: '${widget.isDetails? "" : "Select "}Printer',
+                    child: widget.isDetails? _buildPrinterOption(printers.firstWhere((printer)=> printer.id==_selectedPrinterId)) : Column(
                       children:
                           printers
                               .map((printer) => _buildPrinterOption(printer))
@@ -194,7 +255,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           ),
 
           // Bottom Action Buttons
-          Container(
+          if (!widget.isDetails) Container(
             padding: const EdgeInsets.all(16).copyWith(bottom: 30),
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -441,13 +502,13 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(widget.isDetails? 8 : 16),
         decoration: BoxDecoration(
           color: const Color(0xFFF5F7FA),
           borderRadius: BorderRadius.circular(12),
           border:
               isSelected
-                  ? Border.all(color: const Color(0xFF2563EB), width: 2)
+                  ? Border.all(color: widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : const Color(0xFF2563EB), width: 2)
                   : null,
         ),
         child: Row(
@@ -458,13 +519,13 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               decoration: BoxDecoration(
                 color:
                     isSelected
-                        ? const Color(0xFF2563EB).withOpacity(0.1)
+                        ? (widget.isDetails? const Color.fromARGB(255, 228, 229, 232) : const Color(0xFF2563EB).withOpacity(0.1))
                         : statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.print,
-                color: isSelected ? const Color(0xFF2563EB) : statusColor,
+                color: isSelected ? (widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : const Color(0xFF2563EB)) : statusColor,
                 size: 24,
               ),
             ),
@@ -489,16 +550,16 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: statusColor,
+                          color: widget.isDetails? colorPrimary : statusColor,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isAvailable ? 'Available' : 'Offline',
+                        widget.isDetails? "Printer Assigned" : (isAvailable ? 'Available' : 'Offline'),
                         style: TextStyle(
                           fontSize: 13,
-                          color: statusColor,
+                          color: widget.isDetails? colorPrimary : statusColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -511,8 +572,8 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               Container(
                 width: 24,
                 height: 24,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2563EB),
+                decoration:  BoxDecoration(
+                  color: widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : Color(0xFF2563EB),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 16),
