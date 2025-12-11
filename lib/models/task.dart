@@ -70,7 +70,7 @@ class Task {
     required String name,
     required String description,
     required DateTime? dueDate,
-    required String status,
+    String status = "pending",
     required List<String> assignees,
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],

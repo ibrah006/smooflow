@@ -650,7 +650,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
               setState(() {});
             },
             trailing: SizedBox(
-              width: 115,
+              width: 118,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 spacing: 2,
@@ -706,7 +706,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
                   onDateTimeChanged: (value) => setState(() => _selectedStartDateTime = value),
                   minimumDateTime: DateTime.now().subtract(const Duration(days: 1)),
                   maximumDateTime: DateTime.now().add(const Duration(days: 365)),
-                  initialDateTime: DateTime.now(),
+                  initialDateTime: _selectedStartDateTime?? DateTime.now(),
                   currentDateTime: _selectedStartDateTime,
                   timeLabel: 'Start Time',
                   mode: CupertinoCalendarMode.dateTime,
@@ -873,7 +873,6 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           projectId: _selectedProjectId!,
           productionDuration: Duration(minutes: _estimatedDuration),
           printerId: _selectedPrinterId!,
-          status: "production",
           materialId: _selectedMaterialType!,
           productionStartTime: _selectedStartDateTime)
       );
