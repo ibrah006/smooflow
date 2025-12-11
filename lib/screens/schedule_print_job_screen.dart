@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
@@ -11,9 +12,20 @@ import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
 class ScheduleJobScreen extends ConsumerStatefulWidget {
+  // To use when requested for creating (ScheduleJobScreen constructor) from a specific project
   final String? projectId;
 
-  const ScheduleJobScreen({Key? key, this.projectId}) : super(key: key);
+  ScheduleJobScreen({Key? key, this.projectId}) : super(key: key) {
+    isDetails = false;
+  }
+
+  late final Task task;
+
+  late final bool isDetails;
+
+  ScheduleJobScreen.details({Key? key, this.projectId, required this.task}) : super(key: key) {
+    isDetails = true;
+  }
 
   @override
   ConsumerState<ScheduleJobScreen> createState() => _ScheduleJobScreenState();
@@ -47,6 +59,17 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
     _runsController = TextEditingController(text: '1');
     _notesController = TextEditingController();
     _selectedProjectId = widget.projectId;
+
+    if (widget.isDetails) {
+      // Intialize values on viewing
+      _notesController.text = widget.task.description;
+      _selectedProjectId = widget.task.projectId;
+      _estimatedDuration = widget.task.productionDuration;
+      _selectedPrinterId = widget.task.printerId;
+      _selectedMaterialType = widget.task.materialId;
+      _selectedStartDateTime = widget.task.productionStartTime;
+      _runsController.text = widget.task.runs.toString();
+    }
   }
 
   @override
@@ -152,7 +175,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
                   _buildSectionCard(
                     icon: Icons.schedule,
                     iconColor: const Color(0xFF2563EB),
-                    title: 'Estimated Duration',
+                    title: '${widget.isDetails? "Est." : "Estimated"} Duration & Start Time',
                     child: _buildDurationSlider(),
                   ),
 
@@ -616,6 +639,30 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
       return Column(
         children: [
           ...headerContent,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Start Time',
+                style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFff3b2f).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _selectedStartDateTime.formatDisplay?? "No Schedule",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFff3b2f),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       );
     }
@@ -890,7 +937,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           dueDate: null,
           assignees: [],
           projectId: _selectedProjectId!,
-          productionDuration: Duration(minutes: _estimatedDuration),
+          productionDuration: _estimatedDuration,
           printerId: _selectedPrinterId!,
           materialId: _selectedMaterialType!,
           productionStartTime: _selectedStartDateTime,

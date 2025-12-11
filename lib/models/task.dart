@@ -8,7 +8,7 @@ class Task {
   late String _name;
   late String _description;
   late DateTime? _dueDate;
-  late Duration? _productionDuration;
+  late int? _productionDuration;
   late String _printerId;
   late String _materialId;
   late DateTime? _productionStartTime;
@@ -48,7 +48,7 @@ class Task {
     required DateTime? dateCompleted,
     required this.workActivityLogs,
     required this.updatedAt,
-    required Duration? productionDuration,
+    required int? productionDuration,
     required String printerId,
     required String? materialId,
     required DateTime? productionStartTime,
@@ -78,7 +78,7 @@ class Task {
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],
     required String projectId,
-    required Duration productionDuration,
+    required int productionDuration,
     required String printerId,
     required String materialId,
     required DateTime? productionStartTime,
@@ -115,7 +115,7 @@ class Task {
   DateTime? get dateCompleted => _dateCompleted;
   Color? get color => _color;
   IconData? get icon => _icon;
-  int get productionDuration => _productionDuration?.inMinutes ?? 0;
+  int get productionDuration => _productionDuration ?? 0;
   String get printerId => _printerId;
   String get materialId => _materialId;
   DateTime? get productionStartTime => _productionStartTime;
@@ -178,9 +178,7 @@ class Task {
         (json["workActivityLogs"] as List).map((activityLogJson) {
           return WorkActivityLog.getIdFromJson(activityLogJson);
         }).toList(),
-    productionDuration: json['productionDuration'] != null
-        ? Duration(minutes: json['productionDuration'])
-        : null,
+    productionDuration: json['productionDuration'],
     printerId: json["printerId"],
     materialId: json["materialId"],
     productionStartTime: json["productionStartTime"] != null
@@ -304,7 +302,7 @@ class Task {
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),
       // 'progressLogs': progressLogIds.map((id) => {'id': id}).toList(),
-      'estimatedDuration': _productionDuration?.inMinutes,
+      'estimatedDuration': _productionDuration,
       'printerId': _printerId,
       'materialId': _materialId,
       'productionStartTime': _productionStartTime?.toIso8601String(),

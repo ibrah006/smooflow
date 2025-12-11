@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'dart:async';
 
@@ -313,7 +314,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             iconBg: const Color(0xFFDCE7FE),
                             iconColor: const Color(0xFF2563EB),
                             value: activePrintersCount.toString(),
-                            label: 'All${_selectedSectionIndex==0? "\n" : " "}Printers',
+                            label: 'Active${_selectedSectionIndex==0? "\n" : " "}Printers',
                             indexValue: 0
                           ),
                         ),
@@ -540,185 +541,195 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     final isStarted = task.status.toLowerCase() == "printing";
     final isBlocked = task.status.toLowerCase() == "blocked";
 
-    final scheduleTimeColor = task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now())? Colors.red : Color(0xFF9CA3AF);
-    
-    final isAlert = isBlocked || (task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now())); 
+    final isOverdue = task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now());
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    final scheduleTimeColor = isOverdue? Colors.red : Color(0xFF9CA3AF);
+    
+    final isAlert = isBlocked || isOverdue; 
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: () {
+          AppRoutes.navigateTo(context, AppRoutes.schedulePrintView, arguments: SchedulePrintJobArgs.details(task: task));
+        },
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color:
-                      isAlert
-                          ? const Color(0xFFFEE2E2)
-                          : const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  isAlert ? Icons.block : Icons.arrow_downward,
-                  color:
-                      isAlert
-                          ? const Color(0xFFEF4444)
-                          : const Color(0xFF10B981),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.name,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color:
+                          isAlert
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                    child: Icon(
+                      isBlocked ? Icons.block : isOverdue? Icons.warning_amber_rounded : Icons.arrow_downward,
+                      color:
+                          isAlert
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF10B981),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.schedule_rounded,
-                            size: 15, color: scheduleTimeColor),
                         Text(
-                          task.productionStartTime != null
-                              ? ' ${task.productionStartTime!.eventIn}'
-                              : ' No Start Time',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: scheduleTimeColor,
+                          task.name,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.schedule_rounded,
+                                size: 15, color: scheduleTimeColor),
+                            Text(
+                              task.productionStartTime != null
+                                  ? ' ${task.productionStartTime!.eventIn}${isOverdue? ", Overdue" : ""}'
+                                  : ' No Start Time',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: scheduleTimeColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      isAlert
-                          ? const Color(0xFFFEE2E2)
-                          : const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  isStarted? "Printing" : task.status,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color:
-                        isAlert
-                            ? const Color(0xFFEF4444)
-                            : const Color(0xFF10B981),
                   ),
-                ),
-              ),
-            ],
-          ),
-
-          if (task.status == "printing") ...[
-            const SizedBox(height: 20),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value:
-                    0 /
-                    task.productionDuration,
-                backgroundColor: const Color(0xFFEDF2F7),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFF2563EB),
-                ),
-                minHeight: 8,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '0/${task.productionDuration} min',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                Text(
-                  '${0-task.productionDuration} min left',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          if (task.description.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    size: 18,
-                    color: Color(0xFFEF4444),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isAlert
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Text(
-                      task.description,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFEF4444),
+                      isStarted? "Printing" : task.status,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isAlert
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF10B981),
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              const Icon(
-                Icons.person_outline,
-                size: 16,
-                color: Color(0xFF9CA3AF),
-              ),
-              const SizedBox(width: 6),
-              const Text(
-                'By Ibrahim',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+        
+              if (task.status == "printing") ...[
+                const SizedBox(height: 20),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value:
+                        0 /
+                        task.productionDuration,
+                    backgroundColor: const Color(0xFFEDF2F7),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF2563EB),
+                    ),
+                    minHeight: 8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '0/${task.productionDuration} min',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    Text(
+                      '${0-task.productionDuration} min left',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+        
+              if (task.description.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: Color(0xFFEF4444),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          task.description,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFFEF4444),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+        
+              const SizedBox(height: 16),
+        
+              Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'By Ibrahim',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

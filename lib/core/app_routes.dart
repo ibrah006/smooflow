@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
+import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/printer_screen.dart';
@@ -15,6 +16,7 @@ import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/production_dashboard.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
+import 'package:smooflow/screens/schedule_print_job_screen.dart';
 
 // Auth & Onboarding
 import '../screens/claim_organization_screen.dart';
@@ -105,6 +107,7 @@ class AppRoutes {
 
   static const productionDashboard = '/production';
   static const schedulePrint = '/print-schedule';
+  static const schedulePrintView = '/print-schedule/view';
 
   static const addPrinter = '/printers/add';
   static const printerDetails = '/printers/details';
@@ -343,7 +346,11 @@ class AppRoutes {
           screen = PrinterScreen.details(printer: args);
         }
         break;
-
+      case schedulePrintView:
+        if (args is SchedulePrintJobArgs) {
+          screen = ScheduleJobScreen.details(projectId: args.projectId, task: args.task);
+        }
+        break;
     }
 
     // If screen was determined, create the route
