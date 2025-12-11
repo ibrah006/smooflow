@@ -53,6 +53,7 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
   void dispose() {
     _runsController.dispose();
     _notesController.dispose();
+    // _dateTimeExpansionController.();
     super.dispose();
   }
 
@@ -574,13 +575,8 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
 
   Widget _buildDurationSlider() {
 
-    final showConfirm = _selectedStartDateTime!=null && _dateTimeExpansionController.isExpanded;
-    final showTime = _selectedStartDateTime!=null && !_dateTimeExpansionController.isExpanded;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    final headerContent = [
+      Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
@@ -605,6 +601,29 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           ],
         ),
         const SizedBox(height: 16),
+    ];
+    
+    late final bool showConfirm;
+    late final bool showTime;
+    try {
+      showConfirm = _selectedStartDateTime!=null && _dateTimeExpansionController.isExpanded;
+      showTime = _selectedStartDateTime!=null && !_dateTimeExpansionController.isExpanded;
+    } catch(e) {
+      showConfirm = false;
+      showTime = false;
+      print('error caught: $e');
+
+      return Column(
+        children: [
+          ...headerContent,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...headerContent,
         SliderTheme(
           data: SliderThemeData(
             activeTrackColor: const Color(0xFF2563EB),
@@ -874,7 +893,9 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
           productionDuration: Duration(minutes: _estimatedDuration),
           printerId: _selectedPrinterId!,
           materialId: _selectedMaterialType!,
-          productionStartTime: _selectedStartDateTime)
+          productionStartTime: _selectedStartDateTime,
+            runs: int.tryParse(_runsController.text) ?? 1,
+        )
       );
 
       Navigator.pop(context);

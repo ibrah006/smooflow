@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
@@ -538,7 +539,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
     final isStarted = task.status.toLowerCase() == "printing";
     final isBlocked = task.status.toLowerCase() == "blocked";
+
+    final scheduleTimeColor = task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now())? Colors.red : Color(0xFF9CA3AF);
     
+    final isAlert = isBlocked || (task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now())); 
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -556,15 +561,15 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                 height: 48,
                 decoration: BoxDecoration(
                   color:
-                      isBlocked
+                      isAlert
                           ? const Color(0xFFFEE2E2)
                           : const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  isBlocked ? Icons.block : Icons.arrow_downward,
+                  isAlert ? Icons.block : Icons.arrow_downward,
                   color:
-                      isBlocked
+                      isAlert
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF10B981),
                   size: 24,
@@ -584,12 +589,20 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '4 days ago',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF9CA3AF),
-                      ),
+                    Row(
+                      children: [
+                        Icon(Icons.schedule_rounded,
+                            size: 15, color: scheduleTimeColor),
+                        Text(
+                          task.productionStartTime != null
+                              ? ' ${task.productionStartTime!.eventIn}'
+                              : ' No Start Time',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: scheduleTimeColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -601,7 +614,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                 ),
                 decoration: BoxDecoration(
                   color:
-                      isBlocked
+                      isAlert
                           ? const Color(0xFFFEE2E2)
                           : const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(12),
@@ -612,7 +625,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color:
-                        isBlocked
+                        isAlert
                             ? const Color(0xFFEF4444)
                             : const Color(0xFF10B981),
                   ),
