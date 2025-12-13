@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/hawk_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/material_stock_transaction_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/models/material.dart';
 import 'dart:async';
 
 import 'package:smooflow/models/printer.dart';
@@ -126,6 +128,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
       await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
       await ref.watch(taskNotifierProvider.notifier).loadAll();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
     });
   }
 
@@ -146,6 +149,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
 
     final tasks = ref.watch(taskNotifierProvider);
+
+    final materials = ref.watch(materialNotifierProvider).materials;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -369,7 +374,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         (printer) => _buildPrinterCard(printer),
                       ),
                     ] else if (_selectedSectionIndex == 1) 
-                      ...tasks.map((task) => _buildJobCard(task)).toList(),
+                      ...tasks.map((task) => _buildJobCard(task)).toList()
+                    else ...materials.map((material)=> _buildMaterialCard(material)),
 
                     const SizedBox(height: 24),
 
@@ -388,33 +394,33 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     const SizedBox(height: 24),
 
                     // Material Alerts
-                    const Text(
-                      'Material Status',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildMaterialCard(
-                      'Cast Vinyl',
-                      '15 rolls',
-                      'Low Stock',
-                      const Color(0xFFF59E0B),
-                    ),
-                    _buildMaterialCard(
-                      'Banner Material',
-                      '8 rolls',
-                      'Critical',
-                      const Color(0xFFEF4444),
-                    ),
-                    _buildMaterialCard(
-                      'Photo Paper',
-                      '42 rolls',
-                      'Good',
-                      const Color(0xFF10B981),
-                    ),
+                    // const Text(
+                    //   'Material Status',
+                    //   style: TextStyle(
+                    //     fontSize: 20,
+                    //     fontWeight: FontWeight.w700,
+                    //     color: Colors.black,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
+                    // _buildMaterialCard(
+                    //   'Cast Vinyl',
+                    //   '15 rolls',
+                    //   'Low Stock',
+                    //   const Color(0xFFF59E0B),
+                    // ),
+                    // _buildMaterialCard(
+                    //   'Banner Material',
+                    //   '8 rolls',
+                    //   'Critical',
+                    //   const Color(0xFFEF4444),
+                    // ),
+                    // _buildMaterialCard(
+                    //   'Photo Paper',
+                    //   '42 rolls',
+                    //   'Good',
+                    //   const Color(0xFF10B981),
+                    // ),
 
                     const SizedBox(height: 100), // Bottom padding for FAB
                   ],
@@ -902,70 +908,83 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   }
 
   Widget _buildMaterialCard(
-    String name,
-    String stock,
-    String status,
-    Color color,
+    MaterialModel material
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.inventory_2, color: color, size: 28),
+
+    final name = material.name;
+    final stock = "${material.currentStock} ${material.unit}";
+    final status = material.stockStatus;
+    final color = material.stockStatusColor;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () {
+          AppRoutes.navigateTo(
+            context, AppRoutes.materialTransactions,
+            arguments: MaterialStockTransactionArgs(materialId: material.id)
+          );
+        },
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  stock,
+                child: Icon(Icons.inventory_2, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      stock,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  status,
                   style: TextStyle(
                     fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: color,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              status,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

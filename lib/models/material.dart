@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:smooflow/services/login_service.dart';
 
 enum MeasureType {
@@ -155,14 +156,34 @@ class MaterialModel {
   bool get isLowStock => currentStock < minStockLevel;
   bool get isCriticalStock => currentStock <= 0;
 
+  String get stockStatus {
+    if (isLowStock) {
+      return "Low Stock";
+    } else if (isCriticalStock) {
+      return "Critical";
+    } else {
+      return "Good";
+    }
+  }
+
+  Color get stockStatusColor {
+    if (isLowStock) {
+      return Color(0xFFF59E0B);
+    } else if (isCriticalStock) {
+      return Color(0xFFEF4444);
+    } else {
+      return Color(0xFF10B981);
+    }
+  }
+
   String get unit {
     switch (measureType) {
       case MeasureType.running_meter:
-        return "meters";
+        return currentStock==1? "meter" : "meters";
       case MeasureType.item_quantity:
-        return "units";
+        return currentStock==1? "unit" : "units";
       case MeasureType.kilograms:
-        return "kgs";
+        return "KG";
       case MeasureType.liters:
         MeasureType.liters.name;
       default:

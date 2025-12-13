@@ -1,13 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:loading_overlay/loading_overlay.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/components/product_barcode.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/material.dart';
