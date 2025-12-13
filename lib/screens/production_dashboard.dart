@@ -925,6 +925,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             arguments: MaterialStockTransactionArgs(materialId: material.id)
           );
         },
+        borderRadius: BorderRadius.circular(20),
         child: Ink(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
