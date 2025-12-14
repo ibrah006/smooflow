@@ -325,7 +325,7 @@ class AppRoutes {
       case viewProject:
         if (args is ProjectArgs) {
           // screen = AddProjectScreen.view(projectId: args.projectId);
-          screen = ProjectScreen();
+          screen = ProjectScreen(projectId: args.projectId);
         }
         break;
       case inviteMember:

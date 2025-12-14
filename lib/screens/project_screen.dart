@@ -18,7 +18,10 @@ enum ProgressStatus {
 }
 
 class ProjectScreen extends StatefulWidget {
-  const ProjectScreen({Key? key}) : super(key: key);
+
+  final String projectId;
+
+  const ProjectScreen({Key? key, required this.projectId}) : super(key: key);
 
   @override
   State<ProjectScreen> createState() => _ProjectScreenState();
