@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/models/company.dart';
 
 import 'user.dart';
@@ -32,6 +31,16 @@ class Project {
   }
 
   String get status => _status;
+
+  // To ensure toSet gives no duplicates
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Project &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+  @override
+  int get hashCode => id.hashCode;
 
   // You can add computed/derived fields here as needed
   // e.g., double? projectEfficiency;
@@ -153,7 +162,7 @@ class Project {
   }
 
   // Only local data
-  late double progressRate;
+  double progressRate = 0;
 
   Color get statusColor {
     switch (_status) {

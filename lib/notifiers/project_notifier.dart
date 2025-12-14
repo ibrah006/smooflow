@@ -185,6 +185,8 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
       projectsOverallStatus.activeLength = result['activeLength'] as int;
       projectsOverallStatus.pendingLength = result['pendingLength'] as int;
       projectsOverallStatus.finishedLength = result['finishedLength'] as int;
+
+      state = {...state, ...activeProjects}.toList();
     } catch (e) {
       // ignore errors for now; caller can handle
       print("Error fetching projects overall status: $e");

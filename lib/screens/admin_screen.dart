@@ -5,6 +5,9 @@ import 'dart:async';
 
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/project_args.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
@@ -461,46 +464,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         const SizedBox(height: 16),
 
         ...activeProjects.map((activeProject)=> _buildProjectCard(
-              name: activeProject.name,
-              client: activeProject.client.name,
-              progress: activeProject.progressRate,
-              dueDate: activeProject.dueDate != null
-                  ? 'Due in ${activeProject.dueDate!.difference(DateTime.now()).inDays} days'
-                  : 'No due date',
-              team: activeProject.assignedManagers.length,
+              project: activeProject
             )),
-
-        _buildProjectCard(
-          name: 'ABC Corp - Storefront Signage',
-          client: 'ABC Corporation',
-          progress: 0.65,
-          dueDate: 'Due in 3 days',
-          team: 5,
-        ),
-
-        _buildProjectCard(
-          name: 'XYZ Ltd - Vehicle Wraps',
-          client: 'XYZ Limited',
-          progress: 0.40,
-          dueDate: 'Due in 5 days',
-          team: 3,
-        ),
-
-        _buildProjectCard(
-          name: 'Local Cafe - Menu Boards',
-          client: 'Local Cafe',
-          progress: 0.85,
-          dueDate: 'Due tomorrow',
-          team: 4,
-        ),
-
-        _buildProjectCard(
-          name: 'Mall Kiosk - Signage Package',
-          client: 'Shopping Mall',
-          progress: 0.20,
-          dueDate: 'Due in 1 week',
-          team: 2,
-        ),
 
         const SizedBox(height: 80),
       ],
@@ -923,83 +888,99 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildProjectCard({
-    required String name,
-    required String client,
-    required double progress,
-    required String dueDate,
-    required int team,
+    required Project project
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+
+    final name = project.name;
+    final client = project.client.name;
+    final progress = project.progressRate;
+    final dueDate = project.dueDate != null
+        ? project.dueDate!.eventIn
+        : 'No due date';
+    final team = project.assignedManagers.length;
+
+    final isOverdue = project.dueDate!=null? DateTime.now().isAfter(project.dueDate!) : false;
+    final dueTextColor = isOverdue? const Color(0xFFEF4444) : const Color(0xFF94A3B8);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          AppRoutes.navigateTo(context, AppRoutes.viewProject, arguments: ProjectArgs(projectId: project.id));
+        },
         borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
           ),
-          const SizedBox(height: 4),
-          Text(
-            client,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: const Color(0xFFF1F5F9),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2563EB),
-              ),
-              minHeight: 6,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.schedule_rounded,
-                size: 14,
-                color: Color(0xFF94A3B8),
-              ),
-              const SizedBox(width: 6),
               Text(
-                dueDate,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-              const SizedBox(width: 16),
-              const Icon(
-                Icons.people_rounded,
-                size: 14,
-                color: Color(0xFF94A3B8),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '$team',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-              const Spacer(),
-              Text(
-                '${(progress * 100).toInt()}%',
+                name,
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2563EB),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
                 ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                client,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF2563EB),
+                  ),
+                  minHeight: 6,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 14,
+                    color: dueTextColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    dueDate,
+                    style: TextStyle(fontSize: 12, color: dueTextColor),
+                  ),
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.people_rounded,
+                    size: 14,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$team',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${(progress * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

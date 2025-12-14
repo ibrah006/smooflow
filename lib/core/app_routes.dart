@@ -16,6 +16,7 @@ import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/production_dashboard.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
+import 'package:smooflow/screens/project_screen.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
 
 // Auth & Onboarding
@@ -323,7 +324,8 @@ class AppRoutes {
         break;
       case viewProject:
         if (args is ProjectArgs) {
-          screen = AddProjectScreen.view(projectId: args.projectId);
+          // screen = AddProjectScreen.view(projectId: args.projectId);
+          screen = ProjectScreen();
         }
         break;
       case inviteMember:
