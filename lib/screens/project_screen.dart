@@ -1,5 +1,13 @@
 // lib/screens/project/project_details_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/priorities.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/models/company.dart';
+import 'package:smooflow/models/project.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/repositories/company_repo.dart';
 
 enum ProjectStage {
   planning,
@@ -17,22 +25,24 @@ enum ProgressStatus {
   inProgress,
 }
 
-class ProjectScreen extends StatefulWidget {
+class ProjectScreen extends ConsumerStatefulWidget {
 
   final String projectId;
 
   const ProjectScreen({Key? key, required this.projectId}) : super(key: key);
 
   @override
-  State<ProjectScreen> createState() => _ProjectScreenState();
+  ConsumerState<ProjectScreen> createState() => _ProjectScreenState();
 }
 
-class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProviderStateMixin {
+class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedJobFilter = 'All';
   
   // Mock data
   final List<String> _availableJobStages = ['planning', 'design', 'production', 'finishing'];
+
+  late final Company clientCompany;
   
   final List<Map<String, dynamic>> _progressLogs = [
     {
@@ -106,6 +116,14 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
     _tabController = TabController(length: 3, vsync: this);
   }
 
+  void initializeClientCompany(String clientId) {
+    try {
+    clientCompany = CompanyRepo.companies.firstWhere((company)=> company.id == clientId);
+    } catch(e) {
+      // already initialized
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -114,6 +132,14 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+
+    final project = ref.watch(projectByIdProvider(widget.projectId))!;
+
+    final name = project.name;
+    final status = project.status;
+
+    initializeClientCompany(project.client.id);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -141,12 +167,12 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'ABC Corp - Signage',
+                              name,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
@@ -211,7 +237,7 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildInformationTab(),
+                _buildInformationTab(project),
                 _buildProgressTab(),
                 _buildJobsTab(),
               ],
@@ -222,7 +248,14 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildInformationTab() {
+  Widget _buildInformationTab(Project project) {
+    final status = project.status;
+    var priority = PriorityLevel.values.elementAt(project.priority).name;
+    priority = priority[0].toUpperCase() + priority.substring(1);
+
+    final startDate = project.estimatedProductionStart;
+    final dueDate = project.dueDate; 
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -251,13 +284,13 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
                   color: const Color(0xFF2563EB).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.print, color: Color(0xFF2563EB), size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Production',
+                      "${status[0].toUpperCase()}${status.substring(1)}",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -293,13 +326,13 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
               ),
               const SizedBox(height: 20),
               
-              _buildInfoRow('Client', 'ABC Corporation'),
+              _buildInfoRow('Client', clientCompany.name),
               const SizedBox(height: 16),
-              _buildInfoRow('Priority', 'High', isHighlighted: true),
+              _buildInfoRow('Priority', priority, isHighlighted: true),
               const SizedBox(height: 16),
-              _buildInfoRow('Start Date', 'Dec 1, 2025'),
+              if (startDate != null) _buildInfoRow('Start Date', startDate.formatDisplay!),
               const SizedBox(height: 16),
-              _buildInfoRow('End Date', 'Dec 15, 2025'),
+              if (dueDate != null) _buildInfoRow('End Date', dueDate.formatDisplay!),
             ],
           ),
         ),
@@ -307,7 +340,7 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
         const SizedBox(height: 16),
         
         // Description Card
-        Container(
+        if (project.description!=null && project.description!.isNotEmpty) Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -325,8 +358,8 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Complete storefront signage package including main exterior sign, window decals, and interior directional signage. All materials to be weather-resistant and meet local regulations.',
+              Text(
+                project.description!,
                 style: TextStyle(
                   fontSize: 15,
                   color: Color(0xFF6B7280),
@@ -420,12 +453,15 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
         // Filter Chips
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildJobFilterChip('All'),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: _buildJobFilterChip('All'),
+                ),
                 ..._availableJobStages.map((stage) => 
                   _buildJobFilterChip(_capitalizeFirst(stage))
                 ),
@@ -746,7 +782,7 @@ class _ProjectScreenState extends State<ProjectScreen> with SingleTickerProvider
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.black : const Color(0xFFF5F7FA),
+            color: isSelected ? colorPrimary : const Color(0xFFF5F7FA),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
