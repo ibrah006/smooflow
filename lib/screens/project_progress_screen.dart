@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/add_project_progress_args.dart';
 import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/progress_log.dart';
@@ -482,8 +483,13 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
             child: Padding(
               padding: const EdgeInsets.only(bottom: 32),
               child: MaterialButton(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 onPressed: () {
-                  AppRoutes.navigateTo(context, AppRoutes.addProjectProgressView);
+                  AppRoutes.navigateTo(
+                    context,
+                    AppRoutes.addProjectProgressView,
+                    arguments: AddProjectProgressArgs.view(progressLog: progressLog, projectId: widget.projectId)
+                  );
                 },
                 child: Ink(
                   padding: const EdgeInsets.all(20),
