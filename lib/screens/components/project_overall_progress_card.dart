@@ -80,6 +80,10 @@ class ProjectOverallProgressCard extends StatelessWidget {
                         letterSpacing: -0.5,
                       ),
                     ),
+                    if (onPressed != null) ...[
+                      SizedBox(width: 3),
+                      Icon(Icons.chevron_right_rounded)
+                    ]
                   ],
                 ),
                 const SizedBox(height: 16),

@@ -194,7 +194,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
           ),
         ),
         
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         
         // Basic Information Card
         Container(
@@ -227,41 +227,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
             ],
           ),
         ),
-        
-        const SizedBox(height: 16),
-        
-        // Description Card
-        if (project.description!=null && project.description!.isNotEmpty) Container(
-          padding: const EdgeInsets.all(24),
-          margin: EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Description',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                project.description!,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 8),
+        const SizedBox(height: 20),
         ProjectOverallProgressCard(
           margin: EdgeInsets.symmetric(horizontal: 4),
           heroKey: kOverallProgressHeroKey,
@@ -269,6 +235,40 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
             AppRoutes.navigateTo(context, AppRoutes.projectProgress, arguments: ProjectArgs(projectId: widget.projectId));
           }
         ),
+        // Description Card
+        if (project.description!=null && project.description!.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(24),
+            margin: EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Description',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  project.description!,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF6B7280),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
       ],
     );
   }

@@ -1,11 +1,13 @@
 // lib/screens/project_progress_log_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'dart:async';
 
 import 'package:smooflow/screens/components/project_overall_progress_card.dart';
 
-class ProjectProgressLogScreen extends StatefulWidget {
+class ProjectProgressLogScreen extends ConsumerStatefulWidget {
   final String projectId;
   
   const ProjectProgressLogScreen({
@@ -14,10 +16,10 @@ class ProjectProgressLogScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ProjectProgressLogScreen> createState() => _ProjectProgressLogScreenState();
+  ConsumerState<ProjectProgressLogScreen> createState() => _ProjectProgressLogScreenState();
 }
 
-class _ProjectProgressLogScreenState extends State<ProjectProgressLogScreen>
+class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedJobFilter = 'all';
@@ -43,6 +45,10 @@ class _ProjectProgressLogScreenState extends State<ProjectProgressLogScreen>
 
   @override
   Widget build(BuildContext context) {
+
+    final project = ref.watch(projectByIdProvider(widget.projectId))!;
+    final appbarSubTitle = "${project.client.name} - ${project.name}";
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
@@ -52,7 +58,7 @@ class _ProjectProgressLogScreenState extends State<ProjectProgressLogScreen>
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -65,7 +71,7 @@ class _ProjectProgressLogScreenState extends State<ProjectProgressLogScreen>
               ),
             ),
             Text(
-              'ABC Corp - Storefront',
+              appbarSubTitle,
               style: TextStyle(
                 fontSize: 13,
                 color: Color(0xFF64748B),
