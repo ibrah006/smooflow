@@ -13,22 +13,6 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/screens/components/project_overall_progress_card.dart';
 
-enum ProjectStage {
-  planning,
-  design,
-  production,
-  finishing,
-  application,
-  finished,
-  cancelled,
-}
-
-enum ProgressStatus {
-  completed,
-  issue,
-  inProgress,
-}
-
 class ProjectScreen extends ConsumerStatefulWidget {
   final String projectId;
 

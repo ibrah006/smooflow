@@ -14,6 +14,9 @@ import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/components/project_overall_progress_card.dart';
+import 'package:smooflow/screens/components/task_status_indicator_help_dialog.dart';
+import '../../enums/progress_status.dart';
+import '../../enums/project_stage.dart';
 
 class ProjectProgressLogScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -103,6 +106,13 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              TaskStatusIndicatorDialog.show(context);
+            },
+            icon: Icon(Icons.info_outline_rounded))
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(49),
           child: Container(
@@ -712,24 +722,6 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
       ),
     );
   }
-}
-
-// Models
-enum ProgressStatus {
-  completed,
-  issues,
-  inProgress,
-  pending,
-}
-
-enum ProjectStage {
-  planning,
-  design,
-  production,
-  finishing,
-  application,
-  finished,
-  cancelled,
 }
 
 class JobItem {
