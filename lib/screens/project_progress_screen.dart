@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
@@ -28,9 +30,6 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedJobFilter = 'All';
-  
-  // Moved from ProjectScreen
-  final List<String> _availableJobStages = ['planning', 'design', 'production', 'finishing'];
 
   late List<ProgressLog> progressLogs;
 
@@ -185,10 +184,21 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
 
   // Moved from ProjectScreen
   Widget _buildJobsTab() {
+    // All unique progress log stages for this project - uniqie in terms of the status name
+    // Don't include 'All' filter here
+
+    final List<String> _availableJobStages = [];
+    for (ProgressLog log in progressLogs) {
+      if (!_availableJobStages.contains(log.status.name)) {
+        _availableJobStages.add(log.status.name);
+      }
+    }
+    
     return Column(
       children: [
         // Filter Chips
         Container(
+          width: MediaQuery.of(context).size.width,
           color: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: SingleChildScrollView(
@@ -196,7 +206,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
             child: Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
+                  padding: const EdgeInsets.only(left: 15),
                   child: _buildJobFilterChip('All'),
                 ),
                 ..._availableJobStages.map((stage) =>
@@ -245,63 +255,70 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   }
 
   // Moved from ProjectScreen
-  Widget _buildJobCard(Task job) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          _buildStatusCircle(job.status, size: 40),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  job.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+  Widget _buildJobCard(Task task) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          AppRoutes.navigateTo(context, AppRoutes.task, arguments: TaskArgs(task.id));
+        },
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              _buildStatusCircle(task.status, size: 40),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.person, size: 14, color: Color(0xFF9CA3AF)),
-                    const SizedBox(width: 6),
-                    // Text(
-                    //   job['assignee'],
-                    //   style: const TextStyle(
-                    //     fontSize: 13,
-                    //     color: Color(0xFF9CA3AF),
-                    //   ),
-                    // ),
+                    Text(
+                      task.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.person, size: 14, color: Color(0xFF9CA3AF)),
+                        const SizedBox(width: 6),
+                        // Text(
+                        //   job['assignee'],
+                        //   style: const TextStyle(
+                        //     fontSize: 13,
+                        //     color: Color(0xFF9CA3AF),
+                        //   ),
+                        // ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7FA),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _getStageLabel(job),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FA),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _getStageLabel(task),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
