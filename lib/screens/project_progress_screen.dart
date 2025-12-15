@@ -150,7 +150,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
       padding: const EdgeInsets.all(24),
       children: [
         // Project Overview Card
-        ProjectOverallProgressCard(heroKey: kOverallProgressHeroKey),
+        ProjectOverallProgressCard(projectId: widget.projectId, heroKey: kOverallProgressHeroKey),
 
         const SizedBox(height: 32),
 

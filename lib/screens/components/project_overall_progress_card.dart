@@ -1,23 +1,41 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/status.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 
 // Project Overall Progress Card
-class ProjectOverallProgressCard extends StatelessWidget {
+class ProjectOverallProgressCard extends ConsumerWidget {
   final String? heroKey;
 
   final Function()? onPressed;
   final EdgeInsetsGeometry? margin;
 
+  final String projectId;
+
   const ProjectOverallProgressCard({
     super.key,
     this.heroKey,
     this.onPressed,
-    this.margin
+    this.margin,
+    required this.projectId
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+
+    final progressLogs = ref.watch(
+      progressLogsByProjectProviderSimple(projectId),
+    );
+
+    final totalStagesCount = progressLogs.length;
+
+    final stagesCompltedCount = progressLogs.where((log) {
+      return log.status == Status.finished;
+    }).length;
+
+    final stageCompletionPercent = totalStagesCount==0? 0.0 : (stagesCompltedCount/totalStagesCount);
 
     final child = Padding(
       padding: margin?? EdgeInsets.zero,
@@ -48,7 +66,7 @@ class ProjectOverallProgressCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -62,7 +80,7 @@ class ProjectOverallProgressCard extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            '4 of 6 stages completed',
+                            '$stagesCompltedCount of $totalStagesCount stages completed',
                             style: TextStyle(
                               fontSize: 13,
                               color: Color(0xFF64748B),
@@ -71,8 +89,8 @@ class ProjectOverallProgressCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Text(
-                      '67%',
+                    Text(
+                      '${(stageCompletionPercent*100).toInt()}%',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -89,8 +107,8 @@ class ProjectOverallProgressCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: const LinearProgressIndicator(
-                    value: 0.67,
+                  child: LinearProgressIndicator(
+                    value: stageCompletionPercent,
                     backgroundColor: Color(0xFFF1F5F9),
                     valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
                     minHeight: 8,

@@ -236,6 +236,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
         ),
         const SizedBox(height: 20),
         ProjectOverallProgressCard(
+          projectId: widget.projectId,
           margin: EdgeInsets.symmetric(horizontal: 4),
           heroKey: kOverallProgressHeroKey,
           onPressed: () {
