@@ -163,7 +163,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                         Row(
                           spacing: 7,
                           children: [
-                            Icon(Icons.description_outlined),
+                            Icon(Icons.assignment_turned_in),
                             Text(
                               "Job Status",
                               style: textTheme.titleMedium!.copyWith(
