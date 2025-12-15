@@ -35,40 +35,6 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   late List<ProgressLog> progressLogs;
 
   bool _isLoading = true;
-  
-  // Moved from ProjectScreen - Mock data
-  final List<Map<String, dynamic>> _allJobs = [
-    {
-      'name': 'Initial consultation',
-      'stage': ProjectStage.planning,
-      'assignee': 'John Doe',
-      'status': ProgressStatus.completed,
-    },
-    {
-      'name': 'Concept design',
-      'stage': ProjectStage.design,
-      'assignee': 'Sarah Smith',
-      'status': ProgressStatus.completed,
-    },
-    {
-      'name': 'Client approval',
-      'stage': ProjectStage.design,
-      'assignee': 'Sarah Smith',
-      'status': ProgressStatus.issues,
-    },
-    {
-      'name': 'Printing banners',
-      'stage': ProjectStage.production,
-      'assignee': 'Mike Johnson',
-      'status': ProgressStatus.inProgress,
-    },
-    {
-      'name': 'Lamination',
-      'stage': ProjectStage.finishing,
-      'assignee': 'Lisa Chen',
-      'status': ProgressStatus.inProgress,
-    },
-  ];
 
   @override
   void initState() {
