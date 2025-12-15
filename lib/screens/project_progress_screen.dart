@@ -1,15 +1,19 @@
 // lib/screens/project_progress_log_screen.dart
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'dart:async';
-
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/components/project_overall_progress_card.dart';
 
 class ProjectProgressLogScreen extends ConsumerStatefulWidget {
   final String projectId;
-  
+
   const ProjectProgressLogScreen({
     Key? key,
     required this.projectId,
@@ -22,19 +26,68 @@ class ProjectProgressLogScreen extends ConsumerStatefulWidget {
 class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedJobFilter = 'all';
-  final List<String> _availableFilters = [
-    'all',
-    'planning',
-    'design',
-    'production',
-    'finishing',
+  String _selectedJobFilter = 'All';
+  
+  // Moved from ProjectScreen
+  final List<String> _availableJobStages = ['planning', 'design', 'production', 'finishing'];
+
+  late List<ProgressLog> progressLogs;
+
+  bool _isLoading = true;
+  
+  // Moved from ProjectScreen - Mock data
+  final List<Map<String, dynamic>> _allJobs = [
+    {
+      'name': 'Initial consultation',
+      'stage': ProjectStage.planning,
+      'assignee': 'John Doe',
+      'status': ProgressStatus.completed,
+    },
+    {
+      'name': 'Concept design',
+      'stage': ProjectStage.design,
+      'assignee': 'Sarah Smith',
+      'status': ProgressStatus.completed,
+    },
+    {
+      'name': 'Client approval',
+      'stage': ProjectStage.design,
+      'assignee': 'Sarah Smith',
+      'status': ProgressStatus.issues,
+    },
+    {
+      'name': 'Printing banners',
+      'stage': ProjectStage.production,
+      'assignee': 'Mike Johnson',
+      'status': ProgressStatus.inProgress,
+    },
+    {
+      'name': 'Lamination',
+      'stage': ProjectStage.finishing,
+      'assignee': 'Lisa Chen',
+      'status': ProgressStatus.inProgress,
+    },
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    Future.microtask(() {
+      ref
+          .read(
+            progressLogsByProjectProvider(
+              ProgressLogsByProviderArgs(widget.projectId),
+            ),
+          )
+          .then((updatedFromDatabase) {
+            progressLogs = updatedFromDatabase.progressLogs;
+
+            _isLoading = false;
+            setState(() {});
+          });
+    });
   }
 
   @override
@@ -45,9 +98,12 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
 
   @override
   Widget build(BuildContext context) {
-
     final project = ref.watch(projectByIdProvider(widget.projectId))!;
     final appbarSubTitle = "${project.client.name} - ${project.name}";
+
+    progressLogs = ref.watch(
+      progressLogsByProjectProviderSimple(widget.projectId),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -117,7 +173,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
         controller: _tabController,
         children: [
           _buildTimelineTab(),
-          _buildJobsTab(),
+          _buildJobsTab(), // This now uses the moved code
         ],
       ),
     );
@@ -144,172 +200,242 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
 
         const SizedBox(height: 20),
 
-        // Timeline Items
-        _buildTimelineItem(
-          stage: 'Planning',
-          date: 'Dec 1, 2025',
-          status: ProgressStatus.completed,
-          description: 'Project scope and requirements defined',
-          jobs: [
-            JobItem('Client meeting', true),
-            JobItem('Scope definition', true),
-            JobItem('Budget approval', true),
-          ],
-          isFirst: true,
-        ),
-
-        _buildTimelineItem(
-          stage: 'Design',
-          date: 'Dec 3, 2025',
-          status: ProgressStatus.completed,
-          description: 'Design mockups created and approved',
-          jobs: [
-            JobItem('Initial concepts', true),
-            JobItem('Client review', true),
-            JobItem('Final approval', true),
-          ],
-        ),
-
-        _buildTimelineItem(
-          stage: 'Production',
-          date: 'Dec 5, 2025',
-          status: ProgressStatus.issues,
-          description: 'Material shortage causing delay',
-          jobs: [
-            JobItem('Material preparation', true),
-            JobItem('Printing', false, hasIssue: true),
-            JobItem('Quality check', false),
-          ],
-        ),
-
-        _buildTimelineItem(
-          stage: 'Finishing',
-          date: 'Pending',
-          status: ProgressStatus.pending,
-          description: 'Waiting for production completion',
-          jobs: [
-            JobItem('Trimming', false),
-            JobItem('Lamination', false),
-          ],
-        ),
-
-        _buildTimelineItem(
-          stage: 'Application',
-          date: 'Pending',
-          status: ProgressStatus.pending,
-          description: 'On-site installation scheduled',
-          jobs: [
-            JobItem('Site preparation', false),
-            JobItem('Installation', false),
-          ],
-        ),
-
-        _buildTimelineItem(
-          stage: 'Completed',
-          date: 'Expected: Dec 14',
-          status: ProgressStatus.pending,
-          description: 'Final delivery and sign-off',
-          jobs: [
-            JobItem('Final inspection', false),
-            JobItem('Client handover', false),
-          ],
-          isLast: true,
-        ),
+        if (_isLoading) CardLoading(
+          height: 100,
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+          margin: EdgeInsets.only(bottom: 10),
+        ) else if (progressLogs.isNotEmpty) ...progressLogs.map((progressLog)=> 
+          // Timeline Items
+          _buildTimelineItem(progressLog)
+        )
+        // No Progress Logs to display
+        else HelpTimeline(projectId: widget.projectId),
 
         const SizedBox(height: 80),
       ],
     );
   }
 
+  // Moved from ProjectScreen
   Widget _buildJobsTab() {
     return Column(
       children: [
         // Filter Chips
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           color: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _availableFilters.map((filter) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildFilterChip(filter),
-                );
-              }).toList(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: _buildJobFilterChip('All'),
+                ),
+                ..._availableJobStages.map((stage) =>
+                    _buildJobFilterChip(_capitalizeFirst(stage))),
+              ],
             ),
           ),
         ),
 
-        const Divider(height: 1, color: Color(0xFFF1F5F9)),
-
         // Jobs List
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              _buildJobCard(
-                title: 'Client meeting',
-                stage: 'Planning',
-                status: ProgressStatus.completed,
-                assignee: 'Ibrahim',
-                dueDate: 'Dec 1',
-                description: 'Initial project discussion and requirements gathering',
-              ),
-
-              _buildJobCard(
-                title: 'Design mockups',
-                stage: 'Design',
-                status: ProgressStatus.completed,
-                assignee: 'Muhammad Fazaldeen',
-                dueDate: 'Dec 3',
-                description: 'Create initial design concepts',
-              ),
-
-              _buildJobCard(
-                title: 'Material preparation',
-                stage: 'Production',
-                status: ProgressStatus.completed,
-                assignee: 'Ahmed Ali',
-                dueDate: 'Dec 5',
-                description: 'Prepare vinyl and substrate materials',
-              ),
-
-              _buildJobCard(
-                title: 'Large format printing',
-                stage: 'Production',
-                status: ProgressStatus.issues,
-                assignee: 'Ahmed Ali',
-                dueDate: 'Dec 7',
-                description: 'Print on 3M vinyl - Material shortage issue',
-              ),
-
-              _buildJobCard(
-                title: 'Lamination',
-                stage: 'Finishing',
-                status: ProgressStatus.pending,
-                assignee: 'Sarah Johnson',
-                dueDate: 'Dec 9',
-                description: 'Apply protective laminate',
-              ),
-
-              const SizedBox(height: 60),
-            ],
+            padding: const EdgeInsets.all(20),
+            children: _getFilteredJobs().map((job) => _buildJobCard(job)).toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTimelineItem({
-    required String stage,
-    required String date,
-    required ProgressStatus status,
-    required String description,
-    required List<JobItem> jobs,
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
+  // Moved from ProjectScreen
+  Widget _buildJobFilterChip(String label) {
+    final isSelected = _selectedJobFilter == label;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: () => setState(() => _selectedJobFilter = label),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? colorPrimary : const Color(0xFFF5F7FA),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : const Color(0xFF9CA3AF),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Moved from ProjectScreen
+  Widget _buildJobCard(Map<String, dynamic> job) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          _buildStatusCircle(job['status'], size: 40),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job['name'],
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.person, size: 14, color: Color(0xFF9CA3AF)),
+                    const SizedBox(width: 6),
+                    Text(
+                      job['assignee'],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _getStageLabel(job['stage']),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Moved from ProjectScreen
+  List<Map<String, dynamic>> _getFilteredJobs() {
+    if (_selectedJobFilter == 'All') {
+      return _allJobs;
+    }
+
+    return _allJobs.where((job) {
+      return _getStageLabel(job['stage']).toLowerCase() == _selectedJobFilter.toLowerCase();
+    }).toList();
+  }
+
+  // Moved from ProjectScreen
+  String _getStageLabel(ProjectStage stage) {
+    switch (stage) {
+      case ProjectStage.planning:
+        return 'Planning';
+      case ProjectStage.design:
+        return 'Design';
+      case ProjectStage.production:
+        return 'Production';
+      case ProjectStage.finishing:
+        return 'Finishing';
+      case ProjectStage.application:
+        return 'Application';
+      case ProjectStage.finished:
+        return 'Finished';
+      case ProjectStage.cancelled:
+        return 'Cancelled';
+    }
+  }
+
+  // Moved from ProjectScreen
+  Widget _buildStatusCircle(ProgressStatus status, {double size = 24}) {
+    Color color = _getStatusColor(status);
+    IconData? icon;
+
+    switch (status) {
+      case ProgressStatus.completed:
+        icon = size > 20 ? Icons.check_rounded : null;
+        break;
+      case ProgressStatus.issues:
+        icon = Icons.priority_high_rounded;
+        break;
+      case ProgressStatus.inProgress:
+        icon = size > 20 ? Icons.remove_rounded : null;
+        break;
+      case ProgressStatus.pending:
+        icon = null;
+        break;
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      child: icon != null
+          ? Icon(icon, color: Colors.white, size: size * 0.55)
+          : null,
+    );
+  }
+
+  // Moved from ProjectScreen
+  Color _getStatusColor(ProgressStatus status) {
+    switch (status) {
+      case ProgressStatus.completed:
+        return const Color(0xFF2563EB);
+      case ProgressStatus.issues:
+        return const Color(0xFFEF4444);
+      case ProgressStatus.inProgress:
+        return const Color(0xFFF59E0B);
+      case ProgressStatus.pending:
+        return const Color(0xFFE2E8F0);
+    }
+  }
+
+  // Moved from ProjectScreen
+  String _capitalizeFirst(String text) {
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
+  // Original timeline methods remain the same
+  Widget _buildTimelineItem(ProgressLog progressLog) {
+
+    String stage = progressLog.status.name[0].toUpperCase() + progressLog.status.name.substring(1);
+    String date = progressLog.dueDate.formatDisplay?? "N/A";
+    ProgressStatus status = progressLog.isCompleted? ProgressStatus.completed : progressLog.hasIssues? ProgressStatus.issues : ProgressStatus.inProgress;
+    String description = progressLog.description?? "No description";
+    bool isFirst = false;
+    bool isLast = false;
+
+    final tasks = ref.watch(taskNotifierProvider).where((task)=> task.progressLogIds.contains(progressLog.id));
+
+    List<JobItem> jobs = tasks.map((task)=> JobItem(task.name, task.dateCompleted!=null)).toList();
+    
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,188 +686,6 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
       ),
     );
   }
-
-  Widget _buildFilterChip(String filter) {
-    final isSelected = _selectedJobFilter == filter;
-    final displayName = filter == 'all' ? 'All Jobs' : filter[0].toUpperCase() + filter.substring(1);
-
-    return InkWell(
-      onTap: () => setState(() => _selectedJobFilter = filter),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          displayName,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildJobCard({
-    required String title,
-    required String stage,
-    required ProgressStatus status,
-    required String assignee,
-    required String dueDate,
-    required String description,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: status == ProgressStatus.issues
-            ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: _getStatusColor(status),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              _buildStatusBadge(status),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF64748B),
-              height: 1.5,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.category_rounded,
-                      size: 14,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      stage,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.person_rounded,
-                      size: 14,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      assignee,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      dueDate,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStatusColor(ProgressStatus status) {
-    switch (status) {
-      case ProgressStatus.completed:
-        return const Color(0xFF2563EB);
-      case ProgressStatus.issues:
-        return const Color(0xFFEF4444);
-      case ProgressStatus.inProgress:
-        return const Color(0xFFF59E0B);
-      case ProgressStatus.pending:
-        return const Color(0xFFE2E8F0);
-    }
-  }
 }
 
 // Models
@@ -750,6 +694,16 @@ enum ProgressStatus {
   issues,
   inProgress,
   pending,
+}
+
+enum ProjectStage {
+  planning,
+  design,
+  production,
+  finishing,
+  application,
+  finished,
+  cancelled,
 }
 
 class JobItem {

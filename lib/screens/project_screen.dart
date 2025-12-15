@@ -9,6 +9,7 @@ import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/company.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/screens/components/project_overall_progress_card.dart';
 
@@ -29,7 +30,6 @@ enum ProgressStatus {
 }
 
 class ProjectScreen extends ConsumerStatefulWidget {
-
   final String projectId;
 
   const ProjectScreen({Key? key, required this.projectId}) : super(key: key);
@@ -38,23 +38,30 @@ class ProjectScreen extends ConsumerStatefulWidget {
   ConsumerState<ProjectScreen> createState() => _ProjectScreenState();
 }
 
-class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTickerProviderStateMixin {
-
+class _ProjectScreenState extends ConsumerState<ProjectScreen> {
   late final Company clientCompany;
 
   void initializeClientCompany(String clientId) {
     try {
-    clientCompany = CompanyRepo.companies.firstWhere((company)=> company.id == clientId);
-    } catch(e) {
+      clientCompany = CompanyRepo.companies.firstWhere((company) => company.id == clientId);
+    } catch (e) {
       // already initialized
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
+      setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-
     final project = ref.watch(projectByIdProvider(widget.projectId))!;
-
     final name = project.name;
 
     initializeClientCompany(project.client.id);
@@ -127,10 +134,10 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
               ],
             ),
           ),
-          
+
           // Tab Content
           Expanded(
-            child: _buildInformationTab(project)
+            child: _buildInformationTab(project),
           ),
         ],
       ),
@@ -143,7 +150,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
     priority = priority[0].toUpperCase() + priority.substring(1);
 
     final startDate = project.estimatedProductionStart;
-    final dueDate = project.dueDate; 
+    final dueDate = project.dueDate;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -193,9 +200,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
             ],
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Basic Information Card
         Container(
           margin: EdgeInsets.symmetric(horizontal: 20),
@@ -216,7 +223,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               _buildInfoRow('Client', clientCompany.name),
               const SizedBox(height: 16),
               _buildInfoRow('Priority', priority, isHighlighted: true),
@@ -232,11 +239,13 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> with SingleTicker
           margin: EdgeInsets.symmetric(horizontal: 4),
           heroKey: kOverallProgressHeroKey,
           onPressed: () {
-            AppRoutes.navigateTo(context, AppRoutes.projectProgress, arguments: ProjectArgs(projectId: widget.projectId));
-          }
+            AppRoutes.navigateTo(
+                context, AppRoutes.projectProgress,
+                arguments: ProjectArgs(projectId: widget.projectId));
+          },
         ),
         // Description Card
-        if (project.description!=null && project.description!.isNotEmpty) ...[
+        if (project.description != null && project.description!.isNotEmpty) ...[
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(24),

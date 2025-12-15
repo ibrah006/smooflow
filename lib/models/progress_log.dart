@@ -1,5 +1,6 @@
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/enums/status.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:uuid/uuid.dart';
 
 class ProgressLog {
@@ -35,6 +36,8 @@ class ProgressLog {
 
   DateTime? completedAt;
 
+  final List<int> tasks;
+
   ProgressLog({
     required this.id,
     required this.projectId,
@@ -45,6 +48,7 @@ class ProgressLog {
     ProgressIssue? issue,
     required bool isCompleted,
     required this.completedAt,
+    required this.tasks
   }) : _status = status,
        _issue = issue {
     _description = description;
@@ -61,7 +65,8 @@ class ProgressLog {
        startDate = DateTime.now(),
        _isCompleted = false,
        _status = status,
-       _issue = issue {
+       _issue = issue,
+       tasks = [] {
     _description = description;
   }
 
@@ -86,6 +91,7 @@ class ProgressLog {
           json['completedAt'] != null
               ? DateTime.parse(json['completedAt'])
               : null,
+      tasks: (json['tasks'] as List).map((taskRaw)=> Task.getIdFromJson(taskRaw)).toList()
     );
   }
 
@@ -100,6 +106,8 @@ class ProgressLog {
       issue: ProgressIssue.none,
       isCompleted: false,
       completedAt: null,
+      // May or may not be empty, but since it's deleted we aren't going to show anything anyways
+      tasks: []
     );
   }
 

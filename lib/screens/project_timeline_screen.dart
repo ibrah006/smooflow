@@ -16,6 +16,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/add_project_progress_screen.dart';
 import 'dart:io' show Platform;
 
+@Deprecated("ProjectTimelineScreen is deprecated and will be replcaed by ProjectProgressScreen")
 class ProjectTimelineScreen extends ConsumerStatefulWidget {
   final String projectId;
 
