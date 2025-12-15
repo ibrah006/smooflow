@@ -18,6 +18,7 @@ class ProgressLog {
   }
 
   final DateTime? dueDate;
+  // Actually the created date of this progress log
   final DateTime startDate;
 
   ProgressIssue? _issue;

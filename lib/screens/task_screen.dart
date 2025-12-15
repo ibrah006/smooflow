@@ -30,7 +30,7 @@ class TaskScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
-  late Future<ProgressLog> progressLogFuture;
+  late ProgressLog? progressLog;
 
   /// This Task's work-activity-logs
   late Future<List<WorkActivityLog>> workActivityLogsFuture;
@@ -91,9 +91,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
       //           : ProgressLog.deleted(task.progressLogId);
       //     });
 
-      // workActivityLogsFuture = ref.watch(
-      //   workActivityLogsByTaskProvider(task.id),
-      // );
+      progressLog = ref.watch(progressLogNotifierProvider.notifier).currentProgressLogForTask(task);
+
+      workActivityLogsFuture = ref.watch(
+        workActivityLogsByTaskProvider(task.id),
+      );
 
       try {
         await startDurationEventHandler();
@@ -120,7 +122,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
 
     late final bool showLoadingOverlay;
     try {
-      progressLogFuture;
+      progressLog;
       workActivityLogsFuture;
       showLoadingOverlay = false;
     } catch (e) {
@@ -157,24 +159,27 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                     ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 5,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorPrimary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            task.status,
-                            style: textTheme.labelMedium!.copyWith(
-                              color: colorPrimary,
+                        SizedBox(height: 10),
+                        Row(
+                          spacing: 7,
+                          children: [
+                            Icon(Icons.description_outlined),
+                            Text(
+                              "Job Status",
+                              style: textTheme.titleMedium!.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          task.status,
+                          style: textTheme.bodyMedium!.copyWith(
+                            color: Colors.grey.shade900,
                           ),
                         ),
-                        SizedBox(width: 20),
-                        SizedBox(height: 15),
+                        SizedBox(height: 25),
                         Row(
                           spacing: 7,
                           children: [
@@ -207,7 +212,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                               color: Colors.grey.shade900,
                             ),
                           ),
-                        SizedBox(height: 30),
+                        SizedBox(height: 25),
                         Row(
                           spacing: 7,
                           children: [
@@ -263,7 +268,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                               color: Colors.grey.shade900,
                             ),
                           ),
-                        SizedBox(height: 30),
+                        SizedBox(height: 25),
                         // Progress phase & Priority
                         Row(
                           children: [
@@ -285,24 +290,18 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                     ],
                                   ),
                                   SizedBox(height: 8),
-                                  // FutureBuilder(
-                                  //   future: progressLogFuture,
-                                  //   builder: (context, snapshot) {
-                                  //     if (snapshot.data == null) {
-                                  //       return CircularProgressIndicator();
-                                  //     }
-                                  //     final status = snapshot.data!.status.name;
-
-                                  //     return Text(
-                                  //       !snapshot.data!.isDeleted
-                                  //           ? "${status[0].toUpperCase()}${status.substring(1)}"
-                                  //           :
-                                  //           // Deleted progress log
-                                  //           "Deleted Progress Log",
-                                  //       style: textTheme.titleMedium,
-                                  //     );
-                                  //   },
-                                  // ),
+                                  if (progressLog != null) Text(
+                                    !progressLog!.isDeleted
+                                        ? "${progressLog!.status.name[0].toUpperCase()}${progressLog!.status.name.substring(1)}"
+                                        :
+                                        // Deleted progress log
+                                        "Deleted Progress Log",
+                                    style: textTheme.titleMedium,
+                                  )
+                                  else Text(
+                                    "Unkown",
+                                    style: textTheme.titleMedium
+                                  )
                                 ],
                               ),
                             ),
@@ -330,7 +329,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                             ),
                           ],
                         ),
-                        SizedBox(height: 30),
+                        SizedBox(height: 25),
                         Row(
                           spacing: 7,
                           children: [
@@ -405,7 +404,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                                               width: 100,
                                             ),
                                             Text(
-                                              "No activity logs recorded for this task yet",
+                                              "No activity logs recorded for this job yet",
                                               style: textTheme.titleLarge!
                                                   .copyWith(
                                                     fontWeight: FontWeight.w500,

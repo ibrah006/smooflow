@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/repositories/progress_log_repo.dart';
 
 class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
@@ -14,6 +15,43 @@ class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
   //   final logs = await _repo.();
   //   state = logs;
   // }
+
+  ProgressLog? currentProgressLogForTask(Task task) {
+    // All progress logs associated with this task
+    // i.e., all the stages this task has gone through
+    final taskProgressLogs = state.where((log)=> task.progressLogIds.contains(log.id));
+
+    if (taskProgressLogs.isEmpty) {
+      // TODO: HANDLE this EDGE CASE
+      return null;
+    }
+
+    // Extract the latest log i.e., current stage of the task.
+    final currentStage = taskProgressLogs.reduce((a, b) => 
+      a.startDate.isAfter(b.startDate) ? a : b
+    );
+    
+    return currentStage;
+  }
+
+  /// check if this task's progress logs hold true for the [requiredLogStatus]
+  bool isTaskExistForProgressLogStatus({required Task task, required String requiredLogStatus}) {
+    // Task progress logs
+    try {
+      state.firstWhere(
+        (log)=>
+          // Checking to see if this log is part of the concerned [task]
+          task.progressLogIds.contains(log.id)
+          // Checking to see if the log status matches the required [requiredLogStatus]
+          && log.status.name == requiredLogStatus.toLowerCase()
+      );
+
+      // progress log [_] exists for this task
+      return true;
+    } catch(E) {
+      return false;
+    }
+  }
 
   // create progress log
   // update the project status aswell in this endpoint

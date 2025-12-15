@@ -361,6 +361,11 @@ class AppRoutes {
           screen = ProjectProgressLogScreen(projectId: args.projectId);
         }
         break;
+      case addProjectProgressView:
+        if (args is AddProjectProgressArgs) {
+          screen = AddProjectProgressScreen.view(progressLog: args.progressLog, projectId: args.projectId);
+        }
+        break;
     }
 
     // If screen was determined, create the route

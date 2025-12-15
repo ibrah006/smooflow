@@ -332,27 +332,11 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
     }
 
     return allTasks.where((task) {
-      return _isTaskExistForSelectedJobFilter(task);
+      return ref.watch(progressLogNotifierProvider.notifier).isTaskExistForProgressLogStatus(
+        task: task,
+        requiredLogStatus: _selectedJobFilter
+      );
     }).toList();
-  }
-
-  /// check if this task's progress logs hold true for the _selectedJobFilter
-  bool _isTaskExistForSelectedJobFilter(Task task) {
-    // Task progress logs
-    try {
-    final _ = ref.watch(progressLogNotifierProvider).firstWhere(
-      (log)=>
-        // Checking to see if this log is part of the concerned [task]
-        task.progressLogIds.contains(log.id)
-        // Checking to see if the log status matches the required (_selectedJobFilter)
-        && log.status.name == _selectedJobFilter.toLowerCase()
-    );
-
-    // progress log [_] exists for this task
-    return true;
-    } catch(E) {
-      return false;
-    }
   }
 
   // Moved from ProjectScreen
@@ -394,8 +378,9 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   // Moved from ProjectScreen
   Widget _buildStatusCircle(String taskStatus, {double size = 24}) {
     late final ProgressStatus status;
+    print("status circle: ${taskStatus.toLowerCase()}");
     try {
-      status = ProgressStatus.values.byName(taskStatus);
+      status = ProgressStatus.values.byName(taskStatus.toLowerCase());
     } catch(e) {
       status = ProgressStatus.pending;
     }
@@ -496,79 +481,84 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 32),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: status == ProgressStatus.issues
-                      ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
-                      : null,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                stage,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
-                                  letterSpacing: -0.3,
+              child: MaterialButton(
+                onPressed: () {
+                  AppRoutes.navigateTo(context, AppRoutes.addProjectProgressView);
+                },
+                child: Ink(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: status == ProgressStatus.issues
+                        ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
+                        : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  stage,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.3,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule_rounded,
-                                    size: 14,
-                                    color: const Color(0xFF64748B),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    date,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF64748B),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule_rounded,
+                                      size: 14,
+                                      color: const Color(0xFF64748B),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      date,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        _buildStatusBadge(status),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Description
-                    Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                        height: 1.5,
+                          _buildStatusBadge(status),
+                        ],
                       ),
-                    ),
-
-                    // Jobs/Works
-                    if (jobs.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const Divider(color: Color(0xFFF1F5F9)),
+                
                       const SizedBox(height: 12),
-                      ...jobs.map((job) => _buildJobListItem(job)),
+                
+                      // Description
+                      Text(
+                        description,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF64748B),
+                          height: 1.5,
+                        ),
+                      ),
+                
+                      // Jobs/Works
+                      if (jobs.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Divider(color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 12),
+                        ...jobs.map((job) => _buildJobListItem(job)),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
