@@ -6,6 +6,7 @@ import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -278,7 +279,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   }
 
   // Moved from ProjectScreen
-  Widget _buildJobCard(Map<String, dynamic> job) {
+  Widget _buildJobCard(Task job) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -288,14 +289,14 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
       ),
       child: Row(
         children: [
-          _buildStatusCircle(job['status'], size: 40),
+          _buildStatusCircle(job.status, size: 40),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  job['name'],
+                  job.name,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -307,13 +308,13 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
                   children: [
                     const Icon(Icons.person, size: 14, color: Color(0xFF9CA3AF)),
                     const SizedBox(width: 6),
-                    Text(
-                      job['assignee'],
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
+                    // Text(
+                    //   job['assignee'],
+                    //   style: const TextStyle(
+                    //     fontSize: 13,
+                    //     color: Color(0xFF9CA3AF),
+                    //   ),
+                    // ),
                   ],
                 ),
               ],
@@ -326,7 +327,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              _getStageLabel(job['stage']),
+              _getStageLabel(job),
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -340,18 +341,55 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   }
 
   // Moved from ProjectScreen
-  List<Map<String, dynamic>> _getFilteredJobs() {
+  List<Task> _getFilteredJobs() {
+    // For Tasks for this Project
+    final allTasks = ref.watch(taskNotifierProvider).where((task)=> task.projectId == widget.projectId).toList();
     if (_selectedJobFilter == 'All') {
-      return _allJobs;
+      return allTasks; 
     }
 
-    return _allJobs.where((job) {
-      return _getStageLabel(job['stage']).toLowerCase() == _selectedJobFilter.toLowerCase();
+    return allTasks.where((task) {
+      return _isTaskExistForSelectedJobFilter(task);
     }).toList();
   }
 
+  /// check if this task's progress logs hold true for the _selectedJobFilter
+  bool _isTaskExistForSelectedJobFilter(Task task) {
+    // Task progress logs
+    try {
+    final _ = ref.watch(progressLogNotifierProvider).firstWhere(
+      (log)=>
+        // Checking to see if this log is part of the concerned [task]
+        task.progressLogIds.contains(log.id)
+        // Checking to see if the log status matches the required (_selectedJobFilter)
+        && log.status.name == _selectedJobFilter.toLowerCase()
+    );
+
+    // progress log [_] exists for this task
+    return true;
+    } catch(E) {
+      return false;
+    }
+  }
+
   // Moved from ProjectScreen
-  String _getStageLabel(ProjectStage stage) {
+  String _getStageLabel(Task task) {
+
+    // Each task can point to many progress logs
+    // but for tesing, let's just fetch only one stage that's related to it
+
+    final allProgressLogs = ref.watch(progressLogNotifierProvider);
+
+    late final ProgressLog progressLog;
+    try {
+      progressLog = allProgressLogs.firstWhere((log)=> log.id == task.progressLogIds.first);
+    } catch(e) {
+      // Error occuring due to task not pointing to any progress log id, possibly because of major database migrations - old structure conflicting with newer migrations but not casuing any problems
+      // Unkown Log
+      return "Unkown";
+    }
+    final stage = ProjectStage.values.byName(progressLog.status.name);
+    
     switch (stage) {
       case ProjectStage.planning:
         return 'Planning';
@@ -371,7 +409,13 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   }
 
   // Moved from ProjectScreen
-  Widget _buildStatusCircle(ProgressStatus status, {double size = 24}) {
+  Widget _buildStatusCircle(String taskStatus, {double size = 24}) {
+    late final ProgressStatus status;
+    try {
+      status = ProgressStatus.values.byName(taskStatus);
+    } catch(e) {
+      status = ProgressStatus.pending;
+    }
     Color color = _getStatusColor(status);
     IconData? icon;
 
@@ -432,7 +476,10 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
     bool isFirst = false;
     bool isLast = false;
 
-    final tasks = ref.watch(taskNotifierProvider).where((task)=> task.progressLogIds.contains(progressLog.id));
+    final allTasks = ref.watch(taskNotifierProvider);
+    final tasks = allTasks.where((task) {
+      return task.progressLogIds.contains(progressLog.id);
+    });
 
     List<JobItem> jobs = tasks.map((task)=> JobItem(task.name, task.dateCompleted!=null)).toList();
     
