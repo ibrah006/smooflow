@@ -15,6 +15,7 @@ import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/production_dashboard.dart';
+import 'package:smooflow/screens/project_progress_screen.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
 import 'package:smooflow/screens/project_screen.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
@@ -116,6 +117,8 @@ class AppRoutes {
   static const createClient = '/clients/create';
 
   static const googleSheetViewer = '/google-sheet';
+
+  static const projectProgress = '/project/progress';
 
   // Admin reports
   static const projectReport = '/admin/project-report';
@@ -351,6 +354,11 @@ class AppRoutes {
       case schedulePrintView:
         if (args is SchedulePrintJobArgs) {
           screen = ScheduleJobScreen.details(projectId: args.projectId, task: args.task);
+        }
+        break;
+      case projectProgress:
+        if (args is ProjectArgs) {
+          screen = ProjectProgressLogScreen(projectId: args.projectId);
         }
         break;
     }

@@ -13,3 +13,5 @@ const colorError = Color(0xFFd53d3c);
 const colorErrorBackground = Color(0xFFfbebec);
 
 const timelineRefreshIntervalSecs = 60;
+
+const kOverallProgressHeroKey = "overall_progress";
