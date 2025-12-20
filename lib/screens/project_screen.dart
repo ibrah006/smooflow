@@ -139,53 +139,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       children: [
-        // Current Stage Card
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Current Stage',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF9CA3AF),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.print, color: Color(0xFF2563EB), size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      "${status[0].toUpperCase()}${status.substring(1)}",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Basic Information Card
         Container(
@@ -210,11 +165,13 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
 
               _buildInfoRow('Client', clientCompany.name),
               const SizedBox(height: 16),
-              _buildInfoRow('Priority', priority, isHighlighted: true),
+              _buildInfoRow('Priority', priority, color: project.priorityColor),
               const SizedBox(height: 16),
               if (startDate != null) _buildInfoRow('Start Date', startDate.formatDisplay!),
               const SizedBox(height: 16),
               if (dueDate != null) _buildInfoRow('End Date', dueDate.formatDisplay!),
+              const SizedBox(height: 16),
+              _buildInfoRow("Stage", "${status[0].toUpperCase()}${status.substring(1)}", color: project.statusColor)
             ],
           ),
         ),
@@ -267,7 +224,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isHighlighted = false}) {
+  Widget _buildInfoRow(String label, String value, {bool isHighlighted = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -283,7 +240,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: isHighlighted ? const Color(0xFFF59E0B) : Colors.black,
+            color: color?? (isHighlighted ? const Color(0xFFF59E0B) : Colors.black),
           ),
         ),
       ],

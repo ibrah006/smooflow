@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/company.dart';
@@ -180,7 +181,7 @@ class Project {
   Color get priorityColor {
     switch (priority) {
       case 0:
-        return colorPositiveStatus;
+        return Colors.black38;
       case 1:
         return colorPrimary;
       default:

@@ -2,6 +2,7 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/components/help_timeline.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
@@ -75,8 +76,15 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
       progressLogsByProjectProviderSimple(widget.projectId),
     );
 
+    final isNoJobs = _getAvailableJobStages.isEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
+      floatingActionButton: !isNoJobs? FloatingActionButton.extended(
+        onPressed: () {},
+        icon: Icon(Icons.add),
+        label: Text("Schedule Job"),
+      ) : null,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -193,17 +201,24 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
     );
   }
 
-  // Moved from ProjectScreen
-  Widget _buildJobsTab() {
-    // All unique progress log stages for this project - uniqie in terms of the status name
-    // Don't include 'All' filter here
-
+  List<String> get _getAvailableJobStages {
     final List<String> _availableJobStages = [];
     for (ProgressLog log in progressLogs) {
       if (!_availableJobStages.contains(log.status.name)) {
         _availableJobStages.add(log.status.name);
       }
     }
+    return _availableJobStages;
+  }
+
+  // Moved from ProjectScreen
+  Widget _buildJobsTab() {
+    // All unique progress log stages for this project - uniqie in terms of the status name
+    // Don't include 'All' filter here
+
+    final textTheme = Theme.of(context).textTheme;
+
+    final isNoJobs = _getAvailableJobStages.isEmpty;
     
     return Column(
       children: [
@@ -220,7 +235,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
                   padding: const EdgeInsets.only(left: 15),
                   child: _buildJobFilterChip('All'),
                 ),
-                ..._availableJobStages.map((stage) =>
+                ..._getAvailableJobStages.map((stage) =>
                     _buildJobFilterChip(_capitalizeFirst(stage))),
               ],
             ),
@@ -229,9 +244,46 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
 
         // Jobs List
         Expanded(
-          child: ListView(
+          child: !isNoJobs? ListView(
             padding: const EdgeInsets.all(20),
             children: _getFilteredJobs().map((job) => _buildJobCard(job)).toList(),
+          ) : Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width / 1.65,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 20,
+                children: [
+                  SvgPicture.asset(
+                    "assets/icons/no_tasks_icon.svg",
+                    width: 100,
+                  ),
+                  Text(
+                    "No Jobs",
+                    style: textTheme.headlineLarge!.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    "No jobs have been assigned to this project yet\nClick below to initialize print job",
+                    style: textTheme.titleMedium!.copyWith(
+                      color: Colors.grey.shade700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        AppRoutes.navigateTo(context, AppRoutes.schedulePrint);
+                      },
+                      child: Text("Initialize Print Job"),
+                    ),
+                  ),
+                  SizedBox(height: kToolbarHeight + 20),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -447,7 +499,6 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
 
   // Original timeline methods remain the same
   Widget _buildTimelineItem(ProgressLog progressLog) {
-
     String stage = progressLog.status.name[0].toUpperCase() + progressLog.status.name.substring(1);
     String date = progressLog.dueDate.formatDisplay?? "N/A";
     ProgressStatus status = progressLog.isCompleted? ProgressStatus.completed : progressLog.hasIssues? ProgressStatus.issues : ProgressStatus.inProgress;
@@ -572,7 +623,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
                         const Divider(color: Color(0xFFF1F5F9)),
                         const SizedBox(height: 12),
                         ...jobs.map((job) => _buildJobListItem(job)),
-                      ],
+                      ]
                     ],
                   ),
                 ),

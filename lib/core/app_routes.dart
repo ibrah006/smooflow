@@ -352,6 +352,9 @@ class AppRoutes {
           screen = PrinterScreen.details(printer: args);
         }
         break;
+      case schedulePrint:
+        screen = ScheduleJobScreen();
+        break;
       case schedulePrintView:
         if (args is SchedulePrintJobArgs) {
           screen = ScheduleJobScreen.details(projectId: args.projectId, task: args.task);
