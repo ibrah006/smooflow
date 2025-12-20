@@ -82,6 +82,14 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     newProject.initializeId(createdProjectId);
     _pushRecentProjectToTop(createdProjectId);
 
+    // Add to active projects if start date is >= now
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (newProject.estimatedProductionStart?.isAfter(today)?? true) {
+      // If not start date, then by default, it is an active project
+      activeProjects = [...activeProjects, newProject];
+    }
+
     state = [...state, newProject];
   }
 

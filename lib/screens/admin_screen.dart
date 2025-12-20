@@ -69,11 +69,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
 
-    final printers = ref.watch(printerNotifierProvider).printers;
-
     final materialStockPercentage = ref.watch(materialNotifierProvider).stockStats?.percentage;
 
-    print("printers: $printers");
+    print("active projects: ${ref.watch(projectNotifierProvider.notifier).activeProjects}");
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
