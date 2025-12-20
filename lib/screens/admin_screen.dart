@@ -1,6 +1,7 @@
 // lib/screens/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'dart:async';
 
 import 'package:smooflow/constants.dart';
@@ -76,6 +77,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
+      floatingActionButton: _currentTabIndex == 1 && ref.watch(projectNotifierProvider.notifier).activeProjects.isNotEmpty? FloatingActionButton(
+        onPressed: () {
+          AppRoutes.navigateTo(context, AppRoutes.addProject);
+        },
+        child: Icon(Icons.add),
+      ) : null,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight + 50),
         child: Container(
@@ -406,6 +413,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildProjectsTab() {
+    final textTheme = Theme.of(context).textTheme;
 
     final activeProjects = ref.watch(projectNotifierProvider.notifier).activeProjects;
     // Project overall status
@@ -463,9 +471,43 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
         const SizedBox(height: 16),
 
+        if (activeProjects.isNotEmpty)
         ...activeProjects.map((activeProject)=> _buildProjectCard(
               project: activeProject
-            )),
+            ))
+        else ... [
+          SvgPicture.asset(
+            "assets/icons/no_projects_icon.svg",
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: Text(
+              "No active projects",
+              style: textTheme.headlineSmall!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "Click the button below to add a new project.",
+            textAlign: TextAlign.center,
+            style: textTheme.titleMedium!.copyWith(
+              color: Colors.grey.shade600,
+            ),
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            width: 100,
+            child: FilledButton(
+              onPressed: () {
+                AppRoutes.navigateTo(context, AppRoutes.addProject);
+              },
+              child: Text("Add Project"),
+            ),
+          ),
+        ],
 
         const SizedBox(height: 80),
       ],
