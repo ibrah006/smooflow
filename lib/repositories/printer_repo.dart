@@ -111,7 +111,7 @@ class PrinterRepo {
   Future<ProductionReportResponse> getProductionReport(ReportPeriod period) async {
     try {
 
-      final response = await ApiClient.http.get("/reports/production", );
+      final response = await ApiClient.http.get("/reports/production?for=${period.name}");
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body) as Map<String, dynamic>;

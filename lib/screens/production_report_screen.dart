@@ -1,26 +1,21 @@
 // lib/screens/reports/printer_reports_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/data/production_report_details.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 
-class ProductionReportsScreen extends StatefulWidget {
+class ProductionReportsScreen extends ConsumerStatefulWidget {
   const ProductionReportsScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProductionReportsScreen> createState() => _ProductionReportsScreenState();
+  ConsumerState<ProductionReportsScreen> createState() => _ProductionReportsScreenState();
 }
 
-class _ProductionReportsScreenState extends State<ProductionReportsScreen> {
-  String _selectedPeriod = 'This Week';
-  
-  // Mock data
-  final Map<String, int> _printerStatus = {
-    'Active': 4,
-    'Idle': 2,
-    'Maintenance': 1,
-    'Offline': 1,
-  };
+class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScreen> {
+  ReportPeriod _selectedPeriod = ReportPeriod.thisWeek;
   
   final List<Map<String, dynamic>> _printerUtilization = [
     {'name': 'Large Format A', 'utilization': 89, 'hours': 71, 'total': 80, 'jobs': 24},
@@ -37,374 +32,406 @@ class _ProductionReportsScreenState extends State<ProductionReportsScreen> {
     'Software error': 6,
   };
 
+  late final Map<String, int> _printerStatus;
+
   @override
   Widget build(BuildContext context) {
+
+    final reportFuture = ref.watch(printerNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(20).copyWith(top: MediaQuery.of(context).padding.top + 10),
-            child: Row(
-              children: [
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F7FA),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.arrow_back, color: Colors.black, size: 22),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Printer Reports',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Production Analytics',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                InkWell(
-                  onTap: () {},
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F7FA),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.file_download, color: Colors.black, size: 22),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                // Period Filter
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildPeriodTab('Today'),
-                      _buildPeriodTab('This Week'),
-                      _buildPeriodTab('This Month'),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // High-Level Summary KPIs
-                const Text(
-                  'Overview',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Row(
+      body: FutureBuilder(
+        future: reportFuture,
+        builder: (context, snapshot) {
+
+          final report = snapshot.data?? ProductionReportDetails.sample();
+
+          final totalPrinters = report.overview.totalPrinters;
+          final activePrinters = report.overview.activePrinters;
+          final idlePrinters = report.overview.idlePrinters;
+          final avgUtilization = report.overview.averageUtilization;
+
+          _printerStatus = {
+            'Active': report.overview.activePrinters,
+            'Idle': report.overview.idlePrinters,
+            'Maintenance': report.overview.maintenancePrinters,
+            'Offline': report.overview.offlinePrinters,
+          };
+
+          return Column(
+            children: [
+              // Header
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(20).copyWith(top: MediaQuery.of(context).padding.top + 10),
+                child: Row(
                   children: [
-                    Expanded(
-                      child: _buildKPICard(
-                        value: '8',
-                        label: 'Total\nPrinters',
-                        icon: Icons.print,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildKPICard(
-                        value: '4',
-                        label: 'Active\nNow',
-                        icon: Icons.check_circle,
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildKPICard(
-                        value: '2',
-                        label: 'Idle',
-                        icon: Icons.remove_circle_outline,
-                        color: const Color(0xFFF59E0B),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildKPICard(
-                        value: '65%',
-                        label: 'Avg\nUtilization',
-                        icon: Icons.trending_up,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Printer Status Distribution
-                const Text(
-                  'Printer Status Distribution',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 200,
-                        child: CustomPaint(
-                          painter: DonutChartPainter(_printerStatus),
-                          child: Container(),
+                    InkWell(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F7FA),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      ..._buildStatusLegend(),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Printer Utilization
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Printer Utilization',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        child: const Icon(Icons.arrow_back, color: Colors.black, size: 22),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.info_outline, size: 14, color: Color(0xFF9CA3AF)),
-                          SizedBox(width: 4),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            'Hours active vs available',
+                            'Printer Reports',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Production Analytics',
+                            style: TextStyle(
+                              fontSize: 13,
                               color: Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
                       ),
                     ),
+                    InkWell(
+                      onTap: () {},
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F7FA),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.file_download, color: Colors.black, size: 22),
+                      ),
+                    ),
                   ],
                 ),
-                
-                const SizedBox(height: 16),
-                
-                ..._printerUtilization.map((printer) => _buildUtilizationCard(printer)),
-                
-                const SizedBox(height: 24),
-                
-                // Insights Card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              ),
+              
+              // Content
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // Period Filter
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildPeriodTab(ReportPeriod.today),
+                          _buildPeriodTab(ReportPeriod.thisWeek),
+                          _buildPeriodTab(ReportPeriod.thisMonth),
+                        ],
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.lightbulb, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Insights',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // High-Level Summary KPIs
+                    const Text(
+                      'Overview',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
                       ),
-                      const SizedBox(height: 16),
-                      _buildInsightItem('Most utilized: Large Format A (89%)'),
-                      const SizedBox(height: 10),
-                      _buildInsightItem('Underutilized: Sticker Station (46%)'),
-                      const SizedBox(height: 10),
-                      _buildInsightItem('Consider redistributing jobs to balance load'),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Downtime & Issues
-                const Text(
-                  'Downtime & Issues',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDowntimeStat('12h', 'Total Downtime'),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildKPICard(
+                            value: totalPrinters.toString(),
+                            label: 'Total\nPrinters',
+                            icon: Icons.print,
+                            color: Colors.black,
                           ),
-                          Container(
-                            width: 1,
-                            height: 40,
-                            color: const Color(0xFFF5F7FA),
-                          ),
-                          Expanded(
-                            child: _buildDowntimeStat('34', 'Incidents'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Container(height: 1, color: const Color(0xFFF5F7FA)),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Most Common Issues',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF6B7280),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildKPICard(
+                            value: activePrinters.toString(),
+                            label: 'Active\nNow',
+                            icon: Icons.check_circle,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildKPICard(
+                            value: idlePrinters.toString(),
+                            label: 'Idle',
+                            icon: Icons.remove_circle_outline,
+                            color: const Color(0xFFF59E0B),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildKPICard(
+                            value: avgUtilization.toString(),
+                            label: 'Avg\nUtilization',
+                            icon: Icons.trending_up,
+                            color: const Color(0xFF2563EB),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Printer Status Distribution
+                    const Text(
+                      'Printer Status Distribution',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
                       ),
-                      const SizedBox(height: 16),
-                      ..._buildIssueBars(),
-                    ],
-                  ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 200,
+                            child: CustomPaint(
+                              painter: DonutChartPainter(_printerStatus),
+                              child: Container(),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ..._buildStatusLegend(report),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Printer Utilization
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Printer Utilization',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F7FA),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.info_outline, size: 14, color: Color(0xFF9CA3AF)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Hours active vs available',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    ..._printerUtilization.map((printer) => _buildUtilizationCard(printer)),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Insights Card
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.lightbulb, color: Colors.white, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Insights',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildInsightItem('Most utilized: Large Format A (89%)'),
+                          const SizedBox(height: 10),
+                          _buildInsightItem('Underutilized: Sticker Station (46%)'),
+                          const SizedBox(height: 10),
+                          _buildInsightItem('Consider redistributing jobs to balance load'),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Downtime & Issues
+                    const Text(
+                      'Downtime & Issues',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDowntimeStat('12h', 'Total Downtime'),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: const Color(0xFFF5F7FA),
+                              ),
+                              Expanded(
+                                child: _buildDowntimeStat('34', 'Incidents'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Container(height: 1, color: const Color(0xFFF5F7FA)),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Most Common Issues',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ..._buildIssueBars(),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Efficiency Ranking
+                    const Text(
+                      'Efficiency Ranking',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildRankingItem(1, 'Large Format A', 94),
+                          const SizedBox(height: 16),
+                          _buildRankingItem(2, 'Vinyl Master', 87),
+                          const SizedBox(height: 16),
+                          _buildRankingItem(3, 'Banner Pro', 72),
+                          const SizedBox(height: 16),
+                          _buildRankingItem(4, 'Sticker Station', 58),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 80),
+                  ],
                 ),
-                
-                const SizedBox(height: 24),
-                
-                // Efficiency Ranking
-                const Text(
-                  'Efficiency Ranking',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildRankingItem(1, 'Large Format A', 94),
-                      const SizedBox(height: 16),
-                      _buildRankingItem(2, 'Vinyl Master', 87),
-                      const SizedBox(height: 16),
-                      _buildRankingItem(3, 'Banner Pro', 72),
-                      const SizedBox(height: 16),
-                      _buildRankingItem(4, 'Sticker Station', 58),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 80),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        }
       ),
     );
   }
 
-  Widget _buildPeriodTab(String period) {
+  Widget _buildPeriodTab(ReportPeriod period) {
     final isSelected = _selectedPeriod == period;
+
+    late final title;
+    switch(period) {
+      case ReportPeriod.today: title = "Today"; break;
+      case ReportPeriod.thisWeek: title = "This Week"; break;
+      case ReportPeriod.thisMonth: title = "This Month"; break;
+    }
     
     return Expanded(
       child: InkWell(
@@ -416,7 +443,7 @@ class _ProductionReportsScreenState extends State<ProductionReportsScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            period,
+            title,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -476,7 +503,7 @@ class _ProductionReportsScreenState extends State<ProductionReportsScreen> {
     );
   }
 
-  List<Widget> _buildStatusLegend() {
+  List<Widget> _buildStatusLegend(ProductionReportDetails report) {
     final colors = {
       'Active': const Color(0xFF10B981),
       'Idle': const Color(0xFFF59E0B),

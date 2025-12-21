@@ -29,11 +29,13 @@ class ProductionReportDetails {
   final OverviewData overview;
   final List<PrinterUtilizationData> printerUtilization;
   final DowntimeData downtimeAndIssues;
+  final ReportPeriod period;
 
   ProductionReportDetails({
     required this.overview,
     required this.printerUtilization,
     required this.downtimeAndIssues,
+    required this.period,
   });
 
   factory ProductionReportDetails.fromJson(Map<String, dynamic> json) =>
@@ -47,6 +49,12 @@ class ProductionReportDetails {
   List<PrinterUtilizationData> getTopPerformers(int count) {
     return printerUtilization.take(count).toList();
   }
+
+  ProductionReportDetails.sample({ReportPeriod? period})
+      : period = period ?? ReportPeriod.thisWeek,
+        overview = OverviewData(totalPrinters: 0, activePrinters: 0, idlePrinters: 0, maintenancePrinters: 0, offlinePrinters: 0, averageUtilization: 0),
+        printerUtilization = [],
+        downtimeAndIssues = DowntimeData(totalMaintenanceMinutes: 0, totalMaintenanceHours: 0, averageMaintenancePerPrinter: 0);
 
   /// Get underutilized printers (below threshold)
   List<PrinterUtilizationData> getUnderutilizedPrinters(

@@ -134,6 +134,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     
     } catch(e) {
       state = state.copyWith(error: e.toString(), loading: false);
+      rethrow;
     }
   }
 

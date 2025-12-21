@@ -12,7 +12,10 @@ ProductionReportResponse _$ProductionReportResponseFromJson(
   success: json['success'] as bool,
   period: json['period'] as String,
   generatedAt: json['generatedAt'] as String,
-  data: ProductionReportDetails.fromJson(json['data'] as Map<String, dynamic>),
+  data: ProductionReportDetails.fromJson({
+    ...json['data'] as Map<String, dynamic>,
+    "period": json['period'] as String
+  }),
 );
 
 Map<String, dynamic> _$ProductionReportResponseToJson(
@@ -27,6 +30,7 @@ Map<String, dynamic> _$ProductionReportResponseToJson(
 ProductionReportDetails _$ProductionReportDetailsFromJson(
   Map<String, dynamic> json,
 ) => ProductionReportDetails(
+  period: ReportPeriod.values.byName(json["period"]),
   overview: OverviewData.fromJson(json['overview'] as Map<String, dynamic>),
   printerUtilization:
       (json['printerUtilization'] as List<dynamic>)
