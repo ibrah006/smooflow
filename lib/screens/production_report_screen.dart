@@ -1,6 +1,7 @@
 // lib/screens/reports/printer_reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'dart:math' as math;
 
 import 'package:smooflow/constants.dart';
@@ -32,20 +33,46 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
     'Software error': 6,
   };
 
-  late final Map<String, int> _printerStatus;
+  late Map<String, int> _printerStatus;
+
+  bool isLoading = true;
+
+  late Future<ProductionReportDetails> reportFuture;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    Future.microtask(() {
+      reportFuture = ref.watch(printerNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
+      reportFuture.then((value) {
+          setState(() {
+            isLoading = false; 
+          });
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
 
-    final reportFuture = ref.watch(printerNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
+    print("Prouction notifier error: ${ref.watch(printerNotifierProvider).error}");
+
+    try {
+      reportFuture;
+    }catch(E) {
+      return Scaffold(body: LoadingOverlay(isLoading: true, child: SizedBox()));
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: FutureBuilder(
         future: reportFuture,
+        initialData: ProductionReportDetails.sample(),
         builder: (context, snapshot) {
 
-          final report = snapshot.data?? ProductionReportDetails.sample();
+          final report = snapshot.data!;
 
           final totalPrinters = report.overview.totalPrinters;
           final activePrinters = report.overview.activePrinters;
@@ -118,6 +145,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                   ],
                 ),
               ),
+              if (isLoading) LinearProgressIndicator(backgroundColor: Colors.grey.shade100),
               
               // Content
               Expanded(
@@ -129,7 +157,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(25),
                       ),
                       child: Row(
                         children: [
@@ -191,7 +219,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildKPICard(
-                            value: avgUtilization.toString(),
+                            value: "${avgUtilization.toStringAsFixed(0)}%",
                             label: 'Avg\nUtilization',
                             icon: Icons.trending_up,
                             color: const Color(0xFF2563EB),
@@ -435,12 +463,25 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
     
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _selectedPeriod = period),
+        onTap: () {
+          reportFuture = ref.watch(printerNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
+          reportFuture.then((value) {
+            Future.microtask(() {
+              setState(() {
+                isLoading = false; 
+              });
+            });
+          });
+          setState(() {
+            _selectedPeriod = period;
+            isLoading = true; 
+          });
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? colorPrimary : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             title,
@@ -514,7 +555,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
     return _printerStatus.entries.map((entry) {
       final color = colors[entry.key]!;
       final total = _printerStatus.values.reduce((a, b) => a + b);
-      final percentage = ((entry.value / total) * 100).toInt();
+      final percentage = (total == 0? 0 : (entry.value / total) * 100).toInt();
       
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),

@@ -120,7 +120,11 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   /// Fetch production report for a given period
   Future<void> fetchReport(
     ReportPeriod period,
-  ) async {
+  ) async {    
+    // try {
+    //   state = state.copyWith(loading: true);
+    // } catch(e) {}
+  
     try {
       final reportResponse = await _repo.getProductionReport(period);
 
