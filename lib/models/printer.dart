@@ -31,6 +31,7 @@ class Printer {
   final double? printSpeed;
   final DateTime createdAt;
   final String? currentJobId;
+  final int activeMinutes;
 
   Printer({
     required this.id,
@@ -42,6 +43,7 @@ class Printer {
     this.printSpeed,
     required this.createdAt,
     this.currentJobId,
+    required this.activeMinutes
   });
 
   factory Printer.fromJson(Map<String, dynamic> json) {
@@ -55,10 +57,12 @@ class Printer {
       printSpeed: (json['printSpeed'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
       currentJobId: json['currentTaskId'],
+      activeMinutes: json['activeMinutes']
     );
   }
 
   Map<String, dynamic> toJson() {
+    // DO NOT PASS IN activeMinutes - the value is updated only from server
     return {
       'id': id,
       'name': name,
@@ -72,7 +76,6 @@ class Printer {
   }
 }
 
-// lib/models/print_job.dart
 class PrintJob {
   final String id;
   final String name;

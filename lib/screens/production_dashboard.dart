@@ -35,45 +35,6 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   int _selectedSectionIndex = 0;
 
   // Mock data - replace with actual service calls
-  final List<PrintJob> _urgentJobs = [
-    PrintJob(
-      id: 'job001',
-      name: 'Emergency Vehicle Wrap',
-      projectId: 'proj001',
-      printerId: '1',
-      materialType: 'Cast Vinyl',
-      quantity: 1,
-      status: JobStatus.printing,
-      priority: JobPriority.urgent,
-      deadline: DateTime.now().add(const Duration(hours: 2)),
-      estimatedDurationMinutes: 120,
-      actualDurationMinutes: 75,
-      startedAt: DateTime.now().subtract(const Duration(minutes: 75)),
-      queuePosition: 0,
-      createdBy: 'user1',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-    PrintJob(
-      id: 'job002',
-      name: 'Store Opening Banners',
-      projectId: 'proj002',
-      printerId: '2',
-      materialType: 'Vinyl Banner',
-      quantity: 5,
-      status: JobStatus.blocked,
-      priority: JobPriority.urgent,
-      deadline: DateTime.now().add(const Duration(hours: 4)),
-      estimatedDurationMinutes: 90,
-      blockedReason: BlockedReason.designApproval,
-      blockedNote: 'Waiting for client approval on color changes',
-      queuePosition: 0,
-      createdBy: 'user2',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-  ];
-
   final List<Printer> _mockPrinters = [
     Printer(
       id: '1',
@@ -84,6 +45,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       currentJobId: 'job001',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
+      activeMinutes: 0
     ),
     Printer(
       id: '2',
@@ -93,6 +55,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       location: 'Section B',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
+      activeMinutes: 0
     ),
     Printer(
       id: '3',
@@ -102,6 +65,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       location: 'Section A',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
+      activeMinutes: 0
     ),
     Printer(
       id: '4',
@@ -110,6 +74,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       status: PrinterStatus.offline,
       location: 'Section C',
       createdAt: DateTime.now(),
+      activeMinutes: 0
       // updatedAt: DateTime.now(),
     ),
   ];
@@ -365,7 +330,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
                     // Urgent Jobs List
                     if (_selectedSectionIndex == 0) ... [
-                      if (_urgentJobs.isNotEmpty)
+                      if (printers.isNotEmpty)
                         // ..._urgentJobs.map((job) => _buildJobCard(job)),
 
                       // Printer Status Cards

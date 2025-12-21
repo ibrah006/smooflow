@@ -15,6 +15,7 @@ import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/production_dashboard.dart';
+import 'package:smooflow/screens/production_report_screen.dart';
 import 'package:smooflow/screens/progress_log_screen.dart';
 import 'package:smooflow/screens/project_progress_screen.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
@@ -369,6 +370,9 @@ class AppRoutes {
         if (args is AddProjectProgressArgs) {
           screen = ProgressLogScreen(progressLog: args.progressLog, projectId: args.projectId);
         }
+        break;
+      case productionReport:
+        screen = ProductionReportsScreen();
         break;
     }
 
