@@ -1,7 +1,6 @@
 // lib/screens/reports/printer_reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'dart:math' as math;
 
@@ -90,6 +89,21 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
 
           final printerUtilization = report.printerUtilization;
 
+          // Printer Utilization Data
+          final mostUtilizedPrinters = report.getTopPerformers(1);
+          late final PrinterUtilizationData? mostUtilizedPrinter;
+          try {
+            mostUtilizedPrinter = mostUtilizedPrinters.first;
+          } catch(e) {
+            mostUtilizedPrinter = null;
+          }
+          late final PrinterUtilizationData? underUtilizedPrinter;
+          try {
+            underUtilizedPrinter = report.getUnderutilizedPrinters().first;
+          } catch(e) {
+            underUtilizedPrinter = null;
+          }
+
           return Column(
             children: [
               // Header
@@ -116,7 +130,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Printer Reports',
+                            'Production Report',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -335,46 +349,76 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                     
                     // Insights Card
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(mostUtilizedPrinter == null && underUtilizedPrinter == null? 15 : 24),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                          colors: [Colors.grey.shade500, Colors.grey.shade400],
                         ),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          if (mostUtilizedPrinter != null || underUtilizedPrinter != null)... [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.lightbulb, color: Colors.white, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Insights',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            if (mostUtilizedPrinter!=null) _buildInsightItem('Most utilized: ${mostUtilizedPrinter.name} (${mostUtilizedPrinter.utilizationPercentage}%)'),
+                            const SizedBox(height: 10),
+                            if (underUtilizedPrinter!=null) _buildInsightItem('Underutilized: ${underUtilizedPrinter.name} (${underUtilizedPrinter.utilizationPercentage}%)'),
+                            const SizedBox(height: 10),
+                            if (underUtilizedPrinter!=null) _buildInsightItem('Consider redistributing jobs to balance load'),
+                          ] else Row(
+                            spacing: 8,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(10),
+                              Icon(Icons.lightbulb, color: Colors.white, size: 40),
+                              Expanded(
+                                child: Column(
+                                  spacing: 3,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "No Utilization Insights",
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.titleMedium!.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white
+                                      ),
+                                    ),
+                                    Text(
+                                      "Start print jobs to see printer utilization insights",
+                                      style: textTheme.bodyMedium!.copyWith(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(Icons.lightbulb, color: Colors.white, size: 20),
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Insights',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              SizedBox(height: 5),
                             ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildInsightItem('Most utilized: Large Format A (89%)'),
-                          const SizedBox(height: 10),
-                          _buildInsightItem('Underutilized: Sticker Station (46%)'),
-                          const SizedBox(height: 10),
-                          _buildInsightItem('Consider redistributing jobs to balance load'),
-                        ],
+                          )
+                        ]
                       ),
                     ),
                     

@@ -56,9 +56,26 @@ class ProductionReportDetails {
         printerUtilization = [],
         downtimeAndIssues = DowntimeData(totalMaintenanceMinutes: 0, totalMaintenanceHours: 0, averageMaintenancePerPrinter: 0);
 
-  /// Get underutilized printers (below threshold)
-  List<PrinterUtilizationData> getUnderutilizedPrinters(
-      double thresholdPercentage) {
+  /// Get underutilized printers (below threshold).
+  /// If no threshold is provided, returns the single most underutilized printer.
+  /// DEFAULT threshold is 80%
+  List<PrinterUtilizationData> getUnderutilizedPrinters({
+    double? thresholdPercentage,
+  }) {
+    if (printerUtilization.isEmpty) return [];
+
+    // If no threshold provided, return the most underutilized printer
+    if (thresholdPercentage == null) {
+      final mostUnderutilizedPrinter = printerUtilization.reduce(
+        (current, next) =>
+            current.utilizationPercentage < next.utilizationPercentage
+                ? current
+                : next,
+      );
+      return mostUnderutilizedPrinter.utilizationPercentage<80? [mostUnderutilizedPrinter] : [];
+    }
+
+    // Return all printers below the threshold
     return printerUtilization
         .where((printer) => printer.utilizationPercentage < thresholdPercentage)
         .toList();

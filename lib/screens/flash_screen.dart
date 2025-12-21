@@ -55,7 +55,7 @@ class _FlashScreenState extends State<FlashScreen> {
 
         // Temporariliy commented to check the admin screen functionality
         // AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.home : AppRoutes.login, predicate: (Route<dynamic> route) => false);
-        AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.productionReport : AppRoutes.login, predicate: (Route<dynamic> route) => false);
+        AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.admin : AppRoutes.login, predicate: (Route<dynamic> route) => false);
       });
     });
   }

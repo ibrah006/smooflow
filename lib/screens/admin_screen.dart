@@ -1173,7 +1173,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          AppRoutes.navigateTo(context, AppRoutes.projectReport);
+          final String? page;
+          switch(title) {
+            case "Projects Report": page = AppRoutes.projectReport; break;
+            case "Production Report": page = AppRoutes.productionReport; break;
+            default: page = null;
+          }
+
+          if (page != null) AppRoutes.navigateTo(context, page);
         },
         borderRadius: BorderRadius.circular(24),
         child: Ink(
