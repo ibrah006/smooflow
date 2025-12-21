@@ -1,6 +1,7 @@
 // lib/screens/reports/printer_reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'dart:math' as math;
 
@@ -56,6 +57,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
 
     print("Prouction notifier error: ${ref.watch(printerNotifierProvider).error}");
 
@@ -85,6 +87,8 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
             'Maintenance': report.overview.maintenancePrinters,
             'Offline': report.overview.offlinePrinters,
           };
+
+          final printerUtilization = report.printerUtilization;
 
           return Column(
             children: [
@@ -303,7 +307,29 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                     
                     const SizedBox(height: 16),
                     
-                    ..._printerUtilization.map((printer) => _buildUtilizationCard(printer)),
+                    ...printerUtilization.map((printer) => _buildUtilizationCard(printer)),
+                    if (printerUtilization.isEmpty) ...[
+                      Icon(Icons.print_rounded, size: 80),
+                      SizedBox(height: 5),
+                      Text(
+                        "No Printers",
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineSmall!.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          "No data available - Create Printers to see utilization data",
+                          style: textTheme.titleSmall!.copyWith(
+                            color: Colors.grey.shade700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                     
                     const SizedBox(height: 24),
                     
@@ -602,8 +628,8 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
     }).toList();
   }
 
-  Widget _buildUtilizationCard(Map<String, dynamic> printer) {
-    final utilization = printer['utilization'] as int;
+  Widget _buildUtilizationCard(PrinterUtilizationData printer) {
+    final utilization = printer.totalUtilizedHours as int;
     Color barColor;
     
     if (utilization >= 70) {
@@ -629,7 +655,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
             children: [
               Expanded(
                 child: Text(
-                  printer['name'],
+                  printer.name,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -670,7 +696,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
               Icon(Icons.access_time, size: 14, color: const Color(0xFF9CA3AF)),
               const SizedBox(width: 6),
               Text(
-                '${printer['hours']}h / ${printer['total']}h',
+                '${printer.totalUtilizedHours}h / ${printer.totalActiveHours}h',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF9CA3AF),
@@ -680,7 +706,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
               Icon(Icons.work, size: 14, color: const Color(0xFF9CA3AF)),
               const SizedBox(width: 6),
               Text(
-                '${printer['jobs']} jobs',
+                '${printer.totalPrintJobs} jobs',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF9CA3AF),
