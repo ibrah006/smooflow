@@ -1,8 +1,9 @@
 import 'dart:convert';
-
-import 'package:dio/dio.dart';
 import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/data/production_report_details.dart';
 import '../models/printer.dart';
+
+import 'package:http/http.dart' as http;
 
 class PrinterRepo {
   PrinterRepo();
@@ -106,4 +107,61 @@ class PrinterRepo {
 
     throw Exception('Failed to fetch active printers: ${res.body}');
   }
+  
+  Future<ProductionReportResponse> getProductionReport(ReportPeriod period) async {
+    try {
+
+      final response = await ApiClient.http.get("/reports/production", );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        return ProductionReportResponse.fromJson(jsonData);
+      } else if (response.statusCode == 400) {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        throw ProductionReportException(
+          message: errorData['message'] ?? 'Bad request',
+          statusCode: 400,
+        );
+      } else if (response.statusCode == 401) {
+        throw ProductionReportException(
+          message: 'Unauthorized. Please login again.',
+          statusCode: 401,
+        );
+      } else if (response.statusCode == 500) {
+        throw ProductionReportException(
+          message: 'Server error. Please try again later.',
+          statusCode: 500,
+        );
+      } else {
+        throw ProductionReportException(
+          message: 'Unexpected error occurred',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.Client catch (e) {
+      throw ProductionReportException(
+        message: 'Network error: $e',
+        statusCode: 0,
+      );
+    } catch (e) {
+      if (e is ProductionReportException) rethrow;
+      throw ProductionReportException(
+        message: 'Failed to fetch production report: $e',
+        statusCode: 0,
+      );
+    }
+  }
+}
+
+class ProductionReportException implements Exception {
+  final String message;
+  final int statusCode;
+
+  ProductionReportException({
+    required this.message,
+    required this.statusCode,
+  });
+
+  @override
+  String toString() => 'ProductionReportException: $message (Status: $statusCode)';
 }

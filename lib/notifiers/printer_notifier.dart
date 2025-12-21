@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/data/production_report_details.dart';
 import 'package:smooflow/repositories/printer_repo.dart';
 import 'package:smooflow/states/printer.dart';
 
@@ -114,5 +115,36 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
+  }
+
+  /// Fetch production report for a given period
+  Future<void> fetchReport(
+    ReportPeriod period,
+  ) async {
+    try {
+      final reportResponse = await _repo.getProductionReport(period);
+
+      if (!reportResponse.success) {
+        state = state.copyWith(error: "Failed to Production Report", loading: false);
+      }
+      
+      state = state.copyWith(
+        report: {...state.report, period: reportResponse.data}
+      );
+    
+    } catch(e) {
+      state = state.copyWith(error: e.toString(), loading: false);
+    }
+  }
+
+  /// Lazy loading (only reload if empty)
+  Future<ProductionReportDetails> ensureReportLoaded(ReportPeriod period) async {
+    final report = state.report[period];
+
+    if (report == null) {
+      await fetchReport(period);
+    }
+
+    return state.report[period]!;
   }
 }

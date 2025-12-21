@@ -63,6 +63,7 @@ dependencies:
   hawk_fab_menu: ^1.2.0
   dio: ^5.9.0
   cupertino_calendar_picker: ^2.2.6
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +75,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.6
+  json_serializable: ^6.7.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,3 +1,5 @@
+import 'package:smooflow/data/production_report_details.dart';
+
 import '../models/printer.dart';
 
 class PrinterState {
@@ -7,12 +9,15 @@ class PrinterState {
   final String? error;
   final int totalPrintersCount;
 
+  final Map<ReportPeriod, ProductionReportDetails> report;
+
   const PrinterState({
     this.printers = const [],
     this.activePrinters = const [],
     this.loading = false,
     this.error,
-    this.totalPrintersCount = 0
+    this.totalPrintersCount = 0,
+    this.report = const {}
   });
 
   PrinterState copyWith({
@@ -21,13 +26,15 @@ class PrinterState {
     bool? loading,
     String? error,
     int? totalPrintersCount,
+    Map<ReportPeriod, ProductionReportDetails>? report
   }) {
     return PrinterState(
       printers: printers ?? this.printers,
       activePrinters: activePrinters ?? this.activePrinters,
       loading: loading ?? this.loading,
       error: error,
-      totalPrintersCount: totalPrintersCount ?? this.totalPrintersCount
+      totalPrintersCount: totalPrintersCount ?? this.totalPrintersCount,
+      report: report?? this.report
     );
   }
 }
