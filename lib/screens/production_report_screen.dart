@@ -9,6 +9,7 @@ import 'dart:math' as math;
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/data/production_report_details.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/screens/components/production_report_header.dart';
 
 class ProductionReportsScreen extends ConsumerStatefulWidget {
   const ProductionReportsScreen({Key? key}) : super(key: key);
@@ -19,13 +20,6 @@ class ProductionReportsScreen extends ConsumerStatefulWidget {
 
 class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScreen> {
   ReportPeriod _selectedPeriod = ReportPeriod.thisWeek;
-  
-  final List<Map<String, dynamic>> _printerUtilization = [
-    {'name': 'Large Format A', 'utilization': 89, 'hours': 71, 'total': 80, 'jobs': 24},
-    {'name': 'Vinyl Master', 'utilization': 74, 'hours': 59, 'total': 80, 'jobs': 18},
-    {'name': 'Banner Pro', 'utilization': 52, 'hours': 42, 'total': 80, 'jobs': 12},
-    {'name': 'Sticker Station', 'utilization': 46, 'hours': 37, 'total': 80, 'jobs': 15},
-  ];
   
   final Map<String, int> _issueFrequency = {
     'Paper jam': 8,
@@ -76,11 +70,6 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
         builder: (context, snapshot) {
 
           final report = snapshot.data!;
-
-          final totalPrinters = report.overview.totalPrinters;
-          final activePrinters = report.overview.activePrinters;
-          final idlePrinters = report.overview.idlePrinters;
-          final avgUtilization = report.overview.averageUtilization;
 
           _printerStatus = {
             'Active': report.overview.activePrinters,
@@ -207,53 +196,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                     ),
                     
                     const SizedBox(height: 16),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKPICard(
-                            value: totalPrinters.toString(),
-                            label: 'Total\nPrinters',
-                            icon: Icons.print,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            value: activePrinters.toString(),
-                            label: 'Active\nNow',
-                            icon: Icons.check_circle,
-                            color: const Color(0xFF10B981),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKPICard(
-                            value: idlePrinters.toString(),
-                            label: 'Idle',
-                            icon: Icons.remove_circle_outline,
-                            color: const Color(0xFFF59E0B),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            value: "${avgUtilization.toStringAsFixed(0)}%",
-                            label: 'Avg\nUtilization',
-                            icon: Icons.trending_up,
-                            color: const Color(0xFF2563EB),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
+                    ProductionReportHeader(overviewData: report.overview),
                     const SizedBox(height: 32),
                     
                     // Printer Status Distribution
@@ -465,7 +408,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                                 color: const Color(0xFFF5F7FA),
                               ),
                               Expanded(
-                                child: _buildDowntimeStat('${avgMaintenancePerPrinter}h', 'Avg Downtime\nper Printer'),
+                                child: _buildDowntimeStat('${avgMaintenancePerPrinter}h', 'Avg. Downtime\nper Printer'),
                               ),
                             ],
                           ),
@@ -636,54 +579,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
       ),
     );
   }
-
-  Widget _buildKPICard({
-    required String value,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   List<Widget> _buildStatusLegend(ProductionReportDetails report) {
     final colors = {
       'Active': const Color(0xFF10B981),

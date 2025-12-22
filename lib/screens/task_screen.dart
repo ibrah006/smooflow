@@ -9,7 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/native_button.dart';
 import 'package:smooflow/components/work_activity_tile.dart';
-import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/main.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
@@ -132,7 +132,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
     bool showPageContents = !showLoadingOverlay;
 
     final isCompleted =
-        task.dateCompleted != null || task.status.toLowerCase() == "completed";
+        task.dateCompleted != null || task.status == TaskStatus.completed;
 
     final assigneesFuture = ref
         .watch(userNotifierProvider.notifier)
@@ -174,7 +174,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          task.status,
+                          task.statusName,
                           style: textTheme.bodyMedium!.copyWith(
                             color: Colors.grey.shade900,
                           ),
@@ -664,18 +664,22 @@ class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
       isStartTaskLoading = true;
     });
 
-    // await ref.watch(createTaskActivityLogProvider(task.id));
-    // Update task status
-    final workActivityLog = await ref
-        .read(taskNotifierProvider.notifier)
-        .startTask(task.id);
+    try {
+      // await ref.watch(createTaskActivityLogProvider(task.id));
+      // Update task status
+      final workActivityLog = await ref
+          .read(taskNotifierProvider.notifier)
+          .startTask(task.id);
 
-    // Add Work activity log
-    await ref
-        .read(workActivityLogNotifierProvider.notifier)
-        .startWorkSession(taskId: task.id, newLogId: workActivityLog.id);
+      // Add Work activity log
+      await ref
+          .read(workActivityLogNotifierProvider.notifier)
+          .startWorkSession(taskId: task.id, newLogId: workActivityLog.id);
 
-    startDurationEventHandler();
+      startDurationEventHandler();
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
 
     setState(() {
       isStartTaskLoading = false;

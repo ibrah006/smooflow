@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/material_log.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
@@ -16,7 +17,7 @@ class Task {
   List<int> workActivityLogs;
   late int _runs;
 
-  late String _status;
+  late TaskStatus _status;
   late List<String> _assignees;
   late String _projectId;
 
@@ -64,8 +65,7 @@ class Task {
        _materialId = materialId ?? "",
        _productionStartTime = productionStartTime,
        _runs = runs {
-    _status = status.replaceAll(RegExp(r"_"), " ");
-    _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
+    _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
   }
 
@@ -73,7 +73,7 @@ class Task {
     required String name,
     required String description,
     required DateTime? dueDate,
-    String status = "pending",
+    TaskStatus status = TaskStatus.pending,
     required List<String> assignees,
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],
@@ -108,7 +108,8 @@ class Task {
   String get name => _name;
   String get description => _description;
   DateTime? get dueDate => _dueDate;
-  String get status => _status;
+  TaskStatus get status => _status;
+  String get statusName => "${_status.name[0].toUpperCase()}${_status.name.substring(1)}";
   // ids of assigned users
   List<String> get assignees => _assignees;
   String get projectId => _projectId;
@@ -127,9 +128,9 @@ class Task {
   }
 
   // Setters (make sure only Task can modify these)
-  set status(String newStatus) {
-    _status = newStatus.replaceAll(RegExp(r"-"), " ");
-    _status = "${_status[0].toUpperCase()}${_status.substring(1)}";
+  set status(TaskStatus newStatus) {
+    // _status = newStatus.replaceAll(RegExp(r"-"), " ");
+    _status = newStatus;
   }
 
   set dateCompleted(DateTime? newDatetime) {
@@ -199,7 +200,7 @@ class Task {
       progressLogIds = original.progressLogIds,
       workActivityLogs = original.workActivityLogs {
     updatedAt = original.updatedAt;
-    String status = original._status;
+    TaskStatus status = original._status;
     _status = status;
     color = original.color;
     icon = original.icon;
@@ -226,7 +227,7 @@ class Task {
     String? name,
     String? description,
     DateTime? dueDate,
-    String? status,
+    TaskStatus? status,
     List<String>? assignees,
     String? projectId,
     DateTime? dateCompleted,
@@ -297,7 +298,7 @@ class Task {
       'name': name,
       'description': description,
       'dueDate': dueDate?.toIso8601String(),
-      'status': status,
+      'status': _status.name,
       'assignees': assignees,
       'project': {'id': projectId},
       'dateCompleted': dateCompleted?.toIso8601String(),

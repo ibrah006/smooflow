@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
-import 'package:smooflow/screens/barcode_export_screen.dart';
-import 'package:smooflow/screens/desktop_material_details.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/export_barcodes_args.dart';
 

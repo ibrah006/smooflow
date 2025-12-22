@@ -6,10 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/models/progress_log.dart';
-import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
-import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/repositories/users_repo.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 
@@ -28,7 +26,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   final _descController = TextEditingController();
 
   String? _priority;
-  DateTime? _dueDate;
+  // DateTime? _dueDate;
   String? _selectedProgressLogId;
   List<User> _selectedAssignees = [];
 
@@ -43,11 +41,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   bool _isLoading = false;
 
   // Show a snackbar with error message
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red[600]),
-    );
-  }
+  // void _showError(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text(message), backgroundColor: Colors.red[600]),
+  //   );
+  // }
 
   // Validate and Create Function
   void validateAndCreate() async {

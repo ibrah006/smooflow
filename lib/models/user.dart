@@ -2,7 +2,6 @@
 // import 'package:workflow/core/enums/shared_storage_options.dart';
 
 import 'package:flutter/cupertino.dart';
-import 'organization.dart';
 
 class User {
   late final String id;

@@ -3,10 +3,8 @@ import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:printing/printing.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:smooflow/components/product_barcode.dart';
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class ExportBarcodesScreen extends StatefulWidget {

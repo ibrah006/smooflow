@@ -603,6 +603,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   Widget _buildReportsTab() {
+
+    final overallStatus = ref.watch(projectNotifierProvider.notifier).projectsOverallStatus;
+    final projectsThisMonth = overallStatus.countThisMonth;
+    final projectsIncreaseWRTPrevMonth = overallStatus.increaseWRTPrevMonth;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -646,12 +651,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           value: '\$24,580',
           change: '+12.5%',
         ),
-
+        // , 'Projects', , projectsIncreaseWRTPrevMonth>=0)
         _buildReportCard(
           icon: Icons.work_rounded,
           title: 'Projects Report',
-          value: '156',
-          change: '+8 new',
+          value: projectsThisMonth.toString(),
+          change: projectsIncreaseWRTPrevMonth>0? '+${projectsIncreaseWRTPrevMonth.toString()} new' : '',
         ),
 
         _buildReportCard(

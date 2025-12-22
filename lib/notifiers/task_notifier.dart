@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/repositories/task_repo.dart';
+import 'package:smooflow/services/login_service.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
   TaskNotifier(this._repo) : super([]);
@@ -197,6 +199,18 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     return _activeTask;
   }
 
+  TaskStatus get getTaskStartStatus  {
+    final currentUser = LoginService.currentUser;
+    switch (currentUser?.role) {
+      case 'production': return TaskStatus.printing;
+      case 'design': return TaskStatus.designing;
+      case 'finishing': return TaskStatus.finishing;
+      case 'application': return TaskStatus.installing;
+      case 'admin': return TaskStatus.printing;
+      default: throw "Your role doesn't have priveleges to start Task";
+    }
+  }
+
   /// Start a task
   Future<WorkActivityLog> startTask(int taskId) async {
     final workActivityLog = await _repo.startTask(taskId);
@@ -208,7 +222,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
             // Update task state - add work activity log and update status
             t.workActivityLogs.add(workActivityLog.id);
             t.activityLogLastModified = DateTime.now();
-            t.status = "in-progress";
+            t.status = getTaskStartStatus;
             _activeTask = t;
           }
           return t;
@@ -221,7 +235,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   /// End currently active task
-  Future<void> endActiveTask({String? status, bool isCompleted = false}) async {
+  Future<void> endActiveTask({TaskStatus? status, bool isCompleted = false}) async {
     await _repo.endTask(status: status, isCompleted: isCompleted);
 
     if (_activeTask != null) {

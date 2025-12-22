@@ -333,7 +333,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
           ),
           child: Row(
             children: [
-              _buildStatusCircle(task.status, size: 40),
+              _buildStatusCircle(task.statusName, size: 40),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

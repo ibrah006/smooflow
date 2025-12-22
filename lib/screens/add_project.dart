@@ -15,7 +15,6 @@ import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_client_screen.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
-import 'package:smooflow/screens/materials_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';

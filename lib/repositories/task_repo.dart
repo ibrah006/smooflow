@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/models/work_activity_log.dart';
 import 'package:smooflow/services/login_service.dart';
@@ -125,9 +126,9 @@ class TaskRepo {
   }
 
   /// POST /tasks/end — stop working on a task (clock out)
-  Future<void> endTask({String? status, bool isCompleted = false}) async {
+  Future<void> endTask({TaskStatus? status, bool isCompleted = false}) async {
     final queryParams = <String, String>{};
-    if (status != null) queryParams['status'] = status;
+    if (status != null) queryParams['status'] = status.name;
     if (isCompleted) queryParams['isCompleted'] = 'true';
 
     final queryString =

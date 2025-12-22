@@ -6,6 +6,7 @@ import 'package:smooflow/components/hawk_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/material_stock_transaction_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/material.dart';
 import 'dart:async';
@@ -509,8 +510,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
   Widget _buildJobCard(Task task) {
 
-    final isStarted = task.status.toLowerCase() == "printing";
-    final isBlocked = task.status.toLowerCase() == "blocked";
+    // final isStarted = task.status == TaskStatus.printing;
+    final isBlocked = task.status == TaskStatus.blocked;
 
     final isOverdue = task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now());
 
@@ -600,7 +601,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      isStarted? "Printing" : task.status,
+                      task.statusName,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:smooflow/data/project_report_details.dart';
 import 'package:smooflow/data/project_overall_status.dart';
 import 'package:smooflow/enums/period.dart';
 import 'package:smooflow/enums/status.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/task.dart';
@@ -155,7 +156,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
               ..tasks.map((tId) {
                 if (tId == updatedTask.id) {
                   return updatedTask
-                    ..status = "completed"
+                    ..status = TaskStatus.completed
                     ..dateCompleted = dateCompleted;
                 } else {
                   return tId;
