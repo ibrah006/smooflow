@@ -5,12 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:roundcheckbox/roundcheckbox.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
-import 'package:smooflow/screens/task_screen.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/task_args.dart';
 
@@ -31,7 +31,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
     final textTheme = Theme.of(context).textTheme;
 
     final isCompleted =
-        task.dateCompleted != null || task.status.toLowerCase() == "completed";
+        task.dateCompleted != null || task.status == TaskStatus.completed;
 
     final assigneesFuture = ref
         .read(userNotifierProvider.notifier)
@@ -44,14 +44,14 @@ class _TaskTileState extends ConsumerState<TaskTile> {
         children: [
           SizedBox(width: 10),
           RoundCheckBox(
-            isChecked: task.status.toLowerCase() == "completed",
+            isChecked: task.status == TaskStatus.completed,
             animationDuration: Durations.medium1,
             size: 27,
             checkedColor: colorPrimary,
             onTap: (newVal) async {
               setState(() {
                 if (newVal == true) {
-                  task.status = "completed";
+                  task.status = TaskStatus.completed;
                 }
               });
 
@@ -140,7 +140,7 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              "${task.status[0].toUpperCase()}${task.status.substring(1)}",
+                              task.statusName,
                               style: textTheme.labelMedium!.copyWith(
                                 color:
                                     !isCompleted ? colorPrimary : Colors.white,
