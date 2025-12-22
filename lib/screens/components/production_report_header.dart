@@ -1,13 +1,18 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/data/production_report_details.dart';
 
 class ProductionReportHeader extends ConsumerWidget {
   final OverviewData overviewData;
+  final PrintJobsOverview printJobsOverview;
 
   const ProductionReportHeader({
     Key? key,
-    required this.overviewData
+    required this.overviewData,
+    required this.printJobsOverview
   }) : super(key: key);
 
   int get activePrinters => overviewData.activePrinters;
@@ -15,10 +20,12 @@ class ProductionReportHeader extends ConsumerWidget {
   double get averageUtilization => overviewData.averageUtilization;
   int get maintenancePrinters => overviewData.maintenancePrinters;
   int get offlinePrinters => overviewData.offlinePrinters;
-  int get jobsInProgress => 2;
-  int get jobsPending => 3;
-  int get jobsCompletedToday => 2;
+
+  int get jobsInProgress => printJobsOverview.printing;
+  int get jobsPending => printJobsOverview.pending;
+  int get jobsCompletedToday => printJobsOverview.completedToday;
   double get avgJobCompletionTime => 20;
+
 
   @override
   Widget build(BuildContext context, ref) {
@@ -210,11 +217,43 @@ class ProductionReportHeader extends ConsumerWidget {
                   color: const Color(0xFFE2E8F0),
                 ),
                 Expanded(
-                  child: _buildCompactMetric(
-                    icon: Icons.timer_outlined,
-                    label: 'Avg. Time/',
-                    highlightLabel: "Project",
-                    value: '${avgJobCompletionTime.toStringAsFixed(1)}h',
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      _buildCompactMetric(
+                        icon: Icons.timer_outlined,
+                        label: 'Avg. Time/',
+                        highlightLabel: "Project",
+                        value: '${avgJobCompletionTime.toStringAsFixed(1)}h',
+                        highlightValue: true
+                      ),
+                      Transform.scale(
+                        scale: 1.005,
+                        child: SizedBox(
+                          height: 45,
+                          child: ClipRect(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Color(0xFFF8FAFC).withOpacity(0.4), Color(0xFFF8FAFC).withOpacity(0.55)]
+                                  )
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 8,
+                        children: [
+                          Icon(Icons.schedule_rounded, size: 15),
+                          Text("Coming Soon", style: TextStyle(fontWeight: FontWeight.bold),),
+                        ],
+                      )
+                    ],
                   ),
                 ),
               ],
@@ -410,7 +449,8 @@ class ProductionReportHeader extends ConsumerWidget {
     required IconData icon,
     required String label,
     required String value,
-    String? highlightLabel
+    String? highlightLabel,
+    bool highlightValue = false
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -422,10 +462,10 @@ class ProductionReportHeader extends ConsumerWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: highlightValue? colorPrimary : Color(0xFF0F172A),
                 height: 1.2,
               ),
             ),

@@ -5,8 +5,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/material_stock_transactions_screen.dart';
@@ -62,6 +65,8 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return LoadingOverlay(
       isLoading: ref.watch(materialNotifierProvider).isLoading,
       child: Scaffold(
@@ -220,7 +225,53 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
                       .watch(materialNotifierProvider.notifier)
                       .fetchMaterials();
                 },
-                child: ListView.builder(
+                child: _filteredMaterials.isEmpty? ListView(
+                  padding: EdgeInsets.symmetric(horizontal: 40),
+                  children: [
+                    SizedBox(
+                      height:
+                          MediaQuery.of(context).size.height / 30,
+                    ),
+                    SvgPicture.asset(
+                      "assets/icons/no_projects_icon.svg",
+                    ),
+                    Text(
+                      "No Materials",
+                      textAlign: TextAlign.center,
+                      style: textTheme.headlineMedium!.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(),
+                    Text(
+                      "Import your existing Materials and Stock data or start a manual entry",
+                      textAlign: TextAlign.center,
+                      style: textTheme.titleMedium!.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    // Import CSV
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _showImportCSVEducationDialog,
+                        child: Text("Import CSV"),
+                      ),
+                    ),
+                    // Stock Enty
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () {
+                          AppRoutes.navigateTo(context, AppRoutes.stockInEntry, arguments: StockEntryArgs.stockIn());
+                        },
+                        child: Text("Stock Entry"),
+                      ),
+                    ),
+                    SizedBox(height: kToolbarHeight)
+                  ],
+                ) : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: _filteredMaterials.length,
                   itemBuilder: (context, index) {
@@ -248,7 +299,7 @@ class _MaterialsStockScreenState extends ConsumerState<MaterialsStockScreen> {
         //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         //   ),
         // ),
-        floatingActionButton: Column(
+        floatingActionButton: _filteredMaterials.isEmpty? null : Column(
           spacing: 12,
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.end,

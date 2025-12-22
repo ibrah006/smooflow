@@ -143,7 +143,8 @@ class PrinterRepo {
         message: 'Network error: $e',
         statusCode: 0,
       );
-    } catch (e) {
+    }
+    catch (e) {
       if (e is ProductionReportException) rethrow;
       throw ProductionReportException(
         message: 'Failed to fetch production report: $e',

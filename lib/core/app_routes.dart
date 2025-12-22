@@ -7,6 +7,7 @@ import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/screens/login_screen.dart';
+import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/printer_screen.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
@@ -243,7 +244,11 @@ class AppRoutes {
 
       case stockInEntry:
         if (args is StockEntryArgs) {
-          screen = StockEntryScreen.stockin(material: args.material);
+          try{
+            screen = StockEntryScreen.stockin(material: args.material);
+          } catch(e) {
+            screen = StockEntryScreen.stockin();
+          }
         }
         break;
       case stockOutEntry:
@@ -373,6 +378,9 @@ class AppRoutes {
         break;
       case productionReport:
         screen = ProductionReportsScreen();
+        break;
+      case materials:
+        screen = MaterialsStockScreen();
         break;
     }
 

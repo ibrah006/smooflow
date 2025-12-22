@@ -1182,6 +1182,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           switch(title) {
             case "Projects Report": page = AppRoutes.projectReport; break;
             case "Production Report": page = AppRoutes.productionReport; break;
+            case "Material Usage": page = AppRoutes.materials;
             default: page = null;
           }
 

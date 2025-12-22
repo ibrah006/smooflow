@@ -6,7 +6,11 @@ class StockEntryArgs {
   late final bool isStockIn;
 
   StockEntryArgs.stockIn({Key? key, MaterialModel? material})
-    : projectId = null;
+    : projectId = null {
+      if (material != null) {
+        this.material = material;
+      }
+    }
 
   late final MaterialModel material;
   late final StockTransaction transaction;

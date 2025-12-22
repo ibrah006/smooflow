@@ -30,12 +30,14 @@ class ProductionReportDetails {
   final List<PrinterUtilizationData> printerUtilization;
   final DowntimeData downtimeAndIssues;
   final ReportPeriod period;
+  final PrintJobsOverview printJobsOverview;
 
   ProductionReportDetails({
     required this.overview,
     required this.printerUtilization,
     required this.downtimeAndIssues,
     required this.period,
+    required this.printJobsOverview
   });
 
   factory ProductionReportDetails.fromJson(Map<String, dynamic> json) =>
@@ -54,7 +56,8 @@ class ProductionReportDetails {
       : period = period ?? ReportPeriod.thisWeek,
         overview = OverviewData(totalPrinters: 0, activePrinters: 0, idlePrinters: 0, maintenancePrinters: 0, offlinePrinters: 0, averageUtilization: 0),
         printerUtilization = [],
-        downtimeAndIssues = DowntimeData(totalMaintenanceMinutes: 0, totalMaintenanceHours: 0, averageMaintenancePerPrinter: 0);
+        downtimeAndIssues = DowntimeData(totalMaintenanceMinutes: 0, totalMaintenanceHours: 0, averageMaintenancePerPrinter: 0),
+        printJobsOverview = PrintJobsOverview(printing: 0, pending: 0, completedToday: 0);
 
   /// Get underutilized printers (below threshold).
   /// If no threshold is provided, returns the single most underutilized printer.
@@ -258,5 +261,54 @@ enum ReportPeriod {
       case ReportPeriod.thisMonth:
         return 'This Month';
     }
+  }
+}
+
+/// Print jobs overview data
+@JsonSerializable()
+class PrintJobsOverview {
+  final int printing;
+  final int pending;
+  final int completedToday;
+
+  PrintJobsOverview({
+    required this.printing,
+    required this.pending,
+    required this.completedToday,
+  });
+
+  factory PrintJobsOverview.fromJson(Map<String, dynamic> json) =>
+      _$PrintJobsOverviewFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PrintJobsOverviewToJson(this);
+
+  /// Get total active jobs (printing + pending)
+  int getTotalActiveJobs() {
+    return printing + pending;
+  }
+
+  /// Check if there are any jobs in progress
+  bool hasActiveJobs() {
+    return printing > 0 || pending > 0;
+  }
+
+  /// Get status message based on job counts
+  String getStatusMessage() {
+    if (printing == 0 && pending == 0) {
+      return 'No active jobs';
+    } else if (printing > 0 && pending == 0) {
+      return 'All jobs printing';
+    } else if (printing == 0 && pending > 0) {
+      return 'Jobs waiting to print';
+    } else {
+      return 'Jobs in progress and queued';
+    }
+  }
+
+  /// Calculate percentage of jobs currently printing vs total active
+  double getPrintingPercentage() {
+    final total = getTotalActiveJobs();
+    if (total == 0) return 0.0;
+    return (printing / total) * 100;
   }
 }

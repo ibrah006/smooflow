@@ -41,11 +41,12 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
     super.initState();
 
     Future.microtask(() {
+      print("passed in production report period': $_selectedPeriod");
       reportFuture = ref.watch(printerNotifierProvider.notifier).ensureReportLoaded(_selectedPeriod);
       reportFuture.then((value) {
-          setState(() {
-            isLoading = false; 
-          });
+        setState(() {
+          isLoading = false; 
+        });
       });
     });
   }
@@ -196,7 +197,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                     ),
                     
                     const SizedBox(height: 16),
-                    ProductionReportHeader(overviewData: report.overview),
+                    ProductionReportHeader(overviewData: report.overview, printJobsOverview: report.printJobsOverview),
                     const SizedBox(height: 32),
                     
                     // Printer Status Distribution
@@ -579,7 +580,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
       ),
     );
   }
-  
+
   List<Widget> _buildStatusLegend(ProductionReportDetails report) {
     final colors = {
       'Active': const Color(0xFF10B981),

@@ -14,7 +14,7 @@ ProductionReportResponse _$ProductionReportResponseFromJson(
   generatedAt: json['generatedAt'] as String,
   data: ProductionReportDetails.fromJson({
     ...json['data'] as Map<String, dynamic>,
-    "period": json['period'] as String
+    "period": json['period'] as String,
   }),
 );
 
@@ -30,7 +30,6 @@ Map<String, dynamic> _$ProductionReportResponseToJson(
 ProductionReportDetails _$ProductionReportDetailsFromJson(
   Map<String, dynamic> json,
 ) => ProductionReportDetails(
-  period: ReportPeriod.values.byName(json["period"]),
   overview: OverviewData.fromJson(json['overview'] as Map<String, dynamic>),
   printerUtilization:
       (json['printerUtilization'] as List<dynamic>)
@@ -41,6 +40,8 @@ ProductionReportDetails _$ProductionReportDetailsFromJson(
   downtimeAndIssues: DowntimeData.fromJson(
     json['downtimeAndIssues'] as Map<String, dynamic>,
   ),
+  period: $enumDecode(_$ReportPeriodEnumMap, json['period']),
+  printJobsOverview: PrintJobsOverview.fromJson(json['printJobsOverview'])
 );
 
 Map<String, dynamic> _$ProductionReportDetailsToJson(
@@ -49,6 +50,13 @@ Map<String, dynamic> _$ProductionReportDetailsToJson(
   'overview': instance.overview,
   'printerUtilization': instance.printerUtilization,
   'downtimeAndIssues': instance.downtimeAndIssues,
+  'period': _$ReportPeriodEnumMap[instance.period]!,
+};
+
+const _$ReportPeriodEnumMap = {
+  ReportPeriod.today: 'today',
+  ReportPeriod.thisWeek: 'thisWeek',
+  ReportPeriod.thisMonth: 'thisMonth',
 };
 
 OverviewData _$OverviewDataFromJson(Map<String, dynamic> json) => OverviewData(
@@ -104,4 +112,18 @@ Map<String, dynamic> _$DowntimeDataToJson(DowntimeData instance) =>
       'totalMaintenanceMinutes': instance.totalMaintenanceMinutes,
       'totalMaintenanceHours': instance.totalMaintenanceHours,
       'averageMaintenancePerPrinter': instance.averageMaintenancePerPrinter,
+    };
+
+PrintJobsOverview _$PrintJobsOverviewFromJson(Map<String, dynamic> json) =>
+    PrintJobsOverview(
+      printing: (json['printing'] as num).toInt(),
+      pending: (json['pending'] as num).toInt(),
+      completedToday: (json['completedToday'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$PrintJobsOverviewToJson(PrintJobsOverview instance) =>
+    <String, dynamic>{
+      'printing': instance.printing,
+      'pending': instance.pending,
+      'completedToday': instance.completedToday,
     };
