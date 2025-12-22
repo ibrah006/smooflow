@@ -1,4 +1,6 @@
 // lib/screens/reports/printer_reports_screen.dart
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -90,7 +92,9 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
           final printerUtilization = report.printerUtilization;
 
           // Printer Utilization Data
-          final mostUtilizedPrinters = report.getTopPerformers(1);
+          final mostUtilizedPrinters = report.getTopPerformers(5);
+          final underUtilizedPrinters = report.getUnderutilizedPrinters();
+
           late final PrinterUtilizationData? mostUtilizedPrinter;
           try {
             mostUtilizedPrinter = mostUtilizedPrinters.first;
@@ -99,10 +103,14 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
           }
           late final PrinterUtilizationData? underUtilizedPrinter;
           try {
-            underUtilizedPrinter = report.getUnderutilizedPrinters().first;
+            underUtilizedPrinter = underUtilizedPrinters.first;
           } catch(e) {
             underUtilizedPrinter = null;
           }
+
+          // Downtime & Issues data
+          final totalDowntimeHours = report.downtimeAndIssues.totalMaintenanceHours.toInt();
+          final avgMaintenancePerPrinter = report.downtimeAndIssues.averageMaintenancePerPrinter.toInt();
 
           return Column(
             children: [
@@ -323,12 +331,13 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                     
                     ...printerUtilization.map((printer) => _buildUtilizationCard(printer)),
                     if (printerUtilization.isEmpty) ...[
-                      Icon(Icons.print_rounded, size: 80),
+                      Icon(Icons.print_rounded, size: 52),
                       SizedBox(height: 5),
                       Text(
                         "No Printers",
                         textAlign: TextAlign.center,
-                        style: textTheme.headlineSmall!.copyWith(
+                        style: TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -448,15 +457,15 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                           Row(
                             children: [
                               Expanded(
-                                child: _buildDowntimeStat('12h', 'Total Downtime'),
+                                child: _buildDowntimeStat('${totalDowntimeHours}h', 'Total Downtime'),
                               ),
                               Container(
                                 width: 1,
-                                height: 40,
+                                height: 45,
                                 color: const Color(0xFFF5F7FA),
                               ),
                               Expanded(
-                                child: _buildDowntimeStat('34', 'Incidents'),
+                                child: _buildDowntimeStat('${avgMaintenancePerPrinter}h', 'Avg Downtime\nper Printer'),
                               ),
                             ],
                           ),
@@ -472,7 +481,41 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                             ),
                           ),
                           const SizedBox(height: 16),
-                          ..._buildIssueBars(),
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Column(
+                                children: _buildIssueBars(),
+                              ),
+                              Transform.scale(
+                                scale: 1.08,
+                                child: SizedBox(
+                                  height: 220,
+                                  width: MediaQuery.of(context).size.width,
+                                  child: ClipRect(
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [Colors.white.withOpacity(0.4), Colors.white.withOpacity(0.55)]
+                                          )
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 8,
+                                children: [
+                                  Icon(Icons.schedule_rounded, size: 23),
+                                  Text("Coming Soon", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                                ],
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -499,13 +542,40 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
                       ),
                       child: Column(
                         children: [
-                          _buildRankingItem(1, 'Large Format A', 94),
-                          const SizedBox(height: 16),
-                          _buildRankingItem(2, 'Vinyl Master', 87),
-                          const SizedBox(height: 16),
-                          _buildRankingItem(3, 'Banner Pro', 72),
-                          const SizedBox(height: 16),
-                          _buildRankingItem(4, 'Sticker Station', 58),
+                          ...List.generate(mostUtilizedPrinters.length, (index) {
+                            final printerUtilizationData = mostUtilizedPrinters[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _buildRankingItem(index, printerUtilizationData.name, printerUtilizationData.utilizationPercentage.toInt()),
+                            );
+                          }),
+                          if (mostUtilizedPrinters.isEmpty) ... [
+                            Icon(
+                              Icons.leaderboard_rounded,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "No Printers to Rank",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Text(
+                                "No data available - Start using Printers to see efficiency ranking",
+                                style: textTheme.titleSmall!.copyWith(
+                                  color: Colors.grey.shade700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ]
                         ],
                       ),
                     ),
@@ -803,11 +873,15 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
+        SizedBox(
+          height: 30,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9CA3AF),
+            ),
           ),
         ),
       ],
