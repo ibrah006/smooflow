@@ -58,7 +58,10 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
         printSpeed: printSpeed,
       );
 
-      state = state.copyWith(printers: [...state.printers, printer], totalPrintersCount: state.totalPrintersCount + 1);
+      state = state.copyWith(
+        printers: [...state.printers, printer],
+        totalPrintersCount: state.totalPrintersCount + 1,
+        activePrinters: printer.isActive? [...state.activePrinters, printer] : null);
     } catch (e) {
       print("error occurred while creating printer: $e");
       state = state.copyWith(error: e.toString());

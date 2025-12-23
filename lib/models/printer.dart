@@ -61,6 +61,8 @@ class Printer {
     );
   }
 
+  bool get isActive=> status == PrinterStatus.active;
+
   Map<String, dynamic> toJson() {
     // DO NOT PASS IN activeMinutes - the value is updated only from server
     return {

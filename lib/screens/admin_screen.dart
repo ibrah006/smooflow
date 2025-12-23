@@ -662,23 +662,27 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         _buildReportCard(
           icon: Icons.print_rounded,
           title: 'Production Report',
-          value: '247 jobs',
-          change: '94% efficiency',
+          value: 'N/a',
+          change: 'Click to view more'
+          // value: '247 jobs',
+          // change: '94% efficiency',
         ),
 
         _buildReportCard(
           icon: Icons.inventory_2_rounded,
           title: 'Material Usage',
-          value: '86%',
-          change: 'Healthy',
+          value: "N/a",
+          change: "Healthy"
+          // value: '86%',
+          // change: 'Healthy',
         ),
 
-        _buildReportCard(
-          icon: Icons.people_rounded,
-          title: 'Team Performance',
-          value: '92%',
-          change: '+5%',
-        ),
+        // _buildReportCard(
+        //   icon: Icons.people_rounded,
+        //   title: 'Team Performance',
+        //   value: '92%',
+        //   change: '+5%',
+        // ),
 
         const SizedBox(height: 24),
 
@@ -849,58 +853,67 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     String value,
     double progress, {
     Color color = colorPrimary,
+    String? navigateTo,
+    Object? navigationArguments
   }) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(14),
+    return GestureDetector(
+      onTap: () {
+        if (navigateTo!=null) {
+          AppRoutes.navigateTo(context, navigateTo, arguments: navigationArguments);
+        }
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 22),
           ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: const Color(0xFFF1F5F9),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                  minHeight: 6,
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
