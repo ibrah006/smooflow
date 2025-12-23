@@ -380,6 +380,16 @@ class MaterialState {
     );
   }
 
+  List<MaterialModel> byStatus({bool isLow = false, bool isCritical = false}) {
+    return !isLow && !isCritical?
+      materials
+      : materials.where((material)=> (isLow && material.isLowStock) || (isCritical && material.isCriticalStock)).toList();
+  }
+
+  int countByStatus({bool isLow = false, bool isCritical = false}) {
+    return byStatus(isLow: isLow, isCritical: isCritical).length;
+  }
+
   List<StockTransaction> byMaterial(String materialId) {
     return transactions.where((transaction) {
       return transaction.materialId == materialId;

@@ -37,4 +37,14 @@ class PrinterState {
       report: report?? this.report
     );
   }
+
+  List<Printer> byStatus({required List<PrinterStatus>? statuses}) {
+    return statuses==null?
+      printers
+      : printers.where((printer)=> statuses.contains(printer.status)).toList();
+  }
+
+  int countByStatus({required List<PrinterStatus>? statuses}) {
+    return byStatus(statuses: statuses).length;
+  }
 }

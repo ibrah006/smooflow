@@ -35,6 +35,9 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   // Active Printers, Print Jobs, Low Stock
   int _selectedSectionIndex = 0;
 
+  // 0: All, 1: Printing, 2: Blocked
+  int _selectedFilteredIndex = 0;
+
   // Mock data - replace with actual service calls
   final List<Printer> _mockPrinters = [
     Printer(
@@ -104,6 +107,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     _refreshTimer?.cancel();
     super.dispose();
   }
+  
+
+  List<PrinterStatus>? printerStatusesByFilters(int filterIndex) => filterIndex==0? null : filterIndex==1? [PrinterStatus.active] : [PrinterStatus.maintenance, PrinterStatus.offline];
+
+  TaskStatus? taskStatusByFilters(int filterIndex)=> [null, TaskStatus.printing, TaskStatus.blocked][filterIndex];
 
   @override
   Widget build(BuildContext context) {
@@ -111,11 +119,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     final activePrintersCount = ref.watch(printerNotifierProvider).activePrinters.length;
     final totalPrintersCount = ref.watch(printerNotifierProvider).totalPrintersCount;
 
-    final printers = ref.watch(printerNotifierProvider).printers;
+    final printers = ref.watch(printerNotifierProvider).byStatus(statuses: printerStatusesByFilters(_selectedFilteredIndex));
 
     // print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
 
-    final tasks = ref.watch(taskNotifierProvider);
+    final tasks = ref.watch(taskNotifierProvider.notifier).byStatus(status: taskStatusByFilters(_selectedFilteredIndex));
 
     final materials = ref.watch(materialNotifierProvider).materials;
 
@@ -318,14 +326,17 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     const SizedBox(height: 24),
 
                     // Filter Tabs (like Material Stock)
-                    Row(
-                      children: [
-                        _buildFilterTab('All', true, count: totalPrintersCount),
-                        const SizedBox(width: 12),
-                        _buildFilterTab('Printing', false, count: 2),
-                        const SizedBox(width: 12),
-                        _buildFilterTab('Blocked', false, count: 2),
-                      ],
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterTab('All', value: 0, count: totalPrintersCount),
+                          const SizedBox(width: 12),
+                          _buildFilterTab(['Active', 'Printing', 'Low Stock'][_selectedSectionIndex], value: 1, count: 2),
+                          const SizedBox(width: 12),
+                          _buildFilterTab(['Blocked', 'Blocked', 'Critical'][_selectedSectionIndex], value: 2, count: 2),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 20),
@@ -336,10 +347,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         // ..._urgentJobs.map((job) => _buildJobCard(job)),
 
                       // Printer Status Cards
-                      ...printers.map((printer)=> _buildPrinterCard(printer)),
-                      ..._mockPrinters.map(
-                        (printer) => _buildPrinterCard(printer),
-                      ),
+                      ...printers.map((printer)=> _buildPrinterCard(printer))
                     ] else if (_selectedSectionIndex == 1) 
                       ...tasks.map((task) => _buildJobCard(task)).toList()
                     else ...materials.map((material)=> _buildMaterialCard(material)),
@@ -417,6 +425,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
         onTap: () {
           setState(() {
             _selectedSectionIndex = indexValue;
+            _selectedFilteredIndex = 0;
           });
         },
         borderRadius: BorderRadius.circular(20),
@@ -465,46 +474,67 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     );
   }
 
-  Widget _buildFilterTab(String label, bool isSelected, {int? count}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF2563EB) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-          if (count != null) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? Colors.white.withOpacity(0.3)
-                        : const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(12),
+  Widget _buildFilterTab(String label, {int? count, required int value}) {
+
+    final isSelected = value == _selectedFilteredIndex;
+
+    final printerNotifier = ref.watch(printerNotifierProvider);
+    final tasksNotifier = ref.watch(taskNotifierProvider.notifier);
+    final materialNotifier = ref.watch(materialNotifierProvider);
+
+    final count = [
+      printerNotifier.countByStatus(statuses: printerStatusesByFilters(value)),
+      tasksNotifier.countByStatus(status: taskStatusByFilters(value)),
+      materialNotifier.countByStatus(isLow: value == 1, isCritical: value == 2)]
+      [_selectedSectionIndex];
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedFilteredIndex = value;
+        });
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF2563EB) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.black,
               ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isSelected ? Colors.white : const Color(0xFF6B7280),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color:
+                      isSelected
+                          ? Colors.white.withOpacity(0.3)
+                          : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
