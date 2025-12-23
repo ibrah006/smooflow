@@ -116,6 +116,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
     final tasks = ref.watch(taskNotifierProvider);
 
+    print("tasks: $tasks");
+
     final materials = ref.watch(materialNotifierProvider).materials;
 
     return Scaffold(

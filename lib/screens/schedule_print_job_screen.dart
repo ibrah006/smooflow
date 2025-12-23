@@ -991,20 +991,23 @@ class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
       final project = ref.watch(projectByIdProvider(_selectedProjectId!));
       final material = ref.watch(materialNotifierProvider).materials.firstWhere((mat) => mat.id == _selectedMaterialType);
 
-      await ref.watch(projectNotifierProvider.notifier).createTask(
-        task: Task.create(
-          name: "${material.name} - ${project!.name}",
-          description: _notesController.text,
-          dueDate: null,
-          assignees: [],
-          projectId: _selectedProjectId!,
-          productionDuration: _estimatedDuration,
-          printerId: _selectedPrinterId!,
-          materialId: _selectedMaterialType!,
-          productionStartTime: _selectedStartDateTime,
-            runs: int.tryParse(_runsController.text) ?? 1,
-        )
+      final newTask = Task.create(
+        name: "${material.name} - ${project!.name}",
+        description: _notesController.text,
+        dueDate: null,
+        assignees: [],
+        projectId: _selectedProjectId!,
+        productionDuration: _estimatedDuration,
+        printerId: _selectedPrinterId!,
+        materialId: _selectedMaterialType!,
+        productionStartTime: _selectedStartDateTime,
+          runs: int.tryParse(_runsController.text) ?? 1,
       );
+
+      // await ref.watch(projectNotifierProvider.notifier).createTask(
+      //   task: newTask
+      // );
+      await ref.read(createProjectTaskProvider(newTask));
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
