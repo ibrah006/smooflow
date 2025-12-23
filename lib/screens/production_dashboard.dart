@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/components/hawk_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/material_stock_transaction_args.dart';
@@ -108,13 +109,13 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     super.dispose();
   }
   
-
   List<PrinterStatus>? printerStatusesByFilters(int filterIndex) => filterIndex==0? null : filterIndex==1? [PrinterStatus.active] : [PrinterStatus.maintenance, PrinterStatus.offline];
 
   TaskStatus? taskStatusByFilters(int filterIndex)=> [null, TaskStatus.printing, TaskStatus.blocked][filterIndex];
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
 
     final activePrintersCount = ref.watch(printerNotifierProvider).activePrinters.length;
     final totalPrintersCount = ref.watch(printerNotifierProvider).totalPrintersCount;
@@ -125,7 +126,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
     final tasks = ref.watch(taskNotifierProvider.notifier).byStatus(status: taskStatusByFilters(_selectedFilteredIndex));
 
-    final materials = ref.watch(materialNotifierProvider).materials;
+    final materials = ref.watch(materialNotifierProvider).byStatus(isLow: _selectedFilteredIndex==1, isCritical: _selectedFilteredIndex==2);
+
+    final allPrintersCount = printersCountByFilter(filterIndex: 0);
+    final allTasksCount = tasksCountByFilter(filterIndex: 0);
+    final allMaterialsCount = materialsCountByFilter(filterIndex: 0);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -348,9 +353,29 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
                       // Printer Status Cards
                       ...printers.map((printer)=> _buildPrinterCard(printer))
+                      else ... [
+                        Center(child: Icon(Icons.print, size: 40, color: Colors.grey,)),
+                        SizedBox(height: 7),
+                        Center(child: Text(allPrintersCount>0? "Nothing here - Try adjusting the filters" : "No printers created", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                      ]
                     ] else if (_selectedSectionIndex == 1) 
-                      ...tasks.map((task) => _buildJobCard(task)).toList()
-                    else ...materials.map((material)=> _buildMaterialCard(material)),
+                      if (tasks.isNotEmpty)
+                        ...tasks.map((task) => _buildJobCard(task)).toList()
+                      else ... [
+                        Center(child: SvgPicture.asset(
+                          "assets/icons/no_tasks_icon.svg",
+                          width: 43,
+                        ),),
+                        SizedBox(height: 7),
+                        Center(child: Text(allTasksCount>0? "Nothing here - Try adjusting the filters" : "No print jobs assigned", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                      ]
+                    else 
+                     ...materials.map((material)=> _buildMaterialCard(material)),
+                     if (materials.isEmpty) ... [
+                        Center(child: Icon(Icons.receipt_long_outlined, size: 40, color: Colors.grey)),
+                        SizedBox(height: 7),
+                        Center(child: Text(allMaterialsCount>0? 'Nothing here - Try adjusting the filters' : "No transactions found", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                      ],
 
                     const SizedBox(height: 24),
 
@@ -474,19 +499,30 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     );
   }
 
+  int printersCountByFilter({required int filterIndex}) {
+    final printerNotifier = ref.watch(printerNotifierProvider);
+    return printerNotifier.countByStatus(statuses: printerStatusesByFilters(filterIndex));
+  }
+
+  int tasksCountByFilter({required int filterIndex}) {
+    final tasksNotifier = ref.watch(taskNotifierProvider.notifier);
+    return tasksNotifier.countByStatus(status: taskStatusByFilters(filterIndex));
+  }
+
+  int materialsCountByFilter({required int filterIndex}) {
+    final materialNotifier = ref.watch(materialNotifierProvider);
+    return materialNotifier.countByStatus(isLow: filterIndex == 1, isCritical: filterIndex == 2);
+  }
+
   Widget _buildFilterTab(String label, {int? count, required int value}) {
 
     final isSelected = value == _selectedFilteredIndex;
 
-    final printerNotifier = ref.watch(printerNotifierProvider);
-    final tasksNotifier = ref.watch(taskNotifierProvider.notifier);
-    final materialNotifier = ref.watch(materialNotifierProvider);
-
     final count = [
-      printerNotifier.countByStatus(statuses: printerStatusesByFilters(value)),
-      tasksNotifier.countByStatus(status: taskStatusByFilters(value)),
-      materialNotifier.countByStatus(isLow: value == 1, isCritical: value == 2)]
-      [_selectedSectionIndex];
+      printersCountByFilter(filterIndex: value),
+      tasksCountByFilter(filterIndex: value),
+      materialsCountByFilter(filterIndex: value)
+    ][_selectedSectionIndex];
 
     return InkWell(
       onTap: () {
@@ -512,27 +548,25 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                 color: isSelected ? Colors.white : Colors.black,
               ),
             ),
-            if (count != null) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color:
-                      isSelected
-                          ? Colors.white.withOpacity(0.3)
-                          : const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : const Color(0xFF6B7280),
-                  ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? Colors.white.withOpacity(0.3)
+                        : const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Colors.white : const Color(0xFF6B7280),
                 ),
               ),
-            ],
+            ),
           ],
         ),
       ),
