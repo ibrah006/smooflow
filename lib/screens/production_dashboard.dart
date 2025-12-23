@@ -95,6 +95,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
       await ref.watch(taskNotifierProvider.notifier).loadAll();
       await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
     });
   }
 
@@ -112,11 +113,9 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
     final printers = ref.watch(printerNotifierProvider).printers;
 
-    print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
+    // print("activePrintersCount: $activePrintersCount, totalPrintersCount: $totalPrintersCount");
 
     final tasks = ref.watch(taskNotifierProvider);
-
-    print("tasks: $tasks");
 
     final materials = ref.watch(materialNotifierProvider).materials;
 
@@ -800,6 +799,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   }
 
   Widget _buildScheduleCard() {
+    final todaysSchedule = ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -808,10 +809,12 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       ),
       child: Column(
         children: [
-          _buildScheduleItem('08:00', 'Large Banners - ABC Corp', '45 min'),
-          _buildScheduleItem('09:00', 'Vehicle Wrap Panels', '2 hrs'),
-          _buildScheduleItem('11:30', 'Menu Board Prints', '1 hr'),
-          _buildScheduleItem('14:00', 'Store Signage', '30 min', isLast: true),
+          ...todaysSchedule.map((task) {
+            final productionStartTime = task.productionStartTime!;
+            final  duration = 145;
+            final durationDisplay = duration/60 > 0? "${(duration/60).toInt()} hrs ${duration%60} mins" : "${duration} mins";
+            return _buildScheduleItem("${productionStartTime.hour}:${productionStartTime.minute.toString().padLeft(0)}", task.name, durationDisplay);
+          })
         ],
       ),
     );

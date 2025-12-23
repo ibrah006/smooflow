@@ -18,6 +18,22 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   bool get loading => _loading;
   Task? get activeTask => _activeTask;
 
+  List<Task> get todaysProductionTasks {
+    return state.where((task) {
+      final startDate = task.productionStartTime;
+      if (startDate != null) {
+        final today = DateTime.now();
+        final todayStart = DateTime(today.year, today.month, today.day);
+        final tomorrowStart = todayStart.add(Duration(days: 1));
+
+        if (startDate.isAfter(todayStart) && startDate.isBefore(tomorrowStart)) {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+  }
+
   loadTaskToMemory(Task task) {
     state = [...state, task];
   }
@@ -250,6 +266,16 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     }
 
     _activeTask = null;
+  }
+
+  /// Fetch today's production team's schedules
+  Future<void> fetchProductionScheduleToday({TaskStatus? status, bool isCompleted = false}) async {
+    final tasksToday = await _repo.getProductionScheduleToday();
+
+    state = {
+      ...state,
+      ...tasksToday
+    }.toList();
   }
 }
 

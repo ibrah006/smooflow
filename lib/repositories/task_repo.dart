@@ -146,4 +146,21 @@ class TaskRepo {
       throw Exception('Failed to end task: ${response.body}');
     }
   }
+
+  Future<List<Task>> getProductionScheduleToday() async {
+
+    final response = await ApiClient.http.get(
+      '/tasks/production/today',
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch production schedule for today: ${response.body}');
+    }
+
+    final todayTasks = ((jsonDecode(response.body) as Map)["tasks"] as List).map((task) {
+      return Task.fromJson(task);
+    }).toList();
+
+    return todayTasks;
+  }
 }
