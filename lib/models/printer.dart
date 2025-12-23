@@ -31,7 +31,7 @@ class Printer {
   final double? printSpeed;
   final DateTime createdAt;
   final String? currentJobId;
-  final int activeMinutes;
+  final int workMinutes;
 
   Printer({
     required this.id,
@@ -43,7 +43,7 @@ class Printer {
     this.printSpeed,
     required this.createdAt,
     this.currentJobId,
-    required this.activeMinutes
+    required this.workMinutes
   });
 
   factory Printer.fromJson(Map<String, dynamic> json) {
@@ -57,14 +57,14 @@ class Printer {
       printSpeed: (json['printSpeed'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
       currentJobId: json['currentTaskId'],
-      activeMinutes: json['activeMinutes']
+      workMinutes: json['workMinutes']
     );
   }
 
   bool get isActive=> status == PrinterStatus.active;
 
   Map<String, dynamic> toJson() {
-    // DO NOT PASS IN activeMinutes - the value is updated only from server
+    // DO NOT PASS IN workMinutes - the value is updated only from server
     return {
       'id': id,
       'name': name,

@@ -46,7 +46,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       currentJobId: 'job001',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
-      activeMinutes: 0
+      workMinutes: 0
     ),
     Printer(
       id: '2',
@@ -56,7 +56,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       location: 'Section B',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
-      activeMinutes: 0
+      workMinutes: 0
     ),
     Printer(
       id: '3',
@@ -66,7 +66,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       location: 'Section A',
       createdAt: DateTime.now(),
       // updatedAt: DateTime.now(),
-      activeMinutes: 0
+      workMinutes: 0
     ),
     Printer(
       id: '4',
@@ -75,7 +75,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       status: PrinterStatus.offline,
       location: 'Section C',
       createdAt: DateTime.now(),
-      activeMinutes: 0
+      workMinutes: 0
       // updatedAt: DateTime.now(),
     ),
   ];
