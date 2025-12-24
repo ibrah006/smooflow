@@ -122,16 +122,6 @@ class Task {
   DateTime? get productionStartTime => _productionStartTime;
   int get runs => _runs;
 
-  // To ensure toSet gives no duplicates
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Task &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
-  @override
-  int get hashCode => id.hashCode;
-
   void addAssignee(String userId) {
     _assignees.add(userId);
     assigneeLastAdded = DateTime.now();

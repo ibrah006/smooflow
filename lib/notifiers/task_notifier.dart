@@ -282,10 +282,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   Future<void> fetchProductionScheduleToday({TaskStatus? status, bool isCompleted = false}) async {
     final tasksToday = await _repo.getProductionScheduleToday();
 
-    state = {
+    final tasksTodayIds = tasksToday.map((task)=> task.id);
+
+    state.removeWhere((task)=> tasksTodayIds.contains(task.id));
+
+    state = [
       ...state,
       ...tasksToday
-    }.toList();
+    ];
   }
 }
 
