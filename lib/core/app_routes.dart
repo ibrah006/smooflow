@@ -22,6 +22,7 @@ import 'package:smooflow/screens/project_progress_screen.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
 import 'package:smooflow/screens/project_screen.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.dart';
+import 'package:smooflow/screens/schedule_print_job_stages_screen.dart';
 
 // Auth & Onboarding
 import '../screens/claim_organization_screen.dart';
@@ -113,6 +114,7 @@ class AppRoutes {
   static const productionDashboard = '/production';
   static const schedulePrint = '/print-schedule';
   static const schedulePrintView = '/print-schedule/view';
+  static const schedulePrintStages = '/print-schedule/stages';
 
   static const addPrinter = '/printers/add';
   static const printerDetails = '/printers/details';
@@ -359,12 +361,15 @@ class AppRoutes {
         }
         break;
       case schedulePrint:
-        screen = ScheduleJobScreen();
+        screen = SchedulePrintJobScreen();
         break;
       case schedulePrintView:
         if (args is SchedulePrintJobArgs) {
-          screen = ScheduleJobScreen.details(projectId: args.projectId, task: args.task);
+          screen = SchedulePrintJobScreen.details(projectId: args.projectId, task: args.task);
         }
+        break;
+      case schedulePrintStages:
+        screen = SchedulePrintJobStagesScreen();
         break;
       case projectProgress:
         if (args is ProjectArgs) {

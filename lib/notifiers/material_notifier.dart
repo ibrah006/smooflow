@@ -198,20 +198,36 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Fetch material transaction history
-  Future<void> fetchMaterialTransactions(
+  Future<List<StockTransaction>> fetchMaterialTransactions(
     String materialId, {
     int limit = 50,
+    // null means all transactions for material
+    TransactionType? type,
+    // If local (ram) transactions for this specific query is empty, then look for this in database
+    bool checkIsLocalEmpty = false,
+    bool updateState = true
   }) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final transactions = await _repo.getMaterialTransactions(
-        materialId,
-        limit: limit,
-      );
-      state = state.copyWith(transactions: transactions, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    if (updateState) state = state.copyWith(isLoading: true);
+
+    List<StockTransaction> transactions = [];
+    if (checkIsLocalEmpty) {
+      transactions = state.transactions.where((transaction)=> transaction.materialId == materialId && (type!=null && type == transaction.type || type==null)).toList();
     }
+
+    if (transactions.isEmpty) {
+      try {
+        transactions = await _repo.getMaterialTransactions(
+          materialId,
+          limit: limit,
+          type: type
+        );
+        if (updateState) state = state.copyWith(transactions: transactions, isLoading: false);
+      } catch (e) {
+        if (updateState) state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
+    }
+
+    return transactions;
   }
 
   // Fetch organization stock percentage summary

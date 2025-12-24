@@ -154,10 +154,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             label: 'Schedule Job',
             ontap: () {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ScheduleJobScreen()),
-              );
+              AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
             },
             icon: const Icon(Icons.calendar_month_rounded),
             color: Colors.red,

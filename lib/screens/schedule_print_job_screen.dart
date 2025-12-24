@@ -12,11 +12,11 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
-class ScheduleJobScreen extends ConsumerStatefulWidget {
+class SchedulePrintJobScreen extends ConsumerStatefulWidget {
   // To use when requested for creating (ScheduleJobScreen constructor) from a specific project
   final String? projectId;
 
-  ScheduleJobScreen({Key? key, this.projectId}) : super(key: key) {
+  SchedulePrintJobScreen({Key? key, this.projectId}) : super(key: key) {
     isDetails = false;
   }
 
@@ -24,15 +24,15 @@ class ScheduleJobScreen extends ConsumerStatefulWidget {
 
   late final bool isDetails;
 
-  ScheduleJobScreen.details({Key? key, this.projectId, required this.task}) : super(key: key) {
+  SchedulePrintJobScreen.details({Key? key, this.projectId, required this.task}) : super(key: key) {
     isDetails = true;
   }
 
   @override
-  ConsumerState<ScheduleJobScreen> createState() => _ScheduleJobScreenState();
+  ConsumerState<SchedulePrintJobScreen> createState() => _ScheduleJobScreenState();
 }
 
-class _ScheduleJobScreenState extends ConsumerState<ScheduleJobScreen> {
+class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
 
   static const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
