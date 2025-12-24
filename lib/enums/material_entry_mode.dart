@@ -1,0 +1,3 @@
+enum MaterialEntryMode {
+  manual, barcode
+}

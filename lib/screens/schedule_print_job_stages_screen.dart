@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/stock_entry_args.dart';
+import 'package:smooflow/enums/material_entry_mode.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/models/task.dart';
@@ -45,7 +48,9 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
   
   bool _isForward = true;
 
+  @deprecated
   bool _isManualMaterialEntry = false;
+  MaterialEntryMode _materialEntryMode = MaterialEntryMode.barcode;
   // Look up for selected material stock transactions from database
   bool _lookForStockTransactions = false;
 
@@ -124,6 +129,9 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       case 1:
         if (_selectedStockItemId == null) {
           _showError('Please select a Material Item');
+          return false;
+        } else if (_materialQuantity < 1) {
+          _showError('Please set item quantity to be used');
           return false;
         }
         break;
@@ -372,29 +380,47 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
         color: const Color(0xFFF5F7FA),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: DropdownButtonFormField<String>(
-        value: _selectedMaterialId,
-        decoration: InputDecoration(
-          enabled: !_lookForStockTransactions,
-          border: InputBorder.none,
-          hintText: 'Select material type',
-          hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedMaterialId,
+          isExpanded: true,
+          hint: Text('Select material type'),
+          // decoration: InputDecoration(
+          //   enabled: !_lookForStockTransactions,
+          //   border: InputBorder.none,
+          //   hintText: 'Select material type',
+          //   hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+          // ),
+          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
+          items:
+              materials.map((material) {
+                return DropdownMenuItem(
+                  value: material.id,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(material.name, style: const TextStyle(fontSize: 15)),
+                      Text(
+                        "${material.currentStock} ${material.unit}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 0,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedMaterialId = value;
+              _lookForStockTransactions = true;
+            });
+          },
+          // validator: (value) => value == null ? 'Please select material' : null,
         ),
-        icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
-        items:
-            materials.map((material) {
-              return DropdownMenuItem(
-                value: material.id,
-                child: Text(material.name, style: const TextStyle(fontSize: 15)),
-              );
-            }).toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedMaterialId = value;
-            _lookForStockTransactions = true;
-          });
-        },
-        validator: (value) => value == null ? 'Please select material' : null,
       ),
     );
   }
@@ -458,7 +484,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                     materialStockTransations.map((stockTransaction) {
                       return DropdownMenuItem(
                         value: stockTransaction.id,
-                        child: Text("${selectedMaterial.name} - ${stockTransaction.barcode}", style: const TextStyle(fontSize: 15)),
+                        child: Text("${selectedMaterial.name}  ${stockTransaction.barcode}", style: const TextStyle(fontSize: 15)),
                       );
                     }).toList(),
                 onChanged: (value) => setState(() => _selectedStockItemId = value),
@@ -505,11 +531,25 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                       if (materialStockTransations==null) CircularProgressIndicator()
                       else _buildIncrementButton(
                         icon: Icons.add,
-                        onPressed: materialStockTransations.isEmpty? null : () => setState(() => _materialQuantity++),
+                        onPressed: materialStockTransations.isEmpty || _materialQuantity+1 > selectedMaterial.currentStock? null : () {
+                          setState(() => _materialQuantity++);
+                        },
                       ),
                     ],
                   ),
                 ],
+              ),
+            ),
+            if (materialStockTransations?.isEmpty?? false) SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  AppRoutes.navigateTo(context, AppRoutes.stockInEntry, arguments: StockEntryArgs.stockIn());
+                  setState(() {
+                    _lookForStockTransactions = true;
+                  });
+                },
+                child: Text("Add Stock Entry")
               ),
             )
           ],
@@ -520,6 +560,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
 
   // Stage 2: Material Selection
   Widget _buildStage2MaterialSelection() {
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -528,22 +569,35 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           'Scan the barcode on your material to continue',
         ),
         const SizedBox(height: 18),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              setState(() {
-                _isManualMaterialEntry = !_isManualMaterialEntry;
-              });
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 10,
-              children: [
-                Icon(!_isManualMaterialEntry? Icons.list_rounded : CupertinoIcons.barcode, color: colorPrimary, size: 24,),
-                Text(!_isManualMaterialEntry? "Add Manual Entry" : "Scan Barcode"),
-              ],
-            )),
+        Row(
+          children: [
+            Expanded(
+              child: RadioListTile<bool>(
+                value: true,
+                groupValue: _isManualMaterialEntry,
+                title: Text("Manual"),
+                onChanged: (bool? value) {
+                  setState(() {
+                    // _character = value;
+                    _isManualMaterialEntry = true;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: RadioListTile<bool>(
+                value: false,
+                title: Text("Barcode"),
+                groupValue: _isManualMaterialEntry,
+                onChanged: (bool? value) {
+                  setState(() {
+                    // _character = value;
+                    _isManualMaterialEntry = false;
+                  });
+                },
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         
@@ -1144,10 +1198,13 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
         //     });
         //   }
         // }
-        _startTime = await showBoardDateTimePicker(
+        await showBoardDateTimePicker(
           context: context,
           pickerType: DateTimePickerType.datetime, // still shows date + time
           enableDrag: false,
+          onChanged: (result) {
+            _startTime = result;
+          },
           options: BoardDateTimeOptions(
             boardTitle: "Select Schedule",
             // cancel: "Cancel",
