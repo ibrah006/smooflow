@@ -354,27 +354,34 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                       // Printer Status Cards
                       ...printers.map((printer)=> _buildPrinterCard(printer))
                       else ... [
+                        SizedBox(height: 7),
                         Center(child: Icon(Icons.print, size: 40, color: Colors.grey,)),
                         SizedBox(height: 7),
-                        Center(child: Text(allPrintersCount>0? "Nothing here - Try adjusting the filters" : "No printers created", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                        Center(child: Text(allPrintersCount>0? "Nothing here - Try adjusting the filters" : "No printers created", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800))),
+                        SizedBox(height: 7),
                       ]
                     ] else if (_selectedSectionIndex == 1) 
                       if (tasks.isNotEmpty)
                         ...tasks.map((task) => _buildJobCard(task)).toList()
                       else ... [
+                        SizedBox(height: 7),
                         Center(child: SvgPicture.asset(
                           "assets/icons/no_tasks_icon.svg",
                           width: 43,
                         ),),
                         SizedBox(height: 7),
-                        Center(child: Text(allTasksCount>0? "Nothing here - Try adjusting the filters" : "No print jobs assigned", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                        Center(child: Text(allTasksCount>0? "Nothing here - Try adjusting the filters" : "No print jobs assigned", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800))),
+                        SizedBox(height: 7),
                       ]
                     else 
-                     ...materials.map((material)=> _buildMaterialCard(material)),
-                     if (materials.isEmpty) ... [
+                     if (materials.isNotEmpty)
+                     ...materials.map((material)=> _buildMaterialCard(material))
+                     else ... [
+                        SizedBox(height: 7),
                         Center(child: Icon(Icons.receipt_long_outlined, size: 40, color: Colors.grey)),
                         SizedBox(height: 7),
-                        Center(child: Text(allMaterialsCount>0? 'Nothing here - Try adjusting the filters' : "No transactions found", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800)))
+                        Center(child: Text(allMaterialsCount>0? 'Nothing here - Try adjusting the filters' : "No transactions found", style: textTheme.titleMedium!.copyWith(color: Colors.grey.shade800))),
+                        SizedBox(height: 7),
                       ],
 
                     const SizedBox(height: 24),
