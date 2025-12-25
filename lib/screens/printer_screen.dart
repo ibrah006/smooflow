@@ -536,7 +536,7 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
           SnackBar(
             content: Text('Failed to Add Printer. Please try again.'),
             backgroundColor: const Color(0xFF2563EB),
-            behavior: SnackBarBehavior.floating,
+            
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
           ),
@@ -548,7 +548,7 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
         SnackBar(
           content: Text(widget.printer != null ? 'Printer updated' : 'Printer added'),
           backgroundColor: const Color(0xFF2563EB),
-          behavior: SnackBarBehavior.floating,
+          
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
         ),
@@ -585,7 +585,7 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
                 const SnackBar(
                   content: Text('Printer deleted'),
                   backgroundColor: Color(0xFFEF4444),
-                  behavior: SnackBarBehavior.floating,
+                  
                 ),
               );
             },

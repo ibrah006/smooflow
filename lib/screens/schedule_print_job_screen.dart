@@ -1020,7 +1020,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
         const SnackBar(
           content: Text('Job scheduled successfully'),
           backgroundColor: Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
+          
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
@@ -1031,7 +1031,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
         const SnackBar(
           content: Text('Please select a printer'),
           backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
+          
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),

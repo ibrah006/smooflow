@@ -173,7 +173,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                                 content: Text(
                                   "Please enter a valid email address that's not your own.",
                                 ),
-                                behavior: SnackBarBehavior.floating,
+                                
                               ),
                             );
                             return;
@@ -186,7 +186,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Enter a valid email'),
-                                behavior: SnackBarBehavior.floating,
+                                
                               ),
                             );
                             return;
@@ -199,7 +199,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                                   // Cannot send invitation to a user with a different private domain while your organization has a private domain
                                   'Cannot send invitation to a user with a different private domain',
                                 ),
-                                behavior: SnackBarBehavior.floating,
+                                
                               ),
                             );
                             return;
@@ -209,7 +209,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Please select a Role'),
-                                behavior: SnackBarBehavior.floating,
+                                
                               ),
                             );
                             return;
@@ -231,7 +231,7 @@ class _InviteMemberScreenState extends ConsumerState<InviteMemberScreen> {
                                     ? 'An invite to this user is already pending from your organization'
                                     : 'Failed to send invite to user',
                               ),
-                              behavior: SnackBarBehavior.floating,
+                              
                             ),
                           );
                           emailController.clear();
