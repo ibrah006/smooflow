@@ -415,6 +415,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           onChanged: (value) {
             setState(() {
               _selectedMaterialId = value;
+              _selectedStockItemBarcode = null;
               _lookForStockTransactions = true;
             });
           },
@@ -684,7 +685,11 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                 if (barcodes.isNotEmpty && _selectedMaterialId == null) {
                   final String? code = barcodes.first.rawValue;
                   if (code != null) {
-                    setState(() => _selectedMaterialId = code);
+                    setState(() {
+                      _selectedMaterialId = code;
+                      _selectedStockItemBarcode = null;
+                      _lookForStockTransactions = true;
+                    });
                   }
                 }
               },
@@ -1312,7 +1317,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     
     return Row(
       children: priorities.map((priority) {
-        final isSelected = _priority == priority;
+        final isSelected = _priority == priorities.indexOf(priority);
         final color = colors[priority]!;
         
         return Expanded(

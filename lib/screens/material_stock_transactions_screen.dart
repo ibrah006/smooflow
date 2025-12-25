@@ -405,6 +405,8 @@ class _StockTransactionsScreenState
     final isStockIn = transaction.type == TransactionType.stockIn;
     final timeAgo = _getTimeAgo(transaction.createdAt);
 
+    final color = isStockIn? Color(0xFF4CAF50) : (transaction.committed? Color(0xFFE53935) : colorPending);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -429,17 +431,13 @@ class _StockTransactionsScreenState
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color:
-                            isStockIn
-                                ? const Color(0xFFE8F5E9)
-                                : const Color(0xFFFFEBEE),
+                            color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         isStockIn ? Icons.arrow_upward : Icons.arrow_downward,
                         color:
-                            isStockIn
-                                ? const Color(0xFF4CAF50)
-                                : const Color(0xFFE53935),
+                            color,
                         size: 20,
                       ),
                     ),
@@ -451,7 +449,7 @@ class _StockTransactionsScreenState
                           Row(
                             children: [
                               Text(
-                                isStockIn ? 'Stock In' : 'Stock Out',
+                                isStockIn ? 'Stock In' : (transaction.committed? 'Stock Out' : 'Queued'),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -460,14 +458,12 @@ class _StockTransactionsScreenState
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                '${isStockIn ? '+' : '-'}${transaction.quantity} ${material.unit}',
+                                '${isStockIn ? '+' : (transaction.committed? '-' : '')}${transaction.quantity} ${material.unit}',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color:
-                                      isStockIn
-                                          ? const Color(0xFF4CAF50)
-                                          : const Color(0xFFE53935),
+                                      color,
                                 ),
                               ),
                             ],
