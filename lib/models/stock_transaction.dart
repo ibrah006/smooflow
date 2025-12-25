@@ -39,6 +39,8 @@ class StockTransaction {
   final String? projectId;
   final String createdById;
   final DateTime createdAt;
+  final String? taskId;
+  final bool committed;
 
   const StockTransaction({
     required this.id,
@@ -51,6 +53,8 @@ class StockTransaction {
     this.barcode,
     this.notes,
     this.projectId,
+    this.taskId,
+    required this.committed
   });
 
   // To ensure toSet gives no duplicates
@@ -76,6 +80,8 @@ class StockTransaction {
       projectId: json['projectId'],
       createdById: json['createdById'],
       createdAt: DateTime.parse(json['createdAt']),
+      taskId: json['taskId'],
+      committed: json['committed']
     );
   }
 
@@ -92,6 +98,7 @@ class StockTransaction {
       'projectId': projectId,
       'createdById': createdById,
       'createdAt': createdAt.toIso8601String(),
+      'taskId': taskId
     };
   }
 
@@ -108,6 +115,7 @@ class StockTransaction {
     String? createdById,
     DateTime? createdAt,
     MaterialModel? material,
+    String? taskId
   }) {
     return StockTransaction(
       id: id ?? this.id,
@@ -120,6 +128,8 @@ class StockTransaction {
       projectId: projectId ?? this.projectId,
       createdById: createdById ?? this.createdById,
       createdAt: createdAt ?? this.createdAt,
+      taskId: taskId,
+      committed: committed,
     );
   }
 }
