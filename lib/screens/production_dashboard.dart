@@ -130,6 +130,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     final allPrintersCount = printersCountByFilter(filterIndex: 0);
     final allTasksCount = tasksCountByFilter(filterIndex: 0);
     final allMaterialsCount = materialsCountByFilter(filterIndex: 0);
+    final lowStockMaterialsCount = materialsCountByFilter(filterIndex: 1);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -301,7 +302,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             icon: Icons.schema_rounded,
                             iconBg: const Color(0xFFDCFCE7),
                             iconColor: const Color(0xFF22C55E),
-                            value: '0',
+                            value: allTasksCount.toString(),
                             label: 'Print${_selectedSectionIndex==1? "\n" : " "}Jobs',
                             indexValue: 1
                           ),
@@ -312,7 +313,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             icon: Icons.warning_amber_rounded,
                             iconBg: const Color(0xFFFEF3C7),
                             iconColor: const Color(0xFFF59E0B),
-                            value: '0',
+                            value: lowStockMaterialsCount.toString(),
                             label: 'Low${_selectedSectionIndex==2? "\n" : " "}Stock',
                             indexValue: 2
                           ),
