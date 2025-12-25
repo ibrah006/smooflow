@@ -12,6 +12,7 @@ import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
@@ -642,6 +643,10 @@ class _StockTransactionsScreenState
             ? ref.watch(projectByIdProvider(transaction.projectId!))
             : null;
 
+    final taskFuture = transaction.taskId!=null? ref.watch(taskByIdProvider(transaction.taskId!)) : null;
+
+    print("transaction taskid: ${transaction.taskId}");
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -749,6 +754,18 @@ class _StockTransactionsScreenState
                       label: Text("Barcode"),
                     ),
                   ),
+                if (transaction.taskId != null) FutureBuilder(
+                  future: taskFuture,
+                  builder: (context, snapshot) {
+                    final task = snapshot.data;
+
+                    return task==null? CardLoading(
+                        height: 10,
+                        borderRadius: BorderRadius.circular(10),
+                        margin: EdgeInsets.only(bottom: 5),
+                    ) : _buildDetailRow('Job', task.name);
+                  }
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

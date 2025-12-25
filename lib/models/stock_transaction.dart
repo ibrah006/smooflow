@@ -39,7 +39,7 @@ class StockTransaction {
   final String? projectId;
   final String createdById;
   final DateTime createdAt;
-  final String? taskId;
+  final int? taskId;
   final bool committed;
 
   const StockTransaction({
@@ -115,7 +115,7 @@ class StockTransaction {
     String? createdById,
     DateTime? createdAt,
     MaterialModel? material,
-    String? taskId
+    int? taskId
   }) {
     return StockTransaction(
       id: id ?? this.id,
