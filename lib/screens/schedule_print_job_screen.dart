@@ -1030,8 +1030,6 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a printer'),
-          backgroundColor: Color(0xFFEF4444),
-          
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),

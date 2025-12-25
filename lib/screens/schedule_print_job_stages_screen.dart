@@ -158,8 +158,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFFEF4444),
-        
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -170,8 +168,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Print job scheduled successfully!'),
-        backgroundColor: Color(0xFF10B981),
-        
       ),
     );
     Navigator.pop(context);
@@ -1553,8 +1549,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Job scheduled successfully'),
-        backgroundColor: Color(0xFF10B981),
-        
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),

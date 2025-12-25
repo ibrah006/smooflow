@@ -535,7 +535,6 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to Add Printer. Please try again.'),
-            backgroundColor: const Color(0xFF2563EB),
             
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -547,8 +546,6 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.printer != null ? 'Printer updated' : 'Printer added'),
-          backgroundColor: const Color(0xFF2563EB),
-          
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
         ),
@@ -583,9 +580,7 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
               Navigator.pop(context); // Close screen
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Printer deleted'),
-                  backgroundColor: Color(0xFFEF4444),
-                  
+                  content: Text('Printer deleted')
                 ),
               );
             },
