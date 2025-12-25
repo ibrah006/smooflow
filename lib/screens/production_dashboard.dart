@@ -18,7 +18,6 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/schedule_print_job_screen.dart';
 import 'package:smooflow/screens/settings_profile_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 
@@ -157,8 +156,6 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
               AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
             },
             icon: const Icon(Icons.calendar_month_rounded),
-            color: Colors.red,
-            labelColor: Colors.blue,
           ),
           HawkFabMenuItem(
             label: 'Stock Entry',
@@ -172,8 +169,6 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
               );
             },
             icon: const Icon(Icons.add),
-            labelColor: Colors.white,
-            labelBackgroundColor: Colors.blue,
           ),
         ],
         body: CustomScrollView(
@@ -882,7 +877,16 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             final  duration = 145;
             final durationDisplay = duration/60 > 0? "${(duration/60).toInt()} hrs ${duration%60} mins" : "${duration} mins";
             return _buildScheduleItem("${productionStartTime.hour}:${productionStartTime.minute.toString().padLeft(0)}", task.name, durationDisplay);
-          })
+          }),
+          if (todaysSchedule.isEmpty) ... [
+            Row(
+              spacing: 15,
+              children: [
+                Icon(Icons.schema_rounded),
+                Expanded(child: Text("No print jobs scheduled for today", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),))
+              ],
+            )
+          ]
         ],
       ),
     );

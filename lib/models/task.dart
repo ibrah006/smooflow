@@ -16,6 +16,8 @@ class Task {
   // Ids of work activity logs associated with this task
   List<int> workActivityLogs;
   late int _runs;
+  late final double _productionQuantity;
+  late final int _priority;
 
   late TaskStatus _status;
   late List<String> _assignees;
@@ -53,7 +55,9 @@ class Task {
     required String printerId,
     required String? materialId,
     required DateTime? productionStartTime,
-    int runs = 1
+    int runs = 1,
+    required double productionQuantity,
+    required int priority
   }) : _id = id,
        _name = name,
        _description = description,
@@ -64,7 +68,9 @@ class Task {
        _printerId = printerId,
        _materialId = materialId ?? "",
        _productionStartTime = productionStartTime,
-       _runs = runs {
+       _runs = runs,
+       _productionQuantity = productionQuantity,
+       _priority = priority {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
   }
@@ -82,7 +88,9 @@ class Task {
     required String printerId,
     required String materialId,
     required DateTime? productionStartTime,
-    int runs = 1
+    int runs = 1,
+    required double productionQuantity,
+    int priority = 1
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -97,7 +105,9 @@ class Task {
        _printerId = printerId,
        _materialId = materialId,
        _productionStartTime = productionStartTime,
-       _runs = runs;
+       _runs = runs,
+       _productionQuantity = productionQuantity,
+       _priority = priority;
 
   void initializeId(int id) {
     _id = id;
@@ -121,6 +131,7 @@ class Task {
   String get materialId => _materialId;
   DateTime? get productionStartTime => _productionStartTime;
   int get runs => _runs;
+  double get productionQuantity=> _productionQuantity;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -186,6 +197,8 @@ class Task {
         ? DateTime.parse(json["productionStartTime"])
         : null,
     runs: json["runs"] ?? 1,
+    productionQuantity: double.parse(json["productionQuantity"]),
+    priority: json["priority"]
   );
 
   // Copy constructor
@@ -210,6 +223,8 @@ class Task {
     _materialId = original._materialId;
     _productionStartTime = original._productionStartTime;
     _runs = original._runs;
+    _productionQuantity = original._productionQuantity;
+    _priority = original._priority;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
@@ -308,6 +323,8 @@ class Task {
       'materialId': _materialId,
       'productionStartTime': _productionStartTime?.toIso8601String(),
       'runs': _runs,
+      'productionQuantity': _productionQuantity,
+      'priority': _priority
     };
     try {
       return {'id': id, ...json};
@@ -333,5 +350,7 @@ class Task {
     _materialId = newTask._materialId;
     _productionStartTime = newTask._productionStartTime;
     _runs = newTask._runs;
+    _productionQuantity = newTask._productionQuantity;
+    _priority = newTask._priority;
   }
 }

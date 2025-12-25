@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/models/material.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';

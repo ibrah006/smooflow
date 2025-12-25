@@ -44,7 +44,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
   String _priority = 'Medium';
   String _notes = '';
 
-  int _materialQuantity = 0;
+  double _materialQuantity = 0;
   
   bool _isForward = true;
 
@@ -1536,6 +1536,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       materialId: _selectedMaterialId!,
       productionStartTime: _startTime,
         runs: _runs,
+      productionQuantity: _materialQuantity
     );
 
     // await ref.watch(projectNotifierProvider.notifier).createTask(

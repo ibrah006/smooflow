@@ -991,23 +991,29 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
       final project = ref.watch(projectByIdProvider(_selectedProjectId!));
       final material = ref.watch(materialNotifierProvider).materials.firstWhere((mat) => mat.id == _selectedMaterialType);
 
-      final newTask = Task.create(
-        name: "${material.name} - ${project!.name}",
-        description: _notesController.text,
-        dueDate: null,
-        assignees: [],
-        projectId: _selectedProjectId!,
-        productionDuration: _estimatedDuration,
-        printerId: _selectedPrinterId!,
-        materialId: _selectedMaterialType!,
-        productionStartTime: _selectedStartDateTime,
-          runs: int.tryParse(_runsController.text) ?? 1,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("This screen's function suspended temporarily. Need to account for job's material consumption for this print job"),
+        ),
       );
 
-      // await ref.watch(projectNotifierProvider.notifier).createTask(
-      //   task: newTask
+      return;
+
+      // final newTask = Task.create(
+      //   name: "${material.name} - ${project!.name}",
+      //   description: _notesController.text,
+      //   dueDate: null,
+      //   assignees: [],
+      //   projectId: _selectedProjectId!,
+      //   productionDuration: _estimatedDuration,
+      //   printerId: _selectedPrinterId!,
+      //   materialId: _selectedMaterialType!,
+      //   productionStartTime: _selectedStartDateTime,
+      //     runs: int.tryParse(_runsController.text) ?? 1,
+        
       // );
-      await ref.read(createProjectTaskProvider(newTask));
+
+      // await ref.read(createProjectTaskProvider(newTask));
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
