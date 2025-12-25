@@ -114,6 +114,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return LoadingOverlay(
       isLoading: ref.watch(materialNotifierProvider).isLoading,
       child: Scaffold(
@@ -544,6 +545,17 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                             measureType: _selectedMeasureType,
                                           ),
                                         );
+                            // TEMP
+                            // final material = await ref
+                            //             .read(materialNotifierProvider.notifier)
+                            //             // Creates material if it doesn't exist, or returns the existing instance - either from memory or from database
+                            //             .createMaterial(
+                            //               MaterialModel.create(
+                            //                 name: materialType,
+                            //                 description: description,
+                            //                 measureType: _selectedMeasureType,
+                            //               ),
+                            //             );
 
                             // Process stock in/out
                             late final StockTransaction transaction;

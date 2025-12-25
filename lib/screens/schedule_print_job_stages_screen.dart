@@ -34,14 +34,14 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
   // Form data
   String? _selectedProjectId;
   String? _selectedMaterialId;
-  String? _selectedStockItemId;
+  String? _selectedStockItemBarcode;
   String? _selectedPrinterId;
   int _runs = 1;
   bool _requiresInstallation = false;
   String? _installationSite;
   int _estimatedDuration = 30; // minutes
   DateTime? _startTime;
-  String _priority = 'Medium';
+  int _priority = 1;
   String _notes = '';
 
   double _materialQuantity = 0;
@@ -126,7 +126,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
         }
         break;
       case 1:
-        if (_selectedStockItemId == null) {
+        if (_selectedStockItemBarcode == null) {
           _showError('Please select a Material Item');
           return false;
         } else if (_materialQuantity < 1) {
@@ -472,7 +472,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                     Text(materialStockTransations.isEmpty? 'Empty stock' : 'Select item')
                   ],
                 ),
-                value: _selectedStockItemId,
+                value: _selectedStockItemBarcode,
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -481,11 +481,11 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                 items:
                     materialStockTransations.map((stockTransaction) {
                       return DropdownMenuItem(
-                        value: stockTransaction.id,
+                        value: stockTransaction.barcode,
                         child: Text("${selectedMaterial.name}  ${stockTransaction.barcode}", style: const TextStyle(fontSize: 15)),
                       );
                     }).toList(),
-                onChanged: (value) => setState(() => _selectedStockItemId = value),
+                onChanged: (value) => setState(() => _selectedStockItemBarcode = value),
                 validator: (value) => value == null ? (materialStockTransations.isEmpty? 'Empty stock' : 'Please select item') : null,
               ),
             ),
@@ -1319,7 +1319,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           child: Padding(
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
-              onTap: () => setState(() => _priority = priority),
+              onTap: () => setState(() => _priority = priorities.indexOf(priority)),
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1535,7 +1535,8 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       productionStartTime: _startTime,
         runs: _runs,
       productionQuantity: _materialQuantity,
-      // priority: _priority
+      priority: _priority,
+      stockTransactionBarcode: _selectedStockItemBarcode!
     );
 
     // await ref.watch(projectNotifierProvider.notifier).createTask(

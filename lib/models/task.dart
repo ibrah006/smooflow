@@ -18,6 +18,7 @@ class Task {
   late int _runs;
   late final double _productionQuantity;
   late final int _priority;
+  late final String? _stockTransactionBarcode;
 
   late TaskStatus _status;
   late List<String> _assignees;
@@ -57,7 +58,8 @@ class Task {
     required DateTime? productionStartTime,
     int runs = 1,
     required double productionQuantity,
-    required int priority
+    required int priority,
+    required String? stockTransactionBarcode
   }) : _id = id,
        _name = name,
        _description = description,
@@ -70,7 +72,8 @@ class Task {
        _productionStartTime = productionStartTime,
        _runs = runs,
        _productionQuantity = productionQuantity,
-       _priority = priority {
+       _priority = priority,
+       _stockTransactionBarcode = stockTransactionBarcode {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
   }
@@ -90,7 +93,8 @@ class Task {
     required DateTime? productionStartTime,
     int runs = 1,
     required double productionQuantity,
-    int priority = 1
+    int priority = 1,
+    required String stockTransactionBarcode,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -107,7 +111,8 @@ class Task {
        _productionStartTime = productionStartTime,
        _runs = runs,
        _productionQuantity = productionQuantity,
-       _priority = priority;
+       _priority = priority,
+       _stockTransactionBarcode = stockTransactionBarcode;
 
   void initializeId(int id) {
     _id = id;
@@ -132,6 +137,7 @@ class Task {
   DateTime? get productionStartTime => _productionStartTime;
   int get runs => _runs;
   double get productionQuantity=> _productionQuantity;
+  String? get stockTransactionBarcode=> _stockTransactionBarcode;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -197,8 +203,9 @@ class Task {
         ? DateTime.parse(json["productionStartTime"])
         : null,
     runs: json["runs"] ?? 1,
-    productionQuantity: double.parse(json["productionQuantity"]),
-    priority: json["priority"]
+    productionQuantity: double.parse(json["stockTransaction"]?["quantity"]?? json["productionQuantity"]),
+    priority: json["priority"],
+    stockTransactionBarcode: json["stockTransaction"]?["barcode"]
   );
 
   // Copy constructor
@@ -225,6 +232,7 @@ class Task {
     _runs = original._runs;
     _productionQuantity = original._productionQuantity;
     _priority = original._priority;
+    _stockTransactionBarcode = original._stockTransactionBarcode;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)
@@ -324,7 +332,8 @@ class Task {
       'productionStartTime': _productionStartTime?.toIso8601String(),
       'runs': _runs,
       'productionQuantity': _productionQuantity,
-      'priority': _priority
+      'priority': _priority,
+      'barcode': _stockTransactionBarcode,
     };
     try {
       return {'id': id, ...json};
@@ -352,5 +361,6 @@ class Task {
     _runs = newTask._runs;
     _productionQuantity = newTask._productionQuantity;
     _priority = newTask._priority;
+    _stockTransactionBarcode = newTask._stockTransactionBarcode;
   }
 }
