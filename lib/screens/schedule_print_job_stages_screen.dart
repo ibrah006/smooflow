@@ -50,7 +50,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
 
   @deprecated
   bool _isManualMaterialEntry = false;
-  MaterialEntryMode _materialEntryMode = MaterialEntryMode.barcode;
   // Look up for selected material stock transactions from database
   bool _lookForStockTransactions = false;
 
