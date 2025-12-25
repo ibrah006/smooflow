@@ -72,7 +72,7 @@ class MaterialRepo {
     TransactionType? type
   }) async {
     final res = await ApiClient.http.get(
-      '/material/materials/$materialId/transactions?limit=$limit${type!=null? '?${type.name}' : ''}',
+      '/material/materials/$materialId/transactions?limit=$limit${type!=null? '&type=${transactionTypeToString(type)}' : ''}',
     );
     if (res.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(res.body);

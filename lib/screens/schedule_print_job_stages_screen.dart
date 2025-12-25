@@ -439,7 +439,8 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     Future<List<StockTransaction>> materialStockTransationsFuture = ref.watch(materialNotifierProvider.notifier).fetchMaterialTransactions(
       selectedMaterial.id,
       checkIsLocalEmpty: true,
-      updateState: false
+      updateState: false,
+      type: TransactionType.stockIn
     );
     
     if (_lookForStockTransactions) {
@@ -451,8 +452,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       builder: (context, snapshot) {
 
         final materialStockTransations = snapshot.data;
-
-        print("materialStockTransations: ${materialStockTransations}");
 
         return Column(
           spacing: 15,
@@ -1535,7 +1534,8 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       materialId: _selectedMaterialId!,
       productionStartTime: _startTime,
         runs: _runs,
-      productionQuantity: _materialQuantity
+      productionQuantity: _materialQuantity,
+      // priority: _priority
     );
 
     // await ref.watch(projectNotifierProvider.notifier).createTask(
