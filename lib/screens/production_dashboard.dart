@@ -38,51 +38,6 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   // 0: All, 1: Printing, 2: Blocked
   int _selectedFilteredIndex = 0;
 
-  // Mock data - replace with actual service calls
-  final List<Printer> _mockPrinters = [
-    Printer(
-      id: '1',
-      name: 'Epson SureColor P8000',
-      nickname: 'Large Format A',
-      status: PrinterStatus.active,
-      location: 'Section A',
-      currentJobId: 'job001',
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-      workMinutes: 0
-    ),
-    Printer(
-      id: '2',
-      name: 'HP Latex 570',
-      nickname: 'Vinyl Master',
-      status: PrinterStatus.active,
-      location: 'Section B',
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-      workMinutes: 0
-    ),
-    Printer(
-      id: '3',
-      name: 'Roland TrueVIS VG3',
-      nickname: 'Banner Pro',
-      status: PrinterStatus.maintenance,
-      location: 'Section A',
-      createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
-      workMinutes: 0
-    ),
-    Printer(
-      id: '4',
-      name: 'Mimaki CJV330',
-      nickname: 'Sticker Station',
-      status: PrinterStatus.offline,
-      location: 'Section C',
-      createdAt: DateTime.now(),
-      workMinutes: 0
-      // updatedAt: DateTime.now(),
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -762,6 +717,15 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     'By Ibrahim',
                     style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                   ),
+                  Spacer(),
+                  if (task.isDeprecated) ...[
+                    Icon(Icons.priority_high_rounded, size: 15, color: Colors.redAccent),
+                    Text("Deprecated", style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.redAccent
+                    ))
+                  ]
                 ],
               ),
             ],

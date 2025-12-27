@@ -40,9 +40,9 @@ class StockTransaction {
   final String createdById;
   final DateTime createdAt;
   final int? taskId;
-  final bool committed;
+  late bool _committed;
 
-  const StockTransaction({
+  StockTransaction({
     required this.id,
     required this.materialId,
     required this.type,
@@ -54,8 +54,8 @@ class StockTransaction {
     this.notes,
     this.projectId,
     this.taskId,
-    required this.committed
-  });
+    required bool committed
+  }) : _committed = committed;
 
   // To ensure toSet gives no duplicates
   @override
@@ -100,6 +100,13 @@ class StockTransaction {
       'createdAt': createdAt.toIso8601String(),
       'taskId': taskId
     };
+  }
+
+  bool get committed=> _committed;
+
+  set committed(bool committed) {
+    if (type==TransactionType.stockIn) throw "Unsupported action. Cannot commit a stock in transcation.";
+    _committed = committed;
   }
 
   /// Creates a copy with updated fields

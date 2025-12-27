@@ -8,7 +8,7 @@ import '../models/printer.dart';
 class PrinterNotifier extends StateNotifier<PrinterState> {
   final PrinterRepo _repo;
 
-  PrinterNotifier(this._repo) : super(const PrinterState());
+  PrinterNotifier(this._repo) : super(PrinterState());
 
   // -------------------------------
   // LOAD ALL PRINTERS
@@ -154,5 +154,29 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     }
 
     return state.report[period]!;
+  }
+
+  // Only use this in the task provider file along with TaskNotifier.assignPrinter
+  void assignTask({required String printerId, required int taskId}) {
+    state.silentSetPrinters = state.printers.map(
+      (printer) {
+        if (printer.id == printerId) {
+          printer.currentJobId = taskId;
+        }
+        return printer;
+      }
+    ).toList();
+  }
+
+  // Only use this in the task provider file along with TaskNotifier.unassignPrinter
+  void unassignTask({required String printerId}) {
+    state.silentSetPrinters = state.printers.map(
+      (printer) {
+        if (printer.id == printerId) {
+          printer.currentJobId = null;
+        }
+        return printer;
+      }
+    ).toList();
   }
 }

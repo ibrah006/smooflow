@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/constants.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/task.dart';
@@ -54,6 +54,22 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
 
   ExpansionTileController _dateTimeExpansionController = ExpansionTileController();
 
+  bool canSave = false;
+
+  bool get showBottomAction {
+    if (widget.isDetails) {
+      return widget.task.printerId == null;
+    }
+    return true;
+  }
+
+  bool get isOldVersion {
+    if (widget.isDetails) {
+      return widget.task.isDeprecated;
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -93,13 +109,28 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text(
-          'Schedule${widget.isDetails? 'd' : ''} Print Job',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
+        title: Column(
+          children: [
+            Text(
+              'Schedule${widget.isDetails? 'd' : ''} Print Job',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            if (isOldVersion) Wrap(
+              // mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.priority_high_rounded, size: 17, color: Colors.redAccent),
+                Text("Deprecated", style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.redAccent
+                )),
+              ],
+            )
+          ],
         ),
       ),
       body: Column(
@@ -249,13 +280,14 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                     title: 'Notes (Optional)',
                     child: _buildNotesField(),
                   ),
+                  SizedBox(height: 40)
                 ],
               ),
             ),
           ),
 
           // Bottom Action Buttons
-          if (!widget.isDetails) Container(
+          if (showBottomAction) Container(
             padding: const EdgeInsets.all(16).copyWith(bottom: 30),
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -269,7 +301,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
             ),
             child: Row(
               children: [
-                Expanded(
+                if (!widget.isDetails) Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
@@ -293,7 +325,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: _scheduleJob,
+                    onPressed: widget.isDetails? _saveChanges : _scheduleJob,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
@@ -303,8 +335,8 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Schedule Job',
+                    child: Text(
+                      widget.isDetails? "Assign Printer" : 'Schedule Job',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -502,13 +534,13 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
               : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.all(widget.isDetails? 8 : 16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFF5F7FA),
           borderRadius: BorderRadius.circular(12),
           border:
               isSelected
-                  ? Border.all(color: widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : const Color(0xFF2563EB), width: 2)
+                  ? Border.all(color: const Color(0xFF2563EB), width: 2)
                   : null,
         ),
         child: Row(
@@ -519,13 +551,13 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
               decoration: BoxDecoration(
                 color:
                     isSelected
-                        ? (widget.isDetails? const Color.fromARGB(255, 228, 229, 232) : const Color(0xFF2563EB).withOpacity(0.1))
+                        ? (const Color(0xFF2563EB).withOpacity(0.1))
                         : statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.print,
-                color: isSelected ? (widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : const Color(0xFF2563EB)) : statusColor,
+                color: isSelected ? (const Color(0xFF2563EB)) : statusColor,
                 size: 24,
               ),
             ),
@@ -550,16 +582,16 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: widget.isDetails? colorPrimary : statusColor,
+                          color: statusColor,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        widget.isDetails? "Printer Assigned" : (isAvailable ? 'Available' : 'Offline'),
+                        (isAvailable ? 'Available' : 'Offline'),
                         style: TextStyle(
                           fontSize: 13,
-                          color: widget.isDetails? colorPrimary : statusColor,
+                          color: statusColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -573,7 +605,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                 width: 24,
                 height: 24,
                 decoration:  BoxDecoration(
-                  color: widget.isDetails? const Color.fromARGB(255, 190, 196, 211) : Color(0xFF2563EB),
+                  color: Color(0xFF2563EB),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 16),
@@ -983,6 +1015,10 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
         ],
       ],
     );
+  }
+
+  void _saveChanges() async {
+
   }
 
   void _scheduleJob() async {

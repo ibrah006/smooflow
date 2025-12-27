@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class MaterialNotifier extends StateNotifier<MaterialState> {
   final MaterialRepo _repo;
 
-  MaterialNotifier(this._repo) : super(const MaterialState());
+  MaterialNotifier(this._repo) : super(MaterialState());
 
   // Fetch all materials
   Future<void> fetchMaterials() async {
@@ -343,16 +343,27 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     //   rethrow;
     // }
   }
+
+  // Do not use this by itself. Use it with TaskNotifer.assignPrinter and PrinterNotifier.assignTask
+  void commitStockOutTransaction({required String transactionId}) {
+    state.transactions = state.transactions.map((transaction) {
+      if (transaction.id == transactionId) {
+        transaction.committed = true;
+      }
+
+      return transaction;
+    }).toList();
+  }
 }
 
 class MaterialState {
   final List<MaterialModel> materials;
   final bool isLoading;
   final String? errorMessage;
-  final List<StockTransaction> transactions;
+  List<StockTransaction> transactions;
   final StockPercentageResult? stockStats;
 
-  const MaterialState({
+  MaterialState({
     this.materials = const [],
     this.transactions = const [],
     this.isLoading = false,

@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/notifiers/task_notifier.dart';
+import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/repositories/task_repo.dart';
@@ -77,22 +79,32 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
 });
 
 
-final updateTaskStatus = Provider.family<Future<void>, UpdateTaskStatusParams>((
+final setPrinterState = Provider.family<Future<void>, TaskPrinterStateParams>((
   ref,
-  updateTaskStatusParams,
+  taskPrinterStateParams,
 ) async {
-  // Update Task status
-  // TODO: create a tasknotifier function for updating task status
-  // ref.watch(taskNotifierProvider.notifier);
+  // Assign/Unassign printer to task
+  if (taskPrinterStateParams.printerId != null) {
+    await ref.watch(taskNotifierProvider.notifier).assignPrinter(taskId: taskPrinterStateParams.id, printerId: taskPrinterStateParams.printerId!);
+    ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskPrinterStateParams.printerId!, taskId: taskPrinterStateParams.id);
 
+    // Commit stock out transaction
+    if (taskPrinterStateParams.stockTransactionId!=null){
+      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionId: taskPrinterStateParams.stockTransactionId!);
+    }
 
-  // Update stock transcation. Commit if needed
+  } else {
+    await ref.watch(taskNotifierProvider.notifier).unassignPrinter(taskId: taskPrinterStateParams.id, status: taskPrinterStateParams.newTaskStatus);
+    ref.watch(printerNotifierProvider.notifier).unassignTask(printerId: taskPrinterStateParams.printerId!);
+  }
 });
 
 
-class UpdateTaskStatusParams {
-  int id;
-  TaskStatus status;
+class TaskPrinterStateParams {
+  final int id;
+  final String? printerId;
+  final String? stockTransactionId;
+  final TaskStatus newTaskStatus;
 
-  UpdateTaskStatusParams({required this.id, required this.status});
+  const TaskPrinterStateParams({required this.id, required this.printerId, required this.stockTransactionId, required this.newTaskStatus});
 }

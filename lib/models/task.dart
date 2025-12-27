@@ -10,7 +10,7 @@ class Task {
   late String _description;
   late DateTime? _dueDate;
   late int? _productionDuration;
-  late String _printerId;
+  late String? _printerId;
   late String _materialId;
   late DateTime? _productionStartTime;
   // Ids of work activity logs associated with this task
@@ -88,7 +88,7 @@ class Task {
     List<MaterialLog> usedMaterials = const [],
     required String projectId,
     required int productionDuration,
-    required String printerId,
+    required String? printerId,
     required String materialId,
     required DateTime? productionStartTime,
     int runs = 1,
@@ -132,7 +132,7 @@ class Task {
   Color? get color => _color;
   IconData? get icon => _icon;
   int get productionDuration => _productionDuration ?? 0;
-  String get printerId => _printerId;
+  String? get printerId => _printerId;
   String get materialId => _materialId;
   DateTime? get productionStartTime => _productionStartTime;
   int get runs => _runs;
@@ -143,6 +143,8 @@ class Task {
     _assignees.add(userId);
     assigneeLastAdded = DateTime.now();
   }
+
+  bool get isDeprecated=> printerId != null && status != TaskStatus.printing;
 
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
@@ -160,6 +162,10 @@ class Task {
 
   set icon(IconData? newIcon) {
     _icon = newIcon;
+  }
+
+  set printerId(String? printerId) {
+    _printerId = printerId;
   }
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(

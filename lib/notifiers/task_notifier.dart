@@ -291,6 +291,30 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       ...tasksToday
     ];
   }
+
+  Future<void> assignPrinter({required int taskId, required String printerId}) async {
+    await _repo.assignPrinter(taskId, printerId);
+
+    state = state.map((task) {
+      if (task.id == taskId) {
+        task.printerId = printerId;
+        task.status = TaskStatus.printing;
+      }
+      return task;
+    }).toList();
+  }
+
+  Future<void> unassignPrinter({required int taskId, required TaskStatus status}) async {
+    await _repo.unassignPrinter(taskId);
+
+    state = state.map((task) {
+      if (task.id == taskId) {
+        task.printerId = null;
+        task.status = status;
+      }
+      return task;
+    }).toList();
+  }
 }
 
 class TasksResponse {

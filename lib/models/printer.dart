@@ -30,7 +30,7 @@ class Printer {
   final double? maxWidth;
   final double? printSpeed;
   final DateTime createdAt;
-  final String? currentJobId;
+  late int? currentJobId;
   final int workMinutes;
 
   Printer({

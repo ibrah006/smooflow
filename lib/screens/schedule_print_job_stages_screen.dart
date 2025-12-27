@@ -26,7 +26,7 @@ class SchedulePrintJobStagesScreen extends ConsumerStatefulWidget {
 class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobStagesScreen>
     with SingleTickerProviderStateMixin {
   int _currentStage = 0;
-  final int _totalStages = 6;
+  final int _totalStages = 5;
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
@@ -134,17 +134,17 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           return false;
         }
         break;
+      // case 2:
+      //   if (_selectedPrinterId == null) {
+      //     _showError('Please select a printer');
+      //     return false;
+      //   }
+      //   if (_runs < 1) {
+      //     _showError('Runs must be at least 1');
+      //     return false;
+      //   }
+      //   break;
       case 2:
-        if (_selectedPrinterId == null) {
-          _showError('Please select a printer');
-          return false;
-        }
-        if (_runs < 1) {
-          _showError('Runs must be at least 1');
-          return false;
-        }
-        break;
-      case 3:
         // if (_requiresInstallation && (_installationSite == null || _installationSite!.isEmpty)) {
         //   _showError('Please enter installation site');
         //   return false;
@@ -262,13 +262,13 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       case 1:
         return _buildStage2MaterialSelection();
       case 2:
-        return _buildStage3PrintersAndRuns();
-      case 3:
         return _buildStage4Installation();
-      case 4:
+      case 3:
         return _buildStage5Duration();
-      case 5:
+      case 4:
         return _buildStage6Options();
+      case 5:
+        // 
       default:
         return const SizedBox();
     }
@@ -1531,7 +1531,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       assignees: [],
       projectId: _selectedProjectId!,
       productionDuration: _estimatedDuration,
-      printerId: _selectedPrinterId!,
+      printerId: _selectedPrinterId,
       materialId: _selectedMaterialId!,
       productionStartTime: _startTime,
         runs: _runs,
