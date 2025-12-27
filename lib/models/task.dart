@@ -53,7 +53,7 @@ class Task {
     required this.workActivityLogs,
     required this.updatedAt,
     required int? productionDuration,
-    required String printerId,
+    required String? printerId,
     required String? materialId,
     required DateTime? productionStartTime,
     int runs = 1,
