@@ -8,13 +8,14 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/stock_entry_args.dart';
-import 'package:smooflow/enums/material_entry_mode.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/stock_transaction.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 class SchedulePrintJobStagesScreen extends ConsumerStatefulWidget {
   const SchedulePrintJobStagesScreen({Key? key}) : super(key: key);
@@ -89,8 +90,18 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     super.dispose();
   }
 
-  void _nextStage() {
-    if (_validateCurrentStage()) {
+  void _nextStage({bool isMoveToSelectPrinterStage = false}) {
+
+    if (isMoveToSelectPrinterStage) {
+      if (_currentStage < _totalStages - 1) {
+        throw "Can only move to select printer stage from last stage";
+      }
+      setState(() {
+        _currentStage++;
+        _isForward = true;
+      });
+      _animationController.forward();
+    } else if (_validateCurrentStage()) {
       if (_currentStage < _totalStages - 1) {
         _animationController.reset();
         _setupAnimations(true);
@@ -106,6 +117,9 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
   }
 
   void _previousStage() {
+    if (_currentStage == 5) {
+      _selectedPrinterId = null;  
+    }
     if (_currentStage > 0) {
       _animationController.reset();
       _setupAnimations(false);
@@ -221,7 +235,8 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(_totalStages, (index) {
-          final isActive = index == _currentStage;
+          final isPrinterSelctionStage = (index == 4 && _currentStage == 5);
+          final isActive = index == _currentStage || isPrinterSelctionStage;
           final isCompleted = index < _currentStage;
           
           return Row(
@@ -233,7 +248,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                 height: 10,
                 decoration: BoxDecoration(
                   color: isCompleted || isActive
-                      ? const Color(0xFF2563EB)
+                      ? (isPrinterSelctionStage? Color(0xFF10B981) : const Color(0xFF2563EB))
                       : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(5),
                 ),
@@ -245,7 +260,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                   width: 20,
                   height: 2,
                   color: isCompleted
-                      ? const Color(0xFF2563EB)
+                      ? (isPrinterSelctionStage? colorPositiveStatus : const Color(0xFF2563EB))
                       : const Color(0xFFE2E8F0),
                 ),
             ],
@@ -268,7 +283,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       case 4:
         return _buildStage6Options();
       case 5:
-        // 
+        return _buildStage3PrintersAndRuns();
       default:
         return const SizedBox();
     }
@@ -1262,24 +1277,6 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           'Additional Options',
           'Set priority and add optional notes',
         ),
-        const SizedBox(height: 24),
-        
-        // Illustration
-        Center(
-          child: Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEF4444).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.flag_rounded,
-              size: 70,
-              color: Color(0xFFEF4444),
-            ),
-          ),
-        ),
         
         const SizedBox(height: 32),
         
@@ -1298,6 +1295,21 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
           title: 'Notes (Optional)',
           child: _buildNotesField(),
         ),
+        const SizedBox(height: 16),
+
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () {
+              _nextStage(isMoveToSelectPrinterStage: true);
+            },
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))
+            ),
+            label: Text("Start Print Job"),
+            icon: Icon(Icons.start_rounded),
+          ),
+        )
       ],
     );
   }
@@ -1474,17 +1486,17 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                 child: OutlinedButton(
                   onPressed: _previousStage,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: _currentStage==5? 19.2 : 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                     side: const BorderSide(color: Color(0xFFE2E8F0)),
                   ),
-                  child: const Text(
-                    'Back',
+                  child: Text(
+                    'Back${_currentStage==5? " (Schedule)" : ""}',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: _currentStage==5? 14 : 16,
+                      fontWeight: _currentStage==5? FontWeight.bold : FontWeight.w600,
                       color: Color(0xFF64748B),
                     ),
                   ),
@@ -1504,7 +1516,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                   elevation: 0,
                 ),
                 child: Text(
-                  _currentStage < _totalStages - 1 ? 'Next' : 'Schedule Job',
+                  _currentStage < _totalStages - 1 ? 'Next' : (_currentStage==5? "Start Job" : 'Schedule Job'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1547,12 +1559,37 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Job scheduled successfully'),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
     );
+
+    if (_currentStage == 5) {
+      late final String message;
+      try {
+        // Start print job
+        await ref.read(setPrinterStateProvider(TaskPrinterStateParams(
+          id: newTask.id,
+          printerId: newTask.printerId,
+          stockTransactionBarcode: newTask.stockTransactionBarcode,
+          newTaskStatus: TaskStatus.printing
+        )));
+        message = 'Job started successfully';
+      } catch(e) {
+        message = 'Failed to start job';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+      );
+    }
   }
 }

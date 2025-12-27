@@ -345,9 +345,9 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Do not use this by itself. Use it with TaskNotifer.assignPrinter and PrinterNotifier.assignTask
-  void commitStockOutTransaction({required String transactionId}) {
+  void commitStockOutTransaction({required String transactionBarcode}) {
     state.transactions = state.transactions.map((transaction) {
-      if (transaction.id == transactionId) {
+      if (transaction.barcode == transactionBarcode) {
         transaction.committed = true;
       }
 

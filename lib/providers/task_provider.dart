@@ -79,7 +79,7 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
 });
 
 
-final setPrinterState = Provider.family<Future<void>, TaskPrinterStateParams>((
+final setPrinterStateProvider = Provider.family<Future<void>, TaskPrinterStateParams>((
   ref,
   taskPrinterStateParams,
 ) async {
@@ -89,8 +89,8 @@ final setPrinterState = Provider.family<Future<void>, TaskPrinterStateParams>((
     ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskPrinterStateParams.printerId!, taskId: taskPrinterStateParams.id);
 
     // Commit stock out transaction
-    if (taskPrinterStateParams.stockTransactionId!=null){
-      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionId: taskPrinterStateParams.stockTransactionId!);
+    if (taskPrinterStateParams.stockTransactionBarcode!=null){
+      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskPrinterStateParams.stockTransactionBarcode!);
     }
 
   } else {
@@ -103,8 +103,8 @@ final setPrinterState = Provider.family<Future<void>, TaskPrinterStateParams>((
 class TaskPrinterStateParams {
   final int id;
   final String? printerId;
-  final String? stockTransactionId;
+  final String? stockTransactionBarcode;
   final TaskStatus newTaskStatus;
 
-  const TaskPrinterStateParams({required this.id, required this.printerId, required this.stockTransactionId, required this.newTaskStatus});
+  const TaskPrinterStateParams({required this.id, required this.printerId, required this.stockTransactionBarcode, required this.newTaskStatus});
 }
