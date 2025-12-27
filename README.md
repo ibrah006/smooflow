@@ -58,11 +58,11 @@ The app focuses on **project management, team collaboration, and production moni
 
 ---
 
-## 🖥️ UI/UX Philosophy  
+## 🔒 License
 
-- **Minimal at a glance** → Show only the most essential details on dashboards  
-- **Modern, clean design** with cards & widgets for easy navigation  
-- **Detailed info on demand** → Drill down into specific project, printer, or staff views  
-- **Cross-platform** → Optimized for both **mobile & desktop (admin PC dashboard)**  
-- **Smooth animations & haptic feedback** → Users feel interactions are real  
+This project is **proprietary / source-available**.
 
+The source code is visible for evaluation purposes only.
+Unauthorized use, redistribution, or commercial use is prohibited.
+
+See the [LICENSE](./LICENSE) file for details.
