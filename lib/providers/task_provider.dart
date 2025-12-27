@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/notifiers/task_notifier.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -74,3 +75,24 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
       .read(workActivityLogNotifierProvider.notifier)
       .startWorkSession(taskId: taskId, newLogId: workActivityLog.id);
 });
+
+
+final updateTaskStatus = Provider.family<Future<void>, UpdateTaskStatusParams>((
+  ref,
+  updateTaskStatusParams,
+) async {
+  // Update Task status
+  // TODO: create a tasknotifier function for updating task status
+  // ref.watch(taskNotifierProvider.notifier);
+
+
+  // Update stock transcation. Commit if needed
+});
+
+
+class UpdateTaskStatusParams {
+  int id;
+  TaskStatus status;
+
+  UpdateTaskStatusParams({required this.id, required this.status});
+}

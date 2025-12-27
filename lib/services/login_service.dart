@@ -5,11 +5,22 @@ import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/data/fetch_with_timeout_retry.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
+import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/models/organization.dart';
 import 'package:smooflow/models/user.dart';
 
 class LoginService {
   static User? currentUser;
+
+  static const _rolePermissions = {
+    'admin': {
+      UserPermission.updateTaskStatus
+    },
+    'production-head': {
+      UserPermission.updateTaskStatus
+    }
+  };
+
 
   /// re-login is meant to run properly when user is already part of an organization
   /// As the core idea this was developed, was to sign JWT token with organizationId
@@ -178,6 +189,14 @@ class LoginService {
     // } catch (e) {
     //   throw "Error caught: $e";
     // }
+  }
+
+  static bool can(UserPermission permission) {
+    try {
+      return _rolePermissions[currentUser!.role]?.contains(permission) ?? false;
+    } catch(e) {
+      throw Exception("Role checking can only be done if the user is logged in");
+    }
   }
 }
 
