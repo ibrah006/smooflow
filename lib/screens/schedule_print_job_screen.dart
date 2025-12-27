@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/models/task.dart';
@@ -16,6 +15,7 @@ class SchedulePrintJobScreen extends ConsumerStatefulWidget {
   // To use when requested for creating (ScheduleJobScreen constructor) from a specific project
   final String? projectId;
 
+  @deprecated
   SchedulePrintJobScreen({Key? key, this.projectId}) : super(key: key) {
     isDetails = false;
   }
@@ -232,8 +232,8 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                   _buildSectionCard(
                     icon: Icons.print,
                     iconColor: const Color(0xFF9333EA),
-                    title: '${widget.isDetails? "" : "Select "}Printer',
-                    child: widget.isDetails? _buildPrinterOption(printers.firstWhere((printer)=> printer.id==_selectedPrinterId)) : Column(
+                    title: "Select Printer",
+                    child: Column(
                       children:
                           printers
                               .map((printer) => _buildPrinterOption(printer))
