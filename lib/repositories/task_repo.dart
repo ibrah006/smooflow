@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
@@ -173,7 +174,9 @@ class TaskRepo {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to assign printer to print job. Please try again.\nStatus code:${response.statusCode}\nError response body: ${response.body}');
+      debugPrint("Error when assigning printer to task, statusCode: ${response.statusCode}");
+      // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
+      throw jsonDecode(response.body)["message"];
     }
 
     // Successfully assigned priner to task and started print job

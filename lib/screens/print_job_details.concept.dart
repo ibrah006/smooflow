@@ -922,13 +922,12 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
       // TODO: Update task with printer assignment via API
       await ref.read(setTaskPrinterStateProvider(TaskPrinterStateParams(
         id: widget.task.id,
-        printerId: widget.task.projectId,
+        printerId: widget.task.printerId,
         stockTransactionBarcode: widget.task.stockTransactionBarcode,
         newTaskStatus: TaskStatus.printing
       )));
     } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to start print job")));
-      print("Error when assigning printer to task: $e");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       setState(() {
         _isAssigningPrinter = false;
       });
