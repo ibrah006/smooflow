@@ -922,7 +922,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
       // TODO: Update task with printer assignment via API
       await ref.read(setTaskPrinterStateProvider(TaskPrinterStateParams(
         id: widget.task.id,
-        printerId: widget.task.printerId,
+        printerId: _selectedPrinterId,
         stockTransactionBarcode: widget.task.stockTransactionBarcode,
         newTaskStatus: TaskStatus.printing
       )));
