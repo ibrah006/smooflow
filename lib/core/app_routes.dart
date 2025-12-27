@@ -8,6 +8,7 @@ import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
+import 'package:smooflow/screens/print_job_details.concept.dart';
 import 'package:smooflow/screens/printer_screen.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
@@ -365,7 +366,8 @@ class AppRoutes {
         break;
       case schedulePrintView:
         if (args is SchedulePrintJobArgs) {
-          screen = SchedulePrintJobScreen.details(projectId: args.projectId, task: args.task);
+          // screen = SchedulePrintJobScreen.details(projectId: args.projectId, task: args.task);
+          screen = PrintJobDetailsScreen(task: args.task);
         }
         break;
       case schedulePrintStages:

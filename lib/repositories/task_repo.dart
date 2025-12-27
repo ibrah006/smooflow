@@ -165,19 +165,22 @@ class TaskRepo {
   }
 
   Future<void> assignPrinter(int taskId, String printerId) async {
-    final response = await ApiClient.http.get(
+    final response = await ApiClient.http.put(
       '/tasks/$taskId/assign-printer',
+      body: {
+        "printerId": printerId
+      }
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to assign printer to print job. Please try again.');
+      throw Exception('Failed to assign printer to print job. Please try again.\nStatus code:${response.statusCode}\nError response body: ${response.body}');
     }
 
     // Successfully assigned priner to task and started print job
   }
 
   Future<void> unassignPrinter(int taskId) async {
-    final response = await ApiClient.http.get(
+    final response = await ApiClient.http.put(
       '/tasks/$taskId/assign-printer',
     );
 

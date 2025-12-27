@@ -79,7 +79,7 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
 });
 
 
-final setPrinterStateProvider = Provider.family<Future<void>, TaskPrinterStateParams>((
+final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterStateParams>((
   ref,
   taskPrinterStateParams,
 ) async {
