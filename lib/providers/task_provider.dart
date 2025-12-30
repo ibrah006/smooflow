@@ -85,6 +85,7 @@ final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterSta
 ) async {
   // Assign/Unassign printer to task
   if (taskPrinterStateParams.printerId != null) {
+    print("about to start print job\nassigning printer");
     await ref.watch(taskNotifierProvider.notifier).assignPrinter(taskId: taskPrinterStateParams.id, printerId: taskPrinterStateParams.printerId!);
     ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskPrinterStateParams.printerId!, taskId: taskPrinterStateParams.id);
 
