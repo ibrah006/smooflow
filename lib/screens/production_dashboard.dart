@@ -741,7 +741,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   }
 
   Widget _buildPrinterCard(Printer printer) {
-    final statusColor = _getPrinterStatusColor(printer.status);
+    final statusColor = _getPrinterStatusColor(printer);
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -794,7 +794,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _getPrinterStatusLabel(printer.status),
+                          _getPrinterStatusLabel(printer),
                           style: TextStyle(
                             fontSize: 14,
                             color: statusColor,
@@ -1003,8 +1003,13 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     );
   }
 
-  Color _getPrinterStatusColor(PrinterStatus status) {
-    switch (status) {
+  Color _getPrinterStatusColor(Printer printer) {
+
+    if (printer.isBusy) {
+      return colorPrimary;
+    }
+
+    switch (printer.status) {
       case PrinterStatus.active:
         return const Color(0xFF10B981);
       case PrinterStatus.offline:
@@ -1016,8 +1021,13 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     }
   }
 
-  String _getPrinterStatusLabel(PrinterStatus status) {
-    switch (status) {
+  String _getPrinterStatusLabel(Printer printer) {
+
+    if (printer.isBusy) {
+      return "Busy";
+    }
+
+    switch (printer.status) {
       case PrinterStatus.active:
         return 'Active';
       case PrinterStatus.offline:

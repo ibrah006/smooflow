@@ -62,6 +62,7 @@ class Printer {
   }
 
   bool get isActive=> status == PrinterStatus.active;
+  bool get isBusy=> currentJobId!=null;
 
   String get statusName=> "${status.name[0].toUpperCase()}${status.name.substring(1)}";
 
