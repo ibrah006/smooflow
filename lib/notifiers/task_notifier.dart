@@ -305,7 +305,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> unassignPrinter({required int taskId, required TaskStatus status}) async {
-    await _repo.unassignPrinter(taskId);
+    await _repo.unassignPrinter(taskId, status);
 
     state = state.map((task) {
       if (task.id == taskId) {

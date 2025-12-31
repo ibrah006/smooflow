@@ -182,13 +182,16 @@ class TaskRepo {
     // Successfully assigned priner to task and started print job
   }
 
-  Future<void> unassignPrinter(int taskId) async {
+  Future<void> unassignPrinter(int taskId, TaskStatus status) async {
     final response = await ApiClient.http.put(
-      '/tasks/$taskId/assign-printer',
+      '/tasks/$taskId/unassign-printer',
+      body: {
+        "status": status.name
+      }
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to unassign printer to print job');
+      throw Exception('Failed to unassign printer to print job\nstatus code: ${response.statusCode}\nbody: ${response.body}');
     }
 
     // Successfully unasssigned priner to task and ended print job
