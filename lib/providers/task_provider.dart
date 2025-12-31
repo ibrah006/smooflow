@@ -93,7 +93,6 @@ final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterSta
     if (taskPrinterStateParams.stockTransactionBarcode!=null){
       ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskPrinterStateParams.stockTransactionBarcode!);
     }
-
   } else {
     await ref.watch(taskNotifierProvider.notifier).unassignPrinter(taskId: taskPrinterStateParams.id, status: taskPrinterStateParams.newTaskStatus);
     ref.watch(printerNotifierProvider.notifier).unassignTask(printerId: taskPrinterStateParams.printerId!);
@@ -103,6 +102,7 @@ final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterSta
 
 class TaskPrinterStateParams {
   final int id;
+  /// Pass in null to unassign printer from task
   final String? printerId;
   final String? stockTransactionBarcode;
   final TaskStatus newTaskStatus;

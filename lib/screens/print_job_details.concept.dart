@@ -1,7 +1,3 @@
-// lib/screens/printer/print_job_details_screen.dart
-import 'dart:math';
-
-import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -63,6 +59,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
   bool _showPrinterSelection = false;
   bool _isAssigningPrinter = false;
 
+  @deprecated
   bool get showBottomAction => widget.task.printerId == null;
   bool get isOldVersion => widget.task.isDeprecated;
 
@@ -104,6 +101,15 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
     _notesController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _markJobAsComplete() async {
+    await ref.watch(setTaskPrinterStateProvider(TaskPrinterStateParams(
+      id: widget.task.id,
+      printerId: null,
+      stockTransactionBarcode: null,
+      newTaskStatus: TaskStatus.completed
+    )));
   }
 
   void _showPrinterSelectionPage() {
@@ -830,7 +836,8 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
   }
 
   Widget _buildBottomAction(List<Printer> printers) {
-    if (!showBottomAction) return const SizedBox.shrink();
+
+    // if (!showBottomAction) return const SizedBox.shrink();
 
     if (_isAssigningPrinter) {
       return Container(
@@ -869,9 +876,9 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
       );
     }
 
-    if (_showPrinterSelection) {
-      return const SizedBox.shrink();
-    }
+    // if (_showPrinterSelection) {
+    //   return const SizedBox.shrink();
+    // }
 
     return Container(
       padding: const EdgeInsets.all(16).copyWith(bottom: 30),
@@ -886,27 +893,30 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         ],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _showPrinterSelectionPage,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: widget.task.printerId!=null? _markJobAsComplete : _showPrinterSelectionPage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  widget.task.printerId!=null? 'Mark Job as Complete' : 'Assign Printer & Start',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
-            child: const Text(
-              'Assign Printer & Start',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          ],
         ),
       ),
     );
