@@ -104,12 +104,20 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
   }
 
   Future<void> _markJobAsComplete() async {
-    await ref.watch(setTaskPrinterStateProvider(TaskPrinterStateParams(
-      id: widget.task.id,
-      printerId: null,
-      stockTransactionBarcode: null,
-      newTaskStatus: TaskStatus.completed
-    )));
+    try {
+      await ref.watch(setTaskPrinterStateProvider(TaskPrinterStateParams(
+        id: widget.task.id,
+        printerId: null,
+        stockTransactionBarcode: null,
+        newTaskStatus: TaskStatus.completed
+      )));
+      
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Print job marked as completed")));
+    } catch(e) {
+      debugPrint("Failed to mark print job as completed: $e");
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to mark job as completed. Please try agin")));
+    }
   }
 
   void _showPrinterSelectionPage() {
