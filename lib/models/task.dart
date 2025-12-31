@@ -20,6 +20,9 @@ class Task {
   late final int _priority;
   late final String? _stockTransactionBarcode;
 
+  DateTime? _actualProductionStartTime;
+  DateTime? _actualProductionEndTime;
+
   late TaskStatus _status;
   late List<String> _assignees;
   late String _projectId;
@@ -59,7 +62,9 @@ class Task {
     int runs = 1,
     required double productionQuantity,
     required int priority,
-    required String? stockTransactionBarcode
+    required String? stockTransactionBarcode,
+    required DateTime? actualProductionStartTime,
+    required DateTime? actualProductionEndTime
   }) : _id = id,
        _name = name,
        _description = description,
@@ -76,6 +81,8 @@ class Task {
        _stockTransactionBarcode = stockTransactionBarcode {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
+    _actualProductionStartTime = actualProductionStartTime;
+    _actualProductionEndTime = actualProductionEndTime;
   }
 
   Task.create({
@@ -135,6 +142,8 @@ class Task {
   String? get printerId => _printerId;
   String get materialId => _materialId;
   DateTime? get productionStartTime => _productionStartTime;
+  DateTime? get actualProductionStartTime => _actualProductionStartTime;
+  DateTime? get actualProductionEndTime => _actualProductionEndTime;
   int get runs => _runs;
   double get productionQuantity=> _productionQuantity;
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
@@ -150,6 +159,12 @@ class Task {
   set status(TaskStatus newStatus) {
     // _status = newStatus.replaceAll(RegExp(r"-"), " ");
     _status = newStatus;
+
+    if (_status == TaskStatus.printing) {
+      _actualProductionStartTime = DateTime.now();
+    } else if (_status == TaskStatus.completed) {
+      _actualProductionEndTime = DateTime.now();
+    }
   }
 
   set dateCompleted(DateTime? newDatetime) {
@@ -211,7 +226,13 @@ class Task {
     runs: json["runs"] ?? 1,
     productionQuantity: double.parse(json["stockTransaction"]?["quantity"]?? json["productionQuantity"]),
     priority: json["priority"],
-    stockTransactionBarcode: json["stockTransaction"]?["barcode"]
+    stockTransactionBarcode: json["stockTransaction"]?["barcode"],
+    actualProductionStartTime: json['actualProductionStartTime'] != null
+            ? DateTime.parse(json['actualProductionStartTime'])
+            : null,
+    actualProductionEndTime: json['actualProductionEndTime'] != null
+            ? DateTime.parse(json['actualProductionEndTime'])
+            : null,
   );
 
   // Copy constructor
@@ -239,6 +260,8 @@ class Task {
     _productionQuantity = original._productionQuantity;
     _priority = original._priority;
     _stockTransactionBarcode = original._stockTransactionBarcode;
+    _actualProductionStartTime = original._actualProductionStartTime;
+    _actualProductionEndTime = original._actualProductionEndTime;
   }
 
   // This Constructor serves those classes which inherit or use Task model as property, and have initial or at any point, a pointing to a Task that doesn't exist (yet)

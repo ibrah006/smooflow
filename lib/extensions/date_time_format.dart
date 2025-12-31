@@ -92,3 +92,52 @@ extension EventIn on DateTime {
     return "In ${futureDays} days";
   }
 }
+
+extension EventAgo on DateTime {
+  String get eventAgo {
+    final now = DateTime.now();
+    final difference = now.difference(this);
+
+    // Handle future events
+    if (difference.isNegative) {
+      final futureMinutes = (-difference).inMinutes;
+      if (futureMinutes < 5) return "Happening soon";
+      return "In $futureMinutes minute${futureMinutes > 1 ? 's' : ''}";
+    }
+
+    final minutes = difference.inMinutes;
+    final hours = difference.inHours;
+
+    // Less than 5 minutes
+    if (minutes < 5) return "Just now";
+
+    // 5–8 minutes
+    if (minutes >= 5 && minutes <= 8) return "5 minutes ago";
+
+    // 9–59 minutes, round to nearest 5
+    if (minutes < 60) {
+      int rounded = (minutes / 5).round() * 5;
+      if (rounded >= 55) return "an hour ago";
+      return "$rounded minute${rounded == 1 ? '' : 's'} ago";
+    }
+
+    // 1 hour or more, round minutes to nearest 15
+    int remainingMinutes = minutes % 60;
+    int roundedMinutes = (remainingMinutes / 15).round() * 15;
+    int displayHours = hours;
+
+    if (roundedMinutes == 60) {
+      displayHours += 1;
+      roundedMinutes = 0;
+    }
+
+    if (roundedMinutes == 0) {
+      return displayHours == 1 ? "1hr ago" : "${displayHours}hrs ago";
+    } else if (roundedMinutes == 15 || roundedMinutes == 30 || roundedMinutes == 45) {
+      return "${displayHours}hr${displayHours == 1 ? '' : 's'} ${roundedMinutes}min${roundedMinutes == 1 ? '' : 's'} ago";
+    } else {
+      // fallback, just in case
+      return "${displayHours}hr${displayHours == 1 ? '' : 's'} ago";
+    }
+  }
+}

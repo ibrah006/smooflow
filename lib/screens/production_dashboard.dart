@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/components/hawk_fab.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/material_stock_transaction_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
@@ -532,6 +533,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
     // final isStarted = task.status == TaskStatus.printing;
     final isBlocked = task.status == TaskStatus.blocked;
+    final isPrinting = task.status == TaskStatus.printing;
 
     final isOverdue = task.productionStartTime != null && task.productionStartTime!.isBefore(DateTime.now());
 
@@ -562,15 +564,15 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     height: 48,
                     decoration: BoxDecoration(
                       color:
-                          isAlert
+                          isPrinting? colorPrimary.withValues(alpha: 0.08) : isAlert
                               ? const Color(0xFFFEE2E2)
                               : const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      isBlocked ? Icons.block : isOverdue? Icons.warning_amber_rounded : Icons.arrow_downward,
+                      isPrinting? Icons.print : isBlocked ? Icons.block : isOverdue? Icons.warning_amber_rounded : Icons.arrow_downward,
                       color:
-                          isAlert
+                          isPrinting? colorPrimary : isAlert
                               ? const Color(0xFFEF4444)
                               : const Color(0xFF10B981),
                       size: 24,
@@ -591,16 +593,19 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         ),
                         const SizedBox(height: 4),
                         Row(
+                          spacing: 5,
                           children: [
-                            Icon(Icons.schedule_rounded,
+                            if (!isPrinting) Icon(Icons.schedule_rounded,
                                 size: 15, color: scheduleTimeColor),
-                            Text(
-                              task.productionStartTime != null
-                                  ? ' ${task.productionStartTime!.eventIn}${isOverdue? ", Overdue" : ""}'
-                                  : ' No Start Time',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: scheduleTimeColor,
+                            Expanded(
+                              child: Text(
+                                isPrinting? "Started ${task.actualProductionStartTime?.eventAgo}" : (task.productionStartTime != null
+                                    ? '${task.productionStartTime!.eventIn}${isOverdue? ", Overdue" : ""}'
+                                    : 'No Start Time'),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: scheduleTimeColor,
+                                ),
                               ),
                             ),
                           ],
@@ -615,7 +620,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     ),
                     decoration: BoxDecoration(
                       color:
-                          isAlert
+                          isPrinting? colorPrimary.withValues(alpha: 0.08) : isAlert
                               ? const Color(0xFFFEE2E2)
                               : const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(12),
@@ -626,7 +631,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color:
-                            isAlert
+                            isPrinting? colorPrimary : isAlert
                                 ? const Color(0xFFEF4444)
                                 : const Color(0xFF10B981),
                       ),
