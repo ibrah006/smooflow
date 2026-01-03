@@ -46,15 +46,37 @@ The app focuses on **project management, team collaboration, and production moni
 
 ## Screenshots
 
-<img src="assets/screenshots/login.png" alt="Description" width="250"/>
-<img src="assets/screenshots/dashboard.png" alt="Description" width="250"/>
+### Admin View
+<img src="assets/screenshots/admin_dashboard.png" alt="Description" width="250"/>
+<img src="assets/screenshots/admin_dashboard_2.png" alt="Description" width="250"/>
+<img src="assets/screenshots/admin_projects.png" alt="Description" width="250"/>
+<img src="assets/screenshots/admin_teams.png" alt="Description" width="250"/>
+
+### Project
+<img src="assets/screenshots/project_details.png" alt="Description" width="250"/>
+
+### Schedule Print Job
+<img src="assets/screenshots/schedule_job_1.png" alt="Description" width="250"/>
+<img src="assets/screenshots/schedule_job_2.png" alt="Description" width="250"/>
+<img src="assets/screenshots/schedule_job_3.png" alt="Description" width="250"/>
+<img src="assets/screenshots/schedule_job_4.png" alt="Description" width="250"/>
+<img src="assets/screenshots/schedule_job_5.png" alt="Description" width="250"/>
+
+### Print Job
+<img src="assets/screenshots/print_job_details.png" alt="Description" width="250"/>
+
+<!-- <img src="assets/screenshots/dashboard.png" alt="Description" width="250"/> -->
+### Material & Stock Management
 <img src="assets/screenshots/material_stock.png" alt="Description" width="250"/>
 <img src="assets/screenshots/material_transactions.png" alt="Description" width="250"/>
 <img src="assets/screenshots/stock_in_info.png" alt="Description" width="250"/>
-<img src="assets/screenshots/project_info.png" alt="Description" width="250"/>
+<!-- <img src="assets/screenshots/project_info.png" alt="Description" width="250"/>
 <img src="assets/screenshots/task_info.png" alt="Description" width="250"/>
 <img src="assets/screenshots/timline.png" alt="Description" width="250"/>
-<img src="assets/screenshots/timeline_stage_info.png" alt="Description" width="250"/>
+<img src="assets/screenshots/timeline_stage_info.png" alt="Description" width="250"/> -->
+
+### Login And Auth
+<img src="assets/screenshots/login.png" alt="Description" width="250"/>
 
 ---
 
