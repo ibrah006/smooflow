@@ -723,14 +723,14 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                   ),
                   Spacer(),
-                  if (task.isDeprecated) ...[
-                    Icon(Icons.priority_high_rounded, size: 15, color: Colors.redAccent),
-                    Text("Deprecated", style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.redAccent
-                    ))
-                  ]
+                  // if (task.isDeprecated) ...[
+                  //   Icon(Icons.priority_high_rounded, size: 15, color: Colors.redAccent),
+                  //   Text("Deprecated", style: TextStyle(
+                  //     fontSize: 13,
+                  //     fontWeight: FontWeight.w500,
+                  //     color: Colors.redAccent
+                  //   ))
+                  // ]
                 ],
               ),
             ],
