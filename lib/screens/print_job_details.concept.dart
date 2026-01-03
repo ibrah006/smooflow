@@ -61,7 +61,6 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
 
   @deprecated
   bool get showBottomAction => widget.task.printerId == null;
-  bool get isOldVersion => widget.task.isDeprecated;
 
   @override
   void initState() {
@@ -171,7 +170,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                   color: Colors.black,
                 ),
               ),
-              if (!_showPrinterSelection && isOldVersion)
+              if (!_showPrinterSelection && widget.task.isDeprecated)
                 Row(
                   children: const [
                     Icon(Icons.priority_high_rounded,
@@ -887,6 +886,10 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
     // if (_showPrinterSelection) {
     //   return const SizedBox.shrink();
     // }
+
+    if (widget.task.status == TaskStatus.completed) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       padding: const EdgeInsets.all(16).copyWith(bottom: 30),

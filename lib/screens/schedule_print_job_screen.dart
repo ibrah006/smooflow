@@ -63,13 +63,6 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
     return true;
   }
 
-  bool get isOldVersion {
-    if (widget.isDetails) {
-      return widget.task.isDeprecated;
-    }
-    return false;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -119,7 +112,7 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
                 color: Colors.black,
               ),
             ),
-            if (isOldVersion) Wrap(
+            if (widget.task.isDeprecated) Wrap(
               // mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.priority_high_rounded, size: 17, color: Colors.redAccent),
