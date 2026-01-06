@@ -657,13 +657,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           title: 'Projects Report',
           value: projectsThisMonth.toString(),
           change: projectsIncreaseWRTPrevMonth>0? '+${projectsIncreaseWRTPrevMonth.toString()} new' : '',
+          navigateTo: AppRoutes.projectReport
         ),
 
         _buildReportCard(
           icon: Icons.print_rounded,
           title: 'Production Report',
           value: 'N/a',
-          change: 'Click to view more'
+          change: 'Click to view more',
+          navigateTo: AppRoutes.productionReport
           // value: '247 jobs',
           // change: '94% efficiency',
         ),
@@ -672,7 +674,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           icon: Icons.inventory_2_rounded,
           title: 'Material Usage',
           value: "N/a",
-          change: "Healthy"
+          change: "Healthy",
+          navigateTo: AppRoutes.materials
           // value: '86%',
           // change: 'Healthy',
         ),
@@ -1186,20 +1189,22 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     required String title,
     required String value,
     required String change,
+    String? navigateTo
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          final String? page;
-          switch(title) {
-            case "Projects Report": page = AppRoutes.projectReport; break;
-            case "Production Report": page = AppRoutes.productionReport; break;
-            case "Material Usage": page = AppRoutes.materials;
-            default: page = null;
-          }
 
-          if (page != null) AppRoutes.navigateTo(context, page);
+          if (navigateTo != null) {
+            AppRoutes.navigateTo(context, navigateTo);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unimplemented report'),
+              ),
+            );
+          }
         },
         borderRadius: BorderRadius.circular(24),
         child: Ink(
