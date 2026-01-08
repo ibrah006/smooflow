@@ -381,9 +381,9 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 ),
                 const SizedBox(height: 12),
                 ...printers
-                    .where((p) => p.status == PrinterStatus.active)
+                    .where((p) => p.status == PrinterStatus.active && !p.isBusy)
                     .map((printer) => _buildPrinterOption(printer, true)),
-                if (printers.any((p) => p.status != PrinterStatus.active)) ...[
+                if (printers.any((p) => p.status != PrinterStatus.active || p.isBusy)) ...[
                   const SizedBox(height: 24),
                   const Text(
                     'Unavailable Printers',
@@ -395,7 +395,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                   ),
                   const SizedBox(height: 12),
                   ...printers
-                      .where((p) => p.status != PrinterStatus.active)
+                      .where((p) => p.status != PrinterStatus.active || p.isBusy)
                       .map((printer) => _buildPrinterOption(printer, false)),
                 ],
               ],
@@ -622,7 +622,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isAvailable ? 'Available' : 'Offline',
+                        isAvailable ? 'Available' : 'Unavailable',
                         style: TextStyle(
                           fontSize: 13,
                           color: statusColor,
