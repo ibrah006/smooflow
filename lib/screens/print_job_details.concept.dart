@@ -622,7 +622,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isAvailable ? 'Available' : 'Unavailable',
+                        _getPrinterStatusLabel(printer),
                         style: TextStyle(
                           fontSize: 13,
                           color: statusColor,
@@ -644,6 +644,23 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         ),
       ),
     );
+  }
+
+  String _getPrinterStatusLabel(Printer printer) {
+    if (printer.isBusy) {
+      return "Busy";
+    }
+
+    switch (printer.status) {
+      case PrinterStatus.active:
+        return 'Active';
+      case PrinterStatus.offline:
+        return 'Offline';
+      case PrinterStatus.maintenance:
+        return 'Maintenance';
+      case PrinterStatus.error:
+        return 'Error';
+    }
   }
 
   Widget _buildPriorityDisplay() {
