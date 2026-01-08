@@ -46,11 +46,15 @@ The app focuses on **project management, team collaboration, and production moni
 
 ## Screenshots
 
-### Admin View
-<img src="assets/screenshots/admin_dashboard.png" alt="Description" width="250"/>
-<img src="assets/screenshots/admin_dashboard_2.png" alt="Description" width="250"/>
-<img src="assets/screenshots/admin_projects.png" alt="Description" width="250"/>
-<img src="assets/screenshots/admin_teams.png" alt="Description" width="250"/>
+### Admin Views
+<table>
+  <tr>
+    <td><img src="assets/screenshots/admin_dashboard.png" width="250"/></td>
+    <td><img src="assets/screenshots/admin_dashboard_2.png" width="250"/></td>
+    <td><img src="assets/screenshots/admin_projects.png" width="250"/></td>
+    <td><img src="assets/screenshots/admin_teams.png" width="250"/></td>
+  </tr>
+</table>
 
 ### Reports
 <img src="assets/screenshots/production_report_screen.gif" alt="Description" width="250"/>
