@@ -640,7 +640,7 @@ class _ProductionReportsScreenState extends ConsumerState<ProductionReportsScree
   }
 
   Widget _buildUtilizationCard(PrinterUtilizationData printer) {
-    final utilization = printer.totalUtilizedHours as int;
+    final utilization = printer.totalUtilizedHours.toInt();
     Color barColor;
     
     if (utilization >= 70) {
