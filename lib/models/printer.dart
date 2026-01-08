@@ -26,11 +26,35 @@ class Printer {
   final String name;
   final String nickname;
   final String? location;
-  final PrinterStatus status;
+  PrinterStatus _status;
+
+  PrinterStatus get status => _status;
+
   final double? maxWidth;
   final double? printSpeed;
   final DateTime createdAt;
-  late int? currentJobId;
+  late int? _currentJobId;
+
+  int? get currentJobId => _currentJobId;
+
+  /// Assign a job to a printer.
+  assignJob({required int jobId}) {
+    if (isBusy) {
+      throw Exception("Printer is already assigned to a job.");
+    }
+
+    _currentJobId = jobId;
+
+    _status = PrinterStatus.active;
+  }
+
+  /// Unassign a job from a printer.
+  unassignJob() {
+    _currentJobId = null;
+
+    _status = PrinterStatus.active;
+  }
+
   final int workMinutes;
 
   Printer({
@@ -38,13 +62,13 @@ class Printer {
     required this.name,
     required this.nickname,
     this.location,
-    required this.status,
+    required PrinterStatus status,
     this.maxWidth,
     this.printSpeed,
     required this.createdAt,
-    this.currentJobId,
+    int? currentJobId,
     required this.workMinutes
-  });
+  }) : _currentJobId = currentJobId, _status = status;
 
   factory Printer.fromJson(Map<String, dynamic> json) {
     return Printer(

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:googleapis/batch/v1.dart';
 import 'package:smooflow/data/production_report_details.dart';
 import 'package:smooflow/repositories/printer_repo.dart';
 import 'package:smooflow/states/printer.dart';
@@ -160,9 +161,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   void assignTask({required String printerId, required int taskId}) {
     state.silentSetPrinters = state.printers.map(
       (printer) {
-        if (printer.id == printerId) {
-          printer.currentJobId = taskId;
-        }
+        if (printer.id == printerId) printer.assignJob(jobId: taskId);
         return printer;
       }
     ).toList();
@@ -172,9 +171,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   void unassignTask({required String printerId}) {
     state.silentSetPrinters = state.printers.map(
       (printer) {
-        if (printer.id == printerId) {
-          printer.currentJobId = null;
-        }
+        if (printer.id == printerId) printer.unassignJob();
         return printer;
       }
     ).toList();
