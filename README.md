@@ -57,8 +57,8 @@ The app focuses on **project management, team collaboration, and production moni
 </table>
 
 ### Reports
-<img src="assets/screenshots/production_report_screen.gif" alt="Description" width="350"/>
-<img src="assets/screenshots/project_report_screen.gif" alt="Description" width="350"/>
+<img src="assets/screenshots/production_report_screen.gif" alt="Description" width="400"/>
+<img src="assets/screenshots/project_report_screen.gif" alt="Description" width="400"/>
 
 ### Project
 <img src="assets/screenshots/project_details.png" alt="Description" width="250"/>
