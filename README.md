@@ -72,7 +72,6 @@ The app focuses on **project management, team collaboration, and production moni
 <img src="assets/screenshots/schedule_job_2.png" alt="Description" width="250"/>
 <img src="assets/screenshots/schedule_job_3.png" alt="Description" width="250"/>
 <img src="assets/screenshots/schedule_job_4.png" alt="Description" width="250"/>
-<img src="assets/screenshots/schedule_job_5.png" alt="Description" width="250"/>
 
 ### Print Job
 <img src="assets/screenshots/print_job_details.png" alt="Description" width="250"/>
