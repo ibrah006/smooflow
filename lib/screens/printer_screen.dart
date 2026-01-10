@@ -537,9 +537,6 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to Update Printer. Please try again.'),
-            
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
           ),
         );
         return;
@@ -548,9 +545,6 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Printer updated successfully'),
-            
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
           ),
         );
       return;

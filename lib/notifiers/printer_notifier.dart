@@ -169,11 +169,13 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
 
   // Only use this in the task provider file along with TaskNotifier.unassignPrinter
   void unassignTask({required int taskId}) {
-    state.silentSetPrinters = state.printers.map(
-      (printer) {
-        if (printer.currentJobId == taskId) printer.unassignJob();
-        return printer;
-      }
-    ).toList();
+    state.copyWith(
+      printers: state.printers.map(
+        (printer) {
+          if (printer.currentJobId == taskId) printer.unassignJob();
+          return printer;
+        }
+      ).toList()
+    );
   }
 }
