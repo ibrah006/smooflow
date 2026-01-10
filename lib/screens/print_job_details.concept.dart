@@ -965,7 +965,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         newTaskStatus: TaskStatus.printing
       )));
     } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), duration: Duration(seconds: 7)));
       setState(() {
         _isAssigningPrinter = false;
       });
