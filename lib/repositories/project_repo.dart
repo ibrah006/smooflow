@@ -88,7 +88,7 @@ class ProjectRepo {
   Future<int> createTask(String projectId, Task task) async {
     final response = await ApiClient.http.post(
       ApiEndpoints.createTask(projectId),
-      body: task.toJson(),
+      body: task.toCreateJson(),
     );
 
     if (response.statusCode != 201) {

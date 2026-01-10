@@ -345,6 +345,14 @@ class Task {
     return taskJson["id"];
   }
 
+  Map<String, dynamic> toCreateJson() {
+    return {
+      ...toJson(),
+      // Inital stage of a Task locked to PRODUCTION
+      "progressStage": "production"
+    };
+  }
+
   Map<String, dynamic> toJson() {
     final json = {
       'name': name,
