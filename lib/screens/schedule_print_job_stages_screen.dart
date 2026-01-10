@@ -465,6 +465,8 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
 
         final materialStockTransations = snapshot.data;
 
+        final isHigherThanStock = materialStockTransations != null && (materialStockTransations.isEmpty || _materialQuantity > selectedMaterial.currentStock);
+
         return Column(
           spacing: 15,
           children: [
@@ -531,17 +533,17 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
                         child: Text(
                           _materialQuantity.toString(),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: isHigherThanStock? colorPending : Color(0xFF0F172A),
                           ),
                         ),
                       ),
                       if (materialStockTransations==null) CircularProgressIndicator()
                       else _buildIncrementButton(
                         icon: Icons.add,
-                        onPressed: materialStockTransations.isEmpty || _materialQuantity+1 > selectedMaterial.currentStock? null : () {
+                        onPressed: () {
                           setState(() => _materialQuantity++);
                         },
                       ),

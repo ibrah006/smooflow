@@ -21,7 +21,7 @@ class HelpTimeline extends ConsumerWidget {
           SizedBox(),
           Icon(Icons.info_rounded, size: 60, color: colorPrimary),
           Text(
-            "How to Use the Timeline",
+            "How the Timeline works",
             style: textTheme.headlineSmall!.copyWith(
               fontWeight: FontWeight.w600,
             ),
