@@ -1570,6 +1570,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     );
 
     if (_currentStage == 5) {
+
       late final String message;
       try {
         // Start print job

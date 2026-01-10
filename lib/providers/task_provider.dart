@@ -95,7 +95,7 @@ final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterSta
     }
   } else {
     await ref.watch(taskNotifierProvider.notifier).unassignPrinter(taskId: taskPrinterStateParams.id, status: taskPrinterStateParams.newTaskStatus);
-    ref.watch(printerNotifierProvider.notifier).unassignTask(printerId: taskPrinterStateParams.printerId!);
+    ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskPrinterStateParams.id);
   }
 });
 

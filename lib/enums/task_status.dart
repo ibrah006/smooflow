@@ -5,5 +5,6 @@ enum TaskStatus {
   finishing,
   installing,
   completed,
-  blocked
+  blocked,
+  paused
 }
