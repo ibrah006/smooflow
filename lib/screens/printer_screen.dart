@@ -523,6 +523,39 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
   }
 
   void _savePrinter() async {
+
+    if (widget.printer != null) {
+      try {
+        await ref.read(printerNotifierProvider.notifier).updatePrinter(
+          widget.printer!.id,
+          name: _nameController.text,
+          nickname: _nicknameController.text,
+          location: _locationController.text,
+          status: _selectedStatus,
+        );
+      } catch(e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to Update Printer. Please try again.'),
+            
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Printer updated successfully'),
+            
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       
       try {
