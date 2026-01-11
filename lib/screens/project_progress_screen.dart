@@ -145,7 +145,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
                   dividerColor: Colors.transparent,
                   tabs: const [
                     Tab(text: 'Timeline'),
-                    Tab(text: 'Jobs'),
+                    Tab(text: 'All Jobs'),
                   ],
                 ),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),

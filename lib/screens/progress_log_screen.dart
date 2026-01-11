@@ -5,6 +5,7 @@ import 'package:smooflow/enums/progress_status.dart';
 import 'package:smooflow/enums/project_stage.dart';
 import 'package:smooflow/models/progress_log.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 class ProgressLogScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -40,6 +41,11 @@ class _ProgressLogDetailScreenState extends ConsumerState<ProgressLogScreen> {
     super.dispose();
   }
 
+  String get stage {
+    final st = widget.progressLog.status.name;
+    return "${st[0].toUpperCase()}${st.substring(1)}";
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = _getProgressStatus(widget.progressLog);
@@ -57,7 +63,7 @@ class _ProgressLogDetailScreenState extends ConsumerState<ProgressLogScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Production",
+              stage,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -109,7 +115,7 @@ class _ProgressLogDetailScreenState extends ConsumerState<ProgressLogScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Production",
+                            stage,
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -963,8 +969,9 @@ class _ProgressLogDetailScreenState extends ConsumerState<ProgressLogScreen> {
   }
 
   List<Task> _getTasksForProgressLog() {
-    // TODO: Implement actual task fetching logic
-    // This is a placeholder - replace with your actual provider logic
-    return [];
+    final allTasks = ref.watch(taskNotifierProvider);
+    return allTasks.where((task) {
+      return task.progressLogIds.contains(widget.progressLog.id);
+    }).toList();
   }
 }
