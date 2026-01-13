@@ -6,6 +6,7 @@ import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/screens/desktop/design_dashboard.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/print_job_details.concept.dart';
@@ -129,6 +130,12 @@ class AppRoutes {
   // Admin reports
   static const projectReport = '/admin/project-report';
   static const productionReport = '/admin/production-report';
+
+  /// Desktop
+
+  // Design
+  static const designDashboard = '/desktop/design-dashboard';
+
 
   // -------------------
   // Route Map
@@ -389,6 +396,8 @@ class AppRoutes {
       case materials:
         screen = MaterialsStockScreen();
         break;
+      case designDashboard:
+        screen = const DesignDashboard();
     }
 
     // If screen was determined, create the route
