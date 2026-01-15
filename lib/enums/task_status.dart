@@ -8,3 +8,6 @@ enum TaskStatus {
   blocked,
   paused
 }
+
+/// New statuses to consider
+// revision, waitingApproval

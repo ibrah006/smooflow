@@ -1,47 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
-enum TaskStatus {
-  pending,
-  inProgress,
-  waitingApproval,
-  approved,
-  revision,
-}
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/priorities.dart';
+import 'package:smooflow/enums/progress_status.dart';
+import 'package:smooflow/enums/project_stage.dart';
+import 'package:smooflow/models/project.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
 enum NavigationPage {
   dashboard,
-  allTasks,
+  allProjects,
   completed,
   pending,
-}
-
-class DesignTask {
-  final String id;
-  String name;
-  TaskStatus status;
-  List<Artwork> artworks;
-  bool autoMoveToNext;
-  DateTime createdAt;
-  DateTime? completedAt;
-  String? assignee;
-  String? priority;
-  String? description;
-  List<TimelineActivity> timeline;
-
-  DesignTask({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.artworks,
-    this.autoMoveToNext = false,
-    required this.createdAt,
-    this.completedAt,
-    this.assignee,
-    this.priority,
-    this.description,
-    List<TimelineActivity>? timeline,
-  }) : timeline = timeline ?? [];
 }
 
 class Artwork {
@@ -93,14 +64,14 @@ class TimelineActivity {
   });
 }
 
-class DesignDashboard extends StatefulWidget {
+class DesignDashboard extends ConsumerStatefulWidget {
   const DesignDashboard({Key? key}) : super(key: key);
 
   @override
-  State<DesignDashboard> createState() => _DesignDashboardState();
+  ConsumerState<DesignDashboard> createState() => _DesignDashboardState();
 }
 
-class _DesignDashboardState extends State<DesignDashboard> with TickerProviderStateMixin {
+class _DesignDashboardState extends ConsumerState<DesignDashboard> with TickerProviderStateMixin {
   late AnimationController _pageAnimationController;
   late AnimationController _detailsAnimationController;
   late Animation<double> _fadeAnimation;
@@ -114,238 +85,22 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
   bool _isSearching = false;
   bool _showingDetails = false;
 
-  List<DesignTask> tasks = [
-    DesignTask(
-      id: '1',
-      name: 'Q1 Marketing Campaign Assets',
-      status: TaskStatus.inProgress,
-      artworks: [
-        Artwork(
-          id: 'a1',
-          name: 'Hero Banner.jpg',
-          path: '/uploads/hero-banner.jpg',
-          uploadedAt: DateTime.now().subtract(const Duration(hours: 2)),
-          fileType: 'JPG',
-          fileSize: '2.4 MB',
-        ),
-        Artwork(
-          id: 'a2',
-          name: 'Social Media Kit.zip',
-          path: '/uploads/social-kit.zip',
-          uploadedAt: DateTime.now().subtract(const Duration(hours: 5)),
-          fileType: 'ZIP',
-          fileSize: '8.1 MB',
-        ),
-      ],
-      assignee: 'Sarah Johnson',
-      priority: 'High',
-      description: 'Design assets for Q1 marketing campaign including social media graphics, email templates, and landing page elements.',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      timeline: [
-        TimelineActivity(
-          id: 't1',
-          type: ActivityType.created,
-          timestamp: DateTime.now().subtract(const Duration(days: 3)),
-          description: 'Project created',
-          actor: 'Admin User',
-        ),
-        TimelineActivity(
-          id: 't2',
-          type: ActivityType.assigneeChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 3, hours: 2)),
-          description: 'Assigned to Sarah Johnson',
-          actor: 'Admin User',
-          metadata: {'assignee': 'Sarah Johnson'},
-        ),
-        TimelineActivity(
-          id: 't3',
-          type: ActivityType.statusChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 2)),
-          description: 'Status changed to In Progress',
-          actor: 'Sarah Johnson',
-          metadata: {'from': 'Pending', 'to': 'In Progress'},
-        ),
-        TimelineActivity(
-          id: 't4',
-          type: ActivityType.artworkUploaded,
-          timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-          description: 'Uploaded Social Media Kit.zip',
-          actor: 'Sarah Johnson',
-          metadata: {'filename': 'Social Media Kit.zip'},
-        ),
-        TimelineActivity(
-          id: 't5',
-          type: ActivityType.artworkUploaded,
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-          description: 'Uploaded Hero Banner.jpg',
-          actor: 'Sarah Johnson',
-          metadata: {'filename': 'Hero Banner.jpg'},
-        ),
-        TimelineActivity(
-          id: 't6',
-          type: ActivityType.comment,
-          timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-          description: 'Added comment: "Banner design is ready for review"',
-          actor: 'Sarah Johnson',
-        ),
-      ],
-    ),
-    DesignTask(
-      id: '2',
-      name: 'Corporate Website Redesign',
-      status: TaskStatus.waitingApproval,
-      artworks: [
-        Artwork(
-          id: 'a3',
-          name: 'Homepage Mockup.fig',
-          path: '/uploads/homepage.fig',
-          uploadedAt: DateTime.now().subtract(const Duration(days: 1)),
-          fileType: 'FIG',
-          fileSize: '12.5 MB',
-        ),
-      ],
-      autoMoveToNext: true,
-      assignee: 'Michael Chen',
-      priority: 'Critical',
-      description: 'Complete redesign of corporate website with modern UI/UX principles and brand guidelines.',
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      timeline: [
-        TimelineActivity(
-          id: 't7',
-          type: ActivityType.created,
-          timestamp: DateTime.now().subtract(const Duration(days: 5)),
-          description: 'Project created',
-          actor: 'Admin User',
-        ),
-        TimelineActivity(
-          id: 't8',
-          type: ActivityType.priorityChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 4)),
-          description: 'Priority set to Critical',
-          actor: 'Admin User',
-          metadata: {'priority': 'Critical'},
-        ),
-        TimelineActivity(
-          id: 't9',
-          type: ActivityType.statusChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 4)),
-          description: 'Status changed to In Progress',
-          actor: 'Michael Chen',
-          metadata: {'from': 'Pending', 'to': 'In Progress'},
-        ),
-        TimelineActivity(
-          id: 't10',
-          type: ActivityType.artworkUploaded,
-          timestamp: DateTime.now().subtract(const Duration(days: 1)),
-          description: 'Uploaded Homepage Mockup.fig',
-          actor: 'Michael Chen',
-          metadata: {'filename': 'Homepage Mockup.fig'},
-        ),
-        TimelineActivity(
-          id: 't11',
-          type: ActivityType.statusChanged,
-          timestamp: DateTime.now().subtract(const Duration(hours: 6)),
-          description: 'Status changed to Pending Approval',
-          actor: 'Michael Chen',
-          metadata: {'from': 'In Progress', 'to': 'Pending Approval'},
-        ),
-      ],
-    ),
-    DesignTask(
-      id: '3',
-      name: 'Annual Report Infographics',
-      status: TaskStatus.pending,
-      artworks: [],
-      assignee: 'Emily Davis',
-      priority: 'Medium',
-      description: 'Create data visualizations and infographics for annual report presentation.',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      timeline: [
-        TimelineActivity(
-          id: 't12',
-          type: ActivityType.created,
-          timestamp: DateTime.now().subtract(const Duration(days: 1)),
-          description: 'Project created',
-          actor: 'Admin User',
-        ),
-        TimelineActivity(
-          id: 't13',
-          type: ActivityType.assigneeChanged,
-          timestamp: DateTime.now().subtract(const Duration(hours: 20)),
-          description: 'Assigned to Emily Davis',
-          actor: 'Admin User',
-          metadata: {'assignee': 'Emily Davis'},
-        ),
-      ],
-    ),
-    DesignTask(
-      id: '4',
-      name: 'Mobile App UI Design',
-      status: TaskStatus.approved,
-      artworks: [
-        Artwork(
-          id: 'a4',
-          name: 'App Screens v2.sketch',
-          path: '/uploads/app-screens.sketch',
-          uploadedAt: DateTime.now().subtract(const Duration(days: 7)),
-          fileType: 'SKETCH',
-          fileSize: '15.2 MB',
-        ),
-      ],
-      assignee: 'Sarah Johnson',
-      priority: 'High',
-      description: 'Complete UI design for mobile application with all screens and interactions.',
-      createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      completedAt: DateTime.now().subtract(const Duration(days: 2)),
-      timeline: [
-        TimelineActivity(
-          id: 't14',
-          type: ActivityType.created,
-          timestamp: DateTime.now().subtract(const Duration(days: 10)),
-          description: 'Project created',
-          actor: 'Admin User',
-        ),
-        TimelineActivity(
-          id: 't15',
-          type: ActivityType.statusChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 9)),
-          description: 'Status changed to In Progress',
-          actor: 'Sarah Johnson',
-          metadata: {'from': 'Pending', 'to': 'In Progress'},
-        ),
-        TimelineActivity(
-          id: 't16',
-          type: ActivityType.artworkUploaded,
-          timestamp: DateTime.now().subtract(const Duration(days: 7)),
-          description: 'Uploaded App Screens v2.sketch',
-          actor: 'Sarah Johnson',
-          metadata: {'filename': 'App Screens v2.sketch'},
-        ),
-        TimelineActivity(
-          id: 't17',
-          type: ActivityType.statusChanged,
-          timestamp: DateTime.now().subtract(const Duration(days: 3)),
-          description: 'Status changed to Pending Approval',
-          actor: 'Sarah Johnson',
-          metadata: {'from': 'In Progress', 'to': 'Pending Approval'},
-        ),
-        TimelineActivity(
-          id: 't18',
-          type: ActivityType.completed,
-          timestamp: DateTime.now().subtract(const Duration(days: 2)),
-          description: 'Project approved and completed',
-          actor: 'Admin User',
-        ),
-      ],
-    ),
-  ];
-
   NavigationPage currentPage = NavigationPage.dashboard;
-  DesignTask? selectedTask;
+  Project? selectedProject;
+
+  List<Project> get projects {
+    return ref.watch(projectNotifierProvider);
+  }
 
   @override
   void initState() {
     super.initState();
+
+    Future.microtask(() async {
+      await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      setState(() {});
+    });
+
     _pageAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -413,7 +168,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     _pageAnimationController.forward();
   }
 
-  void _navigateToTaskDetails(DesignTask task) async {
+  void _navigateToTaskDetails(Project project) async {
     setState(() {
       _showingDetails = true;
     });
@@ -422,7 +177,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     await Future.delayed(const Duration(milliseconds: 100));
     
     setState(() {
-      selectedTask = task;
+      selectedProject = project;
     });
     
     _detailsAnimationController.forward(from: 0.0);
@@ -432,76 +187,81 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     await _detailsAnimationController.reverse();
     
     setState(() {
-      selectedTask = null;
+      selectedProject = null;
       _showingDetails = false;
     });
     
     _triggerPageTransition();
   }
 
-  List<DesignTask> get filteredTasks {
-    List<DesignTask> filtered;
+  List<Project> get filteredTasks {
+    List<Project> filtered;
     
     switch (currentPage) {
-      case NavigationPage.allTasks:
-        filtered = tasks;
+      case NavigationPage.allProjects:
+        filtered = projects;
         break;
       case NavigationPage.completed:
-        filtered = tasks.where((t) => t.status == TaskStatus.approved).toList();
+        filtered = projects.where((t) => t.status == ProjectStage.finished.name).toList();
         break;
       case NavigationPage.pending:
-        filtered = tasks.where((t) => t.status == TaskStatus.pending).toList();
+        filtered = projects.where((t) => t.status == ProjectStage.planning.name).toList();
         break;
       case NavigationPage.dashboard:
       default:
-        filtered = tasks;
+        filtered = projects;
     }
     
     // Apply search filter with improved matching
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase().trim();
-      filtered = filtered.where((task) {
+      filtered = filtered.where((Project project) {
         // Search in project name
-        final nameMatch = task.name.toLowerCase().contains(query);
+        final nameMatch = project.name.toLowerCase().contains(query);
         
         // Search in description
-        final descriptionMatch = task.description?.toLowerCase().contains(query) ?? false;
+        final descriptionMatch = project.description?.toLowerCase().contains(query) ?? false;
         
         // Search in assignee name
-        final assigneeMatch = task.assignee?.toLowerCase().contains(query) ?? false;
+        // final assigneeMatch = project.assignee?.toLowerCase().contains(query) ?? false;
         
         // Search in priority
-        final priorityMatch = task.priority?.toLowerCase().contains(query) ?? false;
+        final priorityMatch = PriorityLevel.values[project.priority].name.toLowerCase().contains(query);
         
         // Search in status
-        final statusMatch = _getStatusLabel(task.status).toLowerCase().contains(query);
+        final statusMatch = _getStatusLabel(project.status).toLowerCase().contains(query);
         
         // Search in artworks
-        final artworkMatch = task.artworks.any((artwork) => 
-          artwork.name.toLowerCase().contains(query) ||
-          artwork.fileType.toLowerCase().contains(query)
-        );
+        // final artworkMatch = project.artworks.any((artwork) => 
+        //   artwork.name.toLowerCase().contains(query) ||
+        //   artwork.fileType.toLowerCase().contains(query)
+        // );
         
-        return nameMatch || descriptionMatch || assigneeMatch || 
-               priorityMatch || statusMatch || artworkMatch;
+        return nameMatch || descriptionMatch || 
+               priorityMatch || statusMatch;
       }).toList();
     }
     
     return filtered;
   }
 
-  String _getStatusLabel(TaskStatus status) {
-    switch (status) {
-      case TaskStatus.pending:
+  String _getStatusLabel(String status) {
+
+    switch (ProjectStage.values.byName(status.toLowerCase())) {
+      case ProjectStage.planning:
         return 'Pending';
-      case TaskStatus.inProgress:
-        return 'In Progress';
-      case TaskStatus.waitingApproval:
-        return 'Pending Approval Waiting Approval';
-      case TaskStatus.approved:
-        return 'Approved Completed';
-      case TaskStatus.revision:
-        return 'Revision Needed';
+      case ProjectStage.design:
+        return 'Design Phase';
+      case ProjectStage.production:
+        return 'Production Phase';
+      case ProjectStage.finishing:
+        return 'Finishing Phase';
+      case ProjectStage.application:
+        return 'Installation Phase';
+      case ProjectStage.finished:
+        return 'Completed';
+      default: 
+        return 'Project Cancelled';
     }
   }
 
@@ -512,7 +272,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
         children: [
           _buildSidebar(),
           Expanded(
-            child: selectedTask != null
+            child: selectedProject != null
                 ? _buildTaskDetailsPage()
                 : _buildMainContent(),
           ),
@@ -614,7 +374,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                   () {
                     setState(() {
                       currentPage = NavigationPage.dashboard;
-                      selectedTask = null;
+                      selectedProject = null;
                     });
                     _triggerPageTransition();
                   },
@@ -622,12 +382,12 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                 _buildSidebarItem(
                   Icons.folder_rounded,
                   'All Projects',
-                  currentPage == NavigationPage.allTasks,
-                  tasks.length,
+                  currentPage == NavigationPage.allProjects,
+                  projects.length,
                   () {
                     setState(() {
-                      currentPage = NavigationPage.allTasks;
-                      selectedTask = null;
+                      currentPage = NavigationPage.allProjects;
+                      selectedProject = null;
                     });
                     _triggerPageTransition();
                   },
@@ -638,38 +398,39 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                   Icons.schedule_rounded,
                   'Pending',
                   currentPage == NavigationPage.pending,
-                  tasks.where((t) => t.status == TaskStatus.pending).length,
+                  projects.where((p) => p.status == "planning" || p.status == "pending").length,
                   () {
                     setState(() {
                       currentPage = NavigationPage.pending;
-                      selectedTask = null;
+                      selectedProject = null;
                     });
                     _triggerPageTransition();
                   },
                 ),
                 _buildSidebarItem(
                   Icons.pending_actions_rounded,
-                  'In Progress',
+                  'Design Phase Projects',
                   false,
-                  tasks.where((t) => t.status == TaskStatus.inProgress).length,
+                  projects.where((p) => p.status == "design").length,
                   () {},
                 ),
-                _buildSidebarItem(
-                  Icons.hourglass_empty_rounded,
-                  'Awaiting Approval',
-                  false,
-                  tasks.where((t) => t.status == TaskStatus.waitingApproval).length,
-                  () {},
-                ),
+                // TODO: For Tasks
+                // _buildSidebarItem(
+                //   Icons.hourglass_empty_rounded,
+                //   'Awaiting Approval',
+                //   false,
+                //   projects.where((t) => t.status == TaskStatus.waitingApproval).length,
+                //   () {},
+                // ),
                 _buildSidebarItem(
                   Icons.check_circle_rounded,
                   'Completed',
                   currentPage == NavigationPage.completed,
-                  tasks.where((t) => t.status == TaskStatus.approved).length,
+                  projects.where((p) => p.status == "completed").length,
                   () {
                     setState(() {
                       currentPage = NavigationPage.completed;
-                      selectedTask = null;
+                      selectedProject = null;
                     });
                     _triggerPageTransition();
                   },
@@ -779,7 +540,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     String pageSubtitle = 'Manage your design workflow';
     
     switch (currentPage) {
-      case NavigationPage.allTasks:
+      case NavigationPage.allProjects:
         pageTitle = 'All Projects';
         pageSubtitle = 'Complete overview of all design projects';
         break;
@@ -923,7 +684,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
         Expanded(
           child: _buildModernStatCard(
             'Total Projects',
-            tasks.length.toString(),
+            projects.length.toString(),
             Icons.folder_rounded,
             const Color(0xFF4F46E5),
             const Color(0xFFEEF2FF),
@@ -935,7 +696,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
         Expanded(
           child: _buildModernStatCard(
             'In Progress',
-            tasks.where((t) => t.status == TaskStatus.inProgress).length.toString(),
+            projects.where((p) => p.status != "completed" && p.status != "cancelled" && p.status != "planning" &&  p.status != "pending").length.toString(),
             Icons.trending_up_rounded,
             const Color(0xFFF59E0B),
             const Color(0xFFFEF3C7),
@@ -944,22 +705,23 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
           ),
         ),
         const SizedBox(width: 20),
-        Expanded(
-          child: _buildModernStatCard(
-            'Pending Approval',
-            tasks.where((t) => t.status == TaskStatus.waitingApproval).length.toString(),
-            Icons.access_time_rounded,
-            const Color(0xFF8B5CF6),
-            const Color(0xFFF3E8FF),
-            '-3%',
-            false,
-          ),
-        ),
+        // TODO: for tasks
+        // Expanded(
+        //   child: _buildModernStatCard(
+        //     'Pending Approval',
+        //     projects.where((t) => t.status == TaskStatus.waitingApproval).length.toString(),
+        //     Icons.access_time_rounded,
+        //     const Color(0xFF8B5CF6),
+        //     const Color(0xFFF3E8FF),
+        //     '-3%',
+        //     false,
+        //   ),
+        // ),
         const SizedBox(width: 20),
         Expanded(
           child: _buildModernStatCard(
             'Completed',
-            tasks.where((t) => t.status == TaskStatus.approved).length.toString(),
+            projects.where((p) => p.status == "completed" || p.status == "finished").length.toString(),
             Icons.check_circle_rounded,
             const Color(0xFF10B981),
             const Color(0xFFD1FAE5),
@@ -974,7 +736,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
   Widget _buildFilterBar() {
     String pageLabel = currentPage == NavigationPage.dashboard
         ? 'All Projects'
-        : currentPage == NavigationPage.allTasks
+        : currentPage == NavigationPage.allProjects
             ? 'Projects List'
             : currentPage == NavigationPage.completed
                 ? 'Completed'
@@ -1323,7 +1085,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
   }
 
   Widget _buildTaskDetailsPage() {
-    if (selectedTask == null) return const SizedBox();
+    if (selectedProject == null) return const SizedBox();
 
     return FadeTransition(
       opacity: _detailsFadeAnimation,
@@ -1358,7 +1120,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            selectedTask!.name,
+                            selectedProject!.name,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -1369,29 +1131,29 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              _buildModernStatusBadge(selectedTask!.status),
+                              _buildModernStatusBadge(selectedProject!.status),
                               const SizedBox(width: 8),
-                              if (selectedTask!.priority != null)
-                                _buildPriorityBadge(selectedTask!.priority!),
+                              _buildPriorityBadge(PriorityLevel.values.elementAt(selectedProject!.priority).name),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    if (selectedTask!.status != TaskStatus.approved)
-                      ElevatedButton.icon(
-                        onPressed: () => _showMoveToNextStageDialog(selectedTask!),
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                        label: const Text('Advance Stage'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                        ),
-                      ),
+                    // TODO: Only for tasks
+                    // if (selectedProject!.status != TaskStatus.approved)
+                    //   ElevatedButton.icon(
+                    //     onPressed: () => _showMoveToNextStageDialog(selectedProject!),
+                    //     icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    //     label: const Text('Advance Stage'),
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: const Color(0xFF4F46E5),
+                    //       foregroundColor: Colors.white,
+                    //       padding: const EdgeInsets.symmetric(
+                    //         horizontal: 20,
+                    //         vertical: 14,
+                    //       ),
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
@@ -1423,16 +1185,18 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                                 'Project Details',
                                 Icons.info_outline_rounded,
                                 [
-                                  _buildDetailRow('Assignee', selectedTask!.assignee ?? 'Unassigned'),
-                                  _buildDetailRow('Created', _formatDateLong(selectedTask!.createdAt)),
-                                  if (selectedTask!.completedAt != null)
-                                    _buildDetailRow('Completed', _formatDateLong(selectedTask!.completedAt!)),
-                                  _buildDetailRow('Total Artworks', '${selectedTask!.artworks.length}'),
+                                  // _buildDetailRow('Assignee', selectedProject!.assignee ?? 'Unassigned'),
+                                  _buildDetailRow('Created', _formatDateLong(selectedProject!.createdAt)),
+                                  // TODO:
+                                  // if (selectedProject!.completedAt != null)
+                                  //   _buildDetailRow('Completed', _formatDateLong(selectedProject!.completedAt!)),
+                                  // TODO: loop throught the tasks and find all artworks related to this project
+                                  // _buildDetailRow('Total Artworks', '${selectedProject!.artworks.length}'),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 24),
-                            if (selectedTask!.description != null)
+                            if (selectedProject!.description != null)
                               TweenAnimationBuilder<double>(
                                 duration: const Duration(milliseconds: 700),
                                 tween: Tween(begin: 0.0, end: 1.0),
@@ -1451,7 +1215,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                                   Icons.description_outlined,
                                   [
                                     Text(
-                                      selectedTask!.description!,
+                                      selectedProject!.description!,
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Color(0xFF475569),
@@ -1604,6 +1368,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
   }
 
   Widget _buildArtworksSection() {
+    // TODO: work this out from selectedTask
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1658,7 +1423,8 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${selectedTask!.artworks.length}',
+                      // '${selectedProject!.artworks.length}',
+                      '0',
                       style: const TextStyle(
                         color: Color(0xFF4F46E5),
                         fontSize: 12,
@@ -1669,7 +1435,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: () => _showUploadArtworkDialog(preselectedTask: selectedTask),
+                onPressed: () => _showUploadArtworkDialog(preselectedTask: selectedProject),
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Add Artwork'),
                 style: ElevatedButton.styleFrom(
@@ -1684,7 +1450,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
             ],
           ),
           const SizedBox(height: 20),
-          if (selectedTask!.artworks.isEmpty)
+          // if (selectedProject!.artworks.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(40),
@@ -1716,21 +1482,21 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                 ),
               ),
             )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1,
-              ),
-              itemCount: selectedTask!.artworks.length,
-              itemBuilder: (context, index) {
-                return _buildDetailedArtworkCard(selectedTask!.artworks[index]);
-              },
-            ),
+          // else
+          //   GridView.builder(
+          //     shrinkWrap: true,
+          //     physics: const NeverScrollableScrollPhysics(),
+          //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //       crossAxisCount: 3,
+          //       crossAxisSpacing: 16,
+          //       mainAxisSpacing: 16,
+          //       childAspectRatio: 1,
+          //     ),
+          //     itemCount: selectedProject!.artworks.length,
+          //     itemBuilder: (context, index) {
+          //       return _buildDetailedArtworkCard(selectedProject!.artworks[index]);
+          //     },
+          //   ),
         ],
       ),
     );
@@ -1859,16 +1625,17 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
             ],
           ),
           const SizedBox(height: 16),
-          _buildSettingItem(
-            'Auto-advance',
-            'Automatically move to next stage',
-            selectedTask!.autoMoveToNext,
-            (value) {
-              setState(() {
-                selectedTask!.autoMoveToNext = value;
-              });
-            },
-          ),
+          // TODO: only for tasks
+          // _buildSettingItem(
+          //   'Auto-advance',
+          //   'Automatically move to next stage',
+          //   selectedProject!.autoMoveToNext,
+          //   (value) {
+          //     setState(() {
+          //       selectedProject!.autoMoveToNext = value;
+          //     });
+          //   },
+          // ),
         ],
       ),
     );
@@ -1922,8 +1689,8 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
   }
 
   Widget _buildActivityCard() {
-    final sortedTimeline = List<TimelineActivity>.from(selectedTask!.timeline)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    // final sortedTimeline = List<TimelineActivity>.from(selectedProject!.timeline)
+    //   ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1942,42 +1709,42 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.history_rounded, color: Color(0xFF4F46E5), size: 20),
-                  SizedBox(width: 10),
-                  Text(
-                    'Activity Timeline',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${sortedTimeline.length}',
-                  style: const TextStyle(
-                    color: Color(0xFF4F46E5),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (sortedTimeline.isEmpty)
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Row(
+          //       children: [
+          //         Icon(Icons.history_rounded, color: Color(0xFF4F46E5), size: 20),
+          //         SizedBox(width: 10),
+          //         Text(
+          //           'Activity Timeline',
+          //           style: TextStyle(
+          //             fontSize: 15,
+          //             fontWeight: FontWeight.bold,
+          //             color: Color(0xFF0F172A),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //     Container(
+          //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          //       decoration: BoxDecoration(
+          //         color: const Color(0xFFEEF2FF),
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //       child: Text(
+          //         '${sortedTimeline.length}',
+          //         style: const TextStyle(
+          //           color: Color(0xFF4F46E5),
+          //           fontSize: 12,
+          //           fontWeight: FontWeight.w700,
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 20),
+          // if (sortedTimeline.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -2000,18 +1767,18 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                 ),
               ),
             )
-          else
-            SizedBox(
-              height: 400,
-              child: ListView.builder(
-                itemCount: sortedTimeline.length,
-                itemBuilder: (context, index) {
-                  final activity = sortedTimeline[index];
-                  final isLast = index == sortedTimeline.length - 1;
-                  return _buildTimelineItem(activity, isLast);
-                },
-              ),
-            ),
+          // else
+          //   SizedBox(
+          //     height: 400,
+          //     child: ListView.builder(
+          //       itemCount: sortedTimeline.length,
+          //       itemBuilder: (context, index) {
+          //         final activity = sortedTimeline[index];
+          //         final isLast = index == sortedTimeline.length - 1;
+          //         return _buildTimelineItem(activity, isLast);
+          //       },
+          //     ),
+          //   ),
         ],
       ),
     );
@@ -2462,7 +2229,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     );
   }
 
-  Widget _buildModernTaskCard(DesignTask task) {
+  Widget _buildModernTaskCard(Project project) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -2480,7 +2247,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _navigateToTaskDetails(task),
+          onTap: () => _navigateToTaskDetails(project),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -2493,14 +2260,14 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: _getStatusColor(task.status),
+                        color: _getStatusColor(project.status),
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        task.name,
+                        project.name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -2509,9 +2276,9 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                         ),
                       ),
                     ),
-                    if (task.priority != null) _buildPriorityBadge(task.priority!),
+                    _buildPriorityBadge(PriorityLevel.values.elementAt(project.priority).name),
                     const SizedBox(width: 12),
-                    _buildModernStatusBadge(task.status),
+                    _buildModernStatusBadge(project.status),
                     const SizedBox(width: 8),
                     PopupMenuButton(
                       icon: const Icon(Icons.more_horiz_rounded,
@@ -2522,7 +2289,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                       itemBuilder: (context) => [
                         PopupMenuItem(
                           value: 'view',
-                          onTap: () => _navigateToTaskDetails(task),
+                          onTap: () => _navigateToTaskDetails(project),
                           child: const Row(
                             children: [
                               Icon(Icons.visibility_rounded,
@@ -2557,7 +2324,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                         const PopupMenuItem(child: Divider()),
                         PopupMenuItem(
                           value: 'delete',
-                          onTap: () => _deleteTask(task),
+                          onTap: () => _deleteTask(project),
                           child: const Row(
                             children: [
                               Icon(Icons.delete_rounded,
@@ -2577,48 +2344,48 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                   children: [
                     _buildInfoChip(
                       Icons.image_rounded,
-                      '${task.artworks.length} artworks',
+                      '0 artworks',
                       const Color(0xFF64748B),
                     ),
                     const SizedBox(width: 16),
                     _buildInfoChip(
                       Icons.person_outline_rounded,
-                      task.assignee ?? 'Unassigned',
+                      'Unassigned',
                       const Color(0xFF64748B),
                     ),
                     const SizedBox(width: 16),
                     _buildInfoChip(
                       Icons.schedule_rounded,
-                      _formatDate(task.createdAt),
+                      _formatDate(project.createdAt),
                       const Color(0xFF64748B),
                     ),
                   ],
                 ),
-                if (task.artworks.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: task.artworks
-                        .take(3)
-                        .map((artwork) => _buildArtworkThumbnail(artwork))
-                        .toList(),
-                  ),
-                  if (task.artworks.length > 3)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        '+${task.artworks.length - 3} more',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
+                // if (project.artworks.isNotEmpty) ...[
+                //   const SizedBox(height: 16),
+                //   const Divider(),
+                //   const SizedBox(height: 16),
+                //   Wrap(
+                //     spacing: 12,
+                //     runSpacing: 12,
+                //     children: project.artworks
+                //         .take(3)
+                //         .map((artwork) => _buildArtworkThumbnail(artwork))
+                //         .toList(),
+                //   ),
+                //   if (project.artworks.length > 3)
+                //     Padding(
+                //       padding: const EdgeInsets.only(top: 12),
+                //       child: Text(
+                //         '+${project.artworks.length - 3} more',
+                //         style: const TextStyle(
+                //           fontSize: 13,
+                //           color: Color(0xFF64748B),
+                //           fontWeight: FontWeight.w600,
+                //         ),
+                //       ),
+                //     ),
+                // ],
               ],
             ),
           ),
@@ -2627,18 +2394,22 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     );
   }
 
-  Color _getStatusColor(TaskStatus status) {
-    switch (status) {
-      case TaskStatus.pending:
+  Color _getStatusColor(String status) {
+    switch (ProjectStage.values.byName(status.toLowerCase())) {
+      case ProjectStage.planning:
         return const Color(0xFF64748B);
-      case TaskStatus.inProgress:
-        return const Color(0xFFF59E0B);
-      case TaskStatus.waitingApproval:
-        return const Color(0xFF8B5CF6);
-      case TaskStatus.approved:
+      case ProjectStage.design:
+        return const Color(0xFF3B82F6);
+      case ProjectStage.production:
         return const Color(0xFF10B981);
-      case TaskStatus.revision:
-        return const Color(0xFFEF4444);
+      case ProjectStage.finishing:
+        return const Color(0xFF8B5CF6);
+      case ProjectStage.application:
+        return const Color(0xFF8B5CF6);
+      case ProjectStage.finished:
+        return const Color(0xFF10B981);
+      default: 
+        return const Color(0xFF64748B);
     }
   }
 
@@ -2689,44 +2460,44 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
     );
   }
 
-  Widget _buildModernStatusBadge(TaskStatus status) {
+  Widget _buildModernStatusBadge(String status) {
     Color color;
     Color bgColor;
     String label;
     IconData icon;
 
-    switch (status) {
-      case TaskStatus.pending:
-        color = const Color(0xFF64748B);
-        bgColor = const Color(0xFFF1F5F9);
-        label = 'Pending';
-        icon = Icons.schedule_rounded;
-        break;
-      case TaskStatus.inProgress:
-        color = const Color(0xFFF59E0B);
-        bgColor = const Color(0xFFFEF3C7);
-        label = 'In Progress';
-        icon = Icons.autorenew_rounded;
-        break;
-      case TaskStatus.waitingApproval:
-        color = const Color(0xFF8B5CF6);
-        bgColor = const Color(0xFFF3E8FF);
-        label = 'Pending Approval';
-        icon = Icons.hourglass_empty_rounded;
-        break;
-      case TaskStatus.approved:
-        color = const Color(0xFF10B981);
-        bgColor = const Color(0xFFD1FAE5);
-        label = 'Approved';
-        icon = Icons.check_circle_rounded;
-        break;
-      case TaskStatus.revision:
-        color = const Color(0xFFEF4444);
-        bgColor = const Color(0xFFFEE2E2);
-        label = 'Revision Needed';
-        icon = Icons.edit_rounded;
-        break;
-    }
+    // switch (status) {
+    //   case TaskStatus.pending:
+    //     color = const Color(0xFF64748B);
+    //     bgColor = const Color(0xFFF1F5F9);
+    //     label = 'Pending';
+    //     icon = Icons.schedule_rounded;
+    //     break;
+    //   case TaskStatus.inProgress:
+    //     color = const Color(0xFFF59E0B);
+    //     bgColor = const Color(0xFFFEF3C7);
+    //     label = 'In Progress';
+    //     icon = Icons.autorenew_rounded;
+    //     break;
+    //   case TaskStatus.waitingApproval:
+    //     color = const Color(0xFF8B5CF6);
+    //     bgColor = const Color(0xFFF3E8FF);
+    //     label = 'Pending Approval';
+    //     icon = Icons.hourglass_empty_rounded;
+    //     break;
+    //   case TaskStatus.approved:
+    //     color = const Color(0xFF10B981);
+    //     bgColor = const Color(0xFFD1FAE5);
+    //     label = 'Approved';
+    //     icon = Icons.check_circle_rounded;
+    //     break;
+    //   case TaskStatus.revision:
+    //     color = const Color(0xFFEF4444);
+    //     bgColor = const Color(0xFFFEE2E2);
+    //     label = 'Revision Needed';
+    //     icon = Icons.edit_rounded;
+    //     break;
+    // }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2852,9 +2623,9 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
           ElevatedButton(
             onPressed: () {
               setState(() {
-                tasks.removeWhere((t) => t.id == task.id);
-                if (selectedTask?.id == task.id) {
-                  selectedTask = null;
+                projects.removeWhere((t) => t.id == task.id);
+                if (selectedProject?.id == task.id) {
+                  selectedProject = null;
                 }
               });
               Navigator.pop(context);
@@ -2999,7 +2770,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
               onPressed: () {
                 if (nameController.text.isNotEmpty) {
                   setState(() {
-                    tasks.add(
+                    projects.add(
                       DesignTask(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
                         name: nameController.text,
@@ -3096,7 +2867,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                         value: null,
                         child: Text('→ Create new project...'),
                       ),
-                      ...tasks.map((task) => DropdownMenuItem(
+                      ...projects.map((task) => DropdownMenuItem(
                             value: task,
                             child: Text(task.name),
                           )),
@@ -3317,7 +3088,7 @@ class _DesignDashboardState extends State<DesignDashboard> with TickerProviderSt
                         );
 
                         setState(() {
-                          tasks.add(targetTask);
+                          projects.add(targetTask);
                         });
                       } else {
                         targetTask = selectedTaskForUpload!;

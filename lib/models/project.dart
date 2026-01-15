@@ -5,6 +5,8 @@ import 'package:smooflow/models/company.dart';
 
 import 'user.dart';
 
+// Add attribute to Project model "createdAt"
+
 class Project {
   late final String id;
   final String name;
@@ -22,6 +24,7 @@ class Project {
   final List<String> progressLogs;
   // Project's material logs
   final List<int> materialLogs;
+  late final DateTime createdAt;
 
   DateTime progressLogLastModifiedAt;
 
@@ -70,6 +73,7 @@ class Project {
     required this.progressLogs,
     required this.materialLogs,
     required this.progressLogLastModifiedAt,
+    required this.createdAt
   }) : _status = status,
        taskLastModifiedAt = null;
 
@@ -140,6 +144,7 @@ class Project {
               )
               .toList() ??
           [],
+      createdAt: DateTime.parse(json['createdAt'])
     );
   }
 
