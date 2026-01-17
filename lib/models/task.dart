@@ -155,6 +155,8 @@ class Task {
 
   bool get isDeprecated=> printerId != null && status != TaskStatus.printing;
 
+  bool get isInProgress => status != TaskStatus.pending && status != TaskStatus.blocked && status != TaskStatus.completed && status != TaskStatus.paused;
+
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
     // _status = newStatus.replaceAll(RegExp(r"-"), " ");

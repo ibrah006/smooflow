@@ -1,42 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
-enum TaskStatus {
-  pending,
-  inProgress,
-  waitingApproval,
-  approved,
-  revision,
-}
+class TaskCard extends ConsumerStatefulWidget {
+  final int id;
 
-class TaskCard extends StatelessWidget {
-  final String id;
-  final String name;
-  final String? description;
-  final String projectName;
-  final TaskStatus status;
-  final String? assignee;
-  final String? priority;
-  final int artworkCount;
-  final DateTime createdAt;
-  final VoidCallback onTap;
   final VoidCallback? onUploadArtwork;
+
   final VoidCallback? onMoveToNextStage;
 
   const TaskCard({
     Key? key,
     required this.id,
-    required this.name,
-    this.description,
-    required this.projectName,
-    required this.status,
-    this.assignee,
-    this.priority,
-    required this.artworkCount,
-    required this.createdAt,
-    required this.onTap,
     this.onUploadArtwork,
-    this.onMoveToNextStage,
+    this.onMoveToNextStage
   }) : super(key: key);
+
+  @override
+  ConsumerState<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<TaskCard> {
+  Task get task => ref.watch(taskByIdProviderSimple(widget.id))!;
+
+  String get name => task.name;
+
+  String? get description => task.description;
+
+  String get projectName => ref.watch(projectByIdProvider(task.projectId))!.name;
+
+  TaskStatus get status => task.status;
+
+  // TODO: implement this
+  String? get assignee => null;
+
+  // TODO: Add priority to Task model
+  String? get priority => null;
+
+  // TODO
+  final int artworkCount = 0;
+
+  // TODO: add created at to task model
+  DateTime get createdAt=> DateTime.now();
+
+  // final VoidCallback onTap;x
+
+  void onTap() {
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +154,9 @@ class TaskCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    if (onUploadArtwork != null)
+                    if (widget.onUploadArtwork != null)
                       OutlinedButton.icon(
-                        onPressed: onUploadArtwork,
+                        onPressed: widget.onUploadArtwork,
                         icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                         label: const Text('Upload'),
                         style: OutlinedButton.styleFrom(
@@ -155,9 +169,9 @@ class TaskCard extends StatelessWidget {
                         ),
                       ),
                     const SizedBox(width: 12),
-                    if (onMoveToNextStage != null && status != TaskStatus.approved)
+                    if (widget.onMoveToNextStage != null && status != TaskStatus.clientApproved)
                       ElevatedButton.icon(
-                        onPressed: onMoveToNextStage,
+                        onPressed: widget.onMoveToNextStage,
                         icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                         label: const Text('Next Stage'),
                         style: ElevatedButton.styleFrom(
@@ -246,10 +260,17 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(TaskStatus status) {
-    Color color;
-    Color bgColor;
-    String label;
-    IconData icon;
+    late Color color;
+    late Color bgColor;
+    late String label;
+    late IconData icon;
+
+    if (task.isInProgress) {
+      color = const Color(0xFFF59E0B);
+      bgColor = const Color(0xFFFEF3C7);
+      label = 'In Progress';
+      icon = Icons.autorenew_rounded;
+    }
 
     switch (status) {
       case TaskStatus.pending:
@@ -258,22 +279,16 @@ class TaskCard extends StatelessWidget {
         label = 'Pending';
         icon = Icons.schedule_rounded;
         break;
-      case TaskStatus.inProgress:
-        color = const Color(0xFFF59E0B);
-        bgColor = const Color(0xFFFEF3C7);
-        label = 'In Progress';
-        icon = Icons.autorenew_rounded;
-        break;
       case TaskStatus.waitingApproval:
         color = const Color(0xFF8B5CF6);
         bgColor = const Color(0xFFF3E8FF);
         label = 'Pending Approval';
         icon = Icons.hourglass_empty_rounded;
         break;
-      case TaskStatus.approved:
+      case TaskStatus.clientApproved:
         color = const Color(0xFF10B981);
         bgColor = const Color(0xFFD1FAE5);
-        label = 'Approved';
+        label = 'ClientApproved';
         icon = Icons.check_circle_rounded;
         break;
       case TaskStatus.revision:
@@ -282,6 +297,26 @@ class TaskCard extends StatelessWidget {
         label = 'Revision Needed';
         icon = Icons.edit_rounded;
         break;
+      case TaskStatus.paused:
+        color = const Color(0xFF9CA3AF);
+        bgColor = const Color(0xFFF3F4F6);
+        label = 'Paused';
+        icon = Icons.pause_circle_filled_rounded;
+        break;
+      case TaskStatus.blocked:
+        color = const Color(0xFFEF4444);
+        bgColor = const Color(0xFFFEE2E2);
+        label = 'Blocked';
+        icon = Icons.block_rounded;
+        break;
+      case TaskStatus.completed:
+        color = const Color(0xFF10B981);
+        bgColor = const Color(0xFFD1FAE5);
+        label = 'Completed';
+        icon = Icons.check_circle_rounded;
+        break;
+      
+      default: break;
     }
 
     return Container(
@@ -308,19 +343,31 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(TaskStatus status) {
+  Color _getStatusColor(TaskStatus status) {    
+
     switch (status) {
       case TaskStatus.pending:
         return const Color(0xFF64748B);
-      case TaskStatus.inProgress:
-        return const Color(0xFFF59E0B);
       case TaskStatus.waitingApproval:
         return const Color(0xFF8B5CF6);
-      case TaskStatus.approved:
+      case TaskStatus.clientApproved:
         return const Color(0xFF10B981);
       case TaskStatus.revision:
         return const Color(0xFFEF4444);
+      case TaskStatus.paused:
+        return const Color(0xFF9CA3AF);
+      case TaskStatus.blocked:
+        return const Color(0xFFEF4444);
+      case TaskStatus.completed:
+        return const Color(0xFF10B981);
+      default: break;
     }
+
+    if (task.isInProgress) {
+      return const Color(0xFFF59E0B);
+    }
+
+    return const Color(0xFF3B82F6);
   }
 
   String _formatDate(DateTime date) {

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/screens/components/desktop/cards/project_card.dart';
 import 'package:smooflow/enums/navigation_page.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/components/desktop/cards/task_card.dart';
 import 'package:smooflow/screens/components/desktop/sidebar.dart';
 // Import your models
 import 'package:smooflow/models/project.dart';
@@ -10,14 +15,14 @@ import 'package:smooflow/models/task.dart';
 // import 'package:your_app/widgets/cards/project_card.dart';
 // import 'package:your_app/widgets/cards/task_card.dart';
 
-class DesignDashboardScreen extends StatefulWidget {
+class DesignDashboardScreen extends ConsumerStatefulWidget {
   const DesignDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<DesignDashboardScreen> createState() => _DesignDashboardScreenState();
+  ConsumerState<DesignDashboardScreen> createState() => _DesignDashboardScreenState();
 }
 
-class _DesignDashboardScreenState extends State<DesignDashboardScreen>
+class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
     with TickerProviderStateMixin {
   late AnimationController _pageAnimationController;
   late Animation<double> _fadeAnimation;
@@ -28,8 +33,8 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
   String _searchQuery = '';
   bool _isSearching = false;
   
-  List<Project> projects = [];
-  List<Task> tasks = [];
+  List<Project> get projects => ref.watch(projectNotifierProvider);
+  List<Task> get tasks => ref.watch(taskNotifierProvider);
 
   @override
   void initState() {
@@ -57,6 +62,13 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
     );
 
     _pageAnimationController.forward();
+
+    Future.microtask(() async {
+      await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.read(taskNotifierProvider.notifier).loadAll();
+
+      setState(() {});
+    });
   }
 
   @override
@@ -79,10 +91,21 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
   }
 
   // TODO: Implement filtering based on your models
-  List<Project> get filteredItems {
+  List<dynamic> get filteredItems {
     // Filter projects or tasks based on currentPage
     // Return filtered list
-    return [];
+
+    switch (currentPage) {
+      case NavigationPage.dashboard: return projects;
+      case NavigationPage.allProjects:
+        return projects;
+      case NavigationPage.pendingTasks: return tasks.where((t) => t.status == TaskStatus.pending).toList();
+      case NavigationPage.inProgressTasks: return tasks.where((t) => t.isInProgress).toList();
+      case NavigationPage.awaitingApprovalTasks: return tasks.where((t) => t.status == TaskStatus.waitingApproval).toList();
+      case NavigationPage.completedTasks:
+        // Return tasks based on status
+        return tasks.where((t) => t.status == TaskStatus.completed).toList();
+    }
   }
 
   @override
@@ -110,7 +133,7 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
   Widget _buildSidebar() {
     final totalProjects = projects.length;
     final pendingTasks = tasks.where((t) => t.status == TaskStatus.pending).length;
-    final inProgressTasks = tasks.where((t) => t.status != TaskStatus.pending && t.status != TaskStatus.blocked && t.status != TaskStatus.completed && t.status != TaskStatus.paused).length;
+    final inProgressTasks = tasks.where((t) => t.isInProgress).length;
     final awaitingApprovalTasks = tasks.where((t) => t.status == TaskStatus.waitingApproval).length;
     final completedTasks = tasks.where((t) => t.status == TaskStatus.completed).length;
     return Sidebar(
@@ -381,6 +404,7 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
 
   Widget _buildProjectsGrid() {
     // TODO: Replace with actual filtered projects
+    print("page: $currentPage");
     final filteredProjects = filteredItems as List<Project>;
 
     return Column(
@@ -411,8 +435,14 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
           ),
           itemCount: filteredProjects.length,
           itemBuilder: (context, index) {
-            // return ProjectCard(...)
-            return Container();
+            final project = filteredProjects[index];
+            return ProjectCard(
+              id: project.id,
+              name: project.name,
+              totalTasks: project.tasks.length,
+              completedTasks: 0,
+              createdAt: project.createdAt,
+              onTap: () {});
           },
         ),
       ],
@@ -421,7 +451,7 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
 
   Widget _buildTasksList() {
     // TODO: Replace with actual filtered tasks
-    // final filteredTasks = filteredItems as List<Task>;
+    final filteredTasks = filteredItems as List<Task>;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,10 +469,13 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen>
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 0, // filteredTasks.length
+          itemCount: filteredTasks.length,
           itemBuilder: (context, index) {
-            // return TaskCard(...)
-            return Container();
+            final task = filteredTasks[index];
+
+            return TaskCard(
+              id: task.id
+              );
           },
         ),
       ],

@@ -7,8 +7,10 @@ enum TaskStatus {
   completed,
   blocked,
   paused,
-  waitingApproval
+  waitingApproval,
+  clientApproved,
+  revision
 }
 
 /// New statuses to consider
-// revision, waitingApproval
+// revision, waitingApproval, clientApproved
