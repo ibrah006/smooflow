@@ -6,7 +6,8 @@ enum TaskStatus {
   installing,
   completed,
   blocked,
-  paused
+  paused,
+  waitingApproval
 }
 
 /// New statuses to consider

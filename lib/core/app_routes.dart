@@ -397,7 +397,7 @@ class AppRoutes {
         screen = MaterialsStockScreen();
         break;
       case designDashboard:
-        screen = const DesignDashboard();
+        screen = const DesignDashboardScreen();
     }
 
     // If screen was determined, create the route
