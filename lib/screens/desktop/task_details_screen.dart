@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 // TODO: Import your models
 // import 'package:your_app/models/task.dart';
 // import 'package:your_app/models/artwork.dart';
 
-enum TaskStatus {
-  pending,
-  inProgress,
-  waitingApproval,
-  approved,
-  revision,
-}
-
-class TaskDetailsScreen extends StatefulWidget {
-  final String taskId;
+class TaskDetailsScreen extends ConsumerStatefulWidget {
+  final int taskId;
   // final Task task;
 
   const TaskDetailsScreen({
@@ -24,10 +21,10 @@ class TaskDetailsScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
+  ConsumerState<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
 }
 
-class _TaskDetailsScreenState extends State<TaskDetailsScreen>
+class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -67,17 +64,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen>
     super.dispose();
   }
 
-  // TODO: Replace with actual task data
-  String get taskName => 'Social Media Graphics';
-  String get projectName => 'Q1 Marketing Campaign';
-  TaskStatus get status => TaskStatus.inProgress;
-  String? get description =>
-      'Create engaging social media graphics for Instagram, Facebook, and Twitter campaigns.';
-  String? get assignee => 'Sarah Johnson';
-  String? get priority => 'High';
+  Task get task => ref.watch(taskByIdProviderSimple(widget.taskId))!;
+
+  String get taskName => task.name;
+  String get projectName => ref.watch(projectByIdProvider(task.projectId))!.name;
+  String? get description => task.description;
+  // TODO
+  String? get assignee => null;
+  // TODO
+  String? get priority => null;
   bool autoMoveToNext = false;
+  // TODO
   DateTime get createdAt => DateTime.now().subtract(const Duration(days: 4));
   List<dynamic> get artworks => []; // Replace with List<Artwork>
+
+  TaskStatus get status => task.status;
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +194,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen>
               ],
             ),
           ),
-          if (status != TaskStatus.approved)
+          if (status != TaskStatus.clientApproved)
             ElevatedButton.icon(
               onPressed: _showMoveToNextStageDialog,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
@@ -750,23 +751,19 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen>
   }
 
   Widget _buildStatusBadge(TaskStatus status) {
-    Color color;
-    String label;
+   late final Color color;
+    late final String label;
 
     switch (status) {
       case TaskStatus.pending:
         color = const Color(0xFF64748B);
         label = 'Pending';
         break;
-      case TaskStatus.inProgress:
-        color = const Color(0xFFF59E0B);
-        label = 'In Progress';
-        break;
       case TaskStatus.waitingApproval:
         color = const Color(0xFF8B5CF6);
         label = 'Pending Approval';
         break;
-      case TaskStatus.approved:
+      case TaskStatus.clientApproved:
         color = const Color(0xFF10B981);
         label = 'Approved';
         break;
@@ -774,6 +771,24 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen>
         color = const Color(0xFFEF4444);
         label = 'Needs Revision';
         break;
+      case TaskStatus.blocked:
+        color = const Color(0xFFF59E0B);
+        label = 'Blocked';
+        break;
+      case TaskStatus.completed:
+        color = const Color(0xFF3B82F6);
+        label = 'Completed';
+        break;
+      default: break;
+    }
+
+    try {
+      if (task.isInProgress) {
+        color = const Color(0xFFF59E0B);
+        label = 'In Progress';
+      }
+    } catch(e) {
+      // Already initialized
     }
 
     return Container(
@@ -886,19 +901,35 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen>
   }
 
   void _showMoveToNextStageDialog() {
-    String nextStage = '';
+    late final String nextStage;
     switch (status) {
       case TaskStatus.pending:
-        nextStage = 'In Progress';
-        break;
-      case TaskStatus.inProgress:
-        nextStage = 'Pending Approval';
+        nextStage = 'Design';
         break;
       case TaskStatus.waitingApproval:
         nextStage = 'Approved';
         break;
+      case TaskStatus.clientApproved:
+        nextStage = 'Advance to next Department';
+        break;
+      case TaskStatus.revision:
+        nextStage = "Await Client's Approval";
+        break;
+      case TaskStatus.blocked:
+        nextStage = 'Unblocked';
+        break;
       default:
+        break;
+    }
+
+    try {
+      if (task.isInProgress) {
+        nextStage = 'Pending Approval';
+      } else {
         return;
+      }
+    } catch(e) {
+      // Already initialized
     }
 
     showDialog(

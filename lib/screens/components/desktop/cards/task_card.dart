@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/task_details_screen.dart';
 
 class TaskCard extends ConsumerStatefulWidget {
   final int id;
@@ -49,7 +52,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   // final VoidCallback onTap;x
 
   void onTap() {
-
+    AppRoutes.navigateTo(context, AppRoutes.designTaskDetailsScreen, arguments: TaskArgs(task.id));
   }
 
   @override

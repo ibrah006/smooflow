@@ -9,7 +9,7 @@ enum TaskStatus {
   paused,
   waitingApproval,
   clientApproved,
-  revision
+  revision;
 }
 
 /// New statuses to consider

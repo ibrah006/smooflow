@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/project_args.dart';
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends StatefulWidget {
   final String id;
   final String name;
   final String? description;
@@ -8,7 +10,6 @@ class ProjectCard extends StatelessWidget {
   final int totalTasks;
   final int completedTasks;
   final DateTime createdAt;
-  final VoidCallback onTap;
 
   const ProjectCard({
     Key? key,
@@ -19,11 +20,23 @@ class ProjectCard extends StatelessWidget {
     required this.totalTasks,
     required this.completedTasks,
     required this.createdAt,
-    required this.onTap,
   }) : super(key: key);
 
+  @override
+  State<ProjectCard> createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<ProjectCard> {
   double get completionPercentage =>
-      totalTasks == 0 ? 0 : (completedTasks / totalTasks * 100);
+      widget.totalTasks == 0 ? 0 : (widget.completedTasks / widget.totalTasks * 100);
+
+  void onTap() {
+    AppRoutes.navigateTo(
+      context,
+      AppRoutes.designProjectDetailsScreen,
+      arguments: ProjectArgs(projectId: widget.id),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +67,7 @@ class ProjectCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        widget.name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -63,7 +76,7 @@ class ProjectCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (client != null) ...[
+                      if (widget.client != null) ...[
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -75,7 +88,7 @@ class ProjectCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                client!,
+                                widget.client!,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey.shade600,
@@ -106,9 +119,9 @@ class ProjectCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (description != null)
+            if (widget.description != null)
               Text(
-                description!,
+                widget.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -143,7 +156,7 @@ class ProjectCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '$totalTasks ${totalTasks == 1 ? 'Task' : 'Tasks'}',
+                            '${widget.totalTasks} ${widget.totalTasks == 1 ? 'Task' : 'Tasks'}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,

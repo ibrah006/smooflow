@@ -155,7 +155,7 @@ class Task {
 
   bool get isDeprecated=> printerId != null && status != TaskStatus.printing;
 
-  bool get isInProgress => status != TaskStatus.pending && status != TaskStatus.blocked && status != TaskStatus.completed && status != TaskStatus.paused;
+  bool get isInProgress => status != TaskStatus.designing || status == TaskStatus.printing || status != TaskStatus.finishing || status == TaskStatus.installing;
 
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
@@ -402,4 +402,6 @@ class Task {
     _priority = newTask._priority;
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
   }
+
+  
 }

@@ -1,18 +1,14 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/models/project.dart';
+import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
-// TODO: Import your models
-// import 'package:your_app/models/project.dart';
-// import 'package:your_app/models/task.dart';
 
-enum TaskStatus {
-  pending,
-  inProgress,
-  waitingApproval,
-  approved,
-  revision,
-}
-
-class ProjectDetailsScreen extends StatefulWidget {
+class ProjectDetailsScreen extends ConsumerStatefulWidget {
   final String projectId;
   // final Project project;
 
@@ -23,10 +19,10 @@ class ProjectDetailsScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
+  ConsumerState<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
 }
 
-class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
+class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -66,19 +62,19 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
     super.dispose();
   }
 
-  // TODO: Replace with actual project data
-  String get projectName => 'Q1 Marketing Campaign';
-  String? get client => 'Acme Corp';
-  String? get description =>
-      'Complete marketing materials for Q1 campaign launch including social media graphics, email templates, and landing page elements.';
+  Project get project => ref.watch(projectByIdProvider(widget.projectId))!;
+
+  String get projectName => project.name;
+  String? get client => project.client.name;
+  String? get description => project.description;
   DateTime get createdAt => DateTime.now().subtract(const Duration(days: 5));
   DateTime? get deadline => DateTime.now().add(const Duration(days: 10));
-  List<dynamic> get tasks => []; // Replace with List<Task>
+  List<Task> get designTasks =>  ref.watch(taskNotifierProvider.notifier).getTasks(taskIds: project.tasks, taskStatus: TaskStatus.designing).where((task)=> task.status == TaskStatus.designing).toList();
 
   int get completedTasksCount =>
       0; // tasks.where((t) => t.status == TaskStatus.approved).length;
   double get completionPercentage =>
-      tasks.isEmpty ? 0 : (completedTasksCount / tasks.length * 100);
+      designTasks.isEmpty ? 0 : (completedTasksCount / designTasks.length * 100);
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +279,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
           _buildDetailRow('Created', _formatDateLong(createdAt)),
           if (deadline != null)
             _buildDetailRow('Deadline', _formatDateLong(deadline!)),
-          _buildDetailRow('Total Tasks', '${tasks.length}'),
+          _buildDetailRow('Total Tasks', '${designTasks.length}'),
           _buildDetailRow('Completed Tasks', '$completedTasksCount'),
         ],
       ),
@@ -429,7 +425,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${tasks.length}',
+                      '${designTasks.length}',
                       style: const TextStyle(
                         color: Color(0xFF4F46E5),
                         fontSize: 12,
@@ -451,7 +447,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
             ],
           ),
           const SizedBox(height: 20),
-          if (tasks.isEmpty)
+          if (designTasks.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(40),
@@ -487,10 +483,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: tasks.length,
+              itemCount: designTasks.length,
               itemBuilder: (context, index) {
                 // final task = tasks[index];
-                return _buildTaskListItem(index);
+                return _buildTaskListItem(designTasks[index]);
               },
             ),
         ],
@@ -498,8 +494,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
     );
   }
 
-  Widget _buildTaskListItem(int index) {
-    // TODO: Use actual task data
+  Widget _buildTaskListItem(Task task) {
+
+    // // Get Task from provider
+    // final taskFuture = ref.watch(taskByIdProvider(taskId));
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -531,7 +530,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Task ${index + 1}', // task.name
+                    task.name, // task.name
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -540,7 +539,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Assigned to: Designer', // task.assignee
+                    // TODO
+                    'Unassigned', // task.assignee
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey.shade600,
@@ -549,7 +549,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
                 ],
               ),
             ),
-            _buildStatusBadge(TaskStatus.inProgress),
+            _buildStatusBadge(task),
             const SizedBox(width: 8),
             const Icon(
               Icons.chevron_right_rounded,
@@ -561,24 +561,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
     );
   }
 
-  Widget _buildStatusBadge(TaskStatus status) {
-    Color color;
-    String label;
+  Widget _buildStatusBadge(Task task) {
+    late final Color color;
+    late final String label;
 
-    switch (status) {
+    switch (task.status) {
       case TaskStatus.pending:
         color = const Color(0xFF64748B);
         label = 'Pending';
-        break;
-      case TaskStatus.inProgress:
-        color = const Color(0xFFF59E0B);
-        label = 'In Progress';
         break;
       case TaskStatus.waitingApproval:
         color = const Color(0xFF8B5CF6);
         label = 'Pending Approval';
         break;
-      case TaskStatus.approved:
+      case TaskStatus.clientApproved:
         color = const Color(0xFF10B981);
         label = 'Approved';
         break;
@@ -586,6 +582,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
         color = const Color(0xFFEF4444);
         label = 'Needs Revision';
         break;
+      case TaskStatus.blocked:
+        color = const Color(0xFFEF4444);
+        label = 'Blocked';
+        break;
+      case TaskStatus.completed:
+        color = const Color(0xFF10B981);
+        label = 'Completed';
+        break;
+      case TaskStatus.paused:
+        color = const Color(0xFFF59E0B);
+        label = 'Paused';
+        break;
+      
+      default: break;
+    }
+
+    try {
+      if (task.isInProgress) {
+        color = const Color(0xFFF59E0B);
+        label = 'In Progress';
+      }
+    }catch(e) {
+      // Not initialized
     }
 
     return Container(
@@ -693,7 +712,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildProgressStat('Total', '${tasks.length}'),
+                _buildProgressStat('Total', '${designTasks.length}'),
                 Container(
                   width: 1,
                   height: 30,

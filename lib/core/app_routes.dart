@@ -7,6 +7,8 @@ import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/models/printer.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.dart';
+import 'package:smooflow/screens/desktop/project_details_screen.dart';
+import 'package:smooflow/screens/desktop/task_details_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/print_job_details.concept.dart';
@@ -135,6 +137,8 @@ class AppRoutes {
 
   // Design
   static const designDashboard = '/desktop/design-dashboard';
+  static const designTaskDetailsScreen = '/desktop/design-task-details';
+  static const designProjectDetailsScreen = '/desktop/design-project-details';
 
 
   // -------------------
@@ -398,6 +402,16 @@ class AppRoutes {
         break;
       case designDashboard:
         screen = const DesignDashboardScreen();
+      case designTaskDetailsScreen:
+        if (args is TaskArgs) {
+          screen = TaskDetailsScreen(taskId: args.taskId);
+        }
+        break;
+      case designProjectDetailsScreen:
+        if (args is ProjectArgs) {
+          screen = ProjectDetailsScreen(projectId: args.projectId);  
+        }
+        break;
     }
 
     // If screen was determined, create the route

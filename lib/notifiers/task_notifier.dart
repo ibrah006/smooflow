@@ -48,6 +48,12 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     return byStatus(status: status).length;
   }
 
+  List<Task> getTasks({required List<int> taskIds, TaskStatus? taskStatus}) {
+    return state.where((task) {
+      return taskIds.contains(task.id) && (taskStatus == null || task.status == taskStatus);
+    }).toList();
+  }
+
   /// Load all tasks (admin or global list)
   Future<void> loadAll() async {
     _loading = true;

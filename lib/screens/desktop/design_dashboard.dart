@@ -441,8 +441,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
               name: project.name,
               totalTasks: project.tasks.length,
               completedTasks: 0,
-              createdAt: project.createdAt,
-              onTap: () {});
+              createdAt: project.createdAt);
           },
         ),
       ],
