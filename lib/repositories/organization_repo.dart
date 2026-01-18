@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:googleapis/admin/directory_v1.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
-import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/core/models/organization.dart';
 
 class OrganizationRepo {
   OrganizationRepo();

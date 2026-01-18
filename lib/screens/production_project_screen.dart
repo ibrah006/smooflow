@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/bottom_sheets.dart';
 import 'package:smooflow/components/project_progress_indicator.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/models/project.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';

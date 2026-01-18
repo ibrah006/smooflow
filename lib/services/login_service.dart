@@ -6,8 +6,8 @@ import 'package:smooflow/data/fetch_with_timeout_retry.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/user_permission.dart';
-import 'package:smooflow/models/organization.dart';
-import 'package:smooflow/models/user.dart';
+import 'package:smooflow/core/models/organization.dart';
+import 'package:smooflow/core/models/user.dart';
 
 class LoginService {
   static User? currentUser;

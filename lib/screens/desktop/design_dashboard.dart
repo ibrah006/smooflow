@@ -8,8 +8,8 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/components/desktop/cards/task_card.dart';
 import 'package:smooflow/screens/components/desktop/sidebar.dart';
 // Import your models
-import 'package:smooflow/models/project.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/screens/desktop/create_task_screen.dart';
 // Import your widgets
 // import 'package:your_app/widgets/sidebar/sidebar.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/user.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/user.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/repositories/work_activity_log_repo.dart';
 

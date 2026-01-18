@@ -1,7 +1,7 @@
 // lib/screens/printer/add_printer_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/printer.dart';
+import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 
 class PrinterScreen extends ConsumerStatefulWidget {

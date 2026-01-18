@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/duration_format.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/providers/user_provider.dart';
 
 class WorkActivityTile extends ConsumerWidget {

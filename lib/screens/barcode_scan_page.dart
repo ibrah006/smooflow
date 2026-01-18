@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:smooflow/models/material.dart';
+import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/notifiers/material_notifier.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';

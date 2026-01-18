@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
-import 'package:smooflow/models/material_log.dart';
-import 'package:smooflow/models/user.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/material_log.dart';
+import 'package:smooflow/core/models/user.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 
 class Task {
   late final int _id;
@@ -412,7 +412,7 @@ class Task {
         return TaskStatus.printing;
       case TaskStatus.printing:
         return TaskStatus.finishing;
-      case TaskStatus.finishing:
+      case TaskStatus.f sinishing:
         return TaskStatus.installing;
       case TaskStatus.installing:
         return TaskStatus.waitingApproval;

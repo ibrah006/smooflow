@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:smooflow/models/material.dart';
-import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/core/models/material.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 
 class StockDetailsArgs {
   final StockTransaction transaction;

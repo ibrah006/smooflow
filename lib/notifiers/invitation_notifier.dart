@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/invitation.dart';
+import 'package:smooflow/core/models/invitation.dart';
 import 'package:smooflow/repositories/invitation_repo.dart';
 import 'package:smooflow/services/login_service.dart';
 

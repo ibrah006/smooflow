@@ -1,4 +1,4 @@
-import 'package:smooflow/models/material.dart';
+import 'package:smooflow/core/models/material.dart';
 
 /// Enum for transaction type — matches backend
 enum TransactionType { stockIn, stockOut, adjustment }

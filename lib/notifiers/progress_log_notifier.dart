@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/progress_issue.dart';
-import 'package:smooflow/models/progress_log.dart';
-import 'package:smooflow/models/project.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/progress_log.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/repositories/progress_log_repo.dart';
 
 class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {

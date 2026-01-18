@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:smooflow/api/api_client.dart';
-import 'package:smooflow/models/material.dart';
-import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/core/models/material.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/notifiers/material_notifier.dart';
 import 'package:smooflow/data/material_stats.dart';
 

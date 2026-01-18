@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/models/company.dart';
+import 'package:smooflow/core/models/company.dart';
 
 import 'user.dart';
 

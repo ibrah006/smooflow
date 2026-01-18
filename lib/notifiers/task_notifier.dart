@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/task_status.dart';
-import 'package:smooflow/models/task.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/repositories/task_repo.dart';
 import 'package:smooflow/services/login_service.dart';
 

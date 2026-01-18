@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/services/login_service.dart';
 
 class WorkActivityLogRepo {

@@ -4,9 +4,9 @@ import 'package:smooflow/data/project_overall_status.dart';
 import 'package:smooflow/enums/period.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/enums/task_status.dart';
-import 'package:smooflow/models/progress_log.dart';
-import 'package:smooflow/models/project.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/progress_log.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
 

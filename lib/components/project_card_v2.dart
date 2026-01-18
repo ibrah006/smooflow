@@ -5,7 +5,7 @@ import 'package:smooflow/components/custom_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
-import 'package:smooflow/models/project.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/core/app_routes.dart';

@@ -10,11 +10,11 @@ import 'package:smooflow/core/args/material_stock_transaction_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
-import 'package:smooflow/models/material.dart';
+import 'package:smooflow/core/models/material.dart';
 import 'dart:async';
 
-import 'package:smooflow/models/printer.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';

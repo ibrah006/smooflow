@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smooflow/models/project.dart';
+import 'package:smooflow/core/models/project.dart';
 
 class CreateTaskScreen extends StatefulWidget {
   final List<Project> projects;

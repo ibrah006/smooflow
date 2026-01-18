@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/enums/task_status.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';

@@ -4,9 +4,9 @@ import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
 import 'package:smooflow/data/project_report_details.dart';
 import 'package:smooflow/enums/period.dart';
-import 'package:smooflow/models/progress_log.dart';
-import 'package:smooflow/models/project.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/progress_log.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
 
 class ProjectRepo {
   @deprecated

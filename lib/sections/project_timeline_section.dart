@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
-import 'package:smooflow/models/project.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
 class ProjectTimelineMilestonesSection extends ConsumerStatefulWidget {

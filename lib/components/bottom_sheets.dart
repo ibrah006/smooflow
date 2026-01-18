@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
-import 'package:smooflow/models/material_log.dart';
+import 'package:smooflow/core/models/material_log.dart';
 import 'package:smooflow/providers/material_log_provider.dart';
 
 void showMaterialLogSheet(

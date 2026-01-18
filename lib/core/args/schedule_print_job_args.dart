@@ -1,4 +1,4 @@
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/task.dart';
 
 class SchedulePrintJobArgs {
   final String? projectId;

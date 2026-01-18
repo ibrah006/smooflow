@@ -8,7 +8,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
-import 'package:smooflow/models/project.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';

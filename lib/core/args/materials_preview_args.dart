@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:smooflow/models/material.dart';
+import 'package:smooflow/core/models/material.dart';
 
 class MaterialsPreviewArgs {
   final List<MaterialModel> materials;

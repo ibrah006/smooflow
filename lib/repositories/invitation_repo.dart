@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
-import 'package:smooflow/models/invitation.dart';
+import 'package:smooflow/core/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 
 class InvitationResponse {

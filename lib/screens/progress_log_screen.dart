@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/progress_status.dart';
 import 'package:smooflow/enums/project_stage.dart';
-import 'package:smooflow/models/progress_log.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/progress_log.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 class ProgressLogScreen extends ConsumerStatefulWidget {

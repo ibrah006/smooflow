@@ -1,6 +1,6 @@
 import 'package:smooflow/data/production_report_details.dart';
 
-import '../models/printer.dart';
+import '../core/models/printer.dart';
 
 class PrinterState {
   late List<Printer> _printers;

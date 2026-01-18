@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 
 /// --- STATE MODEL --- ///

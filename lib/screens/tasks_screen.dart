@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/task_tile.dart';
 import 'package:smooflow/main.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/core/app_routes.dart';

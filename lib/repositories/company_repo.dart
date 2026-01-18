@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
-import 'package:smooflow/models/company.dart';
+import 'package:smooflow/core/models/company.dart';
 
 class CompanyRepo {
   @deprecated

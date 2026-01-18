@@ -1,4 +1,4 @@
-import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/core/models/organization.dart';
 
 class CreateJoinOrganizationArgs {
   final Organization? autoInviteOrganization;

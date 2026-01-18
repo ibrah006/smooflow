@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/department.dart';
 import 'package:smooflow/enums/status.dart';
-import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 

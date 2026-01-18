@@ -4,7 +4,7 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/login_status.dart';
-import 'package:smooflow/models/user.dart';
+import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/repositories/company_repo.dart';
 import 'package:smooflow/repositories/project_repo.dart';
 import 'package:smooflow/screens/create_join_organization_screen.dart';

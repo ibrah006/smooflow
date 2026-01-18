@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/welcome_to_organization_dialog.dart';
-import 'package:smooflow/models/organization.dart';
+import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/app_routes.dart';
 
 class CreateJoinOrganizationScreen extends ConsumerWidget {

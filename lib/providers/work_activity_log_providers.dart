@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/work_activity_log.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/work_activity_log_notifier.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';

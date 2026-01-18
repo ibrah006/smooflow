@@ -1,5 +1,5 @@
-import 'package:smooflow/models/project.dart';
-import 'package:smooflow/models/user.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/services/login_service.dart';
 
 enum MaterialLogType { added, removed, transferred }

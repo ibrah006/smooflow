@@ -1,6 +1,6 @@
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/enums/status.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:uuid/uuid.dart';
 
 class ProgressLog {

@@ -6,7 +6,7 @@ import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
-import 'package:smooflow/models/user.dart';
+import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
 import 'package:smooflow/services/login_service.dart';

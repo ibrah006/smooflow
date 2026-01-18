@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/core/models/progress_log.dart';
 
 class AddProjectProgressArgs {
   final String projectId;

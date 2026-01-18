@@ -7,7 +7,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/enums/status.dart';
-import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 

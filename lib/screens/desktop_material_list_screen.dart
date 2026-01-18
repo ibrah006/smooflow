@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
-import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/export_barcodes_args.dart';

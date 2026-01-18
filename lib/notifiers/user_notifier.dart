@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/models/user.dart';
-import 'package:smooflow/models/task.dart';
+import 'package:smooflow/core/models/user.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/repositories/user_repo.dart';
 import 'package:smooflow/services/login_service.dart';
 

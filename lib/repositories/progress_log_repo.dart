@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:smooflow/api/api_client.dart';
 import 'package:smooflow/api/endpoints.dart';
-import 'package:smooflow/models/progress_log.dart';
+import 'package:smooflow/core/models/progress_log.dart';
 
 class ProgressLogRepo {
   // returns: success code

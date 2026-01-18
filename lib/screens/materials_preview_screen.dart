@@ -1,6 +1,6 @@
 // Materials Preview Screen
 import 'package:flutter/material.dart';
-import 'package:smooflow/models/material.dart';
+import 'package:smooflow/core/models/material.dart';
 
 class MaterialsPreviewScreen extends StatelessWidget {
   final List<MaterialModel> materials;

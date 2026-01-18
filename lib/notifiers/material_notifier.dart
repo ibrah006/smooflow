@@ -1,5 +1,5 @@
-import 'package:smooflow/models/material.dart';
-import 'package:smooflow/models/stock_transaction.dart';
+import 'package:smooflow/core/models/material.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/data/material_stats.dart';
 import '../repositories/material_repo.dart';
 
