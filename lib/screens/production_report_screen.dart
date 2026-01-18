@@ -9,7 +9,7 @@ import 'dart:math' as math;
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/data/production_report_details.dart';
 import 'package:smooflow/providers/printer_provider.dart';
-import 'package:smooflow/screens/components/production_report_header.dart';
+import 'package:smooflow/components/production_report_header.dart';
 
 class ProductionReportsScreen extends ConsumerStatefulWidget {
   const ProductionReportsScreen({Key? key}) : super(key: key);

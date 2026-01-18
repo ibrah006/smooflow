@@ -14,8 +14,8 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/components/project_overall_progress_card.dart';
-import 'package:smooflow/screens/components/task_status_indicator_help_dialog.dart';
+import 'package:smooflow/components/project_overall_progress_card.dart';
+import 'package:smooflow/components/task_status_indicator_help_dialog.dart';
 import '../../enums/progress_status.dart';
 import '../../enums/project_stage.dart';
 

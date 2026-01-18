@@ -5,7 +5,7 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/components/desktop/advance_stage_popup.dart';
+import 'package:smooflow/components/desktop/advance_stage_popup.dart';
 
 // TODO: Import your models
 // import 'package:your_app/models/task.dart';

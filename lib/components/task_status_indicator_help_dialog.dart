@@ -1,6 +1,6 @@
 // lib/widgets/status_indicator_dialog.dart
 import 'package:flutter/material.dart';
-import '../../enums/progress_status.dart';
+import '../enums/progress_status.dart';
 
 class TaskStatusIndicatorDialog extends StatelessWidget {
   const TaskStatusIndicatorDialog({Key? key}) : super(key: key);

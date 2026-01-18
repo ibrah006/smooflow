@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/screens/components/desktop/cards/project_card.dart';
+import 'package:smooflow/components/desktop/cards/project_card.dart';
 import 'package:smooflow/enums/navigation_page.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/components/desktop/cards/task_card.dart';
-import 'package:smooflow/screens/components/desktop/sidebar.dart';
+import 'package:smooflow/components/desktop/cards/task_card.dart';
+import 'package:smooflow/components/desktop/sidebar.dart';
 // Import your models
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';

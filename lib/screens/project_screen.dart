@@ -11,7 +11,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/repositories/company_repo.dart';
-import 'package:smooflow/screens/components/project_overall_progress_card.dart';
+import 'package:smooflow/components/project_overall_progress_card.dart';
 
 class ProjectScreen extends ConsumerStatefulWidget {
   final String projectId;
