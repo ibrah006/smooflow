@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smooflow/api/api_client.dart';
-import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/endpoints.dart';
 import 'package:smooflow/data/fetch_with_timeout_retry.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';

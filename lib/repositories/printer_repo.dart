@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/data/production_report_details.dart';
 import '../core/models/printer.dart';
 

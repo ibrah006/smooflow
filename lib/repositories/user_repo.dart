@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:smooflow/core/models/user.dart';
-import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/core/api/api_client.dart';
 
 class UserRepo {
   /// Fetch all users assigned to a specific task

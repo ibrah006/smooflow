@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:smooflow/api/api_client.dart';
-import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/endpoints.dart';
 import 'package:smooflow/data/project_report_details.dart';
 import 'package:smooflow/enums/period.dart';
 import 'package:smooflow/core/models/progress_log.dart';

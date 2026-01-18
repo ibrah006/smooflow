@@ -1,8 +1,8 @@
 // minimal version of user
 
 import 'dart:convert';
-import 'package:smooflow/api/api_client.dart';
-import 'package:smooflow/api/endpoints.dart';
+import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/endpoints.dart';
 import '../core/models/member.dart';
 
 class MemberRepo {

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/core/api/api_client.dart';
 
 import '../core/models/material_log.dart';
 

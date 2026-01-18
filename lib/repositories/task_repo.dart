@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:smooflow/api/api_client.dart';
+import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
