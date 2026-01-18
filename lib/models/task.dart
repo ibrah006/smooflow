@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/models/material_log.dart';
 import 'package:smooflow/models/user.dart';
 import 'package:smooflow/models/work_activity_log.dart';
@@ -155,7 +156,7 @@ class Task {
 
   bool get isDeprecated=> printerId != null && status != TaskStatus.printing;
 
-  bool get isInProgress => status != TaskStatus.designing || status == TaskStatus.printing || status != TaskStatus.finishing || status == TaskStatus.installing;
+  bool get isInProgress => status == TaskStatus.designing || status == TaskStatus.printing || status == TaskStatus.finishing || status == TaskStatus.installing;
 
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
@@ -403,5 +404,32 @@ class Task {
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
   }
 
-  
+  TaskStatus get nextStage {
+    switch (status) {
+      case TaskStatus.pending:
+        return TaskStatus.designing;
+      case TaskStatus.designing:
+        return TaskStatus.printing;
+      case TaskStatus.printing:
+        return TaskStatus.finishing;
+      case TaskStatus.finishing:
+        return TaskStatus.installing;
+      case TaskStatus.installing:
+        return TaskStatus.waitingApproval;
+      case TaskStatus.waitingApproval:
+        return TaskStatus.clientApproved;
+      case TaskStatus.clientApproved:
+        return TaskStatus.completed;
+      case TaskStatus.paused:
+        return status; // No next status from paused
+      case TaskStatus.revision:
+        return TaskStatus.designing;
+      case TaskStatus.blocked:
+        return status; // No next status from blocked
+      case TaskStatus.completed:
+        return status; // No next status from completed
+    }
+  }
+
+  TaskComponentHelper componentHelper({TaskStatus? status}) => TaskComponentHelper.get(status?? this.status);
 }

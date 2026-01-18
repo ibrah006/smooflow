@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
@@ -65,68 +66,8 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
     super.dispose();
   }
 
-  (TaskStatus, String, String, IconData, Color) get _nextStageInfo {
-
-    if (task.isInProgress) {
-      return (
-        TaskStatus.pending,
-        'Pending',
-        'Task is already in progress',
-        Icons.info_rounded,
-        const Color(0xFF64748B),
-      );
-    }
-
-    switch (currentStatus) {
-      case TaskStatus.pending:
-        return (
-          TaskStatus.pending,
-          'Pending',
-          'Start working on this task',
-          Icons.play_circle_rounded,
-          const Color(0xFFF59E0B),
-        );
-      case TaskStatus.waitingApproval:
-        return (
-          TaskStatus.waitingApproval,
-          'Pending Approval',
-          'Submit for client review',
-          Icons.send_rounded,
-          const Color(0xFF8B5CF6),
-        );
-      case TaskStatus.clientApproved:
-        return (
-          TaskStatus.clientApproved,
-          'Approved',
-          'Mark as complete and approved',
-          Icons.check_circle_rounded,
-          const Color(0xFF10B981),
-        );
-      case TaskStatus.revision:
-        return (
-          TaskStatus.revision,
-          'Needs Revision',
-          'Make necessary changes',
-          Icons.edit_rounded,
-          const Color(0xFFEF4444),
-        );
-      case TaskStatus.blocked:
-        return (
-          TaskStatus.blocked,
-          'Blocked',
-          'Task is currently blocked',
-          Icons.block_rounded,
-          const Color(0xFFF59E0B),
-        );
-      default:
-        return (
-          TaskStatus.clientApproved,
-          'Approved',
-          'Task is complete',
-          Icons.check_circle_rounded,
-          const Color(0xFF10B981),
-        );
-    }
+  TaskComponentHelper get _nextStageInfo {
+    return task.componentHelper();
   }
 
   String get _currentStatusLabel {
@@ -168,10 +109,10 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
   @override
   Widget build(BuildContext context) {
     final nextStage = _nextStageInfo;
-    final nextStatusLabel = nextStage.$2;
-    final nextStatusDescription = nextStage.$3;
-    final nextIcon = nextStage.$4;
-    final nextColor = nextStage.$5;
+    final nextStatusLabel = nextStage.labelTitle;
+    final nextStatusDescription = nextStage.labelSubTitle;
+    final nextIcon = nextStage.icon;
+    final nextColor = nextStage.color;
 
     return FadeTransition(
       opacity: _fadeAnimation,

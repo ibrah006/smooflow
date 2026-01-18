@@ -5,6 +5,7 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/components/desktop/advance_stage_popup.dart';
 
 // TODO: Import your models
 // import 'package:your_app/models/task.dart';
@@ -29,6 +30,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  // GlobalKey for the button
+  final GlobalKey _advanceButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -196,6 +200,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
           ),
           if (status != TaskStatus.clientApproved)
             ElevatedButton.icon(
+              key: _advanceButtonKey,
               onPressed: _showMoveToNextStageDialog,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text('Advance Stage'),
@@ -901,75 +906,23 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   }
 
   void _showMoveToNextStageDialog() {
-    late final String nextStage;
-    switch (status) {
-      case TaskStatus.pending:
-        nextStage = 'Design';
-        break;
-      case TaskStatus.waitingApproval:
-        nextStage = 'Approved';
-        break;
-      case TaskStatus.clientApproved:
-        nextStage = 'Advance to next Department';
-        break;
-      case TaskStatus.revision:
-        nextStage = "Await Client's Approval";
-        break;
-      case TaskStatus.blocked:
-        nextStage = 'Unblocked';
-        break;
-      default:
-        break;
-    }
+    final String nextStage = task.componentHelper(status: task.nextStage).labelTitle;
 
-    try {
-      if (task.isInProgress) {
-        nextStage = 'Pending Approval';
-      } else {
-        return;
-      }
-    } catch(e) {
-      // Already initialized
-    }
-
-    showDialog(
+    AdvanceStagePopup.show(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.arrow_forward_rounded, color: Color(0xFF4F46E5)),
-            SizedBox(width: 12),
-            Text('Advance Stage'),
-          ],
-        ),
-        content: Text('Move "$taskName" to $nextStage?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Update task status
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Task moved to $nextStage'),
-                  backgroundColor: const Color(0xFF10B981),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+      buttonKey: _advanceButtonKey,
+      taskId: task.id,
+      onConfirm: (notes) {
+        setState(() {
+          // Update task status
+          // task.status = getNextStatus(task.status);
+        });
+        
+        if (notes != null) {
+          // Save notes to activity timeline
+          // task.addActivity(notes);
+        }
+      },
     );
   }
 }

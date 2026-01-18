@@ -5,4 +5,5 @@ enum NavigationPage {
   inProgressTasks,
   awaitingApprovalTasks,
   completedTasks,
+  blocked
 }

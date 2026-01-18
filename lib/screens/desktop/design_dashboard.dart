@@ -10,6 +10,7 @@ import 'package:smooflow/screens/components/desktop/sidebar.dart';
 // Import your models
 import 'package:smooflow/models/project.dart';
 import 'package:smooflow/models/task.dart';
+import 'package:smooflow/screens/desktop/create_task_screen.dart';
 // Import your widgets
 // import 'package:your_app/widgets/sidebar/sidebar.dart';
 // import 'package:your_app/widgets/cards/project_card.dart';
@@ -105,6 +106,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
       case NavigationPage.completedTasks:
         // Return tasks based on status
         return tasks.where((t) => t.status == TaskStatus.completed).toList();
+      case NavigationPage.blocked:
+        return tasks.where((t) => t.status == TaskStatus.blocked).toList();
     }
   }
 
@@ -171,6 +174,10 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
       case NavigationPage.completedTasks:
         title = 'Completed Tasks';
         subtitle = 'Successfully completed tasks';
+        break;
+      case NavigationPage.blocked:
+        title = 'Blocked Tasks';
+        subtitle = 'Blocked tasks needing attention';
         break;
       default:
         break;
@@ -397,6 +404,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
       case NavigationPage.awaitingApprovalTasks:
       case NavigationPage.completedTasks:
         return _buildTasksList();
+      case NavigationPage.blocked:
+        return _buildTasksList();
       default:
         return _buildProjectsGrid();
     }
@@ -585,16 +594,16 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
 
   void _showCreateDialog() {
     // TODO: Show create project or task dialog based on currentPage
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          currentPage == NavigationPage.dashboard ||
-                  currentPage == NavigationPage.allProjects
-              ? 'Create Project Dialog'
-              : 'Create Task Dialog',
-        ),
-      ),
-    );
+
+    if (currentPage == NavigationPage.dashboard ||
+        currentPage == NavigationPage.allProjects) {
+      // Create project dialog
+    } else {
+      // Create task dialog
+      Navigator.push(context, MaterialPageRoute(
+        builder: (context) => CreateTaskScreen(projects: projects, onCreateTask: (a, b, c, d, e) {})
+      ));
+    }
   }
 
   void _showUploadArtworkDialog() {

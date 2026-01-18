@@ -99,6 +99,13 @@ class Sidebar extends StatelessWidget {
                   completedTasksCount,
                   () => onPageChanged(NavigationPage.completedTasks),
                 ),
+                _buildSidebarItem(
+                  Icons.block_rounded,
+                  'Blocked',
+                  currentPage == NavigationPage.blocked,
+                  completedTasksCount,
+                  () => onPageChanged(NavigationPage.blocked),
+                ),
               ],
             ),
           ),

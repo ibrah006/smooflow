@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-
-enum TaskStatus {
-  pending,
-  inProgress,
-  waitingApproval,
-  approved,
-  revision,
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
+import 'package:smooflow/models/task.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 class AdvanceStagePopup {
   static void show({
     required BuildContext context,
     required GlobalKey buttonKey,
-    required String taskName,
-    required TaskStatus currentStatus,
+    required int taskId,
     required Function(String? notes) onConfirm,
   }) {
     final RenderBox? renderBox =
@@ -30,8 +26,7 @@ class AdvanceStagePopup {
       builder: (context) => _AdvanceStagePopupContent(
         buttonPosition: buttonPosition,
         buttonSize: buttonSize,
-        taskName: taskName,
-        currentStatus: currentStatus,
+        taskId: taskId,
         onConfirm: (notes) {
           overlayEntry.remove();
           onConfirm(notes);
@@ -46,33 +41,37 @@ class AdvanceStagePopup {
   }
 }
 
-class _AdvanceStagePopupContent extends StatefulWidget {
+class _AdvanceStagePopupContent extends ConsumerStatefulWidget {
+  final int taskId;
   final Offset buttonPosition;
   final Size buttonSize;
-  final String taskName;
-  final TaskStatus currentStatus;
   final Function(String? notes) onConfirm;
   final VoidCallback onCancel;
 
   const _AdvanceStagePopupContent({
+    required this.taskId,
     required this.buttonPosition,
     required this.buttonSize,
-    required this.taskName,
-    required this.currentStatus,
     required this.onConfirm,
     required this.onCancel,
   });
 
   @override
-  State<_AdvanceStagePopupContent> createState() =>
+  ConsumerState<_AdvanceStagePopupContent> createState() =>
       _AdvanceStagePopupContentState();
 }
 
-class _AdvanceStagePopupContentState extends State<_AdvanceStagePopupContent>
+class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+
+  Task get task => ref.watch(taskByIdProviderSimple(widget.taskId))!;
+
+  String get taskName => task.name;
+  TaskStatus get currentStatus=> task.status;
+
 
   final TextEditingController _notesController = TextEditingController();
   bool _showNotes = false;
@@ -109,45 +108,16 @@ class _AdvanceStagePopupContentState extends State<_AdvanceStagePopupContent>
     super.dispose();
   }
 
-  (TaskStatus, String, IconData, Color) get _nextStageInfo {
-    switch (widget.currentStatus) {
-      case TaskStatus.pending:
-        return (
-          TaskStatus.inProgress,
-          'In Progress',
-          Icons.play_circle_rounded,
-          const Color(0xFFF59E0B),
-        );
-      case TaskStatus.inProgress:
-        return (
-          TaskStatus.waitingApproval,
-          'Pending Approval',
-          Icons.send_rounded,
-          const Color(0xFF8B5CF6),
-        );
-      case TaskStatus.waitingApproval:
-        return (
-          TaskStatus.approved,
-          'Approved',
-          Icons.check_circle_rounded,
-          const Color(0xFF10B981),
-        );
-      default:
-        return (
-          TaskStatus.approved,
-          'Approved',
-          Icons.check_circle_rounded,
-          const Color(0xFF10B981),
-        );
-    }
+  TaskComponentHelper get _nextStageInfo {
+    return task.componentHelper(status: task.nextStage);
   }
 
   @override
   Widget build(BuildContext context) {
     final nextStage = _nextStageInfo;
-    final nextStatusLabel = nextStage.$2;
-    final nextIcon = nextStage.$3;
-    final nextColor = nextStage.$4;
+    final nextStatusLabel = nextStage.labelTitle;
+    final nextIcon = nextStage.icon;
+    final nextColor = nextStage.color;
 
     final screenSize = MediaQuery.of(context).size;
     final popupWidth = 340.0;
@@ -305,7 +275,7 @@ class _AdvanceStagePopupContentState extends State<_AdvanceStagePopupContent>
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        widget.taskName,
+                                        taskName,
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
