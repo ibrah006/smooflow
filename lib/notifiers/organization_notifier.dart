@@ -1,35 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/repositories/organization_repo.dart';
-
-/// --- STATE MODEL --- ///
-class OrganizationState {
-  final bool isLoading;
-  final String? error;
-  final Organization? _organization;
-  final DateTime? projectsLastAdded;
-
-  const OrganizationState({
-    this.isLoading = false,
-    this.error,
-    Organization? organization,
-    this.projectsLastAdded,
-  }) : _organization = organization;
-
-  OrganizationState copyWith({
-    bool? isLoading,
-    String? error,
-    Organization? organization,
-    DateTime? projectsLastAdded,
-  }) {
-    return OrganizationState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      organization: organization ?? this._organization,
-      projectsLastAdded: this.projectsLastAdded ?? projectsLastAdded,
-    );
-  }
-}
+import 'package:smooflow/states/organization.dart';
 
 /// --- STATE NOTIFIER --- ///
 class OrganizationNotifier extends StateNotifier<OrganizationState> {
@@ -48,9 +20,9 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   Future<Organization> get getCurrentOrganization async {
     late final Organization organization;
     try {
-      organization = state._organization!;
+      organization = state.organization!;
     } catch (e) {
-      state.copyWith(isLoading: true);
+      state = state.copyWith(isLoading: true);
 
       late final String? error;
       try {
@@ -60,7 +32,7 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
         error = e.toString();
         print("error: $e");
       }
-      state.copyWith(
+      state = state.copyWith(
         isLoading: false,
         error: error,
         organization: organization,
