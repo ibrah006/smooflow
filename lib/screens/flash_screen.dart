@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,7 +57,19 @@ class _FlashScreenState extends State<FlashScreen> {
 
         // Temporariliy commented to check the admin screen functionality
         // AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.home : AppRoutes.login, predicate: (Route<dynamic> route) => false);
-        AppRoutes.navigateAndRemoveUntil(context, isLoggedIn ? AppRoutes.designDashboard : AppRoutes.login, predicate: (Route<dynamic> route) => false);
+
+        late final String route;
+        if (isLoggedIn) {
+          if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+            route = AppRoutes.designDashboard;
+          } else {
+            route = AppRoutes.admin;
+          }
+        } else {
+          route = AppRoutes.login;
+        }
+
+        AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
       });
     });
   }
