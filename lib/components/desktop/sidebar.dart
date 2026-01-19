@@ -33,8 +33,8 @@ class Sidebar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.fromARGB(255, 12, 30, 70),
-            Color.fromARGB(255, 14, 23, 43),
+            Color.fromARGB(255, 15, 39, 91),
+            Color.fromARGB(255, 15, 23, 43),
           ],
         ),
         boxShadow: [
