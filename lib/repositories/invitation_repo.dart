@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/endpoints.dart';
 import 'package:smooflow/core/models/invitation.dart';
-import 'package:smooflow/notifiers/invitation_notifier.dart';
+import 'package:smooflow/enums/invitation_send_satus.dart';
 
 class InvitationResponse {
   InvitationResponse({

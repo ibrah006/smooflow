@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/core/models/invitation.dart';
+import 'package:smooflow/enums/invitation_send_satus.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';

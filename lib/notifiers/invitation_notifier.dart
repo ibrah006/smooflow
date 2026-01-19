@@ -1,16 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/invitation.dart';
+import 'package:smooflow/enums/invitation_send_satus.dart';
 import 'package:smooflow/repositories/invitation_repo.dart';
 import 'package:smooflow/states/invitation.dart';
-
-enum InvitationSendStatus {
-  success,
-  failed,
-  // A request is already pending from this organization
-  alreadyPending,
-  // The requested user is already part of the organization the invitation is being sent from
-  alreadyPartOfThisOrg,
-}
 
 class InvitationNotifier extends StateNotifier<InvitationState> {
   final InvitationRepository _repository;
