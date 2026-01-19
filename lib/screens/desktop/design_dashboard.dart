@@ -139,6 +139,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
     final inProgressTasks = tasks.where((t) => t.isInProgress).length;
     final awaitingApprovalTasks = tasks.where((t) => t.status == TaskStatus.waitingApproval).length;
     final completedTasks = tasks.where((t) => t.status == TaskStatus.completed).length;
+    final blockedTasks = tasks.where((t) => t.status == TaskStatus.blocked).length;
+
     return Sidebar(
       currentPage: currentPage,
       onPageChanged: _onPageChanged,
@@ -147,6 +149,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
       inProgressTasksCount: inProgressTasks,
       awaitingApprovalTasksCount: awaitingApprovalTasks,
       completedTasksCount: completedTasks,
+      blockedTasksCount: blockedTasks
     );
   }
 

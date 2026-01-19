@@ -9,6 +9,7 @@ class Sidebar extends StatelessWidget {
   final int inProgressTasksCount;
   final int awaitingApprovalTasksCount;
   final int completedTasksCount;
+  final int blockedTasksCount;
 
   const Sidebar({
     Key? key,
@@ -19,6 +20,7 @@ class Sidebar extends StatelessWidget {
     required this.inProgressTasksCount,
     required this.awaitingApprovalTasksCount,
     required this.completedTasksCount,
+    required this.blockedTasksCount
   }) : super(key: key);
 
   @override
@@ -103,7 +105,7 @@ class Sidebar extends StatelessWidget {
                   Icons.block_rounded,
                   'Blocked',
                   currentPage == NavigationPage.blocked,
-                  completedTasksCount,
+                  blockedTasksCount,
                   () => onPageChanged(NavigationPage.blocked),
                 ),
               ],
