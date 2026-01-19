@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/enums/user_permission.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class PermissionGate extends StatelessWidget {
   final UserPermission permission;

@@ -10,7 +10,7 @@ import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class ActiveWorkActivityLogCard extends ConsumerStatefulWidget {
   const ActiveWorkActivityLogCard({super.key});

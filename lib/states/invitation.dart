@@ -1,5 +1,5 @@
 import 'package:smooflow/core/models/invitation.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class InvitationState {
   final bool isLoading;

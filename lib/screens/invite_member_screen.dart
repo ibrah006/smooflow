@@ -7,7 +7,7 @@ import 'package:smooflow/enums/invitation_send_satus.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import '../extensions/email.dart';
 
 class InviteMemberScreen extends ConsumerStatefulWidget {

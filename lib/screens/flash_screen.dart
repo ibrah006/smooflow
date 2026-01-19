@@ -8,7 +8,7 @@ import 'package:smooflow/core/args/create_join_organization_args.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/repositories/company_repo.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class FlashScreen extends StatefulWidget {
   const FlashScreen({super.key});

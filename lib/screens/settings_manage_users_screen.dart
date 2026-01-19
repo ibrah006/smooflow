@@ -8,7 +8,7 @@ import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class SettingsManageUsersScreen extends ConsumerWidget {
   const SettingsManageUsersScreen({super.key});

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 enum MeasureType {
   running_meter,

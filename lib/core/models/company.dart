@@ -1,4 +1,4 @@
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:uuid/uuid.dart';
 
 import 'user.dart';

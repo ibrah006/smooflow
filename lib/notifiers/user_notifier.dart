@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/repositories/user_repo.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 // Beware of removing users from memory randomly
 // To ensure there's isn't too many users in memory, we will need to remove som

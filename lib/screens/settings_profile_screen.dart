@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/components/settings_section.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/services/login_service.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class SettingsProfileScreen extends StatelessWidget {
   SettingsProfileScreen({super.key});
