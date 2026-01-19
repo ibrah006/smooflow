@@ -6,6 +6,7 @@ import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
@@ -139,6 +140,7 @@ class AppRoutes {
   static const designDashboard = '/desktop/design-dashboard';
   static const designTaskDetailsScreen = '/desktop/design-task-details';
   static const designProjectDetailsScreen = '/desktop/design-project-details';
+  static const designCreateTaskScreen = '/desktop/design-create-task';
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
@@ -252,7 +254,7 @@ class AppRoutes {
 
       // ===== Tasks =====
       case createTask:
-        if (args is CreateTaskArgs) {
+        if (args is CreateTaskScreenArgs) {
           screen = CreateTaskScreen(projectId: args.projectId);
         }
         break;
@@ -338,6 +340,11 @@ class AppRoutes {
       case designProjectDetailsScreen:
         if (args is ProjectArgs) {
           screen = ProjectDetailsScreen(projectId: args.projectId);  
+        }
+        break;
+      case designCreateTaskScreen:
+        if (args is CreateTaskArgs) {
+          screen = DesignCreateTaskScreen(preselectedProjectId: args.preselectedProjectId, onCreateTask: args.onCreateTask);
         }
         break;
     }

@@ -51,7 +51,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with RouteAware {
     Navigator.pushNamed(
       context,
       AppRoutes.createTask,
-      arguments: CreateTaskArgs(projectId: widget.projectId),
+      arguments: CreateTaskScreenArgs(projectId: widget.projectId),
     );
   }
 

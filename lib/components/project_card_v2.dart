@@ -127,7 +127,7 @@ class ProjectCardV2 extends StatelessWidget {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.createTask,
-                        arguments: CreateTaskArgs(projectId: project.id),
+                        arguments: CreateTaskScreenArgs(projectId: project.id),
                       );
                     },
                     icon: Icon(Icons.add_rounded),

@@ -10,7 +10,6 @@ import 'package:smooflow/components/desktop/sidebar.dart';
 // Import your models
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/screens/desktop/create_task_screen.dart';
 // Import your widgets
 // import 'package:your_app/widgets/sidebar/sidebar.dart';
 // import 'package:your_app/widgets/cards/project_card.dart';
@@ -598,15 +597,13 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
   void _showCreateDialog() {
     // TODO: Show create project or task dialog based on currentPage
 
-    if (currentPage == NavigationPage.dashboard ||
-        currentPage == NavigationPage.allProjects) {
-      // Create project dialog
-    } else {
-      // Create task dialog
-      Navigator.push(context, MaterialPageRoute(
-        builder: (context) => CreateTaskScreen(projects: projects, onCreateTask: (a, b, c, d, e) {})
-      ));
-    }
+    // if (currentPage == NavigationPage.dashboard ||
+    //     currentPage == NavigationPage.allProjects) {
+    //   // Create project dialog
+    // } else {
+    //   // Create task dialog
+      
+    // }
   }
 
   void _showUploadArtworkDialog() {

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/providers/project_provider.dart';
 
-class CreateTaskScreen extends StatefulWidget {
-  final List<Project> projects;
-  final Project? preselectedProject;
+class DesignCreateTaskScreen extends ConsumerStatefulWidget {
+  final String? preselectedProjectId;
   final Function(
     String taskName,
     String projectId,
@@ -12,18 +13,17 @@ class CreateTaskScreen extends StatefulWidget {
     String? priority,
   ) onCreateTask;
 
-  const CreateTaskScreen({
+  const DesignCreateTaskScreen({
     Key? key,
-    required this.projects,
-    this.preselectedProject,
+    this.preselectedProjectId,
     required this.onCreateTask,
   }) : super(key: key);
 
   @override
-  State<CreateTaskScreen> createState() => _CreateTaskScreenState();
+  ConsumerState<DesignCreateTaskScreen> createState() => _DesignCreateTaskScreenState();
 }
 
-class _CreateTaskScreenState extends State<CreateTaskScreen>
+class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -42,7 +42,12 @@ class _CreateTaskScreenState extends State<CreateTaskScreen>
   @override
   void initState() {
     super.initState();
-    _selectedProject = widget.preselectedProject;
+
+    Future.microtask(() {
+      if (widget.preselectedProjectId != null) {
+        _selectedProject = ref.read(projectByIdProvider(widget.preselectedProjectId!))!;
+      }
+    });
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -249,6 +254,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen>
   }
 
   Widget _buildMainForm() {
+
+    final projects = ref.watch(projectNotifierProvider);
+
     return Form(
       key: _formKey,
       child: Column(
@@ -359,7 +367,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen>
                   ),
                 ),
                 isExpanded: true,
-                items: widget.projects.map((project) {
+                items: projects.map((project) {
                   return DropdownMenuItem<Project>(
                     value: project,
                     child: Column(

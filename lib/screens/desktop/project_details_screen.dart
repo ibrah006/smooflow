@@ -1,11 +1,14 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 
 
 class ProjectDetailsScreen extends ConsumerStatefulWidget {
@@ -878,8 +881,9 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
 
   void _showCreateTaskDialog() {
     // TODO: Implement create task dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create Task Dialog')),
-    );
+    AppRoutes.navigateTo(
+      context,
+      AppRoutes.designCreateTaskScreen,
+      arguments: CreateTaskArgs(onCreateTask: (a, b, c, d, e) {}, preselectedProjectId: widget.projectId));
   }
 }
