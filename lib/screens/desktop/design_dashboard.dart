@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/desktop/cards/project_card.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/navigation_page.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -244,7 +245,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF4F46E5).withOpacity(0.1),
+                    color: colorPrimary.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -261,7 +262,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
                   ),
                   prefixIcon: const Icon(
                     Icons.search_rounded,
-                    color: Color(0xFF4F46E5),
+                    color: colorPrimary,
                     size: 20,
                   ),
                   suffixIcon: IconButton(
@@ -297,7 +298,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       width: 2,
                     ),
                   ),
@@ -349,7 +350,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF4F46E5),
+              foregroundColor: colorPrimary,
               side: const BorderSide(
                 color: Color(0xFFE2E8F0),
                 width: 1.5,
@@ -370,7 +371,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4F46E5),
+            backgroundColor: colorPrimary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -500,7 +501,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
             'Total Projects',
             '0', // projects.length.toString()
             Icons.folder_rounded,
-            const Color(0xFF4F46E5),
+            colorPrimary,
             const Color(0xFFEEF2FF),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/enums/navigation_page.dart';
+import 'package:smooflow/constants.dart';
 
 class Sidebar extends StatelessWidget {
   final NavigationPage currentPage;
@@ -32,8 +33,8 @@ class Sidebar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF1E293B),
-            Color(0xFF0F172A),
+            Color.fromARGB(255, 12, 30, 70),
+            Color.fromARGB(255, 14, 23, 43),
           ],
         ),
         boxShadow: [
@@ -126,13 +127,13 @@ class Sidebar extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+              gradient: LinearGradient(
+                colors: [Color(0xFF6366F1), colorPrimary],
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4F46E5).withOpacity(0.3),
+                  color: colorPrimary.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -150,7 +151,7 @@ class Sidebar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'DesignHub',
+                  'Smooflow',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -201,7 +202,7 @@ class Sidebar extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: isActive
-            ? const Color(0xFF4F46E5).withOpacity(0.15)
+            ? colorPrimary.withOpacity(0.15)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
@@ -209,7 +210,7 @@ class Sidebar extends StatelessWidget {
         onTap: onTap,
         leading: Icon(
           icon,
-          color: isActive ? const Color(0xFF818CF8) : const Color(0xFF94A3B8),
+          color: isActive ? const Color.fromARGB(255, 90, 130, 216) : const Color(0xFF94A3B8),
           size: 22,
         ),
         title: Text(
@@ -225,7 +226,7 @@ class Sidebar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? const Color(0xFF4F46E5)
+                      ? colorPrimary
                       : const Color(0xFF334155),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -265,7 +266,7 @@ class Sidebar extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1),
+              color: colorPrimary,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(

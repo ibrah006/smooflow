@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -267,10 +268,10 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.assignment_rounded,
                                       size: 18,
-                                      color: Color(0xFF4F46E5),
+                                      color: colorPrimary,
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
@@ -314,7 +315,7 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
                                               _showNotes = value ?? false;
                                             });
                                           },
-                                          activeColor: const Color(0xFF4F46E5),
+                                          activeColor: colorPrimary,
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(4),
@@ -374,8 +375,8 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
                                               focusedBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(10),
-                                                borderSide: const BorderSide(
-                                                  color: Color(0xFF4F46E5),
+                                                borderSide: BorderSide(
+                                                  color: colorPrimary,
                                                   width: 2,
                                                 ),
                                               ),
@@ -516,7 +517,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       icon: const Icon(Icons.arrow_forward_rounded, size: 18),
       label: const Text('Advance Stage'),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF4F46E5),
+        backgroundColor: colorPrimary,
         foregroundColor: Colors.white,
       ),
     );

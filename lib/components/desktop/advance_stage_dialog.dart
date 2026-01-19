@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -210,9 +211,9 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.assignment_rounded,
-                              color: Color(0xFF4F46E5),
+                              color: colorPrimary,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
@@ -384,7 +385,7 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
                                     _addNotes = value ?? false;
                                   });
                                 },
-                                activeColor: const Color(0xFF4F46E5),
+                                activeColor: colorPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
@@ -437,8 +438,8 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xFF4F46E5),
+                                        borderSide: BorderSide(
+                                          color: colorPrimary,
                                           width: 2,
                                         ),
                                       ),

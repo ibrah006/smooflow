@@ -25,7 +25,7 @@ class CustomButton extends StatefulWidget {
     this.height,
     this.padding,
     this.backgroundColor,
-    this.surfaceAnimationColor = colorPrimary,
+    this.surfaceAnimationColor = const Color(0xFF2563eb),
   }) {
     isIconButton = false;
   }

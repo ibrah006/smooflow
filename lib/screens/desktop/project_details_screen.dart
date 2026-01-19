@@ -1,6 +1,7 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -167,7 +168,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                       ),
                       child: const Icon(
                         Icons.folder_rounded,
-                        color: Color(0xFF4F46E5),
+                        color: colorPrimary,
                         size: 20,
                       ),
                     ),
@@ -221,7 +222,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: colorPrimary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 horizontal: 20,
@@ -263,7 +264,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                 ),
                 child: const Icon(
                   Icons.info_outline_rounded,
-                  color: Color(0xFF4F46E5),
+                  color: colorPrimary,
                   size: 20,
                 ),
               ),
@@ -344,7 +345,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: Color(0xFF4F46E5),
+                  color: colorPrimary,
                   size: 20,
                 ),
               ),
@@ -404,7 +405,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                     ),
                     child: const Icon(
                       Icons.assignment_rounded,
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       size: 20,
                     ),
                   ),
@@ -430,7 +431,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                     child: Text(
                       '${designTasks.length}',
                       style: const TextStyle(
-                        color: Color(0xFF4F46E5),
+                        color: colorPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -443,8 +444,8 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Add Task'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4F46E5),
-                  side: const BorderSide(color: Color(0xFF4F46E5)),
+                  foregroundColor: colorPrimary,
+                  side: const BorderSide(color: colorPrimary),
                 ),
               ),
             ],
@@ -649,7 +650,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
             children: [
               Icon(
                 Icons.trending_up_rounded,
-                color: Color(0xFF4F46E5),
+                color: colorPrimary,
                 size: 20,
               ),
               SizedBox(width: 10),
@@ -775,7 +776,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
             children: [
               Icon(
                 Icons.history_rounded,
-                color: Color(0xFF4F46E5),
+                color: colorPrimary,
                 size: 20,
               ),
               SizedBox(width: 10),

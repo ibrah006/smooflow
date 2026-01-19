@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -205,7 +206,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text('Advance Stage'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
+                backgroundColor: colorPrimary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -247,7 +248,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 ),
                 child: const Icon(
                   Icons.info_outline_rounded,
-                  color: Color(0xFF4F46E5),
+                  color: colorPrimary,
                   size: 20,
                 ),
               ),
@@ -326,7 +327,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: Color(0xFF4F46E5),
+                  color: colorPrimary,
                   size: 20,
                 ),
               ),
@@ -386,7 +387,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                     ),
                     child: const Icon(
                       Icons.collections_rounded,
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       size: 20,
                     ),
                   ),
@@ -412,7 +413,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                     child: Text(
                       '${artworks.length}',
                       style: const TextStyle(
-                        color: Color(0xFF4F46E5),
+                        color: colorPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -425,7 +426,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                 label: const Text('Upload'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: colorPrimary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -513,7 +514,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 child: Icon(
                   Icons.image_rounded,
                   size: 48,
-                  color: Color(0xFF4F46E5),
+                  color: colorPrimary,
                 ),
               ),
             ),
@@ -550,7 +551,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF4F46E5),
+                          color: colorPrimary,
                         ),
                       ),
                     ),
@@ -592,7 +593,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
         children: [
           const Row(
             children: [
-              Icon(Icons.settings_rounded, color: Color(0xFF4F46E5), size: 20),
+              Icon(Icons.settings_rounded, color: colorPrimary, size: 20),
               SizedBox(width: 10),
               Text(
                 'Settings',
@@ -675,7 +676,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
             children: [
               Icon(
                 Icons.history_rounded,
-                color: Color(0xFF4F46E5),
+                color: colorPrimary,
                 size: 20,
               ),
               SizedBox(width: 10),

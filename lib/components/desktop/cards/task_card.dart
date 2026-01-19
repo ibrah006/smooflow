@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -163,8 +164,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                         label: const Text('Upload'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF4F46E5),
-                          side: const BorderSide(color: Color(0xFF4F46E5)),
+                          foregroundColor: colorPrimary,
+                          side: const BorderSide(color: colorPrimary),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 10,
@@ -178,7 +179,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                         label: const Text('Next Stage'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
+                          backgroundColor: colorPrimary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,

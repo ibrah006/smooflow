@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/project_args.dart';
 
@@ -112,7 +113,7 @@ class _ProjectCardState extends State<ProjectCard> {
                   ),
                   child: const Icon(
                     Icons.folder_rounded,
-                    color: Color(0xFF4F46E5),
+                    color: colorPrimary,
                     size: 24,
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
@@ -178,15 +179,15 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF4F46E5).withOpacity(0.1),
-                  const Color(0xFF4F46E5).withOpacity(0.05),
+                  colorPrimary.withOpacity(0.1),
+                  colorPrimary.withOpacity(0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.add_task_rounded,
-              color: Color(0xFF4F46E5),
+              color: colorPrimary,
               size: 24,
             ),
           ),
@@ -239,7 +240,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: colorPrimary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
@@ -282,7 +283,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   fillColor: const Color(0xFFF8FAFC),
                   prefixIcon: const Icon(
                     Icons.assignment_rounded,
-                    color: Color(0xFF4F46E5),
+                    color: colorPrimary,
                     size: 22,
                   ),
                   border: OutlineInputBorder(
@@ -296,7 +297,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       width: 2,
                     ),
                   ),
@@ -336,7 +337,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   fillColor: const Color(0xFFF8FAFC),
                   prefixIcon: const Icon(
                     Icons.folder_rounded,
-                    color: Color(0xFF4F46E5),
+                    color: colorPrimary,
                     size: 22,
                   ),
                   border: OutlineInputBorder(
@@ -350,7 +351,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       width: 2,
                     ),
                   ),
@@ -501,7 +502,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF4F46E5),
+                      color: colorPrimary,
                       width: 2,
                     ),
                   ),
@@ -551,7 +552,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
         _buildInfoCard(
           title: 'Workflow Settings',
           icon: Icons.settings_rounded,
-          color: const Color(0xFF4F46E5),
+          color: colorPrimary,
           children: [
             Container(
               padding: const EdgeInsets.all(16),
@@ -669,7 +670,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   color: const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: const Color(0xFF4F46E5), size: 20),
+                child: Icon(icon, color: colorPrimary, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
