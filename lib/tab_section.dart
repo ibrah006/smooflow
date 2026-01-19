@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/sections/dashboard_section.dart';
+import 'package:smooflow/components/sections/dashboard_section.dart';
 
 class TabSection extends StatefulWidget {
   const TabSection({super.key});

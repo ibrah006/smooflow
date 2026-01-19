@@ -13,8 +13,8 @@ import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/components/search_bar.dart' as search_bar;
-import 'package:smooflow/sections/quick_actions.dart';
-import 'package:smooflow/sections/recent_projects_section.dart';
+import 'package:smooflow/components/sections/quick_actions.dart';
+import 'package:smooflow/components/sections/recent_projects_section.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

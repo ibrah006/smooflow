@@ -13,7 +13,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/create_task_screen.dart';
 import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/screens/tasks_screen.dart';
-import 'package:smooflow/sections/project_timeline_section.dart';
+import 'package:smooflow/components/sections/project_timeline_section.dart';
 
 class ProductionProjectScreen extends ConsumerWidget {
   final String projectId;
