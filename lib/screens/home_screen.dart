@@ -8,7 +8,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/active_work_activity_log_card.dart';
 import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/custom_button.dart';
+import 'package:smooflow/components/custom_button.dart';
 import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/core/app_routes.dart';

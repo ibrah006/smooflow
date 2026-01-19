@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/custom_button.dart';
+import 'package:smooflow/components/custom_button.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/project_provider.dart';
