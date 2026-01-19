@@ -3,7 +3,7 @@
 import 'dart:convert';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/endpoints.dart';
-import '../core/models/member.dart';
+import '../models/member.dart';
 
 class MemberRepo {
   /// ✅ Fetch all members of the current user's organization

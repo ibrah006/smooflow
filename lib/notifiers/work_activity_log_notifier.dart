@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
-import 'package:smooflow/repositories/work_activity_log_repo.dart';
+import 'package:smooflow/core/repositories/work_activity_log_repo.dart';
 
 class WorkActivityLogNotifier extends StateNotifier<List<WorkActivityLog>> {
   WorkActivityLogNotifier(this._repo) : super([]) {

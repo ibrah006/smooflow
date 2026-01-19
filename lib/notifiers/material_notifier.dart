@@ -1,7 +1,7 @@
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/states/material.dart';
-import '../repositories/material_repo.dart';
+import '../core/repositories/material_repo.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

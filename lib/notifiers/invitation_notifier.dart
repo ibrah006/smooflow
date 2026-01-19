@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/invitation.dart';
 import 'package:smooflow/enums/invitation_send_satus.dart';
-import 'package:smooflow/repositories/invitation_repo.dart';
+import 'package:smooflow/core/repositories/invitation_repo.dart';
 import 'package:smooflow/states/invitation.dart';
 
 class InvitationNotifier extends StateNotifier<InvitationState> {

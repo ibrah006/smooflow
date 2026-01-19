@@ -8,7 +8,7 @@ import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/providers/organization_provider.dart';
-import 'package:smooflow/repositories/organization_repo.dart';
+import 'package:smooflow/core/repositories/organization_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 
 class CreateOrganizationScreen extends ConsumerStatefulWidget {

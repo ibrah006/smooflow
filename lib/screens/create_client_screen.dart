@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/company.dart';
-import 'package:smooflow/repositories/company_repo.dart';
+import 'package:smooflow/core/repositories/company_repo.dart';
 
 class CreateClientScreen extends StatefulWidget {
   CreateClientScreen({super.key});

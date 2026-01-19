@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../repositories/material_log_repo.dart';
+import '../core/repositories/material_log_repo.dart';
 import '../notifiers/material_log_notifier.dart';
 import '../core/models/material_log.dart';
 

@@ -7,8 +7,8 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/repositories/organization_repo.dart';
-import 'package:smooflow/repositories/project_repo.dart';
+import 'package:smooflow/core/repositories/organization_repo.dart';
+import 'package:smooflow/core/repositories/project_repo.dart';
 
 class ProjectNotifier extends StateNotifier<List<Project>> {
   ProjectNotifier(this._repo) : super([]) {

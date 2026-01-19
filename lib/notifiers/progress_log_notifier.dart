@@ -3,7 +3,7 @@ import 'package:smooflow/enums/progress_issue.dart';
 import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/repositories/progress_log_repo.dart';
+import 'package:smooflow/core/repositories/progress_log_repo.dart';
 
 class ProgressLogNotifier extends StateNotifier<List<ProgressLog>> {
   final ProgressLogRepo _repo;

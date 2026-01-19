@@ -3,7 +3,7 @@ import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/notifiers/work_activity_log_notifier.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/user_provider.dart';
-import 'package:smooflow/repositories/work_activity_log_repo.dart';
+import 'package:smooflow/core/repositories/work_activity_log_repo.dart';
 
 /// Repository provider — handles API calls for work activity logs
 final workActivityLogRepoProvider = Provider<WorkActivityLogRepo>((ref) {

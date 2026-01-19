@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/states/member.dart';
-import '../repositories/member_repo.dart';
+import '../core/repositories/member_repo.dart';
 import '../core/models/member.dart';
 
 class MemberNotifier extends StateNotifier<MemberState> {

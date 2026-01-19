@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/organization.dart';
-import 'package:smooflow/repositories/organization_repo.dart';
+import 'package:smooflow/core/repositories/organization_repo.dart';
 import 'package:smooflow/states/organization.dart';
 
 /// --- STATE NOTIFIER --- ///

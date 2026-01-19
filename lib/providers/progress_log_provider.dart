@@ -3,7 +3,7 @@ import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/notifiers/progress_log_notifier.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/repositories/progress_log_repo.dart';
+import 'package:smooflow/core/repositories/progress_log_repo.dart';
 
 final progressLogRepoProvider = Provider<ProgressLogRepo>((ref) {
   return ProgressLogRepo();

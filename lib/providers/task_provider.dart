@@ -6,7 +6,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
-import 'package:smooflow/repositories/task_repo.dart';
+import 'package:smooflow/core/repositories/task_repo.dart';
 
 final taskRepoProvider = Provider<TaskRepo>((ref) => TaskRepo());
 

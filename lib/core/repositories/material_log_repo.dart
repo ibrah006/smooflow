@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:smooflow/core/api/api_client.dart';
 
-import '../core/models/material_log.dart';
+import '../models/material_log.dart';
 
 class MaterialLogRepo {
   /// Get all material logs associated with a specific project

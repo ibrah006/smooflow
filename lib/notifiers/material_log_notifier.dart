@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/models/material_log.dart';
-import '../repositories/material_log_repo.dart';
+import '../core/repositories/material_log_repo.dart';
 
 class MaterialLogNotifier extends StateNotifier<List<MaterialLog>> {
   final MaterialLogRepo _repo;

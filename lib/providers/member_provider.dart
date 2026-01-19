@@ -1,5 +1,5 @@
 import 'package:smooflow/notifiers/member_notifier.dart';
-import 'package:smooflow/repositories/member_repo.dart';
+import 'package:smooflow/core/repositories/member_repo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/states/member.dart';
 

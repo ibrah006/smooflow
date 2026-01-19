@@ -3,7 +3,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/notifiers/project_notifier.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/repositories/project_repo.dart';
+import 'package:smooflow/core/repositories/project_repo.dart';
 
 final projectRepoProvider = Provider<ProjectRepo>((ref) {
   return ProjectRepo();

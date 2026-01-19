@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/data/production_report_details.dart';
-import '../core/models/printer.dart';
+import '../models/printer.dart';
 
 import 'package:http/http.dart' as http;
 

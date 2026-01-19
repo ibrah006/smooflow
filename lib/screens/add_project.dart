@@ -20,7 +20,7 @@ import 'package:smooflow/screens/project_timeline_screen.dart';
 import 'package:smooflow/screens/stock_entry_screen.dart';
 import 'package:smooflow/screens/tasks_screen.dart';
 import 'package:smooflow/sections/project_timeline_section.dart';
-import 'package:smooflow/repositories/company_repo.dart';
+import 'package:smooflow/core/repositories/company_repo.dart';
 
 const DEFAULT_PRIORITY = PriorityLevel.low;
 
