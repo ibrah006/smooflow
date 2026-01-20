@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/user.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/navigation_page.dart';
 import 'package:smooflow/constants.dart';
 
@@ -23,6 +25,8 @@ class Sidebar extends StatelessWidget {
     required this.completedTasksCount,
     required this.blockedTasksCount
   }) : super(key: key);
+
+  User get currentUser => LoginService.currentUser!;
 
   @override
   Widget build(BuildContext context) {
@@ -269,9 +273,9 @@ class Sidebar extends StatelessWidget {
               color: colorPrimary,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'AD',
+                currentUser.initials,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -281,12 +285,12 @@ class Sidebar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Admin User',
+                  currentUser.displayName,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 14,

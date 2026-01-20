@@ -48,6 +48,21 @@ class User {
   //       role =
   //           LocalHttp.prefs.get(SharedStorageOptions.userRole.name).toString();
 
+  // Display Name
+  String get displayName => name[0].toUpperCase() + name.substring(1);
+  String get initials {
+    final splitted = name.split(" ");
+
+    String result = "";
+
+    while(splitted.isNotEmpty && result.length < 4) {
+      result += splitted[0][0].toUpperCase();
+      splitted.removeAt(0);
+    }
+
+    return result;
+  }
+
   User.register({required this.name, required this.role, required this.email})
     : departmentId = null,
       phone = null;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/desktop/cards/project_card.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:smooflow/enums/navigation_page.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -596,15 +598,17 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
   }
 
   void _showCreateDialog() {
-    // TODO: Show create project or task dialog based on currentPage
 
-    // if (currentPage == NavigationPage.dashboard ||
-    //     currentPage == NavigationPage.allProjects) {
-    //   // Create project dialog
-    // } else {
-    //   // Create task dialog
-      
-    // }
+    if (currentPage == NavigationPage.dashboard ||
+        currentPage == NavigationPage.allProjects) {
+      // Create project
+    } else {
+      // Create task
+      AppRoutes.navigateTo(
+        context,
+        AppRoutes.designCreateTaskScreen,
+        arguments: CreateTaskArgs(onCreateTask:(taskName, projectId, notes, autoProgress, priority) {}));
+    }
   }
 
   void _showUploadArtworkDialog() {
