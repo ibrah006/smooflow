@@ -1,3 +1,4 @@
+@Deprecated("Status enum is to be replaced by TaskStatus enum")
 enum Status {
   planning,
   design,
