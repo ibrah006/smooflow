@@ -34,7 +34,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  Project? _selectedProject;
+  String? _selectedProjectId;
   bool _autoProgress = false;
   String? _selectedPriority;
 
@@ -46,8 +46,9 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
 
     Future.microtask(() {
       if (widget.preselectedProjectId != null) {
-        _selectedProject = ref.read(projectByIdProvider(widget.preselectedProjectId!))!;
-      }
+        _selectedProjectId = ref.read(projectByIdProvider(widget.preselectedProjectId!))!.id;
+        setState(() {});
+      }      
     });
 
     _animationController = AnimationController(
@@ -85,7 +86,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
 
   void _handleCreate() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedProject == null) {
+      if (_selectedProjectId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select a project'),
@@ -98,7 +99,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
 
       widget.onCreateTask(
         _taskNameController.text.trim(),
-        _selectedProject!.id,
+        _selectedProjectId!,
         _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -330,8 +331,8 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
               const SizedBox(height: 24),
               _buildSectionLabel('Project', required: true),
               const SizedBox(height: 10),
-              DropdownButtonFormField<Project>(
-                value: _selectedProject,
+              DropdownButtonFormField<String>(
+                value: _selectedProjectId,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
@@ -355,10 +356,6 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                       width: 2,
                     ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
                 ),
                 hint: Text(
                   'Select a project for this task',
@@ -369,8 +366,8 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                 ),
                 isExpanded: true,
                 items: projects.map((project) {
-                  return DropdownMenuItem<Project>(
-                    value: project,
+                  return DropdownMenuItem<String>(
+                    value: project.id,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -383,31 +380,30 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.business_rounded,
-                              size: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              project.client.name,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
+                        // Row(
+                        //   children: [
+                        //     Icon(
+                        //       Icons.business_rounded,
+                        //       size: 12,
+                        //       color: Colors.grey.shade500,
+                        //     ),
+                        //     const SizedBox(width: 4),
+                        //     Text(
+                        //       project.client.name,
+                        //       style: TextStyle(
+                        //         fontSize: 11,
+                        //         color: Colors.grey.shade600,
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedProject = value;
+                    _selectedProjectId = value;
                   });
                 },
               ),
