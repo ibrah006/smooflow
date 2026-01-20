@@ -412,6 +412,8 @@ class Task {
         return TaskStatus.printing;
       case TaskStatus.printing:
         return TaskStatus.finishing;
+      case TaskStatus.delivery:
+        return TaskStatus.delivery;
       case TaskStatus.finishing:
         return TaskStatus.installing;
       case TaskStatus.installing:

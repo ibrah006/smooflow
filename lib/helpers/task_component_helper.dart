@@ -21,7 +21,7 @@ class TaskComponentHelper {
           Icons.play_circle_rounded,
           const Color(0xFFF59E0B),
         );
-      case TaskStatus.designing || TaskStatus.printing || TaskStatus.finishing || TaskStatus.installing:
+      case TaskStatus.designing || TaskStatus.printing || TaskStatus.finishing || TaskStatus.installing || TaskStatus.delivery:
         return TaskComponentHelper(
           status,
           'Designing',

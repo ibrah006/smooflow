@@ -907,7 +907,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   }
 
   void _showMoveToNextStageDialog() {
-    final String nextStage = task.componentHelper(status: task.nextStage).labelTitle;
 
     AdvanceStagePopup.show(
       context: context,

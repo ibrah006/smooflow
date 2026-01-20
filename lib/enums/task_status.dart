@@ -4,6 +4,7 @@ enum TaskStatus {
   printing,
   finishing,
   installing,
+  delivery,
   completed,
   blocked,
   paused,
