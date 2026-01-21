@@ -1574,7 +1574,7 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       late final String message;
       try {
         // Start print job
-        await ref.read(setTaskPrinterStateProvider(TaskPrinterStateParams(
+        await ref.read(setTaskStateProvider(TaskStateParams(
           id: newTask.id,
           printerId: newTask.printerId,
           stockTransactionBarcode: newTask.stockTransactionBarcode,

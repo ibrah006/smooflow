@@ -104,7 +104,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
 
   Future<void> _markJobAsComplete() async {
     try {
-      await ref.watch(setTaskPrinterStateProvider(TaskPrinterStateParams(
+      await ref.watch(setTaskStateProvider(TaskStateParams(
         id: widget.task.id,
         printerId: null,
         stockTransactionBarcode: null,
@@ -958,7 +958,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
 
     try {
       // TODO: Update task with printer assignment via API
-      await ref.read(setTaskPrinterStateProvider(TaskPrinterStateParams(
+      await ref.read(setTaskStateProvider(TaskStateParams(
         id: widget.task.id,
         printerId: printer.id,
         stockTransactionBarcode: widget.task.stockTransactionBarcode,

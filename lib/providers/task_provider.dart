@@ -79,33 +79,32 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
 });
 
 
-final setTaskPrinterStateProvider = Provider.family<Future<void>, TaskPrinterStateParams>((
+final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
   ref,
-  taskPrinterStateParams,
+  taskStateParams,
 ) async {
   // Assign/Unassign printer to task
-  if (taskPrinterStateParams.printerId != null) {
+  if (taskStateParams.printerId != null) {
     print("about to start print job\nassigning printer");
-    await ref.watch(taskNotifierProvider.notifier).assignPrinter(taskId: taskPrinterStateParams.id, printerId: taskPrinterStateParams.printerId!);
-    ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskPrinterStateParams.printerId!, taskId: taskPrinterStateParams.id);
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskStateParams.id, newStatus: taskStateParams.newTaskStatus, printerId: taskStateParams.printerId!);
+    ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskStateParams.printerId!, taskId: taskStateParams.id);
 
     // Commit stock out transaction
-    if (taskPrinterStateParams.stockTransactionBarcode!=null){
-      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskPrinterStateParams.stockTransactionBarcode!);
+    if (taskStateParams.stockTransactionBarcode!=null){
+      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskStateParams.stockTransactionBarcode!);
     }
   } else {
-    await ref.watch(taskNotifierProvider.notifier).unassignPrinter(taskId: taskPrinterStateParams.id, status: taskPrinterStateParams.newTaskStatus);
-    ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskPrinterStateParams.id);
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskStateParams.id, newStatus: taskStateParams.newTaskStatus);
+    ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskStateParams.id);
   }
 });
 
-
-class TaskPrinterStateParams {
+class TaskStateParams {
   final int id;
   /// Pass in null to unassign printer from task
   final String? printerId;
   final String? stockTransactionBarcode;
   final TaskStatus newTaskStatus;
 
-  const TaskPrinterStateParams({required this.id, required this.printerId, required this.stockTransactionBarcode, required this.newTaskStatus});
+  const TaskStateParams({required this.id, required this.printerId, required this.stockTransactionBarcode, required this.newTaskStatus});
 }

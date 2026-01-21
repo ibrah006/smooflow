@@ -196,4 +196,19 @@ class TaskRepo {
 
     // Successfully unasssigned priner to task and ended print job
   }
+
+  Future<void> progressStage(int taskId, TaskStatus newStatus) async {
+    final response = await ApiClient.http.put(
+      '/tasks/$taskId/progress-stage',
+      body: {
+        "newStatus": newStatus.name
+      }
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to Progress Stage');
+    }
+
+    // Successfully unasssigned priner to task and ended print job
+  }
 }

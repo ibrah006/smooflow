@@ -421,15 +421,15 @@ class Task {
       case TaskStatus.waitingApproval:
         return TaskStatus.clientApproved;
       case TaskStatus.clientApproved:
-        return TaskStatus.completed;
+        throw "No explicit next stage from Client Approved, should be set manually";
       case TaskStatus.paused:
-        return status; // No next status from paused
+        throw "No explicit next stage from Pause State, should be set manually"; // No next status from paused
       case TaskStatus.revision:
         return TaskStatus.designing;
       case TaskStatus.blocked:
-        return status; // No next status from blocked
+        throw "No explicit next stage from Blocked State, should be set manually"; // No next status from blocked
       case TaskStatus.completed:
-        return status; // No next status from completed
+        throw "No next stage from Completed State"; // No next status from completed
     }
   }
 

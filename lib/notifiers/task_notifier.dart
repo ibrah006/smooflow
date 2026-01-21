@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -298,7 +299,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     ];
   }
 
-  Future<void> assignPrinter({required int taskId, required String printerId}) async {
+  Future<void> _assignPrinter({required int taskId, required String printerId}) async {
     await _repo.assignPrinter(taskId, printerId);
 
     state = state.map((task) {
@@ -310,7 +311,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     }).toList();
   }
 
-  Future<void> unassignPrinter({required int taskId, required TaskStatus status}) async {
+  Future<void> _unassignPrinter({required int taskId, required TaskStatus status}) async {
     await _repo.unassignPrinter(taskId, status);
 
     state = state.map((task) {
@@ -320,6 +321,38 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       }
       return task;
     }).toList();
+  }
+
+  Future<void> progressStage({required int taskId, required TaskStatus newStatus, String? printerId}) async {
+
+    if (printerId == null && newStatus == TaskStatus.printing) {
+      throw "Printer ID must be provided when progressing task to printing status";
+    }
+
+    await _repo.progressStage(taskId, newStatus);
+
+    for (final task in state) {
+      if (task.id == taskId) {
+        if (task.status == TaskStatus.printing &&
+            newStatus != TaskStatus.printing) {
+
+          await _unassignPrinter(taskId: taskId, status: newStatus);
+
+        } else if (newStatus == TaskStatus.printing &&
+            task.status != TaskStatus.printing) {
+
+          await _assignPrinter(
+            taskId: taskId,
+            printerId: printerId!,
+          );
+
+        }
+
+        task.status = newStatus;
+
+        break;
+      }
+    }
   }
 }
 
