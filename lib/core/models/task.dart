@@ -10,7 +10,7 @@ class Task {
   late String _name;
   late String _description;
   late DateTime? _dueDate;
-  late int? _productionDuration;
+  int? _productionDuration;
   late String? _printerId;
   late String? _materialId;
   late DateTime? _productionStartTime;

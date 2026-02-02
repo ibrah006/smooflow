@@ -130,6 +130,8 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
       );
 
       Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
     }
   }
 
