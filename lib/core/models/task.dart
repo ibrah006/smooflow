@@ -112,7 +112,8 @@ class Task {
        updatedAt = DateTime.now(),
        workActivityLogs = [],
        activityLogLastModified = null,
-       progressLogIds = [];
+       progressLogIds = [],
+       _priority = priority;
 
   void initializeId(int id) {
     _id = id;
