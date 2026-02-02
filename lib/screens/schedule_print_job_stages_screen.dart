@@ -1538,26 +1538,26 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
     final project = ref.watch(projectByIdProvider(_selectedProjectId!));
     final material = ref.watch(materialNotifierProvider).materials.firstWhere((mat) => mat.id == _selectedMaterialId);
 
-    final newTask = Task.create(
-      name: "${material.name} - ${project!.name}",
-      description: _notes,
-      dueDate: null,
-      assignees: [],
-      projectId: _selectedProjectId!,
-      productionDuration: _estimatedDuration,
-      printerId: _selectedPrinterId,
-      materialId: _selectedMaterialId!,
-      productionStartTime: _startTime,
-        runs: _runs,
-      productionQuantity: _materialQuantity,
-      priority: _priority,
-      stockTransactionBarcode: _selectedStockItemBarcode!
-    );
-
-    // await ref.watch(projectNotifierProvider.notifier).createTask(
-    //   task: newTask
+    // final newTask = Task.create(
+    //   // name: "${material.name} - ${project!.name}",
+    //   // description: _notes,
+    //   // dueDate: null,
+    //   // assignees: [],
+    //   // projectId: _selectedProjectId!,
+    //   productionDuration: _estimatedDuration,
+    //   printerId: _selectedPrinterId,
+    //   materialId: _selectedMaterialId!,
+    //   productionStartTime: _startTime,
+    //     runs: _runs,
+    //   productionQuantity: _materialQuantity,
+    //   priority: _priority,
+    //   stockTransactionBarcode: _selectedStockItemBarcode!
     // );
-    await ref.read(createProjectTaskProvider(newTask));
+
+    // // await ref.watch(projectNotifierProvider.notifier).createTask(
+    // //   task: newTask
+    // // );
+    // await ref.read(createProjectTaskProvider(newTask));
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1569,30 +1569,31 @@ class _SchedulePrintJobStagesScreenState extends ConsumerState<SchedulePrintJobS
       ),
     );
 
-    if (_currentStage == 5) {
+    // Start Print job as along right away
+    // if (_currentStage == 5) {
 
-      late final String message;
-      try {
-        // Start print job
-        await ref.read(setTaskStateProvider(TaskStateParams(
-          id: newTask.id,
-          printerId: newTask.printerId,
-          stockTransactionBarcode: newTask.stockTransactionBarcode,
-          newTaskStatus: TaskStatus.printing
-        )));
-        message = 'Job started successfully';
-      } catch(e) {
-        message = 'Failed to start job';
-      }
+    //   late final String message;
+    //   try {
+    //     // Start print job
+    //     await ref.read(setTaskStateProvider(TaskStateParams(
+    //       id: newTask.id,
+    //       printerId: newTask.printerId,
+    //       stockTransactionBarcode: newTask.stockTransactionBarcode,
+    //       newTaskStatus: TaskStatus.printing
+    //     )));
+    //     message = 'Job started successfully';
+    //   } catch(e) {
+    //     message = 'Failed to start job';
+    //   }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
-      );
-    }
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text(message),
+    //       shape: RoundedRectangleBorder(
+    //         borderRadius: BorderRadius.all(Radius.circular(12)),
+    //       ),
+    //     ),
+    //   );
+    // }
   }
 }

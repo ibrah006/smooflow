@@ -12,12 +12,12 @@ class Task {
   late DateTime? _dueDate;
   late int? _productionDuration;
   late String? _printerId;
-  late String _materialId;
+  late String? _materialId;
   late DateTime? _productionStartTime;
   // Ids of work activity logs associated with this task
   List<int> workActivityLogs;
-  late int _runs;
-  late final double _productionQuantity;
+  int? _runs;
+  late final double? _productionQuantity;
   late final int _priority;
   late final String? _stockTransactionBarcode;
 
@@ -90,19 +90,19 @@ class Task {
     required String name,
     required String description,
     required DateTime? dueDate,
-    TaskStatus status = TaskStatus.pending,
+    TaskStatus status = TaskStatus.designing,
     required List<String> assignees,
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],
     required String projectId,
-    required int productionDuration,
-    required String? printerId,
-    required String materialId,
-    required DateTime? productionStartTime,
-    int runs = 1,
-    required double productionQuantity,
+    // required int productionDuration,
+    // required String? printerId,
+    // required String materialId,
+    // required DateTime? productionStartTime,
+    // int runs = 1,
+    // required double productionQuantity,
     int priority = 1,
-    required String stockTransactionBarcode,
+    // required String stockTransactionBarcode,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -112,15 +112,7 @@ class Task {
        updatedAt = DateTime.now(),
        workActivityLogs = [],
        activityLogLastModified = null,
-       progressLogIds = [],
-       _productionDuration = productionDuration,
-       _printerId = printerId,
-       _materialId = materialId,
-       _productionStartTime = productionStartTime,
-       _runs = runs,
-       _productionQuantity = productionQuantity,
-       _priority = priority,
-       _stockTransactionBarcode = stockTransactionBarcode;
+       progressLogIds = [];
 
   void initializeId(int id) {
     _id = id;
@@ -141,12 +133,12 @@ class Task {
   IconData? get icon => _icon;
   int get productionDuration => _productionDuration ?? 0;
   String? get printerId => _printerId;
-  String get materialId => _materialId;
+  String? get materialId => _materialId;
   DateTime? get productionStartTime => _productionStartTime;
   DateTime? get actualProductionStartTime => _actualProductionStartTime;
   DateTime? get actualProductionEndTime => _actualProductionEndTime;
-  int get runs => _runs;
-  double get productionQuantity=> _productionQuantity;
+  int? get runs => _runs;
+  double? get productionQuantity=> _productionQuantity;
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
 
   void addAssignee(String userId) {
@@ -352,7 +344,7 @@ class Task {
     return {
       ...toJson(),
       // Inital stage of a Task locked to PRODUCTION
-      "progressStage": "production"
+      "progressStage": "design"
     };
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
 class DesignCreateTaskScreen extends ConsumerStatefulWidget {
@@ -84,7 +85,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
     super.dispose();
   }
 
-  void _handleCreate() {
+  void _handleCreate() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedProjectId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +97,27 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
         );
         return;
       }
+      
+      final newTask = Task.create(
+        name: _taskNameController.text.trim(),
+        description: _notesController.text.trim(),
+        dueDate: null,
+        assignees: [],
+        projectId: _selectedProjectId!,
+        // productionDuration: _estimatedDuration,
+        // printerId: _selectedPrinterId,
+        // materialId: _selectedMaterialId!,
+        // productionStartTime: _startTime,
+        //   runs: _runs,
+        // productionQuantity: _materialQuantity,
+        // priority: _priority,
+        // stockTransactionBarcode: _selectedStockItemBarcode!
+      );
+
+      // await ref.watch(projectNotifierProvider.notifier).createTask(
+      //   task: newTask
+      // );
+      await ref.read(createProjectTaskProvider(newTask));
 
       widget.onCreateTask(
         _taskNameController.text.trim(),
