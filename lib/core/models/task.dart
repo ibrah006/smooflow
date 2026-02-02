@@ -61,7 +61,7 @@ class Task {
     required String? materialId,
     required DateTime? productionStartTime,
     int runs = 1,
-    required double productionQuantity,
+    required double? productionQuantity,
     required int priority,
     required String? stockTransactionBarcode,
     required DateTime? actualProductionStartTime,
@@ -179,57 +179,60 @@ class Task {
     _printerId = printerId;
   }
 
-  factory Task.fromJson(Map<String, dynamic> json) => Task(
-    id: json['id'],
-    name: json['name'],
-    progressLogIds: (json["progressLogs"] as List).map((log) => log["id"].toString()).toList(),
-    description: json['description'],
-    dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
-    updatedAt:
-        json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
-    dateCompleted:
-        json['dateCompleted'] != null
-            ? DateTime.parse(json['dateCompleted'])
-            : null,
-    // estimatedHours: json['estimatedHours'],
-    status: json["status"],
-    // TaskStatus.values
-    //     .firstWhere((e) => e.toString().split('.').last == json['status']),
-    assignees:
-        (json['assignees'] as List).map((assigneeRaw) {
-          return User.getIdFromJson(assigneeRaw);
-        }).toList(),
-    projectId: json['project']?['id'],
-    // Material logs
-    estimatedMaterials:
-        ((json["materialsEstimated"] ?? []) as List)
-            .map((rawMaterialLog) => MaterialLog.fromJson(rawMaterialLog))
-            .toList(),
-    usedMaterials:
-        ((json["materialsUsed"] ?? []) as List)
-            .map((rawMaterialLog) => MaterialLog.fromJson(rawMaterialLog))
-            .toList(),
-    workActivityLogs:
-        (json["workActivityLogs"] as List).map((activityLogJson) {
-          return WorkActivityLog.getIdFromJson(activityLogJson);
-        }).toList(),
-    productionDuration: json['productionDuration'],
-    printerId: json["printerId"],
-    materialId: json["materialId"],
-    productionStartTime: json["productionStartTime"] != null
-        ? DateTime.parse(json["productionStartTime"])
-        : null,
-    runs: json["runs"] ?? 1,
-    productionQuantity: double.parse(json["stockTransaction"]?["quantity"]?? json["productionQuantity"]),
-    priority: json["priority"],
-    stockTransactionBarcode: json["stockTransaction"]?["barcode"],
-    actualProductionStartTime: json['actualProductionStartTime'] != null
-            ? DateTime.parse(json['actualProductionStartTime'])
-            : null,
-    actualProductionEndTime: json['actualProductionEndTime'] != null
-            ? DateTime.parse(json['actualProductionEndTime'])
-            : null,
-  );
+  factory Task.fromJson(Map<String, dynamic> json) {
+    final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
+    return Task(
+      id: json['id'],
+      name: json['name'],
+      progressLogIds: (json["progressLogs"] as List).map((log) => log["id"].toString()).toList(),
+      description: json['description'],
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+      updatedAt:
+          json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
+      dateCompleted:
+          json['dateCompleted'] != null
+              ? DateTime.parse(json['dateCompleted'])
+              : null,
+      // estimatedHours: json['estimatedHours'],
+      status: json["status"],
+      // TaskStatus.values
+      //     .firstWhere((e) => e.toString().split('.').last == json['status']),
+      assignees:
+          (json['assignees'] as List).map((assigneeRaw) {
+            return User.getIdFromJson(assigneeRaw);
+          }).toList(),
+      projectId: json['project']?['id'],
+      // Material logs
+      estimatedMaterials:
+          ((json["materialsEstimated"] ?? []) as List)
+              .map((rawMaterialLog) => MaterialLog.fromJson(rawMaterialLog))
+              .toList(),
+      usedMaterials:
+          ((json["materialsUsed"] ?? []) as List)
+              .map((rawMaterialLog) => MaterialLog.fromJson(rawMaterialLog))
+              .toList(),
+      workActivityLogs:
+          (json["workActivityLogs"] as List).map((activityLogJson) {
+            return WorkActivityLog.getIdFromJson(activityLogJson);
+          }).toList(),
+      productionDuration: json['productionDuration'],
+      printerId: json["printerId"],
+      materialId: json["materialId"],
+      productionStartTime: json["productionStartTime"] != null
+          ? DateTime.parse(json["productionStartTime"])
+          : null,
+      runs: json["runs"] ?? 1,
+      productionQuantity: prodQuantity!=null? double.parse(prodQuantity) : null,
+      priority: json["priority"],
+      stockTransactionBarcode: json["stockTransaction"]?["barcode"],
+      actualProductionStartTime: json['actualProductionStartTime'] != null
+              ? DateTime.parse(json['actualProductionStartTime'])
+              : null,
+      actualProductionEndTime: json['actualProductionEndTime'] != null
+              ? DateTime.parse(json['actualProductionEndTime'])
+              : null,
+    );
+  }
 
   // Copy constructor
   Task.copy(Task original)

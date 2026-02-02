@@ -908,6 +908,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
 
   void _showMoveToNextStageDialog() {
 
+    ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: task.nextStage);
+
     AdvanceStagePopup.show(
       context: context,
       buttonKey: _advanceButtonKey,
