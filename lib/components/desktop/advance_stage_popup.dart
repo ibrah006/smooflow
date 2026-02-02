@@ -110,7 +110,7 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
   }
 
   TaskComponentHelper get _nextStageInfo {
-    return task.componentHelper(status: task.nextStage);
+    return task.componentHelper(status: task.status.nextStage);
   }
 
   @override
