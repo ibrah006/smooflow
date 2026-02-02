@@ -9,17 +9,17 @@ class Task {
   late final int _id;
   late String _name;
   late String _description;
-  late DateTime? _dueDate;
+  DateTime? _dueDate;
   int? _productionDuration;
-  late String? _printerId;
-  late String? _materialId;
-  late DateTime? _productionStartTime;
+  String? _printerId;
+  String? _materialId;
+  DateTime? _productionStartTime;
   // Ids of work activity logs associated with this task
   List<int> workActivityLogs;
   int? _runs;
-  late final double? _productionQuantity;
+  double? _productionQuantity;
   late final int _priority;
-  late final String? _stockTransactionBarcode;
+  String? _stockTransactionBarcode;
 
   DateTime? _actualProductionStartTime;
   DateTime? _actualProductionEndTime;
