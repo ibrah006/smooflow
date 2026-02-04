@@ -774,45 +774,13 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   }
 
   Widget _buildStatusBadge(TaskStatus status) {
-   late final Color color;
+    late final Color color;
     late final String label;
 
-    switch (status) {
-      case TaskStatus.pending:
-        color = const Color(0xFF64748B);
-        label = 'Pending';
-        break;
-      case TaskStatus.waitingApproval:
-        color = const Color(0xFF8B5CF6);
-        label = 'Pending Approval';
-        break;
-      case TaskStatus.clientApproved:
-        color = const Color(0xFF10B981);
-        label = 'Approved';
-        break;
-      case TaskStatus.revision:
-        color = const Color(0xFFEF4444);
-        label = 'Needs Revision';
-        break;
-      case TaskStatus.blocked:
-        color = const Color(0xFFF59E0B);
-        label = 'Blocked';
-        break;
-      case TaskStatus.completed:
-        color = const Color(0xFF3B82F6);
-        label = 'Completed';
-        break;
-      default: break;
-    }
+    final componentHelper = task.componentHelper(status: status);
 
-    try {
-      if (task.isInProgress) {
-        color = const Color(0xFFF59E0B);
-        label = 'In Progress';
-      }
-    } catch(e) {
-      // Already initialized
-    }
+    color = componentHelper.color;
+    label = componentHelper.labelTitle;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
