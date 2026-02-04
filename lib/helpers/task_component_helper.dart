@@ -24,7 +24,7 @@ class TaskComponentHelper {
       case TaskStatus.designing || TaskStatus.printing || TaskStatus.finishing || TaskStatus.installing || TaskStatus.delivery:
         return TaskComponentHelper(
           status,
-          'Designing',
+          "${status.name[0].toUpperCase()}${status.name.substring(1)}",
           'Task is in designing stage',
           Icons.design_services_rounded,
           const Color(0xFF3B82F6),

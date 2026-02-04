@@ -199,10 +199,27 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
               ],
             ),
           ),
+          if (task.status.nextStage == TaskStatus.printing) ...[
+            ElevatedButton.icon(
+              onPressed: approveDesignStage,
+              icon: const Icon(Icons.check_rounded, size: 18),
+              label: const Text('Approve Deisgn Stage'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                elevation: 0,
+              ),
+            ),
+            SizedBox(width: 10)
+          ],
           if (status != TaskStatus.clientApproved)
             ElevatedButton.icon(
               key: _advanceButtonKey,
-              onPressed: _showMoveToNextStageDialog,
+              onPressed: task.status.nextStage == TaskStatus.printing? null : _showMoveToNextStageDialog,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text('Advance Stage'),
               style: ElevatedButton.styleFrom(
@@ -906,15 +923,19 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     }
   }
 
-  void _showMoveToNextStageDialog() {
+  void approveDesignStage() async {
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: TaskStatus.clientApproved);
+    setState(() {});
+  }
 
-    ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: task.status.nextStage);
+  void _showMoveToNextStageDialog() {
 
     AdvanceStagePopup.show(
       context: context,
       buttonKey: _advanceButtonKey,
       taskId: task.id,
-      onConfirm: (notes) {
+      onConfirm: (notes) async {
+        await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: task.status.nextStage);
         setState(() {
           // Update task status
           // task.status = getNextStatus(task.status);
