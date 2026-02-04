@@ -898,12 +898,19 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
 
   void _showMoveToNextStageDialog() {
 
+    final nextStage = task.status.nextStage;
+
+    if (nextStage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No explicit next stage from current phase")));
+      return;
+    }
+
     AdvanceStagePopup.show(
       context: context,
       buttonKey: _advanceButtonKey,
       taskId: task.id,
       onConfirm: (notes) async {
-        await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: task.status.nextStage);
+        await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.taskId, newStatus: nextStage);
         setState(() {
           // Update task status
           // task.status = getNextStatus(task.status);

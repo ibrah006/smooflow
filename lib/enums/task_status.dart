@@ -12,7 +12,7 @@ enum TaskStatus {
   clientApproved,
   revision;
 
-  TaskStatus get nextStage {
+  TaskStatus? get nextStage {
     switch (this) {
       case TaskStatus.pending:
         return TaskStatus.designing;
@@ -28,16 +28,17 @@ enum TaskStatus {
         return TaskStatus.waitingApproval;
       case TaskStatus.waitingApproval:
         return TaskStatus.clientApproved;
-      case TaskStatus.clientApproved:
-        throw "No explicit next stage from Client Approved, should be set manually";
-      case TaskStatus.paused:
-        throw "No explicit next stage from Pause State, should be set manually"; // No next status from paused
+      // "No explicit next stage from beloe stages, should be set manually"
       case TaskStatus.revision:
         return TaskStatus.designing;
+      case TaskStatus.clientApproved:
+        return null;
+      case TaskStatus.paused:
+        return null;
       case TaskStatus.blocked:
-        throw "No explicit next stage from Blocked State, should be set manually"; // No next status from blocked
+        return null;
       case TaskStatus.completed:
-        throw "No next stage from Completed State"; // No next status from completed
+        return null;
     }
   }
 }
