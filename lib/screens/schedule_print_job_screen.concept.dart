@@ -345,9 +345,15 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
         });
 
         // Bottom sheet contents
-        // selectedTask == null
-        //       ? _buildNoSelectionState()
-        //       : _buildSchedulingForm();
+        selectedTask == null
+              ? _buildNoSelectionState()
+              : _buildSchedulingForm();
+
+        showModalBottomSheet(
+          context: context,
+          builder: (context) => selectedTask == null
+              ? _buildNoSelectionState()
+              : _buildSchedulingForm());
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
