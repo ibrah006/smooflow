@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -344,10 +345,10 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           scheduledStartTime = task.productionStartTime;
         });
 
-        showModalBottomSheet(
+        showCupertinoSheet(
           context: context,
-          isScrollControlled: true,
-          builder: (context) => selectedTask == null
+
+          pageBuilder: (context) => selectedTask == null
               ? _buildNoSelectionState()
               : _buildSchedulingForm());
       },
@@ -465,224 +466,241 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildSchedulingForm() {
-    return Material(
-      child: Container(
-        color: Color(0xFFF8FAFC),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
-          child:
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
+    return Container(
+      color: Color(0xFFF8FAFC),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child:
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2563EB).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.schedule,
+                    color: Color(0xFF2563EB),
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Schedule Print Job',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        selectedTask!.name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 28),
+            
+            // Task Details Card
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF2563EB).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.schedule,
-                      color: Color(0xFF2563EB),
-                      size: 24,
+                  Text(
+                    'Task Details',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.2,
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: 16),
+                  _buildDetailRow(
+                    'Project ID',
+                    selectedTask!.projectId,
+                    Icons.folder_outlined,
+                  ),
+                  _buildDetailRow(
+                    'Status',
+                    selectedTask!.statusName,
+                    Icons.info_outline,
+                  ),
+                  if (selectedTask!.dueDate != null)
+                    _buildDetailRow(
+                      'Due Date',
+                      DateFormat('MMM dd, yyyy HH:mm').format(selectedTask!.dueDate!),
+                      Icons.event,
+                    ),
+                  if (selectedTask!.assignees.isNotEmpty)
+                    _buildDetailRow(
+                      'Assignees',
+                      '${selectedTask!.assignees.length} assigned',
+                      Icons.people_outline,
+                    ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 24),
+            
+            // Printer Selection
+            Text(
+              'Printer Assignment',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.2,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Select a printer to activate this print job',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: selectedPrinter == null
+                      ? Color(0xFFE2E8F0)
+                      : Color(0xFF2563EB),
+                ),
+              ),
+              child: DropdownButtonFormField<String>(
+                value: selectedPrinter,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.print, color: Color(0xFF64748B)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  hintText: 'Select printer',
+                  hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                ),
+                items: availablePrinters.map((printer) {
+                  final isAvailable = printer['status'] == 'Available';
+                  return DropdownMenuItem<String>(
+                    value: printer['id'],
+                    enabled: isAvailable,
+                    child: Row(
                       children: [
-                        Text(
-                          'Schedule Print Job',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isAvailable
+                                ? Color(0xFF10B981)
+                                : Color(0xFFEF4444),
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          selectedTask!.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF64748B),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            printer['name']!,
+                            style: TextStyle(
+                              color: isAvailable
+                                  ? Color(0xFF0F172A)
+                                  : Color(0xFF94A3B8),
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          printer['status']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isAvailable
+                                ? Color(0xFF10B981)
+                                : Color(0xFFEF4444),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => selectedPrinter = value);
+                },
               ),
-              
-              SizedBox(height: 28),
-              
-              // Task Details Card
-              Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Task Details',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    _buildDetailRow(
-                      'Project ID',
-                      selectedTask!.projectId,
-                      Icons.folder_outlined,
-                    ),
-                    _buildDetailRow(
-                      'Status',
-                      selectedTask!.statusName,
-                      Icons.info_outline,
-                    ),
-                    if (selectedTask!.dueDate != null)
-                      _buildDetailRow(
-                        'Due Date',
-                        DateFormat('MMM dd, yyyy HH:mm').format(selectedTask!.dueDate!),
-                        Icons.event,
-                      ),
-                    if (selectedTask!.assignees.isNotEmpty)
-                      _buildDetailRow(
-                        'Assignees',
-                        '${selectedTask!.assignees.length} assigned',
-                        Icons.people_outline,
-                      ),
-                  ],
-                ),
+            ),
+            
+            SizedBox(height: 24),
+            
+            // Production Settings
+            Text(
+              'Production Settings',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.2,
               ),
-              
-              SizedBox(height: 24),
-              
-              // Printer Selection
-              Text(
-                'Printer Assignment',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.2,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Select a printer to activate this print job',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: selectedPrinter == null
-                        ? Color(0xFFE2E8F0)
-                        : Color(0xFF2563EB),
-                  ),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: selectedPrinter,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.print, color: Color(0xFF64748B)),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    hintText: 'Select printer',
-                    hintStyle: TextStyle(color: Color(0xFF94A3B8)),
-                  ),
-                  items: availablePrinters.map((printer) {
-                    final isAvailable = printer['status'] == 'Available';
-                    return DropdownMenuItem<String>(
-                      value: printer['id'],
-                      enabled: isAvailable,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isAvailable
-                                  ? Color(0xFF10B981)
-                                  : Color(0xFFEF4444),
-                            ),
+            ),
+            SizedBox(height: 16),
+            
+            // Start Time
+            _buildInputField(
+              label: 'Production Start Time',
+              icon: Icons.access_time,
+              child: InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: scheduledStartTime ?? DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(Duration(days: 365)),
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: Color(0xFF2563EB),
                           ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              printer['name']!,
-                              style: TextStyle(
-                                color: isAvailable
-                                    ? Color(0xFF0F172A)
-                                    : Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ),
-                          Text(
-                            printer['status']!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isAvailable
-                                  ? Color(0xFF10B981)
-                                  : Color(0xFFEF4444),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => selectedPrinter = value);
-                  },
-                ),
-              ),
-              
-              SizedBox(height: 24),
-              
-              // Production Settings
-              Text(
-                'Production Settings',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.2,
-                ),
-              ),
-              SizedBox(height: 16),
-              
-              // Start Time
-              _buildInputField(
-                label: 'Production Start Time',
-                icon: Icons.access_time,
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  
+                  if (date != null) {
+                    final time = await showTimePicker(
                       context: context,
-                      initialDate: scheduledStartTime ?? DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(Duration(days: 365)),
+                      initialTime: TimeOfDay.fromDateTime(
+                        scheduledStartTime ?? DateTime.now(),
+                      ),
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
@@ -695,394 +713,375 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                       },
                     );
                     
-                    if (date != null) {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(
-                          scheduledStartTime ?? DateTime.now(),
-                        ),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: Color(0xFF2563EB),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      
-                      if (time != null) {
-                        setState(() {
-                          scheduledStartTime = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        });
-                      }
+                    if (time != null) {
+                      setState(() {
+                        scheduledStartTime = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        );
+                      });
                     }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            scheduledStartTime != null
-                                ? DateFormat('MMM dd, yyyy HH:mm')
-                                    .format(scheduledStartTime!)
-                                : 'Select start time (optional)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: scheduledStartTime != null
-                                  ? Color(0xFF0F172A)
-                                  : Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ),
-                        Icon(Icons.calendar_today,
-                            size: 18, color: Color(0xFF64748B)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              
-              SizedBox(height: 16),
-              
-              // Duration and Runs Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInputField(
-                      label: 'Duration (minutes)',
-                      icon: Icons.timer_outlined,
-                      child: TextFormField(
-                        initialValue: productionDuration.toString(),
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFF2563EB)),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          hintText: 'Enter duration',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            productionDuration = int.tryParse(value) ?? 60;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: _buildInputField(
-                      label: 'Runs',
-                      icon: Icons.repeat,
-                      child: TextFormField(
-                        initialValue: runs.toString(),
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Color(0xFF2563EB)),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          hintText: 'Enter runs',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            runs = int.tryParse(value) ?? 1;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              
-              SizedBox(height: 16),
-              
-              // Production Quantity
-              _buildInputField(
-                label: 'Production Quantity',
-                icon: Icons.inventory_2_outlined,
-                child: TextFormField(
-                  initialValue: productionQuantity?.toString() ?? '',
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFF2563EB)),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    hintText: 'Enter quantity',
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      productionQuantity = double.tryParse(value);
-                    });
-                  },
-                ),
-              ),
-              
-              SizedBox(height: 16),
-              
-              // Material Selection
-              _buildInputField(
-                label: 'Material',
-                icon: Icons.category_outlined,
+                  }
+                },
                 child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Color(0xFFE2E8F0)),
                   ),
-                  child: DropdownButtonFormField<String>(
-                    value: materials.first['id'],
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      hintText: 'Select material',
-                      hintStyle: TextStyle(color: Color(0xFF94A3B8)),
-                    ),
-                    items: materials.map((material) {
-                      return DropdownMenuItem<String>(
-                        value: material['id'],
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(material['name']!),
-                            ),
-                            Text(
-                              material['stock']!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          scheduledStartTime != null
+                              ? DateFormat('MMM dd, yyyy HH:mm')
+                                  .format(scheduledStartTime!)
+                              : 'Select start time (optional)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: scheduledStartTime != null
+                                ? Color(0xFF0F172A)
+                                : Color(0xFF94A3B8),
+                          ),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => materialId = value);
-                    },
+                      ),
+                      Icon(Icons.calendar_today,
+                          size: 18, color: Color(0xFF64748B)),
+                    ],
                   ),
                 ),
               ),
-              
-              SizedBox(height: 16),
-              
-              // Barcode
-              _buildInputField(
-                label: 'Stock Transaction Barcode (Optional)',
-                icon: Icons.qr_code,
-                child: TextFormField(
-                  initialValue: stockTransactionBarcode ?? '',
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFF2563EB)),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    hintText: 'Enter or scan barcode',
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.qr_code_scanner, color: Color(0xFF64748B)),
-                      onPressed: () {
-                        // Implement barcode scanner
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Duration and Runs Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    label: 'Duration (minutes)',
+                    icon: Icons.timer_outlined,
+                    child: TextFormField(
+                      initialValue: productionDuration.toString(),
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFF2563EB)),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        hintText: 'Enter duration',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          productionDuration = int.tryParse(value) ?? 60;
+                        });
                       },
                     ),
                   ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildInputField(
+                    label: 'Runs',
+                    icon: Icons.repeat,
+                    child: TextFormField(
+                      initialValue: runs.toString(),
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFF2563EB)),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        hintText: 'Enter runs',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          runs = int.tryParse(value) ?? 1;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Production Quantity
+            _buildInputField(
+              label: 'Production Quantity',
+              icon: Icons.inventory_2_outlined,
+              child: TextFormField(
+                initialValue: productionQuantity?.toString() ?? '',
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2563EB)),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  hintText: 'Enter quantity',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    productionQuantity = double.tryParse(value);
+                  });
+                },
+              ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Material Selection
+            _buildInputField(
+              label: 'Material',
+              icon: Icons.category_outlined,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Color(0xFFE2E8F0)),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: materials.first['id'],
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    hintText: 'Select material',
+                    hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                  ),
+                  items: materials.map((material) {
+                    return DropdownMenuItem<String>(
+                      value: material['id'],
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(material['name']!),
+                          ),
+                          Text(
+                            material['stock']!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                   onChanged: (value) {
-                    setState(() {
-                      stockTransactionBarcode = value.isEmpty ? null : value;
-                    });
+                    setState(() => materialId = value);
                   },
                 ),
               ),
-              
-              SizedBox(height: 32),
-              
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          selectedTask = null;
-                          selectedPrinter = null;
-                          scheduledStartTime = null;
-                          productionDuration = 60;
-                          runs = 1;
-                          productionQuantity = null;
-                          materialId = null;
-                          stockTransactionBarcode = null;
-                        });
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Barcode
+            _buildInputField(
+              label: 'Stock Transaction Barcode (Optional)',
+              icon: Icons.qr_code,
+              child: TextFormField(
+                initialValue: stockTransactionBarcode ?? '',
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2563EB)),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  hintText: 'Enter or scan barcode',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.qr_code_scanner, color: Color(0xFF64748B)),
+                    onPressed: () {
+                      // Implement barcode scanner
+                    },
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    stockTransactionBarcode = value.isEmpty ? null : value;
+                  });
+                },
+              ),
+            ),
+            
+            SizedBox(height: 32),
+            
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        selectedTask = null;
+                        selectedPrinter = null;
+                        scheduledStartTime = null;
+                        productionDuration = 60;
+                        runs = 1;
+                        productionQuantity = null;
+                        materialId = null;
+                        stockTransactionBarcode = null;
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
+                      side: BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: selectedPrinter == null || isScheduling
-                          ? null
-                          : _scheduleJob,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF2563EB),
-                        disabledBackgroundColor: Color(0xFFE2E8F0),
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: selectedPrinter == null || isScheduling
+                        ? null
+                        : _scheduleJob,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF2563EB),
+                      disabledBackgroundColor: Color(0xFFE2E8F0),
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: isScheduling
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_outline, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Schedule Print Job',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                      elevation: 0,
+                    ),
+                    child: isScheduling
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Schedule Print Job',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Info banner
+            Container(
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: Color(0xFF2563EB),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'The print job will be activated once a printer is assigned. Make sure all production settings are correct before scheduling.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF1E40AF),
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
               ),
-              
-              SizedBox(height: 16),
-              
-              // Info banner
-              Container(
-                padding: EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Color(0xFFBFDBFE)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 18,
-                      color: Color(0xFF2563EB),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'The print job will be activated once a printer is assigned. Make sure all production settings are correct before scheduling.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF1E40AF),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
