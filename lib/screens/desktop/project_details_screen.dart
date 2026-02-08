@@ -71,8 +71,8 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
   String get projectName => project.name;
   String? get client => project.client.name;
   String? get description => project.description;
-  DateTime get createdAt => DateTime.now().subtract(const Duration(days: 5));
-  DateTime? get deadline => DateTime.now().add(const Duration(days: 10));
+  DateTime get createdAt => project.createdAt;
+  DateTime? get deadline => project.dueDate;
   List<Task> get designTasks =>  ref.watch(taskNotifierProvider.notifier).getTasks(taskIds: project.tasks, taskStatus: TaskStatus.designing).where((task)=> task.status == TaskStatus.designing).toList();
 
   int get completedTasksCount =>
@@ -283,7 +283,7 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
           _buildDetailRow('Created', _formatDateLong(createdAt)),
           if (deadline != null)
             _buildDetailRow('Deadline', _formatDateLong(deadline!)),
-          _buildDetailRow('Total Tasks', '${designTasks.length}'),
+          _buildDetailRow('Design Tasks', '${designTasks.length}'),
           _buildDetailRow('Completed Tasks', '$completedTasksCount'),
         ],
       ),
