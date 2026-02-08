@@ -197,7 +197,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                         children: [
                           Icon(Icons.pending_actions, size: 18),
                           SizedBox(width: 8),
-                          Text('Ready for Production'),
+                          Text('Pending'),
                           SizedBox(width: 6),
                           Container(
                             padding: EdgeInsets.symmetric(
