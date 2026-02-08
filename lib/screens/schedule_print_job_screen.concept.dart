@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
-class SchedulePrintJobScreen extends StatefulWidget {
-  final List<Task> allTasks;
-  final Function(Task, Map<String, dynamic>) onSchedulePrintJob;
+class SchedulePrintJobScreen extends ConsumerStatefulWidget {
 
-  const SchedulePrintJobScreen({
-    Key? key,
-    required this.allTasks,
-    required this.onSchedulePrintJob,
-  }) : super(key: key);
+  const SchedulePrintJobScreen({super.key});
 
   @override
-  State<SchedulePrintJobScreen> createState() =>
+  ConsumerState<SchedulePrintJobScreen> createState() =>
       _SchedulePrintJobScreenState();
 }
 
-class _SchedulePrintJobScreenState extends State<SchedulePrintJobScreen>
+class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Task? selectedTask;
@@ -58,8 +54,11 @@ class _SchedulePrintJobScreenState extends State<SchedulePrintJobScreen>
     super.dispose();
   }
 
+  List<Task> get allTasks => ref.watch(taskNotifierProvider);
+
   List<Task> get clientApprovedTasks {
-    return widget.allTasks.where((task) {
+
+    return allTasks.where((task) {
       // Filter tasks that are post-design stage and ready for production
       return task.status != TaskStatus.designing &&
           task.status != TaskStatus.completed &&
@@ -69,7 +68,7 @@ class _SchedulePrintJobScreenState extends State<SchedulePrintJobScreen>
   }
 
   List<Task> get scheduledTasks {
-    return widget.allTasks.where((task) {
+    return allTasks.where((task) {
       return task.printerId != null && 
              task.status != TaskStatus.completed &&
              task.status != TaskStatus.blocked;
@@ -96,7 +95,7 @@ class _SchedulePrintJobScreenState extends State<SchedulePrintJobScreen>
     };
 
     try {
-      await widget.onSchedulePrintJob(selectedTask!, schedulingData);
+      // await widget.onSchedulePrintJob(selectedTask!, schedulingData);
       
       if (mounted) {
         setState(() {
