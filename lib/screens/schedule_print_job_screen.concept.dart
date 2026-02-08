@@ -326,14 +326,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
         
         // Divider
         Container(width: 1, color: Color(0xFFE2E8F0)),
-        
-        // Right Panel - Scheduling Form
-        Expanded(
-          flex: 3,
-          child: selectedTask == null
-              ? _buildNoSelectionState()
-              : _buildSchedulingForm(),
-        ),
       ],
     );
   }
@@ -351,6 +343,11 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           stockTransactionBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
+
+        // Bottom sheet contents
+        // selectedTask == null
+        //       ? _buildNoSelectionState()
+        //       : _buildSchedulingForm();
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
