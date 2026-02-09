@@ -31,7 +31,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   String? stockTransactionBarcode;
   bool isScheduling = false;
 
-  late final bool stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
+  bool stockItemAlreadySpecified = false;
 
   // Mock data - replace with actual data sources
   final List<Map<String, String>> availablePrinters = [
@@ -160,6 +160,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
   @override
   Widget build(BuildContext context) {
+
+    print("stock trx barcode: ${selectedTask!.stockTransactionBarcode}");
+
     return Scaffold(
       backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -349,6 +352,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           stockTransactionBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
+
+        selectedPrinter = null;
+        stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
 
         showCupertinoSheet(
           context: context,
