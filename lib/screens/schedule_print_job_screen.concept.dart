@@ -31,6 +31,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   String? stockTransactionBarcode;
   bool isScheduling = false;
 
+  late final bool stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
+
   // Mock data - replace with actual data sources
   final List<Map<String, String>> availablePrinters = [
     {'id': 'printer_001', 'name': 'Epson SureColor P9000', 'status': 'Available'},
@@ -814,6 +816,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
               label: 'Stock Transaction Barcode',
               icon: Icons.qr_code,
               child: TextFormField(
+                enabled: !stockItemAlreadySpecified,
                 initialValue: stockTransactionBarcode ?? '',
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
@@ -823,6 +826,10 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 240, 244, 249)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -836,7 +843,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   ),
                   hintText: 'Enter or scan barcode',
                   suffixIcon: IconButton(
-                    icon: Icon(Icons.qr_code_scanner, color: Color(0xFF64748B)),
+                    icon: Icon(CupertinoIcons.barcode, color: Color(0xFF64748B)),
                     onPressed: () async {
                       // Implement barcode scanner
                       final BarcodeScanResponse? response = await AppRoutes.navigateTo<BarcodeScanResponse?>(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
