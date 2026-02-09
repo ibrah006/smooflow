@@ -676,85 +676,85 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             SizedBox(height: 16),
             
             // Duration and Runs Row
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInputField(
-                    label: 'Duration (minutes)',
-                    icon: Icons.timer_outlined,
-                    child: TextFormField(
-                      initialValue: productionDuration.toString(),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFF2563EB)),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        hintText: 'Enter duration',
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          productionDuration = int.tryParse(value) ?? 60;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: _buildInputField(
-                    label: 'Runs',
-                    icon: Icons.repeat,
-                    child: TextFormField(
-                      initialValue: runs.toString(),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFF2563EB)),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        hintText: 'Enter runs',
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          runs = int.tryParse(value) ?? 1;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: _buildInputField(
+            //         label: 'Duration (minutes)',
+            //         icon: Icons.timer_outlined,
+            //         child: TextFormField(
+            //           initialValue: productionDuration.toString(),
+            //           keyboardType: TextInputType.number,
+            //           decoration: InputDecoration(
+            //             border: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            //             ),
+            //             enabledBorder: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            //             ),
+            //             focusedBorder: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFF2563EB)),
+            //             ),
+            //             filled: true,
+            //             fillColor: Colors.white,
+            //             contentPadding: EdgeInsets.symmetric(
+            //               horizontal: 16,
+            //               vertical: 14,
+            //             ),
+            //             hintText: 'Enter duration',
+            //           ),
+            //           onChanged: (value) {
+            //             setState(() {
+            //               productionDuration = int.tryParse(value) ?? 60;
+            //             });
+            //           },
+            //         ),
+            //       ),
+            //     ),
+            //     SizedBox(width: 16),
+            //     Expanded(
+            //       child: _buildInputField(
+            //         label: 'Runs',
+            //         icon: Icons.repeat,
+            //         child: TextFormField(
+            //           initialValue: runs.toString(),
+            //           keyboardType: TextInputType.number,
+            //           decoration: InputDecoration(
+            //             border: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            //             ),
+            //             enabledBorder: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            //             ),
+            //             focusedBorder: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(10),
+            //               borderSide: BorderSide(color: Color(0xFF2563EB)),
+            //             ),
+            //             filled: true,
+            //             fillColor: Colors.white,
+            //             contentPadding: EdgeInsets.symmetric(
+            //               horizontal: 16,
+            //               vertical: 14,
+            //             ),
+            //             hintText: 'Enter runs',
+            //           ),
+            //           onChanged: (value) {
+            //             setState(() {
+            //               runs = int.tryParse(value) ?? 1;
+            //             });
+            //           },
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
             
-            SizedBox(height: 16),
+            // SizedBox(height: 16),
             
             // // Material Selection
             // _buildInputField(
@@ -849,12 +849,17 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
               label: 'Production Quantity',
               icon: Icons.inventory_2_outlined,
               child: TextFormField(
+                enabled: false,
                 initialValue: productionQuantity?.toString() ?? '',
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color.fromARGB(255, 240, 244, 249)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
