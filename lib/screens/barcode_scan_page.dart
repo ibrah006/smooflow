@@ -43,8 +43,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
         }
 
         // on Success
-        Navigator.pop(context, BarcodeScanResponse(barcode: barcode, quantity: quantity));
-        Navigator.of(context).push(
+        final quantity = await Navigator.of(context).push(
           MaterialPageRoute(
             builder:
                 (context) =>
@@ -57,6 +56,8 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
                         : StockEntryScreen.stockin(material: material),
           ),
         );
+
+        Navigator.pop(context, BarcodeScanResponse(barcode: code, quantity: quantity));
       } catch (e) {
         ScaffoldMessenger.of(
           context,

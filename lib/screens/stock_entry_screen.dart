@@ -151,7 +151,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
               IconButton(
                 onPressed: () async {
                   await requestCameraPermission();
-                  Navigator.of(context).pop(context);
+                  Navigator.of(context).pop(null);
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder:
@@ -499,7 +499,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(context, null);
                         },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
@@ -583,8 +583,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                             }
 
                             // Show stock transaction details page
-                            Navigator.of(context).pop(context);
-                            Navigator.of(context).push(
+                            await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder:
                                     (context) => StockEntryDetailsScreen(
@@ -598,6 +597,8 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                     ),
                               ),
                             );
+
+                            Navigator.pop(context, measure);
 
                             _materialTypeController.clear();
                             _descriptionController.clear();
