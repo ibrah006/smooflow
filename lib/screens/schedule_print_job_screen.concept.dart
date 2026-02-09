@@ -468,6 +468,11 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildSchedulingForm() {
+
+    final projectIdSplitted = selectedTask!.projectId.split("-");
+
+    final projectIdDisplay = "${projectIdSplitted[projectIdSplitted.length - 2]}-${projectIdSplitted.last}";
+    
     return Material(
       color: Color(0xFFF8FAFC),
       child: SingleChildScrollView(
@@ -546,7 +551,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   SizedBox(height: 16),
                   _buildDetailRow(
                     'Project ID',
-                    selectedTask!.projectId,
+                    projectIdDisplay,
                     Icons.folder_outlined,
                   ),
                   _buildDetailRow(
