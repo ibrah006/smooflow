@@ -910,16 +910,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      setState(() {
-                        selectedTask = null;
-                        selectedPrinter = null;
-                        scheduledStartTime = null;
-                        productionDuration = 60;
-                        runs = 1;
-                        productionQuantity = null;
-                        materialId = null;
-                        stockTransactionBarcode = null;
-                      });
+                      Navigator.of(context).pop();
                     },
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
