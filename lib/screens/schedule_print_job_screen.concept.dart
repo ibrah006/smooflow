@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/barcode_scan_args.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
@@ -831,6 +833,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     icon: Icon(Icons.qr_code_scanner, color: Color(0xFF64748B)),
                     onPressed: () {
                       // Implement barcode scanner
+                      AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
                     },
                   ),
                 ),
@@ -953,7 +956,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                               Icon(Icons.check_circle_outline, size: 20, color: selectedPrinter == null? null : Colors.white,),
                               SizedBox(width: 8),
                               Text(
-                                'Schedule Print Job',
+                                'Start Print Job',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
