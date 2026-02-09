@@ -756,94 +756,54 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             
             SizedBox(height: 16),
             
-            // Production Quantity
-            _buildInputField(
-              label: 'Production Quantity',
-              icon: Icons.inventory_2_outlined,
-              child: TextFormField(
-                initialValue: productionQuantity?.toString() ?? '',
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Color(0xFF2563EB)),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  hintText: 'Enter quantity',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    productionQuantity = double.tryParse(value);
-                  });
-                },
-              ),
-            ),
-            
-            SizedBox(height: 16),
-            
             // // Material Selection
-            _buildInputField(
-              label: 'Material',
-              icon: Icons.category_outlined,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: materials.first['id'],
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    hintText: 'Select material',
-                    hintStyle: TextStyle(color: Color(0xFF94A3B8)),
-                  ),
-                  items: materials.map((material) {
-                    return DropdownMenuItem<String>(
-                      value: material['id'],
-                      child: Row(
-                        children: [
-                          Text(material['name']!),
-                          Text(
-                            material['stock']!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => materialId = value);
-                  },
-                ),
-              ),
-            ),
-            
-            SizedBox(height: 16),
+            // _buildInputField(
+            //   label: 'Material',
+            //   icon: Icons.category_outlined,
+            //   child: Container(
+            //     decoration: BoxDecoration(
+            //       color: Colors.white,
+            //       borderRadius: BorderRadius.circular(10),
+            //       border: Border.all(color: Color(0xFFE2E8F0)),
+            //     ),
+            //     child: DropdownButtonFormField<String>(
+            //       value: materials.first['id'],
+            //       decoration: InputDecoration(
+            //         border: InputBorder.none,
+            //         contentPadding: EdgeInsets.symmetric(
+            //           horizontal: 16,
+            //           vertical: 12,
+            //         ),
+            //         hintText: 'Select material',
+            //         hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+            //       ),
+            //       items: materials.map((material) {
+            //         return DropdownMenuItem<String>(
+            //           value: material['id'],
+            //           child: Row(
+            //             children: [
+            //               Text(material['name']!),
+            //               Text(
+            //                 material['stock']!,
+            //                 style: TextStyle(
+            //                   fontSize: 12,
+            //                   color: Color(0xFF64748B),
+            //                 ),
+            //               ),
+            //             ],
+            //           ),
+            //         );
+            //       }).toList(),
+            //       onChanged: (value) {
+            //         setState(() => materialId = value);
+            //       },
+            //     ),
+            //   ),
+            // ),
             
             // // Barcode
             _buildInputField(
-              label: 'Stock Transaction Barcode (Optional)',
+              label: 'Stock Transaction Barcode',
               icon: Icons.qr_code,
               child: TextFormField(
                 initialValue: stockTransactionBarcode ?? '',
@@ -877,6 +837,44 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 onChanged: (value) {
                   setState(() {
                     stockTransactionBarcode = value.isEmpty ? null : value;
+                  });
+                },
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            // Production Quantity
+            _buildInputField(
+              label: 'Production Quantity',
+              icon: Icons.inventory_2_outlined,
+              child: TextFormField(
+                initialValue: productionQuantity?.toString() ?? '',
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2563EB)),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  hintText: 'Enter quantity',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    productionQuantity = double.tryParse(value);
                   });
                 },
               ),
@@ -947,13 +945,14 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check_circle_outline, size: 20),
+                              Icon(Icons.check_circle_outline, size: 20, color: selectedPrinter == null? null : Colors.white,),
                               SizedBox(width: 8),
                               Text(
                                 'Schedule Print Job',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
+                                  color: selectedPrinter == null? null : Colors.white,
                                 ),
                               ),
                             ],
