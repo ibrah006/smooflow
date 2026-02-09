@@ -40,7 +40,7 @@ import '../screens/stock_entry_screen.dart';
 import '../screens/stock_entry_checkout_screen.dart';
 
 // Barcode
-import '../screens/barcode_scan_page.dart';
+import '../screens/barcode_scan_screen.dart';
 import '../screens/barcode_export_screen.dart';
 
 // Projects & Tasks

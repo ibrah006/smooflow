@@ -161,8 +161,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   @override
   Widget build(BuildContext context) {
 
-    print("stock trx barcode: ${selectedTask!.stockTransactionBarcode}");
-
     return Scaffold(
       backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -847,18 +845,18 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     horizontal: 16,
                     vertical: 14,
                   ),
-                  hintText: 'Enter or scan barcode',
+                  hintText: 'Scan barcode',
                   suffixIcon: IconButton(
                     icon: Icon(CupertinoIcons.barcode, color: Color(0xFF64748B)),
                     onPressed: () async {
                       // Implement barcode scanner
-                      final BarcodeScanResponse? response = await AppRoutes.navigateTo<BarcodeScanResponse?>(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
-                      if (response != null) {
-                        setState(() {
-                          stockTransactionBarcode = response.barcode;
-                          productionQuantity = response.quantity.toDouble();
-                        });
-                      }
+                      await AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                      // if (response != null) {
+                      //   setState(() {
+                      //     stockTransactionBarcode = response.barcode;
+                      //     productionQuantity = response.quantity.toDouble();
+                      //   });
+                      // }
                     },
                   ),
                 ),

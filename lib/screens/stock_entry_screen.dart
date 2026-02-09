@@ -11,7 +11,7 @@ import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
-import 'package:smooflow/screens/barcode_scan_page.dart';
+import 'package:smooflow/screens/barcode_scan_screen.dart';
 import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 
 class StockEntryScreen extends ConsumerStatefulWidget {
