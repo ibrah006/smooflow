@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/barcode_scan_args.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/screen_responses/barcode_scan_response.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -836,9 +837,15 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   hintText: 'Enter or scan barcode',
                   suffixIcon: IconButton(
                     icon: Icon(Icons.qr_code_scanner, color: Color(0xFF64748B)),
-                    onPressed: () {
+                    onPressed: () async {
                       // Implement barcode scanner
-                      AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                      final BarcodeScanResponse? response = await AppRoutes.navigateTo<BarcodeScanResponse?>(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                      if (response != null) {
+                        setState(() {
+                          stockTransactionBarcode = response.barcode;
+                          productionQuantity = response.quantity.toDouble();
+                        });
+                      }
                     },
                   ),
                 ),
