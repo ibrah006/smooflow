@@ -188,6 +188,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   unselectedLabelColor: Color(0xFF64748B),
                   indicatorColor: Color(0xFF2563EB),
                   indicatorWeight: 3,
+                  dividerColor: Colors.grey.shade200,
                   labelStyle: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
