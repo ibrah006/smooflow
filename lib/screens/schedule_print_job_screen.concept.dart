@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/barcode_scan_args.dart';
+import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/screen_responses/barcode_scan_response.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 class SchedulePrintJobScreen extends ConsumerStatefulWidget {
@@ -33,20 +35,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
   bool stockItemAlreadySpecified = false;
 
-  // Mock data - replace with actual data sources
-  final List<Map<String, String>> availablePrinters = [
-    {'id': 'printer_001', 'name': 'Epson SureColor P9000', 'status': 'Available'},
-    {'id': 'printer_002', 'name': 'HP DesignJet Z9+', 'status': 'Available'},
-    {'id': 'printer_003', 'name': 'Canon imagePROGRAF PRO-6100', 'status': 'In Use'},
-    {'id': 'printer_004', 'name': 'Roland TrueVIS VG3-640', 'status': 'Available'},
-  ];
-
-  final List<Map<String, String>> materials = [
-    {'id': 'mat_001', 'name': 'Vinyl Matte', 'stock': '450 sqft'},
-    {'id': 'mat_002', 'name': 'Vinyl Glossy', 'stock': '320 sqft'},
-    {'id': 'mat_003', 'name': 'Canvas 440gsm', 'stock': '200 sqft'},
-    {'id': 'mat_004', 'name': 'Photo Paper Premium', 'stock': '150 sqft'},
-  ];
+  List<Printer> get availablePrinters => ref.watch(printerNotifierProvider).printers;
 
   @override
   void initState() {
@@ -627,9 +616,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   hintStyle: TextStyle(color: Color(0xFF94A3B8)),
                 ),
                 items: availablePrinters.map((printer) {
-                  final isAvailable = printer['status'] == 'Available';
+                  final isAvailable = printer.isAvailable;
                   return DropdownMenuItem<String>(
-                    value: printer['id'],
+                    value: printer.id,
                     enabled: isAvailable,
                     child: SizedBox(
                       width: 200,
@@ -648,7 +637,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              printer['name']!,
+                              printer.name,
                               style: TextStyle(
                                 color: isAvailable
                                     ? Color(0xFF0F172A)
@@ -657,7 +646,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                             ),
                           ),
                           Text(
-                            printer['status']!,
+                            printer.statusName,
                             style: TextStyle(
                               fontSize: 12,
                               color: isAvailable
@@ -1110,10 +1099,14 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildScheduledTaskCard(Task task) {
-    final printer = availablePrinters.firstWhere(
-      (p) => p['id'] == task.printerId,
-      orElse: () => {'id': '', 'name': 'Unknown Printer', 'status': ''},
+    late final Printer? printer;
+    try {
+    printer = availablePrinters.firstWhere(
+      (p) => p.id == task.printerId,
     );
+    } catch (e) {
+      printer = null;
+    }
     
     return Container(
       padding: EdgeInsets.all(20),
@@ -1202,7 +1195,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
               Expanded(
                 child: _buildScheduledDetail(
                   'Printer',
-                  printer['name']!,
+                  printer?.name ?? 'Unknown Printer',
                   Icons.print,
                 ),
               ),
