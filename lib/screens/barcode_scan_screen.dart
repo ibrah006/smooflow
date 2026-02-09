@@ -59,7 +59,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
 
         if (quantity == null) {
           // User cancelled the stock entry screen
-          Navigator.pop(context);
+          Navigator.pop(context, null);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Stock entry cancelled by user")));
           return;
         }

@@ -850,7 +850,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     icon: Icon(CupertinoIcons.barcode, color: Color(0xFF64748B)),
                     onPressed: () async {
                       // Implement barcode scanner
-                      await AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                      final response = await AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                      print("barcode scan response: $response");
                       // if (response != null) {
                       //   setState(() {
                       //     stockTransactionBarcode = response.barcode;
