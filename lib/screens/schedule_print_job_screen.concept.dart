@@ -466,7 +466,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildSchedulingForm() {
-    return Container(
+    return Material(
       color: Color(0xFFF8FAFC),
       child: SingleChildScrollView(
         padding: EdgeInsets.all(24),
@@ -604,10 +604,10 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.print, color: Color(0xFF64748B)),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  // contentPadding: EdgeInsets.symmetric(
+                  //   horizontal: 16,
+                  //   vertical: 12,
+                  // ),
                   hintText: 'Select printer',
                   hintStyle: TextStyle(color: Color(0xFF94A3B8)),
                 ),
@@ -616,39 +616,42 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   return DropdownMenuItem<String>(
                     value: printer['id'],
                     enabled: isAvailable,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isAvailable
-                                ? Color(0xFF10B981)
-                                : Color(0xFFEF4444),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            printer['name']!,
-                            style: TextStyle(
+                    child: SizedBox(
+                      width: 200,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
                               color: isAvailable
-                                  ? Color(0xFF0F172A)
-                                  : Color(0xFF94A3B8),
+                                  ? Color(0xFF10B981)
+                                  : Color(0xFFEF4444),
                             ),
                           ),
-                        ),
-                        Text(
-                          printer['status']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isAvailable
-                                ? Color(0xFF10B981)
-                                : Color(0xFFEF4444),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              printer['name']!,
+                              style: TextStyle(
+                                color: isAvailable
+                                    ? Color(0xFF0F172A)
+                                    : Color(0xFF94A3B8),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            printer['status']!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isAvailable
+                                  ? Color(0xFF10B981)
+                                  : Color(0xFFEF4444),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -670,93 +673,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 letterSpacing: -0.2,
               ),
             ),
-            SizedBox(height: 16),
-            
-            // Start Time
-            _buildInputField(
-              label: 'Production Start Time',
-              icon: Icons.access_time,
-              child: InkWell(
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: scheduledStartTime ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: Color(0xFF2563EB),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  
-                  if (date != null) {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.fromDateTime(
-                        scheduledStartTime ?? DateTime.now(),
-                      ),
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.light(
-                              primary: Color(0xFF2563EB),
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    
-                    if (time != null) {
-                      setState(() {
-                        scheduledStartTime = DateTime(
-                          date.year,
-                          date.month,
-                          date.day,
-                          time.hour,
-                          time.minute,
-                        );
-                      });
-                    }
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          scheduledStartTime != null
-                              ? DateFormat('MMM dd, yyyy HH:mm')
-                                  .format(scheduledStartTime!)
-                              : 'Select start time (optional)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: scheduledStartTime != null
-                                ? Color(0xFF0F172A)
-                                : Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ),
-                      Icon(Icons.calendar_today,
-                          size: 18, color: Color(0xFF64748B)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            
             SizedBox(height: 16),
             
             // Duration and Runs Row
@@ -878,7 +794,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             
             SizedBox(height: 16),
             
-            // Material Selection
+            // // Material Selection
             _buildInputField(
               label: 'Material',
               icon: Icons.category_outlined,
@@ -904,9 +820,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                       value: material['id'],
                       child: Row(
                         children: [
-                          Expanded(
-                            child: Text(material['name']!),
-                          ),
+                          Text(material['name']!),
                           Text(
                             material['stock']!,
                             style: TextStyle(
@@ -927,7 +841,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             
             SizedBox(height: 16),
             
-            // Barcode
+            // // Barcode
             _buildInputField(
               label: 'Stock Transaction Barcode (Optional)',
               icon: Icons.qr_code,
