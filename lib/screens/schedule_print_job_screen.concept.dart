@@ -11,7 +11,6 @@ import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
-import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -98,19 +97,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     }
 
     setState(() => isScheduling = true);
-
-    
-
-    final schedulingData = {
-      'printerId': selectedPrinterId,
-      'productionStartTime': scheduledStartTime ?? DateTime.now(),
-      'productionDuration': productionDuration,
-      'runs': runs,
-      'productionQuantity': productionQuantity,
-      'materialId': materialId,
-      'stockTransactionBarcode': stockTransactionBarcode,
-      'status': TaskStatus.printing.name,
-    };
 
     try {
       await _assignPrinter();
@@ -963,7 +949,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   icon: Icons.inventory_2_outlined,
                   child: TextFormField(
                     enabled: false,
-                    initialValue: productionQuantity?.toString() ?? '',
+                    initialValue: productionQuantity.toString(),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
