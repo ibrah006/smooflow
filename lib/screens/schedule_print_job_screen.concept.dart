@@ -1,13 +1,18 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/barcode_scan_args.dart';
+import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/screen_responses/barcode_scan_response.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
@@ -24,11 +29,13 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Task? selectedTask;
-  String? selectedPrinter;
+  String? selectedPrinterId;
+  String? selectedMaterialId;
+  String? selectedStockItemBarcode;
   DateTime? scheduledStartTime;
   int productionDuration = 60; // minutes
   int runs = 1;
-  double? productionQuantity;
+  int productionQuantity = 0;
   String? materialId;
   String? stockTransactionBarcode;
   bool isScheduling = false;
@@ -41,6 +48,12 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    Future.microtask(() async {
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await Future.delayed(Duration(milliseconds: 100));
+    });
+
   }
 
   @override
@@ -71,7 +84,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   void _scheduleJob() async {
-    if (selectedTask == null || selectedPrinter == null) {
+    if (selectedTask == null || selectedPrinterId == null) {
       _showError('Please select a task and printer');
       return;
     }
@@ -79,7 +92,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     setState(() => isScheduling = true);
 
     final schedulingData = {
-      'printerId': selectedPrinter,
+      'printerId': selectedPrinterId,
       'productionStartTime': scheduledStartTime ?? DateTime.now(),
       'productionDuration': productionDuration,
       'runs': runs,
@@ -95,11 +108,11 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       if (mounted) {
         setState(() {
           selectedTask = null;
-          selectedPrinter = null;
+          selectedPrinterId = null;
           scheduledStartTime = null;
           productionDuration = 60;
           runs = 1;
-          productionQuantity = null;
+          productionQuantity = 0;
           materialId = null;
           stockTransactionBarcode = null;
           isScheduling = false;
@@ -335,13 +348,13 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           // Pre-fill form with existing task data if available
           productionDuration = task.productionDuration;
           runs = task.runs ?? 1;
-          productionQuantity = task.productionQuantity;
+          productionQuantity = task.productionQuantity?.toInt()?? 0;
           materialId = task.materialId;
           stockTransactionBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
 
-        selectedPrinter = null;
+        selectedPrinterId = null;
         stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
 
         showCupertinoSheet(
@@ -470,6 +483,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
     final projectIdDisplay = "${projectIdSplitted[projectIdSplitted.length - 2]}-${projectIdSplitted.last}";
     
+    final materials = ref.watch(materialNotifierProvider).materials;
+    
     return Material(
       color: Color(0xFFF8FAFC),
       child: SingleChildScrollView(
@@ -594,17 +609,18 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             ),
             SizedBox(height: 12),
             Container(
+              padding: EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: selectedPrinter == null
+                  color: selectedPrinterId == null
                       ? Color(0xFFE2E8F0)
                       : Color(0xFF2563EB),
                 ),
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedPrinter,
+                value: selectedPrinterId,
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.print, color: Color(0xFF64748B)),
                   border: InputBorder.none,
@@ -660,7 +676,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() => selectedPrinter = value);
+                  setState(() => selectedPrinterId = value);
                 },
               ),
             ),
@@ -835,7 +851,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     horizontal: 16,
                     vertical: 14,
                   ),
-                  hintText: 'Scan barcode',
+                  hintText: 'Scan Barcode',
                   suffixIcon: IconButton(
                     icon: Icon(CupertinoIcons.barcode, color: Color(0xFF64748B)),
                     onPressed: () async {
@@ -858,6 +874,58 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 },
               ),
             ),
+            SizedBox(height: 8),
+            Text("OR"),
+            SizedBox(height: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: selectedMaterialId == null
+                      ? Color(0xFFE2E8F0)
+                      : Color(0xFF2563EB),
+                ),
+              ),
+              child: DropdownButtonFormField<String>(
+                value: selectedMaterialId,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  // contentPadding: EdgeInsets.symmetric(
+                  //   horizontal: 16,
+                  //   vertical: 12,
+                  // ),
+                  hintText: 'Select Material',
+                  hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                ),
+                items: materials.map((material) {
+                  return DropdownMenuItem<String>(
+                    value: material.id,
+                    child: SizedBox(
+                      width: 200,
+                      child: Row(
+                        children: [
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              material.name,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => selectedMaterialId = value);
+                },
+              ),
+            ),
+
+            SizedBox(height: 8),
+
+            if (selectedMaterialId != null) _buildStockItemDropdown(),
 
             SizedBox(height: 16),
 
@@ -896,7 +964,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 ),
                 onChanged: (value) {
                   setState(() {
-                    productionQuantity = double.tryParse(value);
+                    productionQuantity = int.parse(value);
                   });
                 },
               ),
@@ -933,7 +1001,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: selectedPrinter == null || isScheduling
+                    onPressed: selectedPrinterId == null || isScheduling
                         ? null
                         : _scheduleJob,
                     style: ElevatedButton.styleFrom(
@@ -958,14 +1026,14 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check_circle_outline, size: 20, color: selectedPrinter == null? null : Colors.white,),
+                              Icon(Icons.check_circle_outline, size: 20, color: selectedPrinterId == null? null : Colors.white,),
                               SizedBox(width: 8),
                               Text(
                                 'Start Print Job',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: selectedPrinter == null? null : Colors.white,
+                                  color: selectedPrinterId == null? null : Colors.white,
                                 ),
                               ),
                             ],
@@ -1014,8 +1082,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildInputField({
-    required String label,
-    required IconData icon,
+    required String? label,
+    required IconData? icon,
     required Widget child,
   }) {
     return Column(
@@ -1023,9 +1091,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: Color(0xFF64748B)),
+            if (icon != null) Icon(icon, size: 16, color: Color(0xFF64748B)),
             SizedBox(width: 6),
-            Text(
+            if (label != null) Text(
               label,
               style: TextStyle(
                 fontSize: 13,
@@ -1437,5 +1505,157 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       default:
         return Color(0xFF64748B);
     }
+  }
+
+  Widget _buildStockItemDropdown() {
+    final materials = ref.watch(materialNotifierProvider).materials;
+
+    final selectedMaterial = materials.firstWhere((material)=> material.id == selectedMaterialId);
+    late String selectedMaterialUnit;
+    try {
+      selectedMaterialUnit = selectedMaterial.unit;
+      selectedMaterialUnit = "${selectedMaterialUnit[0].toUpperCase()}${selectedMaterialUnit.substring(1)}";
+    } catch(e) {
+      selectedMaterialUnit = "Quantity";
+    }
+
+    Future<List<StockTransaction>> materialStockTransationsFuture = ref.watch(materialNotifierProvider.notifier).fetchMaterialTransactions(
+      selectedMaterial.id,
+      checkIsLocalEmpty: true,
+      updateState: false,
+      type: TransactionType.stockIn
+    );
+
+    return FutureBuilder(
+      future: materialStockTransationsFuture,
+      builder: (context, snapshot) {
+
+        final materialStockTransations = snapshot.data;
+
+        final isHigherThanStock = materialStockTransations != null && (materialStockTransations.isEmpty || productionQuantity > selectedMaterial.currentStock);
+
+        return Column(
+          spacing: 15,
+          children: [
+            if (materialStockTransations == null)
+              CardLoading(height: 55, borderRadius: BorderRadius.circular(12))
+            else Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FA),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonFormField<String>(
+                hint: Row(
+                  spacing: 8,
+                  children: [
+                    if (materialStockTransations.isEmpty) Icon(Icons.block_rounded, color: Colors.grey.shade600),
+                    Text(materialStockTransations.isEmpty? 'Empty stock' : 'Select item')
+                  ],
+                ),
+                value: selectedStockItemBarcode,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                ),
+                icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
+                items:
+                    materialStockTransations.map((stockTransaction) {
+                      return DropdownMenuItem(
+                        value: stockTransaction.barcode,
+                        child: Text("${selectedMaterial.name}  ${stockTransaction.barcode}", style: const TextStyle(fontSize: 15)),
+                      );
+                    }).toList(),
+                onChanged: (value) => setState(() => selectedStockItemBarcode = value),
+                validator: (value) => value == null ? (materialStockTransations.isEmpty? 'Empty stock' : 'Please select item') : null,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    selectedMaterialUnit,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _buildIncrementButton(
+                        icon: Icons.remove,
+                        onPressed: productionQuantity > 1 ? () => setState(() => productionQuantity--) : null,
+                      ),
+                      Container(
+                        width: 60,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          productionQuantity.toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isHigherThanStock? colorPending : Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      if (materialStockTransations==null) CircularProgressIndicator()
+                      else _buildIncrementButton(
+                        icon: Icons.add,
+                        onPressed: () {
+                          setState(() => productionQuantity++);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (materialStockTransations?.isEmpty?? false) SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  AppRoutes.navigateTo(context, AppRoutes.stockInEntry, arguments: StockEntryArgs.stockIn());
+                  setState(() {
+                    // _lookForStockTransactions = true;
+                  });
+                },
+                child: Text("Add Stock Entry")
+              ),
+            )
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _buildIncrementButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: onPressed != null
+            ? const Color(0xFF2563EB)
+            : const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: IconButton(
+        icon: Icon(icon, size: 18),
+        color: Colors.white,
+        padding: EdgeInsets.zero,
+        onPressed: onPressed,
+      ),
+    );
   }
 }
