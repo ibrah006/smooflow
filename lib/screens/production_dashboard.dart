@@ -295,6 +295,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
                     const SizedBox(height: 20),
 
+                    // -- Page Content based on selected section (Printers, Jobs, Materials) -- //
+
                     // Urgent Jobs List
                     if (_selectedSectionIndex == 0) ... [
                       if (printers.isNotEmpty)
