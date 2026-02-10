@@ -400,5 +400,6 @@ class Task {
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
   }
 
+  /// if [status] is null, it will use the Task's current status to determine the component properties
   TaskComponentHelper componentHelper({TaskStatus? status}) => TaskComponentHelper.get(status?? this.status);
 }

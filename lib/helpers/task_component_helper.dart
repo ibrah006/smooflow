@@ -40,7 +40,7 @@ class TaskComponentHelper {
       case TaskStatus.clientApproved:
         return TaskComponentHelper(
           TaskStatus.clientApproved,
-          'Approved',
+          'Client Approved',
           'Mark as complete and approved',
           Icons.check_circle_rounded,
           const Color(0xFF10B981),
@@ -71,8 +71,8 @@ class TaskComponentHelper {
         );
       case TaskStatus.completed:
         return TaskComponentHelper(
-          TaskStatus.clientApproved,
-          'Approved',
+          TaskStatus.completed,
+          'Completed',
           'Task is complete',
           Icons.check_circle_rounded,
           const Color(0xFF10B981),

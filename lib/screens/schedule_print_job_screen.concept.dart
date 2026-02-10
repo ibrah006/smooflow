@@ -11,6 +11,7 @@ import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -360,6 +361,12 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildTaskCard(Task task, bool isSelected) {
+
+    final taskComponentHelper = task.componentHelper();
+
+    final statusName = taskComponentHelper.labelTitle;
+    final statusColor = taskComponentHelper.color;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -411,15 +418,15 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(task.status).withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    task.statusName,
+                    statusName,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: _getStatusColor(task.status),
+                      color: statusColor,
                       letterSpacing: 0.3,
                     ),
                   ),
