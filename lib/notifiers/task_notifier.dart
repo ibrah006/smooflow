@@ -333,8 +333,9 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
     for (final task in state) {
       if (task.id == taskId) {
-        if (task.status == TaskStatus.printing &&
-            newStatus != TaskStatus.printing) {
+        // Temporarily removed condition
+        // task.status == TaskStatus.printing &&
+        if (newStatus != TaskStatus.printing) {
 
           await _unassignPrinter(taskId: taskId, status: newStatus);
 

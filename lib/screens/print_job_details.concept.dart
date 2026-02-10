@@ -108,7 +108,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         id: widget.task.id,
         printerId: null,
         stockTransactionBarcode: null,
-        newTaskStatus: TaskStatus.completed
+        newTaskStatus: TaskStatus.finishing
       )));
       
       Navigator.pop(context);
