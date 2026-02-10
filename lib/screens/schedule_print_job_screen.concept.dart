@@ -118,6 +118,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           isScheduling = false;
         });
 
+        Navigator.of(context).pop();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
