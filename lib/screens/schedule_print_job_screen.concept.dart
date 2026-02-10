@@ -281,7 +281,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Select Task to Schedule',
+                        'Select Job to Schedule',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -305,7 +305,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   child: clientApprovedTasks.isEmpty
                       ? _buildEmptyState()
                       : ListView.separated(
-                          padding: EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16).copyWith(bottom: 42),
                           itemCount: clientApprovedTasks.length,
                           separatorBuilder: (context, index) =>
                               SizedBox(height: 12),
