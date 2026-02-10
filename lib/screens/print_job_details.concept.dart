@@ -104,12 +104,13 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
 
   Future<void> _markJobAsComplete() async {
     try {
-      await ref.watch(setTaskStateProvider(TaskStateParams(
-        id: widget.task.id,
-        printerId: null,
-        stockTransactionBarcode: null,
-        newTaskStatus: TaskStatus.finishing
-      )));
+      // await ref.watch(setTaskStateProvider(TaskStateParams(
+      //   id: widget.task.id,
+      //   printerId: null,
+      //   stockTransactionBarcode: null,
+      //   newTaskStatus: TaskStatus.finishing
+      // )));
+      await TaskProvider.setTaskState(ref: ref, taskId: widget.task.id, newStatus: TaskStatus.completed);
       
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Print job marked as completed")));
@@ -958,12 +959,19 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
 
     try {
       // TODO: Update task with printer assignment via API
-      await ref.read(setTaskStateProvider(TaskStateParams(
-        id: widget.task.id,
+      // await ref.read(setTaskStateProvider(TaskStateParams(
+      //   id: widget.task.id,
+      //   printerId: printer.id,
+      //   stockTransactionBarcode: widget.task.stockTransactionBarcode,
+      //   newTaskStatus: TaskStatus.printing
+      // )));
+
+      await TaskProvider.setTaskState(
+        ref: ref,
+        taskId: widget.task.id,
         printerId: printer.id,
         stockTransactionBarcode: widget.task.stockTransactionBarcode,
-        newTaskStatus: TaskStatus.printing
-      )));
+        newStatus: TaskStatus.completed);
     } catch(e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), duration: Duration(seconds: 7)));
       setState(() {

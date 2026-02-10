@@ -78,7 +78,7 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
       .startWorkSession(taskId: taskId, newLogId: workActivityLog.id);
 });
 
-
+@Deprecated("Use TaskProvider.setTaskState instead")
 final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
   ref,
   taskStateParams,
@@ -98,6 +98,35 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
     ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskStateParams.id);
   }
 });
+
+class TaskProvider {
+  /// This is the main function to call when changing task state (progressing stage, assigning/unassigning printer, etc)
+  static Future<void> setTaskState({
+    required WidgetRef ref,
+    required int taskId,
+    required TaskStatus newStatus,
+    /// Pass null when unnassigning printer from task or when progressing task stage without needing to assign a printer (e.g. progressing to completed status)
+    String? printerId,
+    String? stockTransactionBarcode,
+  }) async {
+    if (printerId == null && newStatus == TaskStatus.printing) {
+      throw "Printer ID must be provided when progressing task to printing status";
+    }
+
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
+
+    if (printerId != null) {
+      ref.watch(printerNotifierProvider.notifier).assignTask(printerId: printerId, taskId: taskId);
+    } else {
+      ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskId);
+    }
+
+    // Commit stock out transaction
+    if (stockTransactionBarcode != null){
+      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: stockTransactionBarcode);
+    }
+  }
+}
 
 class TaskStateParams {
   final int id;
