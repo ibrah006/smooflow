@@ -545,8 +545,9 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          AppRoutes.navigateTo(context, AppRoutes.schedulePrintView, arguments: SchedulePrintJobArgs.details(task: task));
+        onTap: () async {
+          await AppRoutes.navigateTo(context, AppRoutes.schedulePrintView, arguments: SchedulePrintJobArgs.details(task: task));
+          setState(() {});
         },
         child: Ink(
           padding: const EdgeInsets.all(20),
