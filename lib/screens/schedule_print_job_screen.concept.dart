@@ -9,7 +9,6 @@ import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/core/screen_responses/barcode_scan_response.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/providers/material_provider.dart';
@@ -83,6 +82,18 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     }).toList();
   }
 
+  Future<void> _assignPrinter() async {
+
+    final printer = ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.id == selectedPrinterId);
+
+    await ref.read(setTaskStateProvider(TaskStateParams(
+      id: selectedTask!.id,
+      printerId: printer.id,
+      stockTransactionBarcode: selectedTask!.stockTransactionBarcode,
+      newTaskStatus: TaskStatus.printing
+    )));
+  }
+
   void _scheduleJob() async {
     if (selectedTask == null || selectedPrinterId == null) {
       _showError('Please select a task and printer');
@@ -90,6 +101,8 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     }
 
     setState(() => isScheduling = true);
+
+    
 
     final schedulingData = {
       'printerId': selectedPrinterId,
@@ -103,7 +116,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     };
 
     try {
-      // await widget.onSchedulePrintJob(selectedTask!, schedulingData);
+      await _assignPrinter();
       
       if (mounted) {
         setState(() {
@@ -118,24 +131,32 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           isScheduling = false;
         });
 
-        Navigator.of(context).pop();
-
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Print job scheduled successfully'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Print job started successfully',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
               ],
             ),
-            backgroundColor: Color(0xFF10B981),
+            backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 3),
           ),
         );
+
+        // Navigate back after brief delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) Navigator.pop(context);
+        });
       }
     } catch (e) {
       setState(() => isScheduling = false);
@@ -664,7 +685,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                             ),
                           ),
                           Text(
-                            printer.statusName,
+                            printer.isBusy ? "Busy" : printer.statusName,
                             style: TextStyle(
                               fontSize: 12,
                               color: isAvailable
