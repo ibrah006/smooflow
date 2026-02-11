@@ -58,9 +58,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   /// Load all tasks (admin or global list)
   Future<void> loadAll() async {
     _loading = true;
-    state = [];
+    // What's the purpose of this?
+    // state = [];
     try {
       final tasks = await _repo.fetchAllTasks();
+      if (tasks == state) {
+        // To prevent unessary state updates and widget rebuilds if the fetched tasks are the same as the current state
+        return;
+      }
       state = tasks;
     } finally {
       _loading = false;

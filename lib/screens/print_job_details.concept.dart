@@ -597,7 +597,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+          const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
