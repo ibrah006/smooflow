@@ -369,12 +369,15 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
         selectedPrinterId = null;
         stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
 
-        showCupertinoSheet(
+        showModalBottomSheet(
           context: context,
-
-          pageBuilder: (context) => selectedTask == null
+          isScrollControlled: true,
+          builder: (context) => SizedBox(
+            height: MediaQuery.of(context).size.height * 0.9,
+            child: selectedTask == null
               ? _buildNoSelectionState()
-              : _buildSchedulingForm());
+              : _buildSchedulingForm()
+            ));
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
@@ -500,6 +503,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     return StatefulBuilder(
       builder: (context, setState) {
         return Material(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           color: Color(0xFFF8FAFC),
           child: SingleChildScrollView(
             padding: EdgeInsets.all(24),
@@ -507,6 +511,18 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 20),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 // Header
                 Row(
                   children: [
@@ -936,13 +952,13 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     },
                   ),
                 ),
-        
+                  
                 SizedBox(height: 8),
-        
+                  
                 if (selectedMaterialId != null) _buildStockItemDropdown(),
-        
+                  
                 SizedBox(height: 16),
-        
+                  
                 // Production Quantity
                 _buildInputField(
                   label: 'Production Quantity',
