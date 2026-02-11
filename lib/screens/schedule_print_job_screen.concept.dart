@@ -607,6 +607,10 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                             ],
                           ),
                         ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: Color(0xFF64748B))
+                        )
                       ],
                     ),
                     
