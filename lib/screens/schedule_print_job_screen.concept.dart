@@ -393,7 +393,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
               ? _buildNoSelectionState()
               : _buildSchedulingForm()
             ));
-        materialId = null;
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
@@ -1548,11 +1547,16 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             if (materialStockTransations == null)
               CardLoading(height: 55, borderRadius: BorderRadius.circular(12))
             else Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.circular(12),
-              ),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: selectedStockItemBarcode == null
+                              ? Color(0xFFE2E8F0)
+                              : Color(0xFF2563EB),
+                        ),
+                      ),
               child: DropdownButtonFormField<String>(
                 hint: Row(
                   spacing: 8,
