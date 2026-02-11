@@ -393,6 +393,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
               ? _buildNoSelectionState()
               : _buildSchedulingForm()
             ));
+        materialId = null;
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
@@ -1577,7 +1578,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                 validator: (value) => value == null ? (materialStockTransations.isEmpty? 'Empty stock' : 'Please select item') : null,
               ),
             ),
-            Container(
+            if (selectedStockItemBarcode != null) Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
