@@ -49,7 +49,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
   }
   void onPrintersPressed () {
-    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: 'available'));
+    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: null));
   }
   void onInventoryPressed () {
 

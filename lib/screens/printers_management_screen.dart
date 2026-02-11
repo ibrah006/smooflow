@@ -324,7 +324,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
 
             // Printers List
             Expanded(
-              child: filteredPrinters.isEmpty
+              child: filteredPrinters.isEmpty 
                   ? _buildEmptyState()
                   : ListView.separated(
                       padding: EdgeInsets.all(20),
@@ -339,7 +339,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: showEmptyStateAddPrinter? null : FloatingActionButton.extended(
         onPressed: onAddPrinter,
         backgroundColor: Color(0xFF2563EB),
         elevation: 4,
@@ -812,6 +812,8 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
     );
   }
 
+  bool get showEmptyStateAddPrinter=> filteredPrinters.isEmpty  && (selectedFilter == null || selectedFilter == 'available');
+
   Widget _buildEmptyState() {
     String message;
     String description;
@@ -864,10 +866,11 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 24),
-          ElevatedButton.icon(
+          if (showEmptyStateAddPrinter) ElevatedButton.icon(
             onPressed: onAddPrinter,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF2563EB),
+              foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
