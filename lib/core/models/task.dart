@@ -179,6 +179,26 @@ class Task {
     _printerId = printerId;
   }
 
+  set materialId(String? materialId) {
+    _materialId = materialId;
+  }
+  
+  set actualProductionStartTime(DateTime? productionStartTime) {
+    _productionStartTime = productionStartTime;
+  }
+
+  set runs(int? runs) {
+    _runs = runs;
+  }
+
+  set productionQuantity(double? productionQuantity) {
+    _productionQuantity = productionQuantity;
+  }
+
+  set stockTransactionBarcode(String? stockTransactionBarcode) {
+    _stockTransactionBarcode = stockTransactionBarcode;
+  }
+
   factory Task.fromJson(Map<String, dynamic> json) {
     final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
     return Task(

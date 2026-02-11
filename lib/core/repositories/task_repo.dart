@@ -211,4 +211,34 @@ class TaskRepo {
 
     // Successfully unasssigned priner to task and ended print job
   }
+
+  Future<void> schedulePrint({
+    required int taskId,
+    required String printerId,
+    required String materialId,
+    required String progressStage,
+    required int runs,
+    required int productionQuantity,
+    required String barcode
+  }) async {
+    final response = await ApiClient.http.put(
+      '/tasks/$taskId/schedule-print',
+      body: {
+        "printerId": printerId,
+        "materialId": materialId,
+        "progressStage": progressStage,
+        "runs": runs,
+        "productionQuantity": productionQuantity,
+        "barcode": barcode
+      }
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint("Error when assigning printer to task, statusCode: ${response.statusCode}");
+      // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
+      throw jsonDecode(response.body)["message"];
+    }
+
+    // Successfully scheduled print job
+  }
 }

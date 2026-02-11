@@ -108,9 +108,23 @@ class TaskProvider {
     /// Pass null when unnassigning printer from task or when progressing task stage without needing to assign a printer (e.g. progressing to completed status)
     String? printerId,
     String? stockTransactionBarcode,
+    String? materialId
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
+    }
+    if (printerId != null && (materialId == null || stockTransactionBarcode == null)) {
+      throw "Material ID and stock transaction barcode must be provided when assigning printer to task for printing";
+    }
+
+    if (printerId != null) {
+      await ref.watch(taskNotifierProvider.notifier).schedulePrint(
+        taskId: taskId,
+        printerId: printerId,
+        materialId: materialId!, // This value is not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+        productionQuantity: 1, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+        barcode: stockTransactionBarcode!
+      );
     }
 
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);

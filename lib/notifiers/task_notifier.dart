@@ -358,6 +358,39 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       }
     }
   }
+
+  Future<void> schedulePrint({
+    required int taskId,
+    required String printerId,
+    required String materialId,
+    String progressStage = 'production',
+    int runs = 1,
+    required int productionQuantity,
+    required String barcode
+  }) async {
+    await _repo.schedulePrint(
+      taskId: taskId,
+      printerId: printerId,
+      materialId: materialId,
+      progressStage: progressStage,
+      runs: runs,
+      productionQuantity: productionQuantity,
+      barcode: barcode
+    );
+
+    state = state.map((task) {
+      if (task.id == taskId) {
+        task.printerId = printerId;
+        task.status = TaskStatus.printing;
+        task.materialId = materialId;
+        task.actualProductionStartTime = DateTime.now();
+        task.runs = runs;
+        task.productionQuantity = productionQuantity.toDouble();
+        task.stockTransactionBarcode = barcode;
+      }
+      return task;
+    }).toList();
+  }
 }
 
 class TasksResponse {
