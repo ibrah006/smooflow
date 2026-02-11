@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
@@ -8,13 +9,11 @@ class PrintersManagementScreen extends ConsumerStatefulWidget {
   final List<Printer> printers;
   /// 'busy', 'available', 'maintenance', 'blocked' or null for all
   final String? initialFilter;
-  final VoidCallback? onAddPrinter;
 
   const PrintersManagementScreen({
     Key? key,
     required this.printers,
     this.initialFilter,
-    this.onAddPrinter,
   }) : super(key: key);
 
   @override
@@ -79,6 +78,9 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
   void onStartMaintenance (Printer printer) {}
   void onUnblock (Printer printer) {}
   void onBlock (Printer printer) {}
+  void onAddPrinter() {
+    AppRoutes.navigateTo(context, AppRoutes.addPrinter);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -337,22 +339,20 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
           ],
         ),
       ),
-      floatingActionButton: widget.onAddPrinter != null
-          ? FloatingActionButton.extended(
-              onPressed: widget.onAddPrinter,
-              backgroundColor: Color(0xFF2563EB),
-              elevation: 4,
-              icon: Icon(Icons.add_rounded, size: 24),
-              label: Text(
-                'Add Printer',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: onAddPrinter,
+        backgroundColor: Color(0xFF2563EB),
+        elevation: 4,
+        icon: Icon(Icons.add_rounded, size: 24),
+        label: Text(
+          'Add Printer',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ),
     );
   }
 
@@ -863,28 +863,26 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
             ),
             textAlign: TextAlign.center,
           ),
-          if (widget.onAddPrinter != null) ...[
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: widget.onAddPrinter,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onAddPrinter,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF2563EB),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              icon: Icon(Icons.add, size: 20),
-              label: Text(
-                'Add Printer',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+              elevation: 0,
+            ),
+            icon: Icon(Icons.add, size: 20),
+            label: Text(
+              'Add Printer',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
