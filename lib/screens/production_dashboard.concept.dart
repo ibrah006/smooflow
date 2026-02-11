@@ -48,8 +48,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   void onSchedulePressed () {
     AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
   }
-  void onPrintersPressed () {
-    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: null));
+  void onPrintersPressed ({required String? initialFilter}) {
+    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: initialFilter));
   }
   void onInventoryPressed () {
 
@@ -212,7 +212,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             backgroundColor: Color(0xFFEFF6FF),
                             trend: '$busyPrintersCount busy',
                             trendPositive: null,
-                            onTap: onPrintersPressed,
+                            onTap: ()=> onPrintersPressed(initialFilter: 'available'),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -270,7 +270,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         ),
                         Spacer(),
                         TextButton(
-                          onPressed: onPrintersPressed,
+                          onPressed: ()=> onPrintersPressed(initialFilter: selectedFilter == 'All'? null : selectedFilter.toLowerCase()),
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               horizontal: 12,
