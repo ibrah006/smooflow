@@ -112,7 +112,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Production Dashboard',
+                          'Dashboard',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
