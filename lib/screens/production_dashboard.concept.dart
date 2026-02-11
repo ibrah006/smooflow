@@ -84,7 +84,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -138,6 +138,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     SizedBox(height: 20),
                     // Search Bar
                     Container(
+                      margin: EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
                         color: Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
@@ -183,7 +184,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
 
             // Stats Cards
             SliverToBoxAdapter(
-              child: Padding(
+              child: Container(
+                color: Color(0xFFF8FAFC),
                 padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
