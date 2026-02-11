@@ -37,7 +37,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   List<Task> get totalPrintJobs => ref.watch(taskNotifierProvider).where(
     (task) => task.status == TaskStatus.clientApproved || task.status == TaskStatus.printing || task.status == TaskStatus.finishing || task.status == TaskStatus.blocked).toList(); // clientApproved + printing + finishing + blocked
   int get printJobsInQueue => totalPrintJobs.where((task) => task.status == TaskStatus.clientApproved).length; // clientApproved
-  int get lowStockItems => ref.watch(materialNotifierProvider).materials.where((item) => item.isLowStock).length; // Materials with isLow = true
+  int get attentionNeededInventoryItems => ref.watch(materialNotifierProvider).materials.where((item) => item.isLowStock || item.isCriticalStock).length; // Materials with isLow = true
   // Available printers (active AND not busy)
   List<Printer> get availablePrinters => printers.where((printer)=> printer.isActive && !printer.isBusy).toList();
   int get busyPrintersCount => printers.where((printer) => printer.isActive && printer.isBusy).length;
@@ -233,13 +233,13 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     SizedBox(height: 12),
                     _buildFullWidthMetricCard(
                       title: 'Inventory Status',
-                      value: lowStockItems.toString(),
+                      value: attentionNeededInventoryItems.toString(),
                       subtitle: 'Items need attention',
                       icon: Icons.inventory_2_rounded,
-                      iconColor: lowStockItems > 0
+                      iconColor: attentionNeededInventoryItems > 0
                           ? Color(0xFFF59E0B)
                           : Color(0xFF10B981),
-                      backgroundColor: lowStockItems > 0
+                      backgroundColor: attentionNeededInventoryItems > 0
                           ? Color(0xFFFEF3C7)
                           : Color(0xFFECFDF5),
                       actionLabel: 'View Inventory',
