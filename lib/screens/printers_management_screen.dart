@@ -37,7 +37,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
     var ps = printers;
     // Apply status filter
     if (selectedFilter != null) {
-      ps = ps.where((p) => p.status == selectedFilter).toList();
+      ps = ps.where((p) => (p.isAvailable && selectedFilter == 'available') || p.status.name == selectedFilter).toList();
     }
 
     // Apply search filter

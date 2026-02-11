@@ -172,6 +172,24 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
                           label: 'Location',
                           hint: isEditing? "📍 N/a" : 'e.g., Section A',
                         ),
+
+                        if (widget.printer?.currentJobId != null)...[
+                          const SizedBox(height: 16),
+                        
+                          _buildTextField(
+                            controller: _locationController,
+                            label: 'Task ID',
+                            hint: widget.printer!.currentJobId.toString(),
+                          )
+                        ],
+
+                        const SizedBox(height: 16),
+
+                        _buildTextField(
+                          controller: null,
+                          label: 'True Status',
+                          hint: widget.printer?.statusName?? "N/a",
+                        ),
                       ],
                     ),
                   ),
@@ -339,7 +357,7 @@ class _AddPrinterScreenState extends ConsumerState<PrinterScreen> {
   }
 
   Widget _buildTextField({
-    required TextEditingController controller,
+    required TextEditingController? controller,
     required String label,
     required String hint,
     String? Function(String?)? validator,
