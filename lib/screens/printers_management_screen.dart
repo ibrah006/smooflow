@@ -85,13 +85,12 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Container(
-              color: Colors.white,
               padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,20 +113,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                           ),
                         ),
                       ),
-                      SizedBox(width: 12),
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.print_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      SizedBox(width: 12),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +128,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                               ),
                             ),
                             Text(
-                              '${printers.length} printers total',
+                              '${printers.length} printer(s) total',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF64748B),
@@ -324,7 +310,9 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
 
             // Printers List
             Expanded(
-              child: filteredPrinters.isEmpty 
+              child: Container(
+                color: Color(0xFFF8FAFC),
+                child: filteredPrinters.isEmpty 
                   ? _buildEmptyState()
                   : ListView.separated(
                       padding: EdgeInsets.all(20),
@@ -334,7 +322,8 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                         final printer = filteredPrinters[index];
                         return _buildPrinterCard(printer);
                       },
-                    ),
+                    )
+              ),
             ),
           ],
         ),
