@@ -331,20 +331,25 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                   ),
                 ),
                 Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-                Expanded(
-                  child: clientApprovedTasks.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.separated(
-                          padding: EdgeInsets.all(16).copyWith(bottom: 42),
-                          itemCount: clientApprovedTasks.length,
-                          separatorBuilder: (context, index) =>
-                              SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final task = clientApprovedTasks[index];
-                            final isSelected = selectedTask?.id == task.id;
-                            return _buildTaskCard(task, isSelected);
-                          },
-                        ),
+                RefreshIndicator(
+                  onRefresh: () async {
+                    
+                  },
+                  child: Expanded(
+                    child: clientApprovedTasks.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.separated(
+                            padding: EdgeInsets.all(16).copyWith(bottom: 42),
+                            itemCount: clientApprovedTasks.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final task = clientApprovedTasks[index];
+                              final isSelected = selectedTask?.id == task.id;
+                              return _buildTaskCard(task, isSelected);
+                            },
+                          ),
+                  ),
                 ),
               ],
             ),
@@ -1402,7 +1407,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return Container(
+      height: MediaQuery.of(context).size.height - 420,
+      alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
