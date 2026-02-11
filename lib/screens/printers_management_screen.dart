@@ -1205,6 +1205,7 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
           backgroundColor: color,
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

@@ -58,7 +58,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: initialFilter));
   }
   void onInventoryPressed () {
-
+    AppRoutes.navigateTo(context, AppRoutes.materials);
   }
 
   Timer? _refreshTimer;
