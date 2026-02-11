@@ -5,7 +5,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:googleapis/integrations/v1.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -35,9 +34,12 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   List<Printer> get printers=> ref.watch(printerNotifierProvider).printers; 
   List<Task> get totalPrintJobs => ref.watch(taskNotifierProvider).where(
     (task) => task.status == TaskStatus.clientApproved || task.status == TaskStatus.printing || task.status == TaskStatus.finishing || task.status == TaskStatus.blocked).toList(); // clientApproved + printing + finishing + blocked
+  int get printJobsInQueue => totalPrintJobs.where((task) => task.status == TaskStatus.clientApproved).length; // clientApproved
   int get lowStockItems => ref.watch(materialNotifierProvider).materials.where((item) => item.isLowStock).length; // Materials with isLow = true
   // Available printers (active AND not busy)
-  List<Printer> get activePrinters => printers.where((printer)=> printer.isActive && printer.isBusy).toList(); 
+  List<Printer> get availablePrinters => printers.where((printer)=> printer.isActive && !printer.isBusy).toList();
+  int get busyPrintersCount => printers.where((printer) => printer.isActive && printer.isBusy).length;
+  int get maintenancePrintersCount => printers.where((printer) => printer.status == PrinterStatus.maintenance).length;
   // Today's schedule - tasks that are scheduled for today
   List<Task> get todaysSchedule => ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
 
@@ -200,11 +202,11 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                         Expanded(
                           child: _buildMetricCard(
                             title: 'Available Printers',
-                            value: activePrinters.length.toString(),
+                            value: availablePrinters.length.toString(),
                             icon: Icons.print_rounded,
                             iconColor: Color(0xFF2563EB),
                             backgroundColor: Color(0xFFEFF6FF),
-                            trend: '2 busy',
+                            trend: '$busyPrintersCount busy',
                             trendPositive: null,
                             onTap: onPrintersPressed,
                           ),
@@ -217,7 +219,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             icon: Icons.assignment_rounded,
                             iconColor: Color(0xFF10B981),
                             backgroundColor: Color(0xFFECFDF5),
-                            trend: '3 in queue',
+                            trend: '$printJobsInQueue in queue',
                             trendPositive: null,
                             onTap: onSchedulePressed,
                           ),
@@ -298,15 +300,13 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildFilterChip('All', 5),
+                          _buildFilterChip('All', printers.length),
                           SizedBox(width: 8),
-                          _buildFilterChip('Available', 2),
+                          _buildFilterChip('Available', availablePrinters.length),
                           SizedBox(width: 8),
-                          _buildFilterChip('Busy', 1),
+                          if (busyPrintersCount > 0) _buildFilterChip('Busy', busyPrintersCount),
                           SizedBox(width: 8),
-                          _buildFilterChip('Blocked', 1),
-                          SizedBox(width: 8),
-                          _buildFilterChip('Maintenance', 1),
+                          if (maintenancePrintersCount > 0) _buildFilterChip('Maintenance', maintenancePrintersCount),
                         ],
                       ),
                     ),
