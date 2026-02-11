@@ -963,7 +963,7 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        printer.name,
+                        printer.nickname,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
