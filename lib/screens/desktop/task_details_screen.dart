@@ -216,7 +216,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
             ),
             SizedBox(width: 10)
           ],
-          if (status != TaskStatus.clientApproved)
+          if (status == TaskStatus.designing || status == TaskStatus.pending)
             ElevatedButton.icon(
               key: _advanceButtonKey,
               onPressed: task.status.nextStage == TaskStatus.printing? null : _showMoveToNextStageDialog,

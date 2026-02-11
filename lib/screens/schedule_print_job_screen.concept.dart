@@ -93,12 +93,20 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
     final printer = ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.id == selectedPrinterId);
 
-    await ref.read(setTaskStateProvider(TaskStateParams(
-      id: selectedTask!.id,
+    // await ref.read(setTaskStateProvider(TaskStateParams(
+    //   id: selectedTask!.id,
+    //   printerId: printer.id,
+    //   stockTransactionBarcode: selectedTask!.stockTransactionBarcode,
+    //   newTaskStatus: TaskStatus.printing
+    // )));
+
+    await TaskProvider.setTaskState(
+      ref: ref,
+      taskId: selectedTask!.id,
       printerId: printer.id,
-      stockTransactionBarcode: selectedTask!.stockTransactionBarcode,
-      newTaskStatus: TaskStatus.printing
-    )));
+      newStatus: TaskStatus.printing,
+      stockTransactionBarcode: selectedStockItemBarcode,
+    );
   }
 
   void _scheduleJob() async {
