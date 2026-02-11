@@ -105,7 +105,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       taskId: selectedTask!.id,
       printerId: printer.id,
       newStatus: TaskStatus.printing,
-      materialId: materialIdfix,
+      materialId: materialId,
       stockTransactionBarcode: selectedStockItemBarcode,
     );
   }
