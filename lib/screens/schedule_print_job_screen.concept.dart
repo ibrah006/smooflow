@@ -837,7 +837,10 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                           );
                         }).toList(),
                         onChanged: (value) {
-                          setState(() => selectedMaterialId = value);
+                          setState(() {
+                            selectedMaterialId = value;
+                            selectedStockItemBarcode = null;
+                          });
                         },
                       ),
                     ),
