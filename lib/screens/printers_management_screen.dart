@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 
-class PrintersManagementScreen extends StatefulWidget {
+class PrintersManagementScreen extends ConsumerStatefulWidget {
   final List<Printer> printers;
-  final PrinterStatus? initialFilter;
+  /// 'busy', 'available', 'maintenance', 'blocked' or null for all
+  final String? initialFilter;
   final Function(Printer)? onPrinterTap;
   final Function(Printer)? onStartMaintenance;
   final Function(Printer)? onUnblock;
@@ -24,12 +26,12 @@ class PrintersManagementScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<PrintersManagementScreen> createState() =>
+  ConsumerState<PrintersManagementScreen> createState() =>
       _PrintersManagementScreenState();
 }
 
-class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
-  late PrinterStatus? selectedFilter;
+class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScreen> {
+  late String? selectedFilter;
   String searchQuery = '';
   String sortBy = 'name'; // name, status, section, jobs
 
@@ -77,8 +79,9 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
     return printers;
   }
 
-  int _getPrinterCountByStatus(PrinterStatus status) {
-    return widget.printers.where((p) => p.status == status).length;
+  int _getPrinterCountByFilter(String filter) {
+
+    return widget.printers.where((p) => (filter == 'available' && !p.isBusy && p.isActive) || (filter == 'busy' && p.isBusy) || p.status.name == filter).length;
   }
 
   @override
@@ -286,38 +289,34 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                     SizedBox(width: 10),
                     _buildFilterChip(
                       label: 'Available',
-                      count: _getPrinterCountByStatus(PrinterStatus.available),
-                      isSelected: selectedFilter == PrinterStatus.available,
+                      count: _getPrinterCountByFilter('available'),
+                      isSelected: selectedFilter == 'available',
                       statusColor: Color(0xFF10B981),
-                      onTap: () =>
-                          setState(() => selectedFilter = PrinterStatus.available),
+                      onTap: () => setState(() => selectedFilter = 'available'),
                     ),
                     SizedBox(width: 10),
                     _buildFilterChip(
                       label: 'Busy',
-                      count: _getPrinterCountByStatus(PrinterStatus.busy),
-                      isSelected: selectedFilter == PrinterStatus.busy,
+                      count: _getPrinterCountByFilter('busy'),
+                      isSelected: selectedFilter == 'busy',
                       statusColor: Color(0xFF2563EB),
-                      onTap: () =>
-                          setState(() => selectedFilter = PrinterStatus.busy),
+                      onTap: () => setState(() => selectedFilter = 'busy'),
                     ),
                     SizedBox(width: 10),
                     _buildFilterChip(
                       label: 'Maintenance',
-                      count: _getPrinterCountByStatus(PrinterStatus.maintenance),
-                      isSelected: selectedFilter == PrinterStatus.maintenance,
+                      count: _getPrinterCountByFilter('maintenance'),
+                      isSelected: selectedFilter == 'maintenance',
                       statusColor: Color(0xFFF59E0B),
-                      onTap: () => setState(
-                          () => selectedFilter = PrinterStatus.maintenance),
+                      onTap: () => setState(() => selectedFilter = 'maintenance'),
                     ),
                     SizedBox(width: 10),
                     _buildFilterChip(
                       label: 'Blocked',
-                      count: _getPrinterCountByStatus(PrinterStatus.blocked),
-                      isSelected: selectedFilter == PrinterStatus.blocked,
+                      count: _getPrinterCountByFilter('blocked'),
+                      isSelected: selectedFilter == 'blocked',
                       statusColor: Color(0xFFEF4444),
-                      onTap: () =>
-                          setState(() => selectedFilter = PrinterStatus.blocked),
+                      onTap: () => setState(() => selectedFilter = 'blocked'),
                     ),
                   ],
                 ),
@@ -438,6 +437,15 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
   }
 
   Widget _buildPrinterCard(Printer printer) {
+
+    late final String currentJobName;
+
+    try {
+      currentJobName = printer.currentJobId != null ? ref.watch(taskNotifierProvider).firstWhere((task) => task.id == printer.currentJobId).name : "No job assigned";
+    } catch (e) {
+      currentJobName = "Updating current job...";
+    }
+
     return GestureDetector(
       onTap: () {
         if (widget.onPrinterTap != null) {
@@ -484,7 +492,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          printer.name,
+                          printer.nickname,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -494,7 +502,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          printer.model,
+                          printer.name,
                           style: TextStyle(
                             fontSize: 14,
                             color: Color(0xFF64748B),
@@ -530,7 +538,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                                 size: 14, color: Color(0xFF64748B)),
                             SizedBox(width: 4),
                             Text(
-                              printer.section,
+                              printer.location?? 'No section',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF64748B),
@@ -551,8 +559,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
             ),
 
             // Current Job / Status Details
-            if (printer.status == PrinterStatus.busy &&
-                printer.currentJobName != null) ...[
+            if (printer.isBusy) ...[
               Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
               Padding(
                 padding: EdgeInsets.all(18),
@@ -591,27 +598,11 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                           ),
                         ),
                         Spacer(),
-                        if (printer.estimatedCompletion != null)
-                          Row(
-                            children: [
-                              Icon(Icons.schedule,
-                                  size: 14, color: Color(0xFF64748B)),
-                              SizedBox(width: 4),
-                              Text(
-                                'ETC ${DateFormat('HH:mm').format(printer.estimatedCompletion!)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
                       ],
                     ),
                     SizedBox(height: 12),
                     Text(
-                      printer.currentJobName!,
+                      currentJobName!,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -628,35 +619,34 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                         ),
                       ),
                     ],
-                    if (printer.progress != null) ...[
-                      SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: printer.progress!,
-                                backgroundColor: Color(0xFFE2E8F0),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF2563EB),
-                                ),
-                                minHeight: 8,
+                    
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: .65,
+                              backgroundColor: Color(0xFFE2E8F0),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF2563EB),
                               ),
+                              minHeight: 8,
                             ),
                           ),
-                          SizedBox(width: 12),
-                          Text(
-                            '${(printer.progress! * 100).toInt()}%',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF2563EB),
-                            ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          '65%',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2563EB),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -690,16 +680,6 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                               color: Color(0xFF92400E),
                             ),
                           ),
-                          if (printer.nextMaintenance != null) ...[
-                            SizedBox(height: 2),
-                            Text(
-                              'Expected: ${DateFormat('MMM dd').format(printer.nextMaintenance!)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFFA16207),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -708,7 +688,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
               ),
             ],
 
-            if (printer.status == PrinterStatus.blocked) ...[
+            if (printer.status == PrinterStatus.error) ...[
               Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
               Container(
                 padding: EdgeInsets.all(18),
@@ -735,16 +715,17 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                               color: Color(0xFF991B1B),
                             ),
                           ),
-                          if (printer.blockedReason != null) ...[
-                            SizedBox(height: 2),
-                            Text(
-                              printer.blockedReason!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFFC81E1E),
-                              ),
+                          
+                          SizedBox(height: 2),
+                          Text(
+                            // TODO: TO be Implemented (as optional to add reason for block)
+                            "Blocked due to error state. Please unblock after resolving the issue.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFC81E1E),
                             ),
-                          ],
+                          ),
+                          
                         ],
                       ),
                     ),
@@ -776,7 +757,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
             ],
 
             // Stats Footer (for available printers)
-            if (printer.status == PrinterStatus.available) ...[
+            if (!printer.isBusy && printer.isActive) ...[
               Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
               Padding(
                 padding: EdgeInsets.all(18),
@@ -795,16 +776,6 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
                       color: Color(0xFFE2E8F0),
                     ),
                     SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatItem(
-                        icon: Icons.schedule_outlined,
-                        label: 'Last Maintenance',
-                        value: printer.lastMaintenance != null
-                            ? DateFormat('MMM dd')
-                                .format(printer.lastMaintenance!)
-                            : 'N/A',
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -858,7 +829,7 @@ class _PrintersManagementScreenState extends State<PrintersManagementScreen> {
       message = 'No Printers Found';
       description = 'Try adjusting your search or filters';
     } else if (selectedFilter != null) {
-      message = 'No ${selectedFilter!.name.capitalize()} Printers';
+      message = 'No ${selectedFilter!.capitalize()} Printers';
       description = 'There are no printers with this status';
     } else {
       message = 'No Printers Available';
@@ -1083,12 +1054,11 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _buildDetailRow('Model', printer.model),
-                          _buildDetailRow('Section', printer.section),
-                          if (printer.serialNumber != null)
-                            _buildDetailRow('Serial Number', printer.serialNumber!),
-                          if (printer.ipAddress != null)
-                            _buildDetailRow('IP Address', printer.ipAddress!),
+                          _buildDetailRow('Model', printer.name),
+                          _buildDetailRow('Section', printer.location ?? 'No section'),
+                          /// TODO :Implement this
+                          // if (printer.ipAddress != null)
+                          //   _buildDetailRow('IP Address', printer.ipAddress!),
                         ],
                       ),
                     ),
@@ -1112,58 +1082,59 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
                             'Total Jobs Completed',
                             printer.totalJobsCompleted.toString(),
                           ),
-                          if (printer.lastMaintenance != null)
-                            _buildDetailRow(
-                              'Last Maintenance',
-                              DateFormat('MMM dd, yyyy')
-                                  .format(printer.lastMaintenance!),
-                            ),
-                          if (printer.nextMaintenance != null)
-                            _buildDetailRow(
-                              'Next Maintenance',
-                              DateFormat('MMM dd, yyyy')
-                                  .format(printer.nextMaintenance!),
-                            ),
+                          // if (printer.lastMaintenance != null)
+                          //   _buildDetailRow(
+                          //     'Last Maintenance',
+                          //     DateFormat('MMM dd, yyyy')
+                          //         .format(printer.lastMaintenance!),
+                          //   ),
+                          // if (printer.nextMaintenance != null)
+                          //   _buildDetailRow(
+                          //     'Next Maintenance',
+                          //     DateFormat('MMM dd, yyyy')
+                          //         .format(printer.nextMaintenance!),
+                          //   ),
                         ],
                       ),
                     ),
                   ),
 
-                  if (printer.capabilities.isNotEmpty) ...[
-                    SizedBox(height: 20),
-                    _buildSection(
-                      title: 'Capabilities',
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: printer.capabilities
-                            .map((capability) => Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    capability,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF475569),
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  ],
+                  /// Capabilities
+                  // if (printer.capabilities.isNotEmpty) ...[
+                  //   SizedBox(height: 20),
+                  //   _buildSection(
+                  //     title: 'Capabilities',
+                  //     child: Wrap(
+                  //       spacing: 8,
+                  //       runSpacing: 8,
+                  //       children: printer.capabilities
+                  //           .map((capability) => Container(
+                  //                 padding: EdgeInsets.symmetric(
+                  //                   horizontal: 12,
+                  //                   vertical: 6,
+                  //                 ),
+                  //                 decoration: BoxDecoration(
+                  //                   color: Color(0xFFF1F5F9),
+                  //                   borderRadius: BorderRadius.circular(8),
+                  //                 ),
+                  //                 child: Text(
+                  //                   capability,
+                  //                   style: TextStyle(
+                  //                     fontSize: 13,
+                  //                     fontWeight: FontWeight.w500,
+                  //                     color: Color(0xFF475569),
+                  //                   ),
+                  //                 ),
+                  //               ))
+                  //           .toList(),
+                  //     ),
+                  //   ),
+                  // ],
 
                   SizedBox(height: 32),
 
                   // Actions
-                  if (printer.status == PrinterStatus.available &&
+                  if (!printer.isBusy && printer.isActive &&
                       onStartMaintenance != null)
                     _buildActionButton(
                       label: 'Start Maintenance',
@@ -1175,7 +1146,7 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
                       },
                     ),
 
-                  if (printer.status == PrinterStatus.available && onBlock != null)
+                  if (!printer.isBusy && printer.isActive && onBlock != null)
                     ...[
                       SizedBox(height: 12),
                       _buildActionButton(
@@ -1188,19 +1159,6 @@ class PrinterDetailsBottomSheet extends StatelessWidget {
                         },
                       ),
                     ],
-
-                  if (printer.status == PrinterStatus.blocked &&
-                      onUnblock != null) ...[
-                    _buildActionButton(
-                      label: 'Unblock Printer',
-                      icon: Icons.check_circle,
-                      color: Color(0xFF10B981),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        onUnblock!(printer);
-                      },
-                    ),
-                  ],
                 ],
               ),
             ),

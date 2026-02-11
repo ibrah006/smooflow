@@ -11,6 +11,7 @@ enum JobPriority { low, medium, high, urgent }
 enum BlockedReason { materials, files, designApproval, other }
 
 enum PrinterStatus {
+  // NO TWO WORD STATUSES to be specified
   active,
   maintenance,
   offline,
