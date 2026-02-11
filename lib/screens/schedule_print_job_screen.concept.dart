@@ -36,7 +36,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   int runs = 1;
   int productionQuantity = 0;
   String? materialId;
-  String? stockTransactionBarcode;
   bool isScheduling = false;
 
   bool stockItemAlreadySpecified = false;
@@ -78,6 +77,18 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     }).toList();
   }
 
+  resetParameters() {
+    selectedTask = null;
+    selectedPrinterId = null;
+    scheduledStartTime = null;
+    productionDuration = 60;
+    runs = 1;
+    productionQuantity = 0;
+    materialId = null;
+    selectedStockItemBarcode = null;
+    isScheduling = false;
+  }
+
   Future<void> _assignPrinter() async {
 
     final printer = ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.id == selectedPrinterId);
@@ -103,15 +114,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       
       if (mounted) {
         setState(() {
-          selectedTask = null;
-          selectedPrinterId = null;
-          scheduledStartTime = null;
-          productionDuration = 60;
-          runs = 1;
-          productionQuantity = 0;
-          materialId = null;
-          stockTransactionBarcode = null;
-          isScheduling = false;
+          resetParameters();
         });
 
         // Show success message
@@ -362,7 +365,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           runs = task.runs ?? 1;
           productionQuantity = task.productionQuantity?.toInt()?? 0;
           materialId = task.materialId;
-          stockTransactionBarcode = task.stockTransactionBarcode;
+          selectedStockItemBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
 
@@ -754,7 +757,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                       icon: Icons.qr_code,
                       child: TextFormField(
                         enabled: !stockItemAlreadySpecified,
-                        initialValue: stockTransactionBarcode ?? '',
+                        initialValue: selectedStockItemBarcode ?? '',
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -789,7 +792,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                         ),
                         onChanged: (value) {
                           setState(() {
-                            stockTransactionBarcode = value.isEmpty ? null : value;
+                            selectedStockItemBarcode = value.isEmpty ? null : value;
                           });
                         },
                       ),
@@ -917,9 +920,9 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                         Expanded(
                           flex: 2,
                           child: ElevatedButton(
-                            onPressed: selectedPrinterId == null || isScheduling
-                                ? null
-                                : _scheduleJob,
+                            onPressed: selectedPrinterId != null && !isScheduling && productionQuantity > 0
+                                ? _scheduleJob
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF2563EB),
                               disabledBackgroundColor: Color(0xFFE2E8F0),
