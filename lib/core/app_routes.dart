@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
+import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
@@ -20,6 +21,7 @@ import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
+import 'package:smooflow/screens/printers_management_screen.dart';
 import 'package:smooflow/screens/production_dashboard.concept.dart';
 import 'package:smooflow/screens/production_report_screen.dart';
 import 'package:smooflow/screens/progress_log_screen.dart';
@@ -121,6 +123,7 @@ class AppRoutes {
   static const schedulePrintView = '/print-schedule/view';
   static const schedulePrintStages = '/print-schedule/stages';
 
+  static const printersManagement = '/printers';
   static const addPrinter = '/printers/add';
   static const printerDetails = '/printers/details';
 
@@ -346,6 +349,11 @@ class AppRoutes {
       case designCreateTaskScreen:
         if (args is CreateTaskArgs) {
           screen = DesignCreateTaskScreen(preselectedProjectId: args.preselectedProjectId, onCreateTask: args.onCreateTask);
+        }
+        break;
+      case printersManagement:
+        if (args is PrintersManagementArgs) {
+          screen = PrintersManagementScreen(initialFilter: args.initialFilter);
         }
         break;
     }
