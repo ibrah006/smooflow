@@ -1,3 +1,5 @@
+// production_dashboard_screen.concept.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -62,7 +64,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Production Dashboard',
+                          'Dashboard',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
