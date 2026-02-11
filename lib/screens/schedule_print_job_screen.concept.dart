@@ -841,7 +841,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                       
                     SizedBox(height: 8),
                       
-                    if (selectedMaterialId != null) _buildStockItemDropdown(),
+                    if (selectedMaterialId != null) _buildStockItemDropdown(setState),
                       
                     SizedBox(height: 16),
                       
@@ -1490,7 +1490,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     }
   }
 
-  Widget _buildStockItemDropdown() {
+  Widget _buildStockItemDropdown(void setState(void Function())) {
     final materials = ref.watch(materialNotifierProvider).materials;
 
     final selectedMaterial = materials.firstWhere((material)=> material.id == selectedMaterialId);
