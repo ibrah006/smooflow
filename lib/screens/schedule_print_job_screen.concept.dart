@@ -963,6 +963,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     // Info banner
                     Container(
                       padding: EdgeInsets.all(14),
+                      margin: EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
                         color: Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(10),
