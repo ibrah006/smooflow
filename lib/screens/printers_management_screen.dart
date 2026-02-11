@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 
 class PrintersManagementScreen extends ConsumerStatefulWidget {
-  final List<Printer> printers;
   /// 'busy', 'available', 'maintenance', 'blocked' or null for all
   final String? initialFilter;
 
   const PrintersManagementScreen({
     Key? key,
-    required this.printers,
     this.initialFilter,
   }) : super(key: key);
 
@@ -32,17 +31,18 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
     selectedFilter = widget.initialFilter;
   }
 
-  List<Printer> get filteredPrinters {
-    var printers = widget.printers;
+  List<Printer> get printers=> ref.watch(printerNotifierProvider).printers;
 
+  List<Printer> get filteredPrinters {
+    var ps = printers;
     // Apply status filter
     if (selectedFilter != null) {
-      printers = printers.where((p) => p.status == selectedFilter).toList();
+      ps = ps.where((p) => p.status == selectedFilter).toList();
     }
 
     // Apply search filter
     if (searchQuery.isNotEmpty) {
-      printers = printers.where((p) {
+      ps = ps.where((p) {
         final query = searchQuery.toLowerCase();
         return p.name.toLowerCase().contains(query) ||
             p.nickname.toLowerCase().contains(query) ||
@@ -53,26 +53,26 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
     // Apply sorting
     switch (sortBy) {
       case 'name':
-        printers.sort((a, b) => a.name.compareTo(b.name));
+        ps.sort((a, b) => a.name.compareTo(b.name));
         break;
       case 'status':
-        printers.sort((a, b) => a.status.index.compareTo(b.status.index));
+        ps.sort((a, b) => a.status.index.compareTo(b.status.index));
         break;
       case 'section':
-        printers.sort((a, b) => a.location?.compareTo(b.location ?? '') ?? 0);
+        ps.sort((a, b) => a.location?.compareTo(b.location ?? '') ?? 0);
         break;
       case 'jobs':
-        printers.sort((a, b) =>
+        ps.sort((a, b) =>
             b.totalJobsCompleted.compareTo(a.totalJobsCompleted));
         break;
     }
 
-    return printers;
+    return ps;
   }
 
   int _getPrinterCountByFilter(String filter) {
 
-    return widget.printers.where((p) => (filter == 'available' && !p.isBusy && p.isActive) || (filter == 'busy' && p.isBusy) || p.status.name == filter).length;
+    return printers.where((p) => (filter == 'available' && !p.isBusy && p.isActive) || (filter == 'busy' && p.isBusy) || p.status.name == filter).length;
   }
 
   void onStartMaintenance (Printer printer) {}
@@ -142,7 +142,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                               ),
                             ),
                             Text(
-                              '${widget.printers.length} printers total',
+                              '${printers.length} printers total',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF64748B),
@@ -280,7 +280,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                   children: [
                     _buildFilterChip(
                       label: 'All',
-                      count: widget.printers.length,
+                      count: printers.length,
                       isSelected: selectedFilter == null,
                       onTap: () => setState(() => selectedFilter = null),
                     ),
