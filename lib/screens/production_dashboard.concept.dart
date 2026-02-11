@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -48,7 +49,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
   }
   void onPrintersPressed () {
-
+    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: 'available'));
   }
   void onInventoryPressed () {
 
