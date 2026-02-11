@@ -1,6 +1,9 @@
 // lib/models/printer.dart
 // enum PrinterStatus { active, offline, maintenance, error }
 
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
 enum JobStatus { waiting, printing, completed, paused, delayed, blocked }
 
 enum JobPriority { low, medium, high, urgent }
@@ -27,6 +30,7 @@ class Printer {
   final String nickname;
   final String? location;
   PrinterStatus _status;
+  final int totalJobsCompleted;
 
   PrinterStatus get status => _status;
 
@@ -67,7 +71,8 @@ class Printer {
     this.printSpeed,
     required this.createdAt,
     int? currentJobId,
-    required this.workMinutes
+    required this.workMinutes,
+    required this.totalJobsCompleted
   }) : _currentJobId = currentJobId, _status = status;
 
   factory Printer.fromJson(Map<String, dynamic> json) {
@@ -81,7 +86,8 @@ class Printer {
       printSpeed: (json['printSpeed'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
       currentJobId: json['currentTaskId'],
-      workMinutes: json['workMinutes']
+      workMinutes: json['workMinutes'],
+      totalJobsCompleted: (json['tasks'] as List).length,
     );
   }
 
@@ -104,6 +110,71 @@ class Printer {
       'printSpeed': printSpeed,
       'createdAt': createdAt.toIso8601String(),
     };
+  }
+
+  // Components can use this to determine which icon/color to show for the job status
+  String get statusLabel {
+    if (!isBusy && isActive) {
+      return 'Available';
+    } else if (isBusy) {
+      return 'Busy';
+    } else if (status == PrinterStatus.maintenance) {
+      return 'Maintenance';
+    } else if (status == PrinterStatus.offline) {
+      return 'Offline';
+    } else if (status == PrinterStatus.error) {
+      return 'Error';
+    } else {
+      return 'Unknown';
+    }
+  }
+
+  Color get statusColor {
+    if (!isBusy && isActive) {
+      return Color(0xFF10B981);
+    } else if (isBusy) {
+      return Color(0xFF2563EB);
+    } else if (status == PrinterStatus.maintenance) {
+      return Color(0xFFF59E0B);
+    } else if (status == PrinterStatus.offline) {
+      return Color(0xFF6B7280);
+    } else if (status == PrinterStatus.error) {
+      return Color(0xFFEF4444);
+    } else {
+      return Color(0xFF9CA3AF);
+    }
+  }
+
+  Color get statusBackgroundColor {
+    if (!isBusy && isActive) {
+      return Color(0xFFD1FAE5);
+    } else if (isBusy) {
+      return Color(0xFFEFF6FF);
+    } else if (status == PrinterStatus.maintenance) {
+      return Color(0xFFFEF3C7);
+    } else if (status == PrinterStatus.offline) {
+      return Color(0xFF6B7280);
+    } else if (status == PrinterStatus.error) {
+      return Color(0xFFFEE2E2);
+    } else {
+      return Color(0xFF9CA3AF);
+    }
+  }
+
+  IconData get statusIcon {
+    if (!isBusy && isActive) {
+      return Icons.check_circle;
+    } else if (isBusy) {
+      return Icons.play_circle_filled;
+    } else if (status == PrinterStatus.maintenance) {
+      return Icons.build_circle;
+    } else if (status == PrinterStatus.offline) {
+      return Icons.power_off;
+    } else if (status == PrinterStatus.error) {
+      return Icons.error_outline;
+    } else {
+      return Icons.question_mark;
+    }
   }
 }
 
