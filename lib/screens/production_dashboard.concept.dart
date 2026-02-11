@@ -1,37 +1,82 @@
 // production_dashboard_screen.concept.dart
+// Populated with realistic sample data based on actual implementation
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:googleapis/integrations/v1.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/extensions/duration_format.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
+import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
-class ProductionDashboardScreen extends StatefulWidget {
-  final int activePrinters;
-  final int totalPrintJobs;
-  final int lowStockItems;
-  final List<Map<String, dynamic>> printers;
-  final List<Map<String, dynamic>> todaysSchedule;
-  final VoidCallback? onSchedulePressed;
-  final VoidCallback? onPrintersPressed;
-  final VoidCallback? onInventoryPressed;
+class ProductionDashboardScreen extends ConsumerStatefulWidget {
 
   const ProductionDashboardScreen({
     Key? key,
-    this.activePrinters = 1,
-    this.totalPrintJobs = 24,
-    this.lowStockItems = 0,
-    this.printers = const [],
-    this.todaysSchedule = const [],
-    this.onSchedulePressed,
-    this.onPrintersPressed,
-    this.onInventoryPressed,
   }) : super(key: key);
 
   @override
-  State<ProductionDashboardScreen> createState() =>
+  ConsumerState<ProductionDashboardScreen> createState() =>
       _ProductionDashboardScreenState();
 }
 
-class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
+class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardScreen> {
   String selectedFilter = 'All';
+
+  List<Printer> get printers=> ref.watch(printerNotifierProvider).printers; 
+  List<Task> get totalPrintJobs => ref.watch(taskNotifierProvider).where(
+    (task) => task.status == TaskStatus.clientApproved || task.status == TaskStatus.printing || task.status == TaskStatus.finishing || task.status == TaskStatus.blocked).toList(); // clientApproved + printing + finishing + blocked
+  int get lowStockItems => ref.watch(materialNotifierProvider).materials.where((item) => item.isLowStock).length; // Materials with isLow = true
+  // Available printers (active AND not busy)
+  List<Printer> get activePrinters => printers.where((printer)=> printer.isActive && printer.isBusy).toList(); 
+  // Today's schedule - tasks that are scheduled for today
+  List<Task> get todaysSchedule => ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
+
+  void onSchedulePressed () {
+
+  }
+  void onPrintersPressed () {
+
+  }
+  void onInventoryPressed () {
+
+  }
+
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Auto-refresh every 30 seconds
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) setState(() {});
+    });
+
+    Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -64,7 +109,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Dashboard',
+                          'Production Dashboard',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -154,27 +199,27 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       children: [
                         Expanded(
                           child: _buildMetricCard(
-                            title: 'Active Printers',
-                            value: widget.activePrinters.toString(),
+                            title: 'Available Printers',
+                            value: activePrinters.length.toString(),
                             icon: Icons.print_rounded,
                             iconColor: Color(0xFF2563EB),
                             backgroundColor: Color(0xFFEFF6FF),
-                            trend: '+2 this week',
-                            trendPositive: true,
-                            onTap: widget.onPrintersPressed,
+                            trend: '2 busy',
+                            trendPositive: null,
+                            onTap: onPrintersPressed,
                           ),
                         ),
                         SizedBox(width: 12),
                         Expanded(
                           child: _buildMetricCard(
                             title: 'Print Jobs',
-                            value: widget.totalPrintJobs.toString(),
+                            value: totalPrintJobs.length.toString(),
                             icon: Icons.assignment_rounded,
                             iconColor: Color(0xFF10B981),
                             backgroundColor: Color(0xFFECFDF5),
-                            trend: '18 in queue',
+                            trend: '3 in queue',
                             trendPositive: null,
-                            onTap: widget.onSchedulePressed,
+                            onTap: onSchedulePressed,
                           ),
                         ),
                       ],
@@ -182,17 +227,17 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                     SizedBox(height: 12),
                     _buildFullWidthMetricCard(
                       title: 'Inventory Status',
-                      value: widget.lowStockItems.toString(),
+                      value: lowStockItems.toString(),
                       subtitle: 'Items need attention',
                       icon: Icons.inventory_2_rounded,
-                      iconColor: widget.lowStockItems > 0
+                      iconColor: lowStockItems > 0
                           ? Color(0xFFF59E0B)
                           : Color(0xFF10B981),
-                      backgroundColor: widget.lowStockItems > 0
+                      backgroundColor: lowStockItems > 0
                           ? Color(0xFFFEF3C7)
                           : Color(0xFFECFDF5),
                       actionLabel: 'View Inventory',
-                      onTap: widget.onInventoryPressed,
+                      onTap: onInventoryPressed,
                     ),
                   ],
                 ),
@@ -219,7 +264,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                         ),
                         Spacer(),
                         TextButton(
-                          onPressed: widget.onPrintersPressed,
+                          onPressed: onPrintersPressed,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               horizontal: 12,
@@ -248,18 +293,20 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       ],
                     ),
                     SizedBox(height: 12),
-                    // Filter Chips
+                    // Filter Chips - Updated filters
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildFilterChip('All', 1),
+                          _buildFilterChip('All', 5),
                           SizedBox(width: 8),
-                          _buildFilterChip('Active', 1),
+                          _buildFilterChip('Available', 2),
                           SizedBox(width: 8),
-                          _buildFilterChip('Blocked', 0),
+                          _buildFilterChip('Busy', 1),
                           SizedBox(width: 8),
-                          _buildFilterChip('Maintenance', 0),
+                          _buildFilterChip('Blocked', 1),
+                          SizedBox(width: 8),
+                          _buildFilterChip('Maintenance', 1),
                         ],
                       ),
                     ),
@@ -273,9 +320,9 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Column(
-                  children: widget.printers.isEmpty
+                  children: printers.isEmpty
                       ? [_buildEmptyPrintersState()]
-                      : widget.printers
+                      : printers
                           .map((printer) => Padding(
                                 padding: EdgeInsets.only(bottom: 12),
                                 child: _buildPrinterCard(printer),
@@ -328,10 +375,10 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: widget.todaysSchedule.isEmpty
+                child: todaysSchedule.isEmpty
                     ? _buildEmptyScheduleState()
                     : Column(
-                        children: widget.todaysSchedule
+                        children: todaysSchedule
                             .map((job) => Padding(
                                   padding: EdgeInsets.only(bottom: 12),
                                   child: _buildScheduleCard(job),
@@ -344,7 +391,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: widget.onSchedulePressed,
+        onPressed: onSchedulePressed,
         backgroundColor: Color(0xFF2563EB),
         elevation: 4,
         icon: Icon(Icons.add_rounded, size: 24),
@@ -620,12 +667,32 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
     );
   }
 
-  Widget _buildPrinterCard(Map<String, dynamic> printer) {
-    final bool isActive = printer['status'] == 'Active';
-    final String name = printer['name'] ?? 'Unknown Printer';
-    final String section = printer['section'] ?? 'No Section';
-    final int? currentJob = printer['currentJob'];
-    final double? progress = printer['progress'];
+  Widget _buildPrinterCard(Printer printer) {
+    final String status = printer.statusName;
+    final bool isBusy = printer.isBusy;
+    final bool isAvailable = printer.isActive && !printer.isBusy;
+    final bool isMaintenance = printer.status == PrinterStatus.maintenance;
+    
+    final String name = printer.name;
+    final String section = printer.location?? "No Section";
+    final int? currentJob = printer.currentJobId;
+
+    Color statusColor;
+    Color statusBgColor;
+    
+    if (isBusy) {
+      statusColor = Color(0xFF2563EB);
+      statusBgColor = Color(0xFFEFF6FF);
+    } else if (isAvailable) {
+      statusColor = Color(0xFF10B981);
+      statusBgColor = Color(0xFFECFDF5);
+    } else if (isMaintenance) {
+      statusColor = Color(0xFFF59E0B);
+      statusBgColor = Color(0xFFFEF3C7);
+    } else {
+      statusColor = Color(0xFF94A3B8);
+      statusBgColor = Color(0xFFF1F5F9);
+    }
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -646,16 +713,12 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
           Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isActive
-                  ? Color(0xFFECFDF5)
-                  : Color(0xFFF1F5F9),
+              color: statusBgColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.print_rounded,
-              color: isActive
-                  ? Color(0xFF10B981)
-                  : Color(0xFF94A3B8),
+              color: statusColor,
               size: 24,
             ),
           ),
@@ -681,20 +744,16 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isActive
-                            ? Color(0xFF10B981)
-                            : Color(0xFF94A3B8),
+                        color: statusColor,
                       ),
                     ),
                     SizedBox(width: 6),
                     Text(
-                      printer['status'] ?? 'Unknown',
+                      status,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isActive
-                            ? Color(0xFF10B981)
-                            : Color(0xFF64748B),
+                        color: statusColor,
                       ),
                     ),
                     SizedBox(width: 8),
@@ -712,7 +771,8 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                     ),
                   ],
                 ),
-                if (currentJob != null && progress != null) ...[
+                // Only show progress for busy printers
+                if (isBusy && currentJob != null) ...[
                   SizedBox(height: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +789,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                           ),
                           Spacer(),
                           Text(
-                            '${(progress * 100).toInt()}%',
+                            '65%',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -742,7 +802,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: progress,
+                          value: 0.65,
                           backgroundColor: Color(0xFFE2E8F0),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             Color(0xFF2563EB),
@@ -766,38 +826,34 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
     );
   }
 
-  Widget _buildScheduleCard(Map<String, dynamic> job) {
-    final String taskName = job['taskName'] ?? 'Unnamed Task';
-    final String printerName = job['printerName'] ?? 'Unknown Printer';
-    final DateTime? startTime = job['startTime'];
-    final int? duration = job['duration'];
-    final String status = job['status'] ?? 'scheduled';
-
-    Color statusColor;
-    Color statusBgColor;
-    IconData statusIcon;
-
-    switch (status.toLowerCase()) {
-      case 'in_progress':
-        statusColor = Color(0xFF2563EB);
-        statusBgColor = Color(0xFFEFF6FF);
-        statusIcon = Icons.play_circle_filled;
-        break;
-      case 'completed':
-        statusColor = Color(0xFF10B981);
-        statusBgColor = Color(0xFFECFDF5);
-        statusIcon = Icons.check_circle;
-        break;
-      case 'delayed':
-        statusColor = Color(0xFFEF4444);
-        statusBgColor = Color(0xFFFEE2E2);
-        statusIcon = Icons.error;
-        break;
-      default:
-        statusColor = Color(0xFF64748B);
-        statusBgColor = Color(0xFFF1F5F9);
-        statusIcon = Icons.schedule;
+  Widget _buildScheduleCard(Task job) {
+    final String taskName = job.name;
+    late final String printerName;
+    try {
+      printerName = job.printerId!=null ? printers.firstWhere((p) => p.id == job.printerId).name : 'Unassigned';
+    } catch(e) {
+      printerName = "Updating Printer...";
     }
+
+    final DateTime? startTime = job.actualProductionStartTime;
+
+    final TaskComponentHelper componentHelper = job.componentHelper();
+    String statusLabel = componentHelper.labelTitle;
+    IconData statusIcon = componentHelper.icon;
+    Color statusColor = componentHelper.color;
+    Color statusBgColor = componentHelper.color.withOpacity(0.1);
+
+    // Calculate time display based on status
+    String timeDisplay = startTime != null && job.actualProductionEndTime != null?
+      // If production has ended, show total duration
+      job.actualProductionEndTime?.difference(startTime).formatTime?? 'Just finished'
+      // If production has started but not ended, show how long it's been running
+      : startTime != null? startTime.eventAgo
+      : 'Not Started';
+
+    // Production Progress
+    bool isInProgress = job.status == TaskStatus.printing;
+    bool isProductionCompleted = startTime != null && job.actualProductionEndTime != null;
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -829,7 +885,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                     Icon(statusIcon, size: 12, color: statusColor),
                     SizedBox(width: 4),
                     Text(
-                      status.replaceAll('_', ' ').toUpperCase(),
+                      statusLabel,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -841,7 +897,7 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                 ),
               ),
               Spacer(),
-              if (startTime != null)
+              if (startTime != null && !isInProgress && !isProductionCompleted)
                 Text(
                   DateFormat('HH:mm').format(startTime),
                   style: TextStyle(
@@ -874,18 +930,18 @@ class _ProductionDashboardScreenState extends State<ProductionDashboardScreen> {
                   color: Color(0xFF64748B),
                 ),
               ),
-              if (duration != null) ...[
-                SizedBox(width: 12),
-                Icon(Icons.timer_outlined, size: 14, color: Color(0xFF64748B)),
-                SizedBox(width: 6),
-                Text(
-                  '$duration min',
+              SizedBox(width: 12),
+              Icon(Icons.timer_outlined, size: 14, color: Color(0xFF64748B)),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  timeDisplay,
                   style: TextStyle(
                     fontSize: 13,
                     color: Color(0xFF64748B),
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ],
