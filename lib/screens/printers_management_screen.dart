@@ -8,20 +8,12 @@ class PrintersManagementScreen extends ConsumerStatefulWidget {
   final List<Printer> printers;
   /// 'busy', 'available', 'maintenance', 'blocked' or null for all
   final String? initialFilter;
-  final Function(Printer)? onPrinterTap;
-  final Function(Printer)? onStartMaintenance;
-  final Function(Printer)? onUnblock;
-  final Function(Printer)? onBlock;
   final VoidCallback? onAddPrinter;
 
   const PrintersManagementScreen({
     Key? key,
     required this.printers,
     this.initialFilter,
-    this.onPrinterTap,
-    this.onStartMaintenance,
-    this.onUnblock,
-    this.onBlock,
     this.onAddPrinter,
   }) : super(key: key);
 
@@ -83,6 +75,10 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
 
     return widget.printers.where((p) => (filter == 'available' && !p.isBusy && p.isActive) || (filter == 'busy' && p.isBusy) || p.status.name == filter).length;
   }
+
+  void onStartMaintenance (Printer printer) {}
+  void onUnblock (Printer printer) {}
+  void onBlock (Printer printer) {}
 
   @override
   Widget build(BuildContext context) {
@@ -448,11 +444,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
 
     return GestureDetector(
       onTap: () {
-        if (widget.onPrinterTap != null) {
-          widget.onPrinterTap!(printer);
-        } else {
-          _showPrinterDetailsBottomSheet(printer);
-        }
+        _showPrinterDetailsBottomSheet(printer);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -602,7 +594,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                     ),
                     SizedBox(height: 12),
                     Text(
-                      currentJobName!,
+                      currentJobName,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -729,9 +721,8 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
                         ],
                       ),
                     ),
-                    if (widget.onUnblock != null)
-                      TextButton(
-                        onPressed: () => widget.onUnblock!(printer),
+                    TextButton(
+                        onPressed: () => onUnblock(printer),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.symmetric(
                             horizontal: 12,
@@ -906,9 +897,9 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
       backgroundColor: Colors.transparent,
       builder: (context) => PrinterDetailsBottomSheet(
         printer: printer,
-        onStartMaintenance: widget.onStartMaintenance,
-        onBlock: widget.onBlock,
-        onUnblock: widget.onUnblock,
+        onStartMaintenance: onStartMaintenance,
+        onBlock: onBlock,
+        onUnblock: onUnblock,
       ),
     );
   }
