@@ -533,12 +533,13 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
             children: [
               SingleChildScrollView(
                 controller: scrollController,
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.all(24).copyWith(top: 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
+                    Container(
                       alignment: Alignment.center,
+                      padding: EdgeInsets.only(top: 24),
                       child: Container(
                         margin: EdgeInsets.only(bottom: 20),
                         width: 40,
