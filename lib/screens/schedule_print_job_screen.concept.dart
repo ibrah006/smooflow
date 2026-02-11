@@ -542,7 +542,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
         }
 
         return Material(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
           color: Color(0xFFF8FAFC),
           child: Stack(
             children: [
