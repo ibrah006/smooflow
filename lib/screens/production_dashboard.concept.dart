@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -44,7 +45,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   List<Task> get todaysSchedule => ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
 
   void onSchedulePressed () {
-
+    AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
   }
   void onPrintersPressed () {
 
@@ -91,7 +92,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
