@@ -14,19 +14,19 @@ import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 
-class TaskDetailsScreen extends ConsumerStatefulWidget {
+class TaskScreen extends ConsumerStatefulWidget {
   final int taskId;
 
-  const TaskDetailsScreen({
-    Key? key,
-    required this.taskId,
-  }) : super(key: key);
+  const TaskScreen(
+    this.taskId,
+    {super.key}
+  );
 
   @override
-  ConsumerState<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
+  ConsumerState<TaskScreen> createState() => _TaskDetailsScreenState();
 }
 
-class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
+class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showAllAssignees = false;

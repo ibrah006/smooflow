@@ -21,15 +21,15 @@ import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/task_args.dart';
 
-class TaskScreen extends ConsumerStatefulWidget {
+class TaskDetailsScreen extends ConsumerStatefulWidget {
   final int taskId;
-  const TaskScreen(this.taskId, {super.key});
+  const TaskDetailsScreen(this.taskId, {super.key});
 
   @override
-  ConsumerState<TaskScreen> createState() => _TaskScreenState();
+  ConsumerState<TaskDetailsScreen> createState() => _TaskScreenState();
 }
 
-class _TaskScreenState extends ConsumerState<TaskScreen> with RouteAware {
+class _TaskScreenState extends ConsumerState<TaskDetailsScreen> with RouteAware {
   late ProgressLog? progressLog;
 
   /// This Task's work-activity-logs
