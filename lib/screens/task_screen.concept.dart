@@ -1216,8 +1216,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
   // ── BOTTOM BAR ─────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     final canSchedule = task.printerId == null &&
-        task.status != TaskStatus.completed &&
-        task.status != TaskStatus.blocked;
+        task.status == TaskStatus.clientApproved;
 
     final canChangeStatus = currentUser.role == "admin" &&
         task.status != TaskStatus.completed &&
@@ -1226,6 +1225,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
     if (!canSchedule && !canChangeStatus) {
       return SizedBox.shrink();
     }
+
+    final nextStage = task.status.nextStage;
 
     return Container(
       color: _surface,
@@ -1237,7 +1238,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
             if (canChangeStatus) ...[
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _showStatusMenu(),
+                  onPressed: () => nextStage != null && nextStage != TaskStatus.designing? _showStatusMenu() : null,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -1247,7 +1248,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
                   icon: Icon(Icons.swap_horiz_rounded,
                       size: 19, color: _textSecondary),
                   label: Text(
-                    'Update Status',
+                    'Advance Stage',// 'Update Status',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1265,6 +1266,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
                   onPressed: onSchedulePrint,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _brandBlue,
+                    foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(11)),
@@ -1474,7 +1476,14 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
   }
 
   // ── DIALOGS ────────────────────────────────────────────────────────────────
-  void _showStatusMenu() {
+  void _showStatusMenu() async {
+    print("about to advance task from task screen");
+    await TaskProvider.setTaskState(
+      ref: ref,
+      taskId: task.id,
+      newStatus: task.status.nextStage!);
+
+    return;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
