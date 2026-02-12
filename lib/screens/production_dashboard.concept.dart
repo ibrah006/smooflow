@@ -45,17 +45,20 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   // Today's schedule - tasks that are scheduled for today
   List<Task> get todaysSchedule => ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
 
-  void onSchedulePressed () {
-    AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
+  void onSchedulePressed () async {
+    await AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
+    setState(() {});
   }
 
-  void printerPressed(Printer printer) {
-    AppRoutes.navigateTo(context, AppRoutes.printerDetails,
+  void printerPressed(Printer printer) async {
+    await AppRoutes.navigateTo(context, AppRoutes.printerDetails,
               arguments: printer);
+    setState(() {});
   }
 
-  void onPrintersPressed ({required String? initialFilter}) {
-    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: initialFilter));
+  void onPrintersPressed ({required String? initialFilter}) async {
+    await AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: initialFilter));
+    setState(() {});
   }
   void onInventoryPressed () {
     AppRoutes.navigateTo(context, AppRoutes.materials);
