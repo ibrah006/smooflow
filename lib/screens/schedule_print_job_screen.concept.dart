@@ -378,7 +378,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           productionDuration = task.productionDuration;
           runs = task.runs ?? 1;
           productionQuantity = task.productionQuantity?.toInt()?? 0;
-          selectedMaterialId = task.materialId;
+          selectedMaterialId = task.materialId?.isEmpty ?? true ? null : task.materialId;
           selectedStockItemBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
@@ -831,12 +831,13 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                       ),
                       child: DropdownButtonFormField<String>(
                         value: selectedMaterialId,
+                        hint: Text("Select Material"),
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText: 'Select Material',
                           hintStyle: TextStyle(color: Color(0xFF94A3B8)),
                         ),
                         items: materials.map((material) {
+                          print("material id from dd item: ${material.id}, selected material id: $selectedMaterialId");
                           return DropdownMenuItem<String>(
                             value: material.id,
                             child: SizedBox(
