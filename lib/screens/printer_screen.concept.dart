@@ -1,8 +1,10 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
-class PrinterScreen extends StatelessWidget {
+class PrinterScreen extends ConsumerWidget {
 
   final Printer printer;
 
@@ -12,7 +14,17 @@ class PrinterScreen extends StatelessWidget {
   void onBlock (Printer printer) {}
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+
+    String? printJobName;
+    if (printer.currentJobId != null) {
+      try {
+        printJobName = ref.watch(taskNotifierProvider).firstWhere((t)=> t.id == printer.currentJobId).name;
+      } catch(e) {
+        printJobName = "Loading Task...";
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 100,
@@ -177,6 +189,80 @@ class PrinterScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                    // Current Task Link (when busy)
+                    if (printer.isBusy && printer.currentJobId != null) ...[
+                      SizedBox(height: 12),
+                      InkWell(
+                        onTap: () {
+                          // Navigate to the current task
+                          // TODO: Implement navigation to task detail screen
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => TaskDetailScreen(task: printer.currentTask!),
+                          //   ),
+                          // );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF2563EB).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.assignment_outlined,
+                                  color: Color(0xFF2563EB),
+                                  size: 18,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Currently Printing',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colorPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      printJobName.toString(),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                color: Color(0xFF2563EB),
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
       
                     /// Capabilities
                     // if (printer.capabilities.isNotEmpty) ...[
