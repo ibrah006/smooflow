@@ -20,12 +20,12 @@ enum TaskStatus {
         return TaskStatus.printing;
       case TaskStatus.printing:
         return TaskStatus.finishing;
-      case TaskStatus.delivery:
-        return TaskStatus.delivery;
       case TaskStatus.finishing:
+        return TaskStatus.delivery;
+      case TaskStatus.delivery:
         return TaskStatus.installing;
       case TaskStatus.installing:
-        return TaskStatus.waitingApproval;
+        return TaskStatus.completed;
       case TaskStatus.waitingApproval:
         return TaskStatus.clientApproved;
       // "No explicit next stage from beloe stages, should be set manually"

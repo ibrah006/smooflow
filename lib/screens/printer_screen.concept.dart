@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
@@ -203,6 +205,8 @@ class PrinterScreen extends ConsumerWidget {
                           //     builder: (context) => TaskDetailScreen(task: printer.currentTask!),
                           //   ),
                           // );
+
+                          AppRoutes.navigateTo(context, AppRoutes.task, arguments: TaskArgs(printer.currentJobId!));
                         },
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
