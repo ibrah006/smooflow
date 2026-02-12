@@ -342,7 +342,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
         printerId: printerId!,
       );
 
-      print("Progressed task $taskId to printing status and assigned printer $printerId");
+      print("$taskId to printing status and assigned printer $printerId");
     } else {
       try {
         final task = state.firstWhere((task)=> task.id == taskId);

@@ -62,12 +62,12 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
   List<Task> get allTasks => ref.watch(taskNotifierProvider);
 
-  List<Task> get clientApprovedTasks {
+  List<Task> get printTasks {
 
     return allTasks.where((task) {
       // Filter tasks that are post-design stage and ready for production
-      return task.status == TaskStatus.clientApproved &&
-          task.printerId == null; // Not yet scheduled
+      return (task.status == TaskStatus.clientApproved &&
+          task.printerId == null) || task.status == TaskStatus.blocked; // Not yet scheduled
     }).toList();
   }
 
@@ -237,7 +237,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              '${clientApprovedTasks.length}',
+                              '${printTasks.length}',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -337,15 +337,15 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                     onRefresh: () async {
                       await ref.watch(taskNotifierProvider.notifier).loadAll();
                     },
-                    child: clientApprovedTasks.isEmpty
+                    child: printTasks.isEmpty
                       ? SingleChildScrollView(physics: AlwaysScrollableScrollPhysics(), child: _buildEmptyState())
                       : ListView.separated(
                           padding: EdgeInsets.all(16).copyWith(bottom: 42),
-                          itemCount: clientApprovedTasks.length,
+                          itemCount: printTasks.length,
                           separatorBuilder: (context, index) =>
                               SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            final task = clientApprovedTasks[index];
+                            final task = printTasks[index];
                             final isSelected = selectedTask?.id == task.id;
                             return _buildTaskCard(task, isSelected);
                           },

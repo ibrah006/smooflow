@@ -51,7 +51,7 @@ class TaskComponentHelper {
           'Needs Revision',
           'Make necessary changes',
           Icons.edit_rounded,
-          const Color(0xFFEF4444),
+          const Color(0xFFF59E0B,),
         );
       case TaskStatus.blocked:
         return TaskComponentHelper(
@@ -59,7 +59,7 @@ class TaskComponentHelper {
           'Blocked',
           'Task is currently blocked',
           Icons.block_rounded,
-          const Color(0xFFF59E0B),
+          const Color(0xFFEF4444),
         );
       case TaskStatus.paused:
         return TaskComponentHelper(
