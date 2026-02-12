@@ -35,7 +35,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
   int productionDuration = 60; // minutes
   int runs = 1;
   int productionQuantity = 0;
-  String? materialId;
   bool isScheduling = false;
 
   bool stockItemAlreadySpecified = false;
@@ -84,7 +83,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     productionDuration = 60;
     runs = 1;
     productionQuantity = 0;
-    materialId = null;
+    selectedMaterialId = null;
     selectedStockItemBarcode = null;
     isScheduling = false;
   }
@@ -100,12 +99,14 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     //   newTaskStatus: TaskStatus.printing
     // )));
 
+    print("Scheduling print job for task ${selectedTask!.id} on printer ${printer.id} with materialId $selectedMaterialId and stock transaction barcode $selectedStockItemBarcode");
+
     await TaskProvider.setTaskState(
       ref: ref,
       taskId: selectedTask!.id,
       printerId: printer.id,
       newStatus: TaskStatus.printing,
-      materialId: materialId,
+      materialId: selectedMaterialId,
       stockTransactionBarcode: selectedStockItemBarcode,
     );
   }
@@ -377,7 +378,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           productionDuration = task.productionDuration;
           runs = task.runs ?? 1;
           productionQuantity = task.productionQuantity?.toInt()?? 0;
-          materialId = task.materialId;
+          selectedMaterialId = task.materialId;
           selectedStockItemBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });

@@ -221,7 +221,8 @@ class TaskRepo {
     required int productionQuantity,
     required String barcode
   }) async {
-    final response = await ApiClient.http.put(
+    print("scheduling print job with printerId: $printerId, materialId: $materialId, progressStage: $progressStage, runs: $runs, productionQuantity: $productionQuantity, barcode: $barcode");
+    final response = await ApiClient.http.post(
       '/tasks/$taskId/schedule-print',
       body: {
         "printerId": printerId,
@@ -234,7 +235,7 @@ class TaskRepo {
     );
 
     if (response.statusCode != 200) {
-      debugPrint("Error when assigning printer to task, statusCode: ${response.statusCode}");
+      debugPrint("Error when assigning printer to task, endpoint: schedule-print, statusCode: ${response.statusCode}\nbody: ${response.body}");
       // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
       throw jsonDecode(response.body)["message"];
     }
