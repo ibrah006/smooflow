@@ -937,7 +937,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                           ),
                         ),
                         SizedBox(width: 16),
-                        Expanded(
+                        if (selectedTask?.status == TaskStatus.clientApproved) Expanded(
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: selectedPrinterId != null && !isScheduling && productionQuantity > 0
