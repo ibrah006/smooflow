@@ -346,8 +346,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     } else {
       try {
         final task = state.firstWhere((task)=> task.id == taskId);
-        if (task.printerId != null) {
-          if (task.status != newStatus) await _unassignPrinter(taskId: taskId, status: newStatus);
+        if (task.printerId != null && printerId == null) {
+          await _unassignPrinter(taskId: taskId, status: newStatus);
           print("Progressed task $taskId to $newStatus status and unassigned printer");
         }
       } catch(e) {}
