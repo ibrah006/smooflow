@@ -223,7 +223,7 @@ class TaskRepo {
   }) async {
     print("scheduling print job with printerId: $printerId, materialId: $materialId, progressStage: $progressStage, runs: $runs, productionQuantity: $productionQuantity, barcode: $barcode");
     final response = await ApiClient.http.post(
-      '/tasks/$taskId/schedule-print',
+      '/tasks/$taskId/schedule-job',
       body: {
         "printerId": printerId,
         "materialId": materialId,
