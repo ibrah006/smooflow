@@ -336,26 +336,28 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
     await _repo.progressStage(taskId, newStatus);
 
-    for (final task in state) {
-      if (task.id == taskId) {
-        if (task.status == TaskStatus.printing &&newStatus != TaskStatus.printing) {
+    if (newStatus == TaskStatus.printing) {
+      await _assignPrinter(
+        taskId: taskId,
+        printerId: printerId!,
+      );
 
-          await _unassignPrinter(taskId: taskId, status: newStatus);
-
-        } else if (newStatus == TaskStatus.printing &&
-            task.status != TaskStatus.printing) {
-
-          await _assignPrinter(
-            taskId: taskId,
-            printerId: printerId!,
-          );
-
+      print("Progressed task $taskId to printing status and assigned printer $printerId");
+    } else {
+      try {
+        final task = state.firstWhere((task)=> task.id == taskId);
+        if (task.printerId != null) {
+          if (task.status != newStatus) await _unassignPrinter(taskId: taskId, status: newStatus);
+          print("Progressed task $taskId to $newStatus status and unassigned printer");
         }
+      } catch(e) {}
+    }
 
-        task.status = newStatus;
-
-        break;
-      }
+    try {
+      state.firstWhere((task)=> task.id == taskId).status = newStatus;
+    } catch(e) {
+      print("Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state");
+      await getTaskById(taskId, forceReload: true);
     }
   }
 
