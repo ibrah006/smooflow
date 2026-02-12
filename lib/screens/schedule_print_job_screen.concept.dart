@@ -6,6 +6,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/barcode_scan_args.dart';
 import 'package:smooflow/core/args/stock_entry_args.dart';
+import 'package:smooflow/core/args/task_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -739,7 +740,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                                       fontSize: 12,
                                       color: isAvailable
                                           ? Color(0xFF10B981)
-                                          : Color(0xFFEF4444),
+                                          : Color.fromARGB(255, 12, 7, 7),
                                     ),
                                   ),
                                 ],
@@ -1172,165 +1173,170 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
       printer = null;
     }
     
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(task.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  task.statusName,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _getStatusColor(task.status),
-                    letterSpacing: 0.3,
+    return GestureDetector(
+      onTap: () {
+        AppRoutes.navigateTo(context, AppRoutes.task, arguments: TaskArgs(task.id));
+      },
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(task.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    task.statusName,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _getStatusColor(task.status),
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 8),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Color(0xFF10B981).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 12, color: Color(0xFF10B981)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Scheduled',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF10B981),
-                        letterSpacing: 0.3,
+                SizedBox(width: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, size: 12, color: Color(0xFF10B981)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Scheduled',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF10B981),
+                          letterSpacing: 0.3,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Spacer(),
-              Text(
-                'ID: ${task.id}',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
+                Spacer(),
+                Text(
+                  'ID: ${task.id}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Text(
-            task.name,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.2,
+              ],
             ),
-          ),
-          SizedBox(height: 16),
-          Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildScheduledDetail(
-                  'Printer',
-                  printer?.name ?? 'Unknown Printer',
-                  Icons.print,
-                ),
+            SizedBox(height: 16),
+            Text(
+              task.name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.2,
               ),
-              Container(
-                width: 1,
-                height: 40,
-                color: Color(0xFFE2E8F0),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _buildScheduledDetail(
-                  'Duration',
-                  '${task.productionDuration} min',
-                  Icons.timer_outlined,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildScheduledDetail(
-                  'Runs',
-                  '${task.runs ?? 1}',
-                  Icons.repeat,
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: Color(0xFFE2E8F0),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _buildScheduledDetail(
-                  'Quantity',
-                  task.productionQuantity?.toString() ?? 'N/A',
-                  Icons.inventory_2_outlined,
-                ),
-              ),
-            ],
-          ),
-          if (task.productionStartTime != null) ...[
+            ),
             SizedBox(height: 16),
             Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
             SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.schedule, size: 16, color: Color(0xFF64748B)),
-                SizedBox(width: 8),
-                Text(
-                  'Scheduled Start: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
+                Expanded(
+                  child: _buildScheduledDetail(
+                    'Printer',
+                    printer?.name ?? 'Unknown Printer',
+                    Icons.print,
                   ),
                 ),
-                Text(
-                  DateFormat('MMM dd, yyyy HH:mm')
-                      .format(task.productionStartTime!),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: Color(0xFFE2E8F0),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildScheduledDetail(
+                    'Duration',
+                    '${task.productionDuration} min',
+                    Icons.timer_outlined,
                   ),
                 ),
               ],
             ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildScheduledDetail(
+                    'Runs',
+                    '${task.runs ?? 1}',
+                    Icons.repeat,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: Color(0xFFE2E8F0),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildScheduledDetail(
+                    'Quantity',
+                    task.productionQuantity?.toString() ?? 'N/A',
+                    Icons.inventory_2_outlined,
+                  ),
+                ),
+              ],
+            ),
+            if (task.productionStartTime != null) ...[
+              SizedBox(height: 16),
+              Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.schedule, size: 16, color: Color(0xFF64748B)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Scheduled Start: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    DateFormat('MMM dd, yyyy HH:mm')
+                        .format(task.productionStartTime!),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
