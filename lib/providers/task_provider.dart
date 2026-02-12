@@ -125,9 +125,9 @@ class TaskProvider {
         productionQuantity: 1, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
         barcode: stockTransactionBarcode!
       );
+    } else {
+      await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
     }
-
-    // await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
 
     if (printerId != null) {
       ref.watch(printerNotifierProvider.notifier).assignTask(printerId: printerId, taskId: taskId);
