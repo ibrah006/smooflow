@@ -816,9 +816,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
       children: [
         // Schedule print CTA — shown when not yet scheduled
         if (task.printerId == null &&
-            task.status != TaskStatus.completed &&
-            task.status != TaskStatus.blocked &&
-            onSchedulePrint != null) ...[
+            task.status == TaskStatus.clientApproved) ...[
           _buildScheduleCta(),
           SizedBox(height: 24),
         ],
