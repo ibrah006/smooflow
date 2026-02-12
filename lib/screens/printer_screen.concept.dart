@@ -14,6 +14,93 @@ class PrinterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 100,
+        automaticallyImplyLeading: false,
+        flexibleSpace: SafeArea(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF64748B)),
+                ),
+                Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: printer.statusBackgroundColor,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.print_rounded,
+                          color: printer.statusColor,
+                          size: 28,
+                        ),
+                      ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    spacing: 5,
+                    children: [
+                      Text(
+                        printer.nickname,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: printer.statusBackgroundColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  printer.statusIcon,
+                                  size: 12,
+                                  color: printer.statusColor,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  printer.statusLabel.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: printer.statusColor,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Column(
           children: [
             // Handle
@@ -24,89 +111,6 @@ class PrinterScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-      
-            // Header
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: printer.statusBackgroundColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.print_rounded,
-                      color: printer.statusColor,
-                      size: 32,
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          printer.nickname,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: printer.statusBackgroundColor,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    printer.statusIcon,
-                                    size: 12,
-                                    color: printer.statusColor,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    printer.statusLabel.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: printer.statusColor,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: Color(0xFF64748B)),
-                  ),
-                ],
               ),
             ),
       
@@ -206,33 +210,52 @@ class PrinterScreen extends StatelessWidget {
                     //   ),
                     // ],
       
-                    SizedBox(height: 32),
-      
-                    // Actions
-                    if (!printer.isBusy && printer.isActive)
-                      _buildActionButton(
-                        label: 'Start Maintenance',
-                        icon: Icons.build_circle,
-                        color: Color(0xFFF59E0B),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          onStartMaintenance(printer);
-                        },
-                      ),
-      
-                    if (!printer.isBusy && printer.isActive)
-                      ...[
-                        SizedBox(height: 12),
-                        _buildActionButton(
-                          label: 'Block Printer',
-                          icon: Icons.block,
-                          color: Color(0xFFEF4444),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            onBlock(printer);
-                          },
+                    SizedBox(height: 50),
+
+                    // Note
+                    if (!(!printer.isBusy && printer.isActive)) Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 5,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 18),
+                        ),
+                        Expanded(
+                          child: Text(
+                            "You can only perform maintenance or block actions when the printer is not busy.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
                         ),
                       ],
+                    ),
+
+                    SizedBox(height: 16),
+                    
+                    // Actions
+                    _buildActionButton(
+                      label: 'Start Maintenance',
+                      icon: Icons.build_circle,
+                      color: Color(0xFFF59E0B),
+                      onPressed: !printer.isBusy && printer.isActive? () {
+                        Navigator.pop(context);
+                        onStartMaintenance(printer);
+                      } : null,
+                    ),
+      
+                    SizedBox(height: 12),
+                    _buildActionButton(
+                      label: 'Block Printer',
+                      icon: Icons.block,
+                      color: Color(0xFFEF4444),
+                      onPressed: !printer.isBusy && printer.isActive? () {
+                        Navigator.pop(context);
+                        onBlock(printer);
+                      } : null,
+                    ),
                   ],
                 ),
               ),
@@ -291,7 +314,7 @@ class PrinterScreen extends StatelessWidget {
     required String label,
     required IconData icon,
     required Color color,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     return SizedBox(
       width: double.infinity,

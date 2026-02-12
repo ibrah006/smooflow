@@ -14,7 +14,7 @@ import 'package:smooflow/screens/desktop/task_details_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/print_job_details.concept.dart';
-import 'package:smooflow/screens/printer_screen.dart';
+import 'package:smooflow/screens/printer_screen.concept.dart';
 import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
@@ -289,7 +289,8 @@ class AppRoutes {
         screen = const InviteMemberScreen();
         break;
       case addPrinter:
-        screen = const PrinterScreen.add();
+        // TODO
+        // screen = const PrinterScreen.add();
         break;
       case home:
         screen = HomeScreen();
@@ -302,7 +303,7 @@ class AppRoutes {
         break;
       case printerDetails:
         if (args is Printer) {
-          screen = PrinterScreen.details(printer: args);
+          screen = PrinterScreen(printer: args);
         }
         break;
       case schedulePrint:
