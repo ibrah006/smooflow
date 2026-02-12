@@ -99,8 +99,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     //   newTaskStatus: TaskStatus.printing
     // )));
 
-    print("Scheduling print job for task ${selectedTask!.id} on printer ${printer.id} with materialId $selectedMaterialId and stock transaction barcode $selectedStockItemBarcode");
-
     await TaskProvider.setTaskState(
       ref: ref,
       taskId: selectedTask!.id,
@@ -837,7 +835,6 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                           hintStyle: TextStyle(color: Color(0xFF94A3B8)),
                         ),
                         items: materials.map((material) {
-                          print("material id from dd item: ${material.id}, selected material id: $selectedMaterialId");
                           return DropdownMenuItem<String>(
                             value: material.id,
                             child: SizedBox(
