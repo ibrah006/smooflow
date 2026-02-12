@@ -33,11 +33,12 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
 
   List<Printer> get printers=> ref.watch(printerNotifierProvider).printers;
 
+  // Filetered printers
   List<Printer> get filteredPrinters {
     var ps = printers;
     // Apply status filter
     if (selectedFilter != null) {
-      ps = ps.where((p) => (p.isAvailable && selectedFilter == 'available') || p.status.name == selectedFilter).toList();
+      ps = ps.where((p) => (p.isAvailable && selectedFilter == 'available') || p.status.name == selectedFilter?.toLowerCase() || (p.isBusy && selectedFilter == 'busy')).toList();
     }
 
     // Apply search filter
