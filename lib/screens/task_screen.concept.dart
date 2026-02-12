@@ -3,31 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/progress_log_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/providers/work_activity_log_providers.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
-  int taskId;
-  final List<Map<String, dynamic>> progressLogs;     // {id, note, createdAt, authorName}
-  final List<Map<String, dynamic>> activityLogs;     // {id, action, createdAt, authorName}
-  final VoidCallback? onEdit;
-  final VoidCallback? onSchedulePrint;
-  final Function(TaskStatus)? onStatusChange;
-  final VoidCallback? onDelete;
+  final int taskId;
 
   const TaskDetailsScreen({
     Key? key,
     required this.taskId,
-    this.progressLogs = const [],
-    this.activityLogs = const [],
-    this.onEdit,
-    this.onSchedulePrint,
-    this.onStatusChange,
-    this.onDelete,
   }) : super(key: key);
 
   @override
@@ -82,6 +74,10 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       return null;
     }
   }
+
+  List<ProgressLog> get progressLogs => ref.watch(progressLogNotifierProvider).where((log)=> task.progressLogIds.contains(log.id)).toList();
+
+  List<WorkActivityLog> get activityLogs => ref.watch(workActivityLogNotifierProvider).where((log)=> task.workActivityLogs.contains(log.id)).toList();
 
   // ── Status helpers ─────────────────────────────────────────────────────────
   Color _statusColor(TaskStatus s) {
@@ -145,6 +141,14 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       _stages.indexOf(task.status).clamp(0, _stages.length - 1);
 
   // ─────────────────────────────────────────────────────────────────────────
+
+  void onEdit() {}
+  void onSchedulePrint() {}
+  void onStatusChange (TaskStatus status) {
+
+  }
+  void onDelete () {}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,51 +212,48 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 ),
               ),
               // More options
-              if (widget.onEdit != null || widget.onDelete != null)
-                PopupMenuButton<String>(
-                  offset: Offset(0, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.more_horiz_rounded,
-                        color: Color(0xFF475569), size: 22),
-                  ),
-                  onSelected: (v) {
-                    if (v == 'edit' && widget.onEdit != null)
-                      widget.onEdit!();
-                    if (v == 'delete' && widget.onDelete != null)
-                      _confirmDelete();
-                  },
-                  itemBuilder: (_) => [
-                    if (widget.onEdit != null)
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(children: [
-                          Icon(Icons.edit_outlined,
-                              size: 20, color: _textSecondary),
-                          SizedBox(width: 12),
-                          Text('Edit Task'),
-                        ]),
-                      ),
-                    if (widget.onDelete != null)
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(children: [
-                          Icon(Icons.delete_outline,
-                              size: 20, color: _red),
-                          SizedBox(width: 12),
-                          Text('Delete Task',
-                              style: TextStyle(color: _red)),
-                        ]),
-                      ),
-                  ],
+              PopupMenuButton<String>(
+                offset: Offset(0, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.more_horiz_rounded,
+                      color: Color(0xFF475569), size: 22),
+                ),
+                onSelected: (v) {
+                  if (v == 'edit' && onEdit != null)
+                    onEdit!();
+                  if (v == 'delete' && onDelete != null)
+                    _confirmDelete();
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(children: [
+                      Icon(Icons.edit_outlined,
+                          size: 20, color: _textSecondary),
+                      SizedBox(width: 12),
+                      Text('Edit Task'),
+                    ]),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(children: [
+                      Icon(Icons.delete_outline,
+                          size: 20, color: _red),
+                      SizedBox(width: 12),
+                      Text('Delete Task',
+                          style: TextStyle(color: _red)),
+                    ]),
+                  ),
+                ],
+              ),
             ],
           ),
           SizedBox(height: 20),
@@ -406,7 +407,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     }
 
     return GestureDetector(
-      onTap: widget.onStatusChange != null
+      onTap: onStatusChange != null
           ? () => _showStatusChangeDialog(stage)
           : null,
       child: Column(
@@ -651,19 +652,19 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
         // SizedBox(height: 24),
 
         // Progress Logs
-        if (widget.progressLogs.isNotEmpty) ...[
+        if (progressLogs.isNotEmpty) ...[
           _sectionTitle('Progress Logs',
-              trailing: '${widget.progressLogs.length}'),
+              trailing: '${progressLogs.length}'),
           SizedBox(height: 10),
           _card(
             child: Column(
-              children: widget.progressLogs
+              children: progressLogs
                   .asMap()
                   .entries
                   .map((e) => _progressLogRow(
                         e.value,
                         isLast:
-                            e.key == widget.progressLogs.length - 1,
+                            e.key == progressLogs.length - 1,
                       ))
                   .toList(),
             ),
@@ -732,10 +733,10 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   //   );
   // }
 
-  Widget _progressLogRow(Map<String, dynamic> log, {bool isLast = false}) {
-    final note = log['note'] as String? ?? '';
-    final author = log['authorName'] as String? ?? 'Unknown';
-    final date = log['createdAt'] as DateTime?;
+  Widget _progressLogRow(ProgressLog log, {bool isLast = false}) {
+    final note = log.description ?? '';
+    // final author = log.createdBy ?? 'Unknown';
+    final date = log.startDate as DateTime?;
 
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
@@ -764,7 +765,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(author,
+                    // TODo
+                    Text('Unknown',
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -804,7 +806,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
         if (task.printerId == null &&
             task.status != TaskStatus.completed &&
             task.status != TaskStatus.blocked &&
-            widget.onSchedulePrint != null) ...[
+            onSchedulePrint != null) ...[
           _buildScheduleCta(),
           SizedBox(height: 24),
         ],
@@ -944,7 +946,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
 
   Widget _buildScheduleCta() {
     return GestureDetector(
-      onTap: widget.onSchedulePrint,
+      onTap: onSchedulePrint,
       child: Container(
         padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -1064,7 +1066,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
   // TAB 3 — ACTIVITY
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildActivityTab() {
-    return widget.activityLogs.isEmpty
+    return activityLogs.isEmpty
         ? Center(
             child: _fullEmptyState(
               Icons.history_rounded,
@@ -1074,47 +1076,47 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
           )
         : ListView.builder(
             padding: EdgeInsets.all(20),
-            itemCount: widget.activityLogs.length,
+            itemCount: activityLogs.length,
             itemBuilder: (_, i) {
               return _activityLogRow(
-                widget.activityLogs[i],
+                activityLogs[i],
                 isFirst: i == 0,
-                isLast: i == widget.activityLogs.length - 1,
+                isLast: i == activityLogs.length - 1,
               );
             },
           );
   }
 
   Widget _activityLogRow(
-    Map<String, dynamic> log, {
+    WorkActivityLog log, {
     bool isFirst = false,
     bool isLast = false,
   }) {
-    final action = log['action'] as String? ?? '';
-    final author = log['authorName'] as String? ?? 'System';
-    final date = log['createdAt'] as DateTime?;
+    // final action = log['action'] as String? ?? '';
+    final author = log.userId as String? ?? 'System';
+    final date = log.start as DateTime?;
 
-    IconData actionIcon;
-    Color actionColor;
-    if (action.contains('status')) {
-      actionIcon = Icons.swap_horiz_rounded;
-      actionColor = _brandBlue;
-    } else if (action.contains('assign')) {
-      actionIcon = Icons.person_add_outlined;
-      actionColor = _purple;
-    } else if (action.contains('creat')) {
-      actionIcon = Icons.add_circle_outline_rounded;
-      actionColor = _green;
-    } else if (action.contains('delet') || action.contains('remov')) {
-      actionIcon = Icons.remove_circle_outline_rounded;
-      actionColor = _red;
-    } else if (action.contains('schedul') || action.contains('print')) {
-      actionIcon = Icons.print_rounded;
-      actionColor = _cyan;
-    } else {
-      actionIcon = Icons.edit_outlined;
-      actionColor = _textSecondary;
-    }
+    // IconData actionIcon;
+    // Color actionColor;
+    // if (action.contains('status')) {
+    //   actionIcon = Icons.swap_horiz_rounded;
+    //   actionColor = _brandBlue;
+    // } else if (action.contains('assign')) {
+    //   actionIcon = Icons.person_add_outlined;
+    //   actionColor = _purple;
+    // } else if (action.contains('creat')) {
+    //   actionIcon = Icons.add_circle_outline_rounded;
+    //   actionColor = _green;
+    // } else if (action.contains('delet') || action.contains('remov')) {
+    //   actionIcon = Icons.remove_circle_outline_rounded;
+    //   actionColor = _red;
+    // } else if (action.contains('schedul') || action.contains('print')) {
+    //   actionIcon = Icons.print_rounded;
+    //   actionColor = _cyan;
+    // } else {
+    //   actionIcon = Icons.edit_outlined;
+    //   actionColor = _textSecondary;
+    // }
 
     return IntrinsicHeight(
       child: Row(
@@ -1128,17 +1130,17 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
                 height: isFirst ? 18 : 0,
                 color: Colors.transparent,
               ),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: actionColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                    child: Icon(actionIcon,
-                        size: 16, color: actionColor)),
-              ),
+              // Container(
+              //   width: 34,
+              //   height: 34,
+              //   decoration: BoxDecoration(
+              //     color: actionColor.withOpacity(0.1),
+              //     shape: BoxShape.circle,
+              //   ),
+              //   child: Center(
+              //       child: Icon(actionIcon,
+              //           size: 16, color: actionColor)),
+              // ),
               if (!isLast)
                 Expanded(
                   child: Container(
@@ -1159,14 +1161,14 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    action,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
+                  // Text(
+                  //   action,
+                  //   style: TextStyle(
+                  //     fontSize: 14,
+                  //     color: _textPrimary,
+                  //     height: 1.4,
+                  //   ),
+                  // ),
                   SizedBox(height: 4),
                   Row(
                     children: [
@@ -1204,9 +1206,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     final canSchedule = task.printerId == null &&
         task.status != TaskStatus.completed &&
         task.status != TaskStatus.blocked &&
-        widget.onSchedulePrint != null;
+        onSchedulePrint != null;
 
-    final canChangeStatus = widget.onStatusChange != null &&
+    final canChangeStatus = onStatusChange != null &&
         task.status != TaskStatus.completed &&
         task.status != TaskStatus.blocked;
 
@@ -1249,7 +1251,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
               Expanded(
                 flex: canChangeStatus ? 1 : 1,
                 child: ElevatedButton.icon(
-                  onPressed: widget.onSchedulePrint,
+                  onPressed: onSchedulePrint,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _brandBlue,
                     padding: EdgeInsets.symmetric(vertical: 15),
@@ -1496,7 +1498,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
             SizedBox(height: 16),
             ..._stages.map((s) => _statusOption(s)).toList(),
             SizedBox(height: 4),
-            _statusOption(TaskStatus.cancelled, isDanger: true),
+            _statusOption(TaskStatus.blocked, isDanger: true),
           ],
         ),
       ),
@@ -1578,7 +1580,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              widget.onStatusChange?.call(newStatus);
+              onStatusChange?.call(newStatus);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _statusColor(newStatus),
@@ -1619,7 +1621,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              widget.onDelete?.call();
+              onDelete?.call();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _red,
