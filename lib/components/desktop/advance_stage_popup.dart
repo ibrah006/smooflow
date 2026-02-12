@@ -217,7 +217,7 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Advance from',
+                                    'Advance to',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF64748B),
