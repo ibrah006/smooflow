@@ -127,7 +127,7 @@ class TaskProvider {
       );
     }
 
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
+    // await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
 
     if (printerId != null) {
       ref.watch(printerNotifierProvider.notifier).assignTask(printerId: printerId, taskId: taskId);
