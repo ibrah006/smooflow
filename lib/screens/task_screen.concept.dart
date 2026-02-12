@@ -6,11 +6,13 @@ import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/progress_log.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/progress_log_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 
@@ -57,7 +59,11 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
     super.dispose();
   }
 
+  final currentUser = LoginService.currentUser!;
+
   Task get task => ref.watch(taskNotifierProvider).firstWhere((t)=> t.id == widget.taskId);
+
+  String get projectName => ref.watch(projectNotifierProvider).firstWhere((p)=> p.id == task.projectId).name;
 
   Printer? get printerInfo {
     try {
@@ -151,8 +157,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -160,13 +167,16 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
             _buildStatusStepper(),
             _buildTabBar(),
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(),
-                  _buildProductionTab(),
-                  _buildActivityTab(),
-                ],
+              child: Container(
+                color: _bg,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOverviewTab(),
+                    _buildProductionTab(),
+                    _buildActivityTab(),
+                  ],
+                ),
               ),
             ),
           ],
@@ -244,12 +254,13 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
                   ),
                   PopupMenuItem(
                     value: 'delete',
+                    enabled: false,
                     child: Row(children: [
                       Icon(Icons.delete_outline,
                           size: 20, color: _red),
                       SizedBox(width: 12),
                       Text('Delete Task',
-                          style: TextStyle(color: _red)),
+                          style: TextStyle(color: _red.withOpacity(0.5))),
                     ]),
                   ),
                 ],
@@ -314,7 +325,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
               ),
               _metaChip(
                 Icons.folder_outlined,
-                task.projectId,
+                projectName,
               ),
               if (task.dueDate != null)
                 _metaChip(
@@ -494,6 +505,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
         labelColor: _brandBlue,
         unselectedLabelColor: _textSecondary,
         indicatorColor: _brandBlue,
+        dividerColor: Colors.grey.shade200,
         indicatorWeight: 3,
         labelStyle: TextStyle(
             fontSize: 14,
@@ -1205,10 +1217,9 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
   Widget _buildBottomBar() {
     final canSchedule = task.printerId == null &&
         task.status != TaskStatus.completed &&
-        task.status != TaskStatus.blocked &&
-        onSchedulePrint != null;
+        task.status != TaskStatus.blocked;
 
-    final canChangeStatus = onStatusChange != null &&
+    final canChangeStatus = currentUser.role == "admin" &&
         task.status != TaskStatus.completed &&
         task.status != TaskStatus.blocked;
 
@@ -1584,6 +1595,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _statusColor(newStatus),
+              foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
