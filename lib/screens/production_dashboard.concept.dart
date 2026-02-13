@@ -117,7 +117,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                             gradient: LinearGradient(
                               colors: [Color(0xFF6366F1), colorPrimary],
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
                                 color: colorPrimary.withOpacity(0.3),
