@@ -18,6 +18,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/constants.dart';
 
 class ProductionDashboardScreen extends ConsumerStatefulWidget {
 
@@ -110,15 +111,25 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
                     Row(
                       children: [
                         Container(
-                          padding: EdgeInsets.all(10),
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: Color(0xFF2563EB),
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF6366F1), colorPrimary],
+                            ),
                             borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorPrimary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            Icons.dashboard_rounded,
+                          child: const Icon(
+                            Icons.layers_rounded,
                             color: Colors.white,
-                            size: 24,
+                            size: 25,
                           ),
                         ),
                         SizedBox(width: 12),
