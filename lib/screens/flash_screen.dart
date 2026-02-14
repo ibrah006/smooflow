@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/core/app_routes.dart';
@@ -83,10 +84,10 @@ class _FlashScreenState extends State<FlashScreen> {
           children: [
             SizedBox(height: 100),
             Row(
-              spacing: 10,
+              spacing: 20,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(width: 60, "assets/icons/app_icon.png"),
+                SvgPicture.asset(width: 60, "assets/icons/logo.svg"),
                 Text(
                   "Smooflow",
                   style: textTheme.headlineLarge!.copyWith(

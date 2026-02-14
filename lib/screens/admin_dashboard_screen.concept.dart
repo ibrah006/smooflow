@@ -367,7 +367,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Admin Dashboard',
+                    Text('Dashboard',
                         style: TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w700,
                             color: _T.textPrimary, letterSpacing: -0.5)),
