@@ -193,6 +193,20 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref.watch(memberNotifierProvider.notifier).members;
+    });
+  }
+
+  @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
@@ -1636,15 +1650,6 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   void initState() {
     super.initState();
     _projectId = widget.preselectedProjectId ?? widget.projects.first.id;
-
-    Future.microtask(() async {
-      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).loadAll();
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
-      await ref.watch(memberNotifierProvider.notifier).members;
-    });
   }
 
   @override
