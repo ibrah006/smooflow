@@ -16,8 +16,6 @@ class PermissionGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    debugPrint("user role: ${LoginService.currentUser!.role}, expected permission: $permission");
-
     return LoginService.can(permission)
         ? child
         : (fallback ?? const SizedBox.shrink());
