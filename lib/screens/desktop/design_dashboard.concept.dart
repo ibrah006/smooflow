@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/member.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -80,24 +81,6 @@ const List<DesignStageInfo> kStages = [
 DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
 int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);
 
-class DesignProject {
-  final String id, name;
-  final String? description;
-  final Color color;
-  final DateTime? dueDate;
-  DesignProject({required this.id, required this.name, this.description, required this.color, this.dueDate});
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SEED DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
-List<DesignProject> buildProjects() => [
-  DesignProject(id: 'p1', name: 'Spring Campaign 2026',  description: 'Print materials for the spring launch.',       color: _T.blue,   dueDate: DateTime(2026, 4, 15)),
-  DesignProject(id: 'p2', name: 'Rebranding — Phase 2',  description: 'Updated brand identity rollout.',              color: _T.purple, dueDate: DateTime(2026, 3, 10)),
-  DesignProject(id: 'p3', name: 'Trade Show Booth',       description: 'Signage and collateral for Expo 2026.',       color: _T.green,  dueDate: DateTime(2026, 5, 1)),
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // APP
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,7 +116,7 @@ class DesignDashboardScreen extends ConsumerStatefulWidget {
 class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   final _currentUser = LoginService.currentUser!;
 
-  final List<DesignProject> _projects = buildProjects();
+  List<Project> get _projects => ref.watch(projectNotifierProvider);
 
   List<Task> get _tasks => ref.watch(taskNotifierProvider);
 
@@ -181,7 +164,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     );
   }
 
-  void _addProject(DesignProject p) {
+  void _addProject(Project p) {
     setState(() => _projects.add(p));
     _showSnack('Project "${p.name}" created', _T.green);
   }
@@ -328,7 +311,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 // SIDEBAR
 // ─────────────────────────────────────────────────────────────────────────────
 class _Sidebar extends ConsumerWidget {
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final List<Task> tasks;
   final String? selectedProjectId;
   final ViewMode viewMode;
@@ -584,7 +567,7 @@ class _SidebarProjectRow extends StatelessWidget {
 // TOPBAR
 // ─────────────────────────────────────────────────────────────────────────────
 class _Topbar extends StatelessWidget {
-  final DesignProject? selectedProject;
+  final Project? selectedProject;
   final TaskFilter filter;
   final ViewMode viewMode;
   final TextEditingController searchCtrl;
@@ -778,7 +761,7 @@ class _FilterChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _BoardView extends StatelessWidget {
   final List<Task> tasks;
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final VoidCallback onAddTask;
@@ -811,7 +794,7 @@ class _BoardView extends StatelessWidget {
 class _KanbanLane extends StatelessWidget {
   final DesignStageInfo stageInfo;
   final List<Task> tasks;
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final VoidCallback? onAddTask;
@@ -939,7 +922,7 @@ class _AddCardButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskCard extends ConsumerWidget {
   final Task task;
-  final DesignProject project;
+  final Project project;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -1040,7 +1023,7 @@ class _TaskCard extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ListView extends ConsumerWidget {
   final List<Task> tasks;
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
 
@@ -1160,7 +1143,7 @@ class _TableHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailPanel extends ConsumerWidget {
   final Task task;
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final VoidCallback onClose;
   final VoidCallback onAdvance;
 
@@ -1566,7 +1549,7 @@ class _LogoPainter extends CustomPainter {
 // MODALS
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectModal extends StatefulWidget {
-  final ValueChanged<DesignProject> onSave;
+  final ValueChanged<Project> onSave;
   const _ProjectModal({required this.onSave});
   @override
   State<_ProjectModal> createState() => _ProjectModalState();
@@ -1592,7 +1575,7 @@ class _ProjectModalState extends State<_ProjectModal> {
     onClose: () => Navigator.pop(context),
     onSave: () {
       if (_name.text.trim().isEmpty) return;
-      widget.onSave(DesignProject(id: 'p${DateTime.now().millisecondsSinceEpoch}', name: _name.text.trim(), description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null, color: _color, dueDate: _due));
+      // widget.onSave(Project(id: 'p${DateTime.now().millisecondsSinceEpoch}', name: _name.text.trim(), description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null, color: _color, dueDate: _due));
       Navigator.pop(context);
     },
     saveLabel: 'Create Project',
@@ -1632,7 +1615,7 @@ class _ProjectModalState extends State<_ProjectModal> {
 }
 
 class _TaskModal extends ConsumerStatefulWidget {
-  final List<DesignProject> projects;
+  final List<Project> projects;
   final String? preselectedProjectId;
   final int idCounter;
   final ValueChanged<Task> onSave;

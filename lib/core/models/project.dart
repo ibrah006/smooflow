@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/constants.dart';
@@ -35,6 +37,14 @@ class Project {
   }
 
   String get status => _status;
+
+  // Get random color for now
+  Color get color {
+    return [Color(0xFF2563EB),
+    Color(0xFF8B5CF6),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B)][Random().nextInt(4)];
+  }
 
   // To ensure toSet gives no duplicates
   @override
