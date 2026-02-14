@@ -5,7 +5,9 @@ import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/enums/task_priority.dart';
 
@@ -1651,6 +1653,15 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   void initState() {
     super.initState();
     _projectId = widget.preselectedProjectId ?? widget.projects.first.id;
+
+    Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref.watch(memberNotifierProvider.notifier).members;
+    });
   }
 
   @override
