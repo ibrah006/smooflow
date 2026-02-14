@@ -83,9 +83,12 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 flutter_launcher_icons:
-  image_path: "assets/icons/app_icon.png" # Path to your icon image (PNG, 1024x1024 recommended)
+  image_path: "assets/icons/logo.png" # Path to your icon image (PNG, 1024x1024 recommended)
   android: true
   ios: true
+  windows: true
+  macos: true
+  linux: true
 
 # The following section is specific to Flutter packages.
 flutter:
