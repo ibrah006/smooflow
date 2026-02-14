@@ -11,18 +11,18 @@ class TaskComponentHelper {
   final Color color;
   final String labelTitle, labelSubTitle;
   IconData icon;
-  DateTime? actualProductionStartTime;
-  DateTime? actualProductionEndTime;
+  DateTime? _actualProductionStartTime;
+  DateTime? _actualProductionEndTime;
 
   // Calculate time display based on status
-  String get timeDisplay => actualProductionStartTime != null && actualProductionEndTime != null?
+  String get timeDisplay => _actualProductionStartTime != null && _actualProductionEndTime != null?
     // If production has ended, show total duration
-    actualProductionEndTime?.difference(actualProductionStartTime!).formatTime?? 'Just finished'
+    _actualProductionEndTime?.difference(_actualProductionStartTime!).formatTime?? 'Just finished'
     // If production has started but not ended, show how long it's been running
-    : actualProductionStartTime != null? actualProductionStartTime!.eventAgo
+    : _actualProductionStartTime != null? _actualProductionStartTime!.eventAgo
     : 'Not Started';
 
-  TaskComponentHelper(this.status, this.labelTitle, this.labelSubTitle, this.icon, this.color, this.actualProductionStartTime, this.actualProductionEndTime);
+  TaskComponentHelper(this.status, this.labelTitle, this.labelSubTitle, this.icon, this.color, this._actualProductionStartTime, this._actualProductionEndTime);
 
   factory TaskComponentHelper.get(Task task) {
     switch (task.status) {

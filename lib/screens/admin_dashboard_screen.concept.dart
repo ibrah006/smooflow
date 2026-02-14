@@ -9,6 +9,9 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
+import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,9 +112,28 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     return ref.watch(taskNotifierProvider).where((task) => task.projectId == projectId).toList();
   }
 
+  // Only use this when there is a printer assigned to a task
+  String taskPrinterName(int taskId) {
+    try {
+    return ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.currentJobId == taskId).name;
+    }catch (e) {
+      return "Loading Printer...";
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+
+    Future.microtask(() async {
+      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).loadAll();
+      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+    });
+
     _searchFocus.addListener(() {
       setState(() => _searchActive = _searchFocus.hasFocus);
     });
@@ -689,7 +711,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           //   _buildStockAlerts(),
           // ],
           SizedBox(height: 28),
-          _buildActivityFeed(),
+          // _buildActivityFeed(),
         ],
       ),
     );
@@ -1484,14 +1506,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                         Icon(Icons.print_rounded,
                             size: 12, color: _T.textMuted),
                         SizedBox(width: 4),
-                        Text(job.printerName,
+                        Text(taskPrinterName(job.id),
                             style: TextStyle(fontSize: 12,
                                 color: _T.textSecondary)),
                         SizedBox(width: 8),
                         Icon(Icons.timer_outlined,
                             size: 12, color: _T.textMuted),
                         SizedBox(width: 4),
-                        Text('${job.durationMin}m',
+                        Text(taskComponentHelper.timeDisplay,
                             style: TextStyle(fontSize: 12,
                                 color: _T.textSecondary)),
                       ],
@@ -1543,7 +1565,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     );
   }
 
-  Widget _teamMemberRow(TeamMember m, {bool isLast = false}) {
+  Widget _teamMemberRow(Member m, {bool isLast = false}) {
     final initials = m.name.split(' ').take(2)
         .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join();
     final avatarColors = [
@@ -1585,12 +1607,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: m.loadBg,
+                  // color: m.loadBg,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Text(m.load,
+                child: Text(m.name,
                     style: TextStyle(fontSize: 12,
-                        fontWeight: FontWeight.w700, color: m.loadColor)),
+                    // m.loadColor
+                        fontWeight: FontWeight.w700, color: _T.brandBlue)),
               ),
             ],
           ),
@@ -1611,14 +1634,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           children: [
             _sectionHeader('Stock Alerts'),
             SizedBox(width: 8),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: _T.redBg, borderRadius: BorderRadius.circular(5)),
-              child: Text('${widget.stockAlerts.length}',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                      color: _T.red)),
-            ),
+            // Container(
+            //   padding: EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            //   decoration: BoxDecoration(
+            //     color: _T.redBg, borderRadius: BorderRadius.circular(5)),
+            //   child: Text('${widget.stockAlerts.length}',
+            //       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+            //           color: _T.red)),
+            // ),
             Spacer(),
             GestureDetector(
               onTap: widget.onViewInventory,
@@ -1634,146 +1657,146 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           ],
         ),
         SizedBox(height: 12),
-        _card(
-          child: Column(
-            children: widget.stockAlerts.asMap().entries.map((e) {
-              final isLast = e.key == widget.stockAlerts.length - 1;
-              return _stockAlertRow(e.value, isLast: isLast);
-            }).toList(),
-          ),
-        ),
+        // _card(
+        //   child: Column(
+        //     children: widget.stockAlerts.asMap().entries.map((e) {
+        //       final isLast = e.key == widget.stockAlerts.length - 1;
+        //       return _stockAlertRow(e.value, isLast: isLast);
+        //     }).toList(),
+        //   ),
+        // ),
       ],
     );
   }
 
-  Widget _stockAlertRow(StockAlert a, {bool isLast = false}) {
-    final pct = (a.current / a.minimum).clamp(0.0, 1.0);
-    final isCritical = a.current < a.minimum * 0.5;
+  // Widget _stockAlertRow(StockAlert a, {bool isLast = false}) {
+  //   final pct = (a.current / a.minimum).clamp(0.0, 1.0);
+  //   final isCritical = a.current < a.minimum * 0.5;
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded,
-                      size: 16,
-                      color: isCritical ? _T.red : _T.amber),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(a.material,
-                        style: TextStyle(fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _T.textPrimary)),
-                  ),
-                  Text('${a.current}/${a.minimum} units',
-                      style: TextStyle(fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isCritical ? _T.red : _T.amber)),
-                ],
-              ),
-              SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 5,
-                  backgroundColor: _T.border,
-                  valueColor: AlwaysStoppedAnimation(
-                      isCritical ? _T.red : _T.amber),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (!isLast) Divider(height: 1, thickness: 1, color: _T.border),
-      ],
-    );
-  }
+  //   return Column(
+  //     children: [
+  //       Padding(
+  //         padding: EdgeInsets.symmetric(vertical: 12),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: [
+  //                 Icon(Icons.warning_amber_rounded,
+  //                     size: 16,
+  //                     color: isCritical ? _T.red : _T.amber),
+  //                 SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(a.material,
+  //                       style: TextStyle(fontSize: 14,
+  //                           fontWeight: FontWeight.w600,
+  //                           color: _T.textPrimary)),
+  //                 ),
+  //                 Text('${a.current}/${a.minimum} units',
+  //                     style: TextStyle(fontSize: 12,
+  //                         fontWeight: FontWeight.w600,
+  //                         color: isCritical ? _T.red : _T.amber)),
+  //               ],
+  //             ),
+  //             SizedBox(height: 8),
+  //             ClipRRect(
+  //               borderRadius: BorderRadius.circular(3),
+  //               child: LinearProgressIndicator(
+  //                 value: pct,
+  //                 minHeight: 5,
+  //                 backgroundColor: _T.border,
+  //                 valueColor: AlwaysStoppedAnimation(
+  //                     isCritical ? _T.red : _T.amber),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //       if (!isLast) Divider(height: 1, thickness: 1, color: _T.border),
+  //     ],
+  //   );
+  // }
 
   // ══════════════════════════════════════════════════════════════════════════
   // 8 · ACTIVITY FEED
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildActivityFeed() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader('Recent Activity'),
-        SizedBox(height: 12),
-        widget.recentActivity.isEmpty
-            ? _card(child: _emptyInline(Icons.history_rounded,
-                'No recent activity'))
-            : _card(
-                child: Column(
-                  children: widget.recentActivity
-                      .take(10)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map((e) {
-                    final isLast = e.key ==
-                        (widget.recentActivity.length > 10
-                                ? 9
-                                : widget.recentActivity.length - 1);
-                    return _activityRow(e.value, isLast: isLast);
-                  }).toList(),
-                ),
-              ),
-      ],
-    );
-  }
+  // Widget _buildActivityFeed() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _sectionHeader('Recent Activity'),
+  //       SizedBox(height: 12),
+  //       widget.recentActivity.isEmpty
+  //           ? _card(child: _emptyInline(Icons.history_rounded,
+  //               'No recent activity'))
+  //           : _card(
+  //               child: Column(
+  //                 children: widget.recentActivity
+  //                     .take(10)
+  //                     .toList()
+  //                     .asMap()
+  //                     .entries
+  //                     .map((e) {
+  //                   final isLast = e.key ==
+  //                       (widget.recentActivity.length > 10
+  //                               ? 9
+  //                               : widget.recentActivity.length - 1);
+  //                   return _activityRow(e.value, isLast: isLast);
+  //                 }).toList(),
+  //               ),
+  //             ),
+  //     ],
+  //   );
+  // }
 
-  Widget _activityRow(ActivityEvent ev, {bool isLast = false}) {
-    IconData icon;
-    Color color;
-    switch (ev.type) {
-      case 'status': icon = Icons.swap_horiz_rounded;  color = _T.brandBlue; break;
-      case 'assign': icon = Icons.person_add_outlined;  color = _T.purple;   break;
-      case 'create': icon = Icons.add_circle_outline;   color = _T.green;    break;
-      case 'print':  icon = Icons.print_rounded;        color = _T.cyan;     break;
-      case 'stock':  icon = Icons.inventory_2_outlined; color = _T.amber;    break;
-      default:       icon = Icons.edit_outlined;        color = _T.textSecondary;
-    }
+  // Widget _activityRow(ActivityEvent ev, {bool isLast = false}) {
+  //   IconData icon;
+  //   Color color;
+  //   switch (ev.type) {
+  //     case 'status': icon = Icons.swap_horiz_rounded;  color = _T.brandBlue; break;
+  //     case 'assign': icon = Icons.person_add_outlined;  color = _T.purple;   break;
+  //     case 'create': icon = Icons.add_circle_outline;   color = _T.green;    break;
+  //     case 'print':  icon = Icons.print_rounded;        color = _T.cyan;     break;
+  //     case 'stock':  icon = Icons.inventory_2_outlined; color = _T.amber;    break;
+  //     default:       icon = Icons.edit_outlined;        color = _T.textSecondary;
+  //   }
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 14, color: color),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(ev.action,
-                        style: TextStyle(fontSize: 13, color: _T.textPrimary,
-                            height: 1.4)),
-                    SizedBox(height: 3),
-                    Text('${ev.author} · ${_timeAgo(ev.at)}',
-                        style: TextStyle(fontSize: 12, color: _T.textMuted)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (!isLast) Divider(height: 1, thickness: 1, color: _T.border),
-      ],
-    );
-  }
+  //   return Column(
+  //     children: [
+  //       Padding(
+  //         padding: EdgeInsets.symmetric(vertical: 10),
+  //         child: Row(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Container(
+  //               padding: EdgeInsets.all(7),
+  //               decoration: BoxDecoration(
+  //                 color: color.withOpacity(0.1),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: Icon(icon, size: 14, color: color),
+  //             ),
+  //             SizedBox(width: 12),
+  //             Expanded(
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Text(ev.action,
+  //                       style: TextStyle(fontSize: 13, color: _T.textPrimary,
+  //                           height: 1.4)),
+  //                   SizedBox(height: 3),
+  //                   Text('${ev.author} · ${_timeAgo(ev.at)}',
+  //                       style: TextStyle(fontSize: 12, color: _T.textMuted)),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //       if (!isLast) Divider(height: 1, thickness: 1, color: _T.border),
+  //     ],
+  //   );
+  // }
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
