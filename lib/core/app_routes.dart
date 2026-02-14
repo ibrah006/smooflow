@@ -54,7 +54,7 @@ import '../screens/tasks_screen.dart';
 // Production / Scheduling
 import '../screens/add_project_progress_screen.dart';
 
-import '../screens/admin_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
 
 // Import all args
 import 'package:smooflow/core/args/add_project_progress_args.dart';
