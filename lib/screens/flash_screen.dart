@@ -84,18 +84,31 @@ class _FlashScreenState extends State<FlashScreen> {
           children: [
             SizedBox(height: 100),
             Row(
-              spacing: 20,
+              spacing: 15,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SvgPicture.asset(width: 60, "assets/icons/logo.svg"),
                 Text(
-                  "Smooflow",
+                  "smooflow",
                   style: textTheme.headlineLarge!.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     fontSize: 40,
+                    fontFamily: "PlusJakartaSans",
+                    letterSpacing: -1.5,
+                    color: Color(0xFF0F172A)
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 13),
+            Text(
+              "Streamlining Large-Format Printing.",
+              style: textTheme.bodyMedium!.copyWith(
+                fontFamily: "PlusJakartaSans",
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Color.fromARGB(255, 90, 96, 103)
+              ),
             ),
             Lottie.asset(
               'assets/animations/loading.json',
