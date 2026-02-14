@@ -118,7 +118,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   List<Project> get _projects => ref.watch(projectNotifierProvider);
 
-  List<Task> get _tasks => ref.watch(taskNotifierProvider);
+  List<Task> get _tasks => ref.watch(taskNotifierProvider).where((t)=> t.status == TaskStatus.pending || t.status == TaskStatus.designing || t.status == TaskStatus.waitingApproval || t.status == TaskStatus.clientApproved).toList();
 
   String? _selectedProjectId;
   int? _selectedTaskId;
@@ -194,6 +194,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
 
     Future.microtask(() async {
@@ -590,11 +591,13 @@ class _Topbar extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onNewTask;
 
-  const _Topbar({
+  _Topbar({
     required this.selectedProject, required this.filter, required this.viewMode,
     required this.searchCtrl, required this.onFilterChanged,
     required this.onViewModeChanged, required this.onSearchChanged, required this.onNewTask,
   });
+
+  final currentUser = LoginService.currentUser!;
 
   @override
   Widget build(BuildContext context) {
@@ -699,11 +702,11 @@ class _Topbar extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
             decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(99)),
-            child: const Row(
+            child: Row(
               children: [
-                _AvatarWidget(initials: 'AK', color: _T.blue, size: 24),
+                _AvatarWidget(initials: currentUser.initials, color: _T.blue, size: 24),
                 SizedBox(width: 7),
-                Text('Alex K.', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
+                Text(currentUser.nameShort, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
                 SizedBox(width: 5),
                 Icon(Icons.keyboard_arrow_down, size: 14, color: _T.slate400),
               ],

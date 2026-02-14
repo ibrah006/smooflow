@@ -39,12 +39,7 @@ class Project {
   String get status => _status;
 
   // Get random color for now
-  Color get color {
-    return [Color(0xFF2563EB),
-    Color(0xFF8B5CF6),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B)][Random().nextInt(4)];
-  }
+  late final Color color;
 
   // To ensure toSet gives no duplicates
   @override
@@ -85,7 +80,11 @@ class Project {
     required this.progressLogLastModifiedAt,
     required this.createdAt
   }) : _status = status,
-       taskLastModifiedAt = null;
+       taskLastModifiedAt = null,
+       color = [Color(0xFF2563EB),
+    Color(0xFF8B5CF6),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B)][Random().nextInt(4)];
 
   Project.create({
     required this.name,

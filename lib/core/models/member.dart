@@ -25,6 +25,11 @@ class Member {
     return n.length > 1? "${n[0]} ${n[1]}" : name[0];
   }
 
+  String get nameShort {
+    final n = name.split(" ");
+    return n.length > 1? "${n[0]} ${n[1][0]}." : name;
+  }
+
   // Get random color for now
   Color get color {
     return [Color(0xFF2563EB),
