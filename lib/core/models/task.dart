@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/core/models/material_log.dart';
@@ -18,7 +19,7 @@ class Task {
   List<int> workActivityLogs;
   int? _runs;
   double? _productionQuantity;
-  late final int _priority;
+  late final TaskPriority _priority;
   String? _stockTransactionBarcode;
 
   DateTime? _actualProductionStartTime;
@@ -62,7 +63,7 @@ class Task {
     required DateTime? productionStartTime,
     int runs = 1,
     required double? productionQuantity,
-    required int priority,
+    required TaskPriority priority,
     required String? stockTransactionBarcode,
     required DateTime? actualProductionStartTime,
     required DateTime? actualProductionEndTime
@@ -101,7 +102,7 @@ class Task {
     // required DateTime? productionStartTime,
     // int runs = 1,
     // required double productionQuantity,
-    int priority = 1,
+    TaskPriority priority = TaskPriority.normal,
     // required String stockTransactionBarcode,
   }) : _name = name,
        _description = description,
@@ -141,6 +142,8 @@ class Task {
   int? get runs => _runs;
   double? get productionQuantity=> _productionQuantity;
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
+
+  TaskPriority get priority => _priority;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -243,7 +246,7 @@ class Task {
           : null,
       runs: json["runs"] ?? 1,
       productionQuantity: prodQuantity!=null? double.parse(prodQuantity) : null,
-      priority: json["priority"],
+      priority: TaskPriority.values.elementAt(json["priority"] - 1),
       stockTransactionBarcode: json["stockTransaction"]?["barcode"],
       actualProductionStartTime: json['actualProductionStartTime'] != null
               ? DateTime.parse(json['actualProductionStartTime'])

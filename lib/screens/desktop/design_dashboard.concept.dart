@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-void main() {
-  runApp(const SmooflowDesignApp());
-}
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/enums/task_priority.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -52,13 +54,11 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA MODELS
 // ─────────────────────────────────────────────────────────────────────────────
-enum TaskStage { initialized, designing, awaitingApproval, clientApproved }
-enum TaskPriority { normal, high, urgent }
 enum TaskFilter { all, mine, overdue }
 enum ViewMode { board, list }
 
 class DesignStageInfo {
-  final TaskStage stage;
+  final TaskStatus stage;
   final String label;
   final String shortLabel;
   final Color color;
@@ -67,18 +67,14 @@ class DesignStageInfo {
 }
 
 const List<DesignStageInfo> kStages = [
-  DesignStageInfo(TaskStage.initialized,     'Initialized',       'Init',     _T.slate500, _T.slate100),
-  DesignStageInfo(TaskStage.designing,       'Designing',         'Design',   _T.purple,   _T.purple50),
-  DesignStageInfo(TaskStage.awaitingApproval,'Awaiting Approval', 'Review',   _T.amber,    _T.amber50),
-  DesignStageInfo(TaskStage.clientApproved,  'Client Approved',   'Approved', _T.green,    _T.green50),
+  DesignStageInfo(TaskStatus.pending,     'Initialized',       'Init',     _T.slate500, _T.slate100),
+  DesignStageInfo(TaskStatus.designing,       'Designing',         'Design',   _T.purple,   _T.purple50),
+  DesignStageInfo(TaskStatus.waitingApproval,'Awaiting Approval', 'Review',   _T.amber,    _T.amber50),
+  DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green,    _T.green50),
 ];
 
-DesignStageInfo stageInfo(TaskStage s) => kStages.firstWhere((i) => i.stage == s);
-int stageIndex(TaskStage s) => kStages.indexWhere((i) => i.stage == s);
-TaskStage? nextStage(TaskStage s) {
-  final idx = stageIndex(s);
-  return idx < kStages.length - 1 ? kStages[idx + 1].stage : null;
-}
+DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
+int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);
 
 class TeamMember {
   final String id, name, initials;
@@ -93,21 +89,6 @@ class DesignProject {
   final Color color;
   final DateTime? dueDate;
   DesignProject({required this.id, required this.name, this.description, required this.color, this.dueDate});
-}
-
-class DesignTask {
-  String id, name;
-  String? description;
-  String projectId, assigneeId;
-  TaskStage stage;
-  DateTime? dueDate;
-  TaskPriority priority;
-  DesignTask({
-    required this.id, required this.name, this.description,
-    required this.projectId, required this.assigneeId,
-    required this.stage, this.dueDate, required this.priority,
-  });
-  bool get isLocked => stage == TaskStage.clientApproved;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,55 +107,47 @@ List<DesignProject> buildProjects() => [
   DesignProject(id: 'p3', name: 'Trade Show Booth',       description: 'Signage and collateral for Expo 2026.',       color: _T.green,  dueDate: DateTime(2026, 5, 1)),
 ];
 
-List<DesignTask> buildTasks() => [
-  DesignTask(id:'t1', name:'Homepage hero banner',      description:'Large format print for store entrance. 3000×1000mm.', projectId:'p1', assigneeId:'alex',  stage:TaskStage.initialized,      dueDate:DateTime(2026,3,5),  priority:TaskPriority.high),
-  DesignTask(id:'t2', name:'Product catalogue spread',   description:'Double-page spreads for 12 product lines.',           projectId:'p1', assigneeId:'maya',  stage:TaskStage.designing,        dueDate:DateTime(2026,3,12), priority:TaskPriority.normal),
-  DesignTask(id:'t3', name:'Social media kit',           description:'Resized assets for all social channels.',             projectId:'p1', assigneeId:'priya', stage:TaskStage.awaitingApproval, dueDate:DateTime(2026,2,14), priority:TaskPriority.urgent),
-  DesignTask(id:'t4', name:'Outdoor billboard artwork',  description:'48-sheet billboard for the city centre location.',    projectId:'p1', assigneeId:'sam',   stage:TaskStage.clientApproved,   dueDate:DateTime(2026,3,20), priority:TaskPriority.high),
-  DesignTask(id:'t5', name:'Brand guidelines PDF',       description:'Full brand guidelines document, updated identity.',   projectId:'p2', assigneeId:'alex',  stage:TaskStage.designing,        dueDate:DateTime(2026,2,14), priority:TaskPriority.high),
-  DesignTask(id:'t6', name:'Logo variations pack',       description:'Dark, light, and mono variants in SVG/PNG/EPS.',     projectId:'p2', assigneeId:'maya',  stage:TaskStage.initialized,      dueDate:DateTime(2026,3,1),  priority:TaskPriority.normal),
-  DesignTask(id:'t7', name:'Booth backdrop print',       description:'3m × 2m retractable banner system.',                 projectId:'p3', assigneeId:'priya', stage:TaskStage.awaitingApproval, dueDate:DateTime(2026,4,10), priority:TaskPriority.normal),
-  DesignTask(id:'t8', name:'Flyer stack — 3 variants',   description:'A5 double-sided flyers, three colour options.',      projectId:'p3', assigneeId:'sam',   stage:TaskStage.initialized,      dueDate:DateTime(2026,4,22), priority:TaskPriority.normal),
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // APP
 // ─────────────────────────────────────────────────────────────────────────────
-class SmooflowDesignApp extends StatelessWidget {
-  const SmooflowDesignApp({super.key});
+// class SmooflowDesignApp extends StatelessWidget {
+//   const SmooflowDesignApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Smooflow — Design Studio',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Inter',
-        scaffoldBackgroundColor: _T.slate50,
-        colorScheme: ColorScheme.fromSeed(seedColor: _T.blue, brightness: Brightness.light),
-        useMaterial3: true,
-      ),
-      home: const DesignDashboardScreen(),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Smooflow — Design Studio',
+//       debugShowCheckedModeBanner: false,
+//       theme: ThemeData(
+//         fontFamily: 'Inter',
+//         scaffoldBackgroundColor: _T.slate50,
+//         colorScheme: ColorScheme.fromSeed(seedColor: _T.blue, brightness: Brightness.light),
+//         useMaterial3: true,
+//       ),
+//       home: const DesignDashboardScreen(),
+//     );
+//   }
+// }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-class DesignDashboardScreen extends StatefulWidget {
+class DesignDashboardScreen extends ConsumerStatefulWidget {
   const DesignDashboardScreen({super.key});
 
   @override
-  State<DesignDashboardScreen> createState() => _DesignDashboardScreenState();
+  ConsumerState<DesignDashboardScreen> createState() => _DesignDashboardScreenState();
 }
 
-class _DesignDashboardScreenState extends State<DesignDashboardScreen> {
+class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
+  final _currentUser = LoginService.currentUser!;
+
   final List<DesignProject> _projects = buildProjects();
-  final List<DesignTask> _tasks = buildTasks();
+
+  List<Task> get _tasks => ref.watch(taskNotifierProvider);
 
   String? _selectedProjectId;
-  String? _selectedTaskId;
+  int? _selectedTaskId;
   TaskFilter _filter = TaskFilter.all;
   ViewMode _viewMode = ViewMode.board;
   String _searchQuery = '';
@@ -182,13 +155,13 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen> {
 
   final _searchCtrl = TextEditingController();
 
-  DesignTask? get _selectedTask => _selectedTaskId == null
-      ? null : _tasks.firstWhere((t) => t.id == _selectedTaskId, orElse: () => _tasks.first);
+  Task? get _selectedTask => _selectedTaskId == null
+      ? null : _tasks.firstWhere((t) => t.id == _selectedTaskId, orElse: () => _tasks.first);  
 
-  List<DesignTask> get _visibleTasks {
+  List<Task> get _visibleTasks {
     return _tasks.where((t) {
       if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
-      if (_filter == TaskFilter.mine && t.assigneeId != 'alex') return false;
+      if (_filter == TaskFilter.mine && !t.assignees.contains(_currentUser.id)) return false;
       if (_filter == TaskFilter.overdue) {
         final d = t.dueDate;
         if (d == null || !d.isBefore(DateTime.now())) return false;
@@ -196,24 +169,24 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen> {
       final q = _searchQuery.toLowerCase().trim();
       if (q.isNotEmpty) {
         return t.name.toLowerCase().contains(q) ||
-            (t.description ?? '').toLowerCase().contains(q);
+            (t.description).toLowerCase().contains(q);
       }
       return true;
     }).toList();
   }
 
-  void _selectTask(String id) => setState(() => _selectedTaskId = id);
+  void _selectTask(int id) => setState(() => _selectedTaskId = id);
   void _closeDetail() => setState(() => _selectedTaskId = null);
 
-  void _advanceTask(DesignTask task) {
-    final next = nextStage(task.stage);
-    if (next == null || task.isLocked) return;
-    setState(() => task.stage = next);
+  void _advanceTask(Task task) {
+    final next = task.status.nextStage;
+    if (next == null) return;
+    setState(() => task.status = next);
     _showSnack(
-      next == TaskStage.clientApproved
+      next == TaskStatus.clientApproved
           ? '✓ Task marked as Client Approved — handed off to production'
           : 'Task moved to "${stageInfo(next).label}"',
-      next == TaskStage.clientApproved ? _T.green : _T.blue,
+      next == TaskStatus.clientApproved ? _T.green : _T.blue,
     );
   }
 
@@ -222,7 +195,7 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen> {
     _showSnack('Project "${p.name}" created', _T.green);
   }
 
-  void _addTask(DesignTask t) {
+  void _addTask(Task t) {
     setState(() { _taskCounter++; _tasks.add(t); });
     _showSnack('"${t.name}" added to Initialized', _T.blue);
   }
@@ -365,7 +338,7 @@ class _DesignDashboardScreenState extends State<DesignDashboardScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _Sidebar extends StatelessWidget {
   final List<DesignProject> projects;
-  final List<DesignTask> tasks;
+  final List<Task> tasks;
   final String? selectedProjectId;
   final ViewMode viewMode;
   final ValueChanged<String?> onProjectSelected;
@@ -380,7 +353,7 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeCount = tasks.where((t) => t.stage != TaskStage.clientApproved).length;
+    final activeCount = tasks.where((t) => t.status != TaskStatus.clientApproved).length;
 
     return Container(
       width: _T.sidebarW,
@@ -810,10 +783,10 @@ class _FilterChip extends StatelessWidget {
 // BOARD VIEW
 // ─────────────────────────────────────────────────────────────────────────────
 class _BoardView extends StatelessWidget {
-  final List<DesignTask> tasks;
+  final List<Task> tasks;
   final List<DesignProject> projects;
-  final String? selectedTaskId;
-  final ValueChanged<String> onTaskSelected;
+  final int? selectedTaskId;
+  final ValueChanged<int> onTaskSelected;
   final VoidCallback onAddTask;
 
   const _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask});
@@ -826,14 +799,14 @@ class _BoardView extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(16),
         children: kStages.map((stageInfo) {
-          final stageTasks = tasks.where((t) => t.stage == stageInfo.stage).toList();
+          final stageTasks = tasks.where((t) => t.status == stageInfo.stage).toList();
           return _KanbanLane(
             stageInfo: stageInfo,
             tasks: stageTasks,
             projects: projects,
             selectedTaskId: selectedTaskId,
             onTaskSelected: onTaskSelected,
-            onAddTask: stageInfo.stage == TaskStage.initialized ? onAddTask : null,
+            onAddTask: stageInfo.stage == TaskStatus.pending ? onAddTask : null,
           );
         }).toList(),
       ),
@@ -843,17 +816,17 @@ class _BoardView extends StatelessWidget {
 
 class _KanbanLane extends StatelessWidget {
   final DesignStageInfo stageInfo;
-  final List<DesignTask> tasks;
+  final List<Task> tasks;
   final List<DesignProject> projects;
-  final String? selectedTaskId;
-  final ValueChanged<String> onTaskSelected;
+  final int? selectedTaskId;
+  final ValueChanged<int> onTaskSelected;
   final VoidCallback? onAddTask;
 
   const _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, this.onAddTask});
 
   @override
   Widget build(BuildContext context) {
-    final isApproved = stageInfo.stage == TaskStage.clientApproved;
+    final isApproved = stageInfo.stage == TaskStatus.clientApproved;
 
     return Container(
       width: 258,
@@ -971,7 +944,7 @@ class _AddCardButton extends StatelessWidget {
 // TASK CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskCard extends StatelessWidget {
-  final DesignTask task;
+  final Task task;
   final DesignProject project;
   final bool isSelected;
   final VoidCallback onTap;
@@ -993,7 +966,8 @@ class _TaskCard extends StatelessWidget {
     final member    = kTeam.firstWhere((m) => m.id == task.assigneeId, orElse: () => kTeam.first);
 
     return Material(
-      color: task.isLocked ? _T.slate50 : _T.white,
+      // task.isLocked ? _T.slate50 :
+      color:  _T.white,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
         onTap: onTap,
@@ -1019,8 +993,8 @@ class _TaskCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: Text(task.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink, height: 1.4))),
-                            if (task.isLocked)
-                              const Padding(padding: EdgeInsets.only(left: 6, top: 1), child: Icon(Icons.lock_outline, size: 12, color: _T.slate300)),
+                            // if (task.isLocked)
+                            //   const Padding(padding: EdgeInsets.only(left: 6, top: 1), child: Icon(Icons.lock_outline, size: 12, color: _T.slate300)),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -1065,10 +1039,10 @@ class _TaskCard extends StatelessWidget {
 // LIST VIEW
 // ─────────────────────────────────────────────────────────────────────────────
 class _ListView extends StatelessWidget {
-  final List<DesignTask> tasks;
+  final List<Task> tasks;
   final List<DesignProject> projects;
-  final String? selectedTaskId;
-  final ValueChanged<String> onTaskSelected;
+  final int? selectedTaskId;
+  final ValueChanged<int> onTaskSelected;
 
   const _ListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
 
@@ -1104,7 +1078,7 @@ class _ListView extends StatelessWidget {
                 final t = tasks[i];
                 final p = projects.firstWhere((pr) => pr.id == t.projectId, orElse: () => projects.first);
                 final m = kTeam.firstWhere((mem) => mem.id == t.assigneeId, orElse: () => kTeam.first);
-                final s = stageInfo(t.stage);
+                final s = stageInfo(t.status);
                 final d = t.dueDate;
                 final now = DateTime.now();
                 final isOverdue = d != null && d.isBefore(now);
@@ -1124,7 +1098,7 @@ class _ListView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Row(children: [
-                                if (t.isLocked) const Padding(padding: EdgeInsets.only(right: 5), child: Icon(Icons.lock_outline, size: 10, color: _T.slate400)),
+                                // if (t.isLocked) const Padding(padding: EdgeInsets.only(right: 5), child: Icon(Icons.lock_outline, size: 10, color: _T.slate400)),
                                 Expanded(child: Text(t.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink))),
                               ]),
                               if (t.description != null)
@@ -1178,7 +1152,7 @@ class _TableHeader extends StatelessWidget {
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailPanel extends StatelessWidget {
-  final DesignTask task;
+  final Task task;
   final List<DesignProject> projects;
   final VoidCallback onClose;
   final VoidCallback onAdvance;
@@ -1187,16 +1161,15 @@ class _DetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locked   = task.isLocked;
-    final curIdx   = stageIndex(task.stage);
-    final si       = stageInfo(task.stage);
+    final curIdx   = stageIndex(task.status);
+    final si       = stageInfo(task.status);
     final proj     = projects.firstWhere((p) => p.id == task.projectId, orElse: () => projects.first);
     final member   = kTeam.firstWhere((m) => m.id == task.assigneeId, orElse: () => kTeam.first);
     final d        = task.dueDate;
     final now      = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
-    final next      = nextStage(task.stage);
+    final next      = task.status.nextStage;
 
     return Container(
       width: _T.detailW,
@@ -1219,20 +1192,20 @@ class _DetailPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text('TASK-${task.id.toUpperCase()}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
+                Text('TASK-${task.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
                 const Spacer(),
-                if (!locked)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.edit_outlined, size: 12, color: _T.slate500),
-                        SizedBox(width: 5),
-                        Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _T.slate500)),
-                      ],
-                    ),
-                  ),
+                // if (!locked)
+                //   Container(
+                //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                //     decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+                //     child: const Row(
+                //       children: [
+                //         Icon(Icons.edit_outlined, size: 12, color: _T.slate500),
+                //         SizedBox(width: 5),
+                //         Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _T.slate500)),
+                //       ],
+                //     ),
+                //   ),
               ],
             ),
           ),
@@ -1287,23 +1260,23 @@ class _DetailPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Locked banner
-                  if (locked)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.lock_outline, size: 16, color: _T.slate400),
-                          const SizedBox(width: 10),
-                          const Expanded(child: Text.rich(TextSpan(children: [
-                            TextSpan(text: 'Client approved', style: TextStyle(fontWeight: FontWeight.w700, color: _T.ink3)),
-                            TextSpan(text: ' — handed off to production. The design team can no longer update its stage.', style: TextStyle(color: _T.slate500)),
-                          ]), style: TextStyle(fontSize: 12, height: 1.5))),
-                        ],
-                      ),
-                    ),
+                  // if (locked)
+                  //   Container(
+                  //     margin: const EdgeInsets.only(bottom: 16),
+                  //     padding: const EdgeInsets.all(12),
+                  //     decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+                  //     child: Row(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const Icon(Icons.lock_outline, size: 16, color: _T.slate400),
+                  //         const SizedBox(width: 10),
+                  //         const Expanded(child: Text.rich(TextSpan(children: [
+                  //           TextSpan(text: 'Client approved', style: TextStyle(fontWeight: FontWeight.w700, color: _T.ink3)),
+                  //           TextSpan(text: ' — handed off to production. The design team can no longer update its stage.', style: TextStyle(color: _T.slate500)),
+                  //         ]), style: TextStyle(fontSize: 12, height: 1.5))),
+                  //       ],
+                  //     ),
+                  //   ),
 
                   // Title
                   Text(task.name, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.3, height: 1.35)),
@@ -1412,13 +1385,15 @@ class _DetailPanel extends StatelessWidget {
           Container(
             decoration: const BoxDecoration(color: _T.slate50, border: Border(top: BorderSide(color: _T.slate200))),
             padding: const EdgeInsets.all(14),
-            child: locked
-                ? Row(children: [
-                    const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
-                    const SizedBox(width: 8),
-                    const Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400)),
-                  ])
-                : next != null
+            child:
+            // locked
+            //     ? Row(children: [
+            //         const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
+            //         const SizedBox(width: 8),
+            //         const Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400)),
+            //       ])
+            //     : 
+                next != null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -1429,20 +1404,20 @@ class _DetailPanel extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 11),
                               decoration: BoxDecoration(
-                                color: next == TaskStage.clientApproved ? _T.green : _T.blue,
+                                color: next == TaskStatus.clientApproved ? _T.green : _T.blue,
                                 borderRadius: BorderRadius.circular(_T.r),
-                                boxShadow: [BoxShadow(color: (next == TaskStage.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))],
+                                boxShadow: [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))],
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (next == TaskStage.clientApproved)
+                                  if (next == TaskStatus.clientApproved)
                                     const Icon(Icons.check, size: 15, color: Colors.white)
                                   else
                                     const Icon(Icons.arrow_forward, size: 15, color: Colors.white),
                                   const SizedBox(width: 8),
                                   Text(
-                                    next == TaskStage.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
+                                    next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
                                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
                                   ),
                                 ],
@@ -1647,7 +1622,7 @@ class _TaskModal extends StatefulWidget {
   final List<DesignProject> projects;
   final String? preselectedProjectId;
   final int idCounter;
-  final ValueChanged<DesignTask> onSave;
+  final ValueChanged<Task> onSave;
   const _TaskModal({required this.projects, this.preselectedProjectId, required this.idCounter, required this.onSave});
   @override
   State<_TaskModal> createState() => _TaskModalState();
@@ -1679,7 +1654,7 @@ class _TaskModalState extends State<_TaskModal> {
     onClose: () => Navigator.pop(context),
     onSave: () {
       if (_name.text.trim().isEmpty) return;
-      widget.onSave(DesignTask(id: 't${widget.idCounter}', name: _name.text.trim(), description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null, projectId: _projectId, assigneeId: _assigneeId, stage: TaskStage.initialized, dueDate: _due, priority: _priority));
+      // widget.onSave();
       Navigator.pop(context);
     },
     saveLabel: 'Create Task',
