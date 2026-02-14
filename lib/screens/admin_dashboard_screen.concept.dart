@@ -14,6 +14,7 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens  (shared with the rest of the Smooflow design system)
@@ -1188,6 +1189,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                             fontWeight: FontWeight.w600)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _T.brandBlue,
+                      foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 16),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -1591,7 +1593,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                             fontWeight: FontWeight.w600,
                             color: _T.textPrimary)),
                     SizedBox(height: 2),
-                    Text('${m.activeTasks} active task${m.activeTasks == 1 ? '' : 's'}',
+                    Text('${m.activeTasks.length} active task${m.activeTasks == 1 ? '' : 's'}',
                         style: TextStyle(fontSize: 12,
                             color: _T.textSecondary)),
                   ],
@@ -1603,7 +1605,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                   // color: m.loadBg,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Text(m.name,
+                child: Text(m.role.capitalize(),
                     style: TextStyle(fontSize: 12,
                     // m.loadColor
                         fontWeight: FontWeight.w700, color: _T.brandBlue)),

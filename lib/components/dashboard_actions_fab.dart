@@ -135,9 +135,11 @@ class _DashboardActionsFabState extends State<DashboardActionsFab> with TickerPr
   Widget _fabActionRow(_FabAction a) {
     return GestureDetector(
       onTap: () {
-        setState(() => widget.fabHelper.fabOpen = false);
-        widget.fabHelper.fabCtrl.reverse();
-        a.onTap?.call();
+        if (widget.fabHelper.fabOpen) {
+          setState(() => widget.fabHelper.fabOpen = false);
+          widget.fabHelper.fabCtrl.reverse();
+          a.onTap?.call();
+        }
       },
       child: Row(
         mainAxisSize: MainAxisSize.min,
