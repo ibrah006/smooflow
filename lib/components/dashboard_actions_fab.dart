@@ -1,7 +1,9 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:smooflow/components/permission_gate.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 
 class _T {
@@ -79,21 +81,24 @@ class _DashboardActionsFabState extends State<DashboardActionsFab> with TickerPr
         // Expanded action items
         ...actions.asMap().entries.map((e) {
           final delay = (actions.length - e.key) * 40;
-          return AnimatedBuilder(
-            animation: widget.fabHelper.fabCtrl,
-            builder: (_, __) {
-              final t = widget.fabHelper.fabCtrl.value;
-              return Opacity(
-                opacity: t,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - t) * 20),
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: _fabActionRow(e.value),
+          return PermissionGate(
+            permission: [UserPermission.addProjectAction, UserPermission.schedulePrintAction, UserPermission.addPrinterAction][e.key],
+            child: AnimatedBuilder(
+              animation: widget.fabHelper.fabCtrl,
+              builder: (_, __) {
+                final t = widget.fabHelper.fabCtrl.value;
+                return Opacity(
+                  opacity: t,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - t) * 20),
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: _fabActionRow(e.value),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         }).toList(),
         SizedBox(height: 4),

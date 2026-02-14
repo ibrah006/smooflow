@@ -1,3 +1,6 @@
 enum UserPermission {
-  updateTaskStatus
+  updateTaskStatus,
+  schedulePrintAction,
+  addPrinterAction,
+  addProjectAction
 }

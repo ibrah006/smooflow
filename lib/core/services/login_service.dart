@@ -14,10 +14,18 @@ class LoginService {
 
   static const _rolePermissions = {
     'admin': {
-      UserPermission.updateTaskStatus
+      UserPermission.updateTaskStatus,
+      UserPermission.schedulePrintAction,
+      UserPermission.addPrinterAction,
+      UserPermission.addProjectAction,
     },
     'production-head': {
-      UserPermission.updateTaskStatus
+      UserPermission.updateTaskStatus,
+      UserPermission.schedulePrintAction,
+      UserPermission.addPrinterAction,
+    },
+    'production': {
+      UserPermission.schedulePrintAction,
     }
   };
 
