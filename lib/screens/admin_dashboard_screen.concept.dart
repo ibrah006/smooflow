@@ -10,6 +10,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -42,44 +43,9 @@ class _T {
 // Admin Dashboard Screen
 // ─────────────────────────────────────────────────────────────────────────────
 class AdminDashboardScreen extends ConsumerStatefulWidget {
-  final List<Printer>   printers;
-  final List<Task>      tasks;
-  final List<Project>   projects;
-  final List<Member>     team;
-  // TODO: implement this
-  // final List<ActivityEvent>  recentActivity;
-  final List<Task>   todaysSchedule;
-  final int notificationCount;
-
-  // Navigation callbacks
-  final VoidCallback? onNewTask;
-  final VoidCallback? onNewProject;
-  final VoidCallback? onSchedulePrint;
-  final VoidCallback? onAddPrinter;
-  final Function(Project)? onProjectTap;
-  final VoidCallback? onViewAllPrinters;
-  final VoidCallback? onViewAllTasks;
-  final VoidCallback? onViewInventory;
-  final VoidCallback? onViewSchedule;
 
   const AdminDashboardScreen({
-    Key? key,
-    this.printers      = const [],
-    this.tasks         = const [],
-    this.projects      = const [],
-    this.team          = const [],
-    // this.recentActivity = const [],
-    this.todaysSchedule = const [],
-    this.notificationCount = 0,
-    this.onNewTask,
-    this.onNewProject,
-    this.onSchedulePrint,
-    this.onAddPrinter,
-    this.onProjectTap,
-    this.onViewAllPrinters,
-    this.onViewAllTasks,
-    this.onViewInventory,
-    this.onViewSchedule,
+    Key? key
   }) : super(key: key);
 
   @override
@@ -88,6 +54,16 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     with TickerProviderStateMixin {
+
+  List<Printer> get printers=> ref.watch(printerNotifierProvider).printers; 
+  List<Task> get tasks => ref.watch(taskNotifierProvider);
+  List<Project> get projects => ref.watch(projectNotifierProvider);
+  List<Member> get team => ref.watch(memberNotifierProvider).members;
+  // TODO: implement this
+  // final List<ActivityEvent>  recentActivity;
+  List<Task> get todaysSchedule=> ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
+
+  final int notificationCount = 0;
 
   // Search
   final _searchCtrl    = TextEditingController();
@@ -102,10 +78,26 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
   final DashboardActionsFabHelper fabHelper = DashboardActionsFabHelper(fabOpen: false);
 
+  void onNewTask() {}
+  void onNewProject() {}
+  void onSchedulePrint() {}
+  void onAddPrinter() {}
+  void onViewAllPrinters() {}
+  void onViewAllTasks() {}
+  void onViewInventory() {}
+  void onViewSchedule() {}
+  void onProjectTap(Project project) {
+
+  }
+
   double projectProgress(Project p) {
-    return ref.watch(taskNotifierProvider).where((task)=> p.tasks.contains(task.id)).fold(0, (prev, task) {
-      return prev + (task.status == TaskStatus.completed ? 1 : 0);
-    }) / (p.tasks.length);
+    if (p.tasks.isEmpty) {
+      return 0;
+    } else {
+      return ref.watch(taskNotifierProvider).where((task)=> p.tasks.contains(task.id)).fold(0, (prev, task) {
+        return prev + (task.status == TaskStatus.completed ? 1 : 0);
+      }) / (p.tasks.length);
+    }
   }
 
   List<Task> projectTasks(String projectId) {
@@ -132,6 +124,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       await ref.watch(taskNotifierProvider.notifier).loadAll();
       await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
       await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref.watch(memberNotifierProvider.notifier).members;
     });
 
     _searchFocus.addListener(() {
@@ -154,7 +147,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     final q = _query.toLowerCase();
     final out = <_SearchResult>[];
 
-    for (final t in widget.tasks) {
+    for (final t in tasks) {
       if (t.name.toLowerCase().contains(q) ||
           t.projectId.toLowerCase().contains(q)) {
         out.add(_SearchResult(
@@ -169,7 +162,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         ));
       }
     }
-    for (final p in widget.projects) {
+    for (final p in projects) {
       if (p.name.toLowerCase().contains(q) ||
           (p.description ?? '').toLowerCase().contains(q)) {
         out.add(_SearchResult(
@@ -184,7 +177,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         ));
       }
     }
-    for (final pr in widget.printers) {
+    for (final pr in printers) {
       if (pr.name.toLowerCase().contains(q) ||
            (pr.location != null && pr.location!.toLowerCase().contains(q))) {
         out.add(_SearchResult(
@@ -199,7 +192,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         ));
       }
     }
-    for (final m in widget.team) {
+    for (final m in team) {
       if (m.name.toLowerCase().contains(q)) {
         out.add(_SearchResult(
           category: 'People',
@@ -217,8 +210,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  Color _statusColor(TaskStatus s) {
-    switch (s) {
+  Color _statusColor(TaskStatus taskStatus) {
+    switch (taskStatus) {
       case TaskStatus.designing:  return _T.amber;
       case TaskStatus.printing:   return _T.brandBlue;
       case TaskStatus.finishing:  return _T.purple;
@@ -228,8 +221,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       default:           return _T.textMuted;
     }
   }
-  Color _statusBg(TaskStatus s) {
-    switch (s) {
+  Color _statusBg(TaskStatus taskStatus) {
+    switch (taskStatus) {
       case TaskStatus.designing:  return _T.amberBg;
       case TaskStatus.printing:   return _T.blueBg;
       case TaskStatus.finishing:  return _T.purpleBg;
@@ -269,13 +262,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     return color;
   }
 
-  int get _activeJobs      => widget.tasks.where((t) =>
+  int get _activeJobs      => tasks.where((t) =>
       t.status != TaskStatus.completed && t.status != TaskStatus.blocked).length;
-  int get _printersOnline  => widget.printers
+  int get _printersOnline  => printers
       .where((p) => p.isAvailable || p.isBusy).length;
   int get _dueToday        {
     final today = DateTime.now();
-    return widget.tasks.where((t) =>
+    return tasks.where((t) =>
         t.dueDate != null &&
         t.dueDate!.year == today.year &&
         t.dueDate!.month == today.month &&
@@ -371,7 +364,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                     child: Icon(Icons.notifications_outlined,
                         color: Color(0xFF475569), size: 22),
                   ),
-                  if (widget.notificationCount > 0)
+                  if (notificationCount > 0)
                     Positioned(
                       top: -4, right: -4,
                       child: Container(
@@ -379,8 +372,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                         decoration: BoxDecoration(
                           color: _T.red, shape: BoxShape.circle),
                         child: Text(
-                          widget.notificationCount > 9
-                              ? '9+' : '${widget.notificationCount}',
+                          notificationCount > 9
+                              ? '9+' : '${notificationCount}',
                           style: TextStyle(fontSize: 9,
                               fontWeight: FontWeight.w800,
                               color: Colors.white),
@@ -706,7 +699,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           _buildTodaysSchedule(),
           SizedBox(height: 28),
           _buildTeamWorkload(),
-          // if (widget.stockAlerts.isNotEmpty) ...[
+          // if (stockAlerts.isNotEmpty) ...[
           //   SizedBox(height: 28),
           //   _buildStockAlerts(),
           // ],
@@ -724,13 +717,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     final kpis = [
       _KpiData('Active Jobs',     '$_activeJobs',
           Icons.work_outline_rounded,     _T.brandBlue, _T.blueBg,   '+3 vs last wk', true),
-      _KpiData('Printers Online', '$_printersOnline/${widget.printers.length}',
+      _KpiData('Printers Online', '$_printersOnline/${printers.length}',
           Icons.print_rounded,            _T.green,     _T.greenBg,  'All operational', null),
       _KpiData('Due Today',       '$_dueToday',
           Icons.today_rounded,            _T.amber,     _T.amberBg,  '2 overdue', false),
-      // _KpiData('Stock Alerts',    '${widget.stockAlerts.length}',
+      // _KpiData('Stock Alerts',    '${stockAlerts.length}',
       //     Icons.inventory_2_outlined,     _T.red,       _T.redBg,    'Needs attention', false),
-      _KpiData('On Shift',        '${widget.team.length}',
+      _KpiData('On Shift',        '${team.length}',
           Icons.people_alt_rounded,       _T.purple,    _T.purpleBg, 'Active now', null),
     ];
 
@@ -815,9 +808,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   Widget _buildProductionHealth() {
     final counts = <TaskStatus, int>{};
     for (final s in TaskStatus.values) {
-      counts[s] = widget.tasks.where((t) => t.status == s).length;
+      counts[s] = tasks.where((t) => t.status == s).length;
     }
-    final total = widget.tasks.length;
+    final total = tasks.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +820,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             _sectionHeader('Production Health'),
             Spacer(),
             GestureDetector(
-              onTap: widget.onViewAllTasks,
+              onTap: onViewAllTasks,
               child: Row(children: [
                 Text('View Tasks',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
@@ -946,7 +939,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           ],
         ),
         SizedBox(height: 12),
-        widget.projects.isEmpty
+        projects.isEmpty
             ? _card(
                 child: _emptyInline(
                   Icons.folder_off_rounded,
@@ -955,7 +948,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                 ),
               )
             : Column(
-                children: widget.projects
+                children: projects
                     .map((p) => Padding(
                           padding: EdgeInsets.only(bottom: 12),
                           child: _projectCard(p),
@@ -969,7 +962,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   Widget _projectCard(Project p) {
     final pct = projectProgress(p);
     return GestureDetector(
-      onTap: () => widget.onProjectTap?.call(p),
+      onTap: () => onProjectTap?.call(p),
       child: Container(
         padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -1187,7 +1180,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                     onPressed: () {
                       if (_projNameCtrl.text.trim().isEmpty) return;
                       Navigator.pop(ctx);
-                      widget.onNewProject?.call();
+                      onNewProject?.call();
                     },
                     icon: Icon(Icons.add_rounded, size: 20),
                     label: Text('Create Project',
@@ -1258,10 +1251,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   // 4 · PRINTER FLEET
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildPrinterFleet() {
-    final busy      = widget.printers.where((p) => p.isBusy).length;
-    final available = widget.printers.where((p) => p.isAvailable).length;
-    final maint     = widget.printers.where((p) => p.status == PrinterStatus.maintenance).length;
-    final blocked   = widget.printers.where((p) => p.status == PrinterStatus.error).length;
+    final busy      = printers.where((p) => p.isBusy).length;
+    final available = printers.where((p) => p.isAvailable).length;
+    final maint     = printers.where((p) => p.status == PrinterStatus.maintenance).length;
+    final blocked   = printers.where((p) => p.status == PrinterStatus.error).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1271,7 +1264,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             _sectionHeader('Printer Fleet'),
             Spacer(),
             GestureDetector(
-              onTap: widget.onViewAllPrinters,
+              onTap: onViewAllPrinters,
               child: Row(children: [
                 Text('View All',
                     style: TextStyle(fontSize: 13,
@@ -1299,12 +1292,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                   _fleetStat('Blocked', blocked, _T.red, _T.redBg),
                 ],
               ),
-              if (widget.printers.isNotEmpty) ...[
+              if (printers.isNotEmpty) ...[
                 SizedBox(height: 16),
                 Divider(height: 1, thickness: 1, color: _T.border),
                 SizedBox(height: 14),
                 // Compact printer rows (max 4)
-                ...widget.printers.take(4).map((p) => _compactPrinterRow(p)).toList(),
+                ...printers.take(4).map((p) => _compactPrinterRow(p)).toList(),
               ],
             ],
           ),
@@ -1395,11 +1388,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTodaysSchedule() {
     final now = DateTime.now();
-    final morning   = widget.todaysSchedule.where(
+    final morning   = todaysSchedule.where(
         (j) => j.actualProductionStartTime != null && j.actualProductionStartTime!.hour < 12).toList();
-    final afternoon = widget.todaysSchedule.where(
+    final afternoon = todaysSchedule.where(
         (j) => j.actualProductionStartTime != null && j.actualProductionStartTime!.hour >= 12 && j.actualProductionStartTime!.hour < 17).toList();
-    final evening   = widget.todaysSchedule.where(
+    final evening   = todaysSchedule.where(
         (j) =>j.actualProductionStartTime != null &&  j.actualProductionStartTime!.hour >= 17).toList();
 
     return Column(
@@ -1410,7 +1403,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             _sectionHeader('Today\'s Schedule'),
             Spacer(),
             GestureDetector(
-              onTap: widget.onViewSchedule,
+              onTap: onViewSchedule,
               child: Row(children: [
                 Text('Full Schedule',
                     style: TextStyle(fontSize: 13,
@@ -1423,7 +1416,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
           ],
         ),
         SizedBox(height: 12),
-        widget.todaysSchedule.isEmpty
+        todaysSchedule.isEmpty
             ? _card(
                 child: _emptyInline(
                   Icons.event_available_rounded,
@@ -1550,13 +1543,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       children: [
         _sectionHeader('Team Workload'),
         SizedBox(height: 12),
-        widget.team.isEmpty
+        team.isEmpty
             ? _card(child: _emptyInline(Icons.people_outline,
                 'No team members added'))
             : _card(
                 child: Column(
-                  children: widget.team.asMap().entries.map((e) {
-                    final isLast = e.key == widget.team.length - 1;
+                  children: team.asMap().entries.map((e) {
+                    final isLast = e.key == team.length - 1;
                     return _teamMemberRow(e.value, isLast: isLast);
                   }).toList(),
                 ),
@@ -1638,13 +1631,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
             //   padding: EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             //   decoration: BoxDecoration(
             //     color: _T.redBg, borderRadius: BorderRadius.circular(5)),
-            //   child: Text('${widget.stockAlerts.length}',
+            //   child: Text('${stockAlerts.length}',
             //       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
             //           color: _T.red)),
             // ),
             Spacer(),
             GestureDetector(
-              onTap: widget.onViewInventory,
+              onTap: onViewInventory,
               child: Row(children: [
                 Text('Inventory',
                     style: TextStyle(fontSize: 13,
@@ -1659,8 +1652,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         SizedBox(height: 12),
         // _card(
         //   child: Column(
-        //     children: widget.stockAlerts.asMap().entries.map((e) {
-        //       final isLast = e.key == widget.stockAlerts.length - 1;
+        //     children: stockAlerts.asMap().entries.map((e) {
+        //       final isLast = e.key == stockAlerts.length - 1;
         //       return _stockAlertRow(e.value, isLast: isLast);
         //     }).toList(),
         //   ),
@@ -1726,21 +1719,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   //     children: [
   //       _sectionHeader('Recent Activity'),
   //       SizedBox(height: 12),
-  //       widget.recentActivity.isEmpty
+  //       recentActivity.isEmpty
   //           ? _card(child: _emptyInline(Icons.history_rounded,
   //               'No recent activity'))
   //           : _card(
   //               child: Column(
-  //                 children: widget.recentActivity
+  //                 children: recentActivity
   //                     .take(10)
   //                     .toList()
   //                     .asMap()
   //                     .entries
   //                     .map((e) {
   //                   final isLast = e.key ==
-  //                       (widget.recentActivity.length > 10
+  //                       (recentActivity.length > 10
   //                               ? 9
-  //                               : widget.recentActivity.length - 1);
+  //                               : recentActivity.length - 1);
   //                   return _activityRow(e.value, isLast: isLast);
   //                 }).toList(),
   //               ),
