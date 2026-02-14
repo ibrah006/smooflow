@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/components/dashboard_actions_fab.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/models/printer.dart';
@@ -20,7 +21,6 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/constants.dart';
 
 class ProductionDashboardScreen extends ConsumerStatefulWidget {
 

@@ -97,6 +97,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    # Icons
   #   - images/a_dot_burr.jpeg
     - assets/icons/printer.svg
     - assets/icons/flow.svg
@@ -106,16 +107,23 @@ flutter:
     - assets/icons/no_tasks_icon.svg
     - assets/icons/no_tasks_icon_dark.svg
     - assets/icons/app_icon.png
+    - assets/icons/logo.svg
+
+    # Images
     - assets/images/logo_long.png
+
+    # Animations
     - assets/animations/loading.json
     - assets/animations/first_half.json
     - assets/animations/second_half.json
     - assets/images/help_timeline.png
     - assets/images/box_open.png
+
     # Google Service Account Key
     - assets/credentials.json
     # Environment variables
     - .env
+    
     # Fonts
     - assets/fonts/Roboto-Regular.ttf
     

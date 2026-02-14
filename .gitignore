@@ -125,3 +125,6 @@ app.*.symbols
 assets/credentials.json
 
 .env
+
+# NEW LOGO Protoypes
+/logo.html

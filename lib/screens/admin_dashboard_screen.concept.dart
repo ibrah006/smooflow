@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/components/dashboard_actions_fab.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -351,15 +352,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           // Top row
           Row(
             children: [
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _T.brandBlue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.admin_panel_settings_rounded,
-                    color: Colors.white, size: 24),
-              ),
+              // Container(
+              //   padding: EdgeInsets.all(10),
+              //   decoration: BoxDecoration(
+              //     color: _T.brandBlue,
+              //     borderRadius: BorderRadius.circular(12),
+              //   ),
+              //   child: Icon(Icons.admin_panel_settings_rounded,
+              //       color: Colors.white, size: 24),
+              // ),
+              Logo(),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
