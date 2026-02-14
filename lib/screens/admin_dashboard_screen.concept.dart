@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/components/dashboard_actions_fab.dart';
 import 'package:smooflow/components/logo.dart';
+import 'package:smooflow/core/models/member.dart';
+import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens  (shared with the rest of the Smooflow design system)
@@ -29,85 +36,16 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Lightweight data models (replace with your real models)
-// ─────────────────────────────────────────────────────────────────────────────
-enum JobStatus { designing, printing, finishing, installing, completed, cancelled }
-
-class AdminPrinter {
-  final String id, name, section;
-  final String status; // available | busy | maintenance | blocked
-  final String? currentJob;
-  final double? progress;
-  AdminPrinter({required this.id, required this.name, required this.section,
-      required this.status, this.currentJob, this.progress});
-}
-
-class AdminTask {
-  final int id;
-  final String name, projectId;
-  final JobStatus status;
-  final DateTime? dueDate;
-  final List<String> assignees;
-  AdminTask({required this.id, required this.name, required this.projectId,
-      required this.status, this.dueDate, this.assignees = const []});
-}
-
-class AdminProject {
-  final String id, name;
-  final String? description;
-  final DateTime? dueDate;
-  final List<String> memberIds;
-  final List<AdminTask> tasks;
-  AdminProject({required this.id, required this.name, this.description,
-      this.dueDate, this.memberIds = const [], this.tasks = const []});
-
-  int get total      => tasks.length;
-  int get completed  => tasks.where((t) => t.status == JobStatus.completed).length;
-  double get percent => total == 0 ? 0 : completed / total;
-}
-
-class TeamMember {
-  final String id, name;
-  final int activeTasks;
-  TeamMember({required this.id, required this.name, required this.activeTasks});
-  String get load => activeTasks <= 2 ? 'Light' : activeTasks <= 5 ? 'Moderate' : 'Heavy';
-  Color get loadColor => activeTasks <= 2 ? _T.green : activeTasks <= 5 ? _T.amber : _T.red;
-  Color get loadBg    => activeTasks <= 2 ? _T.greenBg : activeTasks <= 5 ? _T.amberBg : _T.redBg;
-}
-
-class StockAlert {
-  final String material;
-  final double current, minimum;
-  StockAlert({required this.material, required this.current, required this.minimum});
-}
-
-class ActivityEvent {
-  final String action, author;
-  final DateTime at;
-  final String type; // status | assign | create | print | stock
-  ActivityEvent({required this.action, required this.author, required this.at, required this.type});
-}
-
-class ScheduledJob {
-  final String taskName, printerName;
-  final DateTime startTime;
-  final int durationMin;
-  final String status;
-  ScheduledJob({required this.taskName, required this.printerName,
-      required this.startTime, required this.durationMin, required this.status});
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Admin Dashboard Screen
 // ─────────────────────────────────────────────────────────────────────────────
-class AdminDashboardScreen extends StatefulWidget {
-  final List<AdminPrinter>   printers;
-  final List<AdminTask>      tasks;
-  final List<AdminProject>   projects;
-  final List<TeamMember>     team;
-  final List<StockAlert>     stockAlerts;
-  final List<ActivityEvent>  recentActivity;
-  final List<ScheduledJob>   todaysSchedule;
+class AdminDashboardScreen extends ConsumerStatefulWidget {
+  final List<Printer>   printers;
+  final List<Task>      tasks;
+  final List<Project>   projects;
+  final List<Member>     team;
+  // TODO: implement this
+  // final List<ActivityEvent>  recentActivity;
+  final List<Task>   todaysSchedule;
   final int notificationCount;
 
   // Navigation callbacks
@@ -115,7 +53,7 @@ class AdminDashboardScreen extends StatefulWidget {
   final VoidCallback? onNewProject;
   final VoidCallback? onSchedulePrint;
   final VoidCallback? onAddPrinter;
-  final Function(AdminProject)? onProjectTap;
+  final Function(Project)? onProjectTap;
   final VoidCallback? onViewAllPrinters;
   final VoidCallback? onViewAllTasks;
   final VoidCallback? onViewInventory;
@@ -127,8 +65,7 @@ class AdminDashboardScreen extends StatefulWidget {
     this.tasks         = const [],
     this.projects      = const [],
     this.team          = const [],
-    this.stockAlerts   = const [],
-    this.recentActivity = const [],
+    // this.recentActivity = const [],
     this.todaysSchedule = const [],
     this.notificationCount = 0,
     this.onNewTask,
@@ -143,10 +80,10 @@ class AdminDashboardScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  ConsumerState<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     with TickerProviderStateMixin {
 
   // Search
@@ -161,6 +98,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   DateTime? _projDue;
 
   final DashboardActionsFabHelper fabHelper = DashboardActionsFabHelper(fabOpen: false);
+
+  double projectProgress(Project p) {
+    return ref.watch(taskNotifierProvider).where((task)=> p.tasks.contains(task.id)).fold(0, (prev, task) {
+      return prev + (task.status == TaskStatus.completed ? 1 : 0);
+    }) / (p.tasks.length);
+  }
+
+  List<Task> projectTasks(String projectId) {
+    return ref.watch(taskNotifierProvider).where((task) => task.projectId == projectId).toList();
+  }
 
   @override
   void initState() {
@@ -206,7 +153,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         out.add(_SearchResult(
           category: 'Projects',
           title: p.name,
-          subtitle: '${p.total} tasks · ${(p.percent * 100).toInt()}% complete',
+          subtitle: '${p.tasks.length} tasks · ${(projectProgress(p) * 100).toInt()}% complete',
           icon: Icons.folder_rounded,
           iconColor: _T.brandBlue,
           badgeLabel: null,
@@ -217,16 +164,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     }
     for (final pr in widget.printers) {
       if (pr.name.toLowerCase().contains(q) ||
-          pr.section.toLowerCase().contains(q)) {
+           (pr.location != null && pr.location!.toLowerCase().contains(q))) {
         out.add(_SearchResult(
           category: 'Printers',
           title: pr.name,
-          subtitle: pr.section,
+          subtitle: pr.location?? "No Location",
           icon: Icons.print_rounded,
-          iconColor: _printerStatusColor(pr.status),
-          badgeLabel: pr.status,
-          badgeColor: _printerStatusColor(pr.status),
-          badgeBg: _printerStatusBg(pr.status),
+          iconColor: _printerStatusColor(pr),
+          badgeLabel: pr.statusName,
+          badgeColor: _printerStatusColor(pr),
+          badgeBg: _printerStatusBg(pr),
         ));
       }
     }
@@ -248,49 +195,62 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  Color _statusColor(JobStatus s) {
+  Color _statusColor(TaskStatus s) {
     switch (s) {
-      case JobStatus.designing:  return _T.amber;
-      case JobStatus.printing:   return _T.brandBlue;
-      case JobStatus.finishing:  return _T.purple;
-      case JobStatus.installing: return _T.cyan;
-      case JobStatus.completed:  return _T.green;
-      case JobStatus.cancelled:  return _T.red;
+      case TaskStatus.designing:  return _T.amber;
+      case TaskStatus.printing:   return _T.brandBlue;
+      case TaskStatus.finishing:  return _T.purple;
+      case TaskStatus.installing: return _T.cyan;
+      case TaskStatus.completed:  return _T.green;
+      case TaskStatus.blocked:  return _T.red;
+      default:           return _T.textMuted;
     }
   }
-  Color _statusBg(JobStatus s) {
+  Color _statusBg(TaskStatus s) {
     switch (s) {
-      case JobStatus.designing:  return _T.amberBg;
-      case JobStatus.printing:   return _T.blueBg;
-      case JobStatus.finishing:  return _T.purpleBg;
-      case JobStatus.installing: return _T.cyanBg;
-      case JobStatus.completed:  return _T.greenBg;
-      case JobStatus.cancelled:  return _T.redBg;
+      case TaskStatus.designing:  return _T.amberBg;
+      case TaskStatus.printing:   return _T.blueBg;
+      case TaskStatus.finishing:  return _T.purpleBg;
+      case TaskStatus.installing: return _T.cyanBg;
+      case TaskStatus.completed:  return _T.greenBg;
+      case TaskStatus.blocked:  return _T.redBg;
+      default:           return _T.textMuted.withOpacity(0.1);
     }
   }
-  String _statusLabel(JobStatus s) => s.name[0].toUpperCase() + s.name.substring(1);
+  String _statusLabel(TaskStatus s) => s.name[0].toUpperCase() + s.name.substring(1);
 
-  Color _printerStatusColor(String s) {
-    switch (s.toLowerCase()) {
-      case 'available':   return _T.green;
-      case 'busy':        return _T.brandBlue;
-      case 'maintenance': return _T.amber;
-      default:            return _T.red;
-    }
+  Color _printerStatusColor(Printer p) {
+
+    Color color;
+
+    if (p.isActive) color = _T.green;
+
+    if (p.isAvailable) color = _T.green;
+    else if (p.isBusy) color = _T.brandBlue;
+    else if (p.status == PrinterStatus.maintenance) color = _T.amber;
+    else if (p.status == PrinterStatus.error) color = _T.red;
+    else color = _T.textMuted;
+    
+    return color;
   }
-  Color _printerStatusBg(String s) {
-    switch (s.toLowerCase()) {
-      case 'available':   return _T.greenBg;
-      case 'busy':        return _T.blueBg;
-      case 'maintenance': return _T.amberBg;
-      default:            return _T.redBg;
-    }
+  Color _printerStatusBg(Printer p) {
+    Color color;
+
+    if (p.isActive) color = _T.greenBg;
+
+    if (p.isAvailable) color = _T.greenBg;
+    else if (p.isBusy) color = _T.blueBg;
+    else if (p.status == PrinterStatus.maintenance) color = _T.amberBg;
+    else if (p.status == PrinterStatus.error) color = _T.redBg;
+    else color = _T.textMuted.withOpacity(0.1);
+
+    return color;
   }
 
   int get _activeJobs      => widget.tasks.where((t) =>
-      t.status != JobStatus.completed && t.status != JobStatus.cancelled).length;
+      t.status != TaskStatus.completed && t.status != TaskStatus.blocked).length;
   int get _printersOnline  => widget.printers
-      .where((p) => p.status.toLowerCase() == 'available' || p.status.toLowerCase() == 'busy').length;
+      .where((p) => p.isAvailable || p.isBusy).length;
   int get _dueToday        {
     final today = DateTime.now();
     return widget.tasks.where((t) =>
@@ -724,10 +684,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           _buildTodaysSchedule(),
           SizedBox(height: 28),
           _buildTeamWorkload(),
-          if (widget.stockAlerts.isNotEmpty) ...[
-            SizedBox(height: 28),
-            _buildStockAlerts(),
-          ],
+          // if (widget.stockAlerts.isNotEmpty) ...[
+          //   SizedBox(height: 28),
+          //   _buildStockAlerts(),
+          // ],
           SizedBox(height: 28),
           _buildActivityFeed(),
         ],
@@ -746,8 +706,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Icons.print_rounded,            _T.green,     _T.greenBg,  'All operational', null),
       _KpiData('Due Today',       '$_dueToday',
           Icons.today_rounded,            _T.amber,     _T.amberBg,  '2 overdue', false),
-      _KpiData('Stock Alerts',    '${widget.stockAlerts.length}',
-          Icons.inventory_2_outlined,     _T.red,       _T.redBg,    'Needs attention', false),
+      // _KpiData('Stock Alerts',    '${widget.stockAlerts.length}',
+      //     Icons.inventory_2_outlined,     _T.red,       _T.redBg,    'Needs attention', false),
       _KpiData('On Shift',        '${widget.team.length}',
           Icons.people_alt_rounded,       _T.purple,    _T.purpleBg, 'Active now', null),
     ];
@@ -831,8 +791,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   // 2 · PRODUCTION HEALTH BAR
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildProductionHealth() {
-    final counts = <JobStatus, int>{};
-    for (final s in JobStatus.values) {
+    final counts = <TaskStatus, int>{};
+    for (final s in TaskStatus.values) {
       counts[s] = widget.tasks.where((t) => t.status == s).length;
     }
     final total = widget.tasks.length;
@@ -868,7 +828,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   Text('$total total tasks',
                       style: TextStyle(fontSize: 13, color: _T.textSecondary,
                           fontWeight: FontWeight.w500)),
-                  Text('${counts[JobStatus.completed] ?? 0} completed',
+                  Text('${counts[TaskStatus.completed] ?? 0} completed',
                       style: TextStyle(fontSize: 13,
                           fontWeight: FontWeight.w600, color: _T.green)),
                 ],
@@ -879,7 +839,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: Row(
-                    children: JobStatus.values.map((s) {
+                    children: TaskStatus.values.map((s) {
                       final count = counts[s] ?? 0;
                       if (count == 0) return SizedBox.shrink();
                       return Flexible(
@@ -905,7 +865,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               Wrap(
                 spacing: 14,
                 runSpacing: 8,
-                children: JobStatus.values.map((s) {
+                children: TaskStatus.values.map((s) {
                   final count = counts[s] ?? 0;
                   return Row(
                     mainAxisSize: MainAxisSize.min,
@@ -984,8 +944,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _projectCard(AdminProject p) {
-    final pct = p.percent;
+  Widget _projectCard(Project p) {
+    final pct = projectProgress(p);
     return GestureDetector(
       onTap: () => widget.onProjectTap?.call(p),
       child: Container(
@@ -1053,8 +1013,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 children: p.tasks.isEmpty
                     ? [Expanded(
                         child: Container(height: 6, color: _T.border))]
-                    : JobStatus.values.map((s) {
-                        final count = p.tasks.where((t) => t.status == s).length;
+                    : TaskStatus.values.map((s) {
+                        final count = projectTasks(p.id).where((t) => t.status == s).length;
                         if (count == 0) return SizedBox.shrink();
                         return Flexible(
                           flex: count,
@@ -1069,16 +1029,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 // Task count
                 Icon(Icons.assignment_outlined, size: 14, color: _T.textMuted),
                 SizedBox(width: 5),
-                Text('${p.total} task${p.total == 1 ? '' : 's'}',
+                Text('${p.tasks.length} task${p.tasks.length == 1 ? '' : 's'}',
                     style: TextStyle(fontSize: 12, color: _T.textSecondary,
                         fontWeight: FontWeight.w500)),
                 SizedBox(width: 14),
                 // Members
                 Icon(Icons.people_outline, size: 14, color: _T.textMuted),
                 SizedBox(width: 5),
-                Text('${p.memberIds.length} member${p.memberIds.length == 1 ? '' : 's'}',
-                    style: TextStyle(fontSize: 12, color: _T.textSecondary,
-                        fontWeight: FontWeight.w500)),
+                // Text('${p.memberIds.length} member${p.memberIds.length == 1 ? '' : 's'}',
+                //     style: TextStyle(fontSize: 12, color: _T.textSecondary,
+                //         fontWeight: FontWeight.w500)),
                 Spacer(),
                 if (p.dueDate != null) ...[
                   Icon(Icons.event_rounded, size: 14, color: _T.textMuted),
@@ -1276,10 +1236,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   // 4 · PRINTER FLEET
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildPrinterFleet() {
-    final busy      = widget.printers.where((p) => p.status.toLowerCase() == 'busy').length;
-    final available = widget.printers.where((p) => p.status.toLowerCase() == 'available').length;
-    final maint     = widget.printers.where((p) => p.status.toLowerCase() == 'maintenance').length;
-    final blocked   = widget.printers.where((p) => p.status.toLowerCase() == 'blocked').length;
+    final busy      = widget.printers.where((p) => p.isBusy).length;
+    final available = widget.printers.where((p) => p.isAvailable).length;
+    final maint     = widget.printers.where((p) => p.status == PrinterStatus.maintenance).length;
+    final blocked   = widget.printers.where((p) => p.status == PrinterStatus.error).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1357,8 +1317,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       width: 1, height: 44, color: _T.border,
       margin: EdgeInsets.symmetric(horizontal: 4));
 
-  Widget _compactPrinterRow(AdminPrinter p) {
-    final color = _printerStatusColor(p.status);
+  Widget _compactPrinterRow(Printer p) {
+    final color = _printerStatusColor(p);
     return Padding(
       padding: EdgeInsets.only(bottom: 12),
       child: Row(
@@ -1374,31 +1334,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                     color: _T.textPrimary)),
           ),
-          if (p.progress != null) ...[
-            SizedBox(
-              width: 80,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: p.progress!,
-                  minHeight: 5,
-                  backgroundColor: _T.border,
-                  valueColor: AlwaysStoppedAnimation(_T.brandBlue),
-                ),
-              ),
-            ),
-            SizedBox(width: 8),
-            Text('${(p.progress! * 100).toInt()}%',
-                style: TextStyle(fontSize: 12,
-                    fontWeight: FontWeight.w600, color: _T.brandBlue)),
-          ] else
+          // Printer Progress
+          // if (p.progress != null) ...[
+          //   SizedBox(
+          //     width: 80,
+          //     child: ClipRRect(
+          //       borderRadius: BorderRadius.circular(3),
+          //       child: LinearProgressIndicator(
+          //         value: p.progress!,
+          //         minHeight: 5,
+          //         backgroundColor: _T.border,
+          //         valueColor: AlwaysStoppedAnimation(_T.brandBlue),
+          //       ),
+          //     ),
+          //   ),
+          //   SizedBox(width: 8),
+          //   Text('${(p.progress! * 100).toInt()}%',
+          //       style: TextStyle(fontSize: 12,
+          //           fontWeight: FontWeight.w600, color: _T.brandBlue)),
+          // ] else
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _printerStatusBg(p.status),
+                color: _printerStatusBg(p),
                 borderRadius: BorderRadius.circular(5),
               ),
-              child: Text(p.status,
+              child: Text(p.statusName,
                   style: TextStyle(fontSize: 11,
                       fontWeight: FontWeight.w600, color: color)),
             ),
@@ -1413,11 +1374,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _buildTodaysSchedule() {
     final now = DateTime.now();
     final morning   = widget.todaysSchedule.where(
-        (j) => j.startTime.hour < 12).toList();
+        (j) => j.actualProductionStartTime != null && j.actualProductionStartTime!.hour < 12).toList();
     final afternoon = widget.todaysSchedule.where(
-        (j) => j.startTime.hour >= 12 && j.startTime.hour < 17).toList();
+        (j) => j.actualProductionStartTime != null && j.actualProductionStartTime!.hour >= 12 && j.actualProductionStartTime!.hour < 17).toList();
     final evening   = widget.todaysSchedule.where(
-        (j) => j.startTime.hour >= 17).toList();
+        (j) =>j.actualProductionStartTime != null &&  j.actualProductionStartTime!.hour >= 17).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1463,7 +1424,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   Widget _scheduleGroup(
-      String label, String emoji, List<ScheduledJob> jobs) {
+      String label, String emoji, List<Task> scheduledJobs) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1482,8 +1443,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         ),
         _card(
           child: Column(
-            children: jobs.asMap().entries.map((e) {
-              final isLast = e.key == jobs.length - 1;
+            children: scheduledJobs.asMap().entries.map((e) {
+              final isLast = e.key == scheduledJobs.length - 1;
               return _scheduleJobRow(e.value, isLast: isLast);
             }).toList(),
           ),
@@ -1493,19 +1454,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _scheduleJobRow(ScheduledJob job, {bool isLast = false}) {
-    Color statusColor;
-    Color statusBg;
-    switch (job.status.toLowerCase()) {
-      case 'in_progress':
-        statusColor = _T.brandBlue; statusBg = _T.blueBg; break;
-      case 'completed':
-        statusColor = _T.green; statusBg = _T.greenBg; break;
-      case 'delayed':
-        statusColor = _T.red; statusBg = _T.redBg; break;
-      default:
-        statusColor = _T.textSecondary; statusBg = Color(0xFFF1F5F9);
-    }
+  Widget _scheduleJobRow(Task job, {bool isLast = false}) {
+    
+    final taskComponentHelper = job.componentHelper();
 
     return Column(
       children: [
@@ -1513,7 +1464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           padding: EdgeInsets.symmetric(vertical: 11),
           child: Row(
             children: [
-              Text(DateFormat('HH:mm').format(job.startTime),
+              Text(DateFormat('HH:mm').format(job.actualProductionStartTime ?? DateTime.now()),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
                       color: _T.textPrimary, letterSpacing: -0.2)),
               SizedBox(width: 12),
@@ -1523,7 +1474,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(job.taskName,
+                    Text(job.name,
                         style: TextStyle(fontSize: 14,
                             fontWeight: FontWeight.w600, color: _T.textPrimary),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -1551,13 +1502,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusBg,
+                  color: taskComponentHelper.color.withOpacity(0.14),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  job.status.replaceAll('_', ' ').toUpperCase(),
+                  taskComponentHelper.labelTitle,
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-                      color: statusColor, letterSpacing: 0.3),
+                      color: taskComponentHelper.color, letterSpacing: 0.3),
                 ),
               ),
             ],

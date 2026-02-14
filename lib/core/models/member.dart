@@ -5,6 +5,7 @@ class Member {
   final String email;
   final String role;
   final DateTime createdAt;
+  final List<int> activeTasks;
 
   Member({
     required this.id,
@@ -12,6 +13,7 @@ class Member {
     required this.email,
     required this.role,
     required this.createdAt,
+    required this.activeTasks
   });
 
   // Factory constructor for creating a User from JSON
@@ -22,6 +24,8 @@ class Member {
       email: json['email'] ?? '',
       role: json['role'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
+      // TODO: implement this in backend
+      activeTasks: []
     );
   }
 

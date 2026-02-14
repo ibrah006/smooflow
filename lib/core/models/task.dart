@@ -421,5 +421,16 @@ class Task {
   }
 
   /// if [status] is null, it will use the Task's current status to determine the component properties
-  TaskComponentHelper componentHelper({TaskStatus? status}) => TaskComponentHelper.get(status?? this.status);
+  TaskComponentHelper componentHelper({TaskStatus? status}) {
+    final task = Task.copy(this);
+    if (status != null) {
+      task.status = status;
+    }
+    return TaskComponentHelper.get(task);
+  }
+
+  Duration get productionDurationElapsed {
+    if (updatedAt == null) return Duration.zero;
+    return DateTime.now().difference(updatedAt!);
+  }
 }
