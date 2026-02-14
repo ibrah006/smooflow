@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/components/dashboard_actions_fab.dart';
 import 'package:smooflow/components/logo.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/printers_management_args.dart';
+import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/project.dart';
@@ -79,16 +82,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
 
   final DashboardActionsFabHelper fabHelper = DashboardActionsFabHelper(fabOpen: false);
 
-  void onNewTask() {}
-  void onNewProject() {}
-  void onSchedulePrint() {}
+  void onNewProject() {
+    AppRoutes.navigateTo(context, AppRoutes.addProject);
+  }
+  void onSchedulePrint() {
+    AppRoutes.navigateTo(context, AppRoutes.schedulePrint);
+  }
   void onAddPrinter() {}
-  void onViewAllPrinters() {}
+  void onViewAllPrinters() {
+    AppRoutes.navigateTo(context, AppRoutes.printersManagement, arguments: PrintersManagementArgs(initialFilter: null));
+  }
   void onViewAllTasks() {}
-  void onViewInventory() {}
+  void onViewInventory() {
+    AppRoutes.navigateTo(context, AppRoutes.materialsStock);
+  }
   void onViewSchedule() {}
   void onProjectTap(Project project) {
-
+    AppRoutes.navigateTo(context, AppRoutes.viewProject, arguments: ProjectArgs(projectId: project.id));
   }
 
   double projectProgress(Project p) {
