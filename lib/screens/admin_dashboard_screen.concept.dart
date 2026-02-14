@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/components/dashboard_actions_fab.dart';
+import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens  (shared with the rest of the Smooflow design system)
@@ -152,23 +154,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   bool  _searchActive  = false;
   String _query        = '';
 
-  // FAB
-  bool _fabOpen = false;
-  late AnimationController _fabCtrl;
-  late Animation<double>   _fabRotation;
-
   // New-project sheet
   final _projNameCtrl = TextEditingController();
   final _projDescCtrl = TextEditingController();
   DateTime? _projDue;
 
+  final DashboardActionsFabHelper fabHelper = DashboardActionsFabHelper(fabOpen: false);
+
   @override
   void initState() {
     super.initState();
-    _fabCtrl = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 250));
-    _fabRotation = Tween<double>(begin: 0, end: 0.375)
-        .animate(CurvedAnimation(parent: _fabCtrl, curve: Curves.easeOut));
     _searchFocus.addListener(() {
       setState(() => _searchActive = _searchFocus.hasFocus);
     });
@@ -176,7 +171,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   void dispose() {
-    _fabCtrl.dispose();
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _projNameCtrl.dispose();
@@ -311,7 +305,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        if (_fabOpen) { setState(() => _fabOpen = false); _fabCtrl.reverse(); }
+        if (fabHelper.fabOpen) { setState(() => fabHelper.fabOpen = false); fabHelper.fabCtrl.reverse(); }
       },
       child: Scaffold(
         backgroundColor: _T.bg,
@@ -336,10 +330,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               ),
 
               // ── FAB overlay ──────────────────────────────────────────────
-              Positioned(
-                bottom: 24, right: 20,
-                child: _buildFab(),
-              ),
+              DashboardActionsFab(fabHelper: fabHelper)
             ],
           ),
         ),
@@ -1839,110 +1830,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     return DateFormat('MMM dd').format(dt);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // FAB
-  // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildFab() {
-    final actions = [
-      _FabAction(Icons.add_task_rounded,       'New Task',     _T.brandBlue, widget.onNewTask),
-      _FabAction(Icons.folder_special_rounded, 'New Project',  _T.purple,    widget.onNewProject),
-      _FabAction(Icons.print_rounded,          'Schedule Print',_T.green,    widget.onSchedulePrint),
-      _FabAction(Icons.add_rounded,            'Add Printer',   _T.amber,    widget.onAddPrinter),
-    ];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Expanded action items
-        ...actions.asMap().entries.map((e) {
-          final delay = (actions.length - e.key) * 40;
-          return AnimatedBuilder(
-            animation: _fabCtrl,
-            builder: (_, __) {
-              final t = _fabCtrl.value;
-              return Opacity(
-                opacity: t,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - t) * 20),
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: _fabActionRow(e.value),
-                  ),
-                ),
-              );
-            },
-          );
-        }).toList(),
-        SizedBox(height: 4),
-        // Main FAB
-        GestureDetector(
-          onTap: () {
-            setState(() => _fabOpen = !_fabOpen);
-            _fabOpen ? _fabCtrl.forward() : _fabCtrl.reverse();
-          },
-          child: AnimatedBuilder(
-            animation: _fabRotation,
-            builder: (_, child) => Transform.rotate(
-              angle: _fabRotation.value * 3.14159 * 2,
-              child: child,
-            ),
-            child: Container(
-              width: 56, height: 56,
-              decoration: BoxDecoration(
-                color: _T.brandBlue,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: _T.brandBlue.withOpacity(0.35),
-                      blurRadius: 16, offset: Offset(0, 6)),
-                ],
-              ),
-              child: Icon(Icons.add_rounded, color: Colors.white, size: 28),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _fabActionRow(_FabAction a) {
-    return GestureDetector(
-      onTap: () {
-        setState(() => _fabOpen = false);
-        _fabCtrl.reverse();
-        a.onTap?.call();
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: _T.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _T.border),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06),
-                  blurRadius: 8, offset: Offset(0, 2))],
-            ),
-            child: Text(a.label,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                    color: _T.textPrimary)),
-          ),
-          SizedBox(width: 10),
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: a.color, shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: a.color.withOpacity(0.3),
-                  blurRadius: 8, offset: Offset(0, 3))],
-            ),
-            child: Icon(a.icon, color: Colors.white, size: 19),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Shared helpers ─────────────────────────────────────────────────────────
   Widget _sectionHeader(String title) => Text(
         title,
@@ -2007,12 +1894,4 @@ class _SearchResult {
     required this.icon, required this.iconColor,
     this.badgeLabel, this.badgeColor, this.badgeBg,
   });
-}
-
-class _FabAction {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback? onTap;
-  const _FabAction(this.icon, this.label, this.color, this.onTap);
 }
