@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/components/dashboard_actions_fab.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/models/printer.dart';
@@ -13,6 +14,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/extensions/duration_format.dart';
+import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
@@ -45,6 +47,8 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   int get maintenancePrintersCount => printers.where((printer) => printer.status == PrinterStatus.maintenance).length;
   // Today's schedule - tasks that are scheduled for today
   List<Task> get todaysSchedule => ref.watch(taskNotifierProvider.notifier).todaysProductionTasks;
+
+  final DashboardActionsFabHelper fabHelper = DashboardActionsFabHelper(fabOpen: false);
 
   void onSchedulePressed () async {
     await AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
@@ -95,339 +99,352 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // App Bar
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.white,
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF6366F1), colorPrimary],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorPrimary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.layers_rounded,
-                            color: Colors.white,
-                            size: 25,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Dashboard',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Spacer(),
-                        Container(
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            color: Color(0xFF475569),
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    // Search Bar
-                    Container(
-                      margin: EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
-                      ),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search jobs, printers, materials...',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 15,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFF64748B),
-                            size: 22,
-                          ),
-                          suffixIcon: Container(
-                            margin: EdgeInsets.all(6),
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Color(0xFF2563EB),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.notifications_outlined,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Stats Cards
-            SliverToBoxAdapter(
-              child: Container(
-                color: Color(0xFFF8FAFC),
-                padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Production Overview',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Available Printers',
-                            value: availablePrinters.length.toString(),
-                            icon: Icons.print_rounded,
-                            iconColor: Color(0xFF2563EB),
-                            backgroundColor: Color(0xFFEFF6FF),
-                            trend: '$busyPrintersCount busy',
-                            trendPositive: null,
-                            onTap: ()=> onPrintersPressed(initialFilter: 'available'),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: _buildMetricCard(
-                            title: 'Print Jobs',
-                            value: totalPrintJobs.length.toString(),
-                            icon: Icons.assignment_rounded,
-                            iconColor: Color(0xFF10B981),
-                            backgroundColor: Color(0xFFECFDF5),
-                            trend: '$printJobsInQueue in queue',
-                            trendPositive: null,
-                            onTap: onSchedulePressed,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    _buildFullWidthMetricCard(
-                      title: 'Inventory Status',
-                      value: attentionNeededInventoryItems.toString(),
-                      subtitle: 'Items need attention',
-                      icon: Icons.inventory_2_rounded,
-                      iconColor: attentionNeededInventoryItems > 0
-                          ? Color(0xFFF59E0B)
-                          : Color(0xFF10B981),
-                      backgroundColor: attentionNeededInventoryItems > 0
-                          ? Color(0xFFFEF3C7)
-                          : Color(0xFFECFDF5),
-                      actionLabel: 'View Inventory',
-                      onTap: onInventoryPressed,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Printer Status Section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 32, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Printer Fleet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        Spacer(),
-                        TextButton(
-                          onPressed: ()=> onPrintersPressed(initialFilter: selectedFilter == 'All'? null : selectedFilter.toLowerCase()),
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                          ),
-                          child: Row(
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        if (fabHelper.fabOpen) { setState(() => fabHelper.fabOpen = false); fabHelper.fabCtrl.reverse(); }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  // App Bar
+                  SliverToBoxAdapter(
+                    child: Container(
+                      color: Colors.white,
+                      padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Text(
-                                'View All',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF2563EB),
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Color(0xFF6366F1), colorPrimary],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorPrimary.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.layers_rounded,
+                                  color: Colors.white,
+                                  size: 25,
                                 ),
                               ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                size: 12,
-                                color: Color(0xFF2563EB),
+                              SizedBox(width: 12),
+                              Text(
+                                'Dashboard',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              Spacer(),
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.person_outline,
+                                  color: Color(0xFF475569),
+                                  size: 22,
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    // Filter Chips - Updated filters
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip('All', printers.length),
-                          SizedBox(width: 8),
-                          _buildFilterChip('Available', availablePrinters.length),
-                          SizedBox(width: 8),
-                          if (busyPrintersCount > 0) _buildFilterChip('Busy', busyPrintersCount),
-                          SizedBox(width: 8),
-                          if (maintenancePrintersCount > 0) _buildFilterChip('Maintenance', maintenancePrintersCount),
+                          SizedBox(height: 20),
+                          // Search Bar
+                          Container(
+                            margin: EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Color(0xFFE2E8F0)),
+                            ),
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Search jobs, printers, materials...',
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 15,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  color: Color(0xFF64748B),
+                                  size: 22,
+                                ),
+                                suffixIcon: Container(
+                                  margin: EdgeInsets.all(6),
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFF2563EB),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.notifications_outlined,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Printers List
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  children: printers.isEmpty
-                      ? [_buildEmptyPrintersState()]
-                      : printers
-                          .map((printer) => Padding(
-                                padding: EdgeInsets.only(bottom: 12),
-                                child: _buildPrinterCard(printer),
-                              ))
-                          .toList(),
-                ),
-              ),
-            ),
-
-            // Today's Schedule Section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 32, 20, 0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Today\'s Schedule',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.2,
+                  ),
+                    
+                  // Stats Cards
+                  SliverToBoxAdapter(
+                    child: Container(
+                      color: Color(0xFFF8FAFC),
+                      padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Production Overview',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildMetricCard(
+                                  title: 'Available Printers',
+                                  value: availablePrinters.length.toString(),
+                                  icon: Icons.print_rounded,
+                                  iconColor: Color(0xFF2563EB),
+                                  backgroundColor: Color(0xFFEFF6FF),
+                                  trend: '$busyPrintersCount busy',
+                                  trendPositive: null,
+                                  onTap: ()=> onPrintersPressed(initialFilter: 'available'),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: _buildMetricCard(
+                                  title: 'Print Jobs',
+                                  value: totalPrintJobs.length.toString(),
+                                  icon: Icons.assignment_rounded,
+                                  iconColor: Color(0xFF10B981),
+                                  backgroundColor: Color(0xFFECFDF5),
+                                  trend: '$printJobsInQueue in queue',
+                                  trendPositive: null,
+                                  onTap: onSchedulePressed,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          _buildFullWidthMetricCard(
+                            title: 'Inventory Status',
+                            value: attentionNeededInventoryItems.toString(),
+                            subtitle: 'Items need attention',
+                            icon: Icons.inventory_2_rounded,
+                            iconColor: attentionNeededInventoryItems > 0
+                                ? Color(0xFFF59E0B)
+                                : Color(0xFF10B981),
+                            backgroundColor: attentionNeededInventoryItems > 0
+                                ? Color(0xFFFEF3C7)
+                                : Color(0xFFECFDF5),
+                            actionLabel: 'View Inventory',
+                            onTap: onInventoryPressed,
+                          ),
+                        ],
                       ),
                     ),
-                    Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        DateFormat('MMM dd, yyyy').format(DateTime.now()),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2563EB),
-                        ),
+                  ),
+                    
+                  // Printer Status Section
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 32, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Printer Fleet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              Spacer(),
+                              TextButton(
+                                onPressed: ()=> onPrintersPressed(initialFilter: selectedFilter == 'All'? null : selectedFilter.toLowerCase()),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'View All',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 12,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          // Filter Chips - Updated filters
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildFilterChip('All', printers.length),
+                                SizedBox(width: 8),
+                                _buildFilterChip('Available', availablePrinters.length),
+                                SizedBox(width: 8),
+                                if (busyPrintersCount > 0) _buildFilterChip('Busy', busyPrintersCount),
+                                SizedBox(width: 8),
+                                if (maintenancePrintersCount > 0) _buildFilterChip('Maintenance', maintenancePrintersCount),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Schedule List
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: todaysSchedule.isEmpty
-                    ? _buildEmptyScheduleState()
-                    : Column(
-                        children: todaysSchedule
-                            .map((job) => Padding(
-                                  padding: EdgeInsets.only(bottom: 12),
-                                  child: _buildScheduleCard(job),
-                                ))
-                            .toList(),
+                  ),
+                    
+                  // Printers List
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: Column(
+                        children: printers.isEmpty
+                            ? [_buildEmptyPrintersState()]
+                            : printers
+                                .map((printer) => Padding(
+                                      padding: EdgeInsets.only(bottom: 12),
+                                      child: _buildPrinterCard(printer),
+                                    ))
+                                .toList(),
                       ),
+                    ),
+                  ),
+                    
+                  // Today's Schedule Section
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 32, 20, 0),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Today\'s Schedule',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              DateFormat('MMM dd, yyyy').format(DateTime.now()),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                    
+                  // Schedule List
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: todaysSchedule.isEmpty
+                          ? _buildEmptyScheduleState()
+                          : Column(
+                              children: todaysSchedule
+                                  .map((job) => Padding(
+                                        padding: EdgeInsets.only(bottom: 12),
+                                        child: _buildScheduleCard(job),
+                                      ))
+                                  .toList(),
+                            ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: onSchedulePressed,
-        backgroundColor: Color(0xFF2563EB),
-        elevation: 4,
-        icon: Icon(Icons.add_rounded, size: 24),
-        label: Text(
-          'Schedule Job',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
+
+              // Floating Action Button FAB
+              DashboardActionsFab(fabHelper: fabHelper)
+            ],
           ),
         ),
+        // floatingActionButton: FloatingActionButton.extended(
+        //   onPressed: onSchedulePressed,
+        //   backgroundColor: Color(0xFF2563EB),
+        //   elevation: 4,
+        //   icon: Icon(Icons.add_rounded, size: 24),
+        //   label: Text(
+        //     'Schedule Job',
+        //     style: TextStyle(
+        //       fontSize: 15,
+        //       fontWeight: FontWeight.w600,
+        //       letterSpacing: -0.2,
+        //     ),
+        //   ),
+        // ),
       ),
     );
   }
