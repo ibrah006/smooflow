@@ -140,7 +140,7 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: PlusJakartaSans
+    - family: Plus Jakarta Sans
       fonts:
         - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
           weight: 800

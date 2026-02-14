@@ -93,7 +93,7 @@ class _FlashScreenState extends State<FlashScreen> {
                   style: textTheme.headlineLarge!.copyWith(
                     fontWeight: FontWeight.w800,
                     fontSize: 40,
-                    fontFamily: "PlusJakartaSans",
+                    fontFamily: "Plus Jakarta Sans",
                     letterSpacing: -1.5,
                     color: Color(0xFF0F172A)
                   ),
@@ -104,7 +104,7 @@ class _FlashScreenState extends State<FlashScreen> {
             Text(
               "Streamlining Large-Format Printing.",
               style: textTheme.bodyMedium!.copyWith(
-                fontFamily: "PlusJakartaSans",
+                fontFamily: "Plus Jakarta Sans",
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: Color.fromARGB(255, 90, 96, 103)
