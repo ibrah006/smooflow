@@ -1,6 +1,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/helpers/dashboard_actions_fab_helper.dart';
 
 class _T {
@@ -49,15 +50,23 @@ class _DashboardActionsFabState extends State<DashboardActionsFab> with TickerPr
     super.dispose();
   }
 
-  void onNewTask() {}
-  void onNewProject() {}
-  void onSchedulePrint() {}
-  void onAddPrinter() {}
+  void onNewProject() async {
+    await AppRoutes.navigateTo(context, AppRoutes.addProject);
+    setState(() {});
+  }
+  void onSchedulePrint() async {
+    await AppRoutes.navigateTo(context, AppRoutes.schedulePrintStages);
+    setState(() {});
+  }
+  void onAddPrinter() async {
+    await AppRoutes.navigateTo(context, AppRoutes.addPrinter);
+    setState(() {});
+  }
   
 
   Widget _buildFab() {
     final actions = [
-      _FabAction(Icons.add_task_rounded,       'New Task',     _T.brandBlue, onNewTask),
+      // _FabAction(Icons.add_task_rounded,       'New Task',     _T.brandBlue, onNewTask),
       _FabAction(Icons.folder_special_rounded, 'New Project',  _T.purple,    onNewProject),
       _FabAction(Icons.print_rounded,          'Schedule Print',_T.green,    onSchedulePrint),
       _FabAction(Icons.add_rounded,            'Add Printer',   _T.amber,    onAddPrinter),
