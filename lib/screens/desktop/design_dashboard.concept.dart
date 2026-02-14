@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/enums/task_priority.dart';
 
@@ -76,13 +78,6 @@ const List<DesignStageInfo> kStages = [
 DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
 int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);
 
-class TeamMember {
-  final String id, name, initials;
-  final Color color;
-  final bool online;
-  const TeamMember({required this.id, required this.name, required this.initials, required this.color, required this.online});
-}
-
 class DesignProject {
   final String id, name;
   final String? description;
@@ -94,12 +89,6 @@ class DesignProject {
 // ─────────────────────────────────────────────────────────────────────────────
 // SEED DATA
 // ─────────────────────────────────────────────────────────────────────────────
-final List<TeamMember> kTeam = [
-  const TeamMember(id: 'alex',  name: 'Alex Kim',    initials: 'AK', color: _T.blue,   online: true),
-  const TeamMember(id: 'maya',  name: 'Maya Torres', initials: 'MT', color: _T.purple, online: true),
-  const TeamMember(id: 'sam',   name: 'Sam Okoro',   initials: 'SO', color: _T.green,  online: false),
-  const TeamMember(id: 'priya', name: 'Priya Nair',  initials: 'PN', color: _T.amber,  online: true),
-];
 
 List<DesignProject> buildProjects() => [
   DesignProject(id: 'p1', name: 'Spring Campaign 2026',  description: 'Print materials for the spring launch.',       color: _T.blue,   dueDate: DateTime(2026, 4, 15)),
@@ -336,7 +325,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 // SIDEBAR
 // ─────────────────────────────────────────────────────────────────────────────
-class _Sidebar extends StatelessWidget {
+class _Sidebar extends ConsumerWidget {
   final List<DesignProject> projects;
   final List<Task> tasks;
   final String? selectedProjectId;
@@ -352,8 +341,10 @@ class _Sidebar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final activeCount = tasks.where((t) => t.status != TaskStatus.clientApproved).length;
+
+    List<Member> _members = ref.watch(memberNotifierProvider).members;
 
     return Container(
       width: _T.sidebarW,
@@ -480,17 +471,18 @@ class _Sidebar extends StatelessWidget {
               children: [
                 Text('DESIGN TEAM', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.1 * 10, color: Colors.white.withOpacity(0.25))),
                 const SizedBox(height: 10),
-                ...kTeam.map((m) => Padding(
+                ..._members.map((m) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       _AvatarWidget(initials: m.initials, color: m.color, size: 26),
                       const SizedBox(width: 8),
                       Expanded(child: Text(m.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.5)))),
-                      Container(
-                        width: 6, height: 6,
-                        decoration: BoxDecoration(color: m.online ? _T.green : _T.slate300, shape: BoxShape.circle),
-                      ),
+                      // Live update this
+                      // Container(
+                      //   width: 6, height: 6,
+                      //   decoration: BoxDecoration(color: m.online ? _T.green : _T.slate300, shape: BoxShape.circle),
+                      // ),
                     ],
                   ),
                 )),
@@ -943,7 +935,7 @@ class _AddCardButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK CARD
 // ─────────────────────────────────────────────────────────────────────────────
-class _TaskCard extends StatelessWidget {
+class _TaskCard extends ConsumerWidget {
   final Task task;
   final DesignProject project;
   final bool isSelected;
@@ -958,12 +950,18 @@ class _TaskCard extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final d = task.dueDate;
     final now = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
-    final member    = kTeam.firstWhere((m) => m.id == task.assigneeId, orElse: () => kTeam.first);
+
+    late final Member? member;
+    try {
+      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
+    } catch(e) {
+      member = null;
+    }
 
     return Material(
       // task.isLocked ? _T.slate50 :
@@ -1010,7 +1008,7 @@ class _TaskCard extends StatelessWidget {
                           children: [
                             _PriorityPill(priority: task.priority),
                             const SizedBox(width: 6),
-                            _AvatarWidget(initials: member.initials, color: member.color, size: 20),
+                            if (member != null) _AvatarWidget(initials: member.initials, color: member.color, size: 20),
                             const Spacer(),
                             if (d != null)
                               Row(
@@ -1038,7 +1036,7 @@ class _TaskCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // LIST VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class _ListView extends StatelessWidget {
+class _ListView extends ConsumerWidget {
   final List<Task> tasks;
   final List<DesignProject> projects;
   final int? selectedTaskId;
@@ -1047,7 +1045,8 @@ class _ListView extends StatelessWidget {
   const _ListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+
     return Container(
       color: _T.slate50,
       child: Column(
@@ -1077,7 +1076,13 @@ class _ListView extends StatelessWidget {
               itemBuilder: (_, i) {
                 final t = tasks[i];
                 final p = projects.firstWhere((pr) => pr.id == t.projectId, orElse: () => projects.first);
-                final m = kTeam.firstWhere((mem) => mem.id == t.assigneeId, orElse: () => kTeam.first);
+                
+                late final Member? m;
+                try {
+                  m = ref.watch(memberNotifierProvider).members.firstWhere((mem) => t.assignees.contains(mem.id));
+                } catch(e) {
+                  m = null;
+                }
                 final s = stageInfo(t.status);
                 final d = t.dueDate;
                 final now = DateTime.now();
@@ -1114,7 +1119,7 @@ class _ListView extends StatelessWidget {
                             ]),
                           )),
                           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _StagePill(stageInfo: s))),
-                          Expanded(flex: 2, child: Padding(
+                          if (m != null) Expanded(flex: 2, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(children: [
                               _AvatarWidget(initials: m.initials, color: m.color, size: 22),
@@ -1151,7 +1156,7 @@ class _TableHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-class _DetailPanel extends StatelessWidget {
+class _DetailPanel extends ConsumerWidget {
   final Task task;
   final List<DesignProject> projects;
   final VoidCallback onClose;
@@ -1160,11 +1165,17 @@ class _DetailPanel extends StatelessWidget {
   const _DetailPanel({required this.task, required this.projects, required this.onClose, required this.onAdvance});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final curIdx   = stageIndex(task.status);
     final si       = stageInfo(task.status);
     final proj     = projects.firstWhere((p) => p.id == task.projectId, orElse: () => projects.first);
-    final member   = kTeam.firstWhere((m) => m.id == task.assigneeId, orElse: () => kTeam.first);
+
+    late final Member? member;
+    try {
+      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
+    } catch(e){
+      member = null;
+    }
     final d        = task.dueDate;
     final now      = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
@@ -1301,7 +1312,7 @@ class _DetailPanel extends StatelessWidget {
                     children: [
                       _DetailMetaCell(label: 'Current Stage', child: _StagePill(stageInfo: si)),
                       _DetailMetaCell(label: 'Priority', child: _PriorityPill(priority: task.priority)),
-                      _DetailMetaCell(label: 'Assignee', child: Row(children: [
+                      if (member != null) _DetailMetaCell(label: 'Assignee', child: Row(children: [
                         _AvatarWidget(initials: member.initials, color: member.color, size: 22),
                         const SizedBox(width: 6),
                         Expanded(child: Text(member.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink3))),
@@ -1618,17 +1629,17 @@ class _ProjectModalState extends State<_ProjectModal> {
   );
 }
 
-class _TaskModal extends StatefulWidget {
+class _TaskModal extends ConsumerStatefulWidget {
   final List<DesignProject> projects;
   final String? preselectedProjectId;
   final int idCounter;
   final ValueChanged<Task> onSave;
   const _TaskModal({required this.projects, this.preselectedProjectId, required this.idCounter, required this.onSave});
   @override
-  State<_TaskModal> createState() => _TaskModalState();
+  ConsumerState<_TaskModal> createState() => _TaskModalState();
 }
 
-class _TaskModalState extends State<_TaskModal> {
+class _TaskModalState extends ConsumerState<_TaskModal> {
   final _name = TextEditingController();
   final _desc = TextEditingController();
   late String _projectId;
@@ -1644,6 +1655,8 @@ class _TaskModalState extends State<_TaskModal> {
 
   @override
   void dispose() { _name.dispose(); _desc.dispose(); super.dispose(); }
+
+  List<Member> get _members => ref.watch(memberNotifierProvider).members;
 
   @override
   Widget build(BuildContext context) => _ModalShell(
@@ -1672,7 +1685,7 @@ class _TaskModalState extends State<_TaskModal> {
         const SizedBox(width: 12),
         Expanded(child: _ModalField(label: 'Assign To', child: _ModalDropdown<String>(
           value: _assigneeId,
-          items: kTeam.map((m) => DropdownMenuItem(value: m.id, child: Row(children: [_AvatarWidget(initials: m.initials, color: m.color, size: 20), const SizedBox(width: 8), Text(m.name, style: const TextStyle(fontSize: 13))]))).toList(),
+          items: _members.map((m) => DropdownMenuItem(value: m.id, child: Row(children: [_AvatarWidget(initials: m.initials, color: m.color, size: 20), const SizedBox(width: 8), Text(m.name, style: const TextStyle(fontSize: 13))]))).toList(),
           onChanged: (v) => setState(() => _assigneeId = v!),
         ))),
       ]),
