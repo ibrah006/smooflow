@@ -765,7 +765,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _sectionHeader('Overview'),
         SizedBox(height: 12),
         SizedBox(
-          height: 128,
+          height: 150,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: kpis.length,
