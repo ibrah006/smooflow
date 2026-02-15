@@ -1697,6 +1697,8 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
 
     await ref.read(createProjectTaskProvider(newTask));
 
+    setState(() => _saving = false);
+
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
