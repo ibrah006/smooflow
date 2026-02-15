@@ -25,6 +25,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
   final MobileScannerController cameraController = MobileScannerController();
 
   void _onDetect(BarcodeCapture barcode) async {
+    cameraController.pause();
     final String? code = barcode.barcodes.first.rawValue;
     if (code != null) {
       print("scanned barcode: $code");

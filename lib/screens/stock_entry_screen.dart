@@ -115,6 +115,14 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
   @override
   Widget build(BuildContext context) {
 
+    late final canSubmit;
+    try {
+      final m = _measureController.text.trim();
+      canSubmit = m.isEmpty || double.parse(m) > 0;
+    } catch(e) {
+      canSubmit = false;
+    }
+
     return LoadingOverlay(
       isLoading: ref.watch(materialNotifierProvider).isLoading,
       child: Scaffold(
@@ -443,6 +451,9 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                                 ),
                                 child: TextFormField(
                                   controller: _measureController,
+                                  onChanged: (value) {
+                                    setState(() {});
+                                  },
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
                                         decimal: true,
@@ -498,7 +509,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
+                        onPressed:  () {
                           Navigator.pop(context, null);
                         },
                         style: OutlinedButton.styleFrom(
