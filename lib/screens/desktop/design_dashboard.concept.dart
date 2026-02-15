@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/enums/task_priority.dart';
@@ -1552,37 +1555,65 @@ class _LogoPainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Project Modal ─────────────────────────────────────────────────────────────
-class _ProjectModal extends StatefulWidget {
+class _ProjectModal extends ConsumerStatefulWidget {
   final Future<void> Function(Project) onSave;
   const _ProjectModal({required this.onSave});
   @override
-  State<_ProjectModal> createState() => _ProjectModalState();
+  ConsumerState<_ProjectModal> createState() => _ProjectModalState();
 }
 
-class _ProjectModalState extends State<_ProjectModal> {
+class _ProjectModalState extends ConsumerState<_ProjectModal> {
   final _name  = TextEditingController();
   final _desc  = TextEditingController();
   Color _color = _T.blue;
   DateTime? _due;
   bool _saving = false;
+  Company? _client;
 
   static const _colors = [_T.blue, _T.purple, _T.green, _T.amber, _T.red, Color(0xFF0EA5E9)];
 
+  final List<Company> _clients = [...CompanyRepo.companies];
+ 
   @override
   void dispose() { _name.dispose(); _desc.dispose(); super.dispose(); }
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty) return;
+    if (_name.text.trim().isEmpty || _client == null) return;
     setState(() => _saving = true);
-    // final project = Project(
-    //   id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-    //   name: _name.text.trim(),
-    //   description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null,
-    //   color: _color,
-    //   dueDate: _due,
-    // );
-    // await widget.onSave(project);
-    if (mounted) Navigator.pop(context);
+
+    // Optional: Unfocus keyboard
+    FocusScope.of(context).unfocus();
+
+    // Proceed with form submission
+
+    try {
+      await ref
+        .read(projectNotifierProvider.notifier)
+        .create(
+          Project.create(
+            name: _name.text,
+            description: _desc.text,
+            // TODO: let user assign incharge men when creating project
+            assignedManagers: [],
+            client: _client!,
+            priority: 1,
+            dueDate: _due,
+            estimatedProductionStart: DateTime.now(),
+          ),
+        );
+        // Notify organization state about this adding of a project to update projectsLastAdded
+        ref.read(organizationNotifierProvider.notifier).projectAdded();
+
+        if (mounted) Navigator.pop(context);
+    } catch(e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to Create Project")));
+      return;
+    }
+
+    setState(() => _saving = true);
+    
   }
 
   @override
@@ -1598,6 +1629,21 @@ class _ProjectModalState extends State<_ProjectModal> {
       _ModalField(
         label: 'Project Name', required: true,
         child: _ModalInput(ctrl: _name, hint: 'e.g. Spring Campaign 2026'),
+      ),
+      const SizedBox(height: 16),
+      _ModalField(
+        label: 'Customer',
+        required: true,
+        child: _clients.isEmpty
+            ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+            : _ModalDropdown<Company?>(
+                value: _client,
+                items: _clients.map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(c.name, style: const TextStyle(fontSize: 13)),
+                )).toList(),
+                onChanged: (v) => setState(() => _client = v),
+              ),
       ),
       const SizedBox(height: 16),
       _ModalField(
