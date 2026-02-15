@@ -126,8 +126,11 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
 
     // Calculate position - show above or below button
     final spaceBelow =
-        screenSize.height - (widget.buttonPosition.dy + widget.buttonSize.height);
-    final showAbove = spaceBelow < 300;
+    screenSize.height - (widget.buttonPosition.dy + widget.buttonSize.height);
+
+    final spaceAbove = widget.buttonPosition.dy;
+
+    final showAbove = spaceBelow < popupMaxHeight && spaceAbove > spaceBelow;
 
     double top;
     if (showAbove) {

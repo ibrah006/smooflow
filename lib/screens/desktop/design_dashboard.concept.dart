@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/desktop/advance_stage_popup.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
@@ -79,6 +80,7 @@ const List<DesignStageInfo> kStages = [
   DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
   DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
   DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
+  DesignStageInfo(TaskStatus.printing,  'Printing',   'Printing', _T.blue, _T.blue100),
 ];
 
 DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
@@ -90,7 +92,7 @@ extension TaskStatusNext on TaskStatus {
     TaskStatus.pending         => TaskStatus.designing,
     TaskStatus.designing       => TaskStatus.waitingApproval,
     TaskStatus.waitingApproval => TaskStatus.clientApproved,
-    TaskStatus.clientApproved  => null,
+    TaskStatus.clientApproved  => TaskStatus.printing,
     _                          => null,
   };
 }
@@ -1185,6 +1187,9 @@ class _DetailPanel extends ConsumerStatefulWidget {
 
 class __DetailPanelState extends ConsumerState<_DetailPanel> {
 
+  // GlobalKey for the button
+  final GlobalKey _advanceButtonKey = GlobalKey();
+
   // if (task.status.nextStage == TaskStatus.printing) 
   void approveDesignStage() async {
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: TaskStatus.clientApproved);
@@ -1200,23 +1205,23 @@ class __DetailPanelState extends ConsumerState<_DetailPanel> {
       return;
     }
 
-    // AdvanceStagePopup.show(
-    //   context: context,
-    //   buttonKey: _advanceButtonKey,
-    //   taskId: task.id,
-    //   onConfirm: (notes) async {
-    //     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
-    //     setState(() {
-    //       // Update task status
-    //       // task.status = getNextStatus(task.status);
-    //     });
+    AdvanceStagePopup.show(
+      context: context,
+      buttonKey: _advanceButtonKey,
+      taskId: widget.task.id,
+      onConfirm: (notes) async {
+        await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
+        setState(() {
+          // Update task status
+          // task.status = getNextStatus(task.status);
+        });
         
-    //     if (notes != null) {
-    //       // Save notes to activity timeline
-    //       // task.addActivity(notes);
-    //     }
-    //   },
-    // );
+        if (notes != null) {
+          // Save notes to activity timeline
+          // task.addActivity(notes);
+        }
+      },
+    );
   }
 
   @override
@@ -1432,25 +1437,26 @@ class __DetailPanelState extends ConsumerState<_DetailPanel> {
                       const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
                       const SizedBox(height: 9),
                       GestureDetector(
-                        onTap: next == TaskStatus.clientApproved ? approveDesignStage : (next == TaskStatus.printing || next == TaskStatus.designing) ? _showMoveToNextStageDialog : null,
+                        key: _advanceButtonKey,
+                        onTap: next == TaskStatus.clientApproved ? approveDesignStage : (next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval) ? _showMoveToNextStageDialog : null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color:  next == TaskStatus.clientApproved ? _T.green : (next == TaskStatus.printing || next == TaskStatus.designing)? _T.blue : Colors.grey.shade200,
+                            color:  next == TaskStatus.clientApproved ? _T.green : (next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval)? _T.blue : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))] : null,
+                            boxShadow: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval? [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))] : null,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 next == TaskStatus.clientApproved ? Icons.check : Icons.arrow_forward,
-                                size: 15, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? Colors.white : Colors.grey.shade400,
+                                size: 15, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval ? Colors.white : Colors.grey.shade400,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
-                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? Colors.white : Colors.grey.shade400),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval? Colors.white : Colors.grey.shade400),
                               ),
                             ],
                           ),

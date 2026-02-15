@@ -17,7 +17,7 @@ enum TaskStatus {
       case TaskStatus.pending:
         return TaskStatus.designing;
       case TaskStatus.designing:
-        return TaskStatus.printing;
+        return TaskStatus.waitingApproval;
       case TaskStatus.printing:
         return TaskStatus.finishing;
       case TaskStatus.finishing:

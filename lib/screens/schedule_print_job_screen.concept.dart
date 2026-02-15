@@ -66,8 +66,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
     return allTasks.where((task) {
       // Filter tasks that are post-design stage and ready for production
-      return (task.status == TaskStatus.clientApproved &&
-          task.printerId == null) || task.status == TaskStatus.blocked; // Not yet scheduled
+      return (task.status == TaskStatus.clientApproved) || task.status == TaskStatus.blocked; // Not yet scheduled
     }).toList();
   }
 
