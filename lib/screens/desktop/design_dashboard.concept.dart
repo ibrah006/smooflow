@@ -169,13 +169,6 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     _showSnack('Project "${p.name}" created', _T.green);
   }
 
-  /// Add a new task through the Riverpod notifier.
-  Future<void> _addTask(Task t) async {
-    // await ref.read(taskNotifierProvider.notifier).addTask(t);
-    if (!mounted) return;
-    _showSnack('"${t.name}" added to Initialized', _T.blue);
-  }
-
   void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -308,7 +301,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     );
   }
 
-  void _showTaskModal() {
+  void _showTaskModal() async {
     // Determine next id from current task list
     final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
     showDialog(
@@ -317,9 +310,10 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
         projects: _projects,
         preselectedProjectId: _selectedProjectId,
         nextId: nextId,
-        onSave: _addTask,
       ),
     );
+
+    setState(() {});
   }
 }
 
@@ -1660,9 +1654,8 @@ class _TaskModal extends ConsumerStatefulWidget {
   final List<Project> projects;
   final String? preselectedProjectId;
   final int nextId;
-  final Future<void> Function(Task) onSave;
 
-  const _TaskModal({required this.projects, this.preselectedProjectId, required this.nextId, required this.onSave});
+  const _TaskModal({required this.projects, this.preselectedProjectId, required this.nextId});
 
   @override
   ConsumerState<_TaskModal> createState() => _TaskModalState();
@@ -1694,19 +1687,20 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
 
     final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
 
-    // final task = Task(
-    //   id: widget.nextId,
-    //   name: _name.text.trim(),
-    //   description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null,
-    //   projectId: _projectId,
-    //   assignees: assignees,
-    //   dueDate: _due,
-    //   priority: _priority,
-    //   status: TaskStatus.pending,
-    //   createdAt: DateTime.now(),
-    // );
+    final newTask = Task.create(
+      name: _name.text.trim(),
+      description: _desc.text.trim(),
+      dueDate: null,
+      assignees: assignees,
+      projectId: _projectId,
+    );
 
-    // await widget.onSave(task);
+    await ref.read(createProjectTaskProvider(newTask));
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
+
     if (mounted) Navigator.pop(context);
   }
 

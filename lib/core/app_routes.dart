@@ -8,7 +8,7 @@ import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
-import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
+import 'package:smooflow/screens/desktop/design_dashboard.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
