@@ -1171,7 +1171,7 @@ class _TableHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-class _DetailPanel extends ConsumerWidget {
+class _DetailPanel extends ConsumerStatefulWidget {
   final Task task;
   final List<Project> projects;
   final VoidCallback onClose;
@@ -1180,23 +1180,63 @@ class _DetailPanel extends ConsumerWidget {
   const _DetailPanel({required this.task, required this.projects, required this.onClose, required this.onAdvance});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final curIdx = stageIndex(task.status);
-    final si     = stageInfo(task.status);
-    final proj   = projects.cast<Project?>().firstWhere((p) => p!.id == task.projectId, orElse: () => null) ?? projects.first;
+  ConsumerState<_DetailPanel> createState() => __DetailPanelState();
+}
+
+class __DetailPanelState extends ConsumerState<_DetailPanel> {
+
+  // if (task.status.nextStage == TaskStatus.printing) 
+  void approveDesignStage() async {
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: TaskStatus.clientApproved);
+    setState(() {});
+  }
+
+  void _showMoveToNextStageDialog() {
+
+    final nextStage = widget.task.status.nextStage;
+
+    if (nextStage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No explicit next stage from current phase")));
+      return;
+    }
+
+    // AdvanceStagePopup.show(
+    //   context: context,
+    //   buttonKey: _advanceButtonKey,
+    //   taskId: task.id,
+    //   onConfirm: (notes) async {
+    //     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
+    //     setState(() {
+    //       // Update task status
+    //       // task.status = getNextStatus(task.status);
+    //     });
+        
+    //     if (notes != null) {
+    //       // Save notes to activity timeline
+    //       // task.addActivity(notes);
+    //     }
+    //   },
+    // );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curIdx = stageIndex(widget.task.status);
+    final si     = stageInfo(widget.task.status);
+    final proj   = widget.projects.cast<Project?>().firstWhere((p) => p!.id == widget.task.projectId, orElse: () => null) ?? widget.projects.first;
 
     Member? member;
     try {
-      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
+      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => widget.task.assignees.contains(m.id));
     } catch (_) {
       member = null;
     }
 
-    final d = task.dueDate;
+    final d = widget.task.dueDate;
     final now = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
-    final next      = task.status.nextStage;
+    final next      = widget.task.status.nextStage;
 
     return Container(
       width: _T.detailW,
@@ -1211,7 +1251,7 @@ class _DetailPanel extends ConsumerWidget {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: onClose,
+                  onTap: widget.onClose,
                   child: Container(
                     width: 26, height: 26,
                     decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
@@ -1219,7 +1259,7 @@ class _DetailPanel extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text('TASK-${task.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
+                Text('TASK-${widget.task.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
                 const Spacer(),
               ],
             ),
@@ -1275,7 +1315,7 @@ class _DetailPanel extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
-                  Text(task.name, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.3, height: 1.35)),
+                  Text(widget.task.name, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.3, height: 1.35)),
                   const SizedBox(height: 4),
                   Row(children: [
                     Container(width: 8, height: 8, decoration: BoxDecoration(color: proj.color, shape: BoxShape.circle)),
@@ -1296,7 +1336,7 @@ class _DetailPanel extends ConsumerWidget {
                     mainAxisSpacing: 10,
                     children: [
                       _DetailMetaCell(label: 'Current Stage', child: _StagePill(stageInfo: si)),
-                      _DetailMetaCell(label: 'Priority', child: _PriorityPill(priority: task.priority)),
+                      _DetailMetaCell(label: 'Priority', child: _PriorityPill(priority: widget.task.priority)),
                       if (member != null)
                         _DetailMetaCell(label: 'Assignee', child: Row(children: [
                           _AvatarWidget(initials: member.initials, color: member.color, size: 22),
@@ -1318,13 +1358,13 @@ class _DetailPanel extends ConsumerWidget {
                   const SizedBox(height: 18),
 
                   // Description
-                  if (task.description != null && task.description!.isNotEmpty) ...[
+                  if (widget.task.description.trim().isNotEmpty) ...[
                     const _DetailSectionTitle('Description'),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                      child: Text(task.description!, style: const TextStyle(fontSize: 13, color: _T.slate500, height: 1.65)),
+                      child: Text(widget.task.description, style: const TextStyle(fontSize: 13, color: _T.slate500, height: 1.65)),
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -1392,25 +1432,25 @@ class _DetailPanel extends ConsumerWidget {
                       const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
                       const SizedBox(height: 9),
                       GestureDetector(
-                        onTap: onAdvance,
+                        onTap: next == TaskStatus.clientApproved ? approveDesignStage : (next == TaskStatus.printing || next == TaskStatus.designing) ? _showMoveToNextStageDialog : null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color: next == TaskStatus.clientApproved ? _T.green : _T.blue,
+                            color:  next == TaskStatus.clientApproved ? _T.green : (next == TaskStatus.printing || next == TaskStatus.designing)? _T.blue : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))],
+                            boxShadow: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))] : null,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 next == TaskStatus.clientApproved ? Icons.check : Icons.arrow_forward,
-                                size: 15, color: Colors.white,
+                                size: 15, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? Colors.white : Colors.grey.shade400,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
-                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing? Colors.white : Colors.grey.shade400),
                               ),
                             ],
                           ),
