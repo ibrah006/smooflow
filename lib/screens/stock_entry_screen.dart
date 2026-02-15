@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooflow/constants.dart';
-import 'package:smooflow/core/app_routes.dart';
-import 'package:smooflow/core/args/stock_entry_args.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
@@ -16,12 +14,14 @@ import 'package:smooflow/screens/stock_entry_checkout_screen.dart';
 
 class StockEntryScreen extends ConsumerStatefulWidget {
   late final bool isStockIn;
+  late final bool isDraft;
 
   StockEntryScreen.stockin({Key? key, MaterialModel? material})
     : projectId = null,
       super(key: key) {
     isStockIn = true;
     if (material != null) this.material = material;
+    isDraft = false;
   }
 
   late final MaterialModel material;
@@ -35,6 +35,17 @@ class StockEntryScreen extends ConsumerStatefulWidget {
     required this.projectId,
   }) : super(key: key) {
     isStockIn = false;
+    isDraft = false;
+  }
+
+  StockEntryScreen.draft({
+    Key? key,
+    required this.isStockIn,
+    required this.material,
+    required this.transaction,
+    required this.projectId,
+  }) : super(key: key) {
+    isDraft = true;
   }
 
   @override
@@ -570,27 +581,30 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
 
                             // Process stock in/out
                             late final StockTransaction transaction;
-                            try {
-                              if (widget.isStockIn) {
-                                transaction = await ref
-                                    .read(materialNotifierProvider.notifier)
-                                    .stockIn(material.id, measure);
-                              } else {
-                                transaction = await ref
-                                    .read(materialNotifierProvider.notifier)
-                                    .stockOut(
-                                      widget.transaction.barcode!,
-                                      measure,
-                                      projectId: widget.projectId,
-                                    );
+
+                            if (!widget.isDraft) {
+                              try {
+                                if (widget.isStockIn) {
+                                  transaction = await ref
+                                      .read(materialNotifierProvider.notifier)
+                                      .stockIn(material.id, measure);
+                                } else {
+                                  transaction = await ref
+                                      .read(materialNotifierProvider.notifier)
+                                      .stockOut(
+                                        widget.transaction.barcode!,
+                                        measure,
+                                        projectId: widget.projectId,
+                                      );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed: ${e.toString()}"),
+                                  ),
+                                );
+                                return;
                               }
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Failed: ${e.toString()}"),
-                                ),
-                              );
-                              return;
                             }
 
                             // Show stock transaction details page
@@ -598,7 +612,7 @@ class _StockInScreenState extends ConsumerState<StockEntryScreen> {
                               MaterialPageRoute(
                                 builder:
                                     (context) => StockEntryDetailsScreen(
-                                      transaction,
+                                      widget.isDraft? widget.transaction : transaction,
                                       materialType: materialType,
                                       measureType: _selectedMeasureType,
                                       barcode:
