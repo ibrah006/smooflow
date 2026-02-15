@@ -1710,7 +1710,7 @@ class _TaskModal extends ConsumerStatefulWidget {
 class _TaskModalState extends ConsumerState<_TaskModal> {
   final _name = TextEditingController();
   final _desc = TextEditingController();
-  late String _projectId;
+  late String? _projectId;
   String? _assigneeId;
   DateTime? _due;
   TaskPriority _priority = TaskPriority.normal;
@@ -1719,7 +1719,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   @override
   void initState() {
     super.initState();
-    _projectId = widget.preselectedProjectId ?? (widget.projects.isNotEmpty ? widget.projects.first.id : '');
+    _projectId = widget.preselectedProjectId;
   }
 
   @override
@@ -1728,7 +1728,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   List<Member> get _members => ref.watch(memberNotifierProvider).members;
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty) return;
+    if (_name.text.trim().isEmpty || _projectId == null) return;
     setState(() => _saving = true);
 
     final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
@@ -1738,7 +1738,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
       description: _desc.text.trim(),
       dueDate: null,
       assignees: assignees,
-      projectId: _projectId,
+      projectId: _projectId!,
     );
 
     await ref.read(createProjectTaskProvider(newTask));
@@ -1754,11 +1754,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
 
   @override
   Widget build(BuildContext context) {
-    // Set default assignee once members are loaded
-    if (_assigneeId == null && _members.isNotEmpty) {
-      _assigneeId = _members.first.id;
-    }
-
+    
     return _ModalShell(
       icon: Icons.assignment_outlined,
       iconColor: _T.blue,
@@ -1781,7 +1777,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: _ModalField(
             label: 'Project', required: true,
-            child: _ModalDropdown<String>(
+            child: _ModalDropdown<String?>(
               value: _projectId,
               items: widget.projects.map((p) => DropdownMenuItem(
                 value: p.id,
@@ -1802,8 +1798,8 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
             label: 'Assign To',
             child: _members.isEmpty
                 ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
-                : _ModalDropdown<String>(
-                    value: _assigneeId ?? _members.first.id,
+                : _ModalDropdown<String?>(
+                    value: _assigneeId,
                     items: _members.map((m) => DropdownMenuItem(
                       value: m.id,
                       child: Row(children: [
