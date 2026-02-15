@@ -391,7 +391,7 @@ class Task {
       'productionStartTime': _productionStartTime?.toIso8601String(),
       'runs': _runs,
       'productionQuantity': _productionQuantity,
-      'priority': _priority,
+      'priority': TaskPriority.values.indexOf(_priority),
       'barcode': _stockTransactionBarcode,
     };
     try {

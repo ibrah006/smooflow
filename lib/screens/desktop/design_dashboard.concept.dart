@@ -1762,6 +1762,8 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   TaskPriority _priority = TaskPriority.normal;
   bool _saving = false;
 
+  bool _autoProgress = false;
+
   @override
   void initState() {
     super.initState();
@@ -1779,23 +1781,24 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
 
     final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
 
-    final newTask = Task.create(
-      name: _name.text.trim(),
-      description: _desc.text.trim(),
-      dueDate: null,
-      assignees: assignees,
-      projectId: _projectId!,
-    );
+    try {
+      final newTask = Task.create(
+        name: _name.text.trim(),
+        description: _desc.text.trim(),
+        dueDate: null,
+        assignees: assignees,
+        projectId: _projectId!,
+      );
 
-    await ref.read(createProjectTaskProvider(newTask));
+      await ref.read(createProjectTaskProvider(newTask));
 
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
+
+      if (mounted) Navigator.pop(context);
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create Task")));
+    }
     setState(() => _saving = false);
-
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
-
-    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -1858,6 +1861,78 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
                   ),
           )),
         ]),
+        const SizedBox(height: 16),
+        // _ModalField(
+        //   label: "Workflow Settings",
+        //   child: Container(
+        //     padding: const EdgeInsets.all(16),
+        //     decoration: BoxDecoration(
+        //       color: _autoProgress
+        //           ? _T.blue.withOpacity(0.05)
+        //           : const Color(0xFFF8FAFC),
+        //       borderRadius: BorderRadius.circular(12),
+        //       border: Border.all(
+        //         color: _autoProgress
+        //             ? _T.blue.withOpacity(0.3)
+        //             : const Color(0xFFE2E8F0),
+        //         width: _autoProgress ? 2 : 1,
+        //       ),
+        //     ),
+        //     child: Row(
+        //       children: [
+        //         Container(
+        //           padding: const EdgeInsets.all(8),
+        //           decoration: BoxDecoration(
+        //             color: _autoProgress
+        //                 ? _T.blue.withOpacity(0.15)
+        //                 : Colors.grey.shade200,
+        //             borderRadius: BorderRadius.circular(8),
+        //           ),
+        //           child: Icon(
+        //             Icons.auto_awesome_rounded,
+        //             size: 20,
+        //             color: _autoProgress
+        //                 ? _T.blue
+        //                 : Colors.grey.shade500,
+        //           ),
+        //         ),
+        //         const SizedBox(width: 12),
+        //         Expanded(
+        //           child: Column(
+        //             crossAxisAlignment: CrossAxisAlignment.start,
+        //             children: [
+        //               const Text(
+        //                 'Auto-progress',
+        //                 style: TextStyle(
+        //                   fontSize: 14,
+        //                   fontWeight: FontWeight.w600,
+        //                   color: Color(0xFF0F172A),
+        //                 ),
+        //               ),
+        //               const SizedBox(height: 2),
+        //               Text(
+        //                 'Move to next stage automatically',
+        //                 style: TextStyle(
+        //                   fontSize: 12,
+        //                   color: Colors.grey.shade600,
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //         Switch(
+        //           value: _autoProgress,
+        //           onChanged: (value) {
+        //             setState(() {
+        //               _autoProgress = value;
+        //             });
+        //           },
+        //           activeColor: _T.blue,
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         // const SizedBox(height: 16),
         // Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         //   Expanded(child: _ModalField(
