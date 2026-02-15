@@ -72,36 +72,25 @@ class DesignStageInfo {
 }
 
 const List<DesignStageInfo> kStages = [
-  DesignStageInfo(TaskStatus.pending,     'Initialized',       'Init',     _T.slate500, _T.slate100),
-  DesignStageInfo(TaskStatus.designing,       'Designing',         'Design',   _T.purple,   _T.purple50),
-  DesignStageInfo(TaskStatus.waitingApproval,'Awaiting Approval', 'Review',   _T.amber,    _T.amber50),
-  DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green,    _T.green50),
+  DesignStageInfo(TaskStatus.pending,      'Initialized',       'Init',     _T.slate500, _T.slate100),
+  DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
+  DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
+  DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
 ];
 
 DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
 int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// APP
-// ─────────────────────────────────────────────────────────────────────────────
-// class SmooflowDesignApp extends StatelessWidget {
-//   const SmooflowDesignApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Smooflow — Design Studio',
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         fontFamily: 'Inter',
-//         scaffoldBackgroundColor: _T.slate50,
-//         colorScheme: ColorScheme.fromSeed(seedColor: _T.blue, brightness: Brightness.light),
-//         useMaterial3: true,
-//       ),
-//       home: const DesignDashboardScreen(),
-//     );
-//   }
-// }
+/// Extension to compute the next stage in the design pipeline.
+extension TaskStatusNext on TaskStatus {
+  TaskStatus? get nextStage => switch (this) {
+    TaskStatus.pending         => TaskStatus.designing,
+    TaskStatus.designing       => TaskStatus.waitingApproval,
+    TaskStatus.waitingApproval => TaskStatus.clientApproved,
+    TaskStatus.clientApproved  => null,
+    _                          => null,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT DASHBOARD
@@ -116,21 +105,25 @@ class DesignDashboardScreen extends ConsumerStatefulWidget {
 class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   final _currentUser = LoginService.currentUser!;
 
+  // Read from Riverpod — never mutate directly
   List<Project> get _projects => ref.watch(projectNotifierProvider);
-
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).where((t)=> t.status == TaskStatus.pending || t.status == TaskStatus.designing || t.status == TaskStatus.waitingApproval || t.status == TaskStatus.clientApproved).toList();
+  List<Task> get _tasks => ref.watch(taskNotifierProvider).where((t) =>
+      t.status == TaskStatus.pending ||
+      t.status == TaskStatus.designing ||
+      t.status == TaskStatus.waitingApproval ||
+      t.status == TaskStatus.clientApproved).toList();
 
   String? _selectedProjectId;
-  int? _selectedTaskId;
-  TaskFilter _filter = TaskFilter.all;
-  ViewMode _viewMode = ViewMode.board;
-  String _searchQuery = '';
-  int _taskCounter = 9;
+  int?    _selectedTaskId;
+  TaskFilter _filter   = TaskFilter.all;
+  ViewMode   _viewMode = ViewMode.board;
+  String     _searchQuery = '';
 
   final _searchCtrl = TextEditingController();
 
   Task? get _selectedTask => _selectedTaskId == null
-      ? null : _tasks.firstWhere((t) => t.id == _selectedTaskId, orElse: () => _tasks.first);  
+      ? null
+      : _tasks.cast<Task?>().firstWhere((t) => t!.id == _selectedTaskId, orElse: () => null);
 
   List<Task> get _visibleTasks {
     return _tasks.where((t) {
@@ -143,19 +136,24 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
       final q = _searchQuery.toLowerCase().trim();
       if (q.isNotEmpty) {
         return t.name.toLowerCase().contains(q) ||
-            (t.description).toLowerCase().contains(q);
+            (t.description ?? '').toLowerCase().contains(q);
       }
       return true;
     }).toList();
   }
 
   void _selectTask(int id) => setState(() => _selectedTaskId = id);
-  void _closeDetail() => setState(() => _selectedTaskId = null);
+  void _closeDetail()      => setState(() => _selectedTaskId = null);
 
-  void _advanceTask(Task task) {
+  /// Advance the selected task to the next stage via the Riverpod notifier.
+  Future<void> _advanceTask(Task task) async {
     final next = task.status.nextStage;
     if (next == null) return;
-    setState(() => task.status = next);
+
+    // Persist through notifier
+    // await ref.read(taskNotifierProvider.notifier).updateTaskStatus(task.id, next);
+
+    if (!mounted) return;
     _showSnack(
       next == TaskStatus.clientApproved
           ? '✓ Task marked as Client Approved — handed off to production'
@@ -164,13 +162,17 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     );
   }
 
-  void _addProject(Project p) {
-    setState(() => _projects.add(p));
+  /// Add a new project through the Riverpod notifier.
+  Future<void> _addProject(Project p) async {
+    // await ref.read(projectNotifierProvider.notifier).addProject(p);
+    if (!mounted) return;
     _showSnack('Project "${p.name}" created', _T.green);
   }
 
-  void _addTask(Task t) {
-    setState(() { _taskCounter++; _tasks.add(t); });
+  /// Add a new task through the Riverpod notifier.
+  Future<void> _addTask(Task t) async {
+    // await ref.read(taskNotifierProvider.notifier).addTask(t);
+    if (!mounted) return;
     _showSnack('"${t.name}" added to Initialized', _T.blue);
   }
 
@@ -194,16 +196,13 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-
     Future.microtask(() async {
-      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).loadAll();
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
-      await ref.watch(memberNotifierProvider.notifier).members;
+      await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref.read(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.read(taskNotifierProvider.notifier).loadAll();
+      await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref.read(memberNotifierProvider.notifier).members;
     });
   }
 
@@ -229,34 +228,32 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
         },
         child: Row(
           children: [
-            // Sidebar
+            // ── Sidebar ───────────────────────────────────────────────────
             _Sidebar(
               projects: _projects,
               tasks: _tasks,
               selectedProjectId: _selectedProjectId,
               viewMode: _viewMode,
               onProjectSelected: (id) => setState(() => _selectedProjectId = id),
-              onViewModeChanged: (m) => setState(() => _viewMode = m),
-              onNewProject: () => _showProjectModal(),
+              onViewModeChanged: (m)  => setState(() => _viewMode = m),
+              onNewProject: _showProjectModal,
             ),
-            // Main area
+            // ── Main area ─────────────────────────────────────────────────
             Expanded(
               child: Column(
                 children: [
-                  // Topbar
                   _Topbar(
                     selectedProject: _selectedProjectId != null
-                        ? _projects.firstWhere((p) => p.id == _selectedProjectId)
+                        ? _projects.cast<Project?>().firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null)
                         : null,
                     filter: _filter,
                     viewMode: _viewMode,
                     searchCtrl: _searchCtrl,
-                    onFilterChanged: (f) => setState(() => _filter = f),
+                    onFilterChanged: (f)  => setState(() => _filter = f),
                     onViewModeChanged: (m) => setState(() => _viewMode = m),
-                    onSearchChanged: (q) => setState(() => _searchQuery = q),
-                    onNewTask: () => _showTaskModal(),
+                    onSearchChanged: (q)  => setState(() => _searchQuery = q),
+                    onNewTask: _showTaskModal,
                   ),
-                  // Content
                   Expanded(
                     child: Row(
                       children: [
@@ -267,16 +264,16 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                   projects: _projects,
                                   selectedTaskId: _selectedTaskId,
                                   onTaskSelected: _selectTask,
-                                  onAddTask: () => _showTaskModal(),
+                                  onAddTask: _showTaskModal,
                                 )
-                              : _ListView(
+                              : _TaskListView(
                                   tasks: _visibleTasks,
                                   projects: _projects,
                                   selectedTaskId: _selectedTaskId,
                                   onTaskSelected: _selectTask,
                                 ),
                         ),
-                        // Detail panel
+                        // ── Detail panel ──────────────────────────────────
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeInOut,
@@ -302,6 +299,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     );
   }
 
+  // ── Modal launchers ────────────────────────────────────────────────────────
+
   void _showProjectModal() {
     showDialog(
       context: context,
@@ -310,12 +309,14 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   }
 
   void _showTaskModal() {
+    // Determine next id from current task list
+    final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
     showDialog(
       context: context,
       builder: (_) => _TaskModal(
         projects: _projects,
         preselectedProjectId: _selectedProjectId,
-        idCounter: _taskCounter,
+        nextId: nextId,
         onSave: _addTask,
       ),
     );
@@ -341,10 +342,9 @@ class _Sidebar extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final activeCount = tasks.where((t) => t.status != TaskStatus.clientApproved).length;
-
-    List<Member> _members = ref.watch(memberNotifierProvider).members;
+    final members = ref.watch(memberNotifierProvider).members;
 
     return Container(
       width: _T.sidebarW,
@@ -372,7 +372,7 @@ class _Sidebar extends ConsumerWidget {
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(color: Color(0xFF2563EB).withOpacity(0.35), borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: const Color(0xFF2563EB).withOpacity(0.35), borderRadius: BorderRadius.circular(4)),
                   child: const Text('DESIGN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: Color(0xFF93C5FD))),
                 ),
               ],
@@ -438,7 +438,7 @@ class _Sidebar extends ConsumerWidget {
             ),
           ),
 
-          // New project
+          // New project button
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
             child: InkWell(
@@ -462,27 +462,22 @@ class _Sidebar extends ConsumerWidget {
             ),
           ),
 
-          // Team
+          // Team section
           Container(
             decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DESIGN TEAM', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.1 * 10, color: Colors.white.withOpacity(0.25))),
+                Text('DESIGN TEAM', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: Colors.white.withOpacity(0.25))),
                 const SizedBox(height: 10),
-                ..._members.map((m) => Padding(
+                ...members.map((m) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       _AvatarWidget(initials: m.initials, color: m.color, size: 26),
                       const SizedBox(width: 8),
                       Expanded(child: Text(m.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.5)))),
-                      // Live update this
-                      // Container(
-                      //   width: 6, height: 6,
-                      //   decoration: BoxDecoration(color: m.online ? _T.green : _T.slate300, shape: BoxShape.circle),
-                      // ),
                     ],
                   ),
                 )),
@@ -591,13 +586,13 @@ class _Topbar extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onNewTask;
 
+  final _currentUser = LoginService.currentUser!;
+
   _Topbar({
     required this.selectedProject, required this.filter, required this.viewMode,
     required this.searchCtrl, required this.onFilterChanged,
     required this.onViewModeChanged, required this.onSearchChanged, required this.onNewTask,
   });
-
-  final currentUser = LoginService.currentUser!;
 
   @override
   Widget build(BuildContext context) {
@@ -610,9 +605,9 @@ class _Topbar extends StatelessWidget {
           // Breadcrumb
           Text('Design Board', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3)),
           if (selectedProject != null) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text('›', style: const TextStyle(color: _T.slate300, fontSize: 13)),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Text('›', style: TextStyle(color: _T.slate300, fontSize: 13)),
             ),
             Text(selectedProject!.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink)),
           ],
@@ -658,7 +653,7 @@ class _Topbar extends StatelessWidget {
             child: Row(
               children: [
                 _ViewToggleBtn(icon: Icons.view_kanban_outlined, label: 'Board', isActive: viewMode == ViewMode.board, onTap: () => onViewModeChanged(ViewMode.board)),
-                _ViewToggleBtn(icon: Icons.list_alt_outlined, label: 'List', isActive: viewMode == ViewMode.list, onTap: () => onViewModeChanged(ViewMode.list)),
+                _ViewToggleBtn(icon: Icons.list_alt_outlined,    label: 'List',  isActive: viewMode == ViewMode.list,  onTap: () => onViewModeChanged(ViewMode.list)),
               ],
             ),
           ),
@@ -667,9 +662,9 @@ class _Topbar extends StatelessWidget {
           // Filters
           Row(
             children: [
-              _FilterChip(label: 'All', isActive: filter == TaskFilter.all, onTap: () => onFilterChanged(TaskFilter.all)),
+              _FilterChip(label: 'All',     isActive: filter == TaskFilter.all,     onTap: () => onFilterChanged(TaskFilter.all)),
               const SizedBox(width: 4),
-              _FilterChip(label: 'Mine', isActive: filter == TaskFilter.mine, onTap: () => onFilterChanged(TaskFilter.mine)),
+              _FilterChip(label: 'Mine',    isActive: filter == TaskFilter.mine,    onTap: () => onFilterChanged(TaskFilter.mine)),
               const SizedBox(width: 4),
               _FilterChip(label: 'Overdue', isActive: filter == TaskFilter.overdue, onTap: () => onFilterChanged(TaskFilter.overdue)),
             ],
@@ -677,7 +672,7 @@ class _Topbar extends StatelessWidget {
 
           const Spacer(),
 
-          // New task
+          // New task button
           GestureDetector(
             onTap: onNewTask,
             child: Container(
@@ -704,11 +699,11 @@ class _Topbar extends StatelessWidget {
             decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(99)),
             child: Row(
               children: [
-                _AvatarWidget(initials: currentUser.initials, color: _T.blue, size: 24),
-                SizedBox(width: 7),
-                Text(currentUser.nameShort, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
-                SizedBox(width: 5),
-                Icon(Icons.keyboard_arrow_down, size: 14, color: _T.slate400),
+                _AvatarWidget(initials: _currentUser.initials, color: _T.blue, size: 24),
+                const SizedBox(width: 7),
+                Text(_currentUser.nameShort, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
+                const SizedBox(width: 5),
+                const Icon(Icons.keyboard_arrow_down, size: 14, color: _T.slate400),
               ],
             ),
           ),
@@ -792,15 +787,16 @@ class _BoardView extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(16),
-        children: kStages.map((stageInfo) {
-          final stageTasks = tasks.where((t) => t.status == stageInfo.stage).toList();
+        children: kStages.map((si) {
+          final stageTasks = tasks.where((t) => t.status == si.stage).toList();
           return _KanbanLane(
-            stageInfo: stageInfo,
+            stageInfo: si,
             tasks: stageTasks,
             projects: projects,
             selectedTaskId: selectedTaskId,
             onTaskSelected: onTaskSelected,
-            onAddTask: stageInfo.stage == TaskStatus.pending ? onAddTask : null,
+            // Only allow adding from Initialized lane
+            onAddTask: si.stage == TaskStatus.pending ? onAddTask : null,
           );
         }).toList(),
       ),
@@ -866,17 +862,22 @@ class _KanbanLane extends StatelessWidget {
                   _LaneEmpty()
                 else
                   ...tasks.map((t) {
-                    final proj = projects.firstWhere((p) => p.id == t.projectId, orElse: () => projects.first);
+                    final proj = projects.cast<Project?>().firstWhere((p) => p!.id == t.projectId, orElse: () => null) ?? projects.first;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: _TaskCard(task: t, project: proj, isSelected: selectedTaskId == t.id, onTap: () => onTaskSelected(t.id)),
+                      child: _TaskCard(
+                        task: t,
+                        project: proj,
+                        isSelected: selectedTaskId == t.id,
+                        onTap: () => onTaskSelected(t.id),
+                      ),
                     );
                   }),
               ],
             ),
           ),
 
-          // Add task button
+          // Add button (Initialized lane only)
           if (onAddTask != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
@@ -890,13 +891,13 @@ class _KanbanLane extends StatelessWidget {
 
 class _LaneEmpty extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 24),
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 24),
     child: Column(
       children: [
         Icon(Icons.assignment_outlined, size: 28, color: _T.slate300),
-        const SizedBox(height: 8),
-        const Text('No tasks here', style: TextStyle(fontSize: 12, color: _T.slate300)),
+        SizedBox(height: 8),
+        Text('No tasks here', style: TextStyle(fontSize: 12, color: _T.slate300)),
       ],
     ),
   );
@@ -917,7 +918,7 @@ class _AddCardButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            border: Border.all(color: _T.slate200, width: 1.5, style: BorderStyle.solid),
+            border: Border.all(color: _T.slate200, width: 1.5),
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: const Row(
@@ -952,22 +953,21 @@ class _TaskCard extends ConsumerWidget {
   };
 
   @override
-  Widget build(BuildContext context, ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final d = task.dueDate;
     final now = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
 
-    late final Member? member;
+    Member? member;
     try {
       member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
-    } catch(e) {
+    } catch (_) {
       member = null;
     }
 
     return Material(
-      // task.isLocked ? _T.slate50 :
-      color:  _T.white,
+      color: _T.white,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
         onTap: onTap,
@@ -982,21 +982,20 @@ class _TaskCard extends ConsumerWidget {
             child: Row(
               children: [
                 // Priority accent bar
-                Container(width: 3, decoration: BoxDecoration(color: _priorityColor, borderRadius: const BorderRadius.only(topLeft: Radius.circular(_T.r), bottomLeft: Radius.circular(_T.r)))),
+                Container(
+                  width: 3,
+                  decoration: BoxDecoration(
+                    color: _priorityColor,
+                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(_T.r), bottomLeft: Radius.circular(_T.r)),
+                  ),
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(13),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: Text(task.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink, height: 1.4))),
-                            // if (task.isLocked)
-                            //   const Padding(padding: EdgeInsets.only(left: 6, top: 1), child: Icon(Icons.lock_outline, size: 12, color: _T.slate300)),
-                          ],
-                        ),
+                        Text(task.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink, height: 1.4)),
                         const SizedBox(height: 6),
                         Row(
                           children: [
@@ -1036,19 +1035,18 @@ class _TaskCard extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LIST VIEW
+// LIST VIEW  (renamed to _TaskListView to avoid conflict with Flutter's ListView)
 // ─────────────────────────────────────────────────────────────────────────────
-class _ListView extends ConsumerWidget {
+class _TaskListView extends ConsumerWidget {
   final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
 
-  const _ListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
+  const _TaskListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
 
   @override
-  Widget build(BuildContext context, ref) {
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       color: _T.slate50,
       child: Column(
@@ -1057,8 +1055,8 @@ class _ListView extends ConsumerWidget {
           Container(
             color: _T.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Expanded(flex: 3, child: _TableHeader('Task')),
                 Expanded(flex: 2, child: _TableHeader('Project')),
                 Expanded(flex: 2, child: _TableHeader('Stage')),
@@ -1077,14 +1075,15 @@ class _ListView extends ConsumerWidget {
               separatorBuilder: (_, __) => const Divider(height: 1, thickness: 1, color: _T.slate100),
               itemBuilder: (_, i) {
                 final t = tasks[i];
-                final p = projects.firstWhere((pr) => pr.id == t.projectId, orElse: () => projects.first);
-                
-                late final Member? m;
+                final p = projects.cast<Project?>().firstWhere((pr) => pr!.id == t.projectId, orElse: () => null) ?? projects.first;
+
+                Member? m;
                 try {
                   m = ref.watch(memberNotifierProvider).members.firstWhere((mem) => t.assignees.contains(mem.id));
-                } catch(e) {
+                } catch (_) {
                   m = null;
                 }
+
                 final s = stageInfo(t.status);
                 final d = t.dueDate;
                 final now = DateTime.now();
@@ -1098,20 +1097,22 @@ class _ListView extends ConsumerWidget {
                     onTap: () => onTaskSelected(t.id),
                     borderRadius: BorderRadius.circular(_T.r),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
                         children: [
+                          // Task name + description
                           Expanded(flex: 3, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Row(children: [
-                                // if (t.isLocked) const Padding(padding: EdgeInsets.only(right: 5), child: Icon(Icons.lock_outline, size: 10, color: _T.slate400)),
-                                Expanded(child: Text(t.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink))),
-                              ]),
-                              if (t.description != null)
-                                Text(t.description!.length > 55 ? '${t.description!.substring(0, 55)}…' : t.description!, style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
+                              Text(t.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink)),
+                              if (t.description != null && t.description!.isNotEmpty)
+                                Text(
+                                  t.description!.length > 55 ? '${t.description!.substring(0, 55)}…' : t.description!,
+                                  style: const TextStyle(fontSize: 11.5, color: _T.slate400),
+                                ),
                             ]),
                           )),
+                          // Project
                           Expanded(flex: 2, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(children: [
@@ -1120,20 +1121,35 @@ class _ListView extends ConsumerWidget {
                               Expanded(child: Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
                             ]),
                           )),
-                          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _StagePill(stageInfo: s))),
-                          if (m != null) Expanded(flex: 2, child: Padding(
+                          // Stage
+                          Expanded(flex: 2, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(children: [
-                              _AvatarWidget(initials: m.initials, color: m.color, size: 22),
-                              const SizedBox(width: 7),
-                              Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
-                            ]),
+                            child: _StagePill(stageInfo: s),
                           )),
+                          // Assignee — always occupies its flex slot
+                          Expanded(flex: 2, child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: m != null
+                                ? Row(children: [
+                                    _AvatarWidget(initials: m.initials, color: m.color, size: 22),
+                                    const SizedBox(width: 7),
+                                    Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
+                                  ])
+                                : const Text('—', style: TextStyle(color: _T.slate400)),
+                          )),
+                          // Due date
                           Expanded(flex: 1, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(d != null ? _fmtDate(d) : '—', style: TextStyle(fontSize: 12.5, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w400, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate500)),
+                            child: Text(
+                              d != null ? _fmtDate(d) : '—',
+                              style: TextStyle(fontSize: 12.5, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w400, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate500),
+                            ),
                           )),
-                          Expanded(flex: 1, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _PriorityPill(priority: t.priority))),
+                          // Priority
+                          Expanded(flex: 1, child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: _PriorityPill(priority: t.priority),
+                          )),
                         ],
                       ),
                     ),
@@ -1167,19 +1183,20 @@ class _DetailPanel extends ConsumerWidget {
   const _DetailPanel({required this.task, required this.projects, required this.onClose, required this.onAdvance});
 
   @override
-  Widget build(BuildContext context, ref) {
-    final curIdx   = stageIndex(task.status);
-    final si       = stageInfo(task.status);
-    final proj     = projects.firstWhere((p) => p.id == task.projectId, orElse: () => projects.first);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final curIdx = stageIndex(task.status);
+    final si     = stageInfo(task.status);
+    final proj   = projects.cast<Project?>().firstWhere((p) => p!.id == task.projectId, orElse: () => null) ?? projects.first;
 
-    late final Member? member;
+    Member? member;
     try {
       member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
-    } catch(e){
+    } catch (_) {
       member = null;
     }
-    final d        = task.dueDate;
-    final now      = DateTime.now();
+
+    final d = task.dueDate;
+    final now = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
     final next      = task.status.nextStage;
@@ -1207,18 +1224,6 @@ class _DetailPanel extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Text('TASK-${task.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
                 const Spacer(),
-                // if (!locked)
-                //   Container(
-                //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                //     decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                //     child: const Row(
-                //       children: [
-                //         Icon(Icons.edit_outlined, size: 12, color: _T.slate500),
-                //         SizedBox(width: 5),
-                //         Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _T.slate500)),
-                //       ],
-                //     ),
-                //   ),
               ],
             ),
           ),
@@ -1272,25 +1277,6 @@ class _DetailPanel extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Locked banner
-                  // if (locked)
-                  //   Container(
-                  //     margin: const EdgeInsets.only(bottom: 16),
-                  //     padding: const EdgeInsets.all(12),
-                  //     decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                  //     child: Row(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: [
-                  //         const Icon(Icons.lock_outline, size: 16, color: _T.slate400),
-                  //         const SizedBox(width: 10),
-                  //         const Expanded(child: Text.rich(TextSpan(children: [
-                  //           TextSpan(text: 'Client approved', style: TextStyle(fontWeight: FontWeight.w700, color: _T.ink3)),
-                  //           TextSpan(text: ' — handed off to production. The design team can no longer update its stage.', style: TextStyle(color: _T.slate500)),
-                  //         ]), style: TextStyle(fontSize: 12, height: 1.5))),
-                  //       ],
-                  //     ),
-                  //   ),
-
                   // Title
                   Text(task.name, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.3, height: 1.35)),
                   const SizedBox(height: 4),
@@ -1302,7 +1288,7 @@ class _DetailPanel extends ConsumerWidget {
                   const SizedBox(height: 18),
 
                   // Details grid
-                  _DetailSectionTitle('Details'),
+                  const _DetailSectionTitle('Details'),
                   const SizedBox(height: 10),
                   GridView.count(
                     shrinkWrap: true,
@@ -1314,25 +1300,29 @@ class _DetailPanel extends ConsumerWidget {
                     children: [
                       _DetailMetaCell(label: 'Current Stage', child: _StagePill(stageInfo: si)),
                       _DetailMetaCell(label: 'Priority', child: _PriorityPill(priority: task.priority)),
-                      if (member != null) _DetailMetaCell(label: 'Assignee', child: Row(children: [
-                        _AvatarWidget(initials: member.initials, color: member.color, size: 22),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(member.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink3))),
-                      ])),
-                      _DetailMetaCell(label: 'Due Date', child: d != null
-                          ? Row(children: [
-                              Text(_fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
-                              if (isOverdue) ...[const SizedBox(width: 6), _Badge('Overdue', _T.red, _T.red50)],
-                              if (isSoon && !isOverdue) ...[const SizedBox(width: 6), _Badge('Due soon', _T.amber, _T.amber50)],
-                            ])
-                          : const Text('—', style: TextStyle(color: _T.slate400))),
+                      if (member != null)
+                        _DetailMetaCell(label: 'Assignee', child: Row(children: [
+                          _AvatarWidget(initials: member.initials, color: member.color, size: 22),
+                          const SizedBox(width: 6),
+                          Expanded(child: Text(member.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink3))),
+                        ])),
+                      _DetailMetaCell(
+                        label: 'Due Date',
+                        child: d != null
+                            ? Row(children: [
+                                Text(_fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
+                                if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
+                                if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
+                              ])
+                            : const Text('—', style: TextStyle(color: _T.slate400)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
 
                   // Description
-                  if (task.description != null) ...[
-                    _DetailSectionTitle('Description'),
+                  if (task.description != null && task.description!.isNotEmpty) ...[
+                    const _DetailSectionTitle('Description'),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -1343,7 +1333,7 @@ class _DetailPanel extends ConsumerWidget {
                   ],
 
                   // Stage pipeline
-                  _DetailSectionTitle('Stage Pipeline'),
+                  const _DetailSectionTitle('Stage Pipeline'),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
@@ -1353,7 +1343,7 @@ class _DetailPanel extends ConsumerWidget {
                         final s = entry.value;
                         final isDone    = idx < curIdx;
                         final isCurrent = idx == curIdx;
-                        final isLast = idx == kStages.length - 1;
+                        final isLast    = idx == kStages.length - 1;
                         return Container(
                           decoration: BoxDecoration(
                             color: isCurrent ? s.bg : Colors.transparent,
@@ -1398,48 +1388,46 @@ class _DetailPanel extends ConsumerWidget {
           Container(
             decoration: const BoxDecoration(color: _T.slate50, border: Border(top: BorderSide(color: _T.slate200))),
             padding: const EdgeInsets.all(14),
-            child:
-            // locked
-            //     ? Row(children: [
-            //         const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
-            //         const SizedBox(width: 8),
-            //         const Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400)),
-            //       ])
-            //     : 
-                next != null
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text('ADVANCE STAGE', style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
-                          const SizedBox(height: 9),
-                          GestureDetector(
-                            onTap: onAdvance,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 11),
-                              decoration: BoxDecoration(
-                                color: next == TaskStatus.clientApproved ? _T.green : _T.blue,
-                                borderRadius: BorderRadius.circular(_T.r),
-                                boxShadow: [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))],
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (next == TaskStatus.clientApproved)
-                                    const Icon(Icons.check, size: 15, color: Colors.white)
-                                  else
-                                    const Icon(Icons.arrow_forward, size: 15, color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
-                                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
+            child: next != null
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
+                      const SizedBox(height: 9),
+                      GestureDetector(
+                        onTap: onAdvance,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          decoration: BoxDecoration(
+                            color: next == TaskStatus.clientApproved ? _T.green : _T.blue,
+                            borderRadius: BorderRadius.circular(_T.r),
+                            boxShadow: [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))],
                           ),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                next == TaskStatus.clientApproved ? Icons.check : Icons.arrow_forward,
+                                size: 15, color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
+                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: const [
+                      Icon(Icons.lock_outline, size: 14, color: _T.slate400),
+                      SizedBox(width: 8),
+                      Expanded(child: Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -1543,18 +1531,21 @@ class _LogoPainter extends CustomPainter {
     final w = size.width; final h = size.height;
     final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
 
-    // Node dots
     canvas.drawCircle(Offset(w * 0.19, h * 0.66), w * 0.065, paint..color = Colors.white.withOpacity(0.5));
     canvas.drawCircle(Offset(w * 0.48, h * 0.34), w * 0.065, paint..color = Colors.white.withOpacity(0.7));
 
-    // Flow curve
     final flowPaint = Paint()..color = Colors.white.withOpacity(0.35)..style = PaintingStyle.stroke..strokeWidth = w * 0.055..strokeCap = StrokeCap.round;
-    final flowPath = Path()..moveTo(w * 0.19, h * 0.66)..cubicTo(w * 0.19, h * 0.66, w * 0.30, h * 0.34, w * 0.48, h * 0.34)..cubicTo(w * 0.66, h * 0.34, w * 0.64, h * 0.66, w * 0.81, h * 0.55);
+    final flowPath = Path()
+      ..moveTo(w * 0.19, h * 0.66)
+      ..cubicTo(w * 0.19, h * 0.66, w * 0.30, h * 0.34, w * 0.48, h * 0.34)
+      ..cubicTo(w * 0.66, h * 0.34, w * 0.64, h * 0.66, w * 0.81, h * 0.55);
     canvas.drawPath(flowPath, flowPaint);
 
-    // Checkmark
     final checkPaint = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = w * 0.077..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round;
-    final checkPath = Path()..moveTo(w * 0.35, h * 0.51)..lineTo(w * 0.48, h * 0.65)..lineTo(w * 0.81, h * 0.33);
+    final checkPath = Path()
+      ..moveTo(w * 0.35, h * 0.51)
+      ..lineTo(w * 0.48, h * 0.65)
+      ..lineTo(w * 0.81, h * 0.33);
     canvas.drawPath(checkPath, checkPaint);
   }
 
@@ -1565,23 +1556,40 @@ class _LogoPainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────────────────────
 // MODALS
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ── Project Modal ─────────────────────────────────────────────────────────────
 class _ProjectModal extends StatefulWidget {
-  final ValueChanged<Project> onSave;
+  final Future<void> Function(Project) onSave;
   const _ProjectModal({required this.onSave});
   @override
   State<_ProjectModal> createState() => _ProjectModalState();
 }
 
 class _ProjectModalState extends State<_ProjectModal> {
-  final _name = TextEditingController();
-  final _desc = TextEditingController();
+  final _name  = TextEditingController();
+  final _desc  = TextEditingController();
   Color _color = _T.blue;
   DateTime? _due;
+  bool _saving = false;
 
   static const _colors = [_T.blue, _T.purple, _T.green, _T.amber, _T.red, Color(0xFF0EA5E9)];
 
   @override
   void dispose() { _name.dispose(); _desc.dispose(); super.dispose(); }
+
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty) return;
+    setState(() => _saving = true);
+    // final project = Project(
+    //   id: 'p_${DateTime.now().millisecondsSinceEpoch}',
+    //   name: _name.text.trim(),
+    //   description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null,
+    //   color: _color,
+    //   dueDate: _due,
+    // );
+    // await widget.onSave(project);
+    if (mounted) Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) => _ModalShell(
@@ -1590,53 +1598,72 @@ class _ProjectModalState extends State<_ProjectModal> {
     title: 'New Project',
     subtitle: 'Create a project to group design tasks',
     onClose: () => Navigator.pop(context),
-    onSave: () {
-      if (_name.text.trim().isEmpty) return;
-      // widget.onSave(Project(id: 'p${DateTime.now().millisecondsSinceEpoch}', name: _name.text.trim(), description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null, color: _color, dueDate: _due));
-      Navigator.pop(context);
-    },
-    saveLabel: 'Create Project',
+    onSave: _saving ? null : _submit,
+    saveLabel: _saving ? 'Creating…' : 'Create Project',
     child: Column(children: [
-      _ModalField(label: 'Project Name', required: true, child: _ModalInput(ctrl: _name, hint: 'e.g. Spring Campaign 2026')),
+      _ModalField(
+        label: 'Project Name', required: true,
+        child: _ModalInput(ctrl: _name, hint: 'e.g. Spring Campaign 2026'),
+      ),
       const SizedBox(height: 16),
-      _ModalField(label: 'Description', child: _ModalTextarea(ctrl: _desc, hint: 'What is this project about?')),
+      _ModalField(
+        label: 'Description',
+        child: _ModalTextarea(ctrl: _desc, hint: 'What is this project about?'),
+      ),
       const SizedBox(height: 16),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _ModalField(label: 'Due Date', child: GestureDetector(
-          onTap: () async {
-            final d = await showDatePicker(context: context, initialDate: DateTime.now().add(const Duration(days: 7)), firstDate: DateTime.now(), lastDate: DateTime(2028), builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _T.blue)), child: child!));
-            if (d != null) setState(() => _due = d);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-            child: Row(children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
-              const SizedBox(width: 8),
-              Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
-            ]),
+        Expanded(child: _ModalField(
+          label: 'Due Date',
+          child: GestureDetector(
+            onTap: () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().add(const Duration(days: 7)),
+                firstDate: DateTime.now(), lastDate: DateTime(2028),
+                builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _T.blue)), child: child!),
+              );
+              if (d != null) setState(() => _due = d);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+              child: Row(children: [
+                const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
+                const SizedBox(width: 8),
+                Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
+              ]),
+            ),
           ),
-        ))),
+        )),
         const SizedBox(width: 12),
-        Expanded(child: _ModalField(label: 'Colour', child: Wrap(spacing: 8, runSpacing: 8, children: _colors.map((c) => GestureDetector(
-          onTap: () => setState(() => _color = c),
-          child: Container(
-            width: 28, height: 28,
-            decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: _color == c ? _T.ink : Colors.transparent, width: 2)),
-            child: _color == c ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+        Expanded(child: _ModalField(
+          label: 'Colour',
+          child: Wrap(
+            spacing: 8, runSpacing: 8,
+            children: _colors.map((c) => GestureDetector(
+              onTap: () => setState(() => _color = c),
+              child: Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: _color == c ? _T.ink : Colors.transparent, width: 2)),
+                child: _color == c ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+              ),
+            )).toList(),
           ),
-        )).toList()))),
+        )),
       ]),
     ]),
   );
 }
 
+// ── Task Modal ────────────────────────────────────────────────────────────────
 class _TaskModal extends ConsumerStatefulWidget {
   final List<Project> projects;
   final String? preselectedProjectId;
-  final int idCounter;
-  final ValueChanged<Task> onSave;
-  const _TaskModal({required this.projects, this.preselectedProjectId, required this.idCounter, required this.onSave});
+  final int nextId;
+  final Future<void> Function(Task) onSave;
+
+  const _TaskModal({required this.projects, this.preselectedProjectId, required this.nextId, required this.onSave});
+
   @override
   ConsumerState<_TaskModal> createState() => _TaskModalState();
 }
@@ -1645,14 +1672,15 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   final _name = TextEditingController();
   final _desc = TextEditingController();
   late String _projectId;
-  String _assigneeId = 'alex';
+  String? _assigneeId;
   DateTime? _due;
   TaskPriority _priority = TaskPriority.normal;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _projectId = widget.preselectedProjectId ?? widget.projects.first.id;
+    _projectId = widget.preselectedProjectId ?? (widget.projects.isNotEmpty ? widget.projects.first.id : '');
   }
 
   @override
@@ -1660,75 +1688,155 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
 
   List<Member> get _members => ref.watch(memberNotifierProvider).members;
 
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty) return;
+    setState(() => _saving = true);
+
+    final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
+
+    // final task = Task(
+    //   id: widget.nextId,
+    //   name: _name.text.trim(),
+    //   description: _desc.text.trim().isNotEmpty ? _desc.text.trim() : null,
+    //   projectId: _projectId,
+    //   assignees: assignees,
+    //   dueDate: _due,
+    //   priority: _priority,
+    //   status: TaskStatus.pending,
+    //   createdAt: DateTime.now(),
+    // );
+
+    // await widget.onSave(task);
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
-  Widget build(BuildContext context) => _ModalShell(
-    icon: Icons.assignment_outlined,
-    iconColor: _T.blue,
-    title: 'New Task',
-    subtitle: 'Initializes in the Initialized stage',
-    onClose: () => Navigator.pop(context),
-    onSave: () {
-      if (_name.text.trim().isEmpty) return;
-      // widget.onSave();
-      Navigator.pop(context);
-    },
-    saveLabel: 'Create Task',
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _ModalField(label: 'Task Name', required: true, child: _ModalInput(ctrl: _name, hint: 'e.g. Hero banner — Spring campaign')),
-      const SizedBox(height: 16),
-      _ModalField(label: 'Description', child: _ModalTextarea(ctrl: _desc, hint: 'Deliverable details, dimensions, notes…')),
-      const SizedBox(height: 16),
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _ModalField(label: 'Project', required: true, child: _ModalDropdown<String>(
-          value: _projectId,
-          items: widget.projects.map((p) => DropdownMenuItem(value: p.id, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)), const SizedBox(width: 8), Expanded(child: Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)))]))).toList(),
-          onChanged: (v) => setState(() => _projectId = v!),
-        ))),
-        const SizedBox(width: 12),
-        Expanded(child: _ModalField(label: 'Assign To', child: _ModalDropdown<String>(
-          value: _assigneeId,
-          items: _members.map((m) => DropdownMenuItem(value: m.id, child: Row(children: [_AvatarWidget(initials: m.initials, color: m.color, size: 20), const SizedBox(width: 8), Text(m.name, style: const TextStyle(fontSize: 13))]))).toList(),
-          onChanged: (v) => setState(() => _assigneeId = v!),
-        ))),
+  Widget build(BuildContext context) {
+    // Set default assignee once members are loaded
+    if (_assigneeId == null && _members.isNotEmpty) {
+      _assigneeId = _members.first.id;
+    }
+
+    return _ModalShell(
+      icon: Icons.assignment_outlined,
+      iconColor: _T.blue,
+      title: 'New Task',
+      subtitle: 'Initializes in the Initialized stage',
+      onClose: () => Navigator.pop(context),
+      onSave: _saving ? null : _submit,
+      saveLabel: _saving ? 'Creating…' : 'Create Task',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _ModalField(
+          label: 'Task Name', required: true,
+          child: _ModalInput(ctrl: _name, hint: 'e.g. Hero banner — Spring campaign'),
+        ),
+        const SizedBox(height: 16),
+        _ModalField(
+          label: 'Description',
+          child: _ModalTextarea(ctrl: _desc, hint: 'Deliverable details, dimensions, notes…'),
+        ),
+        const SizedBox(height: 16),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: _ModalField(
+            label: 'Project', required: true,
+            child: _ModalDropdown<String>(
+              value: _projectId,
+              items: widget.projects.map((p) => DropdownMenuItem(
+                value: p.id,
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(width: 8, height: 8, decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+                  ]
+                ),
+              )).toList(),
+              onChanged: (v) => setState(() => _projectId = v!),
+            ),
+          )),
+          const SizedBox(width: 12),
+          Expanded(child: _ModalField(
+            label: 'Assign To',
+            child: _members.isEmpty
+                ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+                : _ModalDropdown<String>(
+                    value: _assigneeId ?? _members.first.id,
+                    items: _members.map((m) => DropdownMenuItem(
+                      value: m.id,
+                      child: Row(children: [
+                        _AvatarWidget(initials: m.initials, color: m.color, size: 20),
+                        const SizedBox(width: 8),
+                        Text(m.name, style: const TextStyle(fontSize: 13)),
+                      ]),
+                    )).toList(),
+                    onChanged: (v) => setState(() => _assigneeId = v),
+                  ),
+          )),
+        ]),
+        // const SizedBox(height: 16),
+        // Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        //   Expanded(child: _ModalField(
+        //     label: 'Due Date',
+        //     child: GestureDetector(
+        //       onTap: () async {
+        //         final d = await showDatePicker(
+        //           context: context,
+        //           initialDate: DateTime.now().add(const Duration(days: 7)),
+        //           firstDate: DateTime.now(), lastDate: DateTime(2028),
+        //           builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _T.blue)), child: child!),
+        //         );
+        //         if (d != null) setState(() => _due = d);
+        //       },
+        //       child: Container(
+        //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        //         decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+        //         child: Row(children: [
+        //           const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
+        //           const SizedBox(width: 8),
+        //           Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
+        //         ]),
+        //       ),
+        //     ),
+        //   )),
+        //   const SizedBox(width: 12),
+        //   Expanded(child: _ModalField(
+        //     label: 'Priority',
+        //     child: _ModalDropdown<TaskPriority>(
+        //       value: _priority,
+        //       items: TaskPriority.values.map((p) => DropdownMenuItem(
+        //         value: p,
+        //         child: Text(_priorityLabel(p), style: const TextStyle(fontSize: 13)),
+        //       )).toList(),
+        //       onChanged: (v) => setState(() => _priority = v!),
+        //     ),
+        //   )),
+        // ]),
       ]),
-      const SizedBox(height: 16),
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _ModalField(label: 'Due Date', child: GestureDetector(
-          onTap: () async {
-            final d = await showDatePicker(context: context, initialDate: DateTime.now().add(const Duration(days: 7)), firstDate: DateTime.now(), lastDate: DateTime(2028), builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _T.blue)), child: child!));
-            if (d != null) setState(() => _due = d);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-            child: Row(children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
-              const SizedBox(width: 8),
-              Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
-            ]),
-          ),
-        ))),
-        const SizedBox(width: 12),
-        Expanded(child: _ModalField(label: 'Priority', child: _ModalDropdown<TaskPriority>(
-          value: _priority,
-          items: TaskPriority.values.map((p) => DropdownMenuItem(value: p, child: Text(_priorityLabel(p), style: const TextStyle(fontSize: 13)))).toList(),
-          onChanged: (v) => setState(() => _priority = v!),
-        ))),
-      ]),
-    ]),
-  );
+    );
+  }
 }
 
-String _priorityLabel(TaskPriority p) => switch (p) { TaskPriority.normal => 'Normal', TaskPriority.high => 'High', TaskPriority.urgent => 'Urgent' };
+String _priorityLabel(TaskPriority p) => switch (p) {
+  TaskPriority.normal => 'Normal',
+  TaskPriority.high   => 'High',
+  TaskPriority.urgent => 'Urgent',
+};
 
+// ── Modal Shell ───────────────────────────────────────────────────────────────
 class _ModalShell extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title, subtitle, saveLabel;
-  final VoidCallback onClose, onSave;
+  final VoidCallback onClose;
+  final VoidCallback? onSave;   // nullable so caller can disable during async
   final Widget child;
 
-  const _ModalShell({required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.saveLabel, required this.onClose, required this.onSave, required this.child});
+  const _ModalShell({
+    required this.icon, required this.iconColor,
+    required this.title, required this.subtitle, required this.saveLabel,
+    required this.onClose, required this.onSave, required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Dialog(
@@ -1781,9 +1889,13 @@ class _ModalShell extends StatelessWidget {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onSave,
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(color: _T.blue, borderRadius: BorderRadius.circular(_T.r)),
+                  decoration: BoxDecoration(
+                    color: onSave != null ? _T.blue : _T.slate300,
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
                   child: Text(saveLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
