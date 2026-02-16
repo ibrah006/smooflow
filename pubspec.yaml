@@ -65,6 +65,7 @@ dependencies:
   cupertino_calendar_picker: ^2.2.6
   json_annotation: ^4.9.0
   board_datetime_picker: ^2.8.5
+  socket_io_client: ^3.1.4
 
 dev_dependencies:
   flutter_test:
