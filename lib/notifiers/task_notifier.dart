@@ -413,11 +413,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // LISTENING TO WEB SCOKET UPDATES
   // ---------------------------------------------------------------------
 
-  String? _error;
-  bool _isLoading = false;
-
   /// Initialize WebSocket and setup listeners
-  Future<void> _initialize() async {
+  Future<void> _initializeSocket() async {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
       _connectionStatus = status;
@@ -428,24 +425,25 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
     // Listen to task list updates
     _client.taskList.listen((tasks) {
-      state = tasks;
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(tasks: tasks, isLoading: false);
     });
 
     // Listen to errors
     _client.errors.listen((error) {
-      _error = error;
-      _isLoading = false;
-      notifyListeners();
+      
+      state = state.copyWith(
+        error: error,
+        isLoading: false
+      );
     });
 
     // Connect to WebSocket
     try {
       await _client.connect();
     } catch (e) {
-      _error = 'Failed to connect: $e';
-      notifyListeners();
+      state = state.copyWith(
+        error: 'Failed to connect: $e',
+      );
     }
   }
 
@@ -453,8 +451,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
   void _handleTaskChange(TaskChangeEvent event) {
     switch (event.type) {
       case TaskChangeType.created:
-        if (event.task != null && !state.any((t) => t.id == event.taskId)) {
-          state.insert(0, event.task!);
+        if (event.task != null && !state.tasks.any((t) => t.id == event.taskId)) {
+          state = state.insert(0, event.task!);
         }
         break;
 
@@ -462,78 +460,79 @@ class TaskNotifier extends StateNotifier<TaskState> {
       case TaskChangeType.statusChanged:
       case TaskChangeType.assigneeAdded:
       case TaskChangeType.assigneeRemoved:
-        final index = state.indexWhere((t) => t.id == event.taskId);
+        final index = state.tasks.indexWhere((t) => t.id == event.taskId);
         if (index != -1 && event.task != null) {
-          state[index] = event.task!;
+          state.tasks[index] = event.task!;
         }
         
         // Update selected task if it's the one that changed
-        if (_selectedTask?.id == event.taskId && event.task != null) {
-          _selectedTask = event.task;
+        if (state.selectedTask?.id == event.taskId && event.task != null) {
+          state.selectedTask = event.task;
         }
         break;
 
       case TaskChangeType.deleted:
-        state.removeWhere((t) => t.id == event.taskId);
-        if (_selectedTask?.id == event.taskId) {
-          _selectedTask = null;
+        state.tasks.removeWhere((t) => t.id == event.taskId);
+        if (state.selectedTask?.id == event.taskId) {
+          state.selectedTask = null;
         }
-        notifyListeners();
+        // To notify about change
+        state = state;
         break;
     }
   }
 
   /// Load all tasks
   Future<void> loadTasks({Map<String, dynamic>? filters}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       _client.listTasks(filters: filters);
     } catch (e) {
-      _error = 'Failed to load tasks: $e';
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(
+        error: 'Failed to load tasks: $e',
+        isLoading: false
+      );
     }
   }
 
   /// Refresh tasks
   Future<void> refreshTasks() async {
-    _isLoading = true;
-    notifyListeners();
+    state = state.copyWith(
+      isLoading: true
+    );
     _client.refreshTasks();
   }
 
   /// Load a specific task
   Future<void> loadTask(int taskId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       _client.subscribeToTask(taskId);
       _client.getTask(taskId);
     } catch (e) {
-      _error = 'Failed to load task: $e';
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(
+        error: 'Failed to load task: $e',
+        isLoading: false
+      );
     }
   }
 
   /// Select a task
   void selectTask(Task task) {
-    _selectedTask = task;
+    state = state.copyWith(selectedTask: task);
     _client.subscribeToTask(task.id);
-    notifyListeners();
   }
 
   /// Deselect task
   void deselectTask() {
-    if (_selectedTask != null) {
-      _client.unsubscribeFromTask(_selectedTask!.id);
-      _selectedTask = null;
-      notifyListeners();
+    if (state.selectedTask != null) {
+      _client.unsubscribeFromTask(state.selectedTask!.id);
+      state.selectedTask = null;
+      state = state.copyWith(
+        selectedTask: null
+      );
     }
   }
 
@@ -544,7 +543,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   /// Get tasks sorted by priority
   List<Task> getTasksByPriority() {
-    final sortedTasks = List<Task>.from(state);
+    final sortedTasks = List<Task>.from(state.tasks);
     sortedTasks.sort((a, b) => b.priority.compareTo(a.priority));
     return sortedTasks;
   }

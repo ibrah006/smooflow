@@ -24,17 +24,36 @@ class TaskState {
     _error = value;
   }
 
+  Task? _selectedTask;
+
+  Task? get selectedTask => _selectedTask;
+
+  set selectedTask(Task? value) {
+    _selectedTask = value;
+  }
+
   TaskState({
       List<Task> tasks = const [],
       bool isLoading = false,
       String? error,
-  }) : _error = error, _isLoading = isLoading, _tasks = tasks;
+      Task? selectedTask
+  }) : _error = error, _isLoading = isLoading, _tasks = tasks, _selectedTask = selectedTask;
+
+  TaskState insert(int index, Task task) {
+
+    _tasks.insert(index, task);
+
+    return TaskState(
+      tasks: _tasks
+    );
+  }
   
   TaskState copyWith({
     List<Task>? tasks,
     bool? isLoading,
     String? error,
-    Task? newTask
+    Task? newTask,
+    Task? selectedTask
   }) {
 
     late final List<Task> ts;
@@ -54,7 +73,8 @@ class TaskState {
     return TaskState(
       tasks: ts,
       isLoading: isLoading ?? _isLoading,
-      error: error
+      error: error,
+      selectedTask: selectedTask
     );
   }
 
