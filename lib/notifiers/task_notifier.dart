@@ -537,7 +537,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   /// Filter tasks by status
-  List<Task> getTasksByStatus(String status) {
+  List<Task> getTasksByStatus(TaskStatus status) {
     return state.tasks.where((task) => task.status == status).toList();
   }
 
@@ -560,8 +560,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   /// Clear error
   void clearError() {
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(
+      error: null
+    );
   }
 
   @override
