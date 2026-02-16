@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
-import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/api/local_http.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -21,7 +22,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   bool get loading => _loading;
   Task? get activeTask => _activeTask;
 
-  final TaskWebSocketClient _client;
+  late final TaskWebSocketClient _client;
 
   List<Task> get todaysProductionTasks {
     return state.tasks.where((task) {
@@ -413,8 +414,15 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // LISTENING TO WEB SCOKET UPDATES
   // ---------------------------------------------------------------------
 
+  ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
+
   /// Initialize WebSocket and setup listeners
   Future<void> _initializeSocket() async {
+
+    final jwtToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
+
+    _client = TaskWebSocketClient(authToken: jwtToken);
+
     // Listen to connection status
     _client.connectionStatus.listen((status) {
       _connectionStatus = status;

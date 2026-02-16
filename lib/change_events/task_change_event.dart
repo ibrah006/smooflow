@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -73,7 +74,6 @@ enum ConnectionStatus {
 /// Task WebSocket Client
 class TaskWebSocketClient {
   final String authToken;
-  final String baseUrl;
   IO.Socket? _socket;
 
   // Status streams
@@ -88,10 +88,7 @@ class TaskWebSocketClient {
   final int _maxReconnectAttempts = 5;
   final Set<int> _subscribedTasks = {};
 
-  TaskWebSocketClient({
-    required this.authToken,
-    required this.baseUrl,
-  });
+  TaskWebSocketClient({required this.authToken});
 
   // Getters for streams
   Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;
@@ -112,7 +109,7 @@ class TaskWebSocketClient {
 
     try {
       _socket = IO.io(
-        baseUrl,
+        ApiClient.http.baseUrl,
         IO.OptionBuilder()
             .setPath('/ws/tasks')
             .setTransports(['websocket', 'polling'])
