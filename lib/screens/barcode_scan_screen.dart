@@ -12,10 +12,13 @@ class BarcodeScanScreen extends ConsumerStatefulWidget {
   late final String? projectId;
 
   final bool isStockIn;
+  final bool isDraft;
 
-  BarcodeScanScreen.stockOut({required this.projectId}) : isStockIn = false;
+  BarcodeScanScreen.stockOut({required this.projectId}) : isStockIn = false, isDraft = false;
 
-  BarcodeScanScreen.stockIn() : isStockIn = true;
+  BarcodeScanScreen.stockIn() : isStockIn = true, isDraft = false;
+
+  BarcodeScanScreen.draft({required this.projectId}) : isStockIn = false, isDraft = true;
 
   @override
   ConsumerState<BarcodeScanScreen> createState() => _BarcodeScanScreenState();
@@ -25,7 +28,9 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
   final MobileScannerController cameraController = MobileScannerController();
 
   void _onDetect(BarcodeCapture barcode) async {
-    cameraController.pause();
+
+    await cameraController.stop();
+
     final String? code = barcode.barcodes.first.rawValue;
     if (code != null) {
       print("scanned barcode: $code");
@@ -47,7 +52,12 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
         final quantity = await Navigator.of(context).push(
           MaterialPageRoute(
             builder:
-                (context) =>
+                (context) => widget.isDraft? StockEntryScreen.draft(
+                      isStockIn: widget.isStockIn,
+                      material: materialResponse.material,
+                      transaction: materialResponse.stockTransaction,
+                      projectId: widget.projectId,
+                    ) :
                     !widget.isStockIn
                         ? StockEntryScreen.stockOut(
                           material: materialResponse.material,
@@ -67,6 +77,7 @@ class _BarcodeScanScreenState extends ConsumerState<BarcodeScanScreen> {
 
         Navigator.pop(context, BarcodeScanResponse(barcode: code, quantity: quantity));
       } catch (e) {
+        print("error: $e");
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Item not found")));

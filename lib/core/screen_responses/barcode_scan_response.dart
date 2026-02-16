@@ -1,7 +1,7 @@
 class BarcodeScanResponse {
 
   String barcode;
-  int quantity;
+  double quantity;
 
   BarcodeScanResponse({
     required this.barcode,

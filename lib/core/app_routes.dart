@@ -103,6 +103,7 @@ class AppRoutes {
 
   static const barcodeScanIn = '/barcode/scan/in';
   static const barcodeScanOut = '/barcode/scan/out';
+  static const barcodeScanDraft = '/barcode/scan/draft';
   static const barcodeExport = '/barcode/export';
 
   static const projects = '/projects';
@@ -227,6 +228,12 @@ class AppRoutes {
       case barcodeScanOut:
         if (args is BarcodeScanArgs) {
           screen = BarcodeScanScreen.stockOut(projectId: args.projectId);
+        }
+        break;
+
+      case barcodeScanDraft:
+        if (args is BarcodeScanArgs) {
+          screen = BarcodeScanScreen.draft(projectId: args.projectId);
         }
         break;
 
