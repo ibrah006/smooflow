@@ -801,7 +801,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                           suffixIcon: IconButton(
                             icon: Icon(CupertinoIcons.barcode, color: Color(0xFF64748B)),
                             onPressed: () async {
-                              final response = await AppRoutes.navigateTo(context, AppRoutes.barcodeScanOut, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
+                              final response = await AppRoutes.navigateTo(context, AppRoutes.barcodeScanDraft, arguments: BarcodeScanArgs.stockOut(projectId: selectedTask!.projectId));
                               
                               if (response == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action cancelled by user")));
