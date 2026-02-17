@@ -7,10 +7,11 @@ import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
+import 'package:smooflow/states/task.dart';
 
 final taskRepoProvider = Provider<TaskRepo>((ref) => TaskRepo());
 
-final taskNotifierProvider = StateNotifierProvider<TaskNotifier, List<Task>>((
+final taskNotifierProvider = StateNotifierProvider<TaskNotifier, TaskState>((
   ref,
 ) {
   final repo = ref.watch(taskRepoProvider);
@@ -55,7 +56,7 @@ final taskByIdProvider = Provider.family<Future<Task?>, int>((
   "taskByIdProviderSimple (-> Task) is deprecated and will be completely replaced by taskByIdProvider (-> Future<Task?>) in future commits",
 )
 final taskByIdProviderSimple = Provider.family<Task?, int>((ref, taskId) {
-  final tasks = ref.watch(taskNotifierProvider);
+  final tasks = ref.watch(taskNotifierProvider).tasks;
   try {
     return tasks.firstWhere((task) => task.id == taskId);
   } catch (e) {

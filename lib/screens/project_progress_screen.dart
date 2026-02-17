@@ -389,7 +389,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
   // Moved from ProjectScreen
   List<Task> _getFilteredJobs() {
     // For Tasks for this Project
-    final allTasks = ref.watch(taskNotifierProvider).where((task)=> task.projectId == widget.projectId).toList();
+    final allTasks = ref.watch(taskNotifierProvider).tasks.where((task)=> task.projectId == widget.projectId).toList();
     if (_selectedJobFilter == 'All') {
       return allTasks; 
     }
@@ -506,7 +506,7 @@ class _ProjectProgressLogScreenState extends ConsumerState<ProjectProgressLogScr
     bool isFirst = false;
     bool isLast = false;
 
-    final allTasks = ref.watch(taskNotifierProvider);
+    final allTasks = ref.watch(taskNotifierProvider).tasks;
     final tasks = allTasks.where((task) {
       return task.progressLogIds.contains(progressLog.id);
     });

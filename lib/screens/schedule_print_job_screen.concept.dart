@@ -60,7 +60,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
     super.dispose();
   }
 
-  List<Task> get allTasks => ref.watch(taskNotifierProvider);
+  List<Task> get allTasks => ref.watch(taskNotifierProvider).tasks;
 
   List<Task> get printTasks {
 
@@ -807,7 +807,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action cancelled by user")));
                               }
 
-                              
+
                             },
                           ),
                         ),

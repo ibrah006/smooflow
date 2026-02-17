@@ -60,7 +60,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     with TickerProviderStateMixin {
 
   List<Printer> get printers=> ref.watch(printerNotifierProvider).printers; 
-  List<Task> get tasks => ref.watch(taskNotifierProvider);
+  List<Task> get tasks => ref.watch(taskNotifierProvider).tasks;
   List<Project> get projects => ref.watch(projectNotifierProvider);
   List<Member> get team => ref.watch(memberNotifierProvider).members;
   // TODO: implement this
@@ -105,14 +105,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     if (p.tasks.isEmpty) {
       return 0;
     } else {
-      return ref.watch(taskNotifierProvider).where((task)=> p.tasks.contains(task.id)).fold(0, (prev, task) {
+      return ref.watch(taskNotifierProvider).tasks.where((task)=> p.tasks.contains(task.id)).fold(0, (prev, task) {
         return prev + (task.status == TaskStatus.completed ? 1 : 0);
       }) / (p.tasks.length);
     }
   }
 
   List<Task> projectTasks(String projectId) {
-    return ref.watch(taskNotifierProvider).where((task) => task.projectId == projectId).toList();
+    return ref.watch(taskNotifierProvider).tasks.where((task) => task.projectId == projectId).toList();
   }
 
   // Only use this when there is a printer assigned to a task

@@ -427,7 +427,7 @@ class _PrintersManagementScreenState extends ConsumerState<PrintersManagementScr
     late final String currentJobName;
 
     try {
-      currentJobName = printer.currentJobId != null ? ref.watch(taskNotifierProvider).firstWhere((task) => task.id == printer.currentJobId).name : "No job assigned";
+      currentJobName = printer.currentJobId != null ? ref.watch(taskNotifierProvider).tasks.firstWhere((task) => task.id == printer.currentJobId).name : "No job assigned";
     } catch (e) {
       currentJobName = "Updating current job...";
     }

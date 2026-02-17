@@ -21,7 +21,7 @@ class PrinterScreen extends ConsumerWidget {
     String? printJobName;
     if (printer.currentJobId != null) {
       try {
-        printJobName = ref.watch(taskNotifierProvider).firstWhere((t)=> t.id == printer.currentJobId).name;
+        printJobName = ref.watch(taskNotifierProvider).tasks.firstWhere((t)=> t.id == printer.currentJobId).name;
       } catch(e) {
         printJobName = "Loading Task...";
       }

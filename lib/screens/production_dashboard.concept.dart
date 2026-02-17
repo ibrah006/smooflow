@@ -37,7 +37,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
   String selectedFilter = 'All';
 
   List<Printer> get printers=> ref.watch(printerNotifierProvider).printers; 
-  List<Task> get totalPrintJobs => ref.watch(taskNotifierProvider).where(
+  List<Task> get totalPrintJobs => ref.watch(taskNotifierProvider).tasks.where(
     (task) => task.status == TaskStatus.clientApproved || task.status == TaskStatus.printing || task.status == TaskStatus.blocked).toList(); // clientApproved + printing + finishing + blocked
   int get printJobsInQueue => totalPrintJobs.where((task) => task.status == TaskStatus.clientApproved).length; // clientApproved
   int get attentionNeededInventoryItems => ref.watch(materialNotifierProvider).materials.where((item) => item.isLowStock || item.isCriticalStock).length; // Materials with isLow = true

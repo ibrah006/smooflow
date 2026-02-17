@@ -61,7 +61,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskScreen>
 
   final currentUser = LoginService.currentUser!;
 
-  Task get task => ref.watch(taskNotifierProvider).firstWhere((t)=> t.id == widget.taskId);
+  Task get task => ref.watch(taskNotifierProvider).tasks.firstWhere((t)=> t.id == widget.taskId);
 
   String get projectName => ref.watch(projectNotifierProvider).firstWhere((p)=> p.id == task.projectId).name;
 

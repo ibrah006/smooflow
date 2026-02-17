@@ -112,7 +112,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   // Read from Riverpod — never mutate directly
   List<Project> get _projects => ref.watch(projectNotifierProvider);
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).where((t) =>
+  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks.where((t) =>
       t.status == TaskStatus.pending ||
       t.status == TaskStatus.designing ||
       t.status == TaskStatus.waitingApproval ||

@@ -969,7 +969,7 @@ class _ProgressLogDetailScreenState extends ConsumerState<ProgressLogScreen> {
   }
 
   List<Task> _getTasksForProgressLog() {
-    final allTasks = ref.watch(taskNotifierProvider);
+    final allTasks = ref.watch(taskNotifierProvider).tasks;
     return allTasks.where((task) {
       return task.progressLogIds.contains(widget.progressLog.id);
     }).toList();

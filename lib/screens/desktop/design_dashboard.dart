@@ -37,7 +37,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen>
   bool _isSearching = false;
   
   List<Project> get projects => ref.watch(projectNotifierProvider);
-  List<Task> get tasks => ref.watch(taskNotifierProvider);
+  List<Task> get tasks => ref.watch(taskNotifierProvider).tasks;
 
   @override
   void initState() {
