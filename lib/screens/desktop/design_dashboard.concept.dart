@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_popup/flutter_popup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/desktop/advance_stage_popup.dart';
 import 'package:smooflow/core/models/company.dart';
@@ -110,6 +111,8 @@ class DesignDashboardScreen extends ConsumerStatefulWidget {
 class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   final _currentUser = LoginService.currentUser!;
 
+  final FocusNode _addTaskFocusNode = FocusNode();
+
   // Read from Riverpod — never mutate directly
   List<Project> get _projects => ref.watch(projectNotifierProvider);
   List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks.where((t) =>
@@ -212,86 +215,94 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _T.slate50,
-      body: Focus(
-        autofocus: true,
-        onKeyEvent: (_, event) {
-          if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.escape) {
-              if (_selectedTaskId != null) { _closeDetail(); return KeyEventResult.handled; }
+    return GestureDetector(
+      onTap: () {
+        // unfocus from add new task 
+        print("unfocus now from add new task");
+        _addTaskFocusNode.unfocus();
+      },
+      child: Scaffold(
+        backgroundColor: _T.slate50,
+        body: Focus(
+          autofocus: true,
+          onKeyEvent: (_, event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.escape) {
+                if (_selectedTaskId != null) { _closeDetail(); return KeyEventResult.handled; }
+              }
             }
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Row(
-          children: [
-            // ── Sidebar ───────────────────────────────────────────────────
-            _Sidebar(
-              projects: _projects,
-              tasks: _tasks,
-              selectedProjectId: _selectedProjectId,
-              viewMode: _viewMode,
-              onProjectSelected: (id) => setState(() => _selectedProjectId = id),
-              onViewModeChanged: (m)  => setState(() => _viewMode = m),
-              onNewProject: _showProjectModal,
-            ),
-            // ── Main area ─────────────────────────────────────────────────
-            Expanded(
-              child: Column(
-                children: [
-                  _Topbar(
-                    selectedProject: _selectedProjectId != null
-                        ? _projects.cast<Project?>().firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null)
-                        : null,
-                    filter: _filter,
-                    viewMode: _viewMode,
-                    searchCtrl: _searchCtrl,
-                    onFilterChanged: (f)  => setState(() => _filter = f),
-                    onViewModeChanged: (m) => setState(() => _viewMode = m),
-                    onSearchChanged: (q)  => setState(() => _searchQuery = q),
-                    onNewTask: _showTaskModal,
-                  ),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _viewMode == ViewMode.board
-                              ? _BoardView(
-                                  tasks: _visibleTasks,
-                                  projects: _projects,
-                                  selectedTaskId: _selectedTaskId,
-                                  onTaskSelected: _selectTask,
-                                  onAddTask: _showTaskModal,
-                                )
-                              : _TaskListView(
-                                  tasks: _visibleTasks,
-                                  projects: _projects,
-                                  selectedTaskId: _selectedTaskId,
-                                  onTaskSelected: _selectTask,
-                                ),
-                        ),
-                        // ── Detail panel ──────────────────────────────────
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeInOut,
-                          width: _selectedTaskId != null ? _T.detailW : 0,
-                          child: _selectedTaskId != null && _selectedTask != null
-                              ? _DetailPanel(
-                                  task: _selectedTask!,
-                                  projects: _projects,
-                                  onClose: _closeDetail,
-                                  onAdvance: () => _advanceTask(_selectedTask!),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+            return KeyEventResult.ignored;
+          },
+          child: Row(
+            children: [
+              // ── Sidebar ───────────────────────────────────────────────────
+              _Sidebar(
+                projects: _projects,
+                tasks: _tasks,
+                selectedProjectId: _selectedProjectId,
+                viewMode: _viewMode,
+                onProjectSelected: (id) => setState(() => _selectedProjectId = id),
+                onViewModeChanged: (m)  => setState(() => _viewMode = m),
+                onNewProject: _showProjectModal,
               ),
-            ),
-          ],
+              // ── Main area ─────────────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  children: [
+                    _Topbar(
+                      selectedProject: _selectedProjectId != null
+                          ? _projects.cast<Project?>().firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null)
+                          : null,
+                      filter: _filter,
+                      viewMode: _viewMode,
+                      searchCtrl: _searchCtrl,
+                      onFilterChanged: (f)  => setState(() => _filter = f),
+                      onViewModeChanged: (m) => setState(() => _viewMode = m),
+                      onSearchChanged: (q)  => setState(() => _searchQuery = q),
+                      onNewTask: _showTaskModal,
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _viewMode == ViewMode.board
+                                ? _BoardView(
+                                    tasks: _visibleTasks,
+                                    projects: _projects,
+                                    selectedTaskId: _selectedTaskId,
+                                    onTaskSelected: _selectTask,
+                                    onAddTask: _showTaskModal,
+                                    addTaskFocusNode: _addTaskFocusNode
+                                  )
+                                : _TaskListView(
+                                    tasks: _visibleTasks,
+                                    projects: _projects,
+                                    selectedTaskId: _selectedTaskId,
+                                    onTaskSelected: _selectTask,
+                                  ),
+                          ),
+                          // ── Detail panel ──────────────────────────────────
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOut,
+                            width: _selectedTaskId != null ? _T.detailW : 0,
+                            child: _selectedTaskId != null && _selectedTask != null
+                                ? _DetailPanel(
+                                    task: _selectedTask!,
+                                    projects: _projects,
+                                    onClose: _closeDetail,
+                                    onAdvance: () => _advanceTask(_selectedTask!),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -776,8 +787,9 @@ class _BoardView extends StatelessWidget {
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final VoidCallback onAddTask;
+  final FocusNode addTaskFocusNode;
 
-  const _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask});
+  const _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask, required this.addTaskFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -794,8 +806,10 @@ class _BoardView extends StatelessWidget {
             projects: projects,
             selectedTaskId: selectedTaskId,
             onTaskSelected: onTaskSelected,
+            showAddTaskBtn: si.label == "Initialized",
+            addTaskFocusNode: addTaskFocusNode
             // Only allow adding from Initialized lane
-            onAddTask: si.stage == TaskStatus.pending ? onAddTask : null,
+            // onAddTask: si.stage == TaskStatus.pending ? onAddTask : null,
           );
         }).toList(),
       ),
@@ -803,19 +817,56 @@ class _BoardView extends StatelessWidget {
   }
 }
 
-class _KanbanLane extends StatelessWidget {
+class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
   final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
-  final VoidCallback? onAddTask;
+  final bool showAddTaskBtn;
+  // final VoidCallback? onAddTask;
+  final FocusNode addTaskFocusNode;
 
-  const _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, this.onAddTask});
+  const _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.showAddTaskBtn, required this.addTaskFocusNode});
+
+  @override
+  ConsumerState<_KanbanLane> createState() => _KanbanLaneState();
+}
+
+class _KanbanLaneState extends ConsumerState<_KanbanLane> {
+
+  bool isAddingTask = false;
+
+  String? newTaskName;
+
+  void onAddTask() {
+    print("can request focus: ${widget.addTaskFocusNode.canRequestFocus}");
+
+    widget.addTaskFocusNode.requestFocus();
+    setState(() {
+      isAddingTask = true;
+    });    
+  }
+
+  void onDismiss() {
+    setState(() {
+      isAddingTask = false;
+    });
+  }
+
+  void onCreated(Task task) {
+    setState(() {
+      isAddingTask = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isApproved = stageInfo.stage == TaskStatus.clientApproved;
+    final isApproved = widget.stageInfo.stage == TaskStatus.clientApproved;
+
+    // if (!widget.addTaskFocusNode.hasFocus && isAddingTask) {
+    //   isAddingTask = false;
+    // }
 
     return Container(
       width: 258,
@@ -833,20 +884,20 @@ class _KanbanLane extends StatelessWidget {
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _T.slate100))),
             child: Row(
               children: [
-                Container(width: 3, height: 16, decoration: BoxDecoration(color: stageInfo.color, borderRadius: BorderRadius.circular(2))),
+                Container(width: 3, height: 16, decoration: BoxDecoration(color: widget.stageInfo.color, borderRadius: BorderRadius.circular(2))),
                 const SizedBox(width: 8),
-                Expanded(child: Text(stageInfo.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _T.ink))),
+                Expanded(child: Text(widget.stageInfo.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _T.ink))),
                 if (isApproved) ...[
-                  Icon(Icons.lock_outline, size: 12, color: stageInfo.color),
+                  Icon(Icons.lock_outline, size: 12, color: widget.stageInfo.color),
                   const SizedBox(width: 4),
                 ],
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isApproved ? stageInfo.bg : _T.slate100,
+                    color: isApproved ? widget.stageInfo.bg : _T.slate100,
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Text('${tasks.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isApproved ? stageInfo.color : _T.slate500)),
+                  child: Text('${widget.tasks.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isApproved ? widget.stageInfo.color : _T.slate500)),
                 ),
               ],
             ),
@@ -857,18 +908,18 @@ class _KanbanLane extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(10),
               children: [
-                if (tasks.isEmpty)
+                if (widget.tasks.isEmpty)
                   _LaneEmpty()
                 else
-                  ...tasks.map((t) {
-                    final proj = projects.cast<Project?>().firstWhere((p) => p!.id == t.projectId, orElse: () => null) ?? projects.first;
+                  ...widget.tasks.map((t) {
+                    final proj = widget.projects.cast<Project?>().firstWhere((p) => p!.id == t.projectId, orElse: () => null) ?? widget.projects.first;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _TaskCard(
                         task: t,
                         project: proj,
-                        isSelected: selectedTaskId == t.id,
-                        onTap: () => onTaskSelected(t.id),
+                        isSelected: widget.selectedTaskId == t.id,
+                        onTap: () => widget.onTaskSelected(t.id),
                       ),
                     );
                   }),
@@ -877,11 +928,21 @@ class _KanbanLane extends StatelessWidget {
           ),
 
           // Add button (Initialized lane only)
-          if (onAddTask != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-              child: _AddCardButton(onTap: onAddTask!),
-            ),
+          if (widget.showAddTaskBtn)
+            if (isAddingTask) Focus(
+              focusNode: widget.addTaskFocusNode,
+              autofocus: true,
+              child: _TaskCard.add(
+                onCreated: onCreated,
+                onDismiss: onDismiss,
+                projects: ref.watch(projectNotifierProvider),
+              ),
+            )
+            else Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                child: _AddCardButton(onTap: onAddTask),
+              ),
+          
         ],
       ),
     );
@@ -937,30 +998,154 @@ class _AddCardButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK CARD
 // ─────────────────────────────────────────────────────────────────────────────
-class _TaskCard extends ConsumerWidget {
-  final Task task;
-  final Project project;
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK CARD
+// ─────────────────────────────────────────────────────────────────────────────
+class _TaskCard extends ConsumerStatefulWidget {
+  // ── normal card fields ────────────────────────────────────────────────────
+  final Task? task;
+  final Project? project;
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const _TaskCard({required this.task, required this.project, required this.isSelected, required this.onTap});
+  // ── creation card fields ──────────────────────────────────────────────────
+  final bool isAddTask;
+  final List<Project> addProjects;
+  final void Function(Task)? onCreated;
+  final VoidCallback? onDismiss;
 
-  Color get _priorityColor => switch (task.priority) {
+  // Normal card
+  const _TaskCard({
+    required Task task,
+    required Project project,
+    required this.isSelected,
+    required this.onTap,
+  })  : task = task,
+        project = project,
+        isAddTask = false,
+        addProjects = const [],
+        onCreated = null,
+        onDismiss = null;
+
+  // Creation card
+  const _TaskCard.add({
+    required List<Project> projects,
+    required void Function(Task) onCreated,
+    required VoidCallback onDismiss,
+  })  : task = null,
+        project = null,
+        isSelected = false,
+        onTap = null,
+        isAddTask = true,
+        addProjects = projects,
+        onCreated = onCreated,
+        onDismiss = onDismiss;
+
+  @override
+  ConsumerState<_TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<_TaskCard>
+    with SingleTickerProviderStateMixin {
+  // ── creation-card state ───────────────────────────────────────────────────
+  final _nameCtrl    = TextEditingController();
+  final _nameFocus   = FocusNode();
+  late String        _selectedProjectId;
+  TaskPriority       _selectedPriority = TaskPriority.normal;
+  bool               _showProjectPicker = false;
+  bool               _nameTouched = false;
+
+  // ── animation ─────────────────────────────────────────────────────────────
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  );
+  late final Animation<double> _fadeIn =
+      CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+  late final Animation<Offset> _slideIn = Tween<Offset>(
+    begin: const Offset(0, 0.06),
+    end: Offset.zero,
+  ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOut));
+
+  final popupKey = GlobalKey<CustomPopupState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isAddTask) {
+      _selectedProjectId =
+          widget.addProjects.isNotEmpty ? widget.addProjects.first.id : '';
+      // Auto-focus the name field after the card animates in
+      _ac.forward().then((_) {
+        if (mounted) _nameFocus.requestFocus();
+      });
+      _nameCtrl.addListener(() => setState(() {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _nameFocus.dispose();
+    _ac.dispose();
+    super.dispose();
+  }
+
+  // ── helpers ───────────────────────────────────────────────────────────────
+  Color get _priorityColor => switch (widget.task?.priority ?? _selectedPriority) {
     TaskPriority.urgent => _T.red,
     TaskPriority.high   => _T.amber,
     TaskPriority.normal => _T.slate200,
   };
 
+  Project? get _currentProject => widget.addProjects.cast<Project?>()
+      .firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null);
+
+  bool get _canSubmit => _nameCtrl.text.trim().isNotEmpty && _currentProject != null;
+
+  void _submit() {
+    if (!_canSubmit) {
+      setState(() => _nameTouched = true);
+      _nameFocus.requestFocus();
+
+
+      return;
+    }
+    // final task = Task(
+    //   id: DateTime.now().millisecondsSinceEpoch,
+    //   name: _nameCtrl.text.trim(),
+    //   description: null,
+    //   projectId: _selectedProjectId,
+    //   assignees: const [],
+    //   dueDate: null,
+    //   priority: _selectedPriority,
+    //   status: TaskStatus.pending,
+    // );
+    // widget.onCreated?.call(task);
+  }
+
+  void _dismiss() => widget.onDismiss?.call();
+
+  // ─────────────────────────────────────────────────────────────────────────
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final d = task.dueDate;
-    final now = DateTime.now();
+  Widget build(BuildContext context) {
+    if (widget.isAddTask) return _buildCreationCard();
+    return _buildNormalCard();
+  }
+
+  // ── NORMAL CARD ───────────────────────────────────────────────────────────
+  Widget _buildNormalCard() {
+    final task    = widget.task!;
+    final project = widget.project!;
+    final d       = task.dueDate;
+    final now     = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
 
     Member? member;
     try {
-      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => task.assignees.contains(m.id));
+      member = ref.watch(memberNotifierProvider).members
+          .firstWhere((m) => task.assignees.contains(m.id));
     } catch (_) {
       member = null;
     }
@@ -969,25 +1154,34 @@ class _TaskCard extends ConsumerWidget {
       color: _T.white,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(_T.r),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
-            border: Border.all(color: isSelected ? _T.blue : _T.slate200, width: isSelected ? 1.5 : 1),
+            border: Border.all(
+              color: widget.isSelected ? _T.blue : _T.slate200,
+              width: widget.isSelected ? 1.5 : 1,
+            ),
             borderRadius: BorderRadius.circular(_T.r),
-            boxShadow: isSelected ? [BoxShadow(color: _T.blue.withOpacity(0.12), blurRadius: 8, spreadRadius: 1)] : null,
+            boxShadow: widget.isSelected
+                ? [BoxShadow(color: _T.blue.withOpacity(0.12), blurRadius: 8, spreadRadius: 1)]
+                : null,
           ),
           child: IntrinsicHeight(
             child: Row(
               children: [
-                // Priority accent bar
+                // Priority accent bar — animates colour change
                 AnimatedContainer(
-                  duration: Duration(milliseconds: 400),
+                  duration: const Duration(milliseconds: 400),
                   width: 3,
-                  margin: isSelected? EdgeInsets.all(2) : null,
+                  margin: widget.isSelected ? const EdgeInsets.all(2) : null,
                   decoration: BoxDecoration(
                     color: _priorityColor,
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(_T.r), bottomLeft: Radius.circular(_T.r)),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(_T.r),
+                      bottomLeft: Radius.circular(_T.r),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -996,32 +1190,63 @@ class _TaskCard extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(task.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink, height: 1.4)),
+                        Text(task.name,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                                height: 1.4)),
                         const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Container(width: 6, height: 6, decoration: BoxDecoration(color: project.color, shape: BoxShape.circle)),
-                            const SizedBox(width: 5),
-                            Expanded(child: Text(project.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: _T.slate400))),
-                          ],
-                        ),
+                        Row(children: [
+                          Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                  color: project.color,
+                                  shape: BoxShape.circle)),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(project.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: _T.slate400)),
+                          ),
+                        ]),
                         const SizedBox(height: 9),
-                        Row(
-                          children: [
-                            _PriorityPill(priority: task.priority),
-                            const SizedBox(width: 6),
-                            if (member != null) _AvatarWidget(initials: member.initials, color: member.color, size: 20),
-                            const Spacer(),
-                            if (d != null)
-                              Row(
-                                children: [
-                                  Icon(Icons.calendar_today_outlined, size: 10, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate400),
-                                  const SizedBox(width: 4),
-                                  Text(_fmtDate(d), style: TextStyle(fontSize: 11, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate400)),
-                                ],
-                              ),
-                          ],
-                        ),
+                        Row(children: [
+                          _PriorityPill(priority: task.priority),
+                          const SizedBox(width: 6),
+                          if (member != null)
+                            _AvatarWidget(
+                                initials: member.initials,
+                                color: member.color,
+                                size: 20),
+                          const Spacer(),
+                          if (d != null)
+                            Row(children: [
+                              Icon(Icons.calendar_today_outlined,
+                                  size: 10,
+                                  color: isOverdue
+                                      ? _T.red
+                                      : isSoon
+                                          ? _T.amber
+                                          : _T.slate400),
+                              const SizedBox(width: 4),
+                              Text(_fmtDate(d),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isOverdue || isSoon
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      color: isOverdue
+                                          ? _T.red
+                                          : isSoon
+                                              ? _T.amber
+                                              : _T.slate400)),
+                            ]),
+                        ]),
                       ],
                     ),
                   ),
@@ -1031,6 +1256,497 @@ class _TaskCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // ── CREATION CARD ─────────────────────────────────────────────────────────
+  Widget _buildCreationCard() {
+
+    final projects = ref.watch(projectNotifierProvider);
+
+    final bool nameEmpty = _nameCtrl.text.trim().isEmpty;
+    final bool showError = _nameTouched && nameEmpty;
+
+    late final Project? p;
+    try {
+      p = projects.firstWhere((p)=> p.id == _selectedProjectId);
+    } catch(e) {
+      p = null;
+    }
+
+    return FadeTransition(
+      opacity: _fadeIn,
+      child: SlideTransition(
+        position: _slideIn,
+        child: KeyboardListener(
+          focusNode: FocusNode(),
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
+              if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: _T.white,
+              border: Border.all(
+                color: _T.blue.withOpacity(0.45),
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(_T.rLg),
+              boxShadow: [
+                BoxShadow(
+                  color: _T.blue.withOpacity(0.08),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Animated priority accent bar ──────────────────────
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: _accentForPriority(_selectedPriority),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(_T.rLg),
+                      bottomLeft: Radius.circular(_T.rLg),
+                    ),
+                  ),
+                ),
+                
+                // ── Card body ─────────────────────────────────────────
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                
+                        // ── Project picker ────────────────────────────
+                
+                        _ProjectChipRow(
+                          projects: projects,
+                          selectedId: _selectedProjectId,
+                          onChanged: (projectId) {
+                            setState(() {
+                              _selectedProjectId = projectId;
+                            });
+                          },
+                        ),
+                
+                        const SizedBox(height: 18),
+                
+                        // ── Priority picker ───────────────────────────
+                        _PriorityRadioRow(
+                          selected: _selectedPriority,
+                          onChanged: (p) =>
+                              setState(() => _selectedPriority = p),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // ── Task name input ───────────────────────────
+                        TextField(
+                          controller: _nameCtrl,
+                          focusNode: _nameFocus,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink,
+                            height: 1.4,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Task name…',
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: _T.slate300,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            errorText: showError ? 'Name required' : null,
+                            errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
+                          ),
+                          onSubmitted: (_) => _submit(),
+                          textInputAction: TextInputAction.done,
+                        ),
+                
+                        // ── Actions ───────────────────────────────────
+                        // Row(
+                        //   children: [
+                        //     // Submit
+                        //     Expanded(
+                        //       child: GestureDetector(
+                        //         onTap: _submit,
+                        //         child: AnimatedContainer(
+                        //           duration: const Duration(milliseconds: 160),
+                        //           padding: const EdgeInsets.symmetric(
+                        //               vertical: 7),
+                        //           decoration: BoxDecoration(
+                        //             color: _canSubmit
+                        //                 ? _T.blue
+                        //                 : _T.slate200,
+                        //             borderRadius:
+                        //                 BorderRadius.circular(_T.r),
+                        //           ),
+                        //           child: Row(
+                        //             mainAxisAlignment:
+                        //                 MainAxisAlignment.center,
+                        //             children: [
+                        //               Icon(
+                        //                 Icons.add_rounded,
+                        //                 size: 14,
+                        //                 color: _canSubmit
+                        //                     ? Colors.white
+                        //                     : _T.slate400,
+                        //               ),
+                        //               const SizedBox(width: 5),
+                        //               Text(
+                        //                 'Add task',
+                        //                 style: TextStyle(
+                        //                   fontSize: 12.5,
+                        //                   fontWeight: FontWeight.w700,
+                        //                   color: _canSubmit
+                        //                       ? Colors.white
+                        //                       : _T.slate400,
+                        //                 ),
+                        //               ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     const SizedBox(width: 7),
+                        //     // Dismiss
+                        //     GestureDetector(
+                        //       onTap: _dismiss,
+                        //       child: Container(
+                        //         width: 30,
+                        //         height: 30,
+                        //         decoration: BoxDecoration(
+                        //           border:
+                        //               Border.all(color: _T.slate200),
+                        //           borderRadius:
+                        //               BorderRadius.circular(_T.r),
+                        //         ),
+                        //         child: const Icon(Icons.close_rounded,
+                        //             size: 14, color: _T.slate400),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CHIP ROW
+// Scrollable horizontal row of small project chips — tap to select
+// ─────────────────────────────────────────────────────────────────────────────
+class _ProjectChipRow extends StatelessWidget {
+  final List<Project> projects;
+  final String selectedId;
+  final void Function(String) onChanged;
+
+  const _ProjectChipRow({
+    required this.projects,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (projects.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      width: 244,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PROJECT',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Wrap(
+            spacing: 5,       // horizontal spacing
+            runSpacing: 5,    // vertical spacing
+            children: projects.map((p) {
+              final isActive = p.id == selectedId;
+
+              return GestureDetector(
+                onTap: () => onChanged(p.id),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? p.color.withOpacity(0.12)
+                        : _T.slate50,
+                    border: Border.all(
+                      color: isActive
+                          ? p.color.withOpacity(0.5)
+                          : _T.slate200,
+                      width: isActive ? 1.5 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // 👈 important
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: isActive ? 7 : 6,
+                        height: isActive ? 7 : 6,
+                        decoration: BoxDecoration(
+                          color: p.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        p.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isActive
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color:
+                              isActive ? p.color : _T.slate500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+
+
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRIORITY RADIO ROW
+// Three side-by-side pill buttons — visually distinct per priority level
+// ─────────────────────────────────────────────────────────────────────────────
+class _PriorityRadioRow extends StatelessWidget {
+  final TaskPriority selected;
+  final void Function(TaskPriority) onChanged;
+
+  const _PriorityRadioRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  static const _options = [
+    (TaskPriority.normal, 'Normal',  _T.slate500, _T.slate100, _T.slate200,  Icons.remove_rounded),
+    (TaskPriority.high,   'High',    _T.amber,    _T.amber50,  Color(0xFFFCD34D), Icons.keyboard_arrow_up_rounded),
+    (TaskPriority.urgent, 'Urgent',  _T.red,      _T.red50,    Color(0xFFFCA5A5), Icons.keyboard_double_arrow_up_rounded),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 244,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PRIORITY',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Wrap(
+            spacing: 5,      // horizontal spacing
+            runSpacing: 5,   // vertical spacing
+            children: _options.map((opt) {
+              final (priority, label, fgColor, bgColor, borderColor, icon) = opt;
+              final isActive = selected == priority;
+
+              return GestureDetector(
+                onTap: () => onChanged(priority),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isActive ? bgColor : _T.slate50,
+                    border: Border.all(
+                      color: isActive ? borderColor : _T.slate200,
+                      width: isActive ? 1.5 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // 👈 critical
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 13,
+                        height: 13,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive ? fgColor : Colors.transparent,
+                          border: Border.all(
+                            color: isActive ? fgColor : _T.slate300,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isActive
+                            ? Center(
+                                child: Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 5),
+                      Icon(
+                        icon,
+                        size: 11,
+                        color: isActive ? fgColor : _T.slate400,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isActive
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isActive ? fgColor : _T.slate500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOW TO INTEGRATE INTO _KanbanLane
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// In your _KanbanLane's Column > Expanded > ListView, keep track of whether
+// the creation card is open in the parent board or lane:
+//
+//   bool _addingTask = false;
+//
+//   // At the end of the cards list, before the add button:
+//   if (_addingTask)
+//     _TaskCard.add(
+//       projects: widget.projects,
+//       onCreated: (task) {
+//         widget.onTaskCreated(task);     // call your Riverpod notifier
+//         setState(() => _addingTask = false);
+//       },
+//       onDismiss: () => setState(() => _addingTask = false),
+//     ),
+//
+//   // Replace the old _AddCardButton with:
+//   if (!_addingTask)
+//     _AddCardButton(onTap: () => setState(() => _addingTask = true)),
+//
+// The creation card will auto-focus, animate in, and close cleanly on
+// submit (Enter) or dismiss (Escape / ✕ button).
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED MICRO WIDGETS  (already in your file — included here for completeness)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Color _accentForPriority(TaskPriority p) => switch (p) {
+  TaskPriority.urgent => _T.red,
+  TaskPriority.high   => _T.amber,
+  TaskPriority.normal => _T.slate200,
+};
+
+class _AvatarWidget extends StatelessWidget {
+  final String initials;
+  final Color color;
+  final double size;
+  const _AvatarWidget(
+      {required this.initials, required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+            color: color.withOpacity(0.15), shape: BoxShape.circle),
+        child: Center(
+          child: Text(initials,
+              style: TextStyle(
+                  fontSize: size * 0.38,
+                  fontWeight: FontWeight.w700,
+                  color: color)),
+        ),
+      );
+}
+
+class _PriorityPill extends StatelessWidget {
+  final TaskPriority priority;
+  const _PriorityPill({required this.priority});
+
+  @override
+  Widget build(BuildContext context) {
+    final (text, color, bg) = switch (priority) {
+      TaskPriority.urgent => ('Urgent', _T.red, _T.red50),
+      TaskPriority.high   => ('High',   _T.amber, _T.amber50),
+      TaskPriority.normal => ('Normal', _T.slate500, _T.slate100),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
+      child: Text(text,
+          style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color)),
     );
   }
 }
@@ -1506,38 +2222,38 @@ class _DetailMetaCell extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
-class _AvatarWidget extends StatelessWidget {
-  final String initials;
-  final Color color;
-  final double size;
-  const _AvatarWidget({required this.initials, required this.color, required this.size});
+// class _AvatarWidget extends StatelessWidget {
+//   final String initials;
+//   final Color color;
+//   final double size;
+//   const _AvatarWidget({required this.initials, required this.color, required this.size});
 
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size, height: size,
-    decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
-    child: Center(child: Text(initials, style: TextStyle(fontSize: size * 0.38, fontWeight: FontWeight.w700, color: color))),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => Container(
+//     width: size, height: size,
+//     decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
+//     child: Center(child: Text(initials, style: TextStyle(fontSize: size * 0.38, fontWeight: FontWeight.w700, color: color))),
+//   );
+// }
 
-class _PriorityPill extends StatelessWidget {
-  final TaskPriority priority;
-  const _PriorityPill({required this.priority});
+// class _PriorityPill extends StatelessWidget {
+//   final TaskPriority priority;
+//   const _PriorityPill({required this.priority});
 
-  @override
-  Widget build(BuildContext context) {
-    final (text, color, bg) = switch (priority) {
-      TaskPriority.urgent => ('Urgent', _T.red,    _T.red50),
-      TaskPriority.high   => ('High',   _T.amber,  _T.amber50),
-      TaskPriority.normal => ('Normal', _T.slate500, _T.slate100),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
-      child: Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     final (text, color, bg) = switch (priority) {
+//       TaskPriority.urgent => ('Urgent', _T.red,    _T.red50),
+//       TaskPriority.high   => ('High',   _T.amber,  _T.amber50),
+//       TaskPriority.normal => ('Normal', _T.slate500, _T.slate100),
+//     };
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+//       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
+//       child: Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+//     );
+//   }
+// }
 
 class _StagePill extends StatelessWidget {
   final DesignStageInfo stageInfo;
@@ -2157,6 +2873,9 @@ class _ModalDropdown<T> extends StatelessWidget {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 String _fmtDate(DateTime d) {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ];
   return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
