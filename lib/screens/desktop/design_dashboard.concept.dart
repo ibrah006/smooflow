@@ -981,8 +981,10 @@ class _TaskCard extends ConsumerWidget {
             child: Row(
               children: [
                 // Priority accent bar
-                Container(
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 400),
                   width: 3,
+                  margin: isSelected? EdgeInsets.all(2) : null,
                   decoration: BoxDecoration(
                     color: _priorityColor,
                     borderRadius: const BorderRadius.only(topLeft: Radius.circular(_T.r), bottomLeft: Radius.circular(_T.r)),
