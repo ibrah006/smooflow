@@ -683,24 +683,24 @@ class _Topbar extends StatelessWidget {
           const Spacer(),
 
           // New task button
-          GestureDetector(
-            onTap: onNewTask,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: _T.blue,
-                borderRadius: BorderRadius.circular(_T.r),
-                boxShadow: [BoxShadow(color: _T.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.add, size: 14, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('New Task', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                ],
-              ),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: onNewTask,
+          //   child: Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          //     decoration: BoxDecoration(
+          //       color: _T.blue,
+          //       borderRadius: BorderRadius.circular(_T.r),
+          //       boxShadow: [BoxShadow(color: _T.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
+          //     ),
+          //     child: const Row(
+          //       children: [
+          //         Icon(Icons.add, size: 14, color: Colors.white),
+          //         SizedBox(width: 6),
+          //         Text('New Task', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           const SizedBox(width: 12),
 
           // User chip
