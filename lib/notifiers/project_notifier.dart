@@ -130,18 +130,21 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   // Create Task
-  Future<void> createTask({required Task task}) async {
+  Future<int> createTask({required Task task}) async {
     final taskId = await _repo.createTask(task.projectId, task);
+
+    task.initializeId(taskId);
 
     state =
         state.map((project) {
           if (project.id == task.projectId) {
-            task.initializeId(taskId);
             return project..tasks.add(taskId);
           } else {
             return project;
           }
         }).toList();
+
+    return taskId;
   }
 
   // Update task status

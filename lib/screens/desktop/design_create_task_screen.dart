@@ -116,7 +116,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
       // await ref.watch(projectNotifierProvider.notifier).createTask(
       //   task: newTask
       // );
-      await ref.read(createProjectTaskProvider(newTask));
+      // await ref.read(createProjectTaskProvider(newTask));
 
       widget.onCreateTask(
         _taskNameController.text.trim(),

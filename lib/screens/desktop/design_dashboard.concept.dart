@@ -1149,7 +1149,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
       _isLoading = true;
     });
     
-    try {
+    // try {
       final newTask = Task.create(
         name: _nameCtrl.text,
         description: "",
@@ -1159,10 +1159,13 @@ class _TaskCardState extends ConsumerState<_TaskCard>
         priority: _selectedPriority
       );
 
-      await ref.read(createProjectTaskProvider(newTask));
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
-    }
+      // await ref.read(createProjectTaskProvider(newTask));
+      await ref.watch(projectNotifierProvider.notifier).createTask(task: newTask);
+
+      ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
+    // } catch(e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
+    // }
 
     setState(() {
       _isLoading = false;
@@ -2585,29 +2588,27 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
   List<Member> get _members => ref.watch(memberNotifierProvider).members;
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty || _projectId == null) return;
-    setState(() => _saving = true);
+    // if (_name.text.trim().isEmpty || _projectId == null) return;
+    // setState(() => _saving = true);
 
-    final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
+    // final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
 
-    try {
-      final newTask = Task.create(
-        name: _name.text.trim(),
-        description: _desc.text.trim(),
-        dueDate: null,
-        assignees: assignees,
-        projectId: _projectId!,
-      );
+    // try {
+    //   final newTask = Task.create(
+    //     name: _name.text.trim(),
+    //     description: _desc.text.trim(),
+    //     dueDate: null,
+    //     assignees: assignees,
+    //     projectId: _projectId!,
+    //   );
 
-      await ref.read(createProjectTaskProvider(newTask));
+    //   await ref.read(createProjectTaskProvider(newTask));
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
-
-      if (mounted) Navigator.pop(context);
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create Task")));
-    }
-    setState(() => _saving = false);
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
+    // } catch(e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create Task")));
+    // }
+    // setState(() => _saving = false);
   }
 
   @override
