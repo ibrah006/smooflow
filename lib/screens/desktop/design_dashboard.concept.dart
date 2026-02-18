@@ -219,7 +219,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
       onTap: () {
         // unfocus from add new task 
         print("unfocus now from add new task");
-        _addTaskFocusNode.unfocus();
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         backgroundColor: _T.slate50,
@@ -777,29 +777,6 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH: Replace your _BoardView and _KanbanLane widgets with these versions
-// This adds dismiss-on-outside-click functionality for the inline task creation
-//
-// ALSO UPDATE your DesignDashboardScreen's build method's GestureDetector:
-// ─────────────────────────────────────────────────────────────────────────────
-/*
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Unfocus will trigger the onFocusChange callback in _KanbanLane
-        // which will dismiss the creation card
-        FocusScope.of(context).unfocus();
-      },
-      child: Scaffold(
-        // ... rest of your scaffold
-      ),
-    );
-  }
-*/
-// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BOARD VIEW (Updated)
