@@ -1086,6 +1086,9 @@ class _TaskCardState extends ConsumerState<_TaskCard>
   bool               _showProjectPicker = false;
   bool               _nameTouched = false;
 
+  /// only for _buildCreationCard
+  bool _isLoading = false;
+
   // ── animation ─────────────────────────────────────────────────────────────
   late final AnimationController _ac = AnimationController(
     vsync: this,
@@ -1139,17 +1142,29 @@ class _TaskCardState extends ConsumerState<_TaskCard>
       setState(() => _nameTouched = true);
       _nameFocus.requestFocus();
     }
-    
-    final newTask = Task.create(
-      name: _nameCtrl.text,
-      description: "",
-      dueDate: null,
-      assignees: [],
-      projectId: _selectedProjectId!,
-      priority: _selectedPriority
-    );
 
-    await ref.read(createProjectTaskProvider(newTask));
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final newTask = Task.create(
+        name: _nameCtrl.text,
+        description: "",
+        dueDate: null,
+        assignees: [],
+        projectId: _selectedProjectId!,
+        priority: _selectedPriority
+      );
+
+      await ref.read(createProjectTaskProvider(newTask));
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to create task")));
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _dismiss() => widget.onDismiss?.call();
@@ -1302,182 +1317,186 @@ class _TaskCardState extends ConsumerState<_TaskCard>
       p = null;
     }
 
-    return FadeTransition(
-      opacity: _fadeIn,
-      child: SlideTransition(
-        position: _slideIn,
-        child: KeyboardListener(
-          focusNode: FocusNode(),
-          onKeyEvent: (event) {
-            if (event is KeyDownEvent) {
-              if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
-              if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: _T.white,
-              border: Border.all(
-                color: _T.blue.withOpacity(0.45),
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(_T.rLg),
-              boxShadow: [
-                BoxShadow(
-                  color: _T.blue.withOpacity(0.08),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Animated priority accent bar ──────────────────────
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 260),
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: _accentForPriority(_selectedPriority),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(_T.rLg),
-                      bottomLeft: Radius.circular(_T.rLg),
-                    ),
+    return Stack(
+      children: [
+        FadeTransition(
+          opacity: _fadeIn,
+          child: SlideTransition(
+            position: _slideIn,
+            child: KeyboardListener(
+              focusNode: FocusNode(),
+              onKeyEvent: (event) {
+                if (event is KeyDownEvent) {
+                  if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
+                  if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _T.white,
+                  border: Border.all(
+                    color: _T.blue.withOpacity(0.45),
+                    width: 1.5,
                   ),
+                  borderRadius: BorderRadius.circular(_T.rLg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.blue.withOpacity(0.08),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                
-                // ── Card body ─────────────────────────────────────────
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                
-                        // ── Project picker ────────────────────────────
-                
-                        if (widget.selectedProjectId == null) ... [
-                          _ProjectChipRow(
-                            projects: projects,
-                            selectedId: _selectedProjectId,
-                            onChanged: (projectId) {
-                              setState(() {
-                                _selectedProjectId = projectId;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                        ],
-                
-                        // ── Priority picker ───────────────────────────
-                        _PriorityRadioRow(
-                          selected: _selectedPriority,
-                          onChanged: (p) =>
-                              setState(() => _selectedPriority = p),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Animated priority accent bar ──────────────────────
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 260),
+                      width: 4,
+                      decoration: BoxDecoration(
+                        color: _accentForPriority(_selectedPriority),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(_T.rLg),
+                          bottomLeft: Radius.circular(_T.rLg),
                         ),
-                        const SizedBox(height: 10),
-
-                        // ── Task name input ───────────────────────────
-                        TextField(
-                          controller: _nameCtrl,
-                          focusNode: _nameFocus,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _T.ink,
-                            height: 1.4,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Task name…',
-                            hintStyle: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: _T.slate300,
+                      ),
+                    ),
+                    
+                    // ── Card body ─────────────────────────────────────────
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                    
+                            // ── Project picker ────────────────────────────
+                    
+                            if (widget.selectedProjectId == null) ... [
+                              _ProjectChipRow(
+                                projects: projects,
+                                selectedId: _selectedProjectId,
+                                onChanged: (projectId) {
+                                  setState(() {
+                                    _selectedProjectId = projectId;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 18),
+                            ],
+                    
+                            // ── Priority picker ───────────────────────────
+                            _PriorityRadioRow(
+                              selected: _selectedPriority,
+                              onChanged: (p) =>
+                                  setState(() => _selectedPriority = p),
                             ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            errorText: showError ? 'Name required' : null,
-                            errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
-                          ),
-                          onSubmitted: (_) => _submit(),
-                          textInputAction: TextInputAction.done,
+                            const SizedBox(height: 10),
+        
+                            // ── Task name input ───────────────────────────
+                            TextField(
+                              controller: _nameCtrl,
+                              focusNode: _nameFocus,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                                height: 1.4,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Task name…',
+                                hintStyle: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: _T.slate300,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                errorText: showError ? 'Name required' : null,
+                                errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
+                              ),
+                              onSubmitted: (_) => _submit(),
+                              textInputAction: TextInputAction.done,
+                            ),
+                    
+                            // ── Actions ───────────────────────────────────
+                            // Row(
+                            //   children: [
+                            //     // Submit
+                            //     Expanded(
+                            //       child: GestureDetector(
+                            //         onTap: _submit,
+                            //         child: AnimatedContainer(
+                            //           duration: const Duration(milliseconds: 160),
+                            //           padding: const EdgeInsets.symmetric(
+                            //               vertical: 7),
+                            //           decoration: BoxDecoration(
+                            //             color: _canSubmit
+                            //                 ? _T.blue
+                            //                 : _T.slate200,
+                            //             borderRadius:
+                            //                 BorderRadius.circular(_T.r),
+                            //           ),
+                            //           child: Row(
+                            //             mainAxisAlignment:
+                            //                 MainAxisAlignment.center,
+                            //             children: [
+                            //               Icon(
+                            //                 Icons.add_rounded,
+                            //                 size: 14,
+                            //                 color: _canSubmit
+                            //                     ? Colors.white
+                            //                     : _T.slate400,
+                            //               ),
+                            //               const SizedBox(width: 5),
+                            //               Text(
+                            //                 'Add task',
+                            //                 style: TextStyle(
+                            //                   fontSize: 12.5,
+                            //                   fontWeight: FontWeight.w700,
+                            //                   color: _canSubmit
+                            //                       ? Colors.white
+                            //                       : _T.slate400,
+                            //                 ),
+                            //               ),
+                            //             ],
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     const SizedBox(width: 7),
+                            //     // Dismiss
+                            //     GestureDetector(
+                            //       onTap: _dismiss,
+                            //       child: Container(
+                            //         width: 30,
+                            //         height: 30,
+                            //         decoration: BoxDecoration(
+                            //           border:
+                            //               Border.all(color: _T.slate200),
+                            //           borderRadius:
+                            //               BorderRadius.circular(_T.r),
+                            //         ),
+                            //         child: const Icon(Icons.close_rounded,
+                            //             size: 14, color: _T.slate400),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                          ],
                         ),
-                
-                        // ── Actions ───────────────────────────────────
-                        // Row(
-                        //   children: [
-                        //     // Submit
-                        //     Expanded(
-                        //       child: GestureDetector(
-                        //         onTap: _submit,
-                        //         child: AnimatedContainer(
-                        //           duration: const Duration(milliseconds: 160),
-                        //           padding: const EdgeInsets.symmetric(
-                        //               vertical: 7),
-                        //           decoration: BoxDecoration(
-                        //             color: _canSubmit
-                        //                 ? _T.blue
-                        //                 : _T.slate200,
-                        //             borderRadius:
-                        //                 BorderRadius.circular(_T.r),
-                        //           ),
-                        //           child: Row(
-                        //             mainAxisAlignment:
-                        //                 MainAxisAlignment.center,
-                        //             children: [
-                        //               Icon(
-                        //                 Icons.add_rounded,
-                        //                 size: 14,
-                        //                 color: _canSubmit
-                        //                     ? Colors.white
-                        //                     : _T.slate400,
-                        //               ),
-                        //               const SizedBox(width: 5),
-                        //               Text(
-                        //                 'Add task',
-                        //                 style: TextStyle(
-                        //                   fontSize: 12.5,
-                        //                   fontWeight: FontWeight.w700,
-                        //                   color: _canSubmit
-                        //                       ? Colors.white
-                        //                       : _T.slate400,
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
-                        //     const SizedBox(width: 7),
-                        //     // Dismiss
-                        //     GestureDetector(
-                        //       onTap: _dismiss,
-                        //       child: Container(
-                        //         width: 30,
-                        //         height: 30,
-                        //         decoration: BoxDecoration(
-                        //           border:
-                        //               Border.all(color: _T.slate200),
-                        //           borderRadius:
-                        //               BorderRadius.circular(_T.r),
-                        //         ),
-                        //         child: const Icon(Icons.close_rounded,
-                        //             size: 14, color: _T.slate400),
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
