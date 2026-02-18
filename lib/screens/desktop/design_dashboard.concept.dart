@@ -284,7 +284,12 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                 ?  _visibleTasks.isEmpty
                                   ? ProjectEmptyState(
                                       onCreateTask: () {},
+                                      onClearFilters: () {},
+                                      onProjectSelected: (p) {},
                                       projectName: _selectedProjectName,
+                                      otherProjects: _projects,
+                                      // _visibleTasks.isEmpty && _projects.isNotEmpty
+                                      hasActiveFilters: false,
                                     )
                                     : _BoardView(
                                       tasks: _visibleTasks,

@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/project.dart';
 
 // Design tokens (adjust to match your _T class)
 class _T {
@@ -28,15 +29,21 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 class ProjectEmptyState extends StatefulWidget {
   final String? projectName;
+  final String? selectedProjectId;
+  final List<Project>? otherProjects;
   final VoidCallback? onCreateTask;
   final VoidCallback? onClearFilters;
+  final Function(String projectId)? onProjectSelected;
   final bool hasActiveFilters;
 
   const ProjectEmptyState({
     super.key,
     this.projectName,
+    this.selectedProjectId,
+    this.otherProjects,
     this.onCreateTask,
     this.onClearFilters,
+    this.onProjectSelected,
     this.hasActiveFilters = false,
   });
 
@@ -91,127 +98,146 @@ class _ProjectEmptyStateState extends State<ProjectEmptyState>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeIn,
-      child: SlideTransition(
-        position: _slideUp,
-        child: Center(
-          child: ScaleTransition(
-            scale: _scaleIn,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 420),
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Illustration
-                  _EmptyStateIllustration(),
-                  const SizedBox(height: 32),
-
-                  // Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.hasActiveFilters
-                            ? 'No matching tasks'
-                            : widget.projectName != null
-                                ? 'No tasks in'
-                                : 'No tasks yet',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: _T.ink,
-                          letterSpacing: -0.2,
-                          height: 1.3,
-                        ),
+    return SingleChildScrollView(
+      child: FadeTransition(
+        opacity: _fadeIn,
+        child: SlideTransition(
+          position: _slideUp,
+          child: Center(
+            child: ScaleTransition(
+              scale: _scaleIn,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Illustration
+                    _EmptyStateIllustration(),
+                    const SizedBox(height: 32),
+      
+                    // Title
+                    Text(
+                      widget.hasActiveFilters
+                          ? 'No matching tasks'
+                          : widget.projectName != null
+                              ? 'No tasks in ${widget.projectName}'
+                              : 'No tasks yet',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: _T.ink,
+                        letterSpacing: -0.5,
+                        height: 1.3,
                       ),
-                      Text(
-                        !widget.hasActiveFilters && widget.projectName != null
-                                ? ' ${widget.projectName}'
-                                : '',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: _T.ink,
-                          letterSpacing: -0.2,
-                          height: 1.3,
-                        ),
+                    ),
+                    const SizedBox(height: 12),
+      
+                    // Description
+                    Text(
+                      widget.hasActiveFilters
+                          ? 'Try adjusting your filters or search terms to find what you\'re looking for.'
+                          : widget.projectName != null
+                              ? 'Create your first design task to get started with this project.'
+                              : 'Start by creating a new design task for your team.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        color: _T.slate500,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+      
+                    // Actions
+                    if (widget.hasActiveFilters && widget.onClearFilters != null)
+                      _EmptyStateButton(
+                        label: 'Clear Filters',
+                        icon: Icons.filter_alt_off_rounded,
+                        onTap: widget.onClearFilters!,
+                        isPrimary: false,
+                      )
+                    else if (widget.onCreateTask != null)
+                      _EmptyStateButton(
+                        label: 'Create First Task',
+                        icon: Icons.add_rounded,
+                        onTap: widget.onCreateTask!,
+                        isPrimary: true,
+                      ),
+      
+                    // Help text
+                    if (!widget.hasActiveFilters && widget.onCreateTask != null) ...[
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: _T.slate50,
+                              border: Border.all(color: _T.slate200),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.keyboard_outlined,
+                                    size: 14, color: _T.slate400),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Or press',
+                                  style: TextStyle(
+                                      fontSize: 12, color: _T.slate400),
+                                ),
+                                SizedBox(width: 5),
+                                _KeyboardKey('N'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Description
-                  Text(
-                    widget.hasActiveFilters
-                        ? 'Try adjusting your filters or search terms to find what you\'re looking for.'
-                        : widget.projectName != null
-                            ? 'Create your first design task to get started with this project.'
-                            : 'Start by creating a new design task for your team.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                      color: _T.slate500,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Actions
-                  if (widget.hasActiveFilters && widget.onClearFilters != null)
-                    _EmptyStateButton(
-                      label: 'Clear Filters',
-                      icon: Icons.filter_alt_off_rounded,
-                      onTap: widget.onClearFilters!,
-                      isPrimary: false,
-                    )
-                  else if (widget.onCreateTask != null)
-                    _EmptyStateButton(
-                      label: 'Create First Task',
-                      icon: Icons.add_rounded,
-                      onTap: widget.onCreateTask!,
-                      isPrimary: true,
-                    ),
-
-                  // Help text
-                  if (!widget.hasActiveFilters && widget.onCreateTask != null) ...[
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: _T.slate50,
-                            border: Border.all(color: _T.slate200),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.keyboard_outlined,
-                                  size: 14, color: _T.slate400),
-                              SizedBox(width: 6),
-                              Text(
-                                'Or press',
-                                style: TextStyle(
-                                    fontSize: 12, color: _T.slate400),
+      
+                    // Project Switcher Section
+                    if (widget.otherProjects != null && 
+                        widget.otherProjects!.isNotEmpty &&
+                        widget.onProjectSelected != null &&
+                        !widget.hasActiveFilters) ...[
+                      const SizedBox(height: 48),
+                      
+                      // Divider with text
+                      Row(
+                        children: [
+                          Expanded(child: Container(height: 1, color: _T.slate200)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Looking for something else?',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _T.slate400,
+                                letterSpacing: 0.5,
                               ),
-                              SizedBox(width: 5),
-                              _KeyboardKey('N'),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                          Expanded(child: Container(height: 1, color: _T.slate200)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Project switcher cards
+                      _ProjectSwitcher(
+                        projects: widget.otherProjects!,
+                        selectedProjectId: widget.selectedProjectId,
+                        onProjectSelected: widget.onProjectSelected!,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -547,37 +573,188 @@ class _FloatingParticleState extends State<_FloatingParticle>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// USAGE EXAMPLE
+// PROJECT SWITCHER
+// Shows available projects to quickly switch to
 // ─────────────────────────────────────────────────────────────────────────────
-/*
+class _ProjectSwitcher extends StatelessWidget {
+  final List<Project> projects;
+  final String? selectedProjectId;
+  final Function(String) onProjectSelected;
 
-// In your board view, replace the empty check with this:
+  const _ProjectSwitcher({
+    required this.projects,
+    required this.selectedProjectId,
+    required this.onProjectSelected,
+  });
 
-if (_visibleTasks.isEmpty) {
-  return ProjectEmptyState(
-    projectName: _selectedProjectId != null 
-        ? _projects.firstWhere((p) => p.id == _selectedProjectId).name 
-        : null,
-    hasActiveFilters: _filter != TaskFilter.all || _searchQuery.isNotEmpty,
-    onCreateTask: _showTaskModal,
-    onClearFilters: () {
-      setState(() {
-        _filter = TaskFilter.all;
-        _searchQuery = '';
-        _searchCtrl.clear();
-      });
-    },
-  );
+  @override
+  Widget build(BuildContext context) {
+    // Filter out the currently selected project and show max 4 projects
+    final availableProjects = projects
+        .where((p) => p.id != selectedProjectId)
+        .take(4)
+        .toList();
+
+    if (availableProjects.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        // Grid of project cards
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: availableProjects.map((project) {
+            return _ProjectCard(
+              project: project,
+              onTap: () => onProjectSelected(project.id),
+            );
+          }).toList(),
+        ),
+        
+        // "View all projects" link if there are more
+        if (projects.length > 5) ...[
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () => onProjectSelected(''), // Empty string means "all projects"
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View all projects',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 14, color: _T.blue),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
-// Or in list view:
-Expanded(
-  child: _visibleTasks.isEmpty
-      ? ProjectEmptyState(
-          projectName: selectedProject?.name,
-          onCreateTask: onNewTask,
-        )
-      : ListView.builder(...),
-)
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CARD
+// Individual project card for quick switching
+// ─────────────────────────────────────────────────────────────────────────────
+class _ProjectCard extends StatefulWidget {
+  final Project project;
+  final VoidCallback onTap;
 
-*/
+  const _ProjectCard({
+    required this.project,
+    required this.onTap,
+  });
+
+  @override
+  State<_ProjectCard> createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<_ProjectCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 180,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
+          decoration: BoxDecoration(
+            color: _isHovered 
+                ? widget.project.color.withOpacity(0.04)
+                : _T.white,
+            border: Border.all(
+              color: _isHovered 
+                  ? widget.project.color.withOpacity(0.3)
+                  : _T.slate200,
+              width: _isHovered ? 1.5 : 1,
+            ),
+            borderRadius: BorderRadius.circular(_T.rLg),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: widget.project.color.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Project icon with color
+              Row(
+                spacing: 10,
+                children: [
+                  Container(
+                    width: 27,
+                    height: 27,
+                    decoration: BoxDecoration(
+                      color: widget.project.color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: widget.project.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Project name
+                      Text(
+                        widget.project.name,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      // Task count text
+                      Text(
+                        widget.project.tasks.isEmpty
+                            ? 'No active tasks'
+                            : '${widget.project.tasks.length} ${widget.project.tasks.length == 1 ? 'task' : 'tasks'}',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
