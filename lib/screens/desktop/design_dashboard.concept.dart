@@ -1330,7 +1330,6 @@ class _TaskCardState extends ConsumerState<_TaskCard>
           focusNode: FocusNode(),
           onKeyEvent: (event) {
             if (event is KeyDownEvent) {
-              if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
               if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
             }
           },

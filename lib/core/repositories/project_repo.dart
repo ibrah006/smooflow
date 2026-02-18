@@ -91,6 +91,8 @@ class ProjectRepo {
       body: task.toCreateJson(),
     );
 
+    print("called create task status: ${response.statusCode}");
+
     if (response.statusCode != 201) {
       throw "Failed to create Task, STATUS ${response.statusCode}: ${response.body}";
     }
