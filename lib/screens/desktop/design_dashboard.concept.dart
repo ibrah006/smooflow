@@ -779,7 +779,30 @@ class _FilterChip extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BOARD VIEW
+// PATCH: Replace your _BoardView and _KanbanLane widgets with these versions
+// This adds dismiss-on-outside-click functionality for the inline task creation
+//
+// ALSO UPDATE your DesignDashboardScreen's build method's GestureDetector:
+// ─────────────────────────────────────────────────────────────────────────────
+/*
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Unfocus will trigger the onFocusChange callback in _KanbanLane
+        // which will dismiss the creation card
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        // ... rest of your scaffold
+      ),
+    );
+  }
+*/
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOARD VIEW (Updated)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BoardView extends StatelessWidget {
   final List<Task> tasks;
@@ -789,7 +812,14 @@ class _BoardView extends StatelessWidget {
   final VoidCallback onAddTask;
   final FocusNode addTaskFocusNode;
 
-  const _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask, required this.addTaskFocusNode});
+  const _BoardView({
+    required this.tasks,
+    required this.projects,
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+    required this.onAddTask,
+    required this.addTaskFocusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -807,9 +837,7 @@ class _BoardView extends StatelessWidget {
             selectedTaskId: selectedTaskId,
             onTaskSelected: onTaskSelected,
             showAddTaskBtn: si.label == "Initialized",
-            addTaskFocusNode: addTaskFocusNode
-            // Only allow adding from Initialized lane
-            // onAddTask: si.stage == TaskStatus.pending ? onAddTask : null,
+            addTaskFocusNode: addTaskFocusNode,
           );
         }).toList(),
       ),
@@ -817,6 +845,9 @@ class _BoardView extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// KANBAN LANE (Updated with dismiss-on-outside-click)
+// ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
   final List<Task> tasks;
@@ -824,126 +855,209 @@ class _KanbanLane extends ConsumerStatefulWidget {
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final bool showAddTaskBtn;
-  // final VoidCallback? onAddTask;
   final FocusNode addTaskFocusNode;
 
-  const _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.showAddTaskBtn, required this.addTaskFocusNode});
+  const _KanbanLane({
+    required this.stageInfo,
+    required this.tasks,
+    required this.projects,
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+    required this.showAddTaskBtn,
+    required this.addTaskFocusNode,
+  });
 
   @override
   ConsumerState<_KanbanLane> createState() => _KanbanLaneState();
 }
 
 class _KanbanLaneState extends ConsumerState<_KanbanLane> {
-
   bool isAddingTask = false;
 
-  String? newTaskName;
+  // GlobalKey to track the creation card's position and size
+  final GlobalKey _creationCardKey = GlobalKey();
 
   void onAddTask() {
-    print("can request focus: ${widget.addTaskFocusNode.canRequestFocus}");
-
-    widget.addTaskFocusNode.requestFocus();
     setState(() {
       isAddingTask = true;
-    });    
+    });
+    // Small delay to ensure the widget is built before requesting focus
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.addTaskFocusNode.requestFocus();
+    });
   }
 
   void onDismiss() {
     setState(() {
       isAddingTask = false;
     });
+    widget.addTaskFocusNode.unfocus();
   }
 
   void onCreated(Task task) {
+    // TODO: Call your Riverpod notifier to save the task
+    // await ref.read(taskNotifierProvider.notifier).addTask(task);
+    
     setState(() {
       isAddingTask = false;
     });
+    widget.addTaskFocusNode.unfocus();
+  }
+
+  // Check if a tap position is outside the creation card
+  bool _isTapOutsideCreationCard(Offset tapPosition) {
+    if (!isAddingTask) return false;
+    
+    final RenderBox? renderBox =
+        _creationCardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return false;
+
+    final cardPosition = renderBox.localToGlobal(Offset.zero);
+    final cardSize = renderBox.size;
+    final cardRect = Rect.fromLTWH(
+      cardPosition.dx,
+      cardPosition.dy,
+      cardSize.width,
+      cardSize.height,
+    );
+
+    return !cardRect.contains(tapPosition);
   }
 
   @override
   Widget build(BuildContext context) {
     final isApproved = widget.stageInfo.stage == TaskStatus.clientApproved;
 
-    // if (!widget.addTaskFocusNode.hasFocus && isAddingTask) {
-    //   isAddingTask = false;
-    // }
-
-    return Container(
-      width: 258,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: _T.white,
-        border: Border.all(color: _T.slate200),
-        borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        children: [
-          // Lane header
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _T.slate100))),
-            child: Row(
-              children: [
-                Container(width: 3, height: 16, decoration: BoxDecoration(color: widget.stageInfo.color, borderRadius: BorderRadius.circular(2))),
-                const SizedBox(width: 8),
-                Expanded(child: Text(widget.stageInfo.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _T.ink))),
-                if (isApproved) ...[
-                  Icon(Icons.lock_outline, size: 12, color: widget.stageInfo.color),
-                  const SizedBox(width: 4),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isApproved ? widget.stageInfo.bg : _T.slate100,
-                    borderRadius: BorderRadius.circular(99),
+    return GestureDetector(
+      // Intercept taps on this lane
+      onTapDown: (details) {
+        if (isAddingTask && _isTapOutsideCreationCard(details.globalPosition)) {
+          onDismiss();
+        }
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+        width: 258,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: _T.white,
+          border: Border.all(color: _T.slate200),
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
+        child: Column(
+          children: [
+            // Lane header
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _T.slate100))),
+              child: Row(
+                children: [
+                  Container(
+                      width: 3,
+                      height: 16,
+                      decoration: BoxDecoration(
+                          color: widget.stageInfo.color,
+                          borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text(widget.stageInfo.label,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _T.ink))),
+                  if (isApproved) ...[
+                    Icon(Icons.lock_outline,
+                        size: 12, color: widget.stageInfo.color),
+                    const SizedBox(width: 4),
+                  ],
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isApproved ? widget.stageInfo.bg : _T.slate100,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text('${widget.tasks.length}',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isApproved
+                                ? widget.stageInfo.color
+                                : _T.slate500)),
                   ),
-                  child: Text('${widget.tasks.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isApproved ? widget.stageInfo.color : _T.slate500)),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Cards
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                if (widget.tasks.isEmpty)
-                  _LaneEmpty()
-                else
-                  ...widget.tasks.map((t) {
-                    final proj = widget.projects.cast<Project?>().firstWhere((p) => p!.id == t.projectId, orElse: () => null) ?? widget.projects.first;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _TaskCard(
-                        task: t,
-                        project: proj,
-                        isSelected: widget.selectedTaskId == t.id,
-                        onTap: () => widget.onTaskSelected(t.id),
+            // Cards
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  if (widget.tasks.isEmpty)
+                    _LaneEmpty()
+                  else
+                    ...widget.tasks.map((t) {
+                      final proj = widget.projects
+                              .cast<Project?>()
+                              .firstWhere((p) => p!.id == t.projectId,
+                                  orElse: () => null) ??
+                          widget.projects.first;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _TaskCard(
+                          task: t,
+                          project: proj,
+                          isSelected: widget.selectedTaskId == t.id,
+                          onTap: () => widget.onTaskSelected(t.id),
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+
+            // Add button (Initialized lane only)
+            if (widget.showAddTaskBtn)
+              if (isAddingTask)
+                // Wrap creation card with key and prevent gesture detection inside
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: GestureDetector(
+                    // Absorb taps inside the creation card
+                    onTap: () {},
+                    child: Container(
+                      key: _creationCardKey,
+                      child: Focus(
+                        focusNode: widget.addTaskFocusNode,
+                        onFocusChange: (hasFocus) {
+                          // Dismiss when focus is lost (e.g., clicking outside)
+                          if (!hasFocus && isAddingTask) {
+                            // Small delay to allow internal clicks to register
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              if (mounted && !widget.addTaskFocusNode.hasFocus) {
+                                onDismiss();
+                              }
+                            });
+                          }
+                        },
+                        child: _TaskCard.add(
+                          onCreated: onCreated,
+                          onDismiss: onDismiss,
+                          projects: ref.watch(projectNotifierProvider),
+                        ),
                       ),
-                    );
-                  }),
-              ],
-            ),
-          ),
-
-          // Add button (Initialized lane only)
-          if (widget.showAddTaskBtn)
-            if (isAddingTask) Focus(
-              focusNode: widget.addTaskFocusNode,
-              autofocus: true,
-              child: _TaskCard.add(
-                onCreated: onCreated,
-                onDismiss: onDismiss,
-                projects: ref.watch(projectNotifierProvider),
-              ),
-            )
-            else Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                child: _AddCardButton(onTap: onAddTask),
-              ),
-          
-        ],
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: _AddCardButton(onTap: onAddTask),
+                ),
+          ],
+        ),
       ),
     );
   }
