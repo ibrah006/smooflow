@@ -1141,6 +1141,8 @@ class _TaskCardState extends ConsumerState<_TaskCard>
     if (!_canSubmit) {
       setState(() => _nameTouched = true);
       _nameFocus.requestFocus();
+
+      return;
     }
 
     setState(() {
@@ -1317,186 +1319,192 @@ class _TaskCardState extends ConsumerState<_TaskCard>
       p = null;
     }
 
-    return Stack(
-      children: [
-        FadeTransition(
-          opacity: _fadeIn,
-          child: SlideTransition(
-            position: _slideIn,
-            child: KeyboardListener(
-              focusNode: FocusNode(),
-              onKeyEvent: (event) {
-                if (event is KeyDownEvent) {
-                  if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
-                  if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
-                }
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _T.white,
-                  border: Border.all(
-                    color: _T.blue.withOpacity(0.45),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(_T.rLg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _T.blue.withOpacity(0.08),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Animated priority accent bar ──────────────────────
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 260),
-                      width: 4,
-                      decoration: BoxDecoration(
-                        color: _accentForPriority(_selectedPriority),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(_T.rLg),
-                          bottomLeft: Radius.circular(_T.rLg),
-                        ),
-                      ),
-                    ),
-                    
-                    // ── Card body ─────────────────────────────────────────
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                    
-                            // ── Project picker ────────────────────────────
-                    
-                            if (widget.selectedProjectId == null) ... [
-                              _ProjectChipRow(
-                                projects: projects,
-                                selectedId: _selectedProjectId,
-                                onChanged: (projectId) {
-                                  setState(() {
-                                    _selectedProjectId = projectId;
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 18),
-                            ],
-                    
-                            // ── Priority picker ───────────────────────────
-                            _PriorityRadioRow(
-                              selected: _selectedPriority,
-                              onChanged: (p) =>
-                                  setState(() => _selectedPriority = p),
-                            ),
-                            const SizedBox(height: 10),
-        
-                            // ── Task name input ───────────────────────────
-                            TextField(
-                              controller: _nameCtrl,
-                              focusNode: _nameFocus,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _T.ink,
-                                height: 1.4,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Task name…',
-                                hintStyle: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: _T.slate300,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                                errorText: showError ? 'Name required' : null,
-                                errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
-                              ),
-                              onSubmitted: (_) => _submit(),
-                              textInputAction: TextInputAction.done,
-                            ),
-                    
-                            // ── Actions ───────────────────────────────────
-                            // Row(
-                            //   children: [
-                            //     // Submit
-                            //     Expanded(
-                            //       child: GestureDetector(
-                            //         onTap: _submit,
-                            //         child: AnimatedContainer(
-                            //           duration: const Duration(milliseconds: 160),
-                            //           padding: const EdgeInsets.symmetric(
-                            //               vertical: 7),
-                            //           decoration: BoxDecoration(
-                            //             color: _canSubmit
-                            //                 ? _T.blue
-                            //                 : _T.slate200,
-                            //             borderRadius:
-                            //                 BorderRadius.circular(_T.r),
-                            //           ),
-                            //           child: Row(
-                            //             mainAxisAlignment:
-                            //                 MainAxisAlignment.center,
-                            //             children: [
-                            //               Icon(
-                            //                 Icons.add_rounded,
-                            //                 size: 14,
-                            //                 color: _canSubmit
-                            //                     ? Colors.white
-                            //                     : _T.slate400,
-                            //               ),
-                            //               const SizedBox(width: 5),
-                            //               Text(
-                            //                 'Add task',
-                            //                 style: TextStyle(
-                            //                   fontSize: 12.5,
-                            //                   fontWeight: FontWeight.w700,
-                            //                   color: _canSubmit
-                            //                       ? Colors.white
-                            //                       : _T.slate400,
-                            //                 ),
-                            //               ),
-                            //             ],
-                            //           ),
-                            //         ),
-                            //       ),
-                            //     ),
-                            //     const SizedBox(width: 7),
-                            //     // Dismiss
-                            //     GestureDetector(
-                            //       onTap: _dismiss,
-                            //       child: Container(
-                            //         width: 30,
-                            //         height: 30,
-                            //         decoration: BoxDecoration(
-                            //           border:
-                            //               Border.all(color: _T.slate200),
-                            //           borderRadius:
-                            //               BorderRadius.circular(_T.r),
-                            //         ),
-                            //         child: const Icon(Icons.close_rounded,
-                            //             size: 14, color: _T.slate400),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return FadeTransition(
+      opacity: _fadeIn,
+      child: SlideTransition(
+        position: _slideIn,
+        child: KeyboardListener(
+          focusNode: FocusNode(),
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.enter) _submit();
+              if (event.logicalKey == LogicalKeyboardKey.escape) _dismiss();
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: _T.white,
+              border: Border.all(
+                color: _T.blue.withOpacity(0.45),
+                width: 1.5,
               ),
+              borderRadius: BorderRadius.circular(_T.rLg),
+              boxShadow: [
+                BoxShadow(
+                  color: _T.blue.withOpacity(0.08),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Animated priority accent bar ──────────────────────
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: _accentForPriority(_selectedPriority),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(_T.rLg),
+                      bottomLeft: Radius.circular(_T.rLg),
+                    ),
+                  ),
+                ),
+                
+                // ── Card body ─────────────────────────────────────────
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                
+                        // ── Project picker ────────────────────────────
+                
+                        if (widget.selectedProjectId == null) ... [
+                          _ProjectChipRow(
+                            projects: projects,
+                            selectedId: _selectedProjectId,
+                            onChanged: (projectId) {
+                              setState(() {
+                                _selectedProjectId = projectId;
+                              });
+                            },
+                            disabled: _isLoading
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                
+                        // ── Priority picker ───────────────────────────
+                        _PriorityRadioRow(
+                          selected: _selectedPriority,
+                          onChanged: (p) =>
+                              setState(() => _selectedPriority = p),
+                          disabled: _isLoading
+                        ),
+                        const SizedBox(height: 10),
+    
+                        // ── Task name input ───────────────────────────
+                        TextField(
+                          enabled: !_isLoading,
+                          controller: _nameCtrl,
+                          focusNode: _nameFocus,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink,
+                            height: 1.4,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Task name…',
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: _T.slate300,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            errorText: showError ? 'Name required' : null,
+                            errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
+                            suffixIconConstraints: _isLoading? BoxConstraints.tight(Size(20, 20)) : null,
+                            suffixIcon: _isLoading? CircularProgressIndicator(strokeWidth: 2.5) : null
+                          ),
+                          onSubmitted: (_) => _submit(),
+                          textInputAction: TextInputAction.done,
+                        ),
+                        if (_isLoading) Text("Creating Task...", style: TextStyle(
+                          fontSize: 12,
+                          color: _T.blue,
+                          fontWeight: FontWeight.w500
+                        ))
+                
+                        // ── Actions ───────────────────────────────────
+                        // Row(
+                        //   children: [
+                        //     // Submit
+                        //     Expanded(
+                        //       child: GestureDetector(
+                        //         onTap: _submit,
+                        //         child: AnimatedContainer(
+                        //           duration: const Duration(milliseconds: 160),
+                        //           padding: const EdgeInsets.symmetric(
+                        //               vertical: 7),
+                        //           decoration: BoxDecoration(
+                        //             color: _canSubmit
+                        //                 ? _T.blue
+                        //                 : _T.slate200,
+                        //             borderRadius:
+                        //                 BorderRadius.circular(_T.r),
+                        //           ),
+                        //           child: Row(
+                        //             mainAxisAlignment:
+                        //                 MainAxisAlignment.center,
+                        //             children: [
+                        //               Icon(
+                        //                 Icons.add_rounded,
+                        //                 size: 14,
+                        //                 color: _canSubmit
+                        //                     ? Colors.white
+                        //                     : _T.slate400,
+                        //               ),
+                        //               const SizedBox(width: 5),
+                        //               Text(
+                        //                 'Add task',
+                        //                 style: TextStyle(
+                        //                   fontSize: 12.5,
+                        //                   fontWeight: FontWeight.w700,
+                        //                   color: _canSubmit
+                        //                       ? Colors.white
+                        //                       : _T.slate400,
+                        //                 ),
+                        //               ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     const SizedBox(width: 7),
+                        //     // Dismiss
+                        //     GestureDetector(
+                        //       onTap: _dismiss,
+                        //       child: Container(
+                        //         width: 30,
+                        //         height: 30,
+                        //         decoration: BoxDecoration(
+                        //           border:
+                        //               Border.all(color: _T.slate200),
+                        //           borderRadius:
+                        //               BorderRadius.circular(_T.r),
+                        //         ),
+                        //         child: const Icon(Icons.close_rounded,
+                        //             size: 14, color: _T.slate400),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -1509,11 +1517,13 @@ class _ProjectChipRow extends StatelessWidget {
   final List<Project> projects;
   final String? selectedId;
   final void Function(String) onChanged;
+  final bool disabled;
 
   const _ProjectChipRow({
     required this.projects,
     required this.selectedId,
     required this.onChanged,
+    required this.disabled
   });
 
   @override
@@ -1541,51 +1551,59 @@ class _ProjectChipRow extends StatelessWidget {
             children: projects.map((p) {
               final isActive = p.id == selectedId;
 
-              return GestureDetector(
-                onTap: () => onChanged(p.id),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? p.color.withOpacity(0.12)
-                        : _T.slate50,
-                    border: Border.all(
-                      color: isActive
-                          ? p.color.withOpacity(0.5)
-                          : _T.slate200,
-                      width: isActive ? 1.5 : 1,
+              return ColorFiltered(
+                colorFilter: disabled? ColorFilter.matrix([
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0,      0,      0,      1, 0,
+                ]) : ColorFilter.mode(Colors.transparent, BlendMode.color),
+                child: GestureDetector(
+                  onTap: disabled? null : () => onChanged(p.id),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min, // 👈 important
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        width: isActive ? 7 : 6,
-                        height: isActive ? 7 : 6,
-                        decoration: BoxDecoration(
-                          color: p.color,
-                          shape: BoxShape.circle,
-                        ),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? p.color.withOpacity(0.12)
+                          : _T.slate50,
+                      border: Border.all(
+                        color: isActive
+                            ? p.color.withOpacity(0.5)
+                            : _T.slate200,
+                        width: isActive ? 1.5 : 1,
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        p.name,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isActive
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color:
-                              isActive ? p.color : _T.slate500,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // 👈 important
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: isActive ? 7 : 6,
+                          height: isActive ? 7 : 6,
+                          decoration: BoxDecoration(
+                            color: p.color,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 5),
+                        Text(
+                          p.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isActive
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color:
+                                isActive ? p.color : _T.slate500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -1606,10 +1624,12 @@ class _ProjectChipRow extends StatelessWidget {
 class _PriorityRadioRow extends StatelessWidget {
   final TaskPriority selected;
   final void Function(TaskPriority) onChanged;
+  final bool disabled;
 
   const _PriorityRadioRow({
     required this.selected,
     required this.onChanged,
+    required this.disabled
   });
 
   static const _options = [
@@ -1617,6 +1637,93 @@ class _PriorityRadioRow extends StatelessWidget {
     (TaskPriority.high,   'High',    _T.amber,    _T.amber50,  Color(0xFFFCD34D), Icons.keyboard_arrow_up_rounded),
     (TaskPriority.urgent, 'Urgent',  _T.red,      _T.red50,    Color(0xFFFCA5A5), Icons.keyboard_double_arrow_up_rounded),
   ];
+
+  Widget _pill({
+    required TaskPriority priority,
+    required bool isActive,
+    required Color bgColor,
+    required Color borderColor,
+    required Color fgColor,
+    required IconData icon,
+    required String label
+  }) {
+
+    final widget = GestureDetector(
+      onTap: () => disabled? null : onChanged(priority),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(
+          vertical: 6,
+          horizontal: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isActive ? bgColor : _T.slate50,
+          border: Border.all(
+            color: isActive ? borderColor : _T.slate200,
+            width: isActive ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // 👈 critical
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 13,
+              height: 13,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive ? fgColor : Colors.transparent,
+                border: Border.all(
+                  color: isActive ? fgColor : _T.slate300,
+                  width: 1.5,
+                ),
+              ),
+              child: isActive
+                  ? Center(
+                      child: Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 5),
+            Icon(
+              icon,
+              size: 11,
+              color: isActive ? fgColor : _T.slate400,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isActive
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+                color: isActive ? fgColor : _T.slate500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return disabled? ColorFiltered(
+      colorFilter: const ColorFilter.matrix([
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0,      0,      0,      1, 0,
+      ]),
+      child: widget
+    ) : widget;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1642,71 +1749,7 @@ class _PriorityRadioRow extends StatelessWidget {
               final (priority, label, fgColor, bgColor, borderColor, icon) = opt;
               final isActive = selected == priority;
 
-              return GestureDetector(
-                onTap: () => onChanged(priority),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive ? bgColor : _T.slate50,
-                    border: Border.all(
-                      color: isActive ? borderColor : _T.slate200,
-                      width: isActive ? 1.5 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(_T.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min, // 👈 critical
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 13,
-                        height: 13,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isActive ? fgColor : Colors.transparent,
-                          border: Border.all(
-                            color: isActive ? fgColor : _T.slate300,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: isActive
-                            ? Center(
-                                child: Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 5),
-                      Icon(
-                        icon,
-                        size: 11,
-                        color: isActive ? fgColor : _T.slate400,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isActive
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: isActive ? fgColor : _T.slate500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              return _pill(priority: priority, isActive: isActive, bgColor: bgColor, borderColor: borderColor, fgColor: fgColor, icon: icon, label: label);
             }).toList(),
           ),
         ],
