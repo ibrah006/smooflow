@@ -279,7 +279,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                     onTaskSelected: _selectTask,
                                     onAddTask: _showTaskModal,
                                     addTaskFocusNode: _addTaskFocusNode,
-                                    isAddingTask: _isAddingTask
+                                    isAddingTask: _isAddingTask,
+                                    selectedProjectId: _selectedProjectId
                                   )
                                 : _TaskListView(
                                     tasks: _visibleTasks,
@@ -664,17 +665,17 @@ class _Topbar extends StatelessWidget {
           const SizedBox(width: 12),
 
           // View toggle
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(color: _T.slate100, borderRadius: BorderRadius.circular(_T.r)),
-            child: Row(
-              children: [
-                _ViewToggleBtn(icon: Icons.view_kanban_outlined, label: 'Board', isActive: viewMode == ViewMode.board, onTap: () => onViewModeChanged(ViewMode.board)),
-                _ViewToggleBtn(icon: Icons.list_alt_outlined,    label: 'List',  isActive: viewMode == ViewMode.list,  onTap: () => onViewModeChanged(ViewMode.list)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
+          // Container(
+          //   padding: const EdgeInsets.all(2),
+          //   decoration: BoxDecoration(color: _T.slate100, borderRadius: BorderRadius.circular(_T.r)),
+          //   child: Row(
+          //     children: [
+          //       _ViewToggleBtn(icon: Icons.view_kanban_outlined, label: 'Board', isActive: viewMode == ViewMode.board, onTap: () => onViewModeChanged(ViewMode.board)),
+          //       _ViewToggleBtn(icon: Icons.list_alt_outlined,    label: 'List',  isActive: viewMode == ViewMode.list,  onTap: () => onViewModeChanged(ViewMode.list)),
+          //     ],
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
 
           // Filters
           Row(
@@ -690,25 +691,25 @@ class _Topbar extends StatelessWidget {
           const Spacer(),
 
           // New task button
-          GestureDetector(
-            onTap: onNewTask,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: _T.blue,
-                borderRadius: BorderRadius.circular(_T.r),
-                boxShadow: [BoxShadow(color: _T.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.add, size: 14, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('New Task', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
+          // GestureDetector(
+          //   onTap: onNewTask,
+          //   child: Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          //     decoration: BoxDecoration(
+          //       color: _T.blue,
+          //       borderRadius: BorderRadius.circular(_T.r),
+          //       boxShadow: [BoxShadow(color: _T.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
+          //     ),
+          //     child: const Row(
+          //       children: [
+          //         Icon(Icons.add, size: 14, color: Colors.white),
+          //         SizedBox(width: 6),
+          //         Text('New Task', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+          //       ],
+          //     ),
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
 
           // User chip
           Container(
@@ -796,8 +797,9 @@ class _BoardView extends StatelessWidget {
   final VoidCallback onAddTask;
   final FocusNode addTaskFocusNode;
   bool isAddingTask;
+  final String? selectedProjectId;
 
-  _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask, required this.addTaskFocusNode, required this.isAddingTask});
+  _BoardView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.onAddTask, required this.addTaskFocusNode, required this.isAddingTask, required this.selectedProjectId});
 
   @override
   Widget build(BuildContext context) {
@@ -816,7 +818,8 @@ class _BoardView extends StatelessWidget {
             onTaskSelected: onTaskSelected,
             showAddTaskBtn: si.label == "Initialized",
             addTaskFocusNode: kStages.indexOf(si) == 0? addTaskFocusNode : null,
-            isAddingTask: kStages.indexOf(si) == 0? isAddingTask : null
+            isAddingTask: kStages.indexOf(si) == 0? isAddingTask : null,
+            selectedProjectId: selectedProjectId
             // Only allow adding from Initialized lane
             // onAddTask: si.stage == TaskStatus.pending ? onAddTask : null,
           );
@@ -836,8 +839,9 @@ class _KanbanLane extends ConsumerStatefulWidget {
   // final VoidCallback? onAddTask;
   final FocusNode? addTaskFocusNode;
   bool? isAddingTask;
+  String? selectedProjectId;
 
-  _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.showAddTaskBtn, required this.addTaskFocusNode, required this.isAddingTask});
+  _KanbanLane({required this.stageInfo, required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected, required this.showAddTaskBtn, required this.addTaskFocusNode, required this.isAddingTask, required this.selectedProjectId});
 
   @override
   ConsumerState<_KanbanLane> createState() => _KanbanLaneState();
@@ -926,6 +930,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                         project: proj,
                         isSelected: widget.selectedTaskId == t.id,
                         onTap: () => widget.onTaskSelected(t.id),
+                        selectedProjectId: widget.selectedProjectId
                       ),
                     );
                   }),
@@ -942,6 +947,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                 onCreated: onCreated,
                 onDismiss: onDismiss,
                 projects: ref.watch(projectNotifierProvider),
+                selectedProjectId: widget.selectedProjectId
               ),
             )
             else Padding(
@@ -1020,12 +1026,15 @@ class _TaskCard extends ConsumerStatefulWidget {
   final void Function(Task)? onCreated;
   final VoidCallback? onDismiss;
 
+  final String? selectedProjectId;
+
   // Normal card
   const _TaskCard({
     required Task task,
     required Project project,
     required this.isSelected,
     required this.onTap,
+    required this.selectedProjectId
   })  : task = task,
         project = project,
         isAddTask = false,
@@ -1038,6 +1047,7 @@ class _TaskCard extends ConsumerStatefulWidget {
     required List<Project> projects,
     required void Function(Task) onCreated,
     required VoidCallback onDismiss,
+    required this.selectedProjectId
   })  : task = null,
         project = null,
         isSelected = false,
@@ -1056,7 +1066,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
   // ── creation-card state ───────────────────────────────────────────────────
   final _nameCtrl    = TextEditingController();
   final _nameFocus   = FocusNode();
-  late String        _selectedProjectId;
+  late String?        _selectedProjectId;
   TaskPriority       _selectedPriority = TaskPriority.normal;
   bool               _showProjectPicker = false;
   bool               _nameTouched = false;
@@ -1080,7 +1090,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
     super.initState();
     if (widget.isAddTask) {
       _selectedProjectId =
-          widget.addProjects.isNotEmpty ? widget.addProjects.first.id : '';
+          widget.selectedProjectId?? (widget.addProjects.isNotEmpty? widget.addProjects.first.id : null);
       // Auto-focus the name field after the card animates in
       _ac.forward().then((_) {
         if (mounted) _nameFocus.requestFocus();
@@ -1335,17 +1345,18 @@ class _TaskCardState extends ConsumerState<_TaskCard>
                 
                         // ── Project picker ────────────────────────────
                 
-                        _ProjectChipRow(
-                          projects: projects,
-                          selectedId: _selectedProjectId,
-                          onChanged: (projectId) {
-                            setState(() {
-                              _selectedProjectId = projectId;
-                            });
-                          },
-                        ),
-                
-                        const SizedBox(height: 18),
+                        if (widget.selectedProjectId == null) ... [
+                          _ProjectChipRow(
+                            projects: projects,
+                            selectedId: _selectedProjectId,
+                            onChanged: (projectId) {
+                              setState(() {
+                                _selectedProjectId = projectId;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                        ],
                 
                         // ── Priority picker ───────────────────────────
                         _PriorityRadioRow(
@@ -1465,7 +1476,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectChipRow extends StatelessWidget {
   final List<Project> projects;
-  final String selectedId;
+  final String? selectedId;
   final void Function(String) onChanged;
 
   const _ProjectChipRow({
