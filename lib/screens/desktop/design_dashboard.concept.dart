@@ -1161,7 +1161,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
 
       await ref.read(createProjectTaskProvider(newTask));
     } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to create task")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
     }
 
     setState(() {
