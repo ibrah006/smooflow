@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_popup/flutter_popup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/desktop/advance_stage_popup.dart';
+import 'package:smooflow/components/desktop/project_empty_state.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
@@ -130,6 +131,14 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   bool _isAddingTask = false;
 
   final _searchCtrl = TextEditingController();
+
+  String? get _selectedProjectName {
+    try {
+      return _selectedProjectId != null? ref.watch(projectNotifierProvider).firstWhere((p)=> p.id == _selectedProjectId).name : null;
+    } catch(e) {
+      return "Loading Project";
+    }
+  }
 
   Task? get _selectedTask => _selectedTaskId == null
       ? null
@@ -272,16 +281,21 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                         children: [
                           Expanded(
                             child: _viewMode == ViewMode.board
-                                ? _BoardView(
-                                    tasks: _visibleTasks,
-                                    projects: _projects,
-                                    selectedTaskId: _selectedTaskId,
-                                    onTaskSelected: _selectTask,
-                                    onAddTask: _showTaskModal,
-                                    addTaskFocusNode: _addTaskFocusNode,
-                                    isAddingTask: _isAddingTask,
-                                    selectedProjectId: _selectedProjectId
-                                  )
+                                ?  _visibleTasks.isEmpty
+                                  ? ProjectEmptyState(
+                                      onCreateTask: () {},
+                                      projectName: _selectedProjectName,
+                                    )
+                                    : _BoardView(
+                                      tasks: _visibleTasks,
+                                      projects: _projects,
+                                      selectedTaskId: _selectedTaskId,
+                                      onTaskSelected: _selectTask,
+                                      onAddTask: _showTaskModal,
+                                      addTaskFocusNode: _addTaskFocusNode,
+                                      isAddingTask: _isAddingTask,
+                                      selectedProjectId: _selectedProjectId
+                                    )
                                 : _TaskListView(
                                     tasks: _visibleTasks,
                                     projects: _projects,
@@ -803,6 +817,7 @@ class _BoardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Container(
       color: _T.slate50,
       child: ListView(
@@ -1119,25 +1134,22 @@ class _TaskCardState extends ConsumerState<_TaskCard>
 
   bool get _canSubmit => _nameCtrl.text.trim().isNotEmpty && _currentProject != null;
 
-  void _submit() {
+  void _submit() async {
     if (!_canSubmit) {
       setState(() => _nameTouched = true);
       _nameFocus.requestFocus();
-
-
-      return;
     }
-    // final task = Task(
-    //   id: DateTime.now().millisecondsSinceEpoch,
-    //   name: _nameCtrl.text.trim(),
-    //   description: null,
-    //   projectId: _selectedProjectId,
-    //   assignees: const [],
-    //   dueDate: null,
-    //   priority: _selectedPriority,
-    //   status: TaskStatus.pending,
-    // );
-    // widget.onCreated?.call(task);
+    
+    final newTask = Task.create(
+      name: _nameCtrl.text,
+      description: "",
+      dueDate: null,
+      assignees: [],
+      projectId: _selectedProjectId!,
+      priority: _selectedPriority
+    );
+
+    await ref.read(createProjectTaskProvider(newTask));
   }
 
   void _dismiss() => widget.onDismiss?.call();
