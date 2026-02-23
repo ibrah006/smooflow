@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/welcome_to_organization_dialog.dart';
 import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/app_routes.dart';
@@ -47,7 +48,7 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                   spacing: 10,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(width: 42, "assets/icons/app_icon.png"),
+                    Logo(),
                     Text(
                       "Smooflow",
                       style: textTheme.headlineMedium!.copyWith(

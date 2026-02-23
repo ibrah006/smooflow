@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/enums/login_status.dart';
@@ -61,11 +62,21 @@ class _CreateOrganizationScreenState
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     spacing: 10,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(width: 42, "assets/icons/app_icon.png"),
+                      Logo(),
                       Text(
                         "Smooflow",
                         style: textTheme.headlineMedium!.copyWith(

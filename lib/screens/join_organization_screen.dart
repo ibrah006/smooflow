@@ -1,8 +1,8 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/constants.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';import 'package:smooflow/components/login_background.dart';
+import 'package:smooflow/components/logo.dart';import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/invitation.dart';
 import 'package:smooflow/notifiers/invitation_notifier.dart';
 import 'package:smooflow/providers/invitation_provider.dart';
@@ -48,10 +48,13 @@ class _JoinOrganizationScreenState
 
     return Scaffold(
       backgroundColor: Color(0xFFf7f9fb),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: Stack(
+        children: [
+          Positioned.fill(child: LoginBackground()),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
             Container(
               margin: EdgeInsets.symmetric(horizontal: paddingValue),
               padding: EdgeInsets.all(paddingValue),
@@ -76,7 +79,7 @@ class _JoinOrganizationScreenState
                       spacing: 10,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(width: 42, "assets/icons/app_icon.png"),
+                        Logo(),
                         Text(
                           "Smooflow",
                           style: textTheme.headlineMedium!.copyWith(
@@ -262,8 +265,8 @@ class _JoinOrganizationScreenState
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

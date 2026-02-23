@@ -12,6 +12,7 @@ import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
+import 'package:smooflow/screens/join_organization_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
 import 'package:smooflow/screens/print_job_details.concept.dart';
@@ -175,7 +176,7 @@ class AppRoutes {
         screen = CreateOrganizationScreen();
         break;
       case joinOrganization:
-        screen = CreateOrganizationScreen();
+        screen = JoinOrganizationScreen();
         break;
       case createJoinOrgHelp:
         screen = const CreateJoinOrganizationHelpScreen();
