@@ -11,6 +11,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/micro_widgets.dart';
 import 'package:smooflow/screens/desktop/components/priority_chip_row.dart';
@@ -178,7 +179,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
       _isLoading = true;
     });
     
-    try {
+    // try {
       final newTask = Task.create(
         name: _nameCtrl.text,
         description: "",
@@ -188,10 +189,13 @@ class _TaskCardState extends ConsumerState<TaskCard>
         priority: _selectedPriority
       );
 
-      await ref.read(createProjectTaskProvider(newTask));
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
-    }
+      // await ref.read(createProjectTaskProvider(newTask));
+      await ref.watch(projectNotifierProvider.notifier).createTask(task: newTask);
+
+      ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
+    // } catch(e) {
+    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
+    // }
 
     setState(() {
       _isLoading = false;
