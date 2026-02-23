@@ -209,32 +209,32 @@ class _ProjectEmptyStateState extends State<ProjectEmptyState>
                       const SizedBox(height: 48),
                       
                       // Divider with text
-                      Row(
-                        children: [
-                          Expanded(child: Container(height: 1, color: _T.slate200)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'Looking for something else?',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _T.slate400,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          Expanded(child: Container(height: 1, color: _T.slate200)),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
+                      // Row(
+                      //   children: [
+                      //     Expanded(child: Container(height: 1, color: _T.slate200)),
+                      //     Padding(
+                      //       padding: const EdgeInsets.symmetric(horizontal: 16),
+                      //       child: Text(
+                      //         'Looking for something else?',
+                      //         style: TextStyle(
+                      //           fontSize: 12,
+                      //           fontWeight: FontWeight.w600,
+                      //           color: _T.slate400,
+                      //           letterSpacing: 0.5,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     Expanded(child: Container(height: 1, color: _T.slate200)),
+                      //   ],
+                      // ),
+                      // const SizedBox(height: 24),
                       
-                      // Project switcher cards
-                      _ProjectSwitcher(
-                        projects: widget.otherProjects!,
-                        selectedProjectId: widget.selectedProjectId,
-                        onProjectSelected: widget.onProjectSelected!,
-                      ),
+                      // // Project switcher cards
+                      // _ProjectSwitcher(
+                      //   projects: widget.otherProjects!,
+                      //   selectedProjectId: widget.selectedProjectId,
+                      //   onProjectSelected: widget.onProjectSelected!,
+                      // ),
                     ],
                   ],
                 ),
