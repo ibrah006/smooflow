@@ -1,5 +1,7 @@
 // lib/routes/app_routes.dart
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
@@ -7,11 +9,13 @@ import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
+import 'package:smooflow/screens/desktop_material_list_screen.dart';
 import 'package:smooflow/screens/join_organization_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
@@ -78,7 +82,7 @@ class AppRoutes {
 
   static const flash = '/';
   static const login = '/login';
-  static const home = '/home';
+  // static const home = '/home';
 
   static const createOrganization = '/create-organization';
   static const joinOrganization = '/join-organization';
@@ -151,13 +155,36 @@ class AppRoutes {
   // Admin
   static const adminDesktopDashboardScreen = '/desktop/admin-dashboard';
 
+  // Home
+  static const home = "/home";
+
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
-    final routeName = settings.name;
+    String? routeName = settings.name;
     final args = settings.arguments;
 
     // Route builder helper
     Widget? screen;
+
+    try {
+      if (routeName == home) {
+        final role = LoginService.currentUser!.role.toLowerCase();
+        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          if (role == 'admin') {
+            routeName = AppRoutes.adminDesktopDashboardScreen;
+          } else if (role == 'production' || role == 'production-head') {
+            routeName = AppRoutes.desktopMaterials;
+          } else if (role == "design") {
+            routeName = AppRoutes.designDashboard;
+          }
+        } else {
+          // route = AppRoutes.admin;
+          routeName = AppRoutes.productionDashboard;
+        }
+      }
+    } catch(e) {
+      routeName = AppRoutes.login;
+    }
 
     switch (routeName) {
       case flash:
@@ -304,9 +331,6 @@ class AppRoutes {
         // TODO
         // screen = const PrinterScreen.add();
         break;
-      case home:
-        screen = HomeScreen();
-        break;
       case projectReport:
         screen = const ProjectReportsScreen();
         break;
@@ -371,6 +395,8 @@ class AppRoutes {
         break;
       case adminDesktopDashboardScreen:
         screen = AdminDesktopDashboardScreen();
+      case desktopMaterials:
+        screen = DesktopMaterialListScreen();
     }
 
     // If screen was determined, create the route

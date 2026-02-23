@@ -56,20 +56,28 @@ class _FlashScreenState extends State<FlashScreen> {
         return;
       }
 
-      late final String route;
-      if (isLoggedIn) {
-        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-          // route = AppRoutes.designDashboard;
-          route = AppRoutes.adminDesktopDashboardScreen;
-        } else {
-          // route = AppRoutes.admin;
-          route = AppRoutes.productionDashboard;
-        }
-      } else {
-        route = AppRoutes.login;
-      }
+      // late final String route;
+      // if (isLoggedIn) {
+      //   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      //     final role = LoginService.currentUser!.role.toLowerCase();
+      //     if (role == 'admin') {
+      //       route = AppRoutes.adminDesktopDashboardScreen;
+      //     } else if (role == 'production' || role == 'production-head') {
+      //       route = AppRoutes.desktopMaterials;
+      //     } else if (role == "design") {
+      //       route = AppRoutes.designDashboard;
+      //     }
+      //   } else {
+      //     // route = AppRoutes.admin;
+      //     route = AppRoutes.productionDashboard;
+      //   }
+      // } else {
+      //   route = AppRoutes.login;
+      // }
 
-      AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
+      // AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
+
+      AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
     });
   }
 
