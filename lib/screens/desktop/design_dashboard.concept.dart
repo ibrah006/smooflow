@@ -15,12 +15,14 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
+import 'package:smooflow/screens/desktop/components/modal_components.dart';
+import 'package:smooflow/screens/desktop/components/modal_shell.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
+import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
@@ -335,7 +337,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
     showDialog(
       context: context,
-      builder: (_) => _TaskModal(
+      builder: (_) => TaskModal(
         projects: _projects,
         preselectedProjectId: _selectedProjectId,
         nextId: nextId,
@@ -1299,7 +1301,7 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
   }
 
   @override
-  Widget build(BuildContext context) => _ModalShell(
+  Widget build(BuildContext context) => ModalShell(
     icon: Icons.folder_outlined,
     iconColor: _T.blue,
     title: 'New Project',
@@ -1308,17 +1310,17 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
     onSave: _saving ? null : _submit,
     saveLabel: _saving ? 'Creating…' : 'Create Project',
     child: Column(children: [
-      _ModalField(
+      ModalField(
         label: 'Project Name', required: true,
-        child: _ModalInput(ctrl: _name, hint: 'e.g. Spring Campaign 2026'),
+        child: ModalInput(ctrl: _name, hint: 'e.g. Spring Campaign 2026'),
       ),
       const SizedBox(height: 16),
-      _ModalField(
+      ModalField(
         label: 'Customer',
         required: true,
         child: _clients.isEmpty
             ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
-            : _ModalDropdown<Company?>(
+            : ModalDropdown<Company?>(
                 value: _client,
                 items: _clients.map((c) => DropdownMenuItem(
                   value: c,
@@ -1328,13 +1330,13 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
               ),
       ),
       const SizedBox(height: 16),
-      _ModalField(
+      ModalField(
         label: 'Description',
-        child: _ModalTextarea(ctrl: _desc, hint: 'What is this project about?'),
+        child: ModalTextarea(ctrl: _desc, hint: 'What is this project about?'),
       ),
       const SizedBox(height: 16),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _ModalField(
+        Expanded(child: ModalField(
           label: 'Due Date',
           child: GestureDetector(
             onTap: () async {
@@ -1358,7 +1360,7 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
           ),
         )),
         const SizedBox(width: 12),
-        Expanded(child: _ModalField(
+        Expanded(child: ModalField(
           label: 'Colour',
           child: Wrap(
             spacing: 8, runSpacing: 8,
@@ -1374,413 +1376,5 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
         )),
       ]),
     ]),
-  );
-}
-
-// ── Task Modal ────────────────────────────────────────────────────────────────
-class _TaskModal extends ConsumerStatefulWidget {
-  final List<Project> projects;
-  final String? preselectedProjectId;
-  final int nextId;
-
-  const _TaskModal({required this.projects, this.preselectedProjectId, required this.nextId});
-
-  @override
-  ConsumerState<_TaskModal> createState() => _TaskModalState();
-}
-
-class _TaskModalState extends ConsumerState<_TaskModal> {
-  final _name = TextEditingController();
-  final _desc = TextEditingController();
-  late String? _projectId;
-  String? _assigneeId;
-  DateTime? _due;
-  TaskPriority _priority = TaskPriority.normal;
-  bool _saving = false;
-
-  bool _autoProgress = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _projectId = widget.preselectedProjectId;
-  }
-
-  @override
-  void dispose() { _name.dispose(); _desc.dispose(); super.dispose(); }
-
-  List<Member> get _members => ref.watch(memberNotifierProvider).members;
-
-  Future<void> _submit() async {
-    // if (_name.text.trim().isEmpty || _projectId == null) return;
-    // setState(() => _saving = true);
-
-    // final assignees = _assigneeId != null ? [_assigneeId!] : <String>[];
-
-    // try {
-    //   final newTask = Task.create(
-    //     name: _name.text.trim(),
-    //     description: _desc.text.trim(),
-    //     dueDate: null,
-    //     assignees: assignees,
-    //     projectId: _projectId!,
-    //   );
-
-    //   await ref.read(createProjectTaskProvider(newTask));
-
-    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
-    // } catch(e) {
-    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create Task")));
-    // }
-    // setState(() => _saving = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    
-    return _ModalShell(
-      icon: Icons.assignment_outlined,
-      iconColor: _T.blue,
-      title: 'New Task',
-      subtitle: 'Initializes in the Initialized stage',
-      onClose: () => Navigator.pop(context),
-      onSave: _saving ? null : _submit,
-      saveLabel: _saving ? 'Creating…' : 'Create Task',
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _ModalField(
-          label: 'Task Name', required: true,
-          child: _ModalInput(ctrl: _name, hint: 'e.g. Hero banner — Spring campaign'),
-        ),
-        const SizedBox(height: 16),
-        _ModalField(
-          label: 'Description',
-          child: _ModalTextarea(ctrl: _desc, hint: 'Deliverable details, dimensions, notes…'),
-        ),
-        const SizedBox(height: 16),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: _ModalField(
-            label: 'Project', required: true,
-            child: _ModalDropdown<String?>(
-              value: _projectId,
-              items: widget.projects.map((p) => DropdownMenuItem(
-                value: p.id,
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Container(width: 8, height: 8, decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
-                    const SizedBox(width: 8),
-                    Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
-                  ]
-                ),
-              )).toList(),
-              onChanged: (v) => setState(() => _projectId = v!),
-            ),
-          )),
-          const SizedBox(width: 12),
-          Expanded(child: _ModalField(
-            label: 'Assign To',
-            child: _members.isEmpty
-                ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
-                : _ModalDropdown<String?>(
-                    value: _assigneeId,
-                    items: _members.map((m) => DropdownMenuItem(
-                      value: m.id,
-                      child: Row(children: [
-                        AvatarWidget(initials: m.initials, color: m.color, size: 20),
-                        const SizedBox(width: 8),
-                        Text(m.name, style: const TextStyle(fontSize: 13)),
-                      ]),
-                    )).toList(),
-                    onChanged: (v) => setState(() => _assigneeId = v),
-                  ),
-          )),
-        ]),
-        const SizedBox(height: 16),
-        // _ModalField(
-        //   label: "Workflow Settings",
-        //   child: Container(
-        //     padding: const EdgeInsets.all(16),
-        //     decoration: BoxDecoration(
-        //       color: _autoProgress
-        //           ? _T.blue.withOpacity(0.05)
-        //           : const Color(0xFFF8FAFC),
-        //       borderRadius: BorderRadius.circular(12),
-        //       border: Border.all(
-        //         color: _autoProgress
-        //             ? _T.blue.withOpacity(0.3)
-        //             : const Color(0xFFE2E8F0),
-        //         width: _autoProgress ? 2 : 1,
-        //       ),
-        //     ),
-        //     child: Row(
-        //       children: [
-        //         Container(
-        //           padding: const EdgeInsets.all(8),
-        //           decoration: BoxDecoration(
-        //             color: _autoProgress
-        //                 ? _T.blue.withOpacity(0.15)
-        //                 : Colors.grey.shade200,
-        //             borderRadius: BorderRadius.circular(8),
-        //           ),
-        //           child: Icon(
-        //             Icons.auto_awesome_rounded,
-        //             size: 20,
-        //             color: _autoProgress
-        //                 ? _T.blue
-        //                 : Colors.grey.shade500,
-        //           ),
-        //         ),
-        //         const SizedBox(width: 12),
-        //         Expanded(
-        //           child: Column(
-        //             crossAxisAlignment: CrossAxisAlignment.start,
-        //             children: [
-        //               const Text(
-        //                 'Auto-progress',
-        //                 style: TextStyle(
-        //                   fontSize: 14,
-        //                   fontWeight: FontWeight.w600,
-        //                   color: Color(0xFF0F172A),
-        //                 ),
-        //               ),
-        //               const SizedBox(height: 2),
-        //               Text(
-        //                 'Move to next stage automatically',
-        //                 style: TextStyle(
-        //                   fontSize: 12,
-        //                   color: Colors.grey.shade600,
-        //                 ),
-        //               ),
-        //             ],
-        //           ),
-        //         ),
-        //         Switch(
-        //           value: _autoProgress,
-        //           onChanged: (value) {
-        //             setState(() {
-        //               _autoProgress = value;
-        //             });
-        //           },
-        //           activeColor: _T.blue,
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
-        // const SizedBox(height: 16),
-        // Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        //   Expanded(child: _ModalField(
-        //     label: 'Due Date',
-        //     child: GestureDetector(
-        //       onTap: () async {
-        //         final d = await showDatePicker(
-        //           context: context,
-        //           initialDate: DateTime.now().add(const Duration(days: 7)),
-        //           firstDate: DateTime.now(), lastDate: DateTime(2028),
-        //           builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _T.blue)), child: child!),
-        //         );
-        //         if (d != null) setState(() => _due = d);
-        //       },
-        //       child: Container(
-        //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        //         decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-        //         child: Row(children: [
-        //           const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
-        //           const SizedBox(width: 8),
-        //           Text(_due != null ? fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
-        //         ]),
-        //       ),
-        //     ),
-        //   )),
-        //   const SizedBox(width: 12),
-        //   Expanded(child: _ModalField(
-        //     label: 'Priority',
-        //     child: _ModalDropdown<TaskPriority>(
-        //       value: _priority,
-        //       items: TaskPriority.values.map((p) => DropdownMenuItem(
-        //         value: p,
-        //         child: Text(_priorityLabel(p), style: const TextStyle(fontSize: 13)),
-        //       )).toList(),
-        //       onChanged: (v) => setState(() => _priority = v!),
-        //     ),
-        //   )),
-        // ]),
-      ]),
-    );
-  }
-}
-
-String _priorityLabel(TaskPriority p) => switch (p) {
-  TaskPriority.normal => 'Normal',
-  TaskPriority.high   => 'High',
-  TaskPriority.urgent => 'Urgent',
-};
-
-// ── Modal Shell ───────────────────────────────────────────────────────────────
-class _ModalShell extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title, subtitle, saveLabel;
-  final VoidCallback onClose;
-  final VoidCallback? onSave;   // nullable so caller can disable during async
-  final Widget child;
-
-  const _ModalShell({
-    required this.icon, required this.iconColor,
-    required this.title, required this.subtitle, required this.saveLabel,
-    required this.onClose, required this.onSave, required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: _T.white,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rXl)),
-    elevation: 24,
-    child: SizedBox(
-      width: 500,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 38, height: 38,
-                decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, size: 19, color: iconColor),
-              ),
-              const SizedBox(width: 13),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w800, color: _T.ink, letterSpacing: -0.4)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
-              ])),
-              GestureDetector(
-                onTap: onClose,
-                child: Container(
-                  width: 28, height: 28,
-                  decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                  child: const Icon(Icons.close, size: 13, color: _T.slate400),
-                ),
-              ),
-            ]),
-          ),
-          Padding(padding: const EdgeInsets.fromLTRB(22, 18, 22, 0), child: child),
-          const SizedBox(height: 14),
-          Container(
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: _T.slate200))),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              GestureDetector(
-                onTap: onClose,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.slate500)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onSave,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: onSave != null ? _T.blue : _T.slate300,
-                    borderRadius: BorderRadius.circular(_T.r),
-                  ),
-                  child: Text(saveLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                ),
-              ),
-            ]),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _ModalField extends StatelessWidget {
-  final String label;
-  final bool required;
-  final Widget child;
-  const _ModalField({required this.label, required this.child, this.required = false});
-
-  @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Row(children: [
-      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
-      if (required) const Text(' *', style: TextStyle(color: _T.red, fontSize: 12)),
-    ]),
-    const SizedBox(height: 6),
-    child,
-  ]);
-}
-
-class _ModalInput extends StatelessWidget {
-  final TextEditingController ctrl;
-  final String hint;
-  const _ModalInput({required this.ctrl, required this.hint});
-
-  @override
-  Widget build(BuildContext context) => TextField(
-    controller: ctrl,
-    style: const TextStyle(fontSize: 13, color: _T.ink),
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: _T.slate400),
-      filled: true, fillColor: _T.slate50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.blue, width: 2)),
-    ),
-  );
-}
-
-class _ModalTextarea extends StatelessWidget {
-  final TextEditingController ctrl;
-  final String hint;
-  const _ModalTextarea({required this.ctrl, required this.hint});
-
-  @override
-  Widget build(BuildContext context) => TextField(
-    controller: ctrl,
-    maxLines: 3,
-    style: const TextStyle(fontSize: 13, color: _T.ink),
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: _T.slate400),
-      filled: true, fillColor: _T.slate50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.blue, width: 2)),
-    ),
-  );
-}
-
-class _ModalDropdown<T> extends StatelessWidget {
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-  const _ModalDropdown({required this.value, required this.items, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) => DropdownButtonFormField<T>(
-    value: value,
-    items: items,
-    onChanged: onChanged,
-    style: const TextStyle(fontSize: 13, color: _T.ink),
-    decoration: InputDecoration(
-      filled: true, fillColor: _T.slate50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.slate200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_T.r), borderSide: const BorderSide(color: _T.blue, width: 2)),
-    ),
-    dropdownColor: Colors.white,
-    borderRadius: BorderRadius.circular(_T.r),
-    icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _T.slate400),
   );
 }

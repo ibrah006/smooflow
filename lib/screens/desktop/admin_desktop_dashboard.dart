@@ -18,7 +18,9 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
+import 'package:smooflow/screens/desktop/components/task_modal.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
@@ -106,6 +108,9 @@ class _AdminDesktopDashboardScreenState
 
   String _searchQuery = '';
 
+  final FocusNode _addTaskFocusNode = FocusNode();
+  bool _isAddingTask = false;
+
   void _selectTask(int id) => setState(() => _selectedTaskId = id);
   void _closeDetail()      => setState(() => _selectedTaskId = null);
 
@@ -160,50 +165,85 @@ class _AdminDesktopDashboardScreenState
 
     print("task ln: ${_visibleTasks.length}");
 
-    return Scaffold(
-      backgroundColor: _T.slate50,
-      body: Focus(
-        autofocus: true,
-        onKeyEvent: (_, event) => KeyEventResult.ignored,
-        child: Row(
-          children: [
-            _AdminSidebar(
-              currentView: _view,
-              selectedProjectId: _selectedProjectId,
-              projects: _projects,
-              tasks: _pipelineTasks,
-              members: _members,
-              onViewChanged: (v) => setState(() => _view = v),
-              onProjectSelected: (id) => setState(() {
-                _selectedProjectId = id;
-                _view = _AdminView.board;
-              }),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  _AdminTopbar(currentView: _view),
-                  Expanded(
-                    child: _view == _AdminView.overview
-                        ? _AdminAnalyticsView(
-                            tasks: _pipelineTasks,
-                            projects: _projects,
-                            members: _members,
-                          )
-                        : _view == _AdminView.board? Center(child: Text("Implemnt board here")) : TaskListView(
-                                    tasks: _visibleTasks,
-                                    projects: _projects,
-                                    selectedTaskId: _selectedTaskId,
-                                    onTaskSelected: _selectTask,
-                                  ),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: () {
+        // unfocus from add new task 
+        print("unfocus now from add new task");
+        _addTaskFocusNode.unfocus();
+
+        setState(() {
+          _isAddingTask = false;          
+        });
+      },
+      child: Scaffold(
+        backgroundColor: _T.slate50,
+        body: Focus(
+          autofocus: true,
+          onKeyEvent: (_, event) => KeyEventResult.ignored,
+          child: Row(
+            children: [
+              _AdminSidebar(
+                currentView: _view,
+                selectedProjectId: _selectedProjectId,
+                projects: _projects,
+                tasks: _pipelineTasks,
+                members: _members,
+                onViewChanged: (v) => setState(() => _view = v),
+                onProjectSelected: (id) => setState(() {
+                  _selectedProjectId = id;
+                  _view = _AdminView.board;
+                }),
               ),
-            ),
-          ],
+              Expanded(
+                child: Column(
+                  children: [
+                    _AdminTopbar(currentView: _view),
+                    Expanded(
+                      child: _view == _AdminView.overview
+                          ? _AdminAnalyticsView(
+                              tasks: _pipelineTasks,
+                              projects: _projects,
+                              members: _members,
+                            )
+                          : _view == _AdminView.board? BoardView(
+                                        tasks: _visibleTasks,
+                                        projects: _projects,
+                                        selectedTaskId: _selectedTaskId,
+                                        onTaskSelected: _selectTask,
+                                        onAddTask: _showTaskModal,
+                                        addTaskFocusNode: _addTaskFocusNode,
+                                        isAddingTask: _isAddingTask,
+                                        selectedProjectId: _selectedProjectId
+                                      ) : TaskListView(
+                                      tasks: _visibleTasks,
+                                      projects: _projects,
+                                      selectedTaskId: _selectedTaskId,
+                                      onTaskSelected: _selectTask,
+                                    ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _showTaskModal() async {
+    // Determine next id from current task list
+    final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
+    showDialog(
+      context: context,
+      builder: (_) => TaskModal(
+        projects: _projects,
+        preselectedProjectId: _selectedProjectId,
+        nextId: nextId,
+      ),
+    );
+
+    setState(() {});
   }
 }
 
