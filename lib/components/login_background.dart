@@ -377,7 +377,7 @@ class _PipelineColumns extends StatelessWidget {
     const n = 5;
     final totalW = n * _kColW + (n - 1) * _kColGap;
     // Nudge columns left so right side stays clear for KPI chips
-    final startX = (w - totalW) / 2 - w * 0.06;
+    final startX = 20;
     final startY = h * 0.07;
 
     return Stack(
@@ -962,7 +962,7 @@ class _BrandRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'Design workflow management',
+                'Streamlining Large-format Printing',
                 style: const TextStyle(
                   fontSize: 9.5,
                   color: _P.s400,
