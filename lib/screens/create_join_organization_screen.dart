@@ -117,12 +117,13 @@ class CreateJoinOrganizationScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.joinOrganization,
-                      );
-                    },
+                    onPressed:  null,
+                    // onPressed:  () {
+                    //   Navigator.pushNamed(
+                    //     context,
+                    //     AppRoutes.joinOrganization,
+                    //   );
+                    // },
                     style: OutlinedButton.styleFrom(
                       iconSize: 28,
                       foregroundColor: Colors.black,

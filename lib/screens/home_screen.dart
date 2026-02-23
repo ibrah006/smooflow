@@ -35,7 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
         Navigator.pop(context);
         Navigator.pushNamed(
           context,
-          AppRoutes.desktopMaterials,
+          AppRoutes.designDashboard,
         );
       }
 

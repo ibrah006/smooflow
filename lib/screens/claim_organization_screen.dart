@@ -77,16 +77,16 @@ class _ClaimOrganizationScreenState
               const SizedBox(height: 14),
               Text.rich(
                 TextSpan(
-                  text: 'We noticed your email domain ',
+                  text: 'We noticed your domain ',
                   style: TextStyle(fontSize: 16),
                   children: <TextSpan>[
                     TextSpan(
-                      text: '@${widget.privateDomain}',
+                      text: widget.privateDomain,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
                       text:
-                          " hasn't been registered yet. If you're the owner or authorized representative, you can claim it to automatically onboard your team members when they sign up using the same domain.",
+                          " hasn't been registered on the platform yet. If you're the owner or authorized representative, you can claim it to automatically onboard your team members when they sign up using the same domain.",
                     ),
                   ],
                 ),
@@ -165,7 +165,16 @@ class _ClaimOrganizationScreenState
                             context,
                           ).showSnackBar(SnackBar(content: Text(message)));
 
-                          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+                          // AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+                          late final route;
+                          if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+                            // route = AppRoutes.designDashboard;
+                            route = AppRoutes.adminDesktopDashboardScreen;
+                          } else {
+                            // route = AppRoutes.admin;
+                            route = AppRoutes.productionDashboard;
+                          }
+                          AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
                           // } catch (e) {
                           //   Navigator.pop(context);
 
@@ -294,7 +303,16 @@ class _ClaimOrganizationScreenState
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+                    // AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+                    late final route;
+                    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+                      // route = AppRoutes.designDashboard;
+                      route = AppRoutes.adminDesktopDashboardScreen;
+                    } else {
+                      // route = AppRoutes.admin;
+                      route = AppRoutes.productionDashboard;
+                    }
+                    AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey.shade200),

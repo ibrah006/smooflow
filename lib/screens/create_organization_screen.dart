@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -204,8 +206,17 @@ class _CreateOrganizationScreenState
                           return;
                         }
 
-                        AppRoutes.navigateAndRemoveUntil(context, orgResponse.privateDomainAvailable
-                                        ? AppRoutes.claimOrganization : AppRoutes.home, arguments: orgResponse.privateDomainAvailable ? ClaimOrganizationArgs(privateDomain: orgResponse.privateDomain!) : null, predicate: (Route<dynamic> route) => false);
+                        // AppRoutes.navigateAndRemoveUntil(context, orgResponse.privateDomainAvailable
+                        //                 ? AppRoutes.claimOrganization : AppRoutes.home, arguments: orgResponse.privateDomainAvailable ? ClaimOrganizationArgs(privateDomain: orgResponse.privateDomain!) : null, predicate: (Route<dynamic> route) => false);
+                        late final route;
+                        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+                          // route = AppRoutes.designDashboard;
+                          route = AppRoutes.adminDesktopDashboardScreen;
+                        } else {
+                          // route = AppRoutes.admin;
+                          route = AppRoutes.productionDashboard;
+                        }
+                        AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
 
                         setState(() {
                           _isLoading = false;
