@@ -27,6 +27,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:smooflow/components/logo.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE  — derived from the login screen source
@@ -924,25 +925,28 @@ class _BrandRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Logo box — matches exact gradient from the rest of the app
-          Container(
-            width: 30, height: 30,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3b72e3), Color(0xFF38BDF8)],
-                begin: Alignment.topLeft,
-                end:   Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: _P.blue.withOpacity(0.30),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: CustomPaint(painter: _CheckP()),
-          ),
+          // Container(
+          //   width: 30, height: 30,
+          //   decoration: BoxDecoration(
+          //     gradient: const LinearGradient(
+          //       colors: [Color(0xFF3b72e3), Color(0xFF38BDF8)],
+          //       begin: Alignment.topLeft,
+          //       end:   Alignment.bottomRight,
+          //     ),
+          //     borderRadius: BorderRadius.circular(8),
+          //     boxShadow: [
+          //       BoxShadow(
+          //         color: _P.blue.withOpacity(0.30),
+          //         blurRadius: 10,
+          //         offset: const Offset(0, 3),
+          //       ),
+          //     ],
+          //   ),
+          //   child: CustomPaint(painter: _CheckP()),
+          // ),
+          SizedBox(
+            width: 30,
+            child: Logo()),
           const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
