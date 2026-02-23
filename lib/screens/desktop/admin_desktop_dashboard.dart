@@ -206,6 +206,8 @@ class _AdminDesktopDashboardScreenState
 
     print("task ln: ${_visibleTasks.length}");
 
+    print("selected task: ${_selectedTaskId}");
+
     return GestureDetector(
       onTap: () {
         // unfocus from add new task 
@@ -240,7 +242,10 @@ class _AdminDesktopDashboardScreenState
                   children: [
                     _AdminTopbar(currentView: _view),
                     Expanded(
-                      child: _view == _AdminView.overview
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _view == _AdminView.overview
                           ? _AdminAnalyticsView(
                               tasks: _pipelineTasks,
                               projects: _projects,
@@ -261,20 +266,23 @@ class _AdminDesktopDashboardScreenState
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
                                     ),
-                    ),
-                    // ── Detail panel ──────────────────────────────────
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeInOut,
-                      width: _selectedTaskId != null ? _T.detailW : 0,
-                      child: _selectedTaskId != null && _selectedTask != null
-                          ? DetailPanel(
-                              task: _selectedTask!,
-                              projects: _projects,
-                              onClose: _closeDetail,
-                              onAdvance: () => _advanceTask(_selectedTask!),
-                            )
-                          : const SizedBox.shrink(),
+                          ),
+                          // ── Detail panel ──────────────────────────────────
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOut,
+                            width: _selectedTaskId != null ? _T.detailW : 0,
+                            child: _selectedTaskId != null && _selectedTask != null
+                                ? DetailPanel(
+                                    task: _selectedTask!,
+                                    projects: _projects,
+                                    onClose: _closeDetail,
+                                    onAdvance: () => _advanceTask(_selectedTask!),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      )
                     ),
                   ],
                 ),
