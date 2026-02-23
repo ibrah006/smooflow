@@ -72,6 +72,16 @@ class _JoinOrganizationScreenState
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: IconButton(
+                        icon: Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     Row(
                       spacing: 10,
                       mainAxisAlignment: MainAxisAlignment.center,
