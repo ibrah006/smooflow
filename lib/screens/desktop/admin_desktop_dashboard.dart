@@ -19,8 +19,10 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
+import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
+import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
@@ -113,6 +115,45 @@ class _AdminDesktopDashboardScreenState
 
   void _selectTask(int id) => setState(() => _selectedTaskId = id);
   void _closeDetail()      => setState(() => _selectedTaskId = null);
+
+  Task? get _selectedTask => _selectedTaskId == null
+      ? null
+      : _tasks.cast<Task?>().firstWhere((t) => t!.id == _selectedTaskId, orElse: () => null);
+
+  void _showSnack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 10),
+          Flexible(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+        ]),
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rLg)),
+        duration: const Duration(seconds: 3),
+        elevation: 8,
+      ),
+    );
+  }
+
+  /// Advance the selected task to the next stage via the Riverpod notifier.
+  Future<void> _advanceTask(Task task) async {
+    final next = task.status.nextStage;
+    if (next == null) return;
+
+    // Persist through notifier
+    // await ref.read(taskNotifierProvider.notifier).updateTaskStatus(task.id, next);
+
+    if (!mounted) return;
+    _showSnack(
+      next == TaskStatus.clientApproved
+          ? '✓ Task marked as Client Approved — handed off to production'
+          : 'Task moved to "${stageInfo(next).label}"',
+      next == TaskStatus.clientApproved ? _T.green : _T.blue,
+    );
+  }
 
   // All pipeline tasks (same filter as DesignDashboardScreen)
   List<Task> get _pipelineTasks =>
@@ -220,6 +261,20 @@ class _AdminDesktopDashboardScreenState
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
                                     ),
+                    ),
+                    // ── Detail panel ──────────────────────────────────
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeInOut,
+                      width: _selectedTaskId != null ? _T.detailW : 0,
+                      child: _selectedTaskId != null && _selectedTask != null
+                          ? DetailPanel(
+                              task: _selectedTask!,
+                              projects: _projects,
+                              onClose: _closeDetail,
+                              onAdvance: () => _advanceTask(_selectedTask!),
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ],
                 ),
