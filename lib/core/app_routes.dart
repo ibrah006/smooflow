@@ -170,6 +170,7 @@ class AppRoutes {
       if (routeName == home) {
         final role = LoginService.currentUser!.role.toLowerCase();
         if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          // Desktop Home
           if (role == 'admin') {
             routeName = AppRoutes.adminDesktopDashboardScreen;
           } else if (role == 'production' || role == 'production-head') {
@@ -178,8 +179,20 @@ class AppRoutes {
             routeName = AppRoutes.designDashboard;
           }
         } else {
+          // Mobile Home
+          if (role == 'admin') {
+            routeName = AppRoutes.admin;
+          } else if (role == 'production' || role == 'production-head') {
+            routeName = AppRoutes.productionDashboard;
+          } else if (role == "design") {
+            // routeName = AppRoutes.designDashboard;
+            // No home route for design on mobile
+          }
           // route = AppRoutes.admin;
-          routeName = AppRoutes.productionDashboard;
+        }
+        // if after all the condition above were gone through and route is still home -> unsupported platform
+        if (routeName == home) {
+          routeName = AppRoutes.login;
         }
       }
     } catch(e) {
