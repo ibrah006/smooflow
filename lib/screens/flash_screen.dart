@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/components/ip_input_modal.dart';
+import 'package:smooflow/components/unsupported_platform_dialog.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/create_join_organization_args.dart';
@@ -77,7 +78,24 @@ class _FlashScreenState extends State<FlashScreen> {
 
       // AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
 
-      AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+      final role = LoginService.currentUser?.role;
+
+      if (
+        // Designer
+        (role == "design" && !(Platform.isWindows || Platform.isLinux))
+      ) {
+        // Unsupported platform for role
+        await UnsupportedPlatformDialog.show(
+          context: context,
+          userRole: role!,           // e.g. from LoginService.currentUser.role
+          currentPlatform: Platform.isMacOS || Platform.isWindows? SmooflowPlatform.desktop : SmooflowPlatform.mobile,
+          onDismiss: () => LoginService.logout(),
+        );
+        AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login, predicate: (Route<dynamic> route) => false);
+      } else {
+        // navigate to home
+        AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+      }
     });
   }
 

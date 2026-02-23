@@ -126,19 +126,18 @@ class LoginService {
     );
   }
 
-  // static Future<void> logout() async {
-  //   final response = await ApiClient.http.post(ApiEndpoints.logout);
+  static Future<void> logout() async {
+    await ApiClient.http.post(ApiEndpoints.logout);
 
-  //   if (response)
+    final prefs = await SharedPreferences.getInstance();
 
-  //   final prefs = await SharedPreferences.getInstance();
-  //   await prefs.remove(SharedStorageOptions.jwtToken.name);
+    await prefs.remove(SharedStorageOptions.jwtToken.name);
 
-  //   await prefs.remove(SharedStorageOptions.uuid.name);
-  //   await prefs.remove(SharedStorageOptions.displayName.name);
-  //   await prefs.remove(SharedStorageOptions.email.name);
-  //   await prefs.remove(SharedStorageOptions.userRole.name);
-  // }
+    await prefs.remove(SharedStorageOptions.uuid.name);
+    await prefs.remove(SharedStorageOptions.displayName.name);
+    await prefs.remove(SharedStorageOptions.email.name);
+    await prefs.remove(SharedStorageOptions.userRole.name);
+  }
 
   static Future<void> register({
     required User user,
