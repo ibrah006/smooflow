@@ -17,6 +17,13 @@ import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/enums/task_priority.dart';
+import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/components/stage_pill.dart';
+import 'package:smooflow/screens/desktop/components/task_list_view.dart';
+import 'package:smooflow/screens/desktop/constants.dart';
+import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -67,26 +74,6 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 enum TaskFilter { all, mine, overdue }
 enum ViewMode { board, list }
-
-class DesignStageInfo {
-  final TaskStatus stage;
-  final String label;
-  final String shortLabel;
-  final Color color;
-  final Color bg;
-  const DesignStageInfo(this.stage, this.label, this.shortLabel, this.color, this.bg);
-}
-
-const List<DesignStageInfo> kStages = [
-  DesignStageInfo(TaskStatus.pending,      'Initialized',       'Init',     _T.slate500, _T.slate100),
-  DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
-  DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
-  DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
-  DesignStageInfo(TaskStatus.printing,  'Printing',   'Printing', _T.blue, _T.blue100),
-];
-
-DesignStageInfo stageInfo(TaskStatus s) => kStages.firstWhere((i) => i.stage == s);
-int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);
 
 /// Extension to compute the next stage in the design pipeline.
 extension TaskStatusNext on TaskStatus {
@@ -301,7 +288,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                       isAddingTask: _isAddingTask,
                                       selectedProjectId: _selectedProjectId
                                     )
-                                : _TaskListView(
+                                : TaskListView(
                                     tasks: _visibleTasks,
                                     projects: _projects,
                                     selectedTaskId: _selectedTaskId,
@@ -512,7 +499,7 @@ class _Sidebar extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      _AvatarWidget(initials: m.initials, color: m.color, size: 26),
+                      AvatarWidget(initials: m.initials, color: m.color, size: 26),
                       const SizedBox(width: 8),
                       Expanded(child: Text(m.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.5)))),
                     ],
@@ -736,7 +723,7 @@ class _Topbar extends StatelessWidget {
             decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(99)),
             child: Row(
               children: [
-                _AvatarWidget(initials: _currentUser.initials, color: _T.blue, size: 24),
+                AvatarWidget(initials: _currentUser.initials, color: _T.blue, size: 24),
                 const SizedBox(width: 7),
                 Text(_currentUser.nameShort, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
                 const SizedBox(width: 5),
@@ -1266,10 +1253,10 @@ class _TaskCardState extends ConsumerState<_TaskCard>
                         ]),
                         const SizedBox(height: 9),
                         Row(children: [
-                          _PriorityPill(priority: task.priority),
+                          PriorityPill(priority: task.priority),
                           const SizedBox(width: 6),
                           if (member != null)
-                            _AvatarWidget(
+                            AvatarWidget(
                                 initials: member.initials,
                                 color: member.color,
                                 size: 20),
@@ -1284,7 +1271,7 @@ class _TaskCardState extends ConsumerState<_TaskCard>
                                           ? _T.amber
                                           : _T.slate400),
                               const SizedBox(width: 4),
-                              Text(_fmtDate(d),
+                              Text(fmtDate(d),
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: isOverdue || isSoon
@@ -1799,190 +1786,6 @@ Color _accentForPriority(TaskPriority p) => switch (p) {
   TaskPriority.normal => _T.slate200,
 };
 
-class _AvatarWidget extends StatelessWidget {
-  final String initials;
-  final Color color;
-  final double size;
-  const _AvatarWidget(
-      {required this.initials, required this.color, required this.size});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-            color: color.withOpacity(0.15), shape: BoxShape.circle),
-        child: Center(
-          child: Text(initials,
-              style: TextStyle(
-                  fontSize: size * 0.38,
-                  fontWeight: FontWeight.w700,
-                  color: color)),
-        ),
-      );
-}
-
-class _PriorityPill extends StatelessWidget {
-  final TaskPriority priority;
-  const _PriorityPill({required this.priority});
-
-  @override
-  Widget build(BuildContext context) {
-    final (text, color, bg) = switch (priority) {
-      TaskPriority.urgent => ('Urgent', _T.red, _T.red50),
-      TaskPriority.high   => ('High',   _T.amber, _T.amber50),
-      TaskPriority.normal => ('Normal', _T.slate500, _T.slate100),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
-      child: Text(text,
-          style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: color)),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LIST VIEW  (renamed to _TaskListView to avoid conflict with Flutter's ListView)
-// ─────────────────────────────────────────────────────────────────────────────
-class _TaskListView extends ConsumerWidget {
-  final List<Task> tasks;
-  final List<Project> projects;
-  final int? selectedTaskId;
-  final ValueChanged<int> onTaskSelected;
-
-  const _TaskListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: _T.slate50,
-      child: Column(
-        children: [
-          // Table header
-          Container(
-            color: _T.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: const Row(
-              children: [
-                Expanded(flex: 3, child: _TableHeader('Task')),
-                Expanded(flex: 2, child: _TableHeader('Project')),
-                Expanded(flex: 2, child: _TableHeader('Stage')),
-                Expanded(flex: 2, child: _TableHeader('Assignee')),
-                Expanded(flex: 1, child: _TableHeader('Due')),
-                Expanded(flex: 1, child: _TableHeader('Priority')),
-              ],
-            ),
-          ),
-          const Divider(height: 1, thickness: 1, color: _T.slate200),
-          // Rows
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: tasks.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 1, color: _T.slate100),
-              itemBuilder: (_, i) {
-                final t = tasks[i];
-                final p = projects.cast<Project?>().firstWhere((pr) => pr!.id == t.projectId, orElse: () => null) ?? projects.first;
-
-                Member? m;
-                try {
-                  m = ref.watch(memberNotifierProvider).members.firstWhere((mem) => t.assignees.contains(mem.id));
-                } catch (_) {
-                  m = null;
-                }
-
-                final s = stageInfo(t.status);
-                final d = t.dueDate;
-                final now = DateTime.now();
-                final isOverdue = d != null && d.isBefore(now);
-                final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
-
-                return Material(
-                  color: selectedTaskId == t.id ? _T.blue50 : _T.white,
-                  borderRadius: BorderRadius.circular(_T.r),
-                  child: InkWell(
-                    onTap: () => onTaskSelected(t.id),
-                    borderRadius: BorderRadius.circular(_T.r),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          // Task name + description
-                          Expanded(flex: 3, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(t.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink)),
-                              if (t.description != null && t.description!.isNotEmpty)
-                                Text(
-                                  t.description!.length > 55 ? '${t.description!.substring(0, 55)}…' : t.description!,
-                                  style: const TextStyle(fontSize: 11.5, color: _T.slate400),
-                                ),
-                            ]),
-                          )),
-                          // Project
-                          Expanded(flex: 2, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(children: [
-                              Container(width: 7, height: 7, decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
-                              const SizedBox(width: 6),
-                              Expanded(child: Text(p.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
-                            ]),
-                          )),
-                          // Stage
-                          Expanded(flex: 2, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: _StagePill(stageInfo: s),
-                          )),
-                          // Assignee — always occupies its flex slot
-                          Expanded(flex: 2, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: m != null
-                                ? Row(children: [
-                                    _AvatarWidget(initials: m.initials, color: m.color, size: 22),
-                                    const SizedBox(width: 7),
-                                    Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
-                                  ])
-                                : const Text('—', style: TextStyle(color: _T.slate400)),
-                          )),
-                          // Due date
-                          Expanded(flex: 1, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              d != null ? _fmtDate(d) : '—',
-                              style: TextStyle(fontSize: 12.5, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w400, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate500),
-                            ),
-                          )),
-                          // Priority
-                          Expanded(flex: 1, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: _PriorityPill(priority: t.priority),
-                          )),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TableHeader extends StatelessWidget {
-  final String text;
-  const _TableHeader(this.text);
-  @override
-  Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.7, color: _T.slate400));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2153,11 +1956,11 @@ class __DetailPanelState extends ConsumerState<_DetailPanel> {
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                     children: [
-                      _DetailMetaCell(label: 'Current Stage', child: _StagePill(stageInfo: si)),
-                      _DetailMetaCell(label: 'Priority', child: _PriorityPill(priority: widget.task.priority)),
+                      _DetailMetaCell(label: 'Current Stage', child: StagePill(stageInfo: si)),
+                      _DetailMetaCell(label: 'Priority', child: PriorityPill(priority: widget.task.priority)),
                       if (member != null)
                         _DetailMetaCell(label: 'Assignee', child: Row(children: [
-                          _AvatarWidget(initials: member.initials, color: member.color, size: 22),
+                          AvatarWidget(initials: member.initials, color: member.color, size: 22),
                           const SizedBox(width: 6),
                           Expanded(child: Text(member.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink3))),
                         ])),
@@ -2165,7 +1968,7 @@ class __DetailPanelState extends ConsumerState<_DetailPanel> {
                         label: 'Due Date',
                         child: d != null
                             ? Row(children: [
-                                Text(_fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
+                                Text(fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
                                 if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
                                 if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
                               ])
@@ -2350,18 +2153,6 @@ class _DetailMetaCell extends StatelessWidget {
 //   }
 // }
 
-class _StagePill extends StatelessWidget {
-  final DesignStageInfo stageInfo;
-  const _StagePill({required this.stageInfo});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(color: stageInfo.bg, borderRadius: BorderRadius.circular(99)),
-    child: Text(stageInfo.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stageInfo.color)),
-  );
-}
-
 class _Badge extends StatelessWidget {
   final String text;
   final Color color, bg;
@@ -2529,7 +2320,7 @@ class _ProjectModalState extends ConsumerState<_ProjectModal> {
               child: Row(children: [
                 const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
                 const SizedBox(width: 8),
-                Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
+                Text(_due != null ? fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
               ]),
             ),
           ),
@@ -2663,7 +2454,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
                     items: _members.map((m) => DropdownMenuItem(
                       value: m.id,
                       child: Row(children: [
-                        _AvatarWidget(initials: m.initials, color: m.color, size: 20),
+                        AvatarWidget(initials: m.initials, color: m.color, size: 20),
                         const SizedBox(width: 8),
                         Text(m.name, style: const TextStyle(fontSize: 13)),
                       ]),
@@ -2764,7 +2555,7 @@ class _TaskModalState extends ConsumerState<_TaskModal> {
         //         child: Row(children: [
         //           const Icon(Icons.calendar_today_outlined, size: 14, color: _T.slate400),
         //           const SizedBox(width: 8),
-        //           Text(_due != null ? _fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
+        //           Text(_due != null ? fmtDate(_due!) : 'Select date', style: TextStyle(fontSize: 13, color: _due != null ? _T.ink : _T.slate400)),
         //         ]),
         //       ),
         //     ),
@@ -2960,15 +2751,4 @@ class _ModalDropdown<T> extends StatelessWidget {
     borderRadius: BorderRadius.circular(_T.r),
     icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _T.slate400),
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtDate(DateTime d) {
-  const months = [
-    'Jan','Feb','Mar','Apr','May','Jun',
-    'Jul','Aug','Sep','Oct','Nov','Dec'
-  ];
-  return '${d.day} ${months[d.month - 1]} ${d.year}';
 }

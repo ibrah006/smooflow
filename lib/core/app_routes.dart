@@ -7,6 +7,7 @@ import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
+import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
@@ -145,6 +146,9 @@ class AppRoutes {
   static const designTaskDetailsScreen = '/desktop/design-task-details';
   static const designProjectDetailsScreen = '/desktop/design-project-details';
   static const designCreateTaskScreen = '/desktop/design-create-task';
+
+  // Admin
+  static const adminDesktopDashboardScreen = '/desktop/admin-dashboard';
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
@@ -364,6 +368,8 @@ class AppRoutes {
           screen = PrintersManagementScreen(initialFilter: args.initialFilter);
         }
         break;
+      case adminDesktopDashboardScreen:
+        screen = AdminDesktopDashboardScreen();
     }
 
     // If screen was determined, create the route

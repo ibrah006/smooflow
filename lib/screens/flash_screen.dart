@@ -59,7 +59,8 @@ class _FlashScreenState extends State<FlashScreen> {
       late final String route;
       if (isLoggedIn) {
         if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-          route = AppRoutes.designDashboard;
+          // route = AppRoutes.designDashboard;
+          route = AppRoutes.adminDesktopDashboardScreen;
         } else {
           // route = AppRoutes.admin;
           route = AppRoutes.productionDashboard;
