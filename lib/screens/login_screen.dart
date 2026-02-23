@@ -2,6 +2,8 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smooflow/components/login_background.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/core/models/user.dart';
@@ -63,232 +65,247 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Scaffold(
       backgroundColor: Color(0xFFf7f9fb),
-      body: Center(
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: paddingValue),
-          padding: EdgeInsets.all(paddingValue),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.02),
-                spreadRadius: 5,
-                blurRadius: 10,
-                offset: Offset(0, 3), // changes position of shadow
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  spacing: 10,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(width: 42, "assets/icons/app_icon.png"),
-                    Text(
-                      "Smooflow",
-                      style: textTheme.headlineMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  isSignIn ? "Log in" : "Register",
-                  style: textTheme.headlineLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Track your team’s productivity & optimize efficiency',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 40),
-                if (!isSignIn) ...[
-                  TextField(
-                    controller: nameController,
-                    enabled: !_isLoading,
-                    keyboardType: TextInputType.name,
-                    decoration: const InputDecoration(
-                      hintText: 'Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 215, 219, 227),
-                        ),
-                      ),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 215, 219, 227),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-                TextFormField(
-                  enabled: !_isLoading,
-                  keyboardType: TextInputType.emailAddress,
-                  controller: emailController,
-                  // Might need later on (not of any use as of now)
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    } else if (!isValidEmail(value)) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    hintText: 'Email',
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFe7eaf0)),
-                    ),
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  enabled: !_isLoading,
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  decoration: InputDecoration(
-                    suffix: IconButton(
-                      onPressed: toggleObscurePassword,
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                    ),
-                    hintText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 215, 219, 227),
-                      ),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 215, 219, 227),
-                      ),
-                    ),
-                  ),
-                ),
-                if (!isSignIn) ...[
-                  const SizedBox(height: 20),
-                  TextField(
-                    enabled: !_isLoading,
-                    controller: confirmPasswordController,
-                    obscureText: obscurePassword,
-                    decoration: const InputDecoration(
-                      hintText: 'Confirm Password',
-                      prefixIcon: Icon(Icons.lock),
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 215, 219, 227),
-                        ),
-                      ),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 215, 219, 227),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                if (isSignIn)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _isLoading ? null : () {},
-                      style: TextButton.styleFrom(
-                        disabledForegroundColor: Colors.grey,
-                      ),
-                      child: const Text('Forgot password?'),
-                    ),
-                  ),
-                SizedBox(height: 20),
-                if (_isLoading) ...[
-                  Lottie.asset(
-                    'assets/animations/loading.json',
-                    width: 150,
-                    height: 150,
-                  ),
-                  SizedBox(
-                    width: 250.0,
-                    height: 20,
-                    child: DefaultTextStyle(
-                      style: const TextStyle(fontSize: 14, color: colorPrimary),
-                      child: Center(
-                        child: AnimatedTextKit(
-                          totalRepeatCount: 2,
-                          pause: Duration(milliseconds: 2000),
-                          animatedTexts: [
-                            ...List.generate(
-                              5,
-                              (index) => FadeAnimatedText('Please wait'),
-                            ),
-                            ...List.generate(
-                              9,
-                              (index) => FadeAnimatedText('One Moment...'),
-                            ),
-                            ...List.generate(
-                              16,
-                              (index) => FadeAnimatedText('Logging you in...'),
-                            ),
-                          ],
-                          onTap: () {
-                            print("Tap Event");
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ] else
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 250),
-                    width: width,
-                    child: FilledButton(
-                      onPressed: _isLoading ? null : authenticate,
-                      style: FilledButton.styleFrom(
-                        disabledBackgroundColor: Colors.grey.shade200,
-                      ),
-                      child: Text(isSignIn ? "Log in" : "Sign up"),
-                    ),
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
 
-                // Forgot password
-                Row(
+          final content = Center(
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: paddingValue),
+              padding: EdgeInsets.all(paddingValue),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.02),
+                    spreadRadius: 5,
+                    blurRadius: 10,
+                    offset: Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      isSignIn
-                          ? "Don't have an account?"
-                          : "Already registered?",
-                      style: textTheme.titleSmall,
+                    Row(
+                      spacing: 10,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Image.asset(width: 42, "assets/icons/app_icon.png"),
+                        Logo(),
+                        Text(
+                          "Smooflow",
+                          style: textTheme.headlineMedium!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: _isLoading ? null : toggleAuthMethod,
-                      style: TextButton.styleFrom(
-                        disabledForegroundColor: Colors.grey,
+                    const SizedBox(height: 15),
+                    Text(
+                      isSignIn ? "Log in" : "Register",
+                      style: textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Track your team’s productivity & optimize efficiency',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 40),
+                    if (!isSignIn) ...[
+                      TextField(
+                        controller: nameController,
+                        enabled: !_isLoading,
+                        keyboardType: TextInputType.name,
+                        decoration: const InputDecoration(
+                          hintText: 'Name',
+                          prefixIcon: Icon(Icons.person_outline),
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 215, 219, 227),
+                            ),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 215, 219, 227),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Text(isSignIn ? "Sign up" : "Sign in"),
+                      const SizedBox(height: 20),
+                    ],
+                    TextFormField(
+                      enabled: !_isLoading,
+                      keyboardType: TextInputType.emailAddress,
+                      controller: emailController,
+                      // Might need later on (not of any use as of now)
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        } else if (!isValidEmail(value)) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Email',
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFe7eaf0)),
+                        ),
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      enabled: !_isLoading,
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        suffix: IconButton(
+                          onPressed: toggleObscurePassword,
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
+                        hintText: 'Password',
+                        prefixIcon: Icon(Icons.lock_outline),
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Color.fromARGB(255, 215, 219, 227),
+                          ),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Color.fromARGB(255, 215, 219, 227),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!isSignIn) ...[
+                      const SizedBox(height: 20),
+                      TextField(
+                        enabled: !_isLoading,
+                        controller: confirmPasswordController,
+                        obscureText: obscurePassword,
+                        decoration: const InputDecoration(
+                          hintText: 'Confirm Password',
+                          prefixIcon: Icon(Icons.lock),
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 215, 219, 227),
+                            ),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 215, 219, 227),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (isSignIn)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: _isLoading ? null : () {},
+                          style: TextButton.styleFrom(
+                            disabledForegroundColor: Colors.grey,
+                          ),
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
+                    SizedBox(height: 20),
+                    if (_isLoading) ...[
+                      Lottie.asset(
+                        'assets/animations/loading.json',
+                        width: 150,
+                        height: 150,
+                      ),
+                      SizedBox(
+                        width: 250.0,
+                        height: 20,
+                        child: DefaultTextStyle(
+                          style: const TextStyle(fontSize: 14, color: colorPrimary),
+                          child: Center(
+                            child: AnimatedTextKit(
+                              totalRepeatCount: 2,
+                              pause: Duration(milliseconds: 2000),
+                              animatedTexts: [
+                                ...List.generate(
+                                  5,
+                                  (index) => FadeAnimatedText('Please wait'),
+                                ),
+                                ...List.generate(
+                                  9,
+                                  (index) => FadeAnimatedText('One Moment...'),
+                                ),
+                                ...List.generate(
+                                  16,
+                                  (index) => FadeAnimatedText('Logging you in...'),
+                                ),
+                              ],
+                              onTap: () {
+                                print("Tap Event");
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else
+                      AnimatedContainer(
+                        duration: Duration(milliseconds: 250),
+                        width: width,
+                        child: FilledButton(
+                          onPressed: _isLoading ? null : authenticate,
+                          style: FilledButton.styleFrom(
+                            disabledBackgroundColor: Colors.grey.shade200,
+                          ),
+                          child: Text(isSignIn ? "Log in" : "Sign up"),
+                        ),
+                      ),
+          
+                    // Forgot password
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isSignIn
+                              ? "Don't have an account?"
+                              : "Already registered?",
+                          style: textTheme.titleSmall,
+                        ),
+                        TextButton(
+                          onPressed: _isLoading ? null : toggleAuthMethod,
+                          style: TextButton.styleFrom(
+                            disabledForegroundColor: Colors.grey,
+                          ),
+                          child: Text(isSignIn ? "Sign up" : "Sign in"),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+
+          return Stack(
+            children: [
+              LoginBackground(),
+              SizedBox(
+                width: constraints.maxWidth > 745? MediaQuery.of(context).size.width/2 : null,
+                child: content),
+            ],
+          );
+        }
       ),
     );
   }

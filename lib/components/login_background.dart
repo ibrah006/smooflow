@@ -1,28 +1,93 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // login_background.dart
 //
-// A self-contained StatefulWidget — drop it anywhere as a background layer.
-// Zero external dependencies.
+// Light-themed background panel for the smooflow login page.
+// Matches the existing login screen palette exactly:
+//   Scaffold: 0xFFf7f9fb  |  Card: white  |  Primary: blue (#3b72e3)
 //
-// Desktop (side panel):
-//   Row(children: [
-//     Expanded(flex: 5, child: const LoginBackground()),
-//     Expanded(flex: 4, child: YourLoginForm()),
-//   ])
+// Built entirely with real Flutter widget composition —
+// genuine BoxShadow, ClipRRect, BackdropFilter, layered gradients.
 //
-// Mobile (full-bleed, card on top):
+// Desktop: shown as the right-side panel (or left, your choice).
+// Mobile:  full-bleed behind the login card.
+//
+// Usage:
+//   // Desktop split-screen (already wired in your LayoutBuilder):
+//   constraints.maxWidth > 600
+//     ? Expanded(child: LoginBackground())
+//     : SizedBox()
+//
+//   // Mobile full-bleed:
 //   Stack(children: [
-//     const Positioned.fill(child: LoginBackground()),
-//     Center(child: YourLoginForm()),
+//     Positioned.fill(child: LoginBackground()),
+//     Center(child: yourLoginCard),
 //   ])
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
-import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PUBLIC WIDGET — only export in this file
+// PALETTE  — derived from the login screen source
+// ─────────────────────────────────────────────────────────────────────────────
+class _P {
+  // Backgrounds — exactly matching login screen
+  static const scaffold   = Color(0xFFf7f9fb);
+  static const cardWhite  = Colors.white;
+  static const borderLine = Color(0xFFe7eaf0);
+
+  // Primary brand blue — from FilledButton + toast
+  static const blue       = Color(0xFF3b72e3);
+  static const blueLight  = Color(0xFF6594F0);
+  static const blueFaint  = Color(0xFFEEF4FF);
+  static const blueMid    = Color(0xFFD6E4FF);
+
+  // Neutral
+  static const s100       = Color(0xFFF1F5F9);
+  static const s200       = Color(0xFFE2E8F0);
+  static const s300       = Color(0xFFCBD5E1);
+  static const s400       = Color(0xFF94A3B8);
+  static const s500       = Color(0xFF64748B);
+  static const ink        = Color(0xFF1E293B);
+  static const ink2       = Color(0xFF334155);
+
+  // Stage accents — same as kStages in design_dashboard
+  static const stage = [
+    Color(0xFF94A3B8), // Init     — slate
+    Color(0xFF8B5CF6), // Design   — purple
+    Color(0xFFF59E0B), // Review   — amber
+    Color(0xFF10B981), // Approved — green
+    Color(0xFF3b72e3), // Print    — brand blue
+  ];
+
+  static const stageBg = [
+    Color(0xFFF1F5F9),
+    Color(0xFFF5F3FF),
+    Color(0xFFFFFBEB),
+    Color(0xFFECFDF5),
+    Color(0xFFEEF4FF),
+  ];
+
+  static const stageBorder = [
+    Color(0xFFCBD5E1),
+    Color(0xFFDDD6FE),
+    Color(0xFFFDE68A),
+    Color(0xFF6EE7B7),
+    Color(0xFFBFDBFE),
+  ];
+
+  static const stageLabel = [
+    'Initialized',
+    'Designing',
+    'In Review',
+    'Approved',
+    'Printing',
+  ];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUBLIC WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
 class LoginBackground extends StatefulWidget {
   const LoginBackground({super.key});
@@ -32,797 +97,974 @@ class LoginBackground extends StatefulWidget {
 }
 
 class _LoginBackgroundState extends State<LoginBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
+    with TickerProviderStateMixin {
+  // Slow ambient breathe — 20s loop
+  late final AnimationController _breathe = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 20),
   )..repeat();
 
+  // Dot traveller along pipeline — 6s per stage loop
+  late final AnimationController _travel = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  )..repeat();
+
+  // One-shot entry reveal
+  late final AnimationController _entry = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _entry.forward();
+  }
+
   @override
   void dispose() {
-    _ctrl.dispose();
+    _breathe.dispose();
+    _travel.dispose();
+    _entry.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => CustomPaint(
-        painter: _ScenePainter(_ctrl.value),
-        child: const SizedBox.expand(),
+      animation: Listenable.merge([_breathe, _travel, _entry]),
+      builder: (context, _) => _Scene(
+        breathe: _breathe.value,
+        travel:  _travel.value,
+        entry:   CurvedAnimation(parent: _entry, curve: Curves.easeOutCubic).value,
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PALETTE  — exact tokens from design_dashboard.dart
+// SCENE
 // ─────────────────────────────────────────────────────────────────────────────
-class _C {
-  // Base
-  static const bg       = Color(0xFFF7F9FC);
-  static const bgWarm   = Color(0xFFF0F4FA);
-  static const white    = Colors.white;
+class _Scene extends StatelessWidget {
+  final double breathe; // 0..1 repeating
+  final double travel;  // 0..1 repeating
+  final double entry;   // 0..1 once
 
-  // Neutrals
-  static const s50      = Color(0xFFF8FAFC);
-  static const s100     = Color(0xFFF1F5F9);
-  static const s200     = Color(0xFFE2E8F0);
-  static const s300     = Color(0xFFCBD5E1);
-  static const s400     = Color(0xFF94A3B8);
-  static const s500     = Color(0xFF64748B);
-
-  // Brand
-  static const blue     = Color(0xFF2563EB);
-  static const blue50   = Color(0xFFEFF6FF);
-  static const blue100  = Color(0xFFDBEAFE);
-  static const blue200  = Color(0xFFBFDBFE);
-  static const teal     = Color(0xFF38BDF8);
-  static const ink      = Color(0xFF0F172A);
-  static const ink3     = Color(0xFF334155);
-
-  // Stage accents — matching kStages exactly
-  static const stage = [
-    Color(0xFF64748B), // 0 Init      — slate-500
-    Color(0xFF8B5CF6), // 1 Designing — purple
-    Color(0xFFF59E0B), // 2 Review    — amber
-    Color(0xFF10B981), // 3 Approved  — green
-    Color(0xFF2563EB), // 4 Printing  — blue
-  ];
-
-  static const stageBg = [
-    Color(0xFFF1F5F9), // slate-100
-    Color(0xFFF5F3FF), // purple-50
-    Color(0xFFFFFBEB), // amber-50
-    Color(0xFFECFDF5), // green-50
-    Color(0xFFEFF6FF), // blue-50
-  ];
-
-  static const stageBorder = [
-    Color(0xFFCBD5E1), // slate-300
-    Color(0xFFDDD6FE), // purple-200
-    Color(0xFFFDE68A), // amber-200
-    Color(0xFFA7F3D0), // green-200
-    Color(0xFFBFDBFE), // blue-200
-  ];
-
-  static const stageLabel = [
-    'Initialized',
-    'Designing',
-    'Awaiting\nApproval',
-    'Client\nApproved',
-    'Printing',
-  ];
-
-  static const stageShort = [
-    'INIT', 'DESIGN', 'REVIEW', 'APPROVED', 'PRINT',
-  ];
-
-  // Fake task names per stage
-  static const taskNames = [
-    ['Brand identity', 'Brochure layout', 'Poster A3'],
-    ['Hero banner', 'Business cards', 'Social pack'],
-    ['Trade show\nbooth wrap', 'Roll-up banner'],
-    ['Spring\ncampaign kit', 'Product sheet'],
-    ['Vinyl banner', 'Packaging\ninserts', 'Letterhead'],
-  ];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SCENE CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
-const _kCardW    = 148.0;
-const _kCardH    = 54.0;
-const _kCardGap  = 10.0;
-const _kColGap   = 22.0;
-const _kHeaderH  = 32.0;
-const _kColPad   = 10.0;
-const _kCorner   = 9.0;
-const _kTaskCorner = 6.0;
-
-// How many task cards to show per column
-const _kTaskRows = [3, 2, 2, 2, 3];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PAINTER
-// ─────────────────────────────────────────────────────────────────────────────
-class _ScenePainter extends CustomPainter {
-  final double t;
-  _ScenePainter(this.t);
+  const _Scene({
+    required this.breathe,
+    required this.travel,
+    required this.entry,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    _drawBackground(canvas, size);
-    _drawGridLines(canvas, size);
-
-    // Apply a gentle perspective transform to the whole board section
-    canvas.save();
-    _applyBoardTransform(canvas, size);
-    _drawBoard(canvas, size);
-    canvas.restore();
-
-    _drawConnectorDots(canvas, size); // dots drawn after restore in screen space
-    _drawBrandFooter(canvas, size);
-    _drawEdgeFades(canvas, size);
-  }
-
-  // ── Background ────────────────────────────────────────────────────────────
-  void _drawBackground(Canvas canvas, Size size) {
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     final w = size.width, h = size.height;
+    final isWide = w > 745;
 
-    // Warm off-white base gradient
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, h),
-      Paint()
-        ..shader = const LinearGradient(
+    // Sine helpers
+    final s1 = math.sin(breathe * math.pi * 2);
+    final s2 = math.sin(breathe * math.pi * 2 + 1.4);
+
+    return ClipRect(
+      child: Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          // ── Base ─────────────────────────────────────────────────────
+          const _Base(),
+      
+          // ── Soft colour blobs ─────────────────────────────────────────
+          _SoftBlob(
+            left: w * 0.05 + s1 * w * 0.02,
+            top:  h * 0.05 + s1 * h * 0.015,
+            diameter: w * 0.75,
+            color: _P.blue.withOpacity(0.055),
+          ),
+          _SoftBlob(
+            left: w * 0.40 + s2 * w * 0.018,
+            top:  h * 0.38 + s2 * h * 0.018,
+            diameter: w * 0.60,
+            color: _P.stage[1].withOpacity(0.030),
+          ),
+          _SoftBlob(
+            left: -w * 0.10,
+            top:   h * 0.62 + s1 * h * 0.010,
+            diameter: w * 0.55,
+            color: _P.stage[3].withOpacity(0.025),
+          ),
+      
+          // ── Fine grid ─────────────────────────────────────────────────
+          SizedBox.expand(child: const _LightGrid()),
+          SizedBox(
+            width: MediaQuery.of(context).size.width/2,
+            child: Stack(
+              
+              fit: StackFit.expand,
+              children: [
+            
+                if (isWide) ...[
+                  // ── Pipeline card columns ─────────────────────────────────────
+                  _PipelineColumns(breathe: breathe, entry: entry, size: size),
+            
+                  // ── Floating KPI chips ────────────────────────────────────────
+                  _Chip(
+                    entry: entry, delay: 0.50,
+                    top: h * 0.08,
+                    right: w * 0.05 + s1 * w * 0.006,
+                    label: 'Active tasks',
+                    value: '24',
+                    accent: _P.blue,
+                  ),
+                  _Chip(
+                    entry: entry, delay: 0.62,
+                    top: h * 0.26,
+                    right: w * 0.05 + s2 * w * 0.005,
+                    label: 'Approved today',
+                    value: '7',
+                    accent: _P.stage[3],
+                  ),
+                  _Chip(
+                    entry: entry, delay: 0.74,
+                    top: h * 0.44,
+                    right: w * 0.05 + s1 * w * 0.005,
+                    label: 'In review',
+                    value: '3',
+                    accent: _P.stage[2],
+                  ),
+            
+                  // ── Pipeline overview bar ─────────────────────────────────────
+                  _PipelineBar(
+                    entry: entry, delay: 0.38,
+                    left: w * 0.04,
+                    bottom: h * 0.15,
+                    width: math.min(w * 0.55, 340),
+                  ),
+            
+                  // ── Brand lockup ──────────────────────────────────────────────
+                  Positioned(
+                    left: w * 0.06,
+                    bottom: h * 0.045,
+                    child: _BrandRow(entry: entry),
+                  ),
+            
+                  // ── Right fade — blends into login form ───────────────────────
+                  const _RightFade(),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BASE
+// ─────────────────────────────────────────────────────────────────────────────
+class _Base extends StatelessWidget {
+  const _Base();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF4F7FB), Color(0xFFF7F9FC), Color(0xFFEFF5FD)],
-          stops: [0.0, 0.5, 1.0],
-        ).createShader(Rect.fromLTWH(0, 0, w, h)),
-    );
-
-    // Blue bloom — upper area, very soft
-    _radialGlow(canvas,
-      cx: w * 0.3, cy: h * 0.15,
-      r: w * 0.7,
-      color: _C.blue.withOpacity(0.04),
-      blur: 90,
-    );
-
-    // Teal accent bloom — lower right
-    _radialGlow(canvas,
-      cx: w * 0.85, cy: h * 0.78,
-      r: w * 0.45,
-      color: _C.teal.withOpacity(0.035),
-      blur: 70,
-    );
-  }
-
-  void _radialGlow(Canvas canvas, {
-    required double cx, required double cy,
-    required double r, required Color color, required double blur,
-  }) {
-    final c = Offset(cx, cy);
-    canvas.drawCircle(
-      c, r,
-      Paint()
-        ..shader = RadialGradient(colors: [color, Colors.transparent])
-            .createShader(Rect.fromCircle(center: c, radius: r))
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur),
-    );
-  }
-
-  // ── Subtle grid ───────────────────────────────────────────────────────────
-  void _drawGridLines(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    const step = 40.0;
-    final p = Paint()..color = _C.s200.withOpacity(0.4)..strokeWidth = 0.5;
-
-    for (double x = 0; x < w; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, h), p);
-    }
-    for (double y = 0; y < h; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(w, y), p);
-    }
-
-    // Cross dots at intersections
-    final dp = Paint()..color = _C.s300.withOpacity(0.35);
-    for (double x = 0; x < w; x += step) {
-      for (double y = 0; y < h; y += step) {
-        canvas.drawCircle(Offset(x, y), 1.0, dp);
-      }
-    }
-  }
-
-  // ── Perspective transform for the board ───────────────────────────────────
-  // A subtle tilt — like viewing the board on a desk at a slight angle.
-  void _applyBoardTransform(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    // Slight Y-axis rotation in 2D (skew + scale trick)
-    // We'll fake a gentle isometric feel: skew-X very slightly, scale Y down
-    final cx = w * 0.5;
-    final cy = h * 0.48;
-    canvas.translate(cx, cy);
-    canvas.transform(
-      // 2D approximation of a mild 3D tilt — feels like a 10° X-axis rotation
-      // [scaleX, skewY, 0, 0, skewX, scaleY, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1]
-      _mat4(
-        scaleX: 1.0,
-        scaleY: 0.88,   // compress Y slightly → perspective feel
-        skewX: 0.0,
-        skewY: 0.0,
-      ),
-    );
-    canvas.translate(-cx, -cy);
-  }
-
-  Float64List _mat4({
-    required double scaleX, required double scaleY,
-    required double skewX,  required double skewY,
-  }) {
-    return Float64List.fromList([
-      scaleX, skewY,  0, 0,
-      skewX,  scaleY, 0, 0,
-      0,      0,      1, 0,
-      0,      0,      0, 1,
-    ]);
-  }
-
-  // ── Board ─────────────────────────────────────────────────────────────────
-  void _drawBoard(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    const nCols  = 5;
-    final totalW = nCols * _kCardW + (nCols - 1) * _kColGap;
-
-    // Board area: centred horizontally, sits in upper-centre of panel
-    final boardLeft = (w - totalW) / 2;
-    final boardTop  = h * 0.10;
-
-    // Slow vertical float — entire board breathes
-    final floatAmt = math.sin(t * math.pi * 2) * size.height * 0.008;
-
-    for (int col = 0; col < nCols; col++) {
-      // Each column has a tiny independent phase offset for organic feel
-      final colFloat = floatAmt + math.sin(t * math.pi * 2 + col * 0.4) * 2.5;
-      final colX = boardLeft + col * (_kCardW + _kColGap);
-      final colY = boardTop  + colFloat;
-
-      _drawColumn(canvas, col, Offset(colX, colY), size);
-    }
-
-    // Draw connector lines between column headers in board space
-    _drawBoardConnectors(canvas, boardLeft, boardTop + floatAmt, size);
-  }
-
-  // ── Single kanban column ──────────────────────────────────────────────────
-  void _drawColumn(Canvas canvas, int col, Offset origin, Size size) {
-    final accent   = _C.stage[col];
-    final stageBg  = _C.stageBg[col];
-    final border   = _C.stageBorder[col];
-    final taskRows = _kTaskRows[col];
-    final colH     = _kHeaderH + _kColPad + taskRows * (_kCardH + _kCardGap) + _kColPad;
-
-    final colRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(origin.dx, origin.dy, _kCardW, colH),
-      const Radius.circular(_kCorner),
-    );
-
-    // Column shadow
-    canvas.drawRRect(
-      colRect.shift(const Offset(0, 6)),
-      Paint()
-        ..color = _C.blue.withOpacity(0.06)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
-    );
-    canvas.drawRRect(
-      colRect.shift(const Offset(0, 2)),
-      Paint()
-        ..color = _C.s400.withOpacity(0.08)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-    );
-
-    // Column body
-    canvas.drawRRect(
-      colRect,
-      Paint()..color = _C.s50.withOpacity(0.96),
-    );
-    canvas.drawRRect(
-      colRect,
-      Paint()
-        ..color = border.withOpacity(0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // ── Column header ────────────────────────────────────────────────────
-    final headerRect = RRect.fromRectAndCorners(
-      Rect.fromLTWH(origin.dx, origin.dy, _kCardW, _kHeaderH),
-      topLeft:  const Radius.circular(_kCorner),
-      topRight: const Radius.circular(_kCorner),
-    );
-    canvas.drawRRect(headerRect, Paint()..color = stageBg);
-    canvas.drawRRect(
-      headerRect,
-      Paint()
-        ..color = border.withOpacity(0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // Accent bar — left edge of header
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        Rect.fromLTWH(origin.dx, origin.dy + 6, 3.0, _kHeaderH - 12),
-        topLeft:    const Radius.circular(2),
-        bottomLeft: const Radius.circular(2),
-      ),
-      Paint()..color = accent,
-    );
-
-    // Stage name
-    _text(
-      canvas,
-      _C.stageShort[col],
-      Offset(origin.dx + 11, origin.dy + 9),
-      color: accent,
-      size: 9.0,
-      weight: FontWeight.w800,
-      spacing: 0.5,
-    );
-
-    // Task count badge
-    final countStr = '${_kTaskRows[col]}';
-    final badgeW   = 18.0;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          origin.dx + _kCardW - badgeW - 8,
-          origin.dy + (_kHeaderH - 16) / 2,
-          badgeW, 16,
-        ),
-        const Radius.circular(99),
-      ),
-      Paint()..color = accent.withOpacity(0.12),
-    );
-    _text(
-      canvas,
-      countStr,
-      Offset(origin.dx + _kCardW - badgeW / 2 - 8 + (countStr.length == 1 ? 5 : 2), origin.dy + 8),
-      color: accent.withOpacity(0.9),
-      size: 9.5,
-      weight: FontWeight.w700,
-    );
-
-    // ── Task cards ───────────────────────────────────────────────────────
-    for (int row = 0; row < taskRows; row++) {
-      final cardOrigin = Offset(
-        origin.dx + _kColPad,
-        origin.dy + _kHeaderH + _kColPad + row * (_kCardH + _kCardGap),
-      );
-      final name = row < _C.taskNames[col].length
-          ? _C.taskNames[col][row]
-          : 'Task ${row + 1}';
-      _drawTaskCard(canvas, cardOrigin, col, row, name);
-    }
-  }
-
-  // ── Single task card ──────────────────────────────────────────────────────
-  void _drawTaskCard(Canvas canvas, Offset o, int col, int row, String name) {
-    final accent  = _C.stage[col];
-    final cardW   = _kCardW - _kColPad * 2;
-    final rect    = RRect.fromRectAndRadius(
-      Rect.fromLTWH(o.dx, o.dy, cardW, _kCardH),
-      const Radius.circular(_kTaskCorner),
-    );
-
-    // Card shadow
-    canvas.drawRRect(
-      rect.shift(const Offset(0, 2)),
-      Paint()
-        ..color = _C.s400.withOpacity(0.1)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-    );
-
-    // Card body — white with very slight blue tint
-    canvas.drawRRect(rect, Paint()..color = Colors.white);
-
-    // Left accent strip
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        Rect.fromLTWH(o.dx, o.dy + 8, 2.5, _kCardH - 16),
-        topLeft:    const Radius.circular(2),
-        bottomLeft: const Radius.circular(2),
-      ),
-      Paint()..color = accent.withOpacity(0.7),
-    );
-
-    // Card border
-    canvas.drawRRect(
-      rect,
-      Paint()
-        ..color = _C.s200.withOpacity(0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.75,
-    );
-
-    // Task name text — 2-line max
-    final lines = name.split('\n');
-    _text(
-      canvas,
-      lines[0],
-      Offset(o.dx + 10, o.dy + 9),
-      color: _C.ink3,
-      size: 9.5,
-      weight: FontWeight.w600,
-    );
-    if (lines.length > 1) {
-      _text(
-        canvas,
-        lines[1],
-        Offset(o.dx + 10, o.dy + 21),
-        color: _C.ink3,
-        size: 9.5,
-        weight: FontWeight.w600,
-      );
-    }
-
-    // Bottom row: priority dot + avatar circle
-    final priorityColors = [_C.s400, _C.stage[2], _C.stage[0]]; // vary
-    final priColor = priorityColors[row % priorityColors.length];
-
-    canvas.drawCircle(
-      Offset(o.dx + 10, o.dy + _kCardH - 9),
-      3.5,
-      Paint()..color = priColor.withOpacity(0.55),
-    );
-
-    // Avatar
-    final avatarColors = [_C.blue, _C.stage[1], _C.stage[2], _C.stage[3]];
-    final avColor = avatarColors[(col + row) % avatarColors.length];
-    canvas.drawCircle(
-      Offset(o.dx + cardW - 10, o.dy + _kCardH - 9),
-      5.5,
-      Paint()..color = avColor.withOpacity(0.2),
-    );
-    canvas.drawCircle(
-      Offset(o.dx + cardW - 10, o.dy + _kCardH - 9),
-      5.5,
-      Paint()
-        ..color = avColor.withOpacity(0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // Thin progress bar
-    final barY  = o.dy + _kCardH - 17;
-    final barW  = cardW - 20;
-    final fillF = 0.3 + (col * 0.15 + row * 0.1).clamp(0.0, 0.9);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(o.dx + 10, barY, barW, 2.5),
-        const Radius.circular(99),
-      ),
-      Paint()..color = _C.s200,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(o.dx + 10, barY, barW * fillF, 2.5),
-        const Radius.circular(99),
-      ),
-      Paint()..color = accent.withOpacity(0.55),
-    );
-  }
-
-  // ── Connector lines between column headers ────────────────────────────────
-  void _drawBoardConnectors(Canvas canvas, double boardLeft, double boardTop, Size size) {
-    for (int i = 0; i < 4; i++) {
-      final x1 = boardLeft + i * (_kCardW + _kColGap) + _kCardW;
-      final x2 = boardLeft + (i + 1) * (_kCardW + _kColGap);
-      final y  = boardTop + _kHeaderH / 2;
-      final mx = (x1 + x2) / 2;
-
-      final path = Path()
-        ..moveTo(x1, y)
-        ..cubicTo(mx, y - 6, mx, y + 6, x2, y);
-
-      _dashedPath(canvas, path,
-        color: _C.s300.withOpacity(0.6),
-        strokeW: 1.2,
-        dash: 4,
-        gap: 3,
-      );
-
-      // Arrow tip
-      _arrowTip(canvas, Offset(x2, y), color: _C.s400.withOpacity(0.55));
-    }
-  }
-
-  // ── Travelling dots on connectors — drawn in screen space ─────────────────
-  // We compute their approximate position mirroring _applyBoardTransform.
-  void _drawConnectorDots(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    const nCols  = 5;
-    final totalW = nCols * _kCardW + (nCols - 1) * _kColGap;
-    final boardLeft = (w - totalW) / 2;
-    final boardTop  = h * 0.10;
-
-    // Replicate transform math: scaleY=0.88 around centre
-    final cx = w * 0.5, cy = h * 0.48;
-
-    Offset transform(double px, double py) {
-      // Apply scaleY=0.88 around (cx,cy)
-      return Offset(px, cy + (py - cy) * 0.88);
-    }
-
-    final floatAmt = math.sin(t * math.pi * 2) * h * 0.008;
-
-    for (int i = 0; i < 4; i++) {
-      final x1 = boardLeft + i * (_kCardW + _kColGap) + _kCardW;
-      final x2 = boardLeft + (i + 1) * (_kCardW + _kColGap);
-      final rawY = boardTop + _kHeaderH / 2 + floatAmt;
-      final mx   = (x1 + x2) / 2;
-
-      // Stagger each dot
-      final dt = ((t * 1.0 + i * 0.25) % 1.0);
-
-      // Bezier on connector path
-      final px = _bez(x1, mx, mx, x2, dt);
-      final py = _bez(rawY, rawY - 6, rawY + 6, rawY, dt);
-
-      // Apply the perspective Y-scale transform
-      final sp = transform(px, py);
-
-      final fade = math.min(dt * 7, math.min((1 - dt) * 7, 1.0));
-      final accent = _C.stage[i];
-
-      // Halo
-      canvas.drawCircle(
-        sp, 9,
-        Paint()
-          ..color = accent.withOpacity(0.10 * fade)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
-      );
-      // Ring
-      canvas.drawCircle(
-        sp, 5.5,
-        Paint()
-          ..color = accent.withOpacity(0.22 * fade)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
-      );
-      // Core
-      canvas.drawCircle(sp, 3.5,
-          Paint()..color = accent.withOpacity(0.85 * fade));
-      // Bright centre
-      canvas.drawCircle(sp, 1.5,
-          Paint()..color = Colors.white.withOpacity(0.9 * fade));
-    }
-  }
-
-  // ── Brand footer ──────────────────────────────────────────────────────────
-  void _drawBrandFooter(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final bx = w * 0.07;
-    final lineY = h * 0.86;
-
-    // Separator
-    canvas.drawLine(
-      Offset(bx, lineY),
-      Offset(w * 0.93, lineY),
-      Paint()..color = _C.s200..strokeWidth = 1.0,
-    );
-
-    // Stage pills breadcrumb
-    double px = bx;
-    final pillTop = lineY + 10;
-    for (int i = 0; i < 5; i++) {
-      final acc = _C.stage[i];
-      final bg  = _C.stageBg[i];
-      final lbl = _C.stageShort[i];
-      final tw  = _measureW(lbl, 8.0, FontWeight.w700) + 14;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(px, pillTop, tw, 15),
-          const Radius.circular(99),
-        ),
-        Paint()..color = bg,
-      );
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(px, pillTop, tw, 15),
-          const Radius.circular(99),
-        ),
-        Paint()
-          ..color = acc.withOpacity(0.28)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.75,
-      );
-      _text(
-        canvas, lbl,
-        Offset(px + 7, pillTop + 2.5),
-        color: acc, size: 8.0, weight: FontWeight.w700, spacing: 0.3,
-      );
-      px += tw;
-
-      if (i < 4) {
-        _text(
-          canvas, '  →  ',
-          Offset(px, pillTop + 2.5),
-          color: _C.s300, size: 8.0, weight: FontWeight.w500,
-        );
-        px += 20;
-      }
-    }
-
-    // Logo row
-    final logoY = lineY + 30;
-    final logoRect = Rect.fromLTWH(bx, logoY, 26, 26);
-
-    // Logo gradient box
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(logoRect, const Radius.circular(7)),
-      Paint()
-        ..shader = const LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF38BDF8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(logoRect),
-    );
-
-    // Checkmark on logo
-    final lw = 26.0, lh = 26.0, ox = bx, oy = logoY;
-    final ckPath = Path()
-      ..moveTo(ox + lw * 0.28, oy + lh * 0.52)
-      ..lineTo(ox + lw * 0.44, oy + lh * 0.67)
-      ..lineTo(ox + lw * 0.76, oy + lh * 0.33);
-    canvas.drawPath(
-      ckPath,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    // Wordmark
-    _text(
-      canvas, 'smooflow',
-      Offset(bx + 34, logoY + 3),
-      color: _C.ink, size: 14.5, weight: FontWeight.w800, spacing: -0.5,
-    );
-
-    // Tagline
-    _text(
-      canvas, 'Design workflow management',
-      Offset(bx + 34, logoY + 17),
-      color: _C.s400, size: 9.5, weight: FontWeight.w500, spacing: 0.1,
-    );
-  }
-
-  // ── Edge fades ────────────────────────────────────────────────────────────
-  void _drawEdgeFades(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final rect = Rect.fromLTWH(0, 0, w, h);
-
-    // Right edge → pure white (blends with login form on desktop)
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          end:   Alignment.bottomRight,
           colors: [
-            Colors.transparent,
-            Colors.white.withOpacity(0.0),
-            Colors.white.withOpacity(0.6),
-            Colors.white,
+            Color(0xFFf4f7fc), // very slightly blue-white
+            Color(0xFFf7f9fb), // exact scaffold colour
+            Color(0xFFf0f5ff), // gentle blue tint at corner
           ],
-          stops: const [0.0, 0.6, 0.82, 1.0],
-        ).createShader(rect),
-    );
-
-    // Top edge
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.white.withOpacity(0.45), Colors.transparent],
-          stops: const [0.0, 0.15],
-        ).createShader(rect),
-    );
-
-    // Bottom edge
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Colors.white.withOpacity(0.5), Colors.transparent],
-          stops: const [0.0, 0.18],
-        ).createShader(rect),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Drawing utilities
-  // ─────────────────────────────────────────────────────────────────────────
-  void _text(Canvas canvas, String str, Offset pos, {
-    required Color color,
-    required double size,
-    required FontWeight weight,
-    double spacing = 0,
-  }) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: str,
-        style: TextStyle(
-          color: color, fontSize: size, fontWeight: weight,
-          letterSpacing: spacing, height: 1.2,
+          stops: [0.0, 0.55, 1.0],
         ),
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, pos);
+    );
   }
+}
 
-  double _measureW(String str, double size, FontWeight weight) {
-    final tp = TextPainter(
-      text: TextSpan(text: str, style: TextStyle(fontSize: size, fontWeight: weight)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    return tp.width;
+// ─────────────────────────────────────────────────────────────────────────────
+// SOFT BLOB
+// ─────────────────────────────────────────────────────────────────────────────
+class _SoftBlob extends StatelessWidget {
+  final double left, top, diameter;
+  final Color color;
+  const _SoftBlob({required this.left, required this.top, required this.diameter, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: left, top: top,
+      child: IgnorePointer(
+        child: Container(
+          width: diameter, height: diameter,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [color, Colors.transparent],
+            ),
+          ),
+        ),
+      ),
+    );
   }
+}
 
-  void _dashedPath(Canvas canvas, Path path, {
-    required Color color, required double strokeW,
-    required double dash, required double gap,
-  }) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeW
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    for (final m in path.computeMetrics()) {
-      double d = 0;
-      bool on = true;
-      while (d < m.length) {
-        final end = (d + (on ? dash : gap)).clamp(0.0, m.length);
-        if (on) canvas.drawPath(m.extractPath(d, end), paint);
-        d = end;
-        on = !on;
+// ─────────────────────────────────────────────────────────────────────────────
+// LIGHT GRID
+// ─────────────────────────────────────────────────────────────────────────────
+class _LightGrid extends StatelessWidget {
+  const _LightGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(child: CustomPaint(painter: _GridP()));
+  }
+}
+
+class _GridP extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    const step = 44.0;
+    final line = Paint()
+      ..color = _P.s200.withOpacity(0.55)
+      ..strokeWidth = 0.5;
+    final dot = Paint()..color = _P.s300.withOpacity(0.4);
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), line);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), line);
+    }
+    for (double x = 0; x < size.width; x += step) {
+      for (double y = 0; y < size.height; y += step) {
+        canvas.drawCircle(Offset(x, y), 1.2, dot);
       }
     }
   }
 
-  void _arrowTip(Canvas canvas, Offset tip, {required Color color}) {
-    const s = 4.0;
+  @override
+  bool shouldRepaint(_) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE COLUMNS
+// ─────────────────────────────────────────────────────────────────────────────
+const _kColW   = 142.0;
+const _kColGap = 14.0;
+
+class _PipelineColumns extends StatelessWidget {
+  final double breathe, entry;
+  final Size size;
+
+  static const _tasks = [
+    [['Brand identity', 0], ['Letterhead', 1], ['Poster A3', 0]],
+    [['Hero banner', 2],    ['Social pack', 1], ['Icon set', 0]],
+    [['Trade show\nbooth', 1], ['Brochure v3', 0]],
+    [['Spring kit', 0],    ['Product\nsheet', 1]],
+    [['Vinyl wrap', 1],    ['Packaging\ninserts', 0], ['Poster A1', 2]],
+  ];
+
+  const _PipelineColumns({required this.breathe, required this.entry, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final w = size.width, h = size.height;
+    const n = 5;
+    final totalW = n * _kColW + (n - 1) * _kColGap;
+    // Nudge columns left so right side stays clear for KPI chips
+    final startX = (w - totalW) / 2 - w * 0.06;
+    final startY = h * 0.07;
+
+    return Stack(
+      children: List.generate(n, (i) {
+        final drift  = math.sin(breathe * math.pi * 2 + i * 0.6) * h * 0.009;
+        final et     = ((entry - 0.06 - i * 0.06) / (1 - 0.06 - i * 0.06)).clamp(0.0, 1.0);
+        final eased  = Curves.easeOutCubic.transform(et);
+
+        return Positioned(
+          left: startX + i * (_kColW + _kColGap),
+          top:  startY + drift + (1 - eased) * 28,
+          child: Opacity(
+            opacity: eased,
+            child: _Column(
+              stageIndex: i,
+              taskData: List<List<dynamic>>.from(_tasks[i]),
+              maxH: h * 0.78,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SINGLE COLUMN — real widget, real shadow
+// ─────────────────────────────────────────────────────────────────────────────
+class _Column extends StatelessWidget {
+  final int stageIndex;
+  final List<List<dynamic>> taskData;
+  final double maxH;
+
+  const _Column({required this.stageIndex, required this.taskData, required this.maxH});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent  = _P.stage[stageIndex];
+    final bg      = _P.stageBg[stageIndex];
+    final border  = _P.stageBorder[stageIndex];
+    final label   = _P.stageLabel[stageIndex];
+
+    return Container(
+      width: _kColW,
+      constraints: BoxConstraints(maxHeight: maxH),
+      decoration: BoxDecoration(
+        color: _P.cardWhite,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _P.s200, width: 1.0),
+        boxShadow: [
+          // Ambient shadow
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
+          ),
+          // Coloured glow at base
+          BoxShadow(
+            color: accent.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Column header ────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+              decoration: BoxDecoration(
+                color: bg,
+                border: Border(bottom: BorderSide(color: border.withOpacity(0.6))),
+              ),
+              child: Row(
+                children: [
+                  // Accent bar
+                  Container(
+                    width: 3, height: 13,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                        letterSpacing: 0.1,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Count badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${taskData.length}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ── Task cards ───────────────────────────────────────────
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.all(7),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: taskData.asMap().entries.map((e) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _TaskTile(
+                        name:       e.value[0] as String,
+                        priority:   e.value[1] as int,
+                        accent:     accent,
+                        rowIdx:     e.key,
+                        stageIndex: stageIndex,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK TILE
+// ─────────────────────────────────────────────────────────────────────────────
+class _TaskTile extends StatelessWidget {
+  final String name;
+  final int    priority;   // 0 normal, 1 high, 2 urgent
+  final Color  accent;
+  final int    rowIdx, stageIndex;
+
+  static const _priColor = [
+    Color(0xFF94A3B8), // normal
+    Color(0xFFF59E0B), // high
+    Color(0xFFEF4444), // urgent
+  ];
+
+  static const _avColor = [
+    Color(0xFF3b72e3), Color(0xFF8B5CF6),
+    Color(0xFF10B981), Color(0xFFF59E0B),
+  ];
+
+  const _TaskTile({
+    required this.name, required this.priority,
+    required this.accent, required this.rowIdx, required this.stageIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pri = _priColor[priority.clamp(0, 2)];
+    final av  = _avColor[(stageIndex + rowIdx) % 4];
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: _P.scaffold,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _P.s200, width: 0.75),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left accent strip
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.65),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  bottomLeft: Radius.circular(8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: _P.ink,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      // Priority dot
+                      Container(
+                        width: 6, height: 6,
+                        decoration: BoxDecoration(color: pri, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      // Progress bar
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: Stack(
+                            children: [
+                              Container(height: 3, color: _P.s200),
+                              FractionallySizedBox(
+                                widthFactor: (0.25 + stageIndex * 0.14).clamp(0.1, 0.95),
+                                child: Container(
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: accent.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Avatar
+                      Container(
+                        width: 17, height: 17,
+                        decoration: BoxDecoration(
+                          color: av.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: av.withOpacity(0.4), width: 1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KPI CHIP — top-right floating cards
+// ─────────────────────────────────────────────────────────────────────────────
+class _Chip extends StatelessWidget {
+  final double entry, delay;
+  final double top, right;
+  final String label, value;
+  final Color accent;
+
+  const _Chip({
+    required this.entry, required this.delay,
+    required this.top,   required this.right,
+    required this.label, required this.value,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t     = ((entry - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+    final eased = Curves.easeOutCubic.transform(t);
+
+    return Positioned(
+      top: top, right: right,
+      child: Opacity(
+        opacity: eased,
+        child: Transform.translate(
+          offset: Offset(16 * (1 - eased), 0),
+          child: Container(
+            width: 148,
+            padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
+            decoration: BoxDecoration(
+              color: _P.cardWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _P.s200, width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                  spreadRadius: -3,
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Icon container
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 9, height: 9,
+                      decoration: BoxDecoration(
+                        color: accent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: _P.ink,
+                          letterSpacing: -0.8,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: _P.s400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE BAR — segmented overview card at bottom
+// ─────────────────────────────────────────────────────────────────────────────
+class _PipelineBar extends StatelessWidget {
+  final double entry, delay;
+  final double left, bottom, width;
+
+  static const _fracs = [0.18, 0.30, 0.16, 0.22, 0.14];
+
+  const _PipelineBar({
+    required this.entry, required this.delay,
+    required this.left,  required this.bottom, required this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t     = ((entry - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+    final eased = Curves.easeOutCubic.transform(t);
+
+    return Positioned(
+      left: left, bottom: bottom,
+      child: Opacity(
+        opacity: eased,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - eased)),
+          child: Container(
+            width: width,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: _P.cardWhite,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _P.s200, width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.055),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -4,
+                ),
+                BoxShadow(
+                  color: _P.blue.withOpacity(0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(children: [
+                  Text(
+                    'Pipeline Overview',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: _P.ink,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _P.stage[3].withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: _P.stage[3].withOpacity(0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5, height: 5,
+                          decoration: BoxDecoration(
+                            color: _P.stage[3],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '22 active',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: _P.stage[3],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+
+                // Segmented bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    children: List.generate(5, (i) => Expanded(
+                      flex: (_fracs[i] * 100).round(),
+                      child: Container(
+                        height: 7,
+                        color: _P.stage[i].withOpacity(0.70),
+                        margin: EdgeInsets.only(right: i < 4 ? 2 : 0),
+                      ),
+                    )),
+                  ),
+                ),
+                const SizedBox(height: 11),
+
+                // Stage labels row
+                Row(
+                  children: List.generate(5, (i) => Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _P.stageLabel[i].split(' ').first,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: _P.stage[i],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '${(_fracs[i] * 22).round()}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _P.ink,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BRAND ROW
+// ─────────────────────────────────────────────────────────────────────────────
+class _BrandRow extends StatelessWidget {
+  final double entry;
+  const _BrandRow({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final t     = ((entry - 0.15) / 0.85).clamp(0.0, 1.0);
+    final eased = Curves.easeOut.transform(t);
+
+    return Opacity(
+      opacity: eased,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Logo box — matches exact gradient from the rest of the app
+          Container(
+            width: 30, height: 30,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3b72e3), Color(0xFF38BDF8)],
+                begin: Alignment.topLeft,
+                end:   Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: _P.blue.withOpacity(0.30),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: CustomPaint(painter: _CheckP()),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'smooflow',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: _P.ink,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              Text(
+                'Design workflow management',
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  color: _P.s400,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckP extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
     final path = Path()
-      ..moveTo(tip.dx - s, tip.dy - s * 1.3)
-      ..lineTo(tip.dx, tip.dy)
-      ..lineTo(tip.dx + s, tip.dy - s * 1.3);
+      ..moveTo(w * 0.26, h * 0.52)
+      ..lineTo(w * 0.44, h * 0.68)
+      ..lineTo(w * 0.77, h * 0.32);
     canvas.drawPath(
       path,
       Paint()
-        ..color = color
+        ..color = Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
+        ..strokeWidth = w * 0.115
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round,
     );
   }
 
-  double _bez(double p0, double p1, double p2, double p3, double t) {
-    final m = 1 - t;
-    return m*m*m*p0 + 3*m*m*t*p1 + 3*m*t*t*p2 + t*t*t*p3;
-  }
+  @override
+  bool shouldRepaint(_) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RIGHT FADE — dissolves into scaffold colour so login card blends in
+// ─────────────────────────────────────────────────────────────────────────────
+class _RightFade extends StatelessWidget {
+  const _RightFade();
 
   @override
-  bool shouldRepaint(_ScenePainter old) => old.t != t;
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end:   Alignment.centerRight,
+              colors: [
+                Colors.transparent,
+                Colors.transparent,
+                Color(0x20f7f9fb),
+                Color(0xDDf7f9fb),
+                Color(0xFFf7f9fb),
+              ],
+              stops: [0.0, 0.50, 0.68, 0.85, 1.0],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOP + BOTTOM SOFTENERS
+// ─────────────────────────────────────────────────────────────────────────────
+class _EdgeSoftener extends StatelessWidget {
+  const _EdgeSoftener();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Column(
+          children: [
+            // Top fade
+            Container(
+              height: 80,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end:   Alignment.bottomCenter,
+                  colors: [Color(0xFFf7f9fb), Colors.transparent],
+                ),
+              ),
+            ),
+            const Spacer(),
+            // Bottom fade
+            Container(
+              height: 80,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end:   Alignment.topCenter,
+                  colors: [Color(0xFFf7f9fb), Colors.transparent],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
