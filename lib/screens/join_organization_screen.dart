@@ -48,13 +48,10 @@ class _JoinOrganizationScreenState
 
     return Scaffold(
       backgroundColor: Color(0xFFf7f9fb),
-      body: Stack(
-        children: [
-          Positioned.fill(child: LoginBackground()),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             Container(
               margin: EdgeInsets.symmetric(horizontal: paddingValue),
               padding: EdgeInsets.all(paddingValue),
@@ -265,8 +262,8 @@ class _JoinOrganizationScreenState
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
