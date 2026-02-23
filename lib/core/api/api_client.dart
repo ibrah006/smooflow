@@ -3,7 +3,7 @@ import 'package:smooflow/core/api/local_http.dart';
 
 class ApiClient {
   static get liveServerUrl => dotenv.env['API_URL'];
-  static var localDevUrl = 'http://192.168.8.216:3000';
+  static var localDevUrl = 'http://localhost:3000';
 
   static final LocalHttp http = LocalHttp(baseUrl: localDevUrl);
 }

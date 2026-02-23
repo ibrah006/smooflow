@@ -433,7 +433,7 @@ class _Sidebar extends ConsumerWidget {
                 ),
                 _SidebarNavItem(
                   icon: Icons.list_alt_outlined,
-                  label: 'All Tasks',
+                  label: 'List',
                   isActive: viewMode == ViewMode.list,
                   onTap: () => onViewModeChanged(ViewMode.list),
                 ),
