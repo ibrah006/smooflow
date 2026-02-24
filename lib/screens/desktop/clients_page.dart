@@ -29,10 +29,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/core/models/company.dart';
-import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
-import 'package:smooflow/core/services/login_service.dart';
-import 'package:smooflow/providers/project_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
@@ -525,36 +522,36 @@ class _Toolbar extends StatelessWidget {
         const SizedBox(width: 10),
 
         // ── Status filter tabs ─────────────────────────────────────────
-        _FilterChip(
-          label: 'All',
-          isActive: filter == _FilterStatus.all,
-          onTap: () => onFilterChanged(_FilterStatus.all),
-        ),
-        const SizedBox(width: 4),
-        _FilterChip(
-          label: 'Active',
-          count: activeCount,
-          dotColor: _T.green,
-          isActive: filter == _FilterStatus.active,
-          onTap: () => onFilterChanged(_FilterStatus.active),
-        ),
-        const SizedBox(width: 4),
-        _FilterChip(
-          label: 'Pending',
-          count: pendingCount,
-          dotColor: _T.amber,
-          isActive: filter == _FilterStatus.pending,
-          onTap: () => onFilterChanged(_FilterStatus.pending),
-        ),
-        const SizedBox(width: 4),
-        _FilterChip(
-          label: 'Inactive',
-          count: inactiveCount,
-          dotColor: _T.slate400,
-          isActive: filter == _FilterStatus.inactive,
-          onTap: () => onFilterChanged(_FilterStatus.inactive),
-        ),
-        const SizedBox(width: 10),
+        // _FilterChip(
+        //   label: 'All',
+        //   isActive: filter == _FilterStatus.all,
+        //   onTap: () => onFilterChanged(_FilterStatus.all),
+        // ),
+        // const SizedBox(width: 4),
+        // _FilterChip(
+        //   label: 'Active',
+        //   count: activeCount,
+        //   dotColor: _T.green,
+        //   isActive: filter == _FilterStatus.active,
+        //   onTap: () => onFilterChanged(_FilterStatus.active),
+        // ),
+        // const SizedBox(width: 4),
+        // _FilterChip(
+        //   label: 'Pending',
+        //   count: pendingCount,
+        //   dotColor: _T.amber,
+        //   isActive: filter == _FilterStatus.pending,
+        //   onTap: () => onFilterChanged(_FilterStatus.pending),
+        // ),
+        // const SizedBox(width: 4),
+        // _FilterChip(
+        //   label: 'Inactive',
+        //   count: inactiveCount,
+        //   dotColor: _T.slate400,
+        //   isActive: filter == _FilterStatus.inactive,
+        //   onTap: () => onFilterChanged(_FilterStatus.inactive),
+        // ),
+        // const SizedBox(width: 10),
 
         // ── View toggle ────────────────────────────────────────────────
         Container(
@@ -1364,6 +1361,7 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
 
     final phone = _phnCtrl.text.trim().isNotEmpty? _phnCtrl.text.trim() : null;
     final email = _emlCtrl.text.trim().isNotEmpty? _emlCtrl.text.trim() : null;
+    final contactName = _conCtrl.text.trim().isNotEmpty? _conCtrl.text.trim() : null;
 
     final errorMessage = await CompanyRepo.createCompany(
       Company.create(
@@ -1371,7 +1369,8 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
         description: "",
         phone: phone,
         email: email,
-        industry: _selectedIndustry
+        industry: _selectedIndustry,
+        contactName: contactName
       ),
     );
 
