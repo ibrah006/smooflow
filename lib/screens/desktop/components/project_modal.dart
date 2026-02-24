@@ -134,7 +134,13 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
         label: 'Customer',
         required: true,
         child: _clients.isEmpty
-            ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+            ? FilledButton.icon(
+              onPressed: () {},
+              icon: Icon(Icons.add),
+              style: FilledButton.styleFrom(
+                textStyle: TextStyle(fontWeight: FontWeight.w500)
+              ),
+              label: Text("Add Client"))
             : ModalDropdown<Company?>(
                 value: _client,
                 items: _clients.map((c) => DropdownMenuItem(

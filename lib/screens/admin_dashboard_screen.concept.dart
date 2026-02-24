@@ -940,7 +940,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                   children: [
                     Icon(Icons.add_rounded, size: 16, color: Colors.white),
                     SizedBox(width: 5),
-                    Text('New Project',
+                    Text('New Projecs',
                         style: TextStyle(fontSize: 13,
                             fontWeight: FontWeight.w600, color: Colors.white)),
                   ],
