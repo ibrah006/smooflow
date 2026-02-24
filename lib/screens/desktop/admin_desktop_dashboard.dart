@@ -18,6 +18,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/clients_page.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/project_modal.dart';
@@ -90,7 +91,7 @@ _StageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, board, list }
+enum _AdminView { overview, board, list, clients }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -246,27 +247,29 @@ class _AdminDesktopDashboardScreenState
                       child: Row(
                         children: [
                           Expanded(
-                            child: _view == _AdminView.overview
-                          ? _AdminAnalyticsView(
-                              tasks: _pipelineTasks,
-                              projects: _projects,
-                              members: _members,
-                            )
-                          : _view == _AdminView.board? BoardView(
-                                        tasks: _visibleTasks,
-                                        projects: _projects,
-                                        selectedTaskId: _selectedTaskId,
-                                        onTaskSelected: _selectTask,
-                                        onAddTask: _showTaskModal,
-                                        addTaskFocusNode: _addTaskFocusNode,
-                                        isAddingTask: _isAddingTask,
-                                        selectedProjectId: _selectedProjectId
-                                      ) : TaskListView(
-                                      tasks: _visibleTasks,
-                                      projects: _projects,
-                                      selectedTaskId: _selectedTaskId,
-                                      onTaskSelected: _selectTask,
-                                    ),
+                            child: ClientsPage()
+                          //   _view == _AdminView.overview
+                          // ? _AdminAnalyticsView(
+                          //     tasks: _pipelineTasks,
+                          //     projects: _projects,
+                          //     members: _members,
+                          //   )
+                          // : _view == _AdminView.board? BoardView(
+                          //               tasks: _visibleTasks,
+                          //               projects: _projects,
+                          //               selectedTaskId: _selectedTaskId,
+                          //               onTaskSelected: _selectTask,
+                          //               onAddTask: _showTaskModal,
+                          //               addTaskFocusNode: _addTaskFocusNode,
+                          //               isAddingTask: _isAddingTask,
+                          //               selectedProjectId: _selectedProjectId
+                          //             ) : TaskListView(
+                          //             tasks: _visibleTasks,
+                          //             projects: _projects,
+                          //             selectedTaskId: _selectedTaskId,
+                          //             onTaskSelected: _selectTask,
+                          //           )
+                                    
                           ),
                           // ── Detail panel ──────────────────────────────────
                           AnimatedContainer(
@@ -486,6 +489,28 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                       onTap: () => widget.onProjectSelected(p.id),
                     );
                   }),
+                ],
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+            child: _SidebarLabel('Manage'),
+          ),
+          const SizedBox(height: 4),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _SidebarNavItem(
+                    icon: Icons.supervisor_account_sharp,
+                    label: 'Clients',
+                    isActive: widget.currentView == _AdminView.clients,
+                    onTap: () => widget.onViewChanged(_AdminView.clients),
+                  )
                 ],
               ),
             ),
