@@ -734,7 +734,6 @@ class _ClientTable extends StatelessWidget {
               Expanded(flex: 1, child: _SortHeader('Projects', _SortField.projects, sort, sortAsc, onSort)),
               Expanded(flex: 1, child: _SortHeader('Tasks', _SortField.tasks, sort, sortAsc, onSort)),
               Expanded(flex: 2, child: _SortHeader('Joined', _SortField.joined, sort, sortAsc, onSort)),
-              Expanded(flex: 2, child: _ColHeader('Status')),
               const SizedBox(width: 36),                // actions spacer
             ]),
           ),
@@ -934,12 +933,6 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                     style: const TextStyle(
                         fontSize: 12, color: _T.slate400,
                         fontWeight: FontWeight.w500)),
-              ),
-
-              // Status
-              Expanded(
-                flex: 2,
-                child: _StatusBadge(c.status),
               ),
 
               // Actions

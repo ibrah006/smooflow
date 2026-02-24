@@ -15,6 +15,10 @@ class Company {
 
   final bool _isSample; // private flag for sample data
 
+  String? email;
+  String? industry;
+  String? phone;
+
   // Sample data check
   bool get isSample => _isSample;
 
