@@ -18,6 +18,7 @@ class Company {
   String? email;
   String? industry;
   String? phone;
+  String? contactName;
 
   // Sample data check
   bool get isSample => _isSample;
@@ -32,7 +33,8 @@ class Company {
     required this.projects,
     required this.email,
     required this.industry,
-    required this.phone
+    required this.phone,
+    required this.contactName
   }) : _isSample = false;
 
   Company.create({
@@ -40,7 +42,8 @@ class Company {
     required this.description,
     this.email,
     this.industry,
-    this.phone})
+    this.phone,
+    this.contactName})
     : id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
@@ -76,7 +79,8 @@ class Company {
               .toList(),
       email: json['emial'],
       phone: json['phone'],
-      industry: json['industry']
+      industry: json['industry'],
+      contactName: json["contactName"]
     );
   }
 
@@ -90,7 +94,8 @@ class Company {
       'projects': projects,
       'email': email,
       'phone': phone,
-      'industry': industry
+      'industry': industry,
+      'contactName': contactName
     };
   }
 }

@@ -27,7 +27,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
@@ -1306,6 +1309,8 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
   late final AnimationController _ac = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 320));
 
+  bool _isLoading = false;
+
   final _namCtrl  = TextEditingController();
   final _conCtrl  = TextEditingController();
   final _emlCtrl  = TextEditingController();
@@ -1352,197 +1357,230 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
     if (mounted) Navigator.of(context).pop();
   }
 
+  void createClient() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final phone = _phnCtrl.text.trim().isNotEmpty? _phnCtrl.text.trim() : null;
+    final email = _emlCtrl.text.trim().isNotEmpty? _emlCtrl.text.trim() : null;
+
+    final errorMessage = await CompanyRepo.createCompany(
+      Company.create(
+        name: _namCtrl.text,
+        description: "",
+        phone: phone,
+        email: email,
+        industry: _selectedIndustry
+      ),
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ac,
-      builder: (_, child) => Opacity(opacity: _ac.value, child: child),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: _T.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 4),
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                    color: _T.slate200,
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 4),
-
-            // Title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 8, 22, 0),
-              child: Row(children: [
-                Text(_isEdit ? 'Edit Client' : 'Add New Client',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800,
-                        color: _T.ink, letterSpacing: -0.3)),
-                const Spacer(),
-                _IconBtn(Icons.close_rounded, () => Navigator.of(context).pop()),
-              ]),
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: Text(
-                _isEdit
-                    ? 'Update the client details below.'
-                    : 'Fill in the details to create a new client account.',
-                style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
-            ),
-            const SizedBox(height: 20),
-            const Divider(height: 1, color: _T.slate100),
-
-            // Form
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Row 1: Company + Contact
-                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Expanded(child: _Field(
-                        label: 'Company Name',
-                        hint: 'e.g. Harrington & Co',
-                        controller: _namCtrl,
-                        icon: Icons.business_outlined,
-                        required: true,
-                      )),
-                      const SizedBox(width: 14),
-                      Expanded(child: _Field(
-                        label: 'Contact Name',
-                        hint: 'Primary contact person',
-                        controller: _conCtrl,
-                        icon: Icons.person_outline,
-                      )),
-                    ]),
-                    const SizedBox(height: 14),
-
-                    // Row 2: Email + Phone
-                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Expanded(child: _Field(
-                        label: 'Email Address',
-                        hint: 'client@company.com',
-                        controller: _emlCtrl,
-                        icon: Icons.email_outlined,
-                        required: true,
-                        keyboard: TextInputType.emailAddress,
-                      )),
-                      const SizedBox(width: 14),
-                      Expanded(child: _Field(
-                        label: 'Phone',
-                        hint: '+1 212 555 0100',
-                        controller: _phnCtrl,
-                        icon: Icons.phone_outlined,
-                        keyboard: TextInputType.phone,
-                      )),
-                    ]),
-                    const SizedBox(height: 14),
-
-                    // Industry dropdown
-                    _FieldLabel('Industry'),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _selectedIndustry,
-                      hint: const Text('Select an industry',
-                          style: TextStyle(fontSize: 13, color: _T.slate400)),
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 16, color: _T.slate400),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.category_outlined,
-                            size: 15, color: _T.slate400),
-                        filled: true,
-                        fillColor: _T.slate50,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(_T.r),
-                            borderSide: const BorderSide(color: _T.slate200)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(_T.r),
-                            borderSide: const BorderSide(color: _T.slate200)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(_T.r),
-                            borderSide: const BorderSide(color: _T.blue, width: 1.5)),
-                      ),
-                      dropdownColor: _T.white,
-                      borderRadius: BorderRadius.circular(_T.rLg),
-                      items: _industries.map((ind) => DropdownMenuItem(
-                        value: ind,
-                        child: Text(ind,
-                            style: const TextStyle(
-                                fontSize: 13, color: _T.ink, fontWeight: FontWeight.w500)),
-                      )).toList(),
-                      onChanged: (v) => setState(() => _selectedIndustry = v),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      child: AnimatedBuilder(
+        animation: _ac,
+        builder: (_, child) => Opacity(opacity: _ac.value, child: child),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: _T.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 4),
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(
+                      color: _T.slate200,
+                      borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-            ),
-
-            // Actions
-            Container(
-              padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
-              decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: _T.slate100))),
-              child: Row(children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _T.slate500,
-                      side: const BorderSide(color: _T.slate200),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(_T.r)),
-                    ),
-                    child: const Text('Cancel',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _T.blue,
-                      disabledBackgroundColor: _T.slate200,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(_T.r)),
-                    ),
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 14, height: 14,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : Icon(_isEdit ? Icons.check_rounded : Icons.add_rounded,
-                            size: 16),
-                    label: Text(
-                      _saving
-                          ? (_isEdit ? 'Saving…' : 'Creating…')
-                          : (_isEdit ? 'Save Changes' : 'Create Client'),
+              const SizedBox(height: 4),
+      
+              // Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 8, 22, 0),
+                child: Row(children: [
+                  Text(_isEdit ? 'Edit Client' : 'Add New Client',
                       style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
+                          fontSize: 16, fontWeight: FontWeight.w800,
+                          color: _T.ink, letterSpacing: -0.3)),
+                  const Spacer(),
+                  _IconBtn(Icons.close_rounded, () => Navigator.of(context).pop()),
+                ]),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                child: Text(
+                  _isEdit
+                      ? 'Update the client details below.'
+                      : 'Fill in the details to create a new client account.',
+                  style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1, color: _T.slate100),
+      
+              // Form
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Row 1: Company + Contact
+                      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Expanded(child: _Field(
+                          label: 'Company Name',
+                          hint: 'e.g. Harrington & Co',
+                          controller: _namCtrl,
+                          icon: Icons.business_outlined,
+                          required: true,
+                        )),
+                        const SizedBox(width: 14),
+                        Expanded(child: _Field(
+                          label: 'Contact Name',
+                          hint: 'Primary contact person',
+                          controller: _conCtrl,
+                          icon: Icons.person_outline,
+                        )),
+                      ]),
+                      const SizedBox(height: 14),
+      
+                      // Row 2: Email + Phone
+                      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Expanded(child: _Field(
+                          label: 'Email Address',
+                          hint: 'client@company.com',
+                          controller: _emlCtrl,
+                          icon: Icons.email_outlined,
+                          required: true,
+                          keyboard: TextInputType.emailAddress,
+                        )),
+                        const SizedBox(width: 14),
+                        Expanded(child: _Field(
+                          label: 'Phone',
+                          hint: '+1 212 555 0100',
+                          controller: _phnCtrl,
+                          icon: Icons.phone_outlined,
+                          keyboard: TextInputType.phone,
+                        )),
+                      ]),
+                      const SizedBox(height: 14),
+      
+                      // Industry dropdown
+                      _FieldLabel('Industry'),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: _selectedIndustry,
+                        hint: const Text('Select an industry',
+                            style: TextStyle(fontSize: 13, color: _T.slate400)),
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                            size: 16, color: _T.slate400),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.category_outlined,
+                              size: 15, color: _T.slate400),
+                          filled: true,
+                          fillColor: _T.slate50,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                              borderSide: const BorderSide(color: _T.slate200)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                              borderSide: const BorderSide(color: _T.slate200)),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                              borderSide: const BorderSide(color: _T.blue, width: 1.5)),
+                        ),
+                        dropdownColor: _T.white,
+                        borderRadius: BorderRadius.circular(_T.rLg),
+                        items: _industries.map((ind) => DropdownMenuItem(
+                          value: ind,
+                          child: Text(ind,
+                              style: const TextStyle(
+                                  fontSize: 13, color: _T.ink, fontWeight: FontWeight.w500)),
+                        )).toList(),
+                        onChanged: (v) => setState(() => _selectedIndustry = v),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-              ]),
-            ),
-          ],
+              ),
+      
+              // Actions
+              Container(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
+                decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: _T.slate100))),
+                child: Row(children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _T.slate500,
+                        side: const BorderSide(color: _T.slate200),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(_T.r)),
+                      ),
+                      child: const Text('Cancel',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _T.blue,
+                        disabledBackgroundColor: _T.slate200,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(_T.r)),
+                      ),
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : Icon(_isEdit ? Icons.check_rounded : Icons.add_rounded,
+                              size: 16),
+                      label: Text(
+                        _saving
+                            ? (_isEdit ? 'Saving…' : 'Creating…')
+                            : (_isEdit ? 'Save Changes' : 'Create Client'),
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+          ),
         ),
       ),
     );
