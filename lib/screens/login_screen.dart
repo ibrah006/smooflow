@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:smooflow/components/login_background.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
@@ -374,10 +375,7 @@ class _LoginScreenState extends State<LoginScreen>
       await CompanyRepo.fetchCompanies();
       await ProjectRepo().fetchProjects();
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-        (Route<dynamic> route) => false,
-      );
+      AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home);
     } else if (isLoggedInStatus.loginStatus == LoginStatus.noOrganization) {
       await CompanyRepo.fetchCompanies();
       // Show create/join organization screen
