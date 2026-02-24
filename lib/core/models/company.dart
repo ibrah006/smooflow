@@ -30,6 +30,9 @@ class Company {
     required this.createdAt,
     required this.createdByUserId,
     required this.projects,
+    required this.email,
+    required this.industry,
+    required this.phone
   }) : _isSample = false;
 
   Company.create({required this.name, required this.description})
@@ -66,6 +69,9 @@ class Company {
           ((json['projects'] ?? []) as List<dynamic>)
               .map((projectJson) => Project.getIdFromJson(projectJson))
               .toList(),
+      email: json['emial'],
+      phone: json['phone'],
+      industry: json['industry']
     );
   }
 
@@ -77,6 +83,9 @@ class Company {
       'isActive': isActive,
       'createdBy': createdByUserId,
       'projects': projects,
+      'email': email,
+      'phone': phone,
+      'industry': industry
     };
   }
 }
