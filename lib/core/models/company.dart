@@ -35,7 +35,12 @@ class Company {
     required this.phone
   }) : _isSample = false;
 
-  Company.create({required this.name, required this.description})
+  Company.create({
+    required this.name,
+    required this.description,
+    this.email,
+    this.industry,
+    this.phone})
     : id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
