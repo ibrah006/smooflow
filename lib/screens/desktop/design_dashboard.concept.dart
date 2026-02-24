@@ -163,7 +163,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   /// Add a new project through the Riverpod notifier.
   Future<void> _addProject(Project p) async {
-    // await ref.read(projectNotifierProvider.notifier).addProject(p);
+    await ref.read(projectNotifierProvider.notifier).create(p);
     if (!mounted) return;
     _showSnack('Project "${p.name}" created', _T.green);
   }

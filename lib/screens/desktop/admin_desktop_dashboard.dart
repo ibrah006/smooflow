@@ -20,6 +20,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
+import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
@@ -313,7 +314,7 @@ class _AdminDesktopDashboardScreenState
 // ─────────────────────────────────────────────────────────────────────────────
 // SIDEBAR
 // ─────────────────────────────────────────────────────────────────────────────
-class _AdminSidebar extends StatelessWidget {
+class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
   final List<Project> projects;
@@ -331,6 +332,43 @@ class _AdminSidebar extends StatelessWidget {
     required this.onViewChanged,
     required this.onProjectSelected,
   });
+
+  @override
+  ConsumerState<_AdminSidebar> createState() => _AdminSidebarState();
+}
+
+class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
+  void _showSnack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 10),
+          Flexible(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+        ]),
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rLg)),
+        duration: const Duration(seconds: 3),
+        elevation: 8,
+      ),
+    );
+  }
+
+  /// Add a new project through the Riverpod notifier.
+  Future<void> _addProject(Project p) async {
+    await ref.read(projectNotifierProvider.notifier).create(p);
+    if (!mounted) return;
+    _showSnack('Project "${p.name}" created', _T.green);
+  }
+
+  void _showProjectModal() {
+    showDialog(
+      context: context,
+      builder: (_) => ProjectModal(onSave: _addProject),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -395,24 +433,24 @@ class _AdminSidebar extends StatelessWidget {
                 _SidebarNavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Overview',
-                  isActive: currentView == _AdminView.overview,
-                  onTap: () => onViewChanged(_AdminView.overview),
+                  isActive: widget.currentView == _AdminView.overview,
+                  onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
                 _SidebarNavItem(
                   icon: Icons.view_kanban_outlined,
                   label: 'Board',
-                  isActive: currentView == _AdminView.board,
-                  badge: tasks
+                  isActive: widget.currentView == _AdminView.board,
+                  badge: widget.tasks
                       .where((t) => t.status != TaskStatus.clientApproved)
                       .length
                       .toString(),
-                  onTap: () => onViewChanged(_AdminView.board),
+                  onTap: () => widget.onViewChanged(_AdminView.board),
                 ),
                 _SidebarNavItem(
                   icon: Icons.list_alt_outlined,
                   label: 'List',
-                  isActive: currentView == _AdminView.list,
-                  onTap: () => onViewChanged(_AdminView.list),
+                  isActive: widget.currentView == _AdminView.list,
+                  onTap: () => widget.onViewChanged(_AdminView.list),
                 ),
               ],
             ),
@@ -433,22 +471,45 @@ class _AdminSidebar extends StatelessWidget {
                   _SidebarProjectRow(
                     name: 'All projects',
                     color: _T.slate400,
-                    count: tasks.length,
-                    isActive: selectedProjectId == null,
-                    onTap: () => onProjectSelected(null),
+                    count: widget.tasks.length,
+                    isActive: widget.selectedProjectId == null,
+                    onTap: () => widget.onProjectSelected(null),
                   ),
-                  ...projects.map((p) {
+                  ...widget.projects.map((p) {
                     final cnt =
-                        tasks.where((t) => t.projectId == p.id).length;
+                        widget.tasks.where((t) => t.projectId == p.id).length;
                     return _SidebarProjectRow(
                       name: p.name,
                       color: p.color,
                       count: cnt,
-                      isActive: selectedProjectId == p.id,
-                      onTap: () => onProjectSelected(p.id),
+                      isActive: widget.selectedProjectId == p.id,
+                      onTap: () => widget.onProjectSelected(p.id),
                     );
                   }),
                 ],
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
+            child: InkWell(
+              onTap: _showProjectModal,
+              borderRadius: BorderRadius.circular(_T.r),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white.withOpacity(0.14), width: 1.5),
+                  borderRadius: BorderRadius.circular(_T.r),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, size: 14, color: Colors.white.withOpacity(0.4)),
+                    const SizedBox(width: 7),
+                    Text('New Project', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.4))),
+                  ],
+                ),
               ),
             ),
           ),
@@ -468,7 +529,7 @@ class _AdminSidebar extends StatelessWidget {
                         letterSpacing: 1.0,
                         color: Colors.white.withOpacity(0.25))),
                 const SizedBox(height: 10),
-                ...members.map((m) => Padding(
+                ...widget.members.map((m) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(children: [
                         _AvatarWidget(
