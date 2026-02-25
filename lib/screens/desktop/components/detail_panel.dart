@@ -122,7 +122,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Widget build(BuildContext context) {
     final curIdx = stageIndex(widget.task.status);
     final si     = stageInfo(widget.task.status);
-    final proj   = widget.projects.cast<Project?>().firstWhere((p) => p!.id == widget.task.projectId, orElse: () => null) ?? widget.projects.first;
+    final proj  = widget.projects.cast<Project?>().firstWhere((p) => p!.id == widget.task.projectId, orElse: () => null) ?? widget.projects.first;
 
     Member? member;
     try {
