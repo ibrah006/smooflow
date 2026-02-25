@@ -46,7 +46,7 @@ class MaterialLog {
       quantity: json['quantity'],
       width: (json['width'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
-      loggedById: User.getIdFromJson(json['loggedBy']),
+      loggedById: User.getIdFromJson(json['loggedBy'])!,
       projectId:
           json['task'] != null ? Project.getIdFromJson(json['task']) : null,
       dateCreated: DateTime.parse(json['dateCreated']),

@@ -233,7 +233,7 @@ class Task {
       //     .firstWhere((e) => e.toString().split('.').last == json['status']),
       assignees:
           (json['assignees'] as List).map((assigneeRaw) {
-            return User.getIdFromJson(assigneeRaw);
+            return User.getIdFromJson(assigneeRaw)!;
           }).toList(),
       projectId: json['project']?['id'],
       // Material logs

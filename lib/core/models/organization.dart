@@ -35,10 +35,10 @@ class Organization {
       id: json['id'],
       name: json['name'],
       description: json['description'],
-      createdById: User.getIdFromJson(json['createdBy']),
+      createdById: User.getIdFromJson(json['createdBy'])!,
       users:
           (json['users'] as List<dynamic>)
-              .map((userJson) => User.getIdFromJson(userJson))
+              .map((userJson) => User.getIdFromJson(userJson)!)
               .toList(),
       projects:
           (json['projects'] as List<dynamic>)

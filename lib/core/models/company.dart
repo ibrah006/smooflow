@@ -122,7 +122,7 @@ class Company {
       description: json['description'],
       isActive: json['isActive'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
-      createdByUserId: User.getIdFromJson(json['createdBy']),
+      createdByUserId: User.getIdFromJson(json['createdBy'])!,
       // projects:
       //     ((json['projects'] ?? []) as List<dynamic>)
       //         .map((projectJson) => Project.getIdFromJson(projectJson))
