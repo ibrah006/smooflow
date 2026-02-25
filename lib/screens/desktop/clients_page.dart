@@ -33,9 +33,6 @@ import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/providers/company_provider.dart';
 
-import 'company_websocket_riverpod_provider.dart';
-import 'company_websocket_client.dart';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1264,7 +1261,7 @@ class _ClientGridCardState extends State<_ClientGridCard> {
                 children: [
                   _ClientAvatar(client: c, size: 40),
                   const Spacer(),
-                  _StatusBadge(c.status),
+                  _StatusBadge(),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1274,26 +1271,26 @@ class _ClientGridCardState extends State<_ClientGridCard> {
                       color: _T.ink, height: 1.2),
                   maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text(c.contactName,
+              Text(c.contactName?? "No contact",
                   style: const TextStyle(fontSize: 11.5, color: _T.slate400,
                       fontWeight: FontWeight.w500)),
               const Spacer(),
-              Row(children: [
-                _GridStat(Icons.folder_outlined, '${c.projectCount}', _T.purple),
-                const SizedBox(width: 12),
-                _GridStat(Icons.assignment_outlined, '${c.activeTaskCount}', _T.blue),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: _T.slate100,
-                      borderRadius: BorderRadius.circular(99)),
-                  child: Text(c.industry,
-                      style: const TextStyle(
-                          fontSize: 10, fontWeight: FontWeight.w600,
-                          color: _T.slate500)),
-                ),
-              ]),
+              // Row(children: [
+              //   _GridStat(Icons.folder_outlined, '${c.projectCount}', _T.purple),
+              //   const SizedBox(width: 12),
+              //   _GridStat(Icons.assignment_outlined, '${c.activeTaskCount}', _T.blue),
+              //   const Spacer(),
+              //   Container(
+              //     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              //     decoration: BoxDecoration(
+              //         color: _T.slate100,
+              //         borderRadius: BorderRadius.circular(99)),
+              //     child: Text(c.industry,
+              //         style: const TextStyle(
+              //             fontSize: 10, fontWeight: FontWeight.w600,
+              //             color: _T.slate500)),
+              //   ),
+              // ]),
             ],
           ),
         ),
@@ -1378,7 +1375,7 @@ class _ClientDetailPanel extends StatelessWidget {
                               color: _T.ink, letterSpacing: -0.3),
                           textAlign: TextAlign.center),
                       const SizedBox(height: 4),
-                      _StatusBadge(c.status),
+                      _StatusBadge(),
                     ]),
                   ),
                   const SizedBox(height: 20),
@@ -1387,28 +1384,28 @@ class _ClientDetailPanel extends StatelessWidget {
 
                   // Contact info
                   _DetailSection('Contact', [
-                    _DetailRow(Icons.person_outline, c.contactName),
-                    _DetailRow(Icons.email_outlined, c.email),
-                    _DetailRow(Icons.phone_outlined, c.phone),
+                    _DetailRow(Icons.person_outline, c.contactName?? "No provided"),
+                    _DetailRow(Icons.email_outlined, c.email?? "Not provided"),
+                    _DetailRow(Icons.phone_outlined, c.phone?? "not provided"),
                   ]),
                   const SizedBox(height: 16),
 
                   // Business info
                   _DetailSection('Business', [
-                    _DetailRow(Icons.business_outlined, c.industry),
+                    _DetailRow(Icons.business_outlined, c.industry?? "Not provided"),
                     _DetailRow(Icons.calendar_today_outlined,
-                        'Joined ${_fmtDateLong(c.joinedDate)}'),
+                        'Joined ${_fmtDateLong(c.createdAt)}'),
                   ]),
                   const SizedBox(height: 16),
 
                   // Stats
-                  Row(children: [
-                    Expanded(child: _StatTile('Projects',
-                        '${c.projectCount}', _T.purple, _T.purple50)),
-                    const SizedBox(width: 10),
-                    Expanded(child: _StatTile('Active Tasks',
-                        '${c.activeTaskCount}', _T.blue, _T.blue50)),
-                  ]),
+                  // Row(children: [
+                  //   Expanded(child: _StatTile('Projects',
+                  //       '${c.projectCount}', _T.purple, _T.purple50)),
+                  //   const SizedBox(width: 10),
+                  //   Expanded(child: _StatTile('Active Tasks',
+                  //       '${c.activeTaskCount}', _T.blue, _T.blue50)),
+                  // ]),
                 ],
               ),
             ),
@@ -1547,9 +1544,9 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
     if (widget.existing != null) {
       final c = widget.existing!;
       _namCtrl.text = c.name;
-      _conCtrl.text = c.contactName;
-      _emlCtrl.text = c.email;
-      _phnCtrl.text = c.phone;
+      _conCtrl.text = c.contactName?? "";
+      _emlCtrl.text = c.email?? "";
+      _phnCtrl.text = c.phone?? "";
       _selectedIndustry = c.industry;
     }
     _ac.forward();
