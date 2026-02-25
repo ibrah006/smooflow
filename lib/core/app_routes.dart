@@ -10,6 +10,7 @@ import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/screens/delivery_dashboard_screen.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
@@ -158,6 +159,8 @@ class AppRoutes {
   // Home
   static const home = "/home";
 
+  static const deliveryDashbaord = "/delivery/dashboard";
+
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
     String? routeName = settings.name;
@@ -180,15 +183,18 @@ class AppRoutes {
           }
         } else {
           // Mobile Home
-          if (role == 'admin') {
-            routeName = AppRoutes.admin;
-          } else if (role == 'production' || role == 'production-head') {
-            routeName = AppRoutes.productionDashboard;
-          } else if (role == "design") {
-            // routeName = AppRoutes.designDashboard;
-            // No home route for design on mobile
-          }
-          // route = AppRoutes.admin;
+          // Debug
+          routeName = AppRoutes.deliveryDashbaord;
+          // if (role == 'admin') {
+          //   routeName = AppRoutes.admin;
+          // } else if (role == 'production' || role == 'production-head') {
+          //   routeName = AppRoutes.productionDashboard;
+          // } else if (role == "design") {
+          //   // routeName = AppRoutes.designDashboard;
+          //   // No home route for design on mobile
+          // }
+
+          // // route = AppRoutes.admin;
         }
         // if after all the condition above were gone through and route is still home -> unsupported platform
         if (routeName == home) {
@@ -408,8 +414,13 @@ class AppRoutes {
         break;
       case adminDesktopDashboardScreen:
         screen = AdminDesktopDashboardScreen();
+        break;
       case desktopMaterials:
         screen = DesktopMaterialListScreen();
+        break;
+      case deliveryDashbaord:
+        screen = DeliveryDashboardScreen();
+        break;
     }
 
     // If screen was determined, create the route
