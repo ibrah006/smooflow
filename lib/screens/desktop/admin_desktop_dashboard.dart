@@ -24,6 +24,8 @@ import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
+import 'package:smooflow/screens/desktop/constants.dart';
+import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -68,25 +70,17 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // Stage metadata — mirrors kStages from design_dashboard.dart
 // ─────────────────────────────────────────────────────────────────────────────
-class _StageInfo {
-  final TaskStatus status;
-  final String label;
-  final String shortLabel;
-  final Color color;
-  final Color bg;
-  const _StageInfo(this.status, this.label, this.shortLabel, this.color, this.bg);
-}
+// class _StageInfo {
+//   final TaskStatus status;
+//   final String label;
+//   final String shortLabel;
+//   final Color color;
+//   final Color bg;
+//   const _StageInfo(this.status, this.label, this.shortLabel, this.color, this.bg);
+// }
 
-const List<_StageInfo> _kStages = [
-  _StageInfo(TaskStatus.pending,         'Initialized',       'Init',     _T.slate500, _T.slate100),
-  _StageInfo(TaskStatus.designing,       'Designing',         'Design',   _T.purple,   _T.purple50),
-  _StageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review',   _T.amber,    _T.amber50),
-  _StageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green,    _T.green50),
-  _StageInfo(TaskStatus.printing,        'Printing',          'Printing', _T.blue,     _T.blue100),
-];
-
-_StageInfo _stageInfo(TaskStatus s) =>
-    _kStages.firstWhere((i) => i.status == s, orElse: () => _kStages.first);
+DesignStageInfo _stageInfo(TaskStatus s) =>
+    kStages.firstWhere((i) => i.stage == s, orElse: () => kStages.first);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM
@@ -1081,8 +1075,8 @@ class _StageFunnelChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final counts = _kStages
-        .map((s) => tasks.where((t) => t.status == s.status).length)
+    final counts = kStages
+        .map((s) => tasks.where((t) => t.status == s.stage).length)
         .toList();
     final total = counts.fold(0, (a, b) => a + b);
     if (total == 0) {
@@ -1095,7 +1089,7 @@ class _StageFunnelChart extends StatelessWidget {
     }
 
     return Column(
-      children: _kStages.asMap().entries.map((entry) {
+      children: kStages.asMap().entries.map((entry) {
         final i = entry.key;
         final s = entry.value;
         final count = counts[i];
@@ -1318,11 +1312,11 @@ class _ProjectHealthGrid extends StatelessWidget {
                   t.dueDate!.isBefore(DateTime.now()))
               .length;
 
-          final stageCounts = _kStages
+          final stageCounts = kStages
               .map((s) =>
-                  ptasks.where((t) => t.status == s.status).length)
+                  ptasks.where((t) => t.status == s.stage).length)
               .toList();
-          final stageColors = _kStages.map((s) => s.color).toList();
+          final stageColors = kStages.map((s) => s.color).toList();
 
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
