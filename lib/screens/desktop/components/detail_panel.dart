@@ -7,6 +7,7 @@ import 'package:smooflow/components/desktop/advance_stage_popup.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -79,7 +80,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // if (task.status.nextStage == TaskStatus.printing) 
   void approveDesignStage() async {
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: TaskStatus.clientApproved);
+    final nextStage = widget.task.status.nextStage;
+    if (nextStage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to advance stage")));
+      return;
+    }
+
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
     setState(() {});
   }
 
@@ -325,25 +332,84 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       const SizedBox(height: 9),
                       GestureDetector(
                         key: _advanceButtonKey,
-                        onTap: next == TaskStatus.clientApproved ? approveDesignStage : (next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval) ? _showMoveToNextStageDialog : null,
+                        onTap: () {
+                          // Determine if button should be enabled
+                          final isAllowedStage = next == TaskStatus.clientApproved ||
+                              next == TaskStatus.printing ||
+                              next == TaskStatus.designing ||
+                              next == TaskStatus.waitingApproval ||
+                              (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
+
+                          if (!isAllowedStage) return;
+
+                          // Call proper handler
+                          if (next == TaskStatus.clientApproved) {
+                            return approveDesignStage();
+                          } else {
+                            return _showMoveToNextStageDialog();
+                          }
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color:  next == TaskStatus.clientApproved ? _T.green : (next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval)? _T.blue : Colors.grey.shade200,
+                            color: (next == TaskStatus.clientApproved)
+                                ? _T.green
+                                : ((next == TaskStatus.printing ||
+                                        next == TaskStatus.designing ||
+                                        next == TaskStatus.waitingApproval ||
+                                        (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                    ? _T.blue
+                                    : Colors.grey.shade200),
                             borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval? [BoxShadow(color: (next == TaskStatus.clientApproved ? _T.green : _T.blue).withOpacity(0.28), blurRadius: 8, offset: const Offset(0, 2))] : null,
+                            boxShadow: (next == TaskStatus.clientApproved ||
+                                    next == TaskStatus.printing ||
+                                    next == TaskStatus.designing ||
+                                    next == TaskStatus.waitingApproval ||
+                                    (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                ? [
+                                    BoxShadow(
+                                      color: ((next == TaskStatus.clientApproved)
+                                              ? _T.green
+                                              : _T.blue)
+                                          .withOpacity(0.28),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ]
+                                : null,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                next == TaskStatus.clientApproved ? Icons.check : Icons.arrow_forward,
-                                size: 15, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval ? Colors.white : Colors.grey.shade400,
+                                next == TaskStatus.clientApproved
+                                    ? Icons.check
+                                    : Icons.arrow_forward,
+                                size: 15,
+                                color: (next == TaskStatus.clientApproved ||
+                                        next == TaskStatus.printing ||
+                                        next == TaskStatus.designing ||
+                                        next == TaskStatus.waitingApproval ||
+                                        (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                    ? Colors.white
+                                    : Colors.grey.shade400,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                next == TaskStatus.clientApproved ? 'Confirm Client Approval' : 'Move to "${stageInfo(next).label}"',
-                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: next == TaskStatus.clientApproved || next == TaskStatus.printing || next == TaskStatus.designing || next == TaskStatus.waitingApproval || next == TaskStatus.waitingApproval? Colors.white : Colors.grey.shade400),
+                                next == TaskStatus.clientApproved
+                                    ? 'Confirm Client Approval'
+                                    : 'Move to "${stageInfo(next).label}"',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: (next == TaskStatus.clientApproved ||
+                                          next == TaskStatus.printing ||
+                                          next == TaskStatus.designing ||
+                                          next == TaskStatus.waitingApproval ||
+                                          (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                      ? Colors.white
+                                      : Colors.grey.shade400,
+                                ),
                               ),
                             ],
                           ),
