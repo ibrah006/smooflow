@@ -22,7 +22,7 @@ class Member {
 
   String get initials {
     final n = name.split(" ");
-    return n.length > 1? "${n[0]} ${n[1]}" : name[0];
+    return n.length > 1? "${n[0][0]}${n[1][0]}" : name[0];
   }
 
   String get nameShort {
