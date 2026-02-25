@@ -1,28 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// clients_screen.dart
-//
-// Clients page for smooflow desktop (design + admin roles).
-// Pixel-perfect match to the existing design system:
-//   • Same _T token class (ink sidebar, slate50 canvas, blue primary)
-//   • Same sidebar shell (220px, dark ink, ADMIN badge)
-//   • Same topbar (52px, white, slate-200 border)
-//   • Same card anatomy (_AnalyticsCard shell)
-//   • Same stagger animations on entry
-//   • Same _SidebarNavItem / _SidebarLabel / _AvatarWidget micro-widgets
-//
-// Wire into your nav by adding a "Clients" item to the sidebar and pushing
-// this screen, or embed ClientsView inside your existing dashboard shell
-// if you prefer not to push a new route.
-//
-// Usage (new route):
-//   Navigator.push(context, MaterialPageRoute(
-//     builder: (_) => const ClientsScreen(),
-//   ));
-//
-// Usage (embed in existing shell — recommended):
-//   Add _AdminView.clients to your enum, add a sidebar nav item,
-//   then swap ClientsView() in where you render the canvas.
-// ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1565,7 +1540,9 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
   void _submit() async {
     if (_namCtrl.text.trim().isEmpty || _emlCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
-    await Future.delayed(const Duration(milliseconds: 600)); // replace with real API call
+    
+    
+
     if (mounted) Navigator.of(context).pop();
   }
 
