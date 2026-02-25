@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 
@@ -46,10 +47,13 @@ class _T {
   static const rXl = 16.0;
 }
 
-const List<DesignStageInfo> kStages = [
-  DesignStageInfo(TaskStatus.pending,      'Initialized',       'Init',     _T.slate500, _T.slate100),
-  DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
-  DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
-  DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
-  DesignStageInfo(TaskStatus.printing,  'Printing',   'Printing', _T.blue, _T.blue100),
-];
+List<DesignStageInfo> get kStages {
+  return [
+    DesignStageInfo(TaskStatus.pending,      'Initialized',       'Init',     _T.slate500, _T.slate100),
+    DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
+    DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
+    DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
+    DesignStageInfo(TaskStatus.printing,  'Printing',   'Printing', _T.blue, _T.blue100),
+    if (LoginService.currentUser!.isAdmin) DesignStageInfo(TaskStatus.finishing,  'Production Complete',   'Finishing', _T.slate500, _T.slate50),
+  ];
+}

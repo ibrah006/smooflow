@@ -31,6 +31,8 @@ class User {
     if (userOrganizationId != null) organizationId = userOrganizationId;
   }
 
+  bool get isAdmin => role.toLowerCase() == 'admin';
+
   // To ensure toSet gives no duplicates
   @override
   bool operator ==(Object other) =>
