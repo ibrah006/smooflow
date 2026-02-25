@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart' show Color, Colors;
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:uuid/uuid.dart';
@@ -70,7 +72,13 @@ class Company {
     this.phone,
     this.contactName,
     Color? color})
-    : _color = color, id = Uuid().v1(),
+    : _color = color??
+    // Get random color
+     [Color(0xFF2563EB),
+      Color(0xFF8B5CF6),
+      Color(0xFF10B981),
+      Color(0xFFF59E0B)][Random().nextInt(4)],
+      id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
       projects = [],
