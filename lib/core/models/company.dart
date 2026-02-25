@@ -127,7 +127,7 @@ class Company {
       //     ((json['projects'] ?? []) as List<dynamic>)
       //         .map((projectJson) => Project.getIdFromJson(projectJson))
       //         .toList(),
-      email: json['emial'],
+      email: json['email'],
       phone: json['phone'],
       industry: json['industry'],
       contactName: json["contactName"],
