@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Color;
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,6 +20,7 @@ class Company {
   String? industry;
   String? phone;
   String? contactName;
+  Color? color;
 
   // Sample data check
   bool get isSample => _isSample;
@@ -34,7 +36,8 @@ class Company {
     required this.email,
     required this.industry,
     required this.phone,
-    required this.contactName
+    required this.contactName,
+    required this.color
   }) : _isSample = false;
 
   Company.create({
@@ -43,7 +46,8 @@ class Company {
     this.email,
     this.industry,
     this.phone,
-    this.contactName})
+    this.contactName,
+    this.color})
     : id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
@@ -80,7 +84,8 @@ class Company {
       email: json['emial'],
       phone: json['phone'],
       industry: json['industry'],
-      contactName: json["contactName"]
+      contactName: json["contactName"],
+      color: (json["color"])
     );
   }
 
@@ -95,7 +100,13 @@ class Company {
       'email': email,
       'phone': phone,
       'industry': industry,
-      'contactName': contactName
+      'contactName': contactName,
+      'color': _colorToHex(color)
     };
   }
+}
+
+String? _colorToHex(Color? color) {
+  if (color == null) return null; 
+  return '#${color.value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
 }

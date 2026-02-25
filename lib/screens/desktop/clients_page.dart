@@ -28,8 +28,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/core/api/websocket_clients/company_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
+import 'package:smooflow/providers/company_provider.dart';
+
+import 'company_websocket_riverpod_provider.dart';
+import 'company_websocket_client.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
@@ -65,58 +70,7 @@ class _T {
   static const rXl       = 16.0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CLIENT MODEL
-// Replace with your real Client model / repository when ready.
-// ─────────────────────────────────────────────────────────────────────────────
-class Client {
-  final String  id;
-  final String  name;
-  final String  contactName;
-  final String  email;
-  final String  phone;
-  final String  industry;
-  final Color   color;           // brand colour for avatar
-  final int     projectCount;
-  final int     activeTaskCount;
-  final DateTime joinedDate;
-  final ClientStatus status;
-
-  const Client({
-    required this.id,
-    required this.name,
-    required this.contactName,
-    required this.email,
-    required this.phone,
-    required this.industry,
-    required this.color,
-    required this.projectCount,
-    required this.activeTaskCount,
-    required this.joinedDate,
-    required this.status,
-  });
-
-  String get initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
-}
-
 enum ClientStatus { active, inactive, pending }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STUB DATA — remove once you wire a real ClientRepository
-// ─────────────────────────────────────────────────────────────────────────────
-final _kStubClients = <Client>[
-  Client(id: '1', name: 'Harrington & Co',    contactName: 'James Harrington', email: 'james@harrington.co',  phone: '+1 212 555 0101', industry: 'Finance',     color: const Color(0xFF2563EB), projectCount: 6,  activeTaskCount: 14, joinedDate: DateTime(2023, 3, 12),  status: ClientStatus.active),
-  Client(id: '2', name: 'Verdant Studios',    contactName: 'Sofia Mendez',     email: 'sofia@verdant.io',     phone: '+1 415 555 0182', industry: 'Media',       color: const Color(0xFF10B981), projectCount: 3,  activeTaskCount: 7,  joinedDate: DateTime(2023, 7, 4),   status: ClientStatus.active),
-  Client(id: '3', name: 'NovaTech Solutions', contactName: 'Raj Patel',        email: 'raj@novatech.com',     phone: '+1 650 555 0133', industry: 'Technology',  color: const Color(0xFF8B5CF6), projectCount: 9,  activeTaskCount: 22, joinedDate: DateTime(2022, 11, 20), status: ClientStatus.active),
-  Client(id: '4', name: 'Bloom Collective',   contactName: 'Chloe Bernard',    email: 'chloe@bloomco.fr',     phone: '+33 1 555 0144',  industry: 'Retail',      color: const Color(0xFFF59E0B), projectCount: 2,  activeTaskCount: 3,  joinedDate: DateTime(2024, 1, 8),   status: ClientStatus.pending),
-  Client(id: '5', name: 'Summit Properties',  contactName: 'Marcus Webb',      email: 'marcus@summit.re',     phone: '+1 303 555 0155', industry: 'Real Estate', color: const Color(0xFFEF4444), projectCount: 4,  activeTaskCount: 0,  joinedDate: DateTime(2022, 5, 15),  status: ClientStatus.inactive),
-  Client(id: '6', name: 'Arclight Media',     contactName: 'Priya Nair',       email: 'priya@arclight.media', phone: '+44 20 555 0166', industry: 'Advertising', color: const Color(0xFF38BDF8), projectCount: 5,  activeTaskCount: 11, joinedDate: DateTime(2023, 9, 30),  status: ClientStatus.active),
-  Client(id: '7', name: 'Zenith Apparel',     contactName: 'Lucas Kim',        email: 'lucas@zenithapp.com',  phone: '+1 718 555 0177', industry: 'Fashion',     color: const Color(0xFF64748B), projectCount: 1,  activeTaskCount: 5,  joinedDate: DateTime(2024, 2, 14),  status: ClientStatus.active),
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FILTER / SORT STATE
@@ -126,16 +80,32 @@ enum _FilterStatus { all, active, inactive, pending }
 enum _ViewMode { table, grid }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROOT SCREEN  (standalone — wraps its own Scaffold + sidebar)
+// clients_screen.dart with Riverpod WebSocket Integration
+//
+// This version integrates the CompanyWebSocketClient with flutter_riverpod
+// for real-time company updates across your organization.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOT SCREEN with Riverpod
 // ─────────────────────────────────────────────────────────────────────────────
 class ClientsPage extends ConsumerStatefulWidget {
   const ClientsPage({super.key});
 
   @override
-  ConsumerState<ClientsPage> createState() => _ClientsScreenState();
+  ConsumerState<ClientsPage> createState() => _ClientsPageState();
 }
 
-class _ClientsScreenState extends ConsumerState<ClientsPage> {
+class _ClientsPageState extends ConsumerState<ClientsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load companies when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(companyListProvider.notifier).loadCompanies();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,35 +113,34 @@ class _ClientsScreenState extends ConsumerState<ClientsPage> {
       body: Focus(
         autofocus: true,
         onKeyEvent: (_, __) => KeyEventResult.ignored,
-        child: ClientsView()
+        child: const ClientsView(),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CLIENTS VIEW  — the main canvas, embeddable in any shell
+// CLIENTS VIEW with Riverpod
 // ─────────────────────────────────────────────────────────────────────────────
-class ClientsView extends StatefulWidget {
+class ClientsView extends ConsumerStatefulWidget {
   const ClientsView({super.key});
 
   @override
-  State<ClientsView> createState() => _ClientsViewState();
+  ConsumerState<ClientsView> createState() => _ClientsViewState();
 }
 
-class _ClientsViewState extends State<ClientsView>
+class _ClientsViewState extends ConsumerState<ClientsView>
     with SingleTickerProviderStateMixin {
   // ── Animation
   late final AnimationController _ac = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 800));
 
-  // ── State
+  // ── Local UI State (non-WebSocket state)
   _SortField    _sort       = _SortField.name;
   bool          _sortAsc    = true;
   _FilterStatus _filter     = _FilterStatus.all;
   _ViewMode     _viewMode   = _ViewMode.table;
   String        _search     = '';
-  Client?       _selected;
 
   final _searchCtrl = TextEditingController();
 
@@ -191,44 +160,26 @@ class _ClientsViewState extends State<ClientsView>
   Animation<double> _stagger(double s, double e) => CurvedAnimation(
       parent: _ac, curve: Interval(s, e, curve: Curves.easeOutCubic));
 
-  // ── Derived list
-  List<Client> get _filtered {
-    var list = _kStubClients.where((c) {
-      final matchSearch = _search.isEmpty ||
-          c.name.toLowerCase().contains(_search.toLowerCase()) ||
-          c.contactName.toLowerCase().contains(_search.toLowerCase()) ||
-          c.email.toLowerCase().contains(_search.toLowerCase()) ||
-          c.industry.toLowerCase().contains(_search.toLowerCase());
-      final matchStatus = _filter == _FilterStatus.all ||
-          (_filter == _FilterStatus.active   && c.status == ClientStatus.active)   ||
-          (_filter == _FilterStatus.inactive && c.status == ClientStatus.inactive) ||
-          (_filter == _FilterStatus.pending  && c.status == ClientStatus.pending);
-      return matchSearch && matchStatus;
-    }).toList();
-
-    list.sort((a, b) {
-      int cmp;
-      switch (_sort) {
-        case _SortField.name:     cmp = a.name.compareTo(b.name); break;
-        case _SortField.projects: cmp = a.projectCount.compareTo(b.projectCount); break;
-        case _SortField.tasks:    cmp = a.activeTaskCount.compareTo(b.activeTaskCount); break;
-        case _SortField.joined:   cmp = a.joinedDate.compareTo(b.joinedDate); break;
-      }
-      return _sortAsc ? cmp : -cmp;
-    });
-
-    return list;
-  }
-
-  // ── KPI counts
-  int get _activeCount   => _kStubClients.where((c) => c.status == ClientStatus.active).length;
-  int get _inactiveCount => _kStubClients.where((c) => c.status == ClientStatus.inactive).length;
-  int get _pendingCount  => _kStubClients.where((c) => c.status == ClientStatus.pending).length;
-  int get _totalProjects => _kStubClients.fold(0, (s, c) => s + c.projectCount);
-  int get _totalTasks    => _kStubClients.fold(0, (s, c) => s + c.activeTaskCount);
-
   @override
   Widget build(BuildContext context) {
+    // Watch WebSocket state
+    final companyState = ref.watch(companyListProvider);
+    final selectedCompany = ref.watch(selectedCompanyProvider);
+    final connectionStatus = ref.watch(companyConnectionStatusProvider);
+
+    // Get filtered companies (convert from Company model if needed)
+    final companies = _getFilteredCompanies(companyState.companies);
+
+    // Show real-time update notification
+    ref.listen<AsyncValue<CompanyChangeEvent>>(
+      companyChangesStreamProvider,
+      (previous, next) {
+        next.whenData((event) {
+          _showChangeNotification(context, event);
+        });
+      },
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -239,6 +190,12 @@ class _ClientsViewState extends State<ClientsView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Connection Status Banner ──────────────────────────────
+                connectionStatus.when(
+                  data: (status) => _ConnectionStatusBanner(status: status),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
 
                 // ── KPI strip ───────────────────────────────────────────
                 FadeTransition(
@@ -247,129 +204,111 @@ class _ClientsViewState extends State<ClientsView>
                     position: Tween<Offset>(
                             begin: const Offset(0, 0.04), end: Offset.zero)
                         .animate(_stagger(0.0, 0.40)),
-                    child: Row(children: [
-                      _KpiCard(
-                        icon: Icons.business_outlined,
-                        iconColor: _T.blue, iconBg: _T.blue50,
-                        label: 'Total Clients',
-                        value: '${_kStubClients.length}',
-                        sub: 'All accounts',
-                        subPositive: null,
-                      ),
-                      const SizedBox(width: 12),
-                      _KpiCard(
-                        icon: Icons.check_circle_outline_rounded,
-                        iconColor: _T.green, iconBg: _T.green50,
-                        label: 'Active',
-                        value: '$_activeCount',
-                        sub: 'In good standing',
-                        subPositive: true,
-                      ),
-                      const SizedBox(width: 12),
-                      _KpiCard(
-                        icon: Icons.hourglass_top_rounded,
-                        iconColor: _T.amber, iconBg: _T.amber50,
-                        label: 'Pending',
-                        value: '$_pendingCount',
-                        sub: 'Awaiting onboard',
-                        subPositive: null,
-                      ),
-                      const SizedBox(width: 12),
-                      _KpiCard(
-                        icon: Icons.folder_outlined,
-                        iconColor: _T.purple, iconBg: _T.purple50,
-                        label: 'Projects',
-                        value: '$_totalProjects',
-                        sub: 'Across all clients',
-                        subPositive: null,
-                      ),
-                      const SizedBox(width: 12),
-                      _KpiCard(
-                        icon: Icons.assignment_outlined,
-                        iconColor: _T.teal,
-                        iconBg: const Color(0xFFECFEFF),
-                        label: 'Active Tasks',
-                        value: '$_totalTasks',
-                        sub: 'In pipeline now',
-                        subPositive: _totalTasks > 0,
-                      ),
-                    ]),
+                    child: _buildKpiStrip(companyState.companies),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // ── Toolbar: search + filters + view toggle + add ────────
+                // ── Toolbar ────────────────────────────────────────────────
                 FadeTransition(
                   opacity: _stagger(0.12, 0.50),
                   child: SlideTransition(
                     position: Tween<Offset>(
                             begin: const Offset(0, 0.04), end: Offset.zero)
                         .animate(_stagger(0.12, 0.50)),
-                    child: _Toolbar(
-                      searchCtrl:  _searchCtrl,
-                      filter:      _filter,
-                      viewMode:    _viewMode,
-                      activeCount: _activeCount,
-                      pendingCount: _pendingCount,
-                      inactiveCount: _inactiveCount,
-                      onSearchChanged: (v) => setState(() => _search = v),
-                      onFilterChanged: (f) => setState(() => _filter = f),
-                      onViewModeChanged: (m) => setState(() => _viewMode = m),
-                      onAddClient: () => _showCreateClientSheet(context),
-                    ),
+                    child: _buildToolbar(companyState.companies),
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // ── Client list / grid ────────────────────────────────────
-                FadeTransition(
-                  opacity: _stagger(0.22, 0.70),
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                            begin: const Offset(0, 0.04), end: Offset.zero)
-                        .animate(_stagger(0.22, 0.70)),
-                    child: _viewMode == _ViewMode.table
-                        ? _ClientTable(
-                            clients:  _filtered,
-                            sort:     _sort,
-                            sortAsc:  _sortAsc,
-                            selected: _selected,
-                            onSort: (f) => setState(() {
-                              if (_sort == f) {
-                                _sortAsc = !_sortAsc;
-                              } else {
-                                _sort = f;
-                                _sortAsc = true;
-                              }
-                            }),
-                            onSelect: (c) => setState(() =>
-                              _selected = _selected?.id == c.id ? null : c),
-                            onEdit:   (c) => _showCreateClientSheet(context, client: c),
-                          )
-                        : _ClientGrid(
-                            clients:  _filtered,
-                            selected: _selected,
-                            onSelect: (c) => setState(() =>
-                              _selected = _selected?.id == c.id ? null : c),
-                            onEdit:   (c) => _showCreateClientSheet(context, client: c),
-                          ),
+                // ── Loading / Error States ────────────────────────────────
+                if (companyState.isLoading && companyState.companies.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (companyState.error != null)
+                  _ErrorView(
+                    error: companyState.error!,
+                    onRetry: () {
+                      ref.read(companyListProvider.notifier).clearError();
+                      ref.read(companyListProvider.notifier).loadCompanies();
+                    },
+                  )
+                else
+                  // ── Company list / grid ──────────────────────────────────
+                  FadeTransition(
+                    opacity: _stagger(0.22, 0.70),
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                              begin: const Offset(0, 0.04), end: Offset.zero)
+                          .animate(_stagger(0.22, 0.70)),
+                      child: _viewMode == _ViewMode.table
+                          ? _ClientTable(
+                              clients: companies,
+                              sort: _sort,
+                              sortAsc: _sortAsc,
+                              selected: selectedCompany,
+                              onSort: (f) => setState(() {
+                                if (_sort == f) {
+                                  _sortAsc = !_sortAsc;
+                                } else {
+                                  _sort = f;
+                                  _sortAsc = true;
+                                }
+                              }),
+                              onSelect: (c) {
+                                if (selectedCompany?.id == c.id) {
+                                  ref.read(selectedCompanyProvider.notifier).state = null;
+                                  ref.read(companyListProvider.notifier)
+                                      .unsubscribeFromCompany(c.id);
+                                } else {
+                                  ref.read(selectedCompanyProvider.notifier).state = c;
+                                  ref.read(companyListProvider.notifier)
+                                      .subscribeToCompany(c.id);
+                                }
+                              },
+                              onEdit: (c) => _showCreateClientSheet(context, client: c),
+                            )
+                          : _ClientGrid(
+                              clients: companies,
+                              selected: selectedCompany,
+                              onSelect: (c) {
+                                if (selectedCompany?.id == c.id) {
+                                  ref.read(selectedCompanyProvider.notifier).state = null;
+                                  ref.read(companyListProvider.notifier)
+                                      .unsubscribeFromCompany(c.id);
+                                } else {
+                                  ref.read(selectedCompanyProvider.notifier).state = c;
+                                  ref.read(companyListProvider.notifier)
+                                      .subscribeToCompany(c.id);
+                                }
+                              },
+                              onEdit: (c) => _showCreateClientSheet(context, client: c),
+                            ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
         ),
 
-        // ── Detail panel (slides in when a client is selected) ──────────
+        // ── Detail panel ──────────────────────────────────────────────────
         AnimatedContainer(
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
-          width: _selected != null ? 320.0 : 0,
-          child: _selected != null
+          width: selectedCompany != null ? 320.0 : 0,
+          child: selectedCompany != null
               ? _ClientDetailPanel(
-                  client: _selected!,
-                  onClose: () => setState(() => _selected = null),
-                  onEdit:  () => _showCreateClientSheet(context, client: _selected),
+                  client: selectedCompany,
+                  onClose: () {
+                    ref.read(companyListProvider.notifier)
+                        .unsubscribeFromCompany(selectedCompany.id);
+                    ref.read(selectedCompanyProvider.notifier).state = null;
+                  },
+                  onEdit: () => _showCreateClientSheet(context, client: selectedCompany),
                 )
               : const SizedBox.shrink(),
         ),
@@ -377,13 +316,292 @@ class _ClientsViewState extends State<ClientsView>
     );
   }
 
+  // ── Helper: Get filtered companies ──────────────────────────────────────
+  List<Company> _getFilteredCompanies(List<Company> allCompanies) {
+    var list = allCompanies.where((c) {
+      // Search filter
+      final matchSearch = _search.isEmpty ||
+          c.name.toLowerCase().contains(_search.toLowerCase()) ||
+          (c.contactName?.toLowerCase().contains(_search.toLowerCase()) ?? false) ||
+          (c.email?.toLowerCase().contains(_search.toLowerCase()) ?? false) ||
+          (c.industry?.toLowerCase().contains(_search.toLowerCase()) ?? false);
+
+      // Status filter
+      final matchStatus = _filter == _FilterStatus.all ||
+          (_filter == _FilterStatus.active && c.isActive) ||
+          (_filter == _FilterStatus.inactive && !c.isActive);
+
+      return matchSearch && matchStatus;
+    }).toList();
+
+    // Sort
+    list.sort((a, b) {
+      int cmp;
+      switch (_sort) {
+        case _SortField.name:
+          cmp = a.name.compareTo(b.name);
+          break;
+        case _SortField.projects:
+          // If you have project count in Company model, use it
+          cmp = 0; // Replace with actual comparison
+          break;
+        case _SortField.tasks:
+          cmp = 0; // Replace with actual comparison
+          break;
+        case _SortField.joined:
+          cmp = a.createdAt.compareTo(b.createdAt);
+          break;
+      }
+      return _sortAsc ? cmp : -cmp;
+    });
+
+    return list;
+  }
+
+  // ── Helper: Build KPI strip ─────────────────────────────────────────────
+  Widget _buildKpiStrip(List<Company> companies) {
+    final activeCount = companies.where((c) => c.isActive).length;
+    final inactiveCount = companies.where((c) => !c.isActive).length;
+    
+    return Row(children: [
+      _KpiCard(
+        icon: Icons.business_outlined,
+        iconColor: _T.blue,
+        iconBg: _T.blue50,
+        label: 'Total Clients',
+        value: '${companies.length}',
+        sub: 'All accounts',
+        subPositive: null,
+      ),
+      const SizedBox(width: 12),
+      _KpiCard(
+        icon: Icons.check_circle_outline_rounded,
+        iconColor: _T.green,
+        iconBg: _T.green50,
+        label: 'Active',
+        value: '$activeCount',
+        sub: 'In good standing',
+        subPositive: true,
+      ),
+      const SizedBox(width: 12),
+      _KpiCard(
+        icon: Icons.cancel_outlined,
+        iconColor: _T.slate400,
+        iconBg: _T.slate100,
+        label: 'Inactive',
+        value: '$inactiveCount',
+        sub: 'Not active',
+        subPositive: false,
+      ),
+    ]);
+  }
+
+  // ── Helper: Build toolbar ───────────────────────────────────────────────
+  Widget _buildToolbar(List<Company> companies) {
+    final activeCount = companies.where((c) => c.isActive).length;
+    final inactiveCount = companies.where((c) => !c.isActive).length;
+
+    return _Toolbar(
+      searchCtrl: _searchCtrl,
+      filter: _filter,
+      viewMode: _viewMode,
+      activeCount: activeCount,
+      pendingCount: 0,
+      inactiveCount: inactiveCount,
+      onSearchChanged: (v) => setState(() => _search = v),
+      onFilterChanged: (f) => setState(() => _filter = f),
+      onViewModeChanged: (m) => setState(() => _viewMode = m),
+      onAddClient: () => _showCreateClientSheet(context),
+    );
+  }
+
+  // ── Helper: Show change notification ────────────────────────────────────
+  void _showChangeNotification(BuildContext context, CompanyChangeEvent event) {
+    String message;
+    IconData icon;
+    Color color;
+
+    switch (event.type) {
+      case CompanyChangeType.created:
+        message = 'New company created';
+        icon = Icons.add_circle_outline;
+        color = _T.green;
+        break;
+      case CompanyChangeType.updated:
+        message = 'Company updated';
+        icon = Icons.update;
+        color = _T.blue;
+        break;
+      case CompanyChangeType.deleted:
+        message = 'Company deleted';
+        icon = Icons.delete_outline;
+        color = _T.red;
+        break;
+      case CompanyChangeType.activated:
+        message = 'Company activated';
+        icon = Icons.check_circle_outline;
+        color = _T.green;
+        break;
+      case CompanyChangeType.deactivated:
+        message = 'Company deactivated';
+        icon = Icons.cancel_outlined;
+        color = _T.amber;
+        break;
+      default:
+        return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   // ── Create / Edit bottom sheet ────────────────────────────────────────────
-  void _showCreateClientSheet(BuildContext context, {Client? client}) {
+  void _showCreateClientSheet(BuildContext context, {Company? client}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _CreateClientSheet(existing: client),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONNECTION STATUS BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConnectionStatusBanner extends StatelessWidget {
+  final ConnectionStatus status;
+
+  const _ConnectionStatusBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == ConnectionStatus.connected) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: _T.green50,
+          borderRadius: BorderRadius.circular(_T.r),
+          border: Border.all(color: _T.green.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sync, size: 14, color: _T.green),
+            const SizedBox(width: 6),
+            Text(
+              'Real-time updates active',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _T.green,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (status == ConnectionStatus.reconnecting || status == ConnectionStatus.connecting) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: _T.amber50,
+          borderRadius: BorderRadius.circular(_T.r),
+          border: Border.all(color: _T.amber.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(_T.amber),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Reconnecting...',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _T.amber,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ERROR VIEW
+// ─────────────────────────────────────────────────────────────────────────────
+class _ErrorView extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+
+  const _ErrorView({
+    required this.error,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: _T.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _T.slate500),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _T.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -590,7 +808,7 @@ class _Toolbar extends StatelessWidget {
                 children: [
                   Icon(Icons.add, size: 15, color: Colors.white),
                   SizedBox(width: 6),
-                  Text('Add Client',
+                  Text('Add Company',
                       style: TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600,
                           color: Colors.white)),
@@ -690,13 +908,13 @@ class _ViewToggleBtn extends StatelessWidget {
 // CLIENT TABLE
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientTable extends StatelessWidget {
-  final List<Client> clients;
+  final List<Company> clients;
   final _SortField   sort;
   final bool         sortAsc;
-  final Client?      selected;
+  final Company?      selected;
   final ValueChanged<_SortField> onSort;
-  final ValueChanged<Client>     onSelect;
-  final ValueChanged<Client>     onEdit;
+  final ValueChanged<Company>     onSelect;
+  final ValueChanged<Company>     onEdit;
 
   const _ClientTable({
     required this.clients, required this.sort, required this.sortAsc,
@@ -728,11 +946,11 @@ class _ClientTable extends StatelessWidget {
             ),
             child: Row(children: [
               const SizedBox(width: 36 + 10),           // avatar spacer
-              Expanded(flex: 4, child: _SortHeader('Client', _SortField.name, sort, sortAsc, onSort)),
+              Expanded(flex: 4, child: _SortHeader('Company', _SortField.name, sort, sortAsc, onSort)),
               Expanded(flex: 3, child: _ColHeader('Contact')),
               Expanded(flex: 2, child: _ColHeader('Industry')),
-              Expanded(flex: 1, child: _SortHeader('Projects', _SortField.projects, sort, sortAsc, onSort)),
-              Expanded(flex: 1, child: _SortHeader('Tasks', _SortField.tasks, sort, sortAsc, onSort)),
+              // Expanded(flex: 1, child: _SortHeader('Projects', _SortField.projects, sort, sortAsc, onSort)),
+              // Expanded(flex: 1, child: _SortHeader('Tasks', _SortField.tasks, sort, sortAsc, onSort)),
               Expanded(flex: 2, child: _SortHeader('Joined', _SortField.joined, sort, sortAsc, onSort)),
               const SizedBox(width: 36),                // actions spacer
             ]),
@@ -806,7 +1024,7 @@ class _ColHeader extends StatelessWidget {
 }
 
 class _ClientTableRow extends StatefulWidget {
-  final Client       client;
+  final Company       client;
   final bool         isSelected, isLast;
   final VoidCallback onTap, onEdit;
 
@@ -866,7 +1084,7 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: _T.ink)),
                     const SizedBox(height: 1),
-                    Text(c.email,
+                    Text(c.email?? "N/a",
                         style: const TextStyle(
                             fontSize: 11, color: _T.slate400,
                             fontWeight: FontWeight.w400)),
@@ -877,7 +1095,7 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               // Contact
               Expanded(
                 flex: 3,
-                child: Text(c.contactName,
+                child: Text(c.contactName?? "N/a",
                     style: const TextStyle(
                         fontSize: 12.5, fontWeight: FontWeight.w500,
                         color: _T.ink3)),
@@ -892,7 +1110,7 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                     color: _T.slate100,
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Text(c.industry,
+                  child: Text(c.industry?? "Not provided",
                       style: const TextStyle(
                           fontSize: 11, fontWeight: FontWeight.w600,
                           color: _T.slate500)),
@@ -900,36 +1118,36 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               ),
 
               // Projects
-              Expanded(
-                flex: 1,
-                child: Text('${c.projectCount}',
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700,
-                        color: _T.ink3)),
-              ),
+              // Expanded(
+              //   flex: 1,
+              //   child: Text('${c.projectCount}',
+              //       style: const TextStyle(
+              //           fontSize: 13, fontWeight: FontWeight.w700,
+              //           color: _T.ink3)),
+              // ),
 
-              // Tasks
-              Expanded(
-                flex: 1,
-                child: Row(children: [
-                  if (c.activeTaskCount > 0)
-                    Container(
-                      width: 6, height: 6,
-                      margin: const EdgeInsets.only(right: 5),
-                      decoration: const BoxDecoration(
-                          color: _T.blue, shape: BoxShape.circle),
-                    ),
-                  Text('${c.activeTaskCount}',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700,
-                          color: c.activeTaskCount > 0 ? _T.ink3 : _T.slate300)),
-                ]),
-              ),
+              // // Tasks
+              // Expanded(
+              //   flex: 1,
+              //   child: Row(children: [
+              //     if (c.activeTaskCount > 0)
+              //       Container(
+              //         width: 6, height: 6,
+              //         margin: const EdgeInsets.only(right: 5),
+              //         decoration: const BoxDecoration(
+              //             color: _T.blue, shape: BoxShape.circle),
+              //       ),
+              //     Text('${c.activeTaskCount}',
+              //         style: TextStyle(
+              //             fontSize: 13, fontWeight: FontWeight.w700,
+              //             color: c.activeTaskCount > 0 ? _T.ink3 : _T.slate300)),
+              //   ]),
+              // ),
 
               // Joined
               Expanded(
                 flex: 2,
-                child: Text(_fmtDate(c.joinedDate),
+                child: Text(_fmtDate(c.createdAt),
                     style: const TextStyle(
                         fontSize: 12, color: _T.slate400,
                         fontWeight: FontWeight.w500)),
@@ -967,9 +1185,9 @@ class _ClientTableRowState extends State<_ClientTableRow> {
 // CLIENT GRID
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientGrid extends StatelessWidget {
-  final List<Client> clients;
-  final Client?      selected;
-  final ValueChanged<Client> onSelect, onEdit;
+  final List<Company> clients;
+  final Company?      selected;
+  final ValueChanged<Company> onSelect, onEdit;
 
   const _ClientGrid({
     required this.clients, required this.selected,
@@ -1000,7 +1218,7 @@ class _ClientGrid extends StatelessWidget {
 }
 
 class _ClientGridCard extends StatefulWidget {
-  final Client client;
+  final Company client;
   final bool   isSelected;
   final VoidCallback onTap, onEdit;
 
@@ -1107,7 +1325,7 @@ class _GridStat extends StatelessWidget {
 // CLIENT DETAIL PANEL — slides in from right
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientDetailPanel extends StatelessWidget {
-  final Client       client;
+  final Company       client;
   final VoidCallback onClose, onEdit;
 
   const _ClientDetailPanel({
@@ -1131,7 +1349,7 @@ class _ClientDetailPanel extends StatelessWidget {
             decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: _T.slate200))),
             child: Row(children: [
-              const Text('Client details',
+              const Text('Company details',
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
               const Spacer(),
@@ -1294,7 +1512,7 @@ class _IconBtn extends StatelessWidget {
 // CREATE / EDIT CLIENT BOTTOM SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 class _CreateClientSheet extends StatefulWidget {
-  final Client? existing;
+  final Company? existing;
   const _CreateClientSheet({this.existing});
 
   @override
@@ -1419,7 +1637,7 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 8, 22, 0),
                 child: Row(children: [
-                  Text(_isEdit ? 'Edit Client' : 'Add New Client',
+                  Text(_isEdit ? 'Edit Company' : 'Add New Company',
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w800,
                           color: _T.ink, letterSpacing: -0.3)),
@@ -1570,7 +1788,7 @@ class _CreateClientSheetState extends State<_CreateClientSheet>
                       label: Text(
                         _saving
                             ? (_isEdit ? 'Saving…' : 'Creating…')
-                            : (_isEdit ? 'Save Changes' : 'Create Client'),
+                            : (_isEdit ? 'Save Changes' : 'Create Company'),
                         style: const TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w600),
                       ),
@@ -1654,8 +1872,7 @@ class _FieldLabel extends StatelessWidget {
 // STATUS BADGE
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatusBadge extends StatelessWidget {
-  final ClientStatus status;
-  const _StatusBadge(this.status);
+  final ClientStatus status = ClientStatus.active;
 
   @override
   Widget build(BuildContext context) {
@@ -1686,7 +1903,7 @@ class _StatusBadge extends StatelessWidget {
 // CLIENT AVATAR
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientAvatar extends StatelessWidget {
-  final Client client;
+  final Company client;
   final double size;
   const _ClientAvatar({required this.client, required this.size});
 
