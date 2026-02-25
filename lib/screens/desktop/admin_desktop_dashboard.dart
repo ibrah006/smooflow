@@ -166,7 +166,9 @@ class _AdminDesktopDashboardScreenState
       t.status == TaskStatus.pending ||
       t.status == TaskStatus.designing ||
       t.status == TaskStatus.waitingApproval ||
-      t.status == TaskStatus.clientApproved).toList();
+      t.status == TaskStatus.clientApproved ||
+      t.status == TaskStatus.printing ||
+      t.status == TaskStatus.finishing).toList();
 
   List<Task> get _visibleTasks {
     return _tasks.where((t) {

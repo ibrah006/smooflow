@@ -72,7 +72,10 @@ class BoardView extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(16),
         children: kStages.map((si) {
-          final stageTasks = tasks.where((t) => t.status == si.stage).toList();
+          final stageTasks = tasks.where((t) { 
+
+            return t.status == si.stage;
+          }).toList();
           return _KanbanLane(
             stageInfo: si,
             tasks: stageTasks,

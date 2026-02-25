@@ -214,6 +214,7 @@ class Task {
   }
 
   factory Task.fromJson(Map<String, dynamic> json) {
+
     final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
     return Task(
       id: json['id'],
