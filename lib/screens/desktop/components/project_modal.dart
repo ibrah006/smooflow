@@ -99,6 +99,7 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
             priority: 1,
             dueDate: _due,
             estimatedProductionStart: DateTime.now(),
+            color: _color
           ),
         );
         // Notify organization state about this adding of a project to update projectsLastAdded

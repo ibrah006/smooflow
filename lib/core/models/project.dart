@@ -96,6 +96,7 @@ class Project {
     required this.assignedManagers,
     required this.client,
     required this.priority,
+    required this.color
   }) : _status = "Pending",
        tasks = [],
        dateStarted = DateTime.now(),

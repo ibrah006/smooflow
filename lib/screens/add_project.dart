@@ -817,6 +817,7 @@ class _AddProjectScreenState extends ConsumerState<AddProjectScreen> {
             priority: PriorityLevel.values.indexOf(selectedPriority),
             dueDate: timelineData.deadline,
             estimatedProductionStart: timelineData.startDate,
+            color: [Color(0xFF2563EB),Color(0xFF8B5CF6), Color(0xFF10B981), Color(0xFFF59E0B), Color(0xFFEF4444), Color(0xFF0EA5E9)][Random().nextInt(6)]
           ),
         );
 
