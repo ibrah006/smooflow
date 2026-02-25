@@ -1361,7 +1361,7 @@ class _ClientDetailPanel extends StatelessWidget {
                   _DetailSection('Contact', [
                     _DetailRow(Icons.person_outline, c.contactName?? "No provided"),
                     _DetailRow(Icons.email_outlined, c.email?? "Not provided"),
-                    _DetailRow(Icons.phone_outlined, c.phone?? "not provided"),
+                    _DetailRow(Icons.phone_outlined, c.phone?? "Not provided"),
                   ]),
                   const SizedBox(height: 16),
 
@@ -1554,10 +1554,6 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
     // Validate required fields
     if (_namCtrl.text.trim().isEmpty) {
       _showError('Company name is required');
-      return;
-    }
-    if (_emlCtrl.text.trim().isEmpty) {
-      _showError('Email address is required');
       return;
     }
 
@@ -1791,7 +1787,6 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
                             hint: 'client@company.com',
                             controller: _emlCtrl,
                             icon: Icons.email_outlined,
-                            required: true,
                             keyboard: TextInputType.emailAddress,
                           ),
                         ),
