@@ -115,7 +115,7 @@ class Company {
       phone: json['phone'],
       industry: json['industry'],
       contactName: json["contactName"],
-      color: (json["color"])
+      color: _hexToColor(json['color'])
     );
   }
 
@@ -137,6 +137,19 @@ class Company {
 }
 
 String? _colorToHex(Color? color) {
-  if (color == null) return null; 
-  return '#${color.value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+  if (color == null) return null;
+  return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+}
+
+Color? _hexToColor(String? hex) {
+  if (hex == null) return null;
+
+  try {
+    final buffer = StringBuffer();
+    if (hex.length == 6 || hex.length == 7) buffer.write('ff');
+    buffer.write(hex.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
+  } catch(e) {
+    return null;
+  }
 }
