@@ -276,7 +276,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   int get _activeJobs      => tasks.where((t) =>
       t.status != TaskStatus.completed && t.status != TaskStatus.blocked).length;
   int get _printersOnline  => printers
-      .where((p) => p.isAvailable || p.isBusy).length;
+      .where((p) => p.isAvailable).length;
   int get _dueToday        {
     final today = DateTime.now();
     return tasks.where((t) =>
@@ -729,7 +729,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       _KpiData('Active Jobs',     '$_activeJobs',
           Icons.work_outline_rounded,     _T.brandBlue, _T.blueBg,   '+3 vs last wk', true),
       _KpiData('Printers Online', '$_printersOnline/${printers.length}',
-          Icons.print_rounded,            _T.green,     _T.greenBg,  'All operational', null),
+          Icons.print_rounded,            _T.green,     _T.greenBg,  _printersOnline==0? 'None operational' : _printersOnline==printers.length? 'All operational' : 'Operational', null),
       _KpiData('Due Today',       '$_dueToday',
           Icons.today_rounded,            _T.amber,     _T.amberBg,  '2 overdue', false),
       // _KpiData('Stock Alerts',    '${stockAlerts.length}',
