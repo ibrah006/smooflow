@@ -1566,12 +1566,12 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
         await _createCompany();
       }
 
-      // if (mounted) {
-      //   Navigator.of(context).pop();
-      //   _showSuccess(
-      //     _isEdit ? 'Company updated successfully' : 'Company created successfully',
-      //   );
-      // }
+      if (mounted) {
+        Navigator.of(context).pop();
+        _showSuccess(
+          _isEdit ? 'Company updated successfully' : 'Company created successfully',
+        );
+      }
     } catch (e) {
       _showError(e.toString().replaceFirst('Exception: ', ''));
     } finally {
