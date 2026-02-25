@@ -77,7 +77,7 @@ class BoardView extends StatelessWidget {
             return t.status == si.stage;
           }).toList();
 
-          if (si.stage == TaskStatus.pending && stageTasks.isEmpty) return SizedBox();
+          // if (si.stage == TaskStatus.pending && stageTasks.isEmpty) return SizedBox();
 
           return _KanbanLane(
             stageInfo: si,
