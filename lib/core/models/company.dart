@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Color;
+import 'package:flutter/material.dart' show Color, Colors;
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -7,6 +7,7 @@ import 'project.dart';
 
 class Company {
   final String id;
+  // Company name
   final String name;
   final String description;
   final bool isActive;
@@ -20,10 +21,31 @@ class Company {
   String? industry;
   String? phone;
   String? contactName;
-  Color? color;
+  Color? _color;
+
+  Color get color {
+    return _color?? Colors.grey;
+  }
+
+  set color(Color? value) {
+    _color = value;
+  }
 
   // Sample data check
   bool get isSample => _isSample;
+
+  String get initials {
+    final splitted = name.split(" ");
+
+    String result = "";
+
+    while(splitted.isNotEmpty && result.length < 4) {
+      result += splitted[0][0].toUpperCase();
+      splitted.removeAt(0);
+    }
+
+    return result;
+  }
 
   Company({
     required this.id,
@@ -37,8 +59,8 @@ class Company {
     required this.industry,
     required this.phone,
     required this.contactName,
-    required this.color
-  }) : _isSample = false;
+    required Color? color
+  }) : _color = color, _isSample = false;
 
   Company.create({
     required this.name,
@@ -47,8 +69,8 @@ class Company {
     this.industry,
     this.phone,
     this.contactName,
-    this.color})
-    : id = Uuid().v1(),
+    Color? color})
+    : _color = color, id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
       projects = [],

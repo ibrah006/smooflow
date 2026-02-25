@@ -1911,7 +1911,7 @@ class _ClientAvatar extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: size, height: size,
     decoration: BoxDecoration(
-        color: client.color.withOpacity(0.12), shape: BoxShape.circle,
+        color: client.color?.withOpacity(0.12), shape: BoxShape.circle,
         border: Border.all(color: client.color.withOpacity(0.25))),
     child: Center(
       child: Text(client.initials,
