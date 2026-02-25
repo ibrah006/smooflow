@@ -330,7 +330,7 @@ class _GridP extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const step = 44.0;
     final line = Paint()
-      ..color = _P.s200.withOpacity(0.55)
+      ..color = _P.s200.withOpacity(0.7)
       ..strokeWidth = 0.5;
     final dot = Paint()..color = _P.s300.withOpacity(0.4);
 
