@@ -10,11 +10,9 @@ import 'package:smooflow/core/models/company.dart';
 /// WebSocket client provider - manages the connection
 final companyWebSocketClientProvider = Provider<CompanyWebSocketClient>((ref) {
   // Get auth token from your auth provider
-  final authToken = ref.watch(authTokenProvider);
   final baseUrl = ApiClient.http.baseUrl; // Or from config provider
   
   final client = CompanyWebSocketClient(
-    authToken: authToken,
     baseUrl: baseUrl,
   );
 
@@ -294,7 +292,7 @@ class CompanyStats {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Replace this with your actual auth token provider
-final authTokenProvider = Provider<String>((ref) {
-  // Get from your auth state/secure storage
-  return 'your-jwt-token';
-});
+// final authTokenProvider = Provider<String>((ref) {
+//   // Get from your auth state/secure storage
+//   return 'your-jwt-token';
+// });

@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/company.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Company change event types
@@ -72,7 +75,7 @@ enum ConnectionStatus {
 
 /// Company WebSocket Client
 class CompanyWebSocketClient {
-  final String authToken;
+  final String authToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
   final String baseUrl;
   IO.Socket? _socket;
 
@@ -89,7 +92,6 @@ class CompanyWebSocketClient {
   final Set<String> _subscribedCompanies = {};
 
   CompanyWebSocketClient({
-    required this.authToken,
     required this.baseUrl,
   });
 
