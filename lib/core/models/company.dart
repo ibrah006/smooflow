@@ -15,7 +15,6 @@ class Company {
   final bool isActive;
   late final DateTime createdAt;
   final String createdByUserId;
-  final List<String> projects;
 
   final bool _isSample; // private flag for sample data
 
@@ -56,13 +55,30 @@ class Company {
     required this.isActive,
     required this.createdAt,
     required this.createdByUserId,
-    required this.projects,
+    // required this.projects,
     required this.email,
     required this.industry,
     required this.phone,
     required this.contactName,
     required Color? color
   }) : _color = color, _isSample = false;
+
+  Company.update(
+    Company original, {
+    required this.name,
+    required this.description,
+    required this.isActive,
+    required this.createdAt,
+    // required this.projects,
+    required this.email,
+    required this.industry,
+    required this.phone,
+    required this.contactName,
+    required Color? color,
+  })  : id = original.id,
+        _color = color,
+        _isSample = original._isSample,
+        createdByUserId = original.createdByUserId;
 
   Company.create({
     required this.name,
@@ -81,7 +97,7 @@ class Company {
       id = Uuid().v1(),
       isActive = true,
       createdByUserId = LoginService.currentUser!.id,
-      projects = [],
+      // projects = [],
       _isSample = false;
 
   // Sample constructor
@@ -92,7 +108,7 @@ class Company {
       isActive = true,
       createdAt = DateTime.now(),
       createdByUserId = "SAMPLE",
-      projects = [],
+      // projects = [],
       _isSample = true;
 
   static String getIdFromJson(Map<String, dynamic> companyJson) {
@@ -107,10 +123,10 @@ class Company {
       isActive: json['isActive'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
       createdByUserId: User.getIdFromJson(json['createdBy']),
-      projects:
-          ((json['projects'] ?? []) as List<dynamic>)
-              .map((projectJson) => Project.getIdFromJson(projectJson))
-              .toList(),
+      // projects:
+      //     ((json['projects'] ?? []) as List<dynamic>)
+      //         .map((projectJson) => Project.getIdFromJson(projectJson))
+      //         .toList(),
       email: json['emial'],
       phone: json['phone'],
       industry: json['industry'],
@@ -126,7 +142,7 @@ class Company {
       'description': description,
       'isActive': isActive,
       'createdBy': createdByUserId,
-      'projects': projects,
+      // 'projects': projects,
       'email': email,
       'phone': phone,
       'industry': industry,
