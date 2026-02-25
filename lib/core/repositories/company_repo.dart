@@ -54,6 +54,30 @@ class CompanyRepo {
     return null;
   }
 
+  // returns error message, if any
+  static Future<String?> updateCompany(Company udpatedCompany) async {
+    try {
+      final response = await ApiClient.http.put(
+        "/companies/${udpatedCompany.id}",
+        body: udpatedCompany.toJson()
+      );
+
+      final body = jsonDecode(response.body) as Map;
+
+      if (response.statusCode != 201 && response.statusCode != 209) {
+        return body["error"];
+      }
+
+      // Client company already exists in this organization
+      // if (response.statusCode == 209) {
+      //   companies.add(body["company"]);
+      // }
+    } catch (e) {
+      debugPrint("Error creating company profile,\nerror: $e");
+    }
+    return null;
+  }
+
   // static Future<void> createCompany(Company project) async {
   //   final response = await ApiClient.http.post(
   //     ApiEndpoints.projects,

@@ -1633,7 +1633,6 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
     );
 
     final errorMessage = await CompanyRepo.updateCompany(
-      widget.existing!.id,
       updatedCompany,
     );
 
