@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/websocket_clients/company_websocket.dart';
+import 'package:smooflow/core/models/company.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
