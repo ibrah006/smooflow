@@ -179,12 +179,13 @@ class CompanyWebSocketClient {
 
     // Company change events
     _socket!.on('company:changed', (data) {
-      try {
+      // try {
+        print("data passed: $data");
         final event = CompanyChangeEvent.fromJson(data as Map<String, dynamic>);
         _companyChangeController.add(event);
-      } catch (e) {
-        print('Error parsing company:changed event: $e');
-      }
+      // } catch (e) {
+      //   print('Error parsing company:changed event: $e');
+      // }
     });
 
     _socket!.on('company:updated', (data) {

@@ -102,8 +102,12 @@ class User {
     );
   }
 
-  static String getIdFromJson(userJson) {
-    return userJson["id"];
+  static String? getIdFromJson(userJson) {
+    try {
+      return userJson["id"];
+    }catch(e) {
+      return null;
+    }
   }
 
   Map<String, dynamic> toJson() {
