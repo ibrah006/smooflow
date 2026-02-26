@@ -1,3 +1,4 @@
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/member_websocket.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/notifiers/member_notifier.dart';

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
@@ -62,15 +63,6 @@ class MemberChangeEvent {
       changes: json['changes'] as Map<String, dynamic>?,
     );
   }
-}
-
-/// WebSocket connection status
-enum ConnectionStatus {
-  disconnected,
-  connecting,
-  connected,
-  reconnecting,
-  error,
 }
 
 /// Member WebSocket Client

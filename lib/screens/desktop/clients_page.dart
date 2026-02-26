@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/components/connection_status_banner.dart';
 import 'package:smooflow/core/api/websocket_clients/company_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/providers/company_provider.dart';
+import 'package:smooflow/screens/desktop/components/error_view.dart';
+import 'package:smooflow/screens/desktop/components/kpi_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
@@ -164,7 +166,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
               children: [
                 // ── Connection Status Banner ──────────────────────────────
                 connectionStatus.when(
-                  data: (status) => _ConnectionStatusBanner(status: status),
+                  data: (status) => ConnectionStatusBanner(status: status),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -202,7 +204,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
                     ),
                   )
                 else if (companyState.error != null)
-                  _ErrorView(
+                  ErrorView(
                     error: companyState.error!,
                     onRetry: () {
                       ref.read(companyListProvider.notifier).clearError();
@@ -336,7 +338,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
     final inactiveCount = companies.where((c) => !c.isActive).length;
     
     return Row(children: [
-      _KpiCard(
+      KpiCard(
         icon: Icons.business_outlined,
         iconColor: _T.blue,
         iconBg: _T.blue50,
@@ -346,7 +348,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
         subPositive: null,
       ),
       const SizedBox(width: 12),
-      _KpiCard(
+      KpiCard(
         icon: Icons.check_circle_outline_rounded,
         iconColor: _T.green,
         iconBg: _T.green50,
@@ -356,7 +358,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
         subPositive: true,
       ),
       const SizedBox(width: 12),
-      _KpiCard(
+      KpiCard(
         icon: Icons.cancel_outlined,
         iconColor: _T.slate400,
         iconBg: _T.slate100,
@@ -446,205 +448,6 @@ class _ClientsViewState extends ConsumerState<ClientsView>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _CreateClientSheet(existing: client),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CONNECTION STATUS BANNER
-// ─────────────────────────────────────────────────────────────────────────────
-class _ConnectionStatusBanner extends StatelessWidget {
-  final ConnectionStatus status;
-
-  const _ConnectionStatusBanner({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    if (status == ConnectionStatus.connected) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: _T.green50,
-          borderRadius: BorderRadius.circular(_T.r),
-          border: Border.all(color: _T.green.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.sync, size: 14, color: _T.green),
-            const SizedBox(width: 6),
-            Text(
-              'Real-time updates active',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _T.green,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (status == ConnectionStatus.reconnecting || status == ConnectionStatus.connecting) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: _T.amber50,
-          borderRadius: BorderRadius.circular(_T.r),
-          border: Border.all(color: _T.amber.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(_T.amber),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Reconnecting...',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _T.amber,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ERROR VIEW
-// ─────────────────────────────────────────────────────────────────────────────
-class _ErrorView extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-
-  const _ErrorView({
-    required this.error,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: _T.red,
-              size: 48,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: _T.slate500),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _T.blue,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// KPI CARD — same anatomy as admin dashboard
-// ─────────────────────────────────────────────────────────────────────────────
-class _KpiCard extends StatelessWidget {
-  final IconData icon;
-  final Color    iconColor, iconBg;
-  final String   label, value, sub;
-  final bool?    subPositive;
-
-  const _KpiCard({
-    required this.icon, required this.iconColor, required this.iconBg,
-    required this.label, required this.value, required this.sub,
-    required this.subPositive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final subColor = subPositive == null
-        ? _T.slate400
-        : subPositive!
-            ? _T.green
-            : _T.red;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-            color: _T.white,
-            border: Border.all(color: _T.slate200),
-            borderRadius: BorderRadius.circular(_T.rLg)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(_T.r)),
-                child: Icon(icon, size: 17, color: iconColor),
-              ),
-              const Spacer(),
-              Icon(
-                subPositive == null
-                    ? Icons.remove
-                    : subPositive!
-                        ? Icons.trending_up_rounded
-                        : Icons.trending_down_rounded,
-                size: 14, color: subColor,
-              ),
-            ]),
-            const SizedBox(height: 12),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.w800,
-                    color: _T.ink, letterSpacing: -1, height: 1)),
-            const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
-            const SizedBox(height: 6),
-            Text(sub,
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w500, color: subColor)),
-          ],
-        ),
-      ),
     );
   }
 }
