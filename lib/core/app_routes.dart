@@ -36,6 +36,7 @@ import 'package:smooflow/screens/project_progress_screen.dart';
 import 'package:smooflow/screens/project_report_screen.dart';
 import 'package:smooflow/screens/project_screen.dart';
 import 'package:smooflow/screens/schedule_print_job_screen.concept.dart';
+import 'package:smooflow/screens/viewer_home_screen.dart';
 // import 'package:smooflow/screens/schedule_print_job_screen.dart';
 
 // Auth & Onboarding
@@ -161,6 +162,9 @@ class AppRoutes {
 
   static const deliveryDashbaord = "/delivery/dashboard";
 
+  // Viewer role home
+  static const viewerHome = "/viewer";
+
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
     String? routeName = settings.name;
@@ -184,7 +188,7 @@ class AppRoutes {
         } else {
           // Mobile Home
           // Debug
-          routeName = AppRoutes.deliveryDashbaord;
+          routeName = AppRoutes.viewerHome;
           // if (role == 'admin') {
           //   routeName = AppRoutes.admin;
           // } else if (role == 'production' || role == 'production-head') {
@@ -421,6 +425,8 @@ class AppRoutes {
       case deliveryDashbaord:
         screen = DeliveryDashboardScreen();
         break;
+      case viewerHome:
+        screen = ViewerPendingScreen();
     }
 
     // If screen was determined, create the route
