@@ -22,7 +22,6 @@ import 'package:smooflow/enums/table_view_mode.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/error_view.dart';
 import 'package:smooflow/screens/desktop/components/kpi_card.dart';
-import 'package:smooflow/screens/desktop/components/toolbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy from ClientsPage
