@@ -30,6 +30,7 @@ import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
+import 'package:smooflow/screens/desktop/manage_members_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
@@ -88,7 +89,7 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, board, list, clients }
+enum _AdminView { overview, board, list, clients, team }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -267,7 +268,8 @@ class _AdminDesktopDashboardScreenState
                                       projects: _projects,
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
-                                    ) : ClientsPage()
+                                    ) : _view == _AdminView.clients?
+                                    ClientsPage() : ManageMembersPage()
                                     
                           ),
                           // ── Detail panel ──────────────────────────────────
@@ -520,6 +522,19 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   label: 'Clients',
                   isActive: widget.currentView == _AdminView.clients,
                   onTap: () => widget.onViewChanged(_AdminView.clients),
+                )
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
+              children: [
+                _SidebarNavItem(
+                  icon: Icons.supervisor_account_sharp,
+                  label: 'Manage Team',
+                  isActive: widget.currentView == _AdminView.team,
+                  onTap: () => widget.onViewChanged(_AdminView.team),
                 )
               ],
             ),
