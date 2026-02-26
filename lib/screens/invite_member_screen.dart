@@ -80,7 +80,7 @@ const _kRoles = [
   ),
   _Role(
     value: 'design',      label: 'Design',
-    description: 'Design tasks',
+    description: 'Design department',
     color: _T.purple,     bg: _T.purple50,
     icon: Icons.palette_outlined,
   ),
@@ -426,7 +426,7 @@ class _ComposeCard extends StatelessWidget {
                 _SmooTextField(
                   controller:  emailCtrl,
                   focusNode:   emailFocus,
-                  hintText:    'colleague@company.com',
+                  hintText:    'colleague@domain.com',
                   prefixIcon:  Icons.alternate_email_rounded,
                   keyboardType: TextInputType.emailAddress,
                 ),
