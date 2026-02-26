@@ -273,7 +273,7 @@ class _UserMenu extends StatefulWidget {
 class _UserMenuState extends State<_UserMenu> {
   bool _confirmingLogout = false;
 
-  bool _isLogoutLoading = true;
+  bool _isLogoutLoading = false;
 
   final user = LoginService.currentUser!;
 
