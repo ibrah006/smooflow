@@ -225,6 +225,8 @@ class _DeliveryDashboardScreenState
               ),
             ),
 
+            SizedBox(height: 15),
+
             // ── Stats strip ──────────────────────────────────────────
             _StatsStrip(
               queueCount:   queue.length,
