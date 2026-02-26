@@ -1414,6 +1414,7 @@ class _MemberDetailPanel extends StatelessWidget {
                   label: 'Edit Role',
                   color: _T.blue,
                   onTap: onEdit,
+                  disabled: true,
                 ),
 
                 // Resend invite (optional)
@@ -1692,21 +1693,23 @@ class _PrimaryButton extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final bool disabled;
 
   const _PrimaryButton({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
+    this.disabled = false
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color,
+      color: disabled? color.withOpacity(0.5) : color,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: onTap,
+        onTap: disabled? () {} : onTap,
         borderRadius: BorderRadius.circular(_T.r),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 11),
