@@ -190,7 +190,7 @@ class AppRoutes {
 
           // Debug
           routeName = AppRoutes.viewerHome;
-          
+
           // if (role == 'admin') {
           //   routeName = AppRoutes.admin;
           // } else if (role == 'production' || role == 'production-head') {
@@ -428,7 +428,7 @@ class AppRoutes {
         screen = DeliveryDashboardScreen();
         break;
       case viewerHome:
-        screen = ViewerPendingScreen();
+        screen = ViewerHomeScreen();
         break;
     }
 

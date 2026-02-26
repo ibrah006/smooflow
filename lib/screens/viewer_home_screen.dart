@@ -67,22 +67,22 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class ViewerPendingScreen extends ConsumerStatefulWidget {
+class ViewerHomeScreen extends ConsumerStatefulWidget {
 
   /// Called when polling detects that a role has been assigned.
   /// Navigate to the appropriate dashboard here.
   final VoidCallback? onRoleAssigned;
 
-  const ViewerPendingScreen({
+  const ViewerHomeScreen({
     super.key,
     this.onRoleAssigned,
   });
 
   @override
-  ConsumerState<ViewerPendingScreen> createState() => _ViewerPendingScreenState();
+  ConsumerState<ViewerHomeScreen> createState() => _ViewerPendingScreenState();
 }
 
-class _ViewerPendingScreenState extends ConsumerState<ViewerPendingScreen>
+class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
     with TickerProviderStateMixin {
 
   // Entry animation controller
