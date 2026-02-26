@@ -21,7 +21,7 @@
 ; modified by Olan Knight.
 ;
 ;********************************************************************
-; COPYRIGHT © 2017 XXXXXXXXXXXXXXXXXXXXXXX  AND/OR ITS
+; COPYRIGHT © 2026 Smooflow  AND/OR ITS
 ; AFFILIATES (“CSG”). ALL RIGHTS RESERVED.
 ;
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
@@ -33,16 +33,16 @@
 #define MyAppId       "A44C3C34-52ED-4625-8BBC-912B9119052B"  
 #define MyAppName     "Smooflow"                                                Name fof the application
 #define MyAppExeName  "Smooflow.exe"                                        
-#define MyAppIcon     "taxi_v3_64x64_v2_black2.ico"
-#define MyAppIconPath "J:\Applications\QualityAssurance\csgi12\ICABS\__ICABS b0168 - LPCs\installer\"
-#define MyAppIconName "J:\Applications\QualityAssurance\csgi12\ICABS\__ICABS b0168 - LPCs\installer\taxi_v3_64x64_v2_black2.ico"
+#define MyAppIcon     "app_icon.ico"
+#define MyAppIconPath "C:\Desktop\smooflow\windows\runner\resources\"
+#define MyAppIconName "C:\Desktop\smooflow\windows\runner\resources\app_icon.ico"
 #define MyAppPath     "C:\Program Files (x86)\CSGI\Smooflow"              
 #define MyAppVersion  "4.0.5.0168"
 #define Reg32AppKey   "Software\CSGI"
 #define Reg64AppKey   "Software\Wow6432Node\CSGI"
 #define Reg32SubKey   "Software\CSGI\\Smooflow"
 #define Reg64SubKey   "Software\Wow6432Node\CSGI\Smooflow"
-#define SourceFileDir "J:\Applications\QualityAssurance\csgi12\ICABS\__ICABS b0168 - LPCs"
+#define SourceFileDir "C:\Desktop\smooflow\build\ICABS\__ICABS b0168 - LPCs"
 #define MyWebsite  ""
 
 
