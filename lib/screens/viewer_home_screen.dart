@@ -29,6 +29,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/screens/login_screen.dart';
 
@@ -1245,9 +1246,13 @@ class _UserSheet extends StatelessWidget {
             color: _T.red50,
             borderRadius: BorderRadius.circular(_T.rLg),
             child: InkWell(
-              onTap: () {
+              onTap: () async {
                 Navigator.of(context).pop();
                 onSignOut();
+
+                await LoginService.logout();
+
+                AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
               },
               borderRadius: BorderRadius.circular(_T.rLg),
               child: Container(
