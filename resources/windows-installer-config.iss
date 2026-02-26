@@ -36,7 +36,7 @@
 #define MyAppIcon     "app_icon.ico"
 #define MyAppIconPath "C:\Desktop\smooflow\windows\runner\resources\"
 #define MyAppIconName "C:\Desktop\smooflow\windows\runner\resources\app_icon.ico"
-#define MyAppPath     "C:\Program Files (x86)\CSGI\Smooflow"              
+#define MyAppPath     "C:\Program Files (x86)\Smooflow"              
 #define MyAppVersion  "4.0.5.0168"
 #define Reg32AppKey   "Software\CSGI"
 #define Reg64AppKey   "Software\Wow6432Node\CSGI"
