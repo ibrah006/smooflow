@@ -27,13 +27,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
-import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/services/login_service.dart';
-import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/login_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +63,8 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class ViewerHomeScreen extends ConsumerStatefulWidget {
+class ViewerHomeScreen extends StatefulWidget {
+  /// The name of the organisation this user has joined.
 
   /// Called when polling detects that a role has been assigned.
   /// Navigate to the appropriate dashboard here.
@@ -79,11 +76,13 @@ class ViewerHomeScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ViewerHomeScreen> createState() => _ViewerPendingScreenState();
+  State<ViewerHomeScreen> createState() => _ViewerHomeScreenState();
 }
 
-class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
+class _ViewerHomeScreenState extends State<ViewerHomeScreen>
     with TickerProviderStateMixin {
+
+  final orgName = "My Org";
 
   // Entry animation controller
   late final AnimationController _entry = AnimationController(
@@ -104,9 +103,6 @@ class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
   );
 
   bool _refreshing = false;
-
-  Future<Organization> get currentOrgFuture =>
-      ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
 
   @override
   void initState() {
@@ -157,7 +153,7 @@ class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
     }
   }
 
-  void _openUserSheet(String orgName) {
+  void _openUserSheet() {
     final user = LoginService.currentUser;
     if (user == null) return;
     HapticFeedback.selectionClick();
@@ -178,206 +174,102 @@ class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
     final mq   = MediaQuery.of(context);
     final user = LoginService.currentUser;
 
-    return FutureBuilder(
-      future: currentOrgFuture,
-      builder: (context, snapshot) {
-        final orgName = snapshot.data?.name;
-        final isLoading = snapshot.data == null;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: _T.slate50,
+        body: Column(
+          children: [
+            // ── Status bar padding + topbar ──────────────────────────
+            Container(
+              color: _T.white,
+              padding: EdgeInsets.only(top: mq.padding.top),
+              child: _Topbar(
+                user:        user,
+                orgName:     orgName,
+                onAvatarTap: _openUserSheet,
+              ),
+            ),
 
-        print("org: ${orgName}");
+            // ── Scrollable body ───────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                    20, 24, 20, 24 + mq.padding.bottom),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.dark.copyWith(
-              statusBarColor: Colors.transparent),
-          child: Scaffold(
-            backgroundColor: _T.slate50,
-            body: Column(
-              children: [
-                // ── Status bar padding + topbar ──────────────────────────
-                Container(
-                  color: _T.white,
-                  padding: EdgeInsets.only(top: mq.padding.top),
-                  child: isLoading
-                      ? _TopbarLoading()
-                      : _Topbar(
-                          user:        user,
-                          orgName:     orgName!,
-                          onAvatarTap: ()=> _openUserSheet(orgName),
-                        ),
-                ),
-        
-                // ── Scrollable body ───────────────────────────────────────
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                        20, 24, 20, 24 + mq.padding.bottom),
-                    physics: const BouncingScrollPhysics(),
-                    child: isLoading
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Welcome card skeleton
-                              CardLoading(
-                                height: 180,
-                                borderRadius: BorderRadius.circular(_T.rXl),
-                                margin: const EdgeInsets.only(bottom: 16),
-                              ),
-                              // Progress track skeleton
-                              CardLoading(
-                                height: 280,
-                                borderRadius: BorderRadius.circular(_T.rXl),
-                                margin: const EdgeInsets.only(bottom: 16),
-                              ),
-                              // What next skeleton
-                              CardLoading(
-                                height: 200,
-                                borderRadius: BorderRadius.circular(_T.rXl),
-                                margin: const EdgeInsets.only(bottom: 16),
-                              ),
-                              // Org card skeleton
-                              CardLoading(
-                                height: 100,
-                                borderRadius: BorderRadius.circular(_T.rXl),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-        
-                        // ── Hero welcome card ─────────────────────────────
-                        _FadeSlide(
-                          anim: _stagger(0.0, 0.5),
-                          child: _WelcomeCard(
-                            user:    user,
-                            orgName: orgName!,
-                            pulse:   _pulse,
+                    // ── Hero welcome card ─────────────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.0, 0.5),
+                      child: _WelcomeCard(
+                        user:    user,
+                        orgName: orgName,
+                        pulse:   _pulse,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Onboarding progress track ─────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.12, 0.60),
+                      child: _ProgressTrack(pulse: _pulse),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── What happens next ─────────────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.24, 0.72),
+                      child: _WhatNextCard(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Organisation card ─────────────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.34, 0.82),
+                      child: _OrgCard(orgName: orgName),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Refresh CTA ───────────────────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.44, 0.92),
+                      child: _RefreshButton(
+                        refreshing: _refreshing,
+                        spin:       _spin,
+                        onTap:      _refresh,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── Sign out (soft, secondary) ────────────────────
+                    _FadeSlide(
+                      anim: _stagger(0.50, 1.0),
+                      child: Center(
+                        child: TextButton(
+                          onPressed: _signOut,
+                          style: TextButton.styleFrom(
+                            foregroundColor: _T.slate400,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-        
-                        // ── Onboarding progress track ─────────────────────
-                        _FadeSlide(
-                          anim: _stagger(0.12, 0.60),
-                          child: _ProgressTrack(pulse: _pulse),
-                        ),
-                        const SizedBox(height: 16),
-        
-                        // ── What happens next ─────────────────────────────
-                        _FadeSlide(
-                          anim: _stagger(0.24, 0.72),
-                          child: _WhatNextCard(),
-                        ),
-                        const SizedBox(height: 16),
-        
-                        // ── Organisation card ─────────────────────────────
-                        _FadeSlide(
-                          anim: _stagger(0.34, 0.82),
-                          child: _OrgCard(orgName: orgName),
-                        ),
-                        const SizedBox(height: 28),
-        
-                        // ── Refresh CTA ───────────────────────────────────
-                        _FadeSlide(
-                          anim: _stagger(0.44, 0.92),
-                          child: _RefreshButton(
-                            refreshing: _refreshing,
-                            spin:       _spin,
-                            onTap:      _refresh,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-        
-                            // ── Sign out (soft, secondary) ────────────────────
-                            _FadeSlide(
-                              anim: _stagger(0.50, 1.0),
-                              child: Center(
-                                child: TextButton(
-                                  onPressed: _signOut,
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: _T.slate400,
-                                  ),
-                                  child: const Text(
-                                    'Sign out',
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                          child: const Text(
+                            'Sign out',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
                             ),
-                            ],
                           ),
-                  ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      }
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TOPBAR LOADING — skeleton loader for topbar
-// ─────────────────────────────────────────────────────────────────────────────
-class _TopbarLoading extends StatelessWidget {
-  const _TopbarLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: const BoxDecoration(
-        color: _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate200)),
-      ),
-      child: Row(
-        children: [
-          // Logo skeleton
-          CardLoading(
-            height: 30,
-            width: 30,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          const SizedBox(width: 10),
-          // Title area skeleton
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CardLoading(
-                  height: 12,
-                  width: 80,
-                  borderRadius: BorderRadius.circular(4),
-                  margin: const EdgeInsets.only(bottom: 6),
-                ),
-                CardLoading(
-                  height: 10,
-                  width: 120,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            ),
-          ),
-          // Badge skeleton
-          CardLoading(
-            height: 28,
-            width: 80,
-            borderRadius: BorderRadius.circular(99),
-            margin: const EdgeInsets.only(right: 10),
-          ),
-          // Avatar skeleton
-          CardLoading(
-            height: 34,
-            width: 34,
-            borderRadius: BorderRadius.circular(99),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
