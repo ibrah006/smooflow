@@ -611,7 +611,7 @@ class _ProgressTrack extends StatelessWidget {
           _Step(
             index:  2,
             icon:   Icons.how_to_reg_outlined,
-            label:  'Membership approved',
+            label:  'User approved',
             sub:    'Your request was accepted',
             state:  _StepState.done,
             pulse:  pulse,
