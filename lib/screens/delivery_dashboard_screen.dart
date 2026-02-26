@@ -28,6 +28,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
@@ -359,18 +360,7 @@ class _Topbar extends StatelessWidget {
       child: Row(
         children: [
           // Logo
-          Container(
-            width: 30, height: 30,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_T.blue, _T.teal],
-                begin: Alignment.topLeft,
-                end:   Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(child: _Logo(size: 17)),
-          ),
+          Logo(size: 34),
           const SizedBox(width: 10),
 
           // Greeting + subtitle
