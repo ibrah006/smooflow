@@ -191,7 +191,7 @@ class _MembersViewState extends ConsumerState<MembersView>
                 const SizedBox(height: 12),
 
                 // Loading / Error States
-                if (memberState.isLoading && memberState.members.isEmpty)
+                if (memberState.isLoading)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
