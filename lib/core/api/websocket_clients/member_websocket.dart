@@ -101,19 +101,25 @@ class MemberWebSocketClient {
     _updateStatus(ConnectionStatus.connecting);
 
     try {
+      // _socket = IO.io(
+      //   baseUrl,
+      //   IO.OptionBuilder()
+      //       .setPath('/ws/members')
+      //       .setTransports(['websocket', 'polling'])
+      //       .setAuth({'token': authToken})
+      //       .enableReconnection()
+      //       .setReconnectionDelay(1000)
+      //       .setReconnectionDelayMax(5000)
+      //       .setReconnectionAttempts(_maxReconnectAttempts)
+      //       .build(),
+      // );
       _socket = IO.io(
-        baseUrl,
+        '$baseUrl/members',
         IO.OptionBuilder()
-            .setPath('/ws/members')
-            .setTransports(['websocket', 'polling'])
+            .setTransports(['websocket'])
             .setAuth({'token': authToken})
-            .enableReconnection()
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(_maxReconnectAttempts)
             .build(),
       );
-
       _setupEventHandlers();
       _socket!.connect();
     } catch (e) {

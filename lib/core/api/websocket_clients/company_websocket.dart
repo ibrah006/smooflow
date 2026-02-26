@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:smooflow/change_events/task_change_event.dart';
-import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
@@ -105,16 +104,23 @@ class CompanyWebSocketClient {
     _updateStatus(ConnectionStatus.connecting);
 
     try {
+      // _socket = IO.io(
+      //   baseUrl,
+      //   IO.OptionBuilder()
+      //       .setPath('/ws/companies')
+      //       .setTransports(['websocket', 'polling'])
+      //       .setAuth({'token': authToken})
+      //       .enableReconnection()
+      //       .setReconnectionDelay(1000)
+      //       .setReconnectionDelayMax(5000)
+      //       .setReconnectionAttempts(_maxReconnectAttempts)
+      //       .build(),
+      // );
       _socket = IO.io(
-        baseUrl,
+        '$baseUrl/companies',
         IO.OptionBuilder()
-            .setPath('/ws/companies')
-            .setTransports(['websocket', 'polling'])
+            .setTransports(['websocket'])
             .setAuth({'token': authToken})
-            .enableReconnection()
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(_maxReconnectAttempts)
             .build(),
       );
 
