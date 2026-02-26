@@ -20,7 +20,7 @@ void main(List<String> args) async {
       size: Size(1200, 800),
       minimumSize: Size(1200, 800),
       center: true,
-      title: "My App",
+      title: "Smooflow",
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
