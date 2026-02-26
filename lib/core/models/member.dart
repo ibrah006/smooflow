@@ -18,7 +18,12 @@ class Member {
     required this.role,
     required this.createdAt,
     required this.activeTasks
-  });
+  }) {
+    color = [Color(0xFF2563EB),
+    Color(0xFF8B5CF6),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B)][Random().nextInt(4)];
+  }
 
   String get initials {
     final n = name.split(" ");
@@ -31,12 +36,7 @@ class Member {
   }
 
   // Get random color for now
-  Color get color {
-    return [Color(0xFF2563EB),
-    Color(0xFF8B5CF6),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B)][Random().nextInt(4)];
-  }
+  late final Color color;
 
   // Factory constructor for creating a User from JSON
   factory Member.fromJson(Map<String, dynamic> json) {

@@ -268,8 +268,8 @@ class _AdminDesktopDashboardScreenState
                                       projects: _projects,
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
-                                    ) : _view == _AdminView.clients?
-                                    ClientsPage() : ManageMembersPage()
+                                    ) :
+                                    ClientsPage()
                                     
                           ),
                           // ── Detail panel ──────────────────────────────────
@@ -526,19 +526,19 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              children: [
-                _SidebarNavItem(
-                  icon: Icons.supervisor_account_sharp,
-                  label: 'Manage Team',
-                  isActive: widget.currentView == _AdminView.team,
-                  onTap: () => widget.onViewChanged(_AdminView.team),
-                )
-              ],
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 10),
+          //   child: Column(
+          //     children: [
+          //       _SidebarNavItem(
+          //         icon: Icons.supervisor_account_sharp,
+          //         label: 'Manage Team',
+          //         isActive: widget.currentView == _AdminView.team,
+          //         onTap: () => widget.onViewChanged(_AdminView.team),
+          //       )
+          //     ],
+          //   ),
+          // ),
 
           // ── Team ─────────────────────────────────────────────────────
           Container(
