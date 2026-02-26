@@ -67,7 +67,7 @@ dependencies:
   board_datetime_picker: ^2.8.5
   socket_io_client: ^3.1.4
   flutter_popup: ^3.3.9
-  window_size: ^0.1.0
+  window_manager: ^0.5.1
 
 dev_dependencies:
   flutter_test:
