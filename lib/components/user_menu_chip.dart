@@ -657,7 +657,7 @@ class _MenuItemState extends State<_MenuItem> {
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: bg,
+            // color: bg,
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: Row(children: [
