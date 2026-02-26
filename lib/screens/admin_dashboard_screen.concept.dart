@@ -101,6 +101,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     AppRoutes.navigateTo(context, AppRoutes.viewProject, arguments: ProjectArgs(projectId: project.id));
   }
 
+  void onManageInvites() {
+    AppRoutes.navigateTo(context, AppRoutes.inviteMember);
+  }
+
   double projectProgress(Project p) {
     if (p.tasks.isEmpty) {
       return 0;
@@ -1553,7 +1557,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('Team Workload'),
+        Row(
+          children: [
+            _sectionHeader('Team Workload'),
+            Spacer(),
+            GestureDetector(
+              onTap: onManageInvites,
+              child: Row(children: [
+                Text('Manage Invites',
+                    style: TextStyle(fontSize: 13,
+                        fontWeight: FontWeight.w600, color: _T.brandBlue)),
+                SizedBox(width: 3),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 12, color: _T.brandBlue),
+              ]),
+            ),
+          ],
+        ),
         SizedBox(height: 12),
         team.isEmpty
             ? _card(child: _emptyInline(Icons.people_outline,
