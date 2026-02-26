@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class Logo extends StatelessWidget {
-  const Logo({super.key});
+  final double? size;
+  const Logo({super.key, this.size});
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      "assets/icons/logo.svg",
+    return SizedBox(
+      height: size,
+      width: size,
+      child: SvgPicture.asset(
+        "assets/icons/logo.svg",
+      ),
     );
   }
 }

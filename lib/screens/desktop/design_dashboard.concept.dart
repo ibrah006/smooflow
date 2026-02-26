@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/desktop/project_empty_state.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
@@ -376,14 +377,7 @@ class _Sidebar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Container(
-                  width: 28, height: 28,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [_T.blue, _T.teal], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  child: const Center(child: _SmooflowLogoMark(size: 16)),
-                ),
+                Logo(size: 25),
                 const SizedBox(width: 9),
                 const Text('smooflow', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: -0.6, color: Colors.white)),
                 const Spacer(),

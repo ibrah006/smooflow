@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -385,17 +386,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Container(
-                  width: 28, height: 28,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                        colors: [_T.blue, _T.teal],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight),
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  child: const Center(child: _LogoMark(size: 16)),
-                ),
+                Logo(size: 25),
                 const SizedBox(width: 9),
                 const Text('smooflow',
                     style: TextStyle(
