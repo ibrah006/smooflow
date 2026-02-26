@@ -58,7 +58,7 @@ class _T {
 // PUBLIC WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
 class UserMenuChip extends StatefulWidget {
-  final VoidCallback onLogout;
+  final Function onLogout;
 
   /// Optional extras to show in the menu above the divider.
   /// Each item: (icon, label, onTap).
@@ -165,10 +165,10 @@ class _UserMenuChipState extends State<UserMenuChip>
                 extraItems: widget.extraItems,
                 onClose:    _close,
                 onLogout: () async {
-                  _close();
+                  // _close();
                   // Small delay so the menu closes before navigation
-                  await Future.delayed(const Duration(milliseconds: 180));
-                  widget.onLogout();
+                  // await Future.delayed(const Duration(milliseconds: 180));
+                  await widget.onLogout();
                 },
               ),
             ),
@@ -256,7 +256,7 @@ class _UserMenuChipState extends State<UserMenuChip>
 // ─────────────────────────────────────────────────────────────────────────────
 class _UserMenu extends StatefulWidget {
   final User         user;
-  final VoidCallback onClose, onLogout;
+  final Function() onClose, onLogout;
   final List<({IconData icon, String label, VoidCallback onTap})>? extraItems;
 
   const _UserMenu({
@@ -272,6 +272,8 @@ class _UserMenu extends StatefulWidget {
 
 class _UserMenuState extends State<_UserMenu> {
   bool _confirmingLogout = false;
+
+  bool _isLogoutLoading = true;
 
   final user = LoginService.currentUser!;
 
@@ -463,11 +465,18 @@ class _UserMenuState extends State<_UserMenu> {
                   icon:       Icons.logout_rounded,
                   label:      'Sign out',
                   isDestructive: true,
+                  isLoading: _isLogoutLoading,
                   onTap: () => setState(() => _confirmingLogout = true),
                 ),
                 secondChild: _LogoutConfirmRow(
                   onCancel:  () => setState(() => _confirmingLogout = false),
-                  onConfirm: widget.onLogout,
+                  onConfirm: () async {
+                    setState(() {
+                      _isLogoutLoading = true;
+                    });
+                    await widget.onLogout();
+                    _isLogoutLoading = false;
+                  },
                 ),
               ),
 
@@ -617,6 +626,7 @@ class _MenuItem extends StatefulWidget {
   final IconData   icon;
   final String     label;
   final bool       isDestructive;
+  final bool       isLoading;
   final Widget?    trailing;
   final VoidCallback onTap;
 
@@ -625,6 +635,7 @@ class _MenuItem extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.isDestructive = false,
+    this.isLoading = false,
     this.trailing,
   });
 
@@ -638,20 +649,20 @@ class _MenuItemState extends State<_MenuItem> {
   @override
   Widget build(BuildContext context) {
     final color = widget.isDestructive
-        ? (_hovered ? _T.red : _T.slate500)
-        : (_hovered ? _T.ink : _T.slate500);
-    final bg = widget.isDestructive && _hovered
+        ? (widget.isLoading || _hovered ? _T.red : _T.slate500)
+        : (_hovered && !widget.isLoading ? _T.ink : _T.slate500);
+    final bg = widget.isDestructive && (_hovered || widget.isLoading)
         ? _T.red50
-        : _hovered
+        : _hovered && !widget.isLoading
             ? _T.slate50
             : Colors.transparent;
 
     return MouseRegion(
-      cursor:  SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      cursor: widget.isLoading ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      onEnter: (_) => !widget.isLoading ? setState(() => _hovered = true) : null,
+      onExit:  (_) => !widget.isLoading ? setState(() => _hovered = false) : null,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: widget.isLoading ? null : widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 110),
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -661,7 +672,17 @@ class _MenuItemState extends State<_MenuItem> {
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: Row(children: [
-            Icon(widget.icon, size: 15, color: color),
+            if (widget.isLoading)
+              SizedBox(
+                width: 15,
+                height: 15,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(widget.isLoading? color.withOpacity(0.6) : color),
+                ),
+              )
+            else
+              Icon(widget.icon, size: 15, color: color),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -669,11 +690,11 @@ class _MenuItemState extends State<_MenuItem> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: color,
+                  color: widget.isLoading? color.withOpacity(0.6) : color,
                 ),
               ),
             ),
-            if (widget.trailing != null) widget.trailing!,
+            if (widget.trailing != null && !widget.isLoading) widget.trailing!,
           ]),
         ),
       ),
