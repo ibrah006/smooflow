@@ -188,17 +188,16 @@ class AppRoutes {
         } else {
           // Mobile Home
 
-          // Debug
-          routeName = AppRoutes.viewerHome;
-
-          // if (role == 'admin') {
-          //   routeName = AppRoutes.admin;
-          // } else if (role == 'production' || role == 'production-head') {
-          //   routeName = AppRoutes.productionDashboard;
-          // } else if (role == "design") {
-          //   // routeName = AppRoutes.designDashboard;
-          //   // No home route for design on mobile
-          // }
+          if (role == 'admin') {
+            routeName = AppRoutes.admin;
+          } else if (role == 'production' || role == 'production-head') {
+            routeName = AppRoutes.productionDashboard;
+          } else if (role == "design") {
+            // routeName = AppRoutes.designDashboard;
+            // No home route for design on mobile
+          } else {
+            routeName = AppRoutes.viewerHome;
+          }
 
           // // route = AppRoutes.admin;
         }
