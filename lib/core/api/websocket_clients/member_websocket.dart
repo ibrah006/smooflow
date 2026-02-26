@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Member change event types
@@ -72,8 +75,8 @@ enum ConnectionStatus {
 
 /// Member WebSocket Client
 class MemberWebSocketClient {
-  final String authToken;
-  final String baseUrl;
+  final String authToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
+  final String baseUrl = ApiClient.http.baseUrl;
   IO.Socket? _socket;
 
   // Status streams
@@ -87,11 +90,6 @@ class MemberWebSocketClient {
   int _reconnectAttempts = 0;
   final int _maxReconnectAttempts = 5;
   final Set<String> _subscribedMembers = {};
-
-  MemberWebSocketClient({
-    required this.authToken,
-    required this.baseUrl,
-  });
 
   // Getters for streams
   Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;
