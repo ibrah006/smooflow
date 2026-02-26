@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/logo.dart';
+import 'package:smooflow/components/user_menu_chip.dart';
+import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -641,35 +643,14 @@ class _AdminTopbar extends StatelessWidget {
 
           // User chip — real user from LoginService
           if (user != null)
-            Container(
-              padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-              decoration: BoxDecoration(
-                  border: Border.all(color: _T.slate200),
-                  borderRadius: BorderRadius.circular(99)),
-              child: Row(children: [
-                Container(
-                  width: 24, height: 24,
-                  decoration: BoxDecoration(
-                      color: _T.amber.withOpacity(0.15),
-                      shape: BoxShape.circle),
-                  child: Center(
-                      child: Text(user.initials.isNotEmpty ? user.initials[0] : 'A',
-                          style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: _T.amber))),
-                ),
-                const SizedBox(width: 7),
-                Text(user.nameShort,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: _T.ink3)),
-                const SizedBox(width: 5),
-                const Icon(Icons.keyboard_arrow_down,
-                    size: 14, color: _T.slate400),
-              ]),
-            ),
+            UserMenuChip(
+              onLogout: () async {
+                await LoginService.logout();
+                if (context.mounted) {
+                  AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
+                }
+              },
+            )
         ],
       ),
     );
