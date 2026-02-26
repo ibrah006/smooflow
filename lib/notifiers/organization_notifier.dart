@@ -20,6 +20,7 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   Future<Organization> get getCurrentOrganization async {
     late final Organization organization;
     try {
+      print("organization: ${state.organization!}");
       organization = state.organization!;
     } catch (e) {
       state = state.copyWith(isLoading: true);

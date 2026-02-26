@@ -187,8 +187,10 @@ class AppRoutes {
           }
         } else {
           // Mobile Home
+
           // Debug
           routeName = AppRoutes.viewerHome;
+          
           // if (role == 'admin') {
           //   routeName = AppRoutes.admin;
           // } else if (role == 'production' || role == 'production-head') {
@@ -427,6 +429,7 @@ class AppRoutes {
         break;
       case viewerHome:
         screen = ViewerPendingScreen();
+        break;
     }
 
     // If screen was determined, create the route

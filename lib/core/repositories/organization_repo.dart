@@ -55,8 +55,13 @@ class OrganizationRepo {
   Future<Organization> getCurrentOrganization() async {
     final response = await ApiClient.http.get(ApiEndpoints.getCurrentOrg);
 
+    print("we're here, STATUS ${response.statusCode} body: ${response.body}");
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
+      print("current oprganizaiton found: $data");
+
       return Organization.fromJson(data);
     } else if (response.statusCode == 404) {
       throw Exception(
