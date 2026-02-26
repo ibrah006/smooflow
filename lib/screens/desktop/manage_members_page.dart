@@ -50,6 +50,9 @@ class _T {
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
+
+  // Radius
+  static const double rSm = 6.0;
   static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
@@ -1186,30 +1189,92 @@ class _MemberGridCardState extends State<_MemberGridCard> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _MemberDetailPanel extends StatelessWidget {
   final Member member;
-  final VoidCallback onClose, onEdit;
+  final VoidCallback onClose;
+  final VoidCallback onEdit;
+  final VoidCallback? onRemove;       // null → hide Remove (e.g. current user)
+  final VoidCallback? onResendInvite; // optional extra action
 
   const _MemberDetailPanel({
     required this.member,
     required this.onClose,
     required this.onEdit,
+    this.onRemove,
+    this.onResendInvite,
   });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  bool get _recentlyActive=> true;
+
+  Widget _buildAvatar() {
+    final roleColor = _RoleBadge._color(member.role);
+
+    // if (member.avatarUrl != null) {
+    //   return Stack(
+    //     clipBehavior: Clip.none,
+    //     children: [
+    //       CircleAvatar(
+    //         radius: 34,
+    //         backgroundImage: NetworkImage(member.avatarUrl!),
+    //       ),
+    //       Positioned(
+    //         bottom: 0,
+    //         right: 0,
+    //         child: _ActivityDot(isActive: _recentlyActive),
+    //       ),
+    //     ],
+    //   );
+    // }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            color: roleColor.withOpacity(0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: roleColor.withOpacity(0.3), width: 2),
+          ),
+          child: Center(
+            child: Text(
+              member.initials,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: roleColor,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 2,
+          right: 2,
+          child: _ActivityDot(isActive: _recentlyActive),
+        ),
+      ],
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final m = member;
-    final roleColor = _getRoleColor(m.role);
-    final roleBg = _getRoleColorBg(m.role);
 
     return Container(
+      width: 280,
       decoration: const BoxDecoration(
         color: _T.white,
         border: Border(left: BorderSide(color: _T.slate200)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
+          // ── Header ─────────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: _T.slate200)),
             ),
@@ -1218,232 +1283,532 @@ class _MemberDetailPanel extends StatelessWidget {
               children: [
                 const Text(
                   'Member Details',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _T.ink),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
                 ),
-                _IconBtn(Icons.close_rounded, onClose),
+                _IconBtn(
+                  Icons.close_rounded,
+                  onClose,
+                  tooltip: 'Close panel',
+                ),
               ],
             ),
           ),
-          // Content
+
+          // ── Scrollable body ────────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar + name
+                  // Avatar + name + role
                   Center(
                     child: Column(
                       children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: _T.amber.withOpacity(0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _T.amber.withOpacity(0.3), width: 2),
-                          ),
-                          child: Center(
-                            child: Text(
-                              m.initials.isNotEmpty ? m.initials[0] : '?',
+                        _buildAvatar(),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              m.name,
                               style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: _T.amber,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _T.ink,
                               ),
                             ),
-                          ),
+                            if (m.isCurrentUser) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _T.blue50,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                      color: _T.blue.withOpacity(0.3)),
+                                ),
+                                child: const Text(
+                                  'YOU',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: _T.blue,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          m.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: _T.ink,
-                          ),
-                        ),
+                        const SizedBox(height: 6),
+                        _RoleBadge(m.role),
                         const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: roleBg,
-                            borderRadius: BorderRadius.circular(_T.r),
-                            border: Border.all(color: roleColor.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            m.role.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: roleColor,
-                            ),
-                          ),
-                        ),
+                        // Active status text
+                        // Text(
+                        //   m.lastActiveAt != null
+                        //       ? 'Active ${_fmtRelativeTime(m.lastActiveAt!)}'
+                        //       : 'Never active',
+                        //   style: const TextStyle(
+                        //     fontSize: 11,
+                        //     color: _T.slate400,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Info sections
+
+                  const SizedBox(height: 20),
+
+                  // ── Contact ────────────────────────────────────────────────
                   _DetailSection(
                     'Contact',
                     [
-                      _DetailRow(Icons.email_outlined, m.email),
+                      _DetailRow(
+                        Icons.email_outlined,
+                        m.email,
+                        label: 'Email address',
+                        copyable: true,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+
+                  const SizedBox(height: 12),
+
+                  // ── Organization ───────────────────────────────────────────
                   _DetailSection(
-                    'Membership',
+                    'Organization',
                     [
-                      _DetailRow(Icons.calendar_today_outlined, _fmtDateLong(m.createdAt)),
+                      _DetailRow(
+                        Icons.business_outlined,
+                        m.role!,
+                        label: 'Department',
+                      ),
+                      _DetailRow(
+                        Icons.calendar_today_outlined,
+                        _fmtDateLong(m.createdAt),
+                        label: 'Joined',
+                      ),
+                      // if (m.invitedByName != null)
+                      //   _DetailRow(
+                      //     Icons.person_add_alt_1_outlined,
+                      //     m.invitedByName!,
+                      //     label: 'Invited by',
+                      //   ),
                     ],
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // ── Activity ───────────────────────────────────────────────
+                  // _DetailSection(
+                  //   'Activity',
+                  //   [
+                  //     _DetailRow(
+                  //       Icons.access_time_rounded,
+                  //       m.lastActiveAt != null
+                  //           ? _fmtDateLong(m.lastActiveAt!)
+                  //           : '—',
+                  //       label: 'Last active',
+                  //       iconColor:
+                  //           _recentlyActive ? _T.green : _T.slate400,
+                  //     ),
+                  //   ],
+                  // ),
+
+                  // Extra spacing so footer shadow isn't clipped
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
-          // Footer
+
+          // ── Footer actions ─────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: const BoxDecoration(
+              color: _T.white,
               border: Border(top: BorderSide(color: _T.slate200)),
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: _T.blue,
-                borderRadius: BorderRadius.circular(_T.r),
-                child: InkWell(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Primary: Edit Role (always shown)
+                _PrimaryButton(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit Role',
+                  color: _T.blue,
                   onTap: onEdit,
-                  borderRadius: BorderRadius.circular(_T.r),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.edit_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'Edit Member',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              ),
+
+                // Resend invite (optional)
+                if (onResendInvite != null) ...[
+                  const SizedBox(height: 8),
+                  _OutlineButton(
+                    icon: Icons.send_rounded,
+                    label: 'Resend Invitation',
+                    color: _T.slate500,
+                    onTap: onResendInvite!,
+                  ),
+                ],
+
+                // Remove (hidden for current user)
+                if (onRemove != null && !m.isCurrentUser) ...[
+                  const SizedBox(height: 8),
+                  _OutlineButton(
+                    icon: Icons.person_remove_outlined,
+                    label: 'Remove Member',
+                    color: _T.red,
+                    onTap: onRemove!,
+                  ),
+                ],
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Color _getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return _T.purple;
-      case 'manager':
-        return _T.blue;
-      case 'designer':
-        return _T.green;
-      case 'delivery':
-        return _T.amber;
-      case 'viewer':
-        return _T.slate400;
-      default:
-        return _T.slate400;
-    }
-  }
+/// Small square icon button used throughout the panel.
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? color;
+  final Color? bgColor;
+  final String? tooltip;
 
-  Color _getRoleColorBg(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return _T.purple50;
-      case 'manager':
-        return _T.blue50;
-      case 'designer':
-        return _T.green50;
-      case 'delivery':
-        return _T.amber50;
-      case 'viewer':
-        return _T.slate100;
-      default:
-        return _T.slate100;
-    }
+  const _IconBtn(
+    this.icon,
+    this.onTap, {
+    this.color,
+    this.bgColor,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final btn = Material(
+      color: bgColor ?? Colors.transparent,
+      borderRadius: BorderRadius.circular(_T.rSm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_T.rSm),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, size: 18, color: color ?? _T.slate500),
+        ),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip!, child: btn) : btn;
   }
 }
 
-class _DetailSection extends StatelessWidget {
-  final String title;
-  final List<Widget> rows;
-  const _DetailSection(this.title, this.rows);
+/// Section header label (e.g. "Contact", "Membership").
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title.toUpperCase(),
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
         style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: _T.slate400,
-          letterSpacing: 0.5,
+          letterSpacing: 0.8,
         ),
       ),
-      const SizedBox(height: 8),
-      ...rows,
-    ],
-  );
+    );
+  }
 }
 
+/// A labelled info row with an icon, label, and copyable value.
 class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String value;
-  const _DetailRow(this.icon, this.value);
+  final String? label;
+  final bool copyable;
+  final Color? iconColor;
+
+  const _DetailRow(
+    this.icon,
+    this.value, {
+    this.label,
+    this.copyable = false,
+    this.iconColor,
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Row(
-      children: [
-        Icon(icon, size: 13, color: _T.slate400),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 13, color: _T.ink3),
-            overflow: TextOverflow.ellipsis,
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(_T.rSm),
+            ),
+            child: Icon(icon, size: 15, color: iconColor ?? _T.slate500),
+          ),
+          const SizedBox(width: 10),
+          // Label + value
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (label != null)
+                  Text(
+                    label!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate400,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                if (label != null) const SizedBox(height: 1),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _T.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Copy button
+          if (copyable)
+            _IconBtn(
+              Icons.copy_rounded,
+              () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Copied: $value'),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'Copy',
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card-style section containing a label + list of _DetailRows.
+class _DetailSection extends StatelessWidget {
+  final String title;
+  final List<Widget> rows;
+
+  const _DetailSection(this.title, this.rows);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel(title),
+          ...rows,
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pill-shaped role badge.
+class _RoleBadge extends StatelessWidget {
+  final String role;
+  const _RoleBadge(this.role);
+
+  static Color _color(String r) {
+    switch (r.toLowerCase()) {
+      case 'admin':    return _T.purple;
+      case 'manager':  return _T.blue;
+      case 'designer': return _T.green;
+      case 'delivery': return _T.amber;
+      default:         return _T.slate400;
+    }
+  }
+
+  static Color _bg(String r) {
+    switch (r.toLowerCase()) {
+      case 'admin':    return _T.purple50;
+      case 'manager':  return _T.blue50;
+      case 'designer': return _T.green50;
+      case 'delivery': return _T.amber50;
+      default:         return _T.slate100;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _color(role);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _bg(role),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: c.withOpacity(0.3)),
+      ),
+      child: Text(
+        role.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: c,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+/// Online / offline indicator dot.
+class _ActivityDot extends StatelessWidget {
+  final bool isActive;
+  const _ActivityDot({required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: isActive ? _T.green : _T.slate400,
+        shape: BoxShape.circle,
+        border: Border.all(color: _T.white, width: 1.5),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REUSABLE FOOTER BUTTONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PrimaryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _PrimaryButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(_T.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_T.r),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 15, color: Colors.white),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
-class _IconBtn extends StatelessWidget {
+class _OutlineButton extends StatelessWidget {
   final IconData icon;
+  final String label;
+  final Color color;
   final VoidCallback onTap;
-  const _IconBtn(this.icon, this.onTap);
+
+  const _OutlineButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(_T.r),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 13, color: _T.slate400),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_T.r),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withOpacity(0.35)),
+            borderRadius: BorderRadius.circular(_T.r),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INVITE MEMBER BOTTOM SHEET

@@ -2,6 +2,7 @@
 import 'dart:math';
 
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/core/services/login_service.dart';
 
 class Member {
   final String id;
@@ -34,6 +35,8 @@ class Member {
     final n = name.split(" ");
     return n.length > 1? "${n[0]} ${n[1][0]}." : name;
   }
+
+  bool get isCurrentUser=> LoginService.currentUser!.email.toLowerCase() == email.toLowerCase();
 
   // Get random color for now
   late final Color color;
