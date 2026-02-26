@@ -22,6 +22,7 @@ import 'package:smooflow/enums/table_view_mode.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/error_view.dart';
 import 'package:smooflow/screens/desktop/components/kpi_card.dart';
+import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy from ClientsPage
@@ -333,7 +334,8 @@ class _MembersViewState extends ConsumerState<MembersView>
     final deliveryCount = members.where((m) => m.role == 'delivery').length;
     final viewerCount = members.where((m) => m.role == 'viewer').length;
 
-    return Row(children: [
+    return Row(
+      children: [
       KpiCard(
         icon: Icons.people_outline,
         iconColor: _T.blue,
@@ -1204,7 +1206,7 @@ class _MemberDetailPanel extends StatelessWidget {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  bool get _recentlyActive=> true;
+  bool get _recentlyActive => true;
 
   Widget _buildAvatar() {
     final roleColor = _RoleBadge._color(member.role);
@@ -1349,16 +1351,6 @@ class _MemberDetailPanel extends StatelessWidget {
                         const SizedBox(height: 6),
                         _RoleBadge(m.role),
                         const SizedBox(height: 4),
-                        // Active status text
-                        // Text(
-                        //   m.lastActiveAt != null
-                        //       ? 'Active ${_fmtRelativeTime(m.lastActiveAt!)}'
-                        //       : 'Never active',
-                        //   style: const TextStyle(
-                        //     fontSize: 11,
-                        //     color: _T.slate400,
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
@@ -1386,7 +1378,7 @@ class _MemberDetailPanel extends StatelessWidget {
                     [
                       _DetailRow(
                         Icons.business_outlined,
-                        m.role!,
+                        m.role.capitalize(),
                         label: 'Department',
                       ),
                       _DetailRow(
@@ -1394,32 +1386,10 @@ class _MemberDetailPanel extends StatelessWidget {
                         _fmtDateLong(m.createdAt),
                         label: 'Joined',
                       ),
-                      // if (m.invitedByName != null)
-                      //   _DetailRow(
-                      //     Icons.person_add_alt_1_outlined,
-                      //     m.invitedByName!,
-                      //     label: 'Invited by',
-                      //   ),
                     ],
                   ),
 
                   const SizedBox(height: 12),
-
-                  // ── Activity ───────────────────────────────────────────────
-                  // _DetailSection(
-                  //   'Activity',
-                  //   [
-                  //     _DetailRow(
-                  //       Icons.access_time_rounded,
-                  //       m.lastActiveAt != null
-                  //           ? _fmtDateLong(m.lastActiveAt!)
-                  //           : '—',
-                  //       label: 'Last active',
-                  //       iconColor:
-                  //           _recentlyActive ? _T.green : _T.slate400,
-                  //     ),
-                  //   ],
-                  // ),
 
                   // Extra spacing so footer shadow isn't clipped
                   const SizedBox(height: 8),

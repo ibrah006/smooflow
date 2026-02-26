@@ -269,7 +269,7 @@ class _AdminDesktopDashboardScreenState
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
                                     ) :
-                                    _view == _AdminView.clients? ClientsPage() : MembersView()
+                                    _view == _AdminView.clients? ClientsPage() : ManageMembersPage()
                                     
                           ),
                           // ── Detail panel ──────────────────────────────────
