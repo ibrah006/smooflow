@@ -27,10 +27,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:smooflow/core/app_routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/login_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,8 +67,7 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class ViewerHomeScreen extends StatefulWidget {
-  /// The name of the organisation this user has joined.
+class ViewerHomeScreen extends ConsumerStatefulWidget {
 
   /// Called when polling detects that a role has been assigned.
   /// Navigate to the appropriate dashboard here.
@@ -77,13 +79,11 @@ class ViewerHomeScreen extends StatefulWidget {
   });
 
   @override
-  State<ViewerHomeScreen> createState() => _ViewerHomeScreenState();
+  ConsumerState<ViewerHomeScreen> createState() => _ViewerPendingScreenState();
 }
 
-class _ViewerHomeScreenState extends State<ViewerHomeScreen>
+class _ViewerPendingScreenState extends ConsumerState<ViewerHomeScreen>
     with TickerProviderStateMixin {
-
-  final orgName = "My Org";
 
   // Entry animation controller
   late final AnimationController _entry = AnimationController(
@@ -105,10 +105,20 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen>
 
   bool _refreshing = false;
 
+  Future<Organization> get currentOrgFuture =>
+      ref.watch(organizationNotifierProvider.notifier).getCurrentOrganization;
+
   @override
   void initState() {
     super.initState();
     _entry.forward();
+
+    Future.microtask(() {
+      currentOrgFuture.then((value) {
+        print("organization found: ${ref.watch(organizationNotifierProvider).organization}");
+      });
+      setState(() {});
+    });
   }
 
   @override
@@ -154,7 +164,7 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen>
     }
   }
 
-  void _openUserSheet() {
+  void _openUserSheet(String orgName) {
     final user = LoginService.currentUser;
     if (user == null) return;
     HapticFeedback.selectionClick();
@@ -175,102 +185,206 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen>
     final mq   = MediaQuery.of(context);
     final user = LoginService.currentUser;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent),
-      child: Scaffold(
-        backgroundColor: _T.slate50,
-        body: Column(
-          children: [
-            // ── Status bar padding + topbar ──────────────────────────
-            Container(
-              color: _T.white,
-              padding: EdgeInsets.only(top: mq.padding.top),
-              child: _Topbar(
-                user:        user,
-                orgName:     orgName,
-                onAvatarTap: _openUserSheet,
-              ),
-            ),
+    return FutureBuilder(
+      future: currentOrgFuture,
+      builder: (context, snapshot) {
+        final orgName = ref.watch(organizationNotifierProvider).organization?.name;
+        final isLoading = snapshot.data == null;
 
-            // ── Scrollable body ───────────────────────────────────────
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                    20, 24, 20, 24 + mq.padding.bottom),
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+        print("org: ${orgName}");
 
-                    // ── Hero welcome card ─────────────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.0, 0.5),
-                      child: _WelcomeCard(
-                        user:    user,
-                        orgName: orgName,
-                        pulse:   _pulse,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Onboarding progress track ─────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.12, 0.60),
-                      child: _ProgressTrack(pulse: _pulse),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── What happens next ─────────────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.24, 0.72),
-                      child: _WhatNextCard(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Organisation card ─────────────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.34, 0.82),
-                      child: _OrgCard(orgName: orgName),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // ── Refresh CTA ───────────────────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.44, 0.92),
-                      child: _RefreshButton(
-                        refreshing: _refreshing,
-                        spin:       _spin,
-                        onTap:      _refresh,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // ── Sign out (soft, secondary) ────────────────────
-                    _FadeSlide(
-                      anim: _stagger(0.50, 1.0),
-                      child: Center(
-                        child: TextButton(
-                          onPressed: _signOut,
-                          style: TextButton.styleFrom(
-                            foregroundColor: _T.slate400,
-                          ),
-                          child: const Text(
-                            'Sign out',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                            ),
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.dark.copyWith(
+              statusBarColor: Colors.transparent),
+          child: Scaffold(
+            backgroundColor: _T.slate50,
+            body: Column(
+              children: [
+                // ── Status bar padding + topbar ──────────────────────────
+                Container(
+                  color: _T.white,
+                  padding: EdgeInsets.only(top: mq.padding.top),
+                  child: isLoading
+                      ? _TopbarLoading()
+                      : _Topbar(
+                          user:        user,
+                          orgName:     orgName!,
+                          onAvatarTap: ()=> _openUserSheet(orgName),
+                        ),
+                ),
+        
+                // ── Scrollable body ───────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                        20, 24, 20, 24 + mq.padding.bottom),
+                    physics: const BouncingScrollPhysics(),
+                    child: isLoading
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Welcome card skeleton
+                              CardLoading(
+                                height: 180,
+                                borderRadius: BorderRadius.circular(_T.rXl),
+                                margin: const EdgeInsets.only(bottom: 16),
+                              ),
+                              // Progress track skeleton
+                              CardLoading(
+                                height: 280,
+                                borderRadius: BorderRadius.circular(_T.rXl),
+                                margin: const EdgeInsets.only(bottom: 16),
+                              ),
+                              // What next skeleton
+                              CardLoading(
+                                height: 200,
+                                borderRadius: BorderRadius.circular(_T.rXl),
+                                margin: const EdgeInsets.only(bottom: 16),
+                              ),
+                              // Org card skeleton
+                              CardLoading(
+                                height: 100,
+                                borderRadius: BorderRadius.circular(_T.rXl),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+        
+                        // ── Hero welcome card ─────────────────────────────
+                        _FadeSlide(
+                          anim: _stagger(0.0, 0.5),
+                          child: _WelcomeCard(
+                            user:    user,
+                            orgName: orgName!,
+                            pulse:   _pulse,
                           ),
                         ),
-                      ),
-                    ),
-                  ],
+                        const SizedBox(height: 16),
+        
+                        // ── Onboarding progress track ─────────────────────
+                        _FadeSlide(
+                          anim: _stagger(0.12, 0.60),
+                          child: _ProgressTrack(pulse: _pulse),
+                        ),
+                        const SizedBox(height: 16),
+        
+                        // ── What happens next ─────────────────────────────
+                        _FadeSlide(
+                          anim: _stagger(0.24, 0.72),
+                          child: _WhatNextCard(),
+                        ),
+                        const SizedBox(height: 16),
+        
+                        // ── Organisation card ─────────────────────────────
+                        _FadeSlide(
+                          anim: _stagger(0.34, 0.82),
+                          child: _OrgCard(orgName: orgName),
+                        ),
+                        const SizedBox(height: 28),
+        
+                        // ── Refresh CTA ───────────────────────────────────
+                        _FadeSlide(
+                          anim: _stagger(0.44, 0.92),
+                          child: _RefreshButton(
+                            refreshing: _refreshing,
+                            spin:       _spin,
+                            onTap:      _refresh,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+        
+                            // ── Sign out (soft, secondary) ────────────────────
+                            _FadeSlide(
+                              anim: _stagger(0.50, 1.0),
+                              child: Center(
+                                child: TextButton(
+                                  onPressed: _signOut,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: _T.slate400,
+                                  ),
+                                  child: const Text(
+                                    'Sign out',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        );
+      }
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOPBAR LOADING — skeleton loader for topbar
+// ─────────────────────────────────────────────────────────────────────────────
+class _TopbarLoading extends StatelessWidget {
+  const _TopbarLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: const BoxDecoration(
+        color: _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
+      child: Row(
+        children: [
+          // Logo skeleton
+          CardLoading(
+            height: 30,
+            width: 30,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          const SizedBox(width: 10),
+          // Title area skeleton
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardLoading(
+                  height: 12,
+                  width: 80,
+                  borderRadius: BorderRadius.circular(4),
+                  margin: const EdgeInsets.only(bottom: 6),
+                ),
+                CardLoading(
+                  height: 10,
+                  width: 120,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            ),
+          ),
+          // Badge skeleton
+          CardLoading(
+            height: 28,
+            width: 80,
+            borderRadius: BorderRadius.circular(99),
+            margin: const EdgeInsets.only(right: 10),
+          ),
+          // Avatar skeleton
+          CardLoading(
+            height: 34,
+            width: 34,
+            borderRadius: BorderRadius.circular(99),
+          ),
+        ],
       ),
     );
   }
@@ -612,7 +726,7 @@ class _ProgressTrack extends StatelessWidget {
           _Step(
             index:  2,
             icon:   Icons.how_to_reg_outlined,
-            label:  'User approved',
+            label:  'Membership approved',
             sub:    'Your request was accepted',
             state:  _StepState.done,
             pulse:  pulse,
@@ -1246,13 +1360,9 @@ class _UserSheet extends StatelessWidget {
             color: _T.red50,
             borderRadius: BorderRadius.circular(_T.rLg),
             child: InkWell(
-              onTap: () async {
+              onTap: () {
                 Navigator.of(context).pop();
                 onSignOut();
-
-                await LoginService.logout();
-
-                AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
               },
               borderRadius: BorderRadius.circular(_T.rLg),
               child: Container(
