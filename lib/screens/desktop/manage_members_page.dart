@@ -15,10 +15,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:googleapis/admin/directory_v1.dart';
-import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/connection_status_banner.dart';
 import 'package:smooflow/core/api/websocket_clients/member_websocket.dart';
+import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/error_view.dart';
 import 'package:smooflow/screens/desktop/components/kpi_card.dart';

@@ -6,9 +6,12 @@ import 'package:smooflow/components/connection_status_banner.dart';
 import 'package:smooflow/core/api/websocket_clients/company_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
+import 'package:smooflow/enums/filter_status.dart';
+import 'package:smooflow/enums/table_view_mode.dart';
 import 'package:smooflow/providers/company_provider.dart';
 import 'package:smooflow/screens/desktop/components/error_view.dart';
 import 'package:smooflow/screens/desktop/components/kpi_card.dart';
+import 'package:smooflow/screens/desktop/components/toolbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
@@ -50,8 +53,6 @@ enum ClientStatus { active, inactive, pending }
 // FILTER / SORT STATE
 // ─────────────────────────────────────────────────────────────────────────────
 enum _SortField { name, projects, tasks, joined }
-enum _FilterStatus { all, active, inactive, pending }
-enum _ViewMode { table, grid }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // clients_screen.dart with Riverpod WebSocket Integration
@@ -112,8 +113,8 @@ class _ClientsViewState extends ConsumerState<ClientsView>
   // ── Local UI State (non-WebSocket state)
   _SortField    _sort       = _SortField.name;
   bool          _sortAsc    = true;
-  _FilterStatus _filter     = _FilterStatus.all;
-  _ViewMode     _viewMode   = _ViewMode.table;
+  FilterStatus _filter     = FilterStatus.all;
+  TableViewMode     _viewMode   = TableViewMode.table;
   String        _search     = '';
 
   final _searchCtrl = TextEditingController();
@@ -219,7 +220,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
                       position: Tween<Offset>(
                               begin: const Offset(0, 0.04), end: Offset.zero)
                           .animate(_stagger(0.22, 0.70)),
-                      child: _viewMode == _ViewMode.table
+                      child: _viewMode == TableViewMode.table
                           ? _ClientTable(
                               clients: companies,
                               sort: _sort,
@@ -301,9 +302,9 @@ class _ClientsViewState extends ConsumerState<ClientsView>
           (c.industry?.toLowerCase().contains(_search.toLowerCase()) ?? false);
 
       // Status filter
-      final matchStatus = _filter == _FilterStatus.all ||
-          (_filter == _FilterStatus.active && c.isActive) ||
-          (_filter == _FilterStatus.inactive && !c.isActive);
+      final matchStatus = _filter == FilterStatus.all ||
+          (_filter == FilterStatus.active && c.isActive) ||
+          (_filter == FilterStatus.inactive && !c.isActive);
 
       return matchSearch && matchStatus;
     }).toList();
@@ -375,7 +376,7 @@ class _ClientsViewState extends ConsumerState<ClientsView>
     final activeCount = companies.where((c) => c.isActive).length;
     final inactiveCount = companies.where((c) => !c.isActive).length;
 
-    return _Toolbar(
+    return Toolbar(
       searchCtrl: _searchCtrl,
       filter: _filter,
       viewMode: _viewMode,
@@ -452,151 +453,6 @@ class _ClientsViewState extends ConsumerState<ClientsView>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOLBAR
-// ─────────────────────────────────────────────────────────────────────────────
-class _Toolbar extends StatelessWidget {
-  final TextEditingController searchCtrl;
-  final _FilterStatus filter;
-  final _ViewMode viewMode;
-  final int activeCount, pendingCount, inactiveCount;
-  final ValueChanged<String>        onSearchChanged;
-  final ValueChanged<_FilterStatus> onFilterChanged;
-  final ValueChanged<_ViewMode>     onViewModeChanged;
-  final VoidCallback                onAddClient;
-
-  const _Toolbar({
-    required this.searchCtrl, required this.filter, required this.viewMode,
-    required this.activeCount, required this.pendingCount, required this.inactiveCount,
-    required this.onSearchChanged, required this.onFilterChanged,
-    required this.onViewModeChanged, required this.onAddClient,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-          color: _T.white,
-          border: Border.all(color: _T.slate200),
-          borderRadius: BorderRadius.circular(_T.rLg)),
-      child: Row(children: [
-
-        // ── Search ─────────────────────────────────────────────────────
-        Expanded(
-          flex: 3,
-          child: SizedBox(
-            height: 36,
-            child: TextField(
-              controller: searchCtrl,
-              onChanged: onSearchChanged,
-              style: const TextStyle(fontSize: 13, color: _T.ink),
-              decoration: InputDecoration(
-                hintText: 'Search clients, contacts, industries…',
-                hintStyle: const TextStyle(fontSize: 13, color: _T.slate400),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    size: 16, color: _T.slate400),
-                filled: true,
-                fillColor: _T.slate50,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.slate200)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.slate200)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.blue, width: 1.5)),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-
-        // ── Status filter tabs ─────────────────────────────────────────
-        // _FilterChip(
-        //   label: 'All',
-        //   isActive: filter == _FilterStatus.all,
-        //   onTap: () => onFilterChanged(_FilterStatus.all),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Active',
-        //   count: activeCount,
-        //   dotColor: _T.green,
-        //   isActive: filter == _FilterStatus.active,
-        //   onTap: () => onFilterChanged(_FilterStatus.active),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Pending',
-        //   count: pendingCount,
-        //   dotColor: _T.amber,
-        //   isActive: filter == _FilterStatus.pending,
-        //   onTap: () => onFilterChanged(_FilterStatus.pending),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Inactive',
-        //   count: inactiveCount,
-        //   dotColor: _T.slate400,
-        //   isActive: filter == _FilterStatus.inactive,
-        //   onTap: () => onFilterChanged(_FilterStatus.inactive),
-        // ),
-        // const SizedBox(width: 10),
-
-        // ── View toggle ────────────────────────────────────────────────
-        Container(
-          height: 32,
-          decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(_T.r)),
-          child: Row(children: [
-            _ViewToggleBtn(
-              icon: Icons.table_rows_outlined,
-              isActive: viewMode == _ViewMode.table,
-              onTap: () => onViewModeChanged(_ViewMode.table),
-            ),
-            _ViewToggleBtn(
-              icon: Icons.grid_view_rounded,
-              isActive: viewMode == _ViewMode.grid,
-              onTap: () => onViewModeChanged(_ViewMode.grid),
-            ),
-          ]),
-        ),
-        const SizedBox(width: 10),
-
-        // ── Add client CTA ─────────────────────────────────────────────
-        Material(
-          color: _T.blue,
-          borderRadius: BorderRadius.circular(_T.r),
-          child: InkWell(
-            onTap: onAddClient,
-            borderRadius: BorderRadius.circular(_T.r),
-            hoverColor: _T.blueHover,
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 15, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Add Company',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600,
-                          color: Colors.white)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
 class _FilterChip extends StatelessWidget {
   final String     label;
   final int?       count;
@@ -644,36 +500,6 @@ class _FilterChip extends StatelessWidget {
                     color: isActive ? _T.blue : _T.slate400)),
           ],
         ]),
-      ),
-    );
-  }
-}
-
-class _ViewToggleBtn extends StatelessWidget {
-  final IconData icon;
-  final bool     isActive;
-  final VoidCallback onTap;
-
-  const _ViewToggleBtn({required this.icon, required this.isActive, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        width: 32, height: 32,
-        decoration: BoxDecoration(
-          color: isActive ? _T.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(_T.r - 1),
-          boxShadow: isActive
-              ? [BoxShadow(color: Colors.black.withOpacity(0.07),
-                  blurRadius: 4, offset: const Offset(0, 1))]
-              : null,
-        ),
-        child: Icon(icon,
-            size: 15,
-            color: isActive ? _T.ink : _T.slate400),
       ),
     );
   }

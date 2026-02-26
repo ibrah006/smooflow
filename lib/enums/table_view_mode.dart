@@ -1,0 +1,1 @@
+enum TableViewMode { table, grid }
