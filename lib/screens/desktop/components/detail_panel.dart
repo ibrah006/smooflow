@@ -184,7 +184,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final Size btnSize  = btn.size;
 
     // Max height: 5 rows at ~40px each, or actual count — whichever is smaller
-    final menuH = (previous.length * 40.0).clamp(0.0, 200.0);
+    final menuH = (previous.length * 40.0);
 
     showGeneralDialog(
       context: context,
@@ -206,7 +206,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             // Menu — anchored above the button
             Positioned(
               left:  offset.dx,
-              top:   offset.dy - menuH - (6 * (previous.length>5? (4*(previous.length-4)) : 1)),
+              top:   offset.dy - menuH - 6,
               width: btnSize.width,
               child: FadeTransition(
                 opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
