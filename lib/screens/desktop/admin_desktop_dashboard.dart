@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
 import 'package:smooflow/constants.dart';
@@ -114,6 +115,8 @@ class _AdminDesktopDashboardScreenState
   final FocusNode _addTaskFocusNode = FocusNode();
   bool _isAddingTask = false;
 
+  bool _isInitLoading = true;
+
   void _selectTask(int id) => setState(() => _selectedTaskId = id);
   void _closeDetail()      => setState(() => _selectedTaskId = null);
 
@@ -197,6 +200,9 @@ class _AdminDesktopDashboardScreenState
       await ref.read(taskNotifierProvider.notifier).loadAll();
       await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
       await ref.read(memberNotifierProvider.notifier).members;
+      setState(() {
+        _isInitLoading = false;
+      });
     });
   }
 
@@ -229,80 +235,83 @@ class _AdminDesktopDashboardScreenState
           _isAddingTask = false;          
         });
       },
-      child: Scaffold(
-        backgroundColor: _T.slate50,
-        body: Focus(
-          autofocus: true,
-          // onKeyEvent: (_, event) => KeyEventResult.ignored,
-          onKeyEvent: _handleKey,
-          child: Row(
-            children: [
-              _AdminSidebar(
-                currentView: _view,
-                selectedProjectId: _selectedProjectId,
-                projects: _projects,
-                tasks: _pipelineTasks,
-                members: _members,
-                onViewChanged: (v) => setState(() => _view = v),
-                onProjectSelected: (id) => setState(() {
-                  _selectedProjectId = id;
-                  _view = _AdminView.board;
-                }),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    _AdminTopbar(currentView: _view),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: 
-                            _view == _AdminView.overview
-                          ? _AdminAnalyticsView(
-                              tasks: _pipelineTasks,
-                              projects: _projects,
-                              members: _members,
-                            )
-                          : _view == _AdminView.board? BoardView(
+      child: LoadingOverlay(
+        isLoading: _isInitLoading,
+        child: Scaffold(
+          backgroundColor: _T.slate50,
+          body: Focus(
+            autofocus: true,
+            // onKeyEvent: (_, event) => KeyEventResult.ignored,
+            onKeyEvent: _handleKey,
+            child: Row(
+              children: [
+                _AdminSidebar(
+                  currentView: _view,
+                  selectedProjectId: _selectedProjectId,
+                  projects: _projects,
+                  tasks: _pipelineTasks,
+                  members: _members,
+                  onViewChanged: (v) => setState(() => _view = v),
+                  onProjectSelected: (id) => setState(() {
+                    _selectedProjectId = id;
+                    _view = _AdminView.board;
+                  }),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _AdminTopbar(currentView: _view),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: 
+                              _view == _AdminView.overview
+                            ? _AdminAnalyticsView(
+                                tasks: _pipelineTasks,
+                                projects: _projects,
+                                members: _members,
+                              )
+                            : _view == _AdminView.board? BoardView(
+                                          tasks: _visibleTasks,
+                                          projects: _projects,
+                                          selectedTaskId: _selectedTaskId,
+                                          onTaskSelected: _selectTask,
+                                          onAddTask: _showTaskModal,
+                                          addTaskFocusNode: _addTaskFocusNode,
+                                          isAddingTask: _isAddingTask,
+                                          selectedProjectId: _selectedProjectId
+                                        ) :  _view == _AdminView.list? TaskListView(
                                         tasks: _visibleTasks,
                                         projects: _projects,
                                         selectedTaskId: _selectedTaskId,
                                         onTaskSelected: _selectTask,
-                                        onAddTask: _showTaskModal,
-                                        addTaskFocusNode: _addTaskFocusNode,
-                                        isAddingTask: _isAddingTask,
-                                        selectedProjectId: _selectedProjectId
-                                      ) :  _view == _AdminView.list? TaskListView(
-                                      tasks: _visibleTasks,
+                                      ) :
+                                      _view == _AdminView.clients? ClientsPage() : ManageMembersPage()
+                                      
+                            ),
+                            // ── Detail panel ──────────────────────────────────
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeInOut,
+                              width: _selectedTaskId != null ? _T.detailW : 0,
+                              child: _selectedTaskId != null && _selectedTask != null
+                                  ? DetailPanel(
+                                      task: _selectedTask!,
                                       projects: _projects,
-                                      selectedTaskId: _selectedTaskId,
-                                      onTaskSelected: _selectTask,
-                                    ) :
-                                    _view == _AdminView.clients? ClientsPage() : ManageMembersPage()
-                                    
-                          ),
-                          // ── Detail panel ──────────────────────────────────
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
-                            width: _selectedTaskId != null ? _T.detailW : 0,
-                            child: _selectedTaskId != null && _selectedTask != null
-                                ? DetailPanel(
-                                    task: _selectedTask!,
-                                    projects: _projects,
-                                    onClose: _closeDetail,
-                                    onAdvance: () => _advanceTask(_selectedTask!),
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      )
-                    ),
-                  ],
+                                      onClose: _closeDetail,
+                                      onAdvance: () => _advanceTask(_selectedTask!),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        )
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
