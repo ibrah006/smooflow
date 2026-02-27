@@ -103,7 +103,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No explicit next stage from current phase")));
       return;
     } else {
-      // next stage != null
+      // next stage ! = null
       nextStage = widget.task.status.nextStage!;
     }
 
