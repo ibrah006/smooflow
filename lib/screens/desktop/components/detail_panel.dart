@@ -146,7 +146,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final next      = widget.task.status.nextStage;
 
     final progressBtnEnabled =
-      next != TaskStatus.printing;
+      next != TaskStatus.printing && next != null;
 
     return Container(
       width: _T.detailW,
@@ -264,8 +264,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           Container(
             decoration: const BoxDecoration(color: _T.slate50, border: Border(top: BorderSide(color: _T.slate200))),
             padding: const EdgeInsets.all(14),
-            child: next != null
-                ? Column(
+            child: next == TaskStatus.printing
+                ? Row(
+                    children: const [
+                      Icon(Icons.lock_outline, size: 14, color: _T.slate400),
+                      SizedBox(width: 8),
+                      Expanded(child: Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
+                    ],
+                  )
+                : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
@@ -344,8 +351,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                               const SizedBox(width: 8),
                               Text(
                                 next == TaskStatus.clientApproved
-                                    ? 'Confirm Client Approval'
-                                    : 'Move to "${stageInfo(next).label}"',
+                                    ? next == null? 'Re-initialize Task' : 'Move to "${stageInfo(next).label}"'
+                                    : 'Confirm Client Approval',
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
@@ -360,13 +367,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
                     ],
                   )
-                : Row(
-                    children: const [
-                      Icon(Icons.lock_outline, size: 14, color: _T.slate400),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
-                    ],
-                  ),
           ),
         ],
       ),
