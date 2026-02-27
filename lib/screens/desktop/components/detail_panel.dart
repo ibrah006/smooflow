@@ -1023,12 +1023,12 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
     TaskStatus.clientApproved,
     TaskStatus.revision,
   ]),
-  _PipelineMilestone('Printing', TaskStatus.printing, [
+  _PipelineMilestone('Production', TaskStatus.printing, [
     TaskStatus.waitingPrinting,
     TaskStatus.printing,
     TaskStatus.printingCompleted,
   ]),
-  _PipelineMilestone('Finishing', TaskStatus.finishing, [
+  _PipelineMilestone('Finishing Dept', TaskStatus.finishing, [
     TaskStatus.finishing,
     TaskStatus.productionCompleted,
   ]),
@@ -1081,6 +1081,22 @@ String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.paused              => 'Paused',
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE PIPELINE
+//
+// Rendering rules:
+//   • Always shows all 7 milestone rows.
+//   • When currentStatus is an intermediate sub-step within a milestone's
+//     subSteps list, that milestone injects a sub-step block after its row.
+//   • The sub-step block shows ONLY:
+//       – Every sibling that comes BEFORE the current status (all past)
+//       – The current status itself
+//     Future siblings are never shown.
+//   • Sub-steps render in strict enum order (matches _kPipelineMilestones
+//     subSteps list order, which mirrors the enum declaration).
+//   • Past siblings: ✓ check, ink3, same row style as done milestones.
+//   • Current sub-step: filled dot, stage colour, "Now" badge.
+// ─────────────────────────────────────────────────────────────────────────────
 class _StagePipeline extends StatelessWidget {
   final TaskStatus            currentStatus;
   final List<DesignStageInfo> stages;
@@ -1095,127 +1111,219 @@ class _StagePipeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final curMilestoneIdx = _milestoneOf(currentStatus);
     final intermediate    = _isIntermediate(currentStatus);
-    final subSi           = intermediate ? _infoFor(currentStatus) : null;
-    final Color subFg     = subSi?.color ?? _T.blue;
-    final Color subBg     = subSi?.bg    ?? _T.blue50;
+
+    // Pre-resolve sub-step colours once (used for every row in the block).
+    final subSi       = intermediate ? _infoFor(currentStatus) : null;
+    final Color subFg = subSi?.color ?? _T.blue;
+    final Color subBg = subSi?.bg    ?? _T.blue50;
 
     return Container(
       decoration: BoxDecoration(
         border:       Border.all(color: _T.slate200),
         borderRadius: BorderRadius.circular(_T.r),
       ),
-      child: Column(
-        children: _kPipelineMilestones.asMap().entries.expand((entry) {
-          final idx       = entry.key;
-          final milestone = entry.value;
-          final isDone    = idx < curMilestoneIdx;
-          final isCurrent = idx == curMilestoneIdx;
-          final injectSubStep   = isCurrent && intermediate;
-          final isVisuallyLast  = idx == _kPipelineMilestones.length - 1 && !injectSubStep;
-          final si          = _infoFor(milestone.status);
-          final Color dotColor = si?.color ?? _T.blue;
-          final Color bgColor  = si?.bg    ?? _T.blue50;
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_T.r),
+        child: Column(
+          children: _kPipelineMilestones.asMap().entries.expand((entry) {
+            final idx       = entry.key;
+            final milestone = entry.value;
+            final isDone    = idx < curMilestoneIdx;
+            final isCurrent = idx == curMilestoneIdx;
 
-          return [
-            Container(
-              decoration: BoxDecoration(
-                color: isCurrent && !injectSubStep ? bgColor : Colors.transparent,
-                border: isVisuallyLast ? null : const Border(bottom: BorderSide(color: _T.slate100)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 22, height: 22,
-                    decoration: BoxDecoration(
-                      color: isDone
-                          ? _T.blue
-                          : isCurrent && !injectSubStep ? dotColor : _T.slate100,
-                      shape: BoxShape.circle,
-                      border: injectSubStep && isCurrent
-                          ? Border.all(color: dotColor.withOpacity(0.4), width: 1.5)
-                          : null,
-                    ),
-                    child: Center(
-                      child: isDone
-                          ? const Icon(Icons.check, size: 11, color: Colors.white)
-                          : isCurrent && !injectSubStep
-                              ? Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))
-                              : Container(
-                                  width: injectSubStep ? 6 : 5,
-                                  height: injectSubStep ? 6 : 5,
-                                  decoration: BoxDecoration(
-                                    color: injectSubStep ? dotColor.withOpacity(0.45) : _T.slate300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      milestone.label,
-                      style: TextStyle(
-                        fontSize:   12.5,
-                        fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
-                        color: isCurrent && !injectSubStep
-                            ? dotColor
-                            : isDone ? _T.ink3
-                            : isCurrent ? _T.ink3
-                            : _T.slate400,
-                      ),
-                    ),
-                  ),
-                  if (isCurrent && !injectSubStep)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                      decoration: BoxDecoration(
-                        color:        bgColor,
-                        border:       Border.all(color: dotColor.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text('Current', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: dotColor)),
-                    ),
-                  if (isDone)
-                    const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
-                ],
-              ),
-            ),
-            if (injectSubStep)
+            // Inject sub-step rows only for the current milestone when
+            // the task is at an intermediate status inside it.
+            final injectSubSteps = isCurrent && intermediate;
+
+            // The sub-steps to render: everything up to and including current.
+            // Because subSteps is in enum order, indexOf gives the correct cut.
+            final List<TaskStatus> visibleSubSteps = injectSubSteps
+                ? milestone.subSteps.sublist(
+                    0,
+                    milestone.subSteps.indexOf(currentStatus) + 1,
+                  )
+                : [];
+
+            // The milestone row itself has no bottom border when sub-steps
+            // follow it — the first sub-step row carries the top border.
+            // The last visual row (milestone or last sub-step) has no bottom
+            // border if it's the very last item in the whole list.
+            final bool isLastMilestone = idx == _kPipelineMilestones.length - 1;
+            final bool milestoneHasBorder = !injectSubSteps && !isLastMilestone;
+
+            final si             = _infoFor(milestone.status);
+            final Color dotColor = si?.color ?? _T.blue;
+            final Color bgColor  = si?.bg    ?? _T.blue50;
+
+            return <Widget>[
+
+              // ── Milestone row ─────────────────────────────────────────────
               Container(
                 decoration: BoxDecoration(
-                  color: subBg,
-                  border: Border(
-                    top:    BorderSide(color: subFg.withOpacity(0.12)),
-                    bottom: idx == _kPipelineMilestones.length - 1 ? BorderSide.none : const BorderSide(color: _T.slate100),
-                  ),
+                  // Highlight only when current AND no sub-step block follows
+                  color: isCurrent && !injectSubSteps ? bgColor : Colors.transparent,
+                  border: milestoneHasBorder
+                      ? const Border(bottom: BorderSide(color: _T.slate100))
+                      : null,
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
+
+                    // Dot
                     Container(
                       width: 22, height: 22,
-                      decoration: BoxDecoration(color: subFg, shape: BoxShape.circle),
-                      child: Center(child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(_subLabel(currentStatus), style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: subFg)),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                       decoration: BoxDecoration(
-                        color:        subBg,
-                        border:       Border.all(color: subFg.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(99),
+                        color: isDone
+                            ? _T.blue
+                            : isCurrent && !injectSubSteps
+                                ? dotColor
+                                : _T.slate100,
+                        shape: BoxShape.circle,
+                        // Hollow ring when current but sub-steps follow
+                        border: injectSubSteps && isCurrent
+                            ? Border.all(color: dotColor.withOpacity(0.4), width: 1.5)
+                            : null,
                       ),
-                      child: Text('Now', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: subFg)),
+                      child: Center(
+                        child: isDone
+                            ? const Icon(Icons.check, size: 11, color: Colors.white)
+                            : isCurrent && !injectSubSteps
+                                ? Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))
+                                : Container(
+                                    width:  injectSubSteps ? 6 : 5,
+                                    height: injectSubSteps ? 6 : 5,
+                                    decoration: BoxDecoration(
+                                      color: injectSubSteps
+                                          ? dotColor.withOpacity(0.45)
+                                          : _T.slate300,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                      ),
                     ),
+
+                    const SizedBox(width: 12),
+
+                    // Label
+                    Expanded(
+                      child: Text(
+                        milestone.label,
+                        style: TextStyle(
+                          fontSize:   12.5,
+                          fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
+                          color: isCurrent && !injectSubSteps
+                              ? dotColor
+                              : isDone || isCurrent   // isCurrent = has sub-steps
+                                  ? _T.ink3
+                                  : _T.slate400,
+                        ),
+                      ),
+                    ),
+
+                    // "Current" badge — only when milestone itself is current
+                    if (isCurrent && !injectSubSteps)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        decoration: BoxDecoration(
+                          color:        bgColor,
+                          border:       Border.all(color: dotColor.withOpacity(0.3)),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text('Current', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: dotColor)),
+                      ),
+
+                    if (isDone)
+                      const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
                   ],
                 ),
               ),
-          ];
-        }).toList(),
+
+              // ── Sub-step rows: past siblings + current, in enum order ─────
+              ...visibleSubSteps.asMap().entries.map((subEntry) {
+                final subIdx    = subEntry.key;
+                final s         = subEntry.value;
+                final isCur     = s == currentStatus;
+                final isPast    = !isCur; // everything in the slice before current
+                final isLastSub = subIdx == visibleSubSteps.length - 1;
+                final isVeryLast = isLastSub && isLastMilestone;
+
+                // Past sub-steps use the milestone's resolved colour for the
+                // ✓ dot so they read as part of the same phase, not generic blue.
+                final rowSi       = _infoFor(s);
+                final Color rowFg = isCur ? subFg : (rowSi?.color ?? _T.blue);
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isCur ? subBg : Colors.transparent,
+                    border: Border(
+                      top: BorderSide(
+                        color: subIdx == 0
+                            ? _T.slate200        // first sub-step: heavier separator from milestone
+                            : _T.slate100,       // between sub-steps: light
+                      ),
+                      bottom: isVeryLast
+                          ? BorderSide.none
+                          : isLastSub
+                              ? const BorderSide(color: _T.slate100) // last sub-step before next milestone
+                              : BorderSide.none,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+
+                      // Dot — same size as milestone dots
+                      Container(
+                        width: 22, height: 22,
+                        decoration: BoxDecoration(
+                          color:  isPast ? _T.blue : subFg,
+                          shape:  BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: isPast
+                              ? const Icon(Icons.check, size: 11, color: Colors.white)
+                              : Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Label
+                      Expanded(
+                        child: Text(
+                          _subLabel(s),
+                          style: TextStyle(
+                            fontSize:   12.5,
+                            fontWeight: isCur ? FontWeight.w700 : FontWeight.w500,
+                            color:      isCur ? subFg : _T.ink3,
+                          ),
+                        ),
+                      ),
+
+                      // Past sub-step: "✓ Done" text (same as milestone done state)
+                      if (isPast)
+                        const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
+
+                      // Current sub-step: "Now" badge
+                      if (isCur)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                          decoration: BoxDecoration(
+                            color:        subBg,
+                            border:       Border.all(color: subFg.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text('Now', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: subFg)),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+
+            ];
+          }).toList(),
+        ),
       ),
     );
   }
