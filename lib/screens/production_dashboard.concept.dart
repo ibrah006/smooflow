@@ -862,7 +862,7 @@ class _ProductionDashboardScreenState extends ConsumerState<ProductionDashboardS
     final DateTime? startTime = job.actualProductionStartTime;
 
     final TaskComponentHelper componentHelper = job.componentHelper();
-    String statusLabel = componentHelper.labelTitle;
+    String statusLabel = componentHelper.label;
     IconData statusIcon = componentHelper.icon;
     Color statusColor = componentHelper.color;
     Color statusBgColor = componentHelper.color.withOpacity(0.1);

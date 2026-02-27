@@ -365,7 +365,7 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
 
     final taskComponentHelper = task.componentHelper();
 
-    final statusName = taskComponentHelper.labelTitle;
+    final statusName = taskComponentHelper.label;
     final statusColor = taskComponentHelper.color;
 
     return GestureDetector(
