@@ -174,6 +174,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // ── Stage-back overlay ────────────────────────────────────────────────────
 
+  bool dismissed = false;
+
   void _showStageBackMenu() {
     final previous = _previousStatuses(widget.task.status);
     if (previous.isEmpty) return;
@@ -185,6 +187,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     // Max height: 5 rows at ~40px each, or actual count — whichever is smaller
     final menuH = (previous.length * 40.0);
+
+    dismissed = false;
 
     showGeneralDialog(
       context: context,
@@ -198,7 +202,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             // Invisible barrier that dismisses on tap
             Positioned.fill(
               child: GestureDetector(
-                onTap: () => Navigator.of(ctx).pop(),
+                onTap: () {
+                  if (dismissed) return;
+                  dismissed = true;
+                  Navigator.of(ctx).pop();
+                },
                 behavior: HitTestBehavior.opaque,
                 child: const SizedBox.expand(),
               ),
