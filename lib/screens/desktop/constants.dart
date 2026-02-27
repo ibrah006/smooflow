@@ -48,12 +48,45 @@ class _T {
 }
 
 List<DesignStageInfo> get kStages {
-  return [
-    DesignStageInfo(TaskStatus.pending,      'Initialized',       'Init',     _T.slate500, _T.slate100),
-    DesignStageInfo(TaskStatus.designing,    'Designing',         'Design',   _T.purple,   _T.purple50),
-    DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber,   _T.amber50),
-    DesignStageInfo(TaskStatus.clientApproved,  'Client Approved',   'Approved', _T.green, _T.green50),
-    DesignStageInfo(TaskStatus.printing,  'Printing',   'Printing', _T.blue, _T.blue100),
-    if (LoginService.currentUser!.isAdmin) DesignStageInfo(TaskStatus.finishing,  'Production Complete',   'Finishing', _T.slate500, _T.slate50),
+  final isAdmin = LoginService.currentUser!.isAdmin;
+
+  final allStages = [
+    DesignStageInfo(TaskStatus.pending, 'Initialized', 'Init', _T.slate500, _T.slate100),
+
+    // ── Design ─────────────────────────────
+    DesignStageInfo(TaskStatus.designing, 'Designing', 'Design', _T.purple, _T.purple50),
+    DesignStageInfo(TaskStatus.waitingApproval, 'Awaiting Approval', 'Review', _T.amber, _T.amber50),
+    DesignStageInfo(TaskStatus.clientApproved, 'Client Approved', 'Approved', _T.green, _T.green50),
+    DesignStageInfo(TaskStatus.revision, 'Revision', 'Revision', _T.amber, _T.amber50),
+
+    // ── Production ─────────────────────────
+    DesignStageInfo(TaskStatus.waitingPrinting, 'Waiting Printing', 'Queued', _T.amber, _T.amber50),
+    DesignStageInfo(TaskStatus.printing, 'Printing', 'Printing', _T.blue, _T.blue100),
+    DesignStageInfo(TaskStatus.printingCompleted, 'Printing Complete', 'Printed', _T.green, _T.green50),
+    DesignStageInfo(TaskStatus.finishing, 'Finishing', 'Finishing', _T.blue, _T.blue100),
+    DesignStageInfo(TaskStatus.productionCompleted, 'Production Complete', 'Produced', _T.green, _T.green50),
+
+    // ── Delivery ───────────────────────────
+    DesignStageInfo(TaskStatus.waitingDelivery, 'Waiting Delivery', 'Dispatch', _T.amber, _T.amber50),
+    DesignStageInfo(TaskStatus.delivery, 'Out for Delivery', 'Shipping', _T.blue, _T.blue100),
+    DesignStageInfo(TaskStatus.delivered, 'Delivered', 'Delivered', _T.green, _T.green50),
+
+    // ── Installation ───────────────────────
+    DesignStageInfo(TaskStatus.waitingInstallation, 'Waiting Installation', 'Install Queue', _T.amber, _T.amber50),
+    DesignStageInfo(TaskStatus.installing, 'Installing', 'Installing', _T.blue, _T.blue100),
+    DesignStageInfo(TaskStatus.completed, 'Completed', 'Done', _T.green, _T.green50),
+
+    // ── Cross-cutting ──────────────────────
+    DesignStageInfo(TaskStatus.blocked, 'Blocked', 'Blocked', _T.red, _T.red50),
+    DesignStageInfo(TaskStatus.paused, 'Paused', 'Paused', _T.slate500, _T.slate100),
   ];
+
+  if (isAdmin) {
+    return allStages;
+  }
+
+  // Non-admin → only up to printingCompleted
+  return allStages.where((stage) {
+    return stage.stage.index <= TaskStatus.printingCompleted.index;
+  }).toList();
 }
