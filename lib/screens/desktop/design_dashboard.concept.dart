@@ -101,7 +101,10 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
       t.status == TaskStatus.pending ||
       t.status == TaskStatus.designing ||
       t.status == TaskStatus.waitingApproval ||
-      t.status == TaskStatus.clientApproved).toList();
+      t.status == TaskStatus.clientApproved ||
+      t.status == TaskStatus.waitingPrinting ||
+      t.status == TaskStatus.printing || 
+      t.status == TaskStatus.printingCompleted).toList();
 
   String? _selectedProjectId;
   int?    _selectedTaskId;

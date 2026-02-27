@@ -42,6 +42,8 @@ class Task {
 
   DateTime? assigneeLastAdded;
 
+  late final DateTime _createdAt;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -66,7 +68,8 @@ class Task {
     required TaskPriority priority,
     required String? stockTransactionBarcode,
     required DateTime? actualProductionStartTime,
-    required DateTime? actualProductionEndTime
+    required DateTime? actualProductionEndTime,
+    required DateTime createdAt
   }) : _id = id,
        _name = name,
        _description = description,
@@ -80,7 +83,8 @@ class Task {
        _runs = runs,
        _productionQuantity = productionQuantity,
        _priority = priority,
-       _stockTransactionBarcode = stockTransactionBarcode {
+       _stockTransactionBarcode = stockTransactionBarcode,
+       _createdAt = createdAt {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
     _actualProductionStartTime = actualProductionStartTime;
@@ -153,6 +157,7 @@ class Task {
   int? get runs => _runs;
   double? get productionQuantity=> _productionQuantity;
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
+  DateTime get createdAt=> _createdAt;
 
   TaskPriority get priority => _priority;
 
@@ -236,6 +241,7 @@ class Task {
           (json['assignees'] as List).map((assigneeRaw) {
             return User.getIdFromJson(assigneeRaw)!;
           }).toList(),
+      createdAt: DateTime.parse(json['createdAt']),
       projectId: json['project']?['id'],
       // Material logs
       estimatedMaterials:

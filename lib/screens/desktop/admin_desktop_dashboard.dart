@@ -168,13 +168,7 @@ class _AdminDesktopDashboardScreenState
 
   List<Project> get _projects => ref.watch(projectNotifierProvider);
   List<Member>  get _members  => ref.watch(memberNotifierProvider).members;
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks.where((t) =>
-      t.status == TaskStatus.pending ||
-      t.status == TaskStatus.designing ||
-      t.status == TaskStatus.waitingApproval ||
-      t.status == TaskStatus.clientApproved ||
-      t.status == TaskStatus.printing ||
-      t.status == TaskStatus.finishing).toList();
+  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks;
 
   List<Task> get _visibleTasks {
     return _tasks.where((t) {
