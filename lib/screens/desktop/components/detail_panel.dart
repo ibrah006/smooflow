@@ -142,6 +142,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
     final next      = widget.task.status.nextStage;
 
+    final progressBtnEnabled =
+      next != TaskStatus.printing;
+
     return Container(
       width: _T.detailW,
       decoration: const BoxDecoration(color: _T.white, border: Border(left: BorderSide(color: _T.slate200))),
@@ -278,20 +281,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color: (next == TaskStatus.clientApproved)
+                            color:
+                            (next == TaskStatus.clientApproved)
                                 ? _T.green
                                 : ((next == TaskStatus.printing ||
-                                        next == TaskStatus.designing ||
-                                        next == TaskStatus.waitingApproval ||
-                                        (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
-                                    ? _T.blue
-                                    : Colors.grey.shade200),
-                            borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: (next == TaskStatus.clientApproved ||
-                                    next == TaskStatus.printing ||
                                     next == TaskStatus.designing ||
                                     next == TaskStatus.waitingApproval ||
                                     (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                    ? _T.blue
+                                    : Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(_T.r),
+                            boxShadow: progressBtnEnabled
                                 ? [
                                     BoxShadow(
                                       color: ((next == TaskStatus.clientApproved)
@@ -308,15 +308,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                next == TaskStatus.clientApproved
+                                progressBtnEnabled
                                     ? Icons.check
                                     : Icons.arrow_forward,
                                 size: 15,
-                                color: (next == TaskStatus.clientApproved ||
-                                        next == TaskStatus.printing ||
-                                        next == TaskStatus.designing ||
-                                        next == TaskStatus.waitingApproval ||
-                                        (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                color: progressBtnEnabled
                                     ? Colors.white
                                     : Colors.grey.shade400,
                               ),
@@ -328,11 +324,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: (next == TaskStatus.clientApproved ||
-                                          next == TaskStatus.printing ||
-                                          next == TaskStatus.designing ||
-                                          next == TaskStatus.waitingApproval ||
-                                          (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                  color: progressBtnEnabled
                                       ? Colors.white
                                       : Colors.grey.shade400,
                                 ),
