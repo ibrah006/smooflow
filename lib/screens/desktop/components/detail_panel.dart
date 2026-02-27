@@ -283,15 +283,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: Container(
-                    width: 26, height: 26,
-                    decoration: BoxDecoration(
-                      border:       Border.all(color: _T.slate200),
-                      borderRadius: BorderRadius.circular(_T.r),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: widget.onClose,
+                    child: Container(
+                      width: 26, height: 26,
+                      decoration: BoxDecoration(
+                        border:       Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                      child: const Icon(Icons.close, size: 13, color: _T.slate400),
                     ),
-                    child: const Icon(Icons.close, size: 13, color: _T.slate400),
                   ),
                 ),
                 const SizedBox(width: 10),
