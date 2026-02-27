@@ -224,6 +224,33 @@ class _BoardViewState extends State<BoardView> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FILTER BAR
+//
+// Corporate design principles:
+//   • White surface, slate200 bottom rule — no tinting
+//   • "STAGES" label: uppercase, tracked, muted — signals control surface
+//   • Group controls are tab-style text buttons, not coloured pills
+//   • Active state = ink text + 2 px bottom underline (tab metaphor)
+//   • Colour appears ONLY in the 3 px left rule of the detail drawer
+//   • Detail drawer: checkbox-style rows, ink/slate only — no colour fills
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER BAR
+//
+// Corporate toolbar — flat, typographic, no coloured fills anywhere.
+//
+// Structure:
+//   ┌─────────────────────────────────────────────────────────────┐
+//   │  STAGES │ [Design ∨]  [Production ∨]  [Delivery ∨]  …      │  ← 40px
+//   ├─────────────────────────────────────────────────────────────┤
+//   │  Design │ ☑ Pending  ☑ Designing  ☐ Waiting…  Done         │  ← 36px
+//   └─────────────────────────────────────────────────────────────┘
+//
+// Active tab:   ink2 text + 2px solid bottom border in ink2.
+// Partial tab:  ink3 text + 1.5px slate400 bottom border.
+// Off tab:      slate400 text, no border. Chevron visible on hover.
+//
+// Detail drawer: white bg, 3px left rule in group colour (sole colour use).
+// Stage items: checkbox-style ☑/☐ rows. No fills, ink/slate only.
 // ─────────────────────────────────────────────────────────────────────────────
 class _FilterBar extends StatelessWidget {
   final List<_StageGroup>        groups;
@@ -249,36 +276,48 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color:  _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate100)),
-      ),
+      color: _T.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-    
-          // ── Group pill row ─────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
+          // ── Tab row ────────────────────────────────────────────────────────
+          Container(
+            height: 40,
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _T.slate200)),
+            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Showing',
-                  style: TextStyle(
-                    fontSize:   11,
-                    fontWeight: FontWeight.w500,
-                    color:      _T.slate400,
+
+                // "STAGES" prefix — uppercase tracked label, not a button
+                Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: const BoxDecoration(
+                    border: Border(right: BorderSide(color: _T.slate200)),
+                  ),
+                  child: const Text(
+                    'STAGES',
+                    style: TextStyle(
+                      fontSize:      9.5,
+                      fontWeight:    FontWeight.w700,
+                      color:         _T.slate400,
+                      letterSpacing: 0.9,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+
+                // Group tabs
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: List.generate(groups.length, (gi) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: _GroupPill(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: List.generate(groups.length, (gi) =>
+                        _GroupTab(
                           group:      groups[gi],
                           isOn:       groupFullyOn(gi),
                           isPartial:  groupPartial(gi),
@@ -286,24 +325,25 @@ class _FilterBar extends StatelessWidget {
                           onTap:      () => onToggleGroup(gi),
                           onExpand:   () => onToggleExpand(gi),
                         ),
-                      )),
+                      ),
                     ),
                   ),
                 ),
+
               ],
             ),
           ),
-    
-          // ── Detail chip rows ───────────────────────────────────────────────
+
+          // ── Detail drawers (one per expanded group) ────────────────────────
           for (int gi = 0; gi < groups.length; gi++)
             if (expandedGroups.contains(gi))
-              _DetailChipRow(
+              _DetailDrawer(
                 group:      groups[gi],
                 hidden:     hidden,
                 onToggle:   onToggleStage,
                 onCollapse: () => onToggleExpand(gi),
               ),
-    
+
         ],
       ),
     );
@@ -311,9 +351,17 @@ class _FilterBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GROUP PILL
+// GROUP TAB
+//
+// Full-height tab within the 40px bar. Three states:
+//   Active (isOn)    → ink2 text, 600 weight, 2px bottom border in ink2.
+//   Partial          → ink3 text, 500 weight, 1.5px slate400 bottom border.
+//   Off              → slate400 text, 400 weight, no border.
+//   Hover (any)      → ink3 text, slate50 bg tint, chevron appears.
+//
+// Chevron is invisible when off and not hovered — surfaces only when relevant.
 // ─────────────────────────────────────────────────────────────────────────────
-class _GroupPill extends StatelessWidget {
+class _GroupTab extends StatefulWidget {
   final _StageGroup  group;
   final bool         isOn;
   final bool         isPartial;
@@ -321,7 +369,7 @@ class _GroupPill extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onExpand;
 
-  const _GroupPill({
+  const _GroupTab({
     required this.group,
     required this.isOn,
     required this.isPartial,
@@ -331,76 +379,84 @@ class _GroupPill extends StatelessWidget {
   });
 
   @override
+  State<_GroupTab> createState() => _GroupTabState();
+}
+
+class _GroupTabState extends State<_GroupTab> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final bool   active = isOn || isPartial;
-    final Color  fg     = active ? group.color                  : _T.slate400;
-    final Color  bg     = active ? group.color.withOpacity(0.08) : _T.slate100;
-    final Color  bd     = active ? group.color.withOpacity(0.22) : _T.slate200;
+    final bool  active    = widget.isOn || widget.isPartial;
+    final Color labelColor = active
+        ? (_hovered ? _T.ink : _T.ink2)
+        : (_hovered ? _T.ink3 : _T.slate400);
 
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration:    const Duration(milliseconds: 160),
-        decoration:  BoxDecoration(
-          color:        bg,
-          border:       Border.all(color: bd),
-          borderRadius: BorderRadius.circular(6),
+        duration: const Duration(milliseconds: 130),
+        decoration: BoxDecoration(
+          // color: _hovered ? _T.slate50 : Colors.transparent,
+          border: Border(
+            bottom: widget.isOn
+                ? const BorderSide(color: _T.ink2, width: 2)
+                : widget.isPartial
+                    ? BorderSide(color: _T.slate400, width: 1.5)
+                    : BorderSide.none,
+          ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:     MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-      
-            // Toggle tap target
+
+            // Label tap zone
             GestureDetector(
-              onTap: onTap,
+              onTap: widget.onTap,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 140),
-                      child: Icon(
-                        isPartial
-                            ? Icons.remove_rounded
-                            : isOn
-                                ? Icons.check_rounded
-                                : Icons.remove_rounded,
-                        key:   ValueKey('$isOn-$isPartial'),
-                        size:  12,
-                        color: active ? group.color : _T.slate400,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      group.label,
-                      style: TextStyle(
-                        fontSize:   11.5,
-                        fontWeight: FontWeight.w600,
-                        color:      fg,
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 130),
+                  style: TextStyle(
+                    fontSize:      11.5,
+                    fontWeight:    widget.isOn
+                        ? FontWeight.w600
+                        : widget.isPartial
+                            ? FontWeight.w500
+                            : FontWeight.w400,
+                    color:         labelColor,
+                    letterSpacing: 0.1,
+                  ),
+                  child: Text(widget.group.label),
                 ),
               ),
             ),
-      
-            // Divider
-            Container(width: 1, height: 20, color: bd),
-      
-            // Chevron
-            GestureDetector(
-              onTap: onExpand,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
-                child: AnimatedRotation(
-                  turns:    isExpanded ? 0.5 : 0.0,
-                  duration: const Duration(milliseconds: 160),
-                  child:    Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: fg),
+
+            // Chevron — separate tap zone, visible when active or hovered
+            AnimatedOpacity(
+              opacity:  (active || _hovered) ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 130),
+              child: GestureDetector(
+                onTap:    widget.onExpand,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 0, 12, 0),
+                  child: AnimatedRotation(
+                    turns:    widget.isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size:  13,
+                      color: active ? _T.slate500 : _T.slate300,
+                    ),
+                  ),
                 ),
               ),
             ),
-      
+
           ],
         ),
       ),
@@ -409,15 +465,21 @@ class _GroupPill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL CHIP ROW
+// DETAIL DRAWER
+//
+// A 36px strip that drops below the tab row when a group chevron is tapped.
+// White surface. The 3px left rule in the group colour is the only colour
+// signal — everything else is ink/slate.
+// Stage items are checkbox-style toggle rows laid out horizontally.
+// "Done" text affordance on the right collapses the drawer.
 // ─────────────────────────────────────────────────────────────────────────────
-class _DetailChipRow extends StatelessWidget {
-  final _StageGroup          group;
-  final Set<TaskStatus>      hidden;
+class _DetailDrawer extends StatelessWidget {
+  final _StageGroup              group;
+  final Set<TaskStatus>          hidden;
   final ValueChanged<TaskStatus> onToggle;
   final VoidCallback             onCollapse;
 
-  const _DetailChipRow({
+  const _DetailDrawer({
     required this.group,
     required this.hidden,
     required this.onToggle,
@@ -448,44 +510,54 @@ class _DetailChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color:  _T.slate50,
+      decoration: BoxDecoration(
+        color: _T.white,
         border: Border(
-          top:    BorderSide(color: _T.slate100),
-          bottom: BorderSide(color: _T.slate100),
+          top:    const BorderSide(color: _T.slate200),
+          bottom: const BorderSide(color: _T.slate200),
+          left:   BorderSide(color: group.color, width: 3),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 6, height: 6,
-            decoration: BoxDecoration(color: group.color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
+
+          // Scrollable stage toggles
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               child: Row(
-                children: group.statuses.map((s) => Padding(
-                  padding: const EdgeInsets.only(right: 5),
-                  child: _StageChip(
+                children: group.statuses.map((s) =>
+                  _StageToggleRow(
                     label:     _label(s),
                     isVisible: !hidden.contains(s),
-                    color:     group.color,
                     onTap:     () => onToggle(s),
                   ),
-                )).toList(),
+                ).toList(),
               ),
             ),
           ),
+
+          // "Done" — text collapse affordance; reads as an intentional action
           GestureDetector(
             onTap: onCollapse,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(Icons.keyboard_arrow_up_rounded, size: 14, color: _T.slate400),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                child: Text(
+                  'Done',
+                  style: TextStyle(
+                    fontSize:   11,
+                    fontWeight: FontWeight.w600,
+                    color:      _T.slate500,
+                  ),
+                ),
+              ),
             ),
           ),
+
         ],
       ),
     );
@@ -493,41 +565,70 @@ class _DetailChipRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE CHIP
+// STAGE TOGGLE ROW
+//
+// Checkbox-style: ☑ visible / ☐ hidden. No colour in any state.
+// Hover: slate50 bg on the row — precise, not a glow.
 // ─────────────────────────────────────────────────────────────────────────────
-class _StageChip extends StatelessWidget {
+class _StageToggleRow extends StatefulWidget {
   final String       label;
   final bool         isVisible;
-  final Color        color;
   final VoidCallback onTap;
 
-  const _StageChip({
+  const _StageToggleRow({
     required this.label,
     required this.isVisible,
-    required this.color,
     required this.onTap,
   });
 
   @override
+  State<_StageToggleRow> createState() => _StageToggleRowState();
+}
+
+class _StageToggleRowState extends State<_StageToggleRow> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration:    const Duration(milliseconds: 130),
-        padding:     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration:  BoxDecoration(
-          color:        isVisible ? color.withOpacity(0.07) : Colors.transparent,
-          border:       Border.all(
-            color: isVisible ? color.withOpacity(0.25) : _T.slate200,
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 110),
+          margin:   const EdgeInsets.only(right: 2),
+          padding:  const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
+          decoration: BoxDecoration(
+            color:        _hovered ? _T.slate50 : Colors.transparent,
+            borderRadius: BorderRadius.circular(4),
           ),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize:   10.5,
-            fontWeight: FontWeight.w500,
-            color:      isVisible ? color : _T.slate400,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 120),
+                child: Icon(
+                  widget.isVisible
+                      ? Icons.check_box_rounded
+                      : Icons.check_box_outline_blank_rounded,
+                  key:   ValueKey(widget.isVisible),
+                  size:  14,
+                  color: widget.isVisible ? _T.ink3 : _T.slate300,
+                ),
+              ),
+              const SizedBox(width: 7),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 110),
+                style: TextStyle(
+                  fontSize:   11.5,
+                  fontWeight: widget.isVisible ? FontWeight.w500 : FontWeight.w400,
+                  color:      widget.isVisible ? _T.ink2 : _T.slate400,
+                ),
+                child: Text(widget.label),
+              ),
+            ],
           ),
         ),
       ),
@@ -535,8 +636,6 @@ class _StageChip extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// KANBAN LANE  — original implementation, zero changes to logic or style
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo   stageInfo;
