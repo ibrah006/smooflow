@@ -102,25 +102,27 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       return;
     }
 
-    AdvanceStagePopup.show(
-      context: context,
-      buttonKey: _advanceButtonKey,
-      taskId: widget.task.id,
-      onConfirm: (notes) async {
-        await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
-        setState(() {
-          // Update task status
-          // task.status = getNextStatus(task.status);
-        });
-        
-        if (notes != null) {
-          // Save notes to activity timeline
-          // task.addActivity(notes);
-        }
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
 
-        widget.onAdvance();
-      },
-    );
+    // AdvanceStagePopup.show(
+    //   context: context,
+    //   buttonKey: _advanceButtonKey,
+    //   taskId: widget.task.id,
+    //   onConfirm: (notes) async {
+    //     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
+    //     setState(() {
+    //       // Update task status
+    //       // task.status = getNextStatus(task.status);
+    //     });
+        
+    //     if (notes != null) {
+    //       // Save notes to activity timeline
+    //       // task.addActivity(notes);
+    //     }
+
+    //     widget.onAdvance();
+    //   },
+    // );
   }
 
   @override
@@ -263,11 +265,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         key: _advanceButtonKey,
                         onTap: () {
                           // Determine if button should be enabled
-                          final isAllowedStage = next == TaskStatus.clientApproved ||
-                              next == TaskStatus.printing ||
-                              next == TaskStatus.designing ||
-                              next == TaskStatus.waitingApproval ||
-                              (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
+                          // final isAllowedStage = next == TaskStatus.clientApproved ||
+                          //     next == TaskStatus.printing ||
+                          //     next == TaskStatus.designing ||
+                          //     next == TaskStatus.waitingApproval ||
+                          //     (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
+
+                          final isAllowedStage = progressBtnEnabled;
 
                           if (!isAllowedStage) return;
 
@@ -284,7 +288,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             color:
                             (next == TaskStatus.clientApproved)
                                 ? _T.green
-                                : ((next == TaskStatus.printing ||
+                                : ((
                                     next == TaskStatus.designing ||
                                     next == TaskStatus.waitingApproval ||
                                     ((
