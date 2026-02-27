@@ -1023,21 +1023,21 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
     TaskStatus.clientApproved,
     TaskStatus.revision,
   ]),
-  _PipelineMilestone('Printing Department', TaskStatus.printing, [
+  _PipelineMilestone('Printing', TaskStatus.printing, [
     TaskStatus.waitingPrinting,
     TaskStatus.printing,
     TaskStatus.printingCompleted,
   ]),
-  _PipelineMilestone('Finishing Department', TaskStatus.finishing, [
+  _PipelineMilestone('Finishing', TaskStatus.finishing, [
     TaskStatus.finishing,
     TaskStatus.productionCompleted,
   ]),
-  _PipelineMilestone('Delivery Department', TaskStatus.delivery, [
+  _PipelineMilestone('Delivery', TaskStatus.delivery, [
     TaskStatus.waitingDelivery,
     TaskStatus.delivery,
     TaskStatus.delivered,
   ]),
-  _PipelineMilestone('Installation Department', TaskStatus.installing, [
+  _PipelineMilestone('Installation', TaskStatus.installing, [
     TaskStatus.waitingInstallation,
     TaskStatus.installing,
   ]),
