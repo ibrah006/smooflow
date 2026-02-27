@@ -109,6 +109,11 @@ class TaskListView extends ConsumerWidget {
                 // final isOverdue = d != null && d.isBefore(now);
                 // final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
 
+                final dateFormatted = fmtDate(d);
+
+                final dateSplitted = dateFormatted.split(" ");
+                dateSplitted.removeLast();
+
                 return Material(
                   color: selectedTaskId == t.id ? _T.blue50 : _T.white,
                   borderRadius: BorderRadius.circular(_T.r),
@@ -160,7 +165,7 @@ class TaskListView extends ConsumerWidget {
                           Expanded(flex: 1, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              fmtDate(d),
+                              d.year == now.year? dateSplitted.join(" ") : dateFormatted,
                               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400, color: _T.slate500),
                             ),
                           )),
