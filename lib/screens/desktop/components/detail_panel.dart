@@ -145,13 +145,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final isSoon    = dueDate != null && !isOverdue && dueDate.difference(now).inDays <= 3;
     final next      = widget.task.status.nextStage;
 
-    final progressBtnEnabled =
-      next != TaskStatus.printing && next != null;
-
     final ableToReinitialize =
       widget.task.status == TaskStatus.paused ||
       widget.task.status == TaskStatus.blocked ||
       widget.task.status == TaskStatus.completed;
+
+    final progressBtnEnabled =
+      next != TaskStatus.printing && next != null || ableToReinitialize;
 
     return Container(
       width: _T.detailW,
@@ -271,10 +271,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             padding: const EdgeInsets.all(14),
             child: next == TaskStatus.printing
                 ? Row(
-                    children: const [
+                    children: [
                       Icon(Icons.lock_outline, size: 14, color: _T.slate400),
                       SizedBox(width: 8),
-                      Expanded(child: Text('Handed off to production — design locked', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
+                      Expanded(child: Text('Handed off to production${LoginService.currentUser!.isAdmin? '' : ' — design locked'}', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
                     ],
                   )
                 : Column(
