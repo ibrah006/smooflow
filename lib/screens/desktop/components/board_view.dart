@@ -139,6 +139,9 @@ class _BoardViewState extends State<BoardView> {
   // Which group indices have their detail chip row open.
   final Set<int> _expandedGroups = {};
 
+  // hide lanes that have zero tasks
+  bool _hideEmpty = false;
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   bool _groupFullyOn(int gi) =>
@@ -167,6 +170,12 @@ class _BoardViewState extends State<BoardView> {
 
   @override
   Widget build(BuildContext context) {
+    // Build the task-count map once so the filter bar can display it
+    final Map<TaskStatus, int> taskCounts = {
+      for (final si in kStages)
+        si.stage: widget.tasks.where((t) => t.status == si.stage).length,
+    };
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -178,9 +187,11 @@ class _BoardViewState extends State<BoardView> {
           groupPartial:    _groupPartial,
           expandedGroups:  _expandedGroups,
           hidden:          _hidden,
+          hideEmpty:       _hideEmpty,
           onToggleGroup:   _toggleGroup,
           onToggleStage:   _toggleStage,
           onToggleExpand:  _toggleExpand,
+          onToggleHideEmpty: () => setState(() => _hideEmpty = !_hideEmpty),
         ),
 
         // ── Lane scroll ──────────────────────────────────────────────────────
@@ -190,30 +201,43 @@ class _BoardViewState extends State<BoardView> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.all(16),
-              children: kStages.where((si) => !_hidden.contains(si.stage)).map((si) {
-                final stageTasks = widget.tasks
-                    .where((t) => t.status == si.stage)
-                    .toList();
+              children: kStages
+                  .where((si) {
+                    // Stage-group visibility filter
+                    if (_hidden.contains(si.stage)) return false;
+                    // Hide-empty filter
+                    if (_hideEmpty) {
+                      final count = taskCounts[si.stage] ?? 0;
+                      if (count == 0) return false;
+                    }
+                    return true;
+                  })
+                  .map((si) {
+                    final stageTasks = widget.tasks
+                        .where((t) => t.status == si.stage)
+                        .toList();
 
-                // Original: hide pending lane when empty
-                if (si.stage == TaskStatus.pending && stageTasks.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                    // Original: hide pending lane when empty (unless hideEmpty
+                    // already handled it above)
+                    if (si.stage == TaskStatus.pending && stageTasks.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
 
-                final isFirst = kStages.indexOf(si) == 0;
+                    final isFirst = kStages.indexOf(si) == 0;
 
-                return _KanbanLane(
-                  stageInfo:         si,
-                  tasks:             stageTasks,
-                  projects:          widget.projects,
-                  selectedTaskId:    widget.selectedTaskId,
-                  onTaskSelected:    widget.onTaskSelected,
-                  showAddTaskBtn:    si.label == 'Initialized',
-                  addTaskFocusNode:  isFirst ? widget.addTaskFocusNode : null,
-                  isAddingTask:      isFirst ? widget.isAddingTask : null,
-                  selectedProjectId: widget.selectedProjectId,
-                );
-              }).toList(),
+                    return _KanbanLane(
+                      stageInfo:         si,
+                      tasks:             stageTasks,
+                      projects:          widget.projects,
+                      selectedTaskId:    widget.selectedTaskId,
+                      onTaskSelected:    widget.onTaskSelected,
+                      showAddTaskBtn:    si.label == 'Initialized',
+                      addTaskFocusNode:  isFirst ? widget.addTaskFocusNode : null,
+                      isAddingTask:      isFirst ? widget.isAddingTask : null,
+                      selectedProjectId: widget.selectedProjectId,
+                    );
+                  })
+                  .toList(),
             ),
           ),
         ),
@@ -252,15 +276,20 @@ class _BoardViewState extends State<BoardView> {
 // Detail drawer: white bg, 3px left rule in group colour (sole colour use).
 // Stage items: checkbox-style ☑/☐ rows. No fills, ink/slate only.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER BAR
+// ─────────────────────────────────────────────────────────────────────────────
 class _FilterBar extends StatelessWidget {
   final List<_StageGroup>        groups;
   final bool Function(int)       groupFullyOn;
   final bool Function(int)       groupPartial;
   final Set<int>                 expandedGroups;
   final Set<TaskStatus>          hidden;
+  final bool                     hideEmpty;
   final ValueChanged<int>        onToggleGroup;
   final ValueChanged<TaskStatus> onToggleStage;
   final ValueChanged<int>        onToggleExpand;
+  final VoidCallback             onToggleHideEmpty;
 
   const _FilterBar({
     required this.groups,
@@ -268,9 +297,11 @@ class _FilterBar extends StatelessWidget {
     required this.groupPartial,
     required this.expandedGroups,
     required this.hidden,
+    required this.hideEmpty,
     required this.onToggleGroup,
     required this.onToggleStage,
     required this.onToggleExpand,
+    required this.onToggleHideEmpty,
   });
 
   @override
@@ -292,7 +323,7 @@ class _FilterBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
 
-                // "STAGES" prefix — uppercase tracked label, not a button
+                // "STAGES" prefix
                 Container(
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -310,7 +341,7 @@ class _FilterBar extends StatelessWidget {
                   ),
                 ),
 
-                // Group tabs
+                // Group tabs — scrollable
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -330,19 +361,38 @@ class _FilterBar extends StatelessWidget {
                   ),
                 ),
 
+                // ── "With tasks" toggle ──────────────────────────────────────
+                // Right-anchored. A vertical divider separates it from the tabs.
+                // When on: ink2 text + filled indicator dot.
+                // When off: slate400 text — recedes exactly like an inactive tab.
+                Container(
+                  decoration: const BoxDecoration(
+                    border: Border(left: BorderSide(color: _T.slate200)),
+                  ),
+                  child: _HideEmptyToggle(
+                    isOn:  hideEmpty,
+                    onTap: onToggleHideEmpty,
+                  ),
+                ),
+
               ],
             ),
           ),
 
-          // ── Detail drawers (one per expanded group) ────────────────────────
+          // ── Detail drawers ─────────────────────────────────────────────────
+          // Each drawer is individually animated with AnimatedSize (height) +
+          // AnimatedOpacity (fade). They animate independently so opening one
+          // doesn't affect another.
           for (int gi = 0; gi < groups.length; gi++)
-            if (expandedGroups.contains(gi))
-              _DetailDrawer(
+            _AnimatedDrawer(
+              visible: expandedGroups.contains(gi),
+              child: _DetailDrawer(
                 group:      groups[gi],
                 hidden:     hidden,
                 onToggle:   onToggleStage,
                 onCollapse: () => onToggleExpand(gi),
               ),
+            ),
 
         ],
       ),
@@ -351,15 +401,173 @@ class _FilterBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HIDE EMPTY TOGGLE
+//
+// Lives at the right end of the tab row. Styled as a tab-like control so it
+// reads as part of the same toolbar, not a foreign widget.
+//
+// States:
+//   Off → slate400 text, no indicator — blends with inactive tabs.
+//   On  → ink2 text, small filled dot to the left of the label, 2px ink2
+//         bottom border — identical active-tab language.
+//
+// Label reads "With tasks" — positive framing. The user is choosing what they
+// want to see, not what to hide.
+// ─────────────────────────────────────────────────────────────────────────────
+class _HideEmptyToggle extends StatefulWidget {
+  final bool         isOn;
+  final VoidCallback onTap;
+
+  const _HideEmptyToggle({required this.isOn, required this.onTap});
+
+  @override
+  State<_HideEmptyToggle> createState() => _HideEmptyToggleState();
+}
+
+class _HideEmptyToggleState extends State<_HideEmptyToggle> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg = widget.isOn
+        ? (_hovered ? _T.ink : _T.ink2)
+        : (_hovered ? _T.ink3 : _T.slate400);
+
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          color: _hovered ? _T.slate50 : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          // 2px bottom border mirrors active-tab language
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: widget.isOn
+                  ? const BorderSide(color: _T.ink2, width: 2)
+                  : BorderSide.none,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Small filled dot — appears only when on
+              AnimatedOpacity(
+                opacity:  widget.isOn ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 150),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Container(
+                    width: 5, height: 5,
+                    decoration: const BoxDecoration(
+                      color: _T.ink2,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 130),
+                style: TextStyle(
+                  fontSize:   11.5,
+                  fontWeight: widget.isOn ? FontWeight.w600 : FontWeight.w400,
+                  color:      fg,
+                  letterSpacing: 0.1,
+                ),
+                child: const Text('With tasks'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED DRAWER WRAPPER
+//
+// Wraps each _DetailDrawer. Uses:
+//   • AnimatedSize  — smoothly grows/shrinks the height (clipBehavior clips
+//                     content during the transition so nothing overflows).
+//   • AnimatedOpacity — fades content in (200ms) and out (120ms, faster so
+//                     the collapse feels snappy rather than sluggish).
+//
+// The asymmetric timing (faster out than in) is a standard motion principle:
+// exit transitions should be quicker so they don't block the user's next action.
+// ─────────────────────────────────────────────────────────────────────────────
+class _AnimatedDrawer extends StatefulWidget {
+  final bool    visible;
+  final Widget  child;
+
+  const _AnimatedDrawer({required this.visible, required this.child});
+
+  @override
+  State<_AnimatedDrawer> createState() => _AnimatedDrawerState();
+}
+
+class _AnimatedDrawerState extends State<_AnimatedDrawer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double>   _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync:    this,
+      duration: const Duration(milliseconds: 200), // open
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    if (widget.visible) _ctrl.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedDrawer old) {
+    super.didUpdateWidget(old);
+    if (widget.visible != old.visible) {
+      if (widget.visible) {
+        // Open: forward at full duration
+        _ctrl.duration = const Duration(milliseconds: 200);
+        _ctrl.forward();
+      } else {
+        // Close: reverse faster — snappy exit
+        _ctrl.duration = const Duration(milliseconds: 130);
+        _ctrl.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration:      const Duration(milliseconds: 200),
+      curve:         Curves.easeOutCubic,
+      clipBehavior:  Clip.hardEdge,
+      alignment:     Alignment.topCenter,
+      child: SizedBox(
+        // SizedBox drives AnimatedSize: visible → natural height, hidden → 0.
+        height: widget.visible || _ctrl.isAnimating ? null : 0,
+        child: FadeTransition(
+          opacity: _fade,
+          child:   widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GROUP TAB
-//
-// Full-height tab within the 40px bar. Three states:
-//   Active (isOn)    → ink2 text, 600 weight, 2px bottom border in ink2.
-//   Partial          → ink3 text, 500 weight, 1.5px slate400 bottom border.
-//   Off              → slate400 text, 400 weight, no border.
-//   Hover (any)      → ink3 text, slate50 bg tint, chevron appears.
-//
-// Chevron is invisible when off and not hovered — surfaces only when relevant.
 // ─────────────────────────────────────────────────────────────────────────────
 class _GroupTab extends StatefulWidget {
   final _StageGroup  group;
@@ -387,7 +595,7 @@ class _GroupTabState extends State<_GroupTab> {
 
   @override
   Widget build(BuildContext context) {
-    final bool  active    = widget.isOn || widget.isPartial;
+    final bool  active     = widget.isOn || widget.isPartial;
     final Color labelColor = active
         ? (_hovered ? _T.ink : _T.ink2)
         : (_hovered ? _T.ink3 : _T.slate400);
@@ -410,11 +618,10 @@ class _GroupTabState extends State<_GroupTab> {
             ),
           ),
           child: Row(
-            mainAxisSize:     MainAxisSize.min,
+            mainAxisSize:       MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-        
-              // Label tap zone
+
               GestureDetector(
                 onTap: widget.onTap,
                 child: Padding(
@@ -435,8 +642,7 @@ class _GroupTabState extends State<_GroupTab> {
                   ),
                 ),
               ),
-        
-              // Chevron — separate tap zone, visible when active or hovered
+
               AnimatedOpacity(
                 opacity:  (active || _hovered) ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 130),
@@ -457,7 +663,7 @@ class _GroupTabState extends State<_GroupTab> {
                   ),
                 ),
               ),
-        
+
             ],
           ),
         ),
@@ -468,12 +674,6 @@ class _GroupTabState extends State<_GroupTab> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL DRAWER
-//
-// A 36px strip that drops below the tab row when a group chevron is tapped.
-// White surface. The 3px left rule in the group colour is the only colour
-// signal — everything else is ink/slate.
-// Stage items are checkbox-style toggle rows laid out horizontally.
-// "Done" text affordance on the right collapses the drawer.
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailDrawer extends StatelessWidget {
   final _StageGroup              group;
@@ -524,7 +724,6 @@ class _DetailDrawer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
 
-          // Scrollable stage toggles
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -541,7 +740,6 @@ class _DetailDrawer extends StatelessWidget {
             ),
           ),
 
-          // "Done" — text collapse affordance; reads as an intentional action
           GestureDetector(
             onTap: onCollapse,
             child: MouseRegion(
@@ -568,9 +766,6 @@ class _DetailDrawer extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STAGE TOGGLE ROW
-//
-// Checkbox-style: ☑ visible / ☐ hidden. No colour in any state.
-// Hover: slate50 bg on the row — precise, not a glow.
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageToggleRow extends StatefulWidget {
   final String       label;
@@ -604,9 +799,7 @@ class _StageToggleRowState extends State<_StageToggleRow> {
             duration: const Duration(milliseconds: 110),
             margin:   const EdgeInsets.only(right: 2),
             padding:  const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-            ),
+            decoration: const BoxDecoration(),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -640,6 +833,8 @@ class _StageToggleRowState extends State<_StageToggleRow> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// KANBAN LANE — original, unchanged
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo   stageInfo;
@@ -693,7 +888,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
       child: Column(
         children: [
 
-          // Header
           Container(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: const BoxDecoration(
@@ -742,7 +936,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
             ),
           ),
 
-          // Cards
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(10),
@@ -773,7 +966,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
             ),
           ),
 
-          // Add button
           if (widget.showAddTaskBtn)
             widget.isAddingTask == true
                 ? Focus(
@@ -798,7 +990,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LANE EMPTY STATE — original, unchanged
+// LANE EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 class _LaneEmpty extends StatelessWidget {
   @override
@@ -815,7 +1007,7 @@ class _LaneEmpty extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADD CARD BUTTON — original, unchanged
+// ADD CARD BUTTON
 // ─────────────────────────────────────────────────────────────────────────────
 class _AddCardButton extends StatelessWidget {
   final VoidCallback onTap;
