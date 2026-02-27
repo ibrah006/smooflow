@@ -217,12 +217,6 @@ class _BoardViewState extends State<BoardView> {
                         .where((t) => t.status == si.stage)
                         .toList();
 
-                    // Original: hide pending lane when empty (unless hideEmpty
-                    // already handled it above)
-                    if (si.stage == TaskStatus.pending && stageTasks.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
                     final isFirst = kStages.indexOf(si) == 0;
 
                     return _KanbanLane(
