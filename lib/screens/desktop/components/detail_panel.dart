@@ -133,9 +133,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   final GlobalKey _advanceButtonKey   = GlobalKey();
   final GlobalKey _stageBackButtonKey = GlobalKey();
 
+  bool _isProgressing = false;
+
   // ── Unchanged data logic ──────────────────────────────────────────────────
 
-  void approveDesignStage() async {
+  Future<void> approveDesignStage() async {
     final nextStage = widget.task.status.nextStage;
     if (nextStage == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to advance stage")));
@@ -146,7 +148,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onAdvance();
   }
 
-  void _showMoveToNextStageDialog() async {
+  Future<void> _showMoveToNextStageDialog() async {
     late final TaskStatus nextStage;
     if (widget.task.status == TaskStatus.paused || widget.task.status == TaskStatus.blocked) {
       nextStage = TaskStatus.pending;
@@ -429,13 +431,20 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             canStageBack:       canStageBack,
             advanceButtonKey:   _advanceButtonKey,
             stageBackButtonKey: _stageBackButtonKey,
-            onAdvanceTap: () {
+            isProgressing: _isProgressing,
+            onAdvanceTap: () async {
               if (!progressBtnEnabled) return;
+              setState(() {
+                _isProgressing = true;
+              });
               if (next == TaskStatus.clientApproved) {
-                approveDesignStage();
+                await approveDesignStage();
               } else {
-                _showMoveToNextStageDialog();
+                await _showMoveToNextStageDialog();
               }
+              setState(() {
+                _isProgressing = false;
+              });
             },
             onStageBackTap: _showStageBackMenu,
           ),
@@ -469,6 +478,7 @@ class _DetailFooter extends StatelessWidget {
   final GlobalKey  stageBackButtonKey;
   final VoidCallback onAdvanceTap;
   final VoidCallback onStageBackTap;
+  final bool isProgressing;
 
   const _DetailFooter({
     required this.task,
@@ -480,6 +490,7 @@ class _DetailFooter extends StatelessWidget {
     required this.stageBackButtonKey,
     required this.onAdvanceTap,
     required this.onStageBackTap,
+    required this.isProgressing
   });
 
   @override
@@ -531,11 +542,11 @@ class _DetailFooter extends StatelessWidget {
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         key: advanceButtonKey,
-                        onTap: onAdvanceTap,
+                        onTap: isProgressing? null : onAdvanceTap,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color: ableToReinitialize
+                            color: isProgressing? Colors.grey.shade100 : (ableToReinitialize
                                 ? _T.slate400
                                 : (next == TaskStatus.clientApproved)
                                     ? _T.green
@@ -552,9 +563,9 @@ class _DetailFooter extends StatelessWidget {
                                                     next == TaskStatus.completed) &&
                                                 LoginService.currentUser!.isAdmin))
                                         ? _T.blue
-                                        : Colors.grey.shade200),
+                                        : Colors.grey.shade200)),
                             borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: progressBtnEnabled
+                            boxShadow: isProgressing? null : (progressBtnEnabled
                                 ? [
                                     BoxShadow(
                                       color: (ableToReinitialize
@@ -567,27 +578,28 @@ class _DetailFooter extends StatelessWidget {
                                       offset: const Offset(0, 2),
                                     )
                                   ]
-                                : null,
+                                : null),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
+                              if (isProgressing) SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.75, color: Colors.grey.shade400))
+                              else Icon(
                                 progressBtnEnabled ? Icons.check : Icons.arrow_forward,
                                 size: 15,
                                 color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                next == TaskStatus.clientApproved
+                                isProgressing? "Progressing" : (next == TaskStatus.clientApproved
                                     ? 'Confirm Client Approval'
                                     : ableToReinitialize
                                         ? 'Re-initialize Task'
-                                        : 'Move to "${stageInfo(next!).label}"',
+                                        : 'Move to "${stageInfo(next!).label}"'),
                                 style: TextStyle(
                                   fontSize:   13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
+                                  color: isProgressing? Colors.grey.shade400 : (progressBtnEnabled ? Colors.white : Colors.grey.shade400),
                                 ),
                               ),
                             ],
