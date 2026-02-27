@@ -36,6 +36,8 @@ enum TaskStatus {
       case TaskStatus.printingCompleted:
         return TaskStatus.finishing;
       case TaskStatus.finishing:
+        return TaskStatus.productionCompleted;
+      case TaskStatus.productionCompleted:
         return TaskStatus.waitingDelivery;
       case TaskStatus.waitingDelivery:
         return TaskStatus.delivery;
