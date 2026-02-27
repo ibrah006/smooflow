@@ -95,14 +95,19 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   void _showMoveToNextStageDialog() async {
 
-    final nextStage = widget.task.status.nextStage;
+    late final TaskStatus nextStage;
 
-    if (nextStage == null) {
+    if (widget.task.status == TaskStatus.paused || widget.task.status == TaskStatus.blocked) {
+      nextStage = TaskStatus.pending;
+    } else if (widget.task.status == TaskStatus.completed) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No explicit next stage from current phase")));
       return;
+    } else {
+      // next stage != null
+      nextStage = widget.task.status.nextStage!;
     }
 
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus:  nextStage);
 
     // AdvanceStagePopup.show(
     //   context: context,
@@ -147,8 +152,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     final ableToReinitialize =
       widget.task.status == TaskStatus.paused ||
-      widget.task.status == TaskStatus.blocked ||
-      widget.task.status == TaskStatus.completed;
+      widget.task.status == TaskStatus.blocked;
 
     final progressBtnEnabled =
       next != TaskStatus.printing && next != null || ableToReinitialize;
@@ -282,91 +286,94 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     children: [
                       const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
                       const SizedBox(height: 9),
-                      GestureDetector(
-                        key: _advanceButtonKey,
-                        onTap: () {
-                          // Determine if button should be enabled
-                          // final isAllowedStage = next == TaskStatus.clientApproved ||
-                          //     next == TaskStatus.printing ||
-                          //     next == TaskStatus.designing ||
-                          //     next == TaskStatus.waitingApproval ||
-                          //     (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
-
-                          final isAllowedStage = progressBtnEnabled;
-
-                          if (!isAllowedStage) return;
-
-                          // Call proper handler
-                          if (next == TaskStatus.clientApproved) {
-                            return approveDesignStage();
-                          } else {
-                            return _showMoveToNextStageDialog();
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          decoration: BoxDecoration(
-                            color:
-                            (next == TaskStatus.clientApproved)
-                                ? _T.green
-                                : ((
-                                    next == TaskStatus.designing ||
-                                    next == TaskStatus.waitingApproval ||
-                                    ((
-                                        next == TaskStatus.waitingPrinting ||
-                                        next == TaskStatus.printingCompleted ||
-                                        next == TaskStatus.finishing ||
-                                        next == TaskStatus.productionCompleted ||
-                                        next == TaskStatus.waitingDelivery ||
-                                        next == TaskStatus.delivery ||
-                                        next == TaskStatus.waitingInstallation ||
-                                        next == TaskStatus.installing ||
-                                        next == TaskStatus.completed
-                                      )
-                                      && LoginService.currentUser!.isAdmin)
-                                  )
-                                    ? _T.blue
-                                    : Colors.grey.shade200),
-                            borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: progressBtnEnabled
-                                ? [
-                                    BoxShadow(
-                                      color: ((next == TaskStatus.clientApproved)
-                                              ? _T.green
-                                              : _T.blue)
-                                          .withOpacity(0.28),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: _advanceButtonKey,
+                          onTap: () {
+                            // Determine if button should be enabled
+                            // final isAllowedStage = next == TaskStatus.clientApproved ||
+                            //     next == TaskStatus.printing ||
+                            //     next == TaskStatus.designing ||
+                            //     next == TaskStatus.waitingApproval ||
+                            //     (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
+                                  
+                            final isAllowedStage = progressBtnEnabled;
+                                  
+                            if (!isAllowedStage) return;
+                                  
+                            // Call proper handler
+                            if (next == TaskStatus.clientApproved) {
+                              return approveDesignStage();
+                            } else {
+                              return _showMoveToNextStageDialog();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            decoration: BoxDecoration(
+                              color: ableToReinitialize? _T.slate400 :
+                              (next == TaskStatus.clientApproved)
+                                  ? _T.green
+                                  : ((
+                                      next == TaskStatus.designing ||
+                                      next == TaskStatus.waitingApproval ||
+                                      ((
+                                          next == TaskStatus.waitingPrinting ||
+                                          next == TaskStatus.printingCompleted ||
+                                          next == TaskStatus.finishing ||
+                                          next == TaskStatus.productionCompleted ||
+                                          next == TaskStatus.waitingDelivery ||
+                                          next == TaskStatus.delivery ||
+                                          next == TaskStatus.waitingInstallation ||
+                                          next == TaskStatus.installing ||
+                                          next == TaskStatus.completed
+                                        )
+                                        && LoginService.currentUser!.isAdmin)
                                     )
-                                  ]
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                progressBtnEnabled
-                                    ? Icons.check
-                                    : Icons.arrow_forward,
-                                size: 15,
-                                color: progressBtnEnabled
-                                    ? Colors.white
-                                    : Colors.grey.shade400,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                next == TaskStatus.clientApproved
-                                    ? 'Move to "${stageInfo(next!).label}"'
-                                    : ableToReinitialize? 'Re-initialize Task' : 'Confirm Client Approval',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
+                                      ? _T.blue
+                                      : Colors.grey.shade200),
+                              borderRadius: BorderRadius.circular(_T.r),
+                              boxShadow: progressBtnEnabled
+                                  ? [
+                                      BoxShadow(
+                                        color: (ableToReinitialize? _T.slate400 : (next == TaskStatus.clientApproved)
+                                                ? _T.green
+                                                : _T.blue)
+                                            .withOpacity(0.28),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  progressBtnEnabled
+                                      ? Icons.check
+                                      : Icons.arrow_forward,
+                                  size: 15,
                                   color: progressBtnEnabled
                                       ? Colors.white
                                       : Colors.grey.shade400,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  next == TaskStatus.clientApproved
+                                      ? 'Move to "${stageInfo(next!).label}"'
+                                      : ableToReinitialize? 'Re-initialize Task' : 'Confirm Client Approval',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: progressBtnEnabled
+                                        ? Colors.white
+                                        : Colors.grey.shade400,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
