@@ -637,9 +637,9 @@ class _PipelineMilestone {
 }
 
 const List<_PipelineMilestone> _kPipelineMilestones = [
+  _PipelineMilestone('Initialized', TaskStatus.pending, []),
   _PipelineMilestone('Design', TaskStatus.designing, [
     // Sub-steps shown when task is in any of these
-    TaskStatus.pending,
     TaskStatus.designing,
     TaskStatus.waitingApproval,
     TaskStatus.clientApproved,
@@ -691,7 +691,7 @@ bool _isIntermediate(TaskStatus s) {
 // ── Sub-step label map ────────────────────────────────────────────────────────
 
 String _subLabel(TaskStatus s) => switch (s) {
-  TaskStatus.pending             => 'Pending',
+  TaskStatus.pending             => 'Initialized',
   TaskStatus.designing           => 'Designing',
   TaskStatus.waitingApproval     => 'Waiting Approval',
   TaskStatus.clientApproved      => 'Client Approved',
@@ -762,6 +762,8 @@ class _StagePipeline extends StatelessWidget {
           final si = _infoFor(milestone.status);
           final Color dotColor = si?.color ?? _T.blue;
           final Color bgColor  = si?.bg    ?? _T.blue50;
+
+          // if ();
 
           return [
 
