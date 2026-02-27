@@ -704,16 +704,19 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               // Industry
               Expanded(
                 flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _T.slate100,
-                    borderRadius: BorderRadius.circular(99),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _T.slate100,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(c.industry?? "Not provided",
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600,
+                            color: _T.slate500)),
                   ),
-                  child: Text(c.industry?? "Not provided",
-                      style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w600,
-                          color: _T.slate500)),
                 ),
               ),
 

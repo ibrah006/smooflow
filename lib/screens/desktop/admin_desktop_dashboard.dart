@@ -199,6 +199,18 @@ class _AdminDesktopDashboardScreenState
     });
   }
 
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        // Close detail
+        if (_selectedTaskId != null) _closeDetail();
+        return KeyEventResult.handled;
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -220,7 +232,8 @@ class _AdminDesktopDashboardScreenState
         backgroundColor: _T.slate50,
         body: Focus(
           autofocus: true,
-          onKeyEvent: (_, event) => KeyEventResult.ignored,
+          // onKeyEvent: (_, event) => KeyEventResult.ignored,
+          onKeyEvent: _handleKey,
           child: Row(
             children: [
               _AdminSidebar(
