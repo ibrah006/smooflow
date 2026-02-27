@@ -60,7 +60,7 @@ List<DesignStageInfo> get kStages {
     DesignStageInfo(TaskStatus.revision, 'Revision', 'Revision', _T.amber, _T.amber50),
 
     // ── Production ─────────────────────────
-    DesignStageInfo(TaskStatus.waitingPrinting, 'Waiting Printing', 'Queued', _T.amber, _T.amber50),
+    DesignStageInfo(TaskStatus.waitingPrinting, 'Handed to Printing', 'Print Queued', _T.amber, _T.amber50),
     DesignStageInfo(TaskStatus.printing, 'Printing', 'Printing', _T.blue, _T.blue100),
     DesignStageInfo(TaskStatus.printingCompleted, 'Printing Complete', 'Printed', _T.green, _T.green50),
     DesignStageInfo(TaskStatus.finishing, 'Finishing', 'Finishing', _T.blue, _T.blue100),
