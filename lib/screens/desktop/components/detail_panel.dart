@@ -148,6 +148,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final progressBtnEnabled =
       next != TaskStatus.printing && next != null;
 
+    final ableToReinitialize =
+      widget.task.status == TaskStatus.paused ||
+      widget.task.status == TaskStatus.blocked ||
+      widget.task.status == TaskStatus.completed;
+
     return Container(
       width: _T.detailW,
       decoration: const BoxDecoration(color: _T.white, border: Border(left: BorderSide(color: _T.slate200))),
@@ -351,8 +356,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                               const SizedBox(width: 8),
                               Text(
                                 next == TaskStatus.clientApproved
-                                    ? next == null? 'Re-initialize Task' : 'Move to "${stageInfo(next).label}"'
-                                    : 'Confirm Client Approval',
+                                    ? 'Move to "${stageInfo(next!).label}"'
+                                    : ableToReinitialize? 'Re-initialize Task' : 'Confirm Client Approval',
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
