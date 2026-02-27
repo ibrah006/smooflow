@@ -439,47 +439,50 @@ class _HideEmptyToggleState extends State<_HideEmptyToggle> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          // 2px bottom border mirrors active-tab language
-          decoration: BoxDecoration(
-            color: _hovered ? _T.slate50 : Colors.transparent,
-            border: Border(
-              bottom: widget.isOn
-                  ? const BorderSide(color: _T.ink2, width: 2)
-                  : BorderSide.none,
+        child: Container(
+          color: _hovered ? _T.slate50 : Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            // 2px bottom border mirrors active-tab language
+            decoration: BoxDecoration(
+              
+              border: Border(
+                bottom: widget.isOn
+                    ? const BorderSide(color: _T.ink2, width: 2)
+                    : BorderSide.none,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Small filled dot — appears only when on
-              AnimatedOpacity(
-                opacity:  widget.isOn ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 150),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Container(
-                    width: 5, height: 5,
-                    decoration: const BoxDecoration(
-                      color: _T.ink2,
-                      shape: BoxShape.circle,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Small filled dot — appears only when on
+                AnimatedOpacity(
+                  opacity:  widget.isOn ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Container(
+                      width: 5, height: 5,
+                      decoration: const BoxDecoration(
+                        color: _T.ink2,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 130),
-                style: TextStyle(
-                  fontSize:   11.5,
-                  fontWeight: widget.isOn ? FontWeight.w600 : FontWeight.w400,
-                  color:      fg,
-                  letterSpacing: 0.1,
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 130),
+                  style: TextStyle(
+                    fontSize:   11.5,
+                    fontWeight: widget.isOn ? FontWeight.w600 : FontWeight.w400,
+                    color:      fg,
+                    letterSpacing: 0.1,
+                  ),
+                  child: const Text('With tasks'),
                 ),
-                child: const Text('With tasks'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
