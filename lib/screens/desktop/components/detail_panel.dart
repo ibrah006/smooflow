@@ -567,10 +567,10 @@ class _DetailFooter extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             next == TaskStatus.clientApproved
-                                ? 'Move to "${stageInfo(next!).label}"'
+                                ? 'Confirm Client Approval'
                                 : ableToReinitialize
                                     ? 'Re-initialize Task'
-                                    : 'Confirm Client Approval',
+                                    : 'Move to "${stageInfo(next!).label}"',
                             style: TextStyle(
                               fontSize:   13.5,
                               fontWeight: FontWeight.w700,
