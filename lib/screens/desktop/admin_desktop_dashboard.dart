@@ -642,28 +642,28 @@ class _AdminTopbar extends StatelessWidget {
           const Spacer(),
 
           // Live indicator
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-                color: _T.green50,
-                border:
-                    Border.all(color: _T.green.withOpacity(0.3)),
-                borderRadius: BorderRadius.circular(99)),
-            child: Row(children: [
-              Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                      color: _T.green, shape: BoxShape.circle)),
-              const SizedBox(width: 6),
-              const Text('Live',
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: _T.green)),
-            ]),
-          ),
+          // Container(
+          //   padding:
+          //       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          //   decoration: BoxDecoration(
+          //       color: _T.green50,
+          //       border:
+          //           Border.all(color: _T.green.withOpacity(0.3)),
+          //       borderRadius: BorderRadius.circular(99)),
+          //   child: Row(children: [
+          //     Container(
+          //         width: 6,
+          //         height: 6,
+          //         decoration: const BoxDecoration(
+          //             color: _T.green, shape: BoxShape.circle)),
+          //     const SizedBox(width: 6),
+          //     const Text('Live',
+          //         style: TextStyle(
+          //             fontSize: 11.5,
+          //             fontWeight: FontWeight.w700,
+          //             color: _T.green)),
+          //   ]),
+          // ),
           const SizedBox(width: 12),
 
           // User chip — real user from LoginService
