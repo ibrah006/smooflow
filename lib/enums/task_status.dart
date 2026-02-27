@@ -65,6 +65,3 @@ enum TaskStatus {
     }
   }
 }
-
-/// New statuses to consider
-// revision, waitingApproval, clientApproved
