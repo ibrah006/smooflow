@@ -484,164 +484,166 @@ class _DetailFooter extends StatelessWidget {
         border: Border(top: BorderSide(color: _T.slate200)),
       ),
       padding: const EdgeInsets.all(14),
-      child: isLocked
-          // ── Locked state ─────────────────────────────────────────────────
-          ? Row(
-              children: [
-                const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Handed off to production${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
-                    style: const TextStyle(fontSize: 12.5, color: _T.slate400),
-                  ),
-                ),
-              ],
-            )
-          // ── Advance + optional stage-back ─────────────────────────────────
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                // Section label
-                const Text(
-                  'ADVANCE STAGE',
-                  style: TextStyle(
-                    fontSize:      9.5,
-                    fontWeight:    FontWeight.w700,
-                    letterSpacing: 1.0,
-                    color:         _T.slate400,
-                  ),
-                ),
-                const SizedBox(height: 9),
-
-                // Primary advance button — unchanged from original
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    key: advanceButtonKey,
-                    onTap: onAdvanceTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      decoration: BoxDecoration(
-                        color: ableToReinitialize
-                            ? _T.slate400
-                            : (next == TaskStatus.clientApproved)
-                                ? _T.green
-                                : ((next == TaskStatus.designing ||
-                                        next == TaskStatus.waitingApproval ||
-                                        ((next == TaskStatus.waitingPrinting ||
-                                                next == TaskStatus.printingCompleted ||
-                                                next == TaskStatus.finishing ||
-                                                next == TaskStatus.productionCompleted ||
-                                                next == TaskStatus.waitingDelivery ||
-                                                next == TaskStatus.delivery ||
-                                                next == TaskStatus.waitingInstallation ||
-                                                next == TaskStatus.installing ||
-                                                next == TaskStatus.completed) &&
-                                            LoginService.currentUser!.isAdmin))
-                                    ? _T.blue
-                                    : Colors.grey.shade200),
-                        borderRadius: BorderRadius.circular(_T.r),
-                        boxShadow: progressBtnEnabled
-                            ? [
-                                BoxShadow(
-                                  color: (ableToReinitialize
-                                          ? _T.slate400
-                                          : (next == TaskStatus.clientApproved)
-                                              ? _T.green
-                                              : _T.blue)
-                                      .withOpacity(0.28),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            progressBtnEnabled ? Icons.check : Icons.arrow_forward,
-                            size: 15,
-                            color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            next == TaskStatus.clientApproved
-                                ? 'Confirm Client Approval'
-                                : ableToReinitialize
-                                    ? 'Re-initialize Task'
-                                    : 'Move to "${stageInfo(next!).label}"',
-                            style: TextStyle(
-                              fontSize:   13.5,
-                              fontWeight: FontWeight.w700,
-                              color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
-                            ),
-                          ),
-                        ],
+      child: Column(
+        children: [
+          isLocked
+              // ── Locked state ─────────────────────────────────────────────────
+              ? Row(
+                  children: [
+                    const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Handed off to production${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
+                        style: const TextStyle(fontSize: 12.5, color: _T.slate400),
                       ),
                     ),
-                  ),
-                ),
-
-                // ── Stage-back button (subordinate) ───────────────────────
-                if (canStageBack) ...[
-                  const SizedBox(height: 1),
-                  // Divider with label — visually separates the two actions
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: _T.slate200, height: 20)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          'or',
-                          style: const TextStyle(
-                            fontSize:   10.5,
-                            color:      _T.slate400,
-                            fontWeight: FontWeight.w400,
+                  ],
+                )
+              // ── Advance + optional stage-back ─────────────────────────────────
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+          
+                    // Section label
+                    const Text(
+                      'ADVANCE STAGE',
+                      style: TextStyle(
+                        fontSize:      9.5,
+                        fontWeight:    FontWeight.w700,
+                        letterSpacing: 1.0,
+                        color:         _T.slate400,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
+          
+                    // Primary advance button — unchanged from original
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        key: advanceButtonKey,
+                        onTap: onAdvanceTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          decoration: BoxDecoration(
+                            color: ableToReinitialize
+                                ? _T.slate400
+                                : (next == TaskStatus.clientApproved)
+                                    ? _T.green
+                                    : ((next == TaskStatus.designing ||
+                                            next == TaskStatus.waitingApproval ||
+                                            ((next == TaskStatus.waitingPrinting ||
+                                                    next == TaskStatus.printingCompleted ||
+                                                    next == TaskStatus.finishing ||
+                                                    next == TaskStatus.productionCompleted ||
+                                                    next == TaskStatus.waitingDelivery ||
+                                                    next == TaskStatus.delivery ||
+                                                    next == TaskStatus.waitingInstallation ||
+                                                    next == TaskStatus.installing ||
+                                                    next == TaskStatus.completed) &&
+                                                LoginService.currentUser!.isAdmin))
+                                        ? _T.blue
+                                        : Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(_T.r),
+                            boxShadow: progressBtnEnabled
+                                ? [
+                                    BoxShadow(
+                                      color: (ableToReinitialize
+                                              ? _T.slate400
+                                              : (next == TaskStatus.clientApproved)
+                                                  ? _T.green
+                                                  : _T.blue)
+                                          .withOpacity(0.28),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                progressBtnEnabled ? Icons.check : Icons.arrow_forward,
+                                size: 15,
+                                color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                next == TaskStatus.clientApproved
+                                    ? 'Confirm Client Approval'
+                                    : ableToReinitialize
+                                        ? 'Re-initialize Task'
+                                        : 'Move to "${stageInfo(next!).label}"',
+                                style: TextStyle(
+                                  fontSize:   13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      const Expanded(child: Divider(color: _T.slate200, height: 20)),
-                    ],
-                  ),
-                  // Stage-back trigger — text-only, no fill
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      key: stageBackButtonKey,
-                      onTap: onStageBackTap,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 7),
-                        decoration: BoxDecoration(
-                          color:        Colors.transparent,
-                          border:       Border.all(color: _T.slate200),
-                          borderRadius: BorderRadius.circular(_T.r),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate500),
-                            SizedBox(width: 6),
-                            Text(
-                              'Stage back',
-                              style: TextStyle(
-                                fontSize:   12,
-                                fontWeight: FontWeight.w500,
-                                color:      _T.slate500,
+                    ),
+                  ],
+                ),
+          // ── Stage-back button (subordinate) ───────────────────────
+                    if (canStageBack) ...[
+                      const SizedBox(height: 1),
+                      // Divider with label — visually separates the two actions
+                      Row(
+                        children: [
+                          const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              'or',
+                              style: const TextStyle(
+                                fontSize:   10.5,
+                                color:      _T.slate400,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
-                          ],
+                          ),
+                          const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                        ],
+                      ),
+                      // Stage-back trigger — text-only, no fill
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: stageBackButtonKey,
+                          onTap: onStageBackTap,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 7),
+                            decoration: BoxDecoration(
+                              color:        Colors.transparent,
+                              border:       Border.all(color: _T.slate200),
+                              borderRadius: BorderRadius.circular(_T.r),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate500),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Stage back',
+                                  style: TextStyle(
+                                    fontSize:   12,
+                                    fontWeight: FontWeight.w500,
+                                    color:      _T.slate500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-
-              ],
-            ),
+                    ],
+        ],
+      ),
     );
   }
 }
