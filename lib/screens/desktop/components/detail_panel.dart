@@ -15,6 +15,7 @@ import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
+import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -236,49 +237,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   // Stage pipeline
                   const _DetailSectionTitle('Stage Pipeline'),
                   const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
-                    child: Column(
-                      children: kStages.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final s = entry.value;
-                        final isDone    = idx < curIdx;
-                        final isCurrent = idx == curIdx;
-                        final isLast    = idx == kStages.length - 1;
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: isCurrent ? s.bg : Colors.transparent,
-                            border: isLast ? null : const Border(bottom: BorderSide(color: _T.slate100)),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 22, height: 22,
-                                decoration: BoxDecoration(color: isDone ? _T.blue : isCurrent ? s.color : _T.slate100, shape: BoxShape.circle),
-                                child: Center(
-                                  child: isDone
-                                      ? const Icon(Icons.check, size: 11, color: Colors.white)
-                                      : isCurrent
-                                          ? Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))
-                                          : Container(width: 5, height: 5, decoration: const BoxDecoration(color: _T.slate300, shape: BoxShape.circle)),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text(s.label, style: TextStyle(fontSize: 12.5, fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500, color: isCurrent ? s.color : isDone ? _T.ink3 : _T.slate400))),
-                              if (isCurrent)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                                  decoration: BoxDecoration(color: s.bg, border: Border.all(color: s.color.withOpacity(0.3)), borderRadius: BorderRadius.circular(99)),
-                                  child: Text('Current', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: s.color)),
-                                ),
-                              if (isDone)
-                                const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                  _StagePipeline(
+                    currentStatus: widget.task.status,
+                    stages: kStages, // your existing DesignStageInfo list
                   ),
                 ],
               ),
@@ -620,3 +581,456 @@ class _StageStepper extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE PIPELINE — detail panel component
+//
+// Default view: 6 milestone rows only.
+//
+// When the task's current status is an intermediate sub-step (e.g.
+// waitingPrinting, printingCompleted, delivered), the parent milestone row
+// expands inline to show its sub-steps. This gives the user precise context
+// without showing all 18 rows at all times.
+//
+// Example — task is in `waitingPrinting`:
+//
+//   ✓  Design
+//   ↳  [waiting print] [● printing] [print done]   ← sub-steps inline
+//      Printing                                     ← milestone label
+//   ○  Finishing
+//   ○  Delivery
+//   ○  Installing
+//   ○  Completed
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Milestone + sub-step data ─────────────────────────────────────────────────
+
+class _PipelineMilestone {
+  final String         label;
+  final TaskStatus     status;       // canonical milestone status
+  final List<TaskStatus> subSteps;   // intermediate statuses within this phase
+  //   Empty list = no sub-steps (the milestone IS the only status in its phase)
+  const _PipelineMilestone(this.label, this.status, this.subSteps);
+}
+
+const List<_PipelineMilestone> _kPipelineMilestones = [
+  _PipelineMilestone('Design', TaskStatus.designing, [
+    // Sub-steps shown when task is in any of these
+    TaskStatus.pending,
+    TaskStatus.designing,
+    TaskStatus.waitingApproval,
+    TaskStatus.clientApproved,
+    TaskStatus.revision,
+  ]),
+  _PipelineMilestone('Printing', TaskStatus.printing, [
+    TaskStatus.waitingPrinting,
+    TaskStatus.printing,
+    TaskStatus.printingCompleted,
+  ]),
+  _PipelineMilestone('Finishing', TaskStatus.finishing, [
+    TaskStatus.finishing,
+    TaskStatus.productionCompleted,
+  ]),
+  _PipelineMilestone('Delivery', TaskStatus.delivery, [
+    TaskStatus.waitingDelivery,
+    TaskStatus.delivery,
+    TaskStatus.delivered,
+  ]),
+  _PipelineMilestone('Installing', TaskStatus.installing, [
+    TaskStatus.waitingInstallation,
+    TaskStatus.installing,
+  ]),
+  _PipelineMilestone('Completed', TaskStatus.completed, []),
+];
+
+// ── Which milestone index owns a given status ─────────────────────────────────
+
+int _milestoneOf(TaskStatus s) {
+  for (int i = 0; i < _kPipelineMilestones.length; i++) {
+    final m = _kPipelineMilestones[i];
+    if (m.status == s) return i;
+    if (m.subSteps.contains(s)) return i;
+  }
+  return 0;
+}
+
+// ── Is this status an intermediate sub-step (not the milestone itself)? ───────
+// "Intermediate" = the status is inside a sub-step list but is NOT the
+// canonical milestone status. When true, the parent milestone row expands.
+
+bool _isIntermediate(TaskStatus s) {
+  for (final m in _kPipelineMilestones) {
+    if (m.subSteps.contains(s) && m.status != s) return true;
+  }
+  return false;
+}
+
+// ── Sub-step label map ────────────────────────────────────────────────────────
+
+String _subLabel(TaskStatus s) => switch (s) {
+  TaskStatus.pending             => 'Pending',
+  TaskStatus.designing           => 'Designing',
+  TaskStatus.waitingApproval     => 'Waiting Approval',
+  TaskStatus.clientApproved      => 'Client Approved',
+  TaskStatus.revision            => 'Needs Revision',
+  TaskStatus.waitingPrinting     => 'Waiting for Print',
+  TaskStatus.printing            => 'Printing',
+  TaskStatus.printingCompleted   => 'Print Complete',
+  TaskStatus.finishing           => 'Finishing',
+  TaskStatus.productionCompleted => 'Production Complete',
+  TaskStatus.waitingDelivery     => 'Waiting for Delivery',
+  TaskStatus.delivery            => 'Out for Delivery',
+  TaskStatus.delivered           => 'Delivered',
+  TaskStatus.waitingInstallation => 'Waiting for Install',
+  TaskStatus.installing          => 'Installing',
+  TaskStatus.completed           => 'Completed',
+  TaskStatus.blocked             => 'Blocked',
+  TaskStatus.paused              => 'Paused',
+};
+
+// ── Pipeline widget ───────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE PIPELINE — detail panel component
+//
+// Default view: 6 milestone rows only.
+//
+// When the task's current status is an intermediate sub-step (e.g.
+// waitingPrinting, printingCompleted, delivered), ONE extra row is inserted
+// immediately after the parent milestone row — showing ONLY the current
+// sub-step. No siblings, no indentation — same visual level as milestones.
+//
+// Example — task is in `waitingPrinting`:
+//
+//   ✓  Design
+//   ◉  Printing            ← milestone (parent context, muted)
+//   ●  Waiting for Print   ← single sub-step row, same level, "Now" badge
+//   ○  Finishing
+//   ○  Delivery
+//   ○  Installing
+//   ○  Completed
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Milestone + sub-step data ─────────────────────────────────────────────────
+
+class _PipelineMilestone {
+  final String         label;
+  final TaskStatus     status;       // canonical milestone status
+  final List<TaskStatus> subSteps;   // intermediate statuses within this phase
+  //   Empty list = no sub-steps (the milestone IS the only status in its phase)
+  const _PipelineMilestone(this.label, this.status, this.subSteps);
+}
+
+const List<_PipelineMilestone> _kPipelineMilestones = [
+  _PipelineMilestone('Design', TaskStatus.designing, [
+    // Sub-steps shown when task is in any of these
+    TaskStatus.pending,
+    TaskStatus.designing,
+    TaskStatus.waitingApproval,
+    TaskStatus.clientApproved,
+    TaskStatus.revision,
+  ]),
+  _PipelineMilestone('Printing', TaskStatus.printing, [
+    TaskStatus.waitingPrinting,
+    TaskStatus.printing,
+    TaskStatus.printingCompleted,
+  ]),
+  _PipelineMilestone('Finishing', TaskStatus.finishing, [
+    TaskStatus.finishing,
+    TaskStatus.productionCompleted,
+  ]),
+  _PipelineMilestone('Delivery', TaskStatus.delivery, [
+    TaskStatus.waitingDelivery,
+    TaskStatus.delivery,
+    TaskStatus.delivered,
+  ]),
+  _PipelineMilestone('Installing', TaskStatus.installing, [
+    TaskStatus.waitingInstallation,
+    TaskStatus.installing,
+  ]),
+  _PipelineMilestone('Completed', TaskStatus.completed, []),
+];
+
+// ── Which milestone index owns a given status ─────────────────────────────────
+
+int _milestoneOf(TaskStatus s) {
+  for (int i = 0; i < _kPipelineMilestones.length; i++) {
+    final m = _kPipelineMilestones[i];
+    if (m.status == s) return i;
+    if (m.subSteps.contains(s)) return i;
+  }
+  return 0;
+}
+
+// ── Is this status an intermediate sub-step (not the milestone itself)? ───────
+// "Intermediate" = the status is inside a sub-step list but is NOT the
+// canonical milestone status. When true, the parent milestone row expands.
+
+bool _isIntermediate(TaskStatus s) {
+  for (final m in _kPipelineMilestones) {
+    if (m.subSteps.contains(s) && m.status != s) return true;
+  }
+  return false;
+}
+
+// ── Sub-step label map ────────────────────────────────────────────────────────
+
+String _subLabel(TaskStatus s) => switch (s) {
+  TaskStatus.pending             => 'Pending',
+  TaskStatus.designing           => 'Designing',
+  TaskStatus.waitingApproval     => 'Waiting Approval',
+  TaskStatus.clientApproved      => 'Client Approved',
+  TaskStatus.revision            => 'Needs Revision',
+  TaskStatus.waitingPrinting     => 'Waiting for Print',
+  TaskStatus.printing            => 'Printing',
+  TaskStatus.printingCompleted   => 'Print Complete',
+  TaskStatus.finishing           => 'Finishing',
+  TaskStatus.productionCompleted => 'Production Complete',
+  TaskStatus.waitingDelivery     => 'Waiting for Delivery',
+  TaskStatus.delivery            => 'Out for Delivery',
+  TaskStatus.delivered           => 'Delivered',
+  TaskStatus.waitingInstallation => 'Waiting for Install',
+  TaskStatus.installing          => 'Installing',
+  TaskStatus.completed           => 'Completed',
+  TaskStatus.blocked             => 'Blocked',
+  TaskStatus.paused              => 'Paused',
+};
+
+// ── Pipeline widget ───────────────────────────────────────────────────────────
+
+class _StagePipeline extends StatelessWidget {
+  final TaskStatus currentStatus;
+  // stageInfos used to resolve .bg and .color per status
+  final List<DesignStageInfo> stages;
+
+  const _StagePipeline({
+    required this.currentStatus,
+    required this.stages,
+  });
+
+  DesignStageInfo? _infoFor(TaskStatus s) =>
+      stages.cast<DesignStageInfo?>()
+          .firstWhere((si) => si!.stage == s, orElse: () => null);
+
+  @override
+  Widget build(BuildContext context) {
+    final curMilestoneIdx = _milestoneOf(currentStatus);
+    final intermediate    = _isIntermediate(currentStatus);
+
+    // Pre-resolve the sub-step's DesignStageInfo once (used for the inserted row)
+    final subSi       = intermediate ? _infoFor(currentStatus) : null;
+    final Color subFg = subSi?.color ?? _T.blue;
+    final Color subBg = subSi?.bg    ?? _T.blue50;
+
+    return Container(
+      decoration: BoxDecoration(
+        border:       Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.r),
+      ),
+      child: Column(
+        children: _kPipelineMilestones.asMap().entries.expand((entry) {
+          final idx       = entry.key;
+          final milestone = entry.value;
+          final isDone    = idx < curMilestoneIdx;
+          final isCurrent = idx == curMilestoneIdx;
+
+          // Whether a sub-step row should be injected after this milestone
+          final injectSubStep = isCurrent && intermediate;
+
+          // Total row count changes when a sub-step is injected, so we
+          // compute isLast against the final rendered list rather than
+          // _kPipelineMilestones.length. We handle the border on the
+          // sub-step row itself when it is injected.
+          final isVisuallyLast =
+              idx == _kPipelineMilestones.length - 1 && !injectSubStep;
+
+          final si = _infoFor(milestone.status);
+          final Color dotColor = si?.color ?? _T.blue;
+          final Color bgColor  = si?.bg    ?? _T.blue50;
+
+          return [
+
+            // ── Milestone row ───────────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                // When a sub-step row follows, don't highlight the milestone —
+                // it becomes a parent-context label, not the active item.
+                color: isCurrent && !injectSubStep ? bgColor : Colors.transparent,
+                border: isVisuallyLast
+                    ? null
+                    : const Border(bottom: BorderSide(color: _T.slate100)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+
+                  // Dot
+                  Container(
+                    width: 22, height: 22,
+                    decoration: BoxDecoration(
+                      // When a sub-step is injected the milestone dot is muted
+                      // (hollow ring) so the sub-step row reads as "current".
+                      color: isDone
+                          ? _T.blue
+                          : isCurrent && !injectSubStep
+                              ? dotColor
+                              : _T.slate100,
+                      shape: BoxShape.circle,
+                      border: injectSubStep && isCurrent
+                          ? Border.all(color: dotColor.withOpacity(0.4), width: 1.5)
+                          : null,
+                    ),
+                    child: Center(
+                      child: isDone
+                          ? const Icon(Icons.check, size: 11, color: Colors.white)
+                          : isCurrent && !injectSubStep
+                              ? Container(
+                                  width: 6, height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                )
+                              : Container(
+                                  width: injectSubStep ? 6 : 5,
+                                  height: injectSubStep ? 6 : 5,
+                                  decoration: BoxDecoration(
+                                    color: injectSubStep
+                                        ? dotColor.withOpacity(0.45)
+                                        : _T.slate300,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Label
+                  Expanded(
+                    child: Text(
+                      milestone.label,
+                      style: TextStyle(
+                        fontSize:   12.5,
+                        fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
+                        color: isCurrent && !injectSubStep
+                            ? dotColor
+                            : isDone
+                                ? _T.ink3
+                                : isCurrent  // injectSubStep case
+                                    ? _T.ink3
+                                    : _T.slate400,
+                      ),
+                    ),
+                  ),
+
+                  // Badge — only when this milestone IS the current row
+                  if (isCurrent && !injectSubStep)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color:        bgColor,
+                        border:       Border.all(color: dotColor.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        'Current',
+                        style: TextStyle(
+                          fontSize:   10.5,
+                          fontWeight: FontWeight.w700,
+                          color:      dotColor,
+                        ),
+                      ),
+                    ),
+
+                  if (isDone)
+                    const Text(
+                      '✓ Done',
+                      style: TextStyle(
+                        fontSize:   11,
+                        fontWeight: FontWeight.w600,
+                        color:      _T.slate400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Single sub-step row — injected at the same level ────────────
+            if (injectSubStep)
+              Container(
+                decoration: BoxDecoration(
+                  color: subBg,
+                  border: Border(
+                    top:    BorderSide(color: subFg.withOpacity(0.12)),
+                    bottom: idx == _kPipelineMilestones.length - 1
+                        ? BorderSide.none
+                        : const BorderSide(color: _T.slate100),
+                  ),
+                ),
+                // Identical horizontal padding to milestone rows — same level.
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  children: [
+
+                    // Dot — same size as milestone dots, stage colour
+                    Container(
+                      width: 22, height: 22,
+                      decoration: BoxDecoration(
+                        color:  subFg,
+                        shape:  BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 6, height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // Label
+                    Expanded(
+                      child: Text(
+                        _subLabel(currentStatus),
+                        style: TextStyle(
+                          fontSize:   12.5,
+                          fontWeight: FontWeight.w700,
+                          color:      subFg,
+                        ),
+                      ),
+                    ),
+
+                    // "Now" badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color:        subBg,
+                        border:       Border.all(color: subFg.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        'Now',
+                        style: TextStyle(
+                          fontSize:   10.5,
+                          fontWeight: FontWeight.w700,
+                          color:      subFg,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+          ];
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// _SubStepList removed — replaced by the single inline sub-step row above.
