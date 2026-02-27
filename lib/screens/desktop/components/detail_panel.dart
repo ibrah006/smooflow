@@ -21,14 +21,11 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  // Brand
   static const blue       = Color(0xFF2563EB);
   static const blueHover  = Color(0xFF1D4ED8);
   static const blue100    = Color(0xFFDBEAFE);
   static const blue50     = Color(0xFFEFF6FF);
   static const teal       = Color(0xFF38BDF8);
-
-  // Semantic
   static const green      = Color(0xFF10B981);
   static const green50    = Color(0xFFECFDF5);
   static const amber      = Color(0xFFF59E0B);
@@ -37,8 +34,6 @@ class _T {
   static const red50      = Color(0xFFFEE2E2);
   static const purple     = Color(0xFF8B5CF6);
   static const purple50   = Color(0xFFF3E8FF);
-
-  // Neutrals
   static const slate50    = Color(0xFFF8FAFC);
   static const slate100   = Color(0xFFF1F5F9);
   static const slate200   = Color(0xFFE2E8F0);
@@ -49,25 +44,85 @@ class _T {
   static const ink2       = Color(0xFF1E293B);
   static const ink3       = Color(0xFF334155);
   static const white      = Colors.white;
-
-  // Dimensions
   static const sidebarW  = 220.0;
   static const topbarH   = 52.0;
   static const detailW   = 400.0;
-
-  // Radius
   static const r   = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE ORDER
+//
+// The canonical linear sequence of statuses. Used to derive "previous stages"
+// for the stage-back feature. Cross-cutting statuses (blocked, paused,
+// revision) are excluded — they have no position in the linear chain.
+// ─────────────────────────────────────────────────────────────────────────────
+const List<TaskStatus> _kStatusOrder = [
+  TaskStatus.pending,
+  TaskStatus.designing,
+  TaskStatus.waitingApproval,
+  TaskStatus.clientApproved,
+  TaskStatus.waitingPrinting,
+  TaskStatus.printing,
+  TaskStatus.printingCompleted,
+  TaskStatus.finishing,
+  TaskStatus.productionCompleted,
+  TaskStatus.waitingDelivery,
+  TaskStatus.delivery,
+  TaskStatus.delivered,
+  TaskStatus.waitingInstallation,
+  TaskStatus.installing,
+  TaskStatus.completed,
+];
+
+/// Returns all statuses that come before [current] in the linear chain.
+/// Returns empty list for cross-cutting statuses or [pending] (nothing before).
+List<TaskStatus> _previousStatuses(TaskStatus current) {
+  final idx = _kStatusOrder.indexOf(current);
+  if (idx <= 0) return []; // pending or not in chain (blocked/paused/revision)
+  return _kStatusOrder.sublist(0, idx).reversed.toList();
+}
+
+/// Human-readable label for any status.
+String _statusLabel(TaskStatus s) => switch (s) {
+  TaskStatus.pending             => 'Initialized',
+  TaskStatus.designing           => 'Designing',
+  TaskStatus.waitingApproval     => 'Waiting Approval',
+  TaskStatus.clientApproved      => 'Client Approved',
+  TaskStatus.waitingPrinting     => 'Waiting Printing',
+  TaskStatus.printing            => 'Printing',
+  TaskStatus.printingCompleted   => 'Print Complete',
+  TaskStatus.finishing           => 'Finishing',
+  TaskStatus.productionCompleted => 'Production Complete',
+  TaskStatus.waitingDelivery     => 'Waiting Delivery',
+  TaskStatus.delivery            => 'Out for Delivery',
+  TaskStatus.delivered           => 'Delivered',
+  TaskStatus.waitingInstallation => 'Waiting Installation',
+  TaskStatus.installing          => 'Installing',
+  TaskStatus.completed           => 'Completed',
+  TaskStatus.blocked             => 'Blocked',
+  TaskStatus.paused              => 'Paused',
+  TaskStatus.revision            => 'Needs Revision',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DETAIL PANEL
+// ─────────────────────────────────────────────────────────────────────────────
 class DetailPanel extends ConsumerStatefulWidget {
   final Task task;
   final List<Project> projects;
   final VoidCallback onClose;
   final VoidCallback onAdvance;
 
-  const DetailPanel({super.key, required this.task, required this.projects, required this.onClose, required this.onAdvance});
+  const DetailPanel({
+    super.key,
+    required this.task,
+    required this.projects,
+    required this.onClose,
+    required this.onAdvance,
+  });
 
   @override
   ConsumerState<DetailPanel> createState() => __DetailPanelState();
@@ -75,97 +130,153 @@ class DetailPanel extends ConsumerStatefulWidget {
 
 class __DetailPanelState extends ConsumerState<DetailPanel> {
 
-  // GlobalKey for the button
-  final GlobalKey _advanceButtonKey = GlobalKey();
+  final GlobalKey _advanceButtonKey   = GlobalKey();
+  final GlobalKey _stageBackButtonKey = GlobalKey();
 
-  // if (task.status.nextStage == TaskStatus.printing) 
+  // ── Unchanged data logic ──────────────────────────────────────────────────
+
   void approveDesignStage() async {
     final nextStage = widget.task.status.nextStage;
     if (nextStage == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to advance stage")));
       return;
     }
-
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
     setState(() {});
-
     widget.onAdvance();
   }
 
   void _showMoveToNextStageDialog() async {
-
     late final TaskStatus nextStage;
-
     if (widget.task.status == TaskStatus.paused || widget.task.status == TaskStatus.blocked) {
       nextStage = TaskStatus.pending;
     } else if (widget.task.status == TaskStatus.completed) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No explicit next stage from current phase")));
       return;
     } else {
-      // next stage ! = null
       nextStage = widget.task.status.nextStage!;
     }
-
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus:  nextStage);
-
+    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
     setState(() {});
-
     widget.onAdvance();
-
-    // AdvanceStagePopup.show(
-    //   context: context,
-    //   buttonKey: _advanceButtonKey,
-    //   taskId: widget.task.id,
-    //   onConfirm: (notes) async {
-    //     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
-    //     setState(() {
-    //       // Update task status
-    //       // task.status = getNextStatus(task.status);
-    //     });
-        
-    //     if (notes != null) {
-    //       // Save notes to activity timeline
-    //       // task.addActivity(notes);
-    //     }
-
-    //     widget.onAdvance();
-    //   },
-    // );
   }
+
+  // ── Stage-back handler — only data call, no new logic ────────────────────
+
+  Future<void> _stageBackTo(TaskStatus target) async {
+    await ref.watch(taskNotifierProvider.notifier).progressStage(
+      taskId:    widget.task.id,
+      newStatus: target,
+    );
+    setState(() {});
+    widget.onAdvance(); // reuse the same refresh callback
+  }
+
+  // ── Stage-back overlay ────────────────────────────────────────────────────
+
+  void _showStageBackMenu() {
+    final previous = _previousStatuses(widget.task.status);
+    if (previous.isEmpty) return;
+
+    final RenderBox btn = _stageBackButtonKey.currentContext!.findRenderObject() as RenderBox;
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final Offset offset = btn.localToGlobal(Offset.zero, ancestor: overlay);
+    final Size btnSize  = btn.size;
+
+    // Max height: 5 rows at ~40px each, or actual count — whichever is smaller
+    final menuH = (previous.length * 40.0).clamp(0.0, 200.0);
+
+    showGeneralDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: true,
+      barrierLabel: 'stage-back',
+      pageBuilder: (ctx, _, __) => SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, _, __) {
+        return Stack(
+          children: [
+            // Invisible barrier that dismisses on tap
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            // Menu — anchored above the button
+            Positioned(
+              left:  offset.dx,
+              top:   offset.dy - menuH - 6,
+              width: btnSize.width,
+              child: FadeTransition(
+                opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.06),
+                    end:   Offset.zero,
+                  ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                  child: _StageBackMenu(
+                    statuses:   previous,
+                    onSelect:   (s) {
+                      Navigator.of(ctx).pop();
+                      _stageBackTo(s);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 180),
+    );
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final curIdx = stageIndex(widget.task.status);
     final si     = stageInfo(widget.task.status);
-    final proj  = widget.projects.cast<Project?>().firstWhere((p) => p!.id == widget.task.projectId, orElse: () => null) ?? widget.projects.first;
+    final proj   = widget.projects.cast<Project?>()
+        .firstWhere((p) => p!.id == widget.task.projectId, orElse: () => null)
+        ?? widget.projects.first;
 
     Member? member;
     try {
-      member = ref.watch(memberNotifierProvider).members.firstWhere((m) => widget.task.assignees.contains(m.id));
+      member = ref.watch(memberNotifierProvider).members
+          .firstWhere((m) => widget.task.assignees.contains(m.id));
     } catch (_) {
       member = null;
     }
 
-    final d = widget.task.createdAt;
-    final dueDate = widget.task.dueDate;
-    final now = DateTime.now();
+    final d        = widget.task.createdAt;
+    final dueDate  = widget.task.dueDate;
+    final now      = DateTime.now();
     final isOverdue = dueDate != null && dueDate.isBefore(now);
     final isSoon    = dueDate != null && !isOverdue && dueDate.difference(now).inDays <= 3;
     final next      = widget.task.status.nextStage;
 
     final ableToReinitialize =
-      widget.task.status == TaskStatus.paused ||
-      widget.task.status == TaskStatus.blocked;
+        widget.task.status == TaskStatus.paused ||
+        widget.task.status == TaskStatus.blocked;
 
     final progressBtnEnabled =
-      next != TaskStatus.printing && next != null || ableToReinitialize;
+        next != TaskStatus.printing && next != null || ableToReinitialize;
+
+    // Stage-back: available for any status that has predecessors in the chain
+    final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
 
     return Container(
       width: _T.detailW,
-      decoration: const BoxDecoration(color: _T.white, border: Border(left: BorderSide(color: _T.slate200))),
+      decoration: const BoxDecoration(
+        color: _T.white,
+        border: Border(left: BorderSide(color: _T.slate200)),
+      ),
       child: Column(
         children: [
-          // Detail topbar
+
+          // ── Top bar ───────────────────────────────────────────────────────
           Container(
             height: _T.topbarH,
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _T.slate200))),
@@ -176,29 +287,51 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   onTap: widget.onClose,
                   child: Container(
                     width: 26, height: 26,
-                    decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+                    decoration: BoxDecoration(
+                      border:       Border.all(color: _T.slate200),
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
                     child: const Icon(Icons.close, size: 13, color: _T.slate400),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text('TASK-${widget.task.id}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _T.slate400)),
+                Text(
+                  'TASK-${widget.task.id}',
+                  style: const TextStyle(
+                    fontSize:   11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color:      _T.slate400,
+                  ),
+                ),
                 const Spacer(),
               ],
             ),
           ),
 
-          // Stage stepper
+          // ── Stage stepper ─────────────────────────────────────────────────
           _StageStepper(currentStatus: widget.task.status),
 
-          // Scrollable body
+          // ── Scrollable body ───────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
                   // Title
-                  Text(widget.task.name, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.3, height: 1.35)),
+                  Text(
+                    widget.task.name,
+                    style: const TextStyle(
+                      fontFamily:   'Plus Jakarta Sans',
+                      fontSize:     16,
+                      fontWeight:   FontWeight.w700,
+                      color:        _T.ink,
+                      letterSpacing: -0.3,
+                      height:       1.35,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Row(children: [
                     Container(width: 8, height: 8, decoration: BoxDecoration(color: proj.color, shape: BoxShape.circle)),
@@ -229,10 +362,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       _DetailMetaCell(
                         label: 'Start Date',
                         child: Row(children: [
-                                Text(fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
-                                if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
-                                if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
-                              ])
+                          Text(fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
+                          if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
+                          if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
+                        ]),
                       ),
                       _DetailMetaCell(
                         label: 'Due Date',
@@ -254,7 +387,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: _T.slate50, border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(_T.r)),
+                      decoration: BoxDecoration(
+                        color:        _T.slate50,
+                        border:       Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
                       child: Text(widget.task.description, style: const TextStyle(fontSize: 13, color: _T.slate500, height: 1.65)),
                     ),
                     const SizedBox(height: 18),
@@ -265,135 +402,448 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   const SizedBox(height: 8),
                   _StagePipeline(
                     currentStatus: widget.task.status,
-                    stages: kStages, // your existing DesignStageInfo list
+                    stages: kStages,
                   ),
                 ],
               ),
             ),
           ),
 
-          // Footer action
-          Container(
-            decoration: const BoxDecoration(color: _T.slate50, border: Border(top: BorderSide(color: _T.slate200))),
-            padding: const EdgeInsets.all(14),
-            child: next == TaskStatus.printing
-                ? Row(
-                    children: [
-                      Icon(Icons.lock_outline, size: 14, color: _T.slate400),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('Handed off to production${LoginService.currentUser!.isAdmin? '' : ' — design locked'}', style: TextStyle(fontSize: 12.5, color: _T.slate400))),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('ADVANCE STAGE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400)),
-                      const SizedBox(height: 9),
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          key: _advanceButtonKey,
-                          onTap: () {
-                            // Determine if button should be enabled
-                            // final isAllowedStage = next == TaskStatus.clientApproved ||
-                            //     next == TaskStatus.printing ||
-                            //     next == TaskStatus.designing ||
-                            //     next == TaskStatus.waitingApproval ||
-                            //     (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin);
-                                  
-                            final isAllowedStage = progressBtnEnabled;
-                                  
-                            if (!isAllowedStage) return;
-                                  
-                            // Call proper handler
-                            if (next == TaskStatus.clientApproved) {
-                              return approveDesignStage();
-                            } else {
-                              return _showMoveToNextStageDialog();
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: ableToReinitialize? _T.slate400 :
-                              (next == TaskStatus.clientApproved)
-                                  ? _T.green
-                                  : ((
-                                      next == TaskStatus.designing ||
-                                      next == TaskStatus.waitingApproval ||
-                                      ((
-                                          next == TaskStatus.waitingPrinting ||
-                                          next == TaskStatus.printingCompleted ||
-                                          next == TaskStatus.finishing ||
-                                          next == TaskStatus.productionCompleted ||
-                                          next == TaskStatus.waitingDelivery ||
-                                          next == TaskStatus.delivery ||
-                                          next == TaskStatus.waitingInstallation ||
-                                          next == TaskStatus.installing ||
-                                          next == TaskStatus.completed
-                                        )
-                                        && LoginService.currentUser!.isAdmin)
-                                    )
-                                      ? _T.blue
-                                      : Colors.grey.shade200),
-                              borderRadius: BorderRadius.circular(_T.r),
-                              boxShadow: progressBtnEnabled
-                                  ? [
-                                      BoxShadow(
-                                        color: (ableToReinitialize? _T.slate400 : (next == TaskStatus.clientApproved)
-                                                ? _T.green
-                                                : _T.blue)
-                                            .withOpacity(0.28),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      )
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  progressBtnEnabled
-                                      ? Icons.check
-                                      : Icons.arrow_forward,
-                                  size: 15,
-                                  color: progressBtnEnabled
-                                      ? Colors.white
-                                      : Colors.grey.shade400,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  next == TaskStatus.clientApproved
-                                      ? 'Move to "${stageInfo(next!).label}"'
-                                      : ableToReinitialize? 'Re-initialize Task' : 'Confirm Client Approval',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: progressBtnEnabled
-                                        ? Colors.white
-                                        : Colors.grey.shade400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
+          // ── Footer ────────────────────────────────────────────────────────
+          _DetailFooter(
+            task:               widget.task,
+            next:               next,
+            progressBtnEnabled: progressBtnEnabled,
+            ableToReinitialize: ableToReinitialize,
+            canStageBack:       canStageBack,
+            advanceButtonKey:   _advanceButtonKey,
+            stageBackButtonKey: _stageBackButtonKey,
+            onAdvanceTap: () {
+              if (!progressBtnEnabled) return;
+              if (next == TaskStatus.clientApproved) {
+                approveDesignStage();
+              } else {
+                _showMoveToNextStageDialog();
+              }
+            },
+            onStageBackTap: _showStageBackMenu,
           ),
+
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DETAIL FOOTER
+//
+// Three possible states:
+//   1. Locked (next == printing): lock icon + message, no actions.
+//   2. Normal: primary advance button. If canStageBack, a secondary
+//      "Stage back" text button sits below it.
+//
+// The stage-back button is visually subordinate:
+//   • No filled background, no border — plain text with a left-arrow icon.
+//   • slate500 colour — present but not competing with the primary action.
+//   • On tap, opens _StageBackMenu anchored above the button.
+// ─────────────────────────────────────────────────────────────────────────────
+class _DetailFooter extends StatelessWidget {
+  final Task       task;
+  final TaskStatus? next;
+  final bool       progressBtnEnabled;
+  final bool       ableToReinitialize;
+  final bool       canStageBack;
+  final GlobalKey  advanceButtonKey;
+  final GlobalKey  stageBackButtonKey;
+  final VoidCallback onAdvanceTap;
+  final VoidCallback onStageBackTap;
+
+  const _DetailFooter({
+    required this.task,
+    required this.next,
+    required this.progressBtnEnabled,
+    required this.ableToReinitialize,
+    required this.canStageBack,
+    required this.advanceButtonKey,
+    required this.stageBackButtonKey,
+    required this.onAdvanceTap,
+    required this.onStageBackTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = next == TaskStatus.printing;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color:  _T.slate50,
+        border: Border(top: BorderSide(color: _T.slate200)),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: isLocked
+          // ── Locked state ─────────────────────────────────────────────────
+          ? Row(
+              children: [
+                const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Handed off to production${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
+                    style: const TextStyle(fontSize: 12.5, color: _T.slate400),
+                  ),
+                ),
+              ],
+            )
+          // ── Advance + optional stage-back ─────────────────────────────────
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                // Section label
+                const Text(
+                  'ADVANCE STAGE',
+                  style: TextStyle(
+                    fontSize:      9.5,
+                    fontWeight:    FontWeight.w700,
+                    letterSpacing: 1.0,
+                    color:         _T.slate400,
+                  ),
+                ),
+                const SizedBox(height: 9),
+
+                // Primary advance button — unchanged from original
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    key: advanceButtonKey,
+                    onTap: onAdvanceTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      decoration: BoxDecoration(
+                        color: ableToReinitialize
+                            ? _T.slate400
+                            : (next == TaskStatus.clientApproved)
+                                ? _T.green
+                                : ((next == TaskStatus.designing ||
+                                        next == TaskStatus.waitingApproval ||
+                                        ((next == TaskStatus.waitingPrinting ||
+                                                next == TaskStatus.printingCompleted ||
+                                                next == TaskStatus.finishing ||
+                                                next == TaskStatus.productionCompleted ||
+                                                next == TaskStatus.waitingDelivery ||
+                                                next == TaskStatus.delivery ||
+                                                next == TaskStatus.waitingInstallation ||
+                                                next == TaskStatus.installing ||
+                                                next == TaskStatus.completed) &&
+                                            LoginService.currentUser!.isAdmin))
+                                    ? _T.blue
+                                    : Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                        boxShadow: progressBtnEnabled
+                            ? [
+                                BoxShadow(
+                                  color: (ableToReinitialize
+                                          ? _T.slate400
+                                          : (next == TaskStatus.clientApproved)
+                                              ? _T.green
+                                              : _T.blue)
+                                      .withOpacity(0.28),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            progressBtnEnabled ? Icons.check : Icons.arrow_forward,
+                            size: 15,
+                            color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            next == TaskStatus.clientApproved
+                                ? 'Move to "${stageInfo(next!).label}"'
+                                : ableToReinitialize
+                                    ? 'Re-initialize Task'
+                                    : 'Confirm Client Approval',
+                            style: TextStyle(
+                              fontSize:   13.5,
+                              fontWeight: FontWeight.w700,
+                              color: progressBtnEnabled ? Colors.white : Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── Stage-back button (subordinate) ───────────────────────
+                if (canStageBack) ...[
+                  const SizedBox(height: 1),
+                  // Divider with label — visually separates the two actions
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'or',
+                          style: const TextStyle(
+                            fontSize:   10.5,
+                            color:      _T.slate400,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                    ],
+                  ),
+                  // Stage-back trigger — text-only, no fill
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      key: stageBackButtonKey,
+                      onTap: onStageBackTap,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        decoration: BoxDecoration(
+                          color:        Colors.transparent,
+                          border:       Border.all(color: _T.slate200),
+                          borderRadius: BorderRadius.circular(_T.r),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate500),
+                            SizedBox(width: 6),
+                            Text(
+                              'Stage back',
+                              style: TextStyle(
+                                fontSize:   12,
+                                fontWeight: FontWeight.w500,
+                                color:      _T.slate500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+              ],
+            ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE BACK MENU
+//
+// A flat dropdown anchored above the "Stage back" button.
+// Shows all preceding statuses in reverse order (most recent first).
+//
+// Design language matches the _DetailDrawer in board_view.dart:
+//   • White surface, 1px slate200 border, rLg radius.
+//   • Rows: ink2 text, hover = slate50 bg, no fills.
+//   • A thin 2px amber left rule is the only colour signal — amber because
+//     staging back is a corrective/cautionary action, not a destructive one.
+// ─────────────────────────────────────────────────────────────────────────────
+class _StageBackMenu extends StatelessWidget {
+  final List<TaskStatus>          statuses;
+  final ValueChanged<TaskStatus>  onSelect;
+
+  const _StageBackMenu({
+    required this.statuses,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color:       Colors.transparent,
+      elevation:   0,
+      child: Container(
+        decoration: BoxDecoration(
+          color:        _T.white,
+          border:       Border.all(color: _T.slate200),
+          borderRadius: BorderRadius.circular(_T.rLg),
+          boxShadow: [
+            BoxShadow(
+              color:      Colors.black.withOpacity(0.08),
+              blurRadius: 16,
+              offset:     const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(_T.rLg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+
+              // Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _T.slate100)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 2, height: 12,
+                      decoration: BoxDecoration(
+                        color:        _T.amber,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'MOVE BACK TO',
+                      style: TextStyle(
+                        fontSize:      9.5,
+                        fontWeight:    FontWeight.w700,
+                        letterSpacing: 0.9,
+                        color:         _T.slate500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Status rows
+              ...statuses.asMap().entries.map((entry) {
+                final i  = entry.key;
+                final s  = entry.value;
+                final isLast = i == statuses.length - 1;
+                return _StageBackRow(
+                  status: s,
+                  isLast: isLast,
+                  onTap:  () => onSelect(s),
+                );
+              }),
+
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE BACK ROW
+// ─────────────────────────────────────────────────────────────────────────────
+class _StageBackRow extends StatefulWidget {
+  final TaskStatus   status;
+  final bool         isLast;
+  final VoidCallback onTap;
+
+  const _StageBackRow({
+    required this.status,
+    required this.isLast,
+    required this.onTap,
+  });
+
+  @override
+  State<_StageBackRow> createState() => _StageBackRowState();
+}
+
+class _StageBackRowState extends State<_StageBackRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Show the position in the chain as a subtle numeric hint
+    final chainIdx = _kStatusOrder.indexOf(widget.status);
+
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          color:  _hovered ? _T.slate50 : Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            decoration: BoxDecoration(
+              border: widget.isLast
+                  ? null
+                  : const Border(bottom: BorderSide(color: _T.slate100)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+          
+                // Chain position number — tabular, slate300, gives spatial context
+                SizedBox(
+                  width: 18,
+                  child: Text(
+                    '${chainIdx + 1}',
+                    style: const TextStyle(
+                      fontSize:      10,
+                      fontWeight:    FontWeight.w600,
+                      color:         _T.slate300,
+                      fontFeatures:  [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+          
+                const SizedBox(width: 8),
+          
+                // Status label
+                Expanded(
+                  child: Text(
+                    _statusLabel(widget.status),
+                    style: const TextStyle(
+                      fontSize:   12.5,
+                      fontWeight: FontWeight.w500,
+                      color:      _T.ink2,
+                    ),
+                  ),
+                ),
+          
+                // Arrow — appears on hover
+                AnimatedOpacity(
+                  opacity:  _hovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 100),
+                  child: const Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate400),
+                ),
+          
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNCHANGED COMPONENTS — verbatim from original
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DetailSectionTitle extends StatelessWidget {
   final String text;
   const _DetailSectionTitle(this.text);
   @override
-  Widget build(BuildContext context) => Text(text.toUpperCase(), style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _T.slate400));
+  Widget build(BuildContext context) => Text(
+    text.toUpperCase(),
+    style: const TextStyle(
+      fontSize:      9.5,
+      fontWeight:    FontWeight.w700,
+      letterSpacing: 1.0,
+      color:         _T.slate400,
+    ),
+  );
 }
 
 class _DetailMetaCell extends StatelessWidget {
@@ -425,34 +875,12 @@ class _Badge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE STEPPER — top-level milestones only
-//
-// Shows 6 milestone stages regardless of the task's granular status.
-// Intermediate statuses (e.g. waitingPrinting, printingCompleted) are mapped
-// to the correct milestone position so the dot and connector state is always
-// accurate.
-//
-// Milestone order:
-//   Designing → Printing → Finishing → Delivery → Installing → Completed
-//
-// Mapping rules:
-//   pending, designing, waitingApproval,
-//     clientApproved, revision          → milestone 0 (Designing)
-//   waitingPrinting, printing,
-//     printingCompleted                 → milestone 1 (Printing)
-//   finishing, productionCompleted      → milestone 2 (Finishing)
-//   waitingDelivery, delivery,
-//     delivered                         → milestone 3 (Delivery)
-//   waitingInstallation, installing     → milestone 4 (Installing)
-//   completed                           → milestone 5 (Completed)
-//   blocked / paused                    → same index as their last known phase
+// STAGE STEPPER — unchanged from previous version
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ── Milestone definition ─────────────────────────────────────────────────────
 
 class _Milestone {
   final String     shortLabel;
-  final TaskStatus status;   // the canonical status for this milestone dot
+  final TaskStatus status;
   final Color      color;
   const _Milestone(this.shortLabel, this.status, this.color);
 }
@@ -466,45 +894,29 @@ const List<_Milestone> _kMilestones = [
   _Milestone('Done',     TaskStatus.completed,  Color(0xFF10B981)),
 ];
 
-// ── Status → milestone index ─────────────────────────────────────────────────
-// Returns the index of the milestone the task is currently AT (not past).
-// "AT" means: actively in this phase or waiting to enter the next one.
-
 int _milestoneIndexFor(TaskStatus status) => switch (status) {
-  // Design phase
   TaskStatus.pending             => 0,
   TaskStatus.designing           => 0,
   TaskStatus.waitingApproval     => 0,
   TaskStatus.clientApproved      => 0,
   TaskStatus.revision            => 0,
-  // Printing phase
   TaskStatus.waitingPrinting     => 1,
   TaskStatus.printing            => 1,
   TaskStatus.printingCompleted   => 1,
-  // Finishing phase
   TaskStatus.finishing           => 2,
   TaskStatus.productionCompleted => 2,
-  // Delivery phase
   TaskStatus.waitingDelivery     => 3,
   TaskStatus.delivery            => 3,
   TaskStatus.delivered           => 3,
-  // Installation phase
   TaskStatus.waitingInstallation => 4,
   TaskStatus.installing          => 4,
-  // Complete
   TaskStatus.completed           => 5,
-  // Cross-cutting: blocked/paused don't advance the milestone
-  // Default to design so we never throw; caller should handle these
-  // by reading the task's previous status if available.
   TaskStatus.blocked             => 0,
   TaskStatus.paused              => 0,
 };
 
-// ── Stepper widget ────────────────────────────────────────────────────────────
-
 class _StageStepper extends StatelessWidget {
   final TaskStatus currentStatus;
-
   const _StageStepper({required this.currentStatus});
 
   @override
@@ -518,24 +930,18 @@ class _StageStepper extends StatelessWidget {
       ),
       child: Row(
         children: List.generate(_kMilestones.length * 2 - 1, (i) {
-
-          // ── Connector segment ─────────────────────────────────────────────
           if (i.isOdd) {
-            final stageIdx = i ~/ 2;
-            // Segment is "done" when the milestone AFTER it is already past.
-            final done = stageIdx < curIdx;
+            final done = (i ~/ 2) < curIdx;
             return Expanded(
               child: Container(
                 height: 2,
                 decoration: BoxDecoration(
-                  color: done ? _T.blue : _T.slate200,
+                  color:        done ? _T.blue : _T.slate200,
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
             );
           }
-
-          // ── Milestone dot + label ─────────────────────────────────────────
           final idx       = i ~/ 2;
           final m         = _kMilestones[idx];
           final isDone    = idx < curIdx;
@@ -546,49 +952,24 @@ class _StageStepper extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width:  26,
-                height: 26,
+                width: 26, height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDone
-                      ? _T.blue
-                      : isCurrent
-                          ? _T.white
-                          : _T.slate100,
+                  color: isDone ? _T.blue : isCurrent ? _T.white : _T.slate100,
                   border: Border.all(
-                    color: isDone
-                        ? _T.blue
-                        : isCurrent
-                            ? _T.blue
-                            : _T.slate200,
+                    color: isDone ? _T.blue : isCurrent ? _T.blue : _T.slate200,
                     width: isCurrent ? 2 : 1.5,
                   ),
                   boxShadow: isCurrent
-                      ? [BoxShadow(
-                          color:      _T.blue.withOpacity(0.15),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        )]
+                      ? [BoxShadow(color: _T.blue.withOpacity(0.15), blurRadius: 6, spreadRadius: 1)]
                       : null,
                 ),
                 child: Center(
                   child: isDone
                       ? const Icon(Icons.check, size: 12, color: Colors.white)
                       : isCurrent
-                          ? Container(
-                              width: 8, height: 8,
-                              decoration: BoxDecoration(
-                                color: m.color,
-                                shape: BoxShape.circle,
-                              ),
-                            )
-                          : Container(
-                              width: 5, height: 5,
-                              decoration: const BoxDecoration(
-                                color: _T.slate300,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                          ? Container(width: 8, height: 8, decoration: BoxDecoration(color: m.color, shape: BoxShape.circle))
+                          : Container(width: 5, height: 5, decoration: const BoxDecoration(color: _T.slate300, shape: BoxShape.circle)),
                 ),
               ),
               const SizedBox(height: 5),
@@ -596,14 +977,10 @@ class _StageStepper extends StatelessWidget {
                 m.shortLabel,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize:   9,
-                  fontWeight: FontWeight.w700,
+                  fontSize:      9,
+                  fontWeight:    FontWeight.w700,
                   letterSpacing: 0.5,
-                  color: isCurrent
-                      ? _T.blue
-                      : isDone
-                          ? _T.ink3
-                          : _T.slate400,
+                  color: isCurrent ? _T.blue : isDone ? _T.ink3 : _T.slate400,
                 ),
               ),
             ],
@@ -615,63 +992,19 @@ class _StageStepper extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE — detail panel component
-//
-// Default view: 6 milestone rows only.
-//
-// When the task's current status is an intermediate sub-step (e.g.
-// waitingPrinting, printingCompleted, delivered), the parent milestone row
-// expands inline to show its sub-steps. This gives the user precise context
-// without showing all 18 rows at all times.
-//
-// Example — task is in `waitingPrinting`:
-//
-//   ✓  Design
-//   ↳  [waiting print] [● printing] [print done]   ← sub-steps inline
-//      Printing                                     ← milestone label
-//   ○  Finishing
-//   ○  Delivery
-//   ○  Installing
-//   ○  Completed
+// STAGE PIPELINE — unchanged from previous version
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ── Milestone + sub-step data ─────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE — detail panel component
-//
-// Default view: 6 milestone rows only.
-//
-// When the task's current status is an intermediate sub-step (e.g.
-// waitingPrinting, printingCompleted, delivered), ONE extra row is inserted
-// immediately after the parent milestone row — showing ONLY the current
-// sub-step. No siblings, no indentation — same visual level as milestones.
-//
-// Example — task is in `waitingPrinting`:
-//
-//   ✓  Design
-//   ◉  Printing            ← milestone (parent context, muted)
-//   ●  Waiting for Print   ← single sub-step row, same level, "Now" badge
-//   ○  Finishing
-//   ○  Delivery
-//   ○  Installing
-//   ○  Completed
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── Milestone + sub-step data ─────────────────────────────────────────────────
 
 class _PipelineMilestone {
-  final String         label;
-  final TaskStatus     status;       // canonical milestone status
-  final List<TaskStatus> subSteps;   // intermediate statuses within this phase
-  //   Empty list = no sub-steps (the milestone IS the only status in its phase)
+  final String           label;
+  final TaskStatus       status;
+  final List<TaskStatus> subSteps;
   const _PipelineMilestone(this.label, this.status, this.subSteps);
 }
 
 const List<_PipelineMilestone> _kPipelineMilestones = [
   _PipelineMilestone('Initialized', TaskStatus.pending, []),
   _PipelineMilestone('Design', TaskStatus.designing, [
-    // Sub-steps shown when task is in any of these
     TaskStatus.designing,
     TaskStatus.waitingApproval,
     TaskStatus.clientApproved,
@@ -698,8 +1031,6 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
   _PipelineMilestone('Completed', TaskStatus.completed, []),
 ];
 
-// ── Which milestone index owns a given status ─────────────────────────────────
-
 int _milestoneOf(TaskStatus s) {
   for (int i = 0; i < _kPipelineMilestones.length; i++) {
     final m = _kPipelineMilestones[i];
@@ -709,18 +1040,12 @@ int _milestoneOf(TaskStatus s) {
   return 0;
 }
 
-// ── Is this status an intermediate sub-step (not the milestone itself)? ───────
-// "Intermediate" = the status is inside a sub-step list but is NOT the
-// canonical milestone status. When true, the parent milestone row expands.
-
 bool _isIntermediate(TaskStatus s) {
   for (final m in _kPipelineMilestones) {
     if (m.subSteps.contains(s) && m.status != s) return true;
   }
   return false;
 }
-
-// ── Sub-step label map ────────────────────────────────────────────────────────
 
 String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.pending             => 'Initialized',
@@ -743,17 +1068,11 @@ String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.paused              => 'Paused',
 };
 
-// ── Pipeline widget ───────────────────────────────────────────────────────────
-
 class _StagePipeline extends StatelessWidget {
-  final TaskStatus currentStatus;
-  // stageInfos used to resolve .bg and .color per status
+  final TaskStatus            currentStatus;
   final List<DesignStageInfo> stages;
 
-  const _StagePipeline({
-    required this.currentStatus,
-    required this.stages,
-  });
+  const _StagePipeline({required this.currentStatus, required this.stages});
 
   DesignStageInfo? _infoFor(TaskStatus s) =>
       stages.cast<DesignStageInfo?>()
@@ -763,11 +1082,9 @@ class _StagePipeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final curMilestoneIdx = _milestoneOf(currentStatus);
     final intermediate    = _isIntermediate(currentStatus);
-
-    // Pre-resolve the sub-step's DesignStageInfo once (used for the inserted row)
-    final subSi       = intermediate ? _infoFor(currentStatus) : null;
-    final Color subFg = subSi?.color ?? _T.blue;
-    final Color subBg = subSi?.bg    ?? _T.blue50;
+    final subSi           = intermediate ? _infoFor(currentStatus) : null;
+    final Color subFg     = subSi?.color ?? _T.blue;
+    final Color subBg     = subSi?.bg    ?? _T.blue50;
 
     return Container(
       decoration: BoxDecoration(
@@ -780,50 +1097,27 @@ class _StagePipeline extends StatelessWidget {
           final milestone = entry.value;
           final isDone    = idx < curMilestoneIdx;
           final isCurrent = idx == curMilestoneIdx;
-
-          // Whether a sub-step row should be injected after this milestone
-          final injectSubStep = isCurrent && intermediate;
-
-          // Total row count changes when a sub-step is injected, so we
-          // compute isLast against the final rendered list rather than
-          // _kPipelineMilestones.length. We handle the border on the
-          // sub-step row itself when it is injected.
-          final isVisuallyLast =
-              idx == _kPipelineMilestones.length - 1 && !injectSubStep;
-
-          final si = _infoFor(milestone.status);
+          final injectSubStep   = isCurrent && intermediate;
+          final isVisuallyLast  = idx == _kPipelineMilestones.length - 1 && !injectSubStep;
+          final si          = _infoFor(milestone.status);
           final Color dotColor = si?.color ?? _T.blue;
           final Color bgColor  = si?.bg    ?? _T.blue50;
 
-          // if ();
-
           return [
-
-            // ── Milestone row ───────────────────────────────────────────────
             Container(
               decoration: BoxDecoration(
-                // When a sub-step row follows, don't highlight the milestone —
-                // it becomes a parent-context label, not the active item.
                 color: isCurrent && !injectSubStep ? bgColor : Colors.transparent,
-                border: isVisuallyLast
-                    ? null
-                    : const Border(bottom: BorderSide(color: _T.slate100)),
+                border: isVisuallyLast ? null : const Border(bottom: BorderSide(color: _T.slate100)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
-
-                  // Dot
                   Container(
                     width: 22, height: 22,
                     decoration: BoxDecoration(
-                      // When a sub-step is injected the milestone dot is muted
-                      // (hollow ring) so the sub-step row reads as "current".
                       color: isDone
                           ? _T.blue
-                          : isCurrent && !injectSubStep
-                              ? dotColor
-                              : _T.slate100,
+                          : isCurrent && !injectSubStep ? dotColor : _T.slate100,
                       shape: BoxShape.circle,
                       border: injectSubStep && isCurrent
                           ? Border.all(color: dotColor.withOpacity(0.4), width: 1.5)
@@ -833,29 +1127,18 @@ class _StagePipeline extends StatelessWidget {
                       child: isDone
                           ? const Icon(Icons.check, size: 11, color: Colors.white)
                           : isCurrent && !injectSubStep
-                              ? Container(
-                                  width: 6, height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                )
+                              ? Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))
                               : Container(
                                   width: injectSubStep ? 6 : 5,
                                   height: injectSubStep ? 6 : 5,
                                   decoration: BoxDecoration(
-                                    color: injectSubStep
-                                        ? dotColor.withOpacity(0.45)
-                                        : _T.slate300,
+                                    color: injectSubStep ? dotColor.withOpacity(0.45) : _T.slate300,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                     ),
                   ),
-
                   const SizedBox(width: 12),
-
-                  // Label
                   Expanded(
                     child: Text(
                       milestone.label,
@@ -864,16 +1147,12 @@ class _StagePipeline extends StatelessWidget {
                         fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
                         color: isCurrent && !injectSubStep
                             ? dotColor
-                            : isDone
-                                ? _T.ink3
-                                : isCurrent  // injectSubStep case
-                                    ? _T.ink3
-                                    : _T.slate400,
+                            : isDone ? _T.ink3
+                            : isCurrent ? _T.ink3
+                            : _T.slate400,
                       ),
                     ),
                   ),
-
-                  // Badge — only when this milestone IS the current row
                   if (isCurrent && !injectSubStep)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -882,79 +1161,34 @@ class _StagePipeline extends StatelessWidget {
                         border:       Border.all(color: dotColor.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(99),
                       ),
-                      child: Text(
-                        'Current',
-                        style: TextStyle(
-                          fontSize:   10.5,
-                          fontWeight: FontWeight.w700,
-                          color:      dotColor,
-                        ),
-                      ),
+                      child: Text('Current', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: dotColor)),
                     ),
-
                   if (isDone)
-                    const Text(
-                      '✓ Done',
-                      style: TextStyle(
-                        fontSize:   11,
-                        fontWeight: FontWeight.w600,
-                        color:      _T.slate400,
-                      ),
-                    ),
+                    const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
                 ],
               ),
             ),
-
-            // ── Single sub-step row — injected at the same level ────────────
             if (injectSubStep)
               Container(
                 decoration: BoxDecoration(
                   color: subBg,
                   border: Border(
                     top:    BorderSide(color: subFg.withOpacity(0.12)),
-                    bottom: idx == _kPipelineMilestones.length - 1
-                        ? BorderSide.none
-                        : const BorderSide(color: _T.slate100),
+                    bottom: idx == _kPipelineMilestones.length - 1 ? BorderSide.none : const BorderSide(color: _T.slate100),
                   ),
                 ),
-                // Identical horizontal padding to milestone rows — same level.
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
-
-                    // Dot — same size as milestone dots, stage colour
                     Container(
                       width: 22, height: 22,
-                      decoration: BoxDecoration(
-                        color:  subFg,
-                        shape:  BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 6, height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: subFg, shape: BoxShape.circle),
+                      child: Center(child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))),
                     ),
-
                     const SizedBox(width: 12),
-
-                    // Label
                     Expanded(
-                      child: Text(
-                        _subLabel(currentStatus),
-                        style: TextStyle(
-                          fontSize:   12.5,
-                          fontWeight: FontWeight.w700,
-                          color:      subFg,
-                        ),
-                      ),
+                      child: Text(_subLabel(currentStatus), style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: subFg)),
                     ),
-
-                    // "Now" badge
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                       decoration: BoxDecoration(
@@ -962,24 +1196,14 @@ class _StagePipeline extends StatelessWidget {
                         border:       Border.all(color: subFg.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(99),
                       ),
-                      child: Text(
-                        'Now',
-                        style: TextStyle(
-                          fontSize:   10.5,
-                          fontWeight: FontWeight.w700,
-                          color:      subFg,
-                        ),
-                      ),
+                      child: Text('Now', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: subFg)),
                     ),
                   ],
                 ),
               ),
-
           ];
         }).toList(),
       ),
     );
   }
 }
-
-// _SubStepList removed — replaced by the single inline sub-step row above.
