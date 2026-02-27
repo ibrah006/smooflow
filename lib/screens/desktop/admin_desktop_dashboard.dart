@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
@@ -120,8 +121,8 @@ class _AdminDesktopDashboardScreenState
       ? null
       : _tasks.cast<Task?>().firstWhere((t) => t!.id == _selectedTaskId, orElse: () => null);
 
-  void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  Future<void> _showSnack(context, String msg, Color color) async {
+    kRootScaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Row(children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
@@ -139,15 +140,15 @@ class _AdminDesktopDashboardScreenState
   }
 
   /// Advance the selected task to the next stage via the Riverpod notifier.
-  Future<void> _advanceTask(Task task) async {
-    final next = task.status.nextStage;
-    if (next == null) return;
+  Future<void> _advanceTask(Task advancedTask) async {
+    final next = advancedTask.status;
+    // if (advancedTask.status == null) return;
 
     // Persist through notifier
     // await ref.read(taskNotifierProvider.notifier).updateTaskStatus(task.id, next);
 
-    if (!mounted) return;
     _showSnack(
+      context,
       next == TaskStatus.clientApproved
           ? '✓ Task marked as Client Approved — handed off to production'
           : 'Task moved to "${stageInfo(next).label}"',

@@ -109,6 +109,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus:  nextStage);
 
+    setState(() {});
+
+    widget.onAdvance();
+
     // AdvanceStagePopup.show(
     //   context: context,
     //   buttonKey: _advanceButtonKey,

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
@@ -17,3 +18,6 @@ const colorErrorBackground = Color(0xFFfbebec);
 const timelineRefreshIntervalSecs = 60;
 
 const kOverallProgressHeroKey = "overall_progress";
+
+final GlobalKey<ScaffoldMessengerState> kRootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();

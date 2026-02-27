@@ -37,6 +37,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: kRootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       theme: ThemeData(
