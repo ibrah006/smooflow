@@ -57,12 +57,13 @@ class _T {
 }
 
 class TaskListView extends ConsumerWidget {
-  final List<Task> tasks;
+  late final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
 
-  const TaskListView({required this.tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected});
+  TaskListView({required final List<Task> tasks, required this.projects, required this.selectedTaskId, required this.onTaskSelected})
+    : this.tasks = tasks.reversed.toList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
