@@ -110,8 +110,8 @@ class _AdvanceStageDialogState extends ConsumerState<AdvanceStageDialog>
   @override
   Widget build(BuildContext context) {
     final nextStage = _nextStageInfo;
-    final nextStatusLabel = nextStage.labelTitle;
-    final nextStatusDescription = nextStage.labelSubTitle;
+    final nextStatusLabel = nextStage.label;
+    final nextStatusDescription = nextStage.subtitle;
     final nextIcon = nextStage.icon;
     final nextColor = nextStage.color;
 

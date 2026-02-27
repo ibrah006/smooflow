@@ -116,7 +116,7 @@ class _AdvanceStagePopupContentState extends ConsumerState<_AdvanceStagePopupCon
   @override
   Widget build(BuildContext context) {
     final nextStage = _nextStageInfo;
-    final nextStatusLabel = nextStage.labelTitle;
+    final nextStatusLabel = nextStage.label;
     final nextIcon = nextStage.icon;
     final nextColor = nextStage.color;
 

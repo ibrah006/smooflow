@@ -19,6 +19,8 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/extensions/date_time_format.dart';
+import 'package:smooflow/extensions/duration_format.dart';
 
 abstract class _T {
   static const Color amber   = Color(0xFFF59E0B);
@@ -37,8 +39,6 @@ class TaskComponentHelper {
   final String subtitle;
   final IconData icon;
   final Color color;
-  final DateTime? startTime;
-  final DateTime? endTime;
 
   const TaskComponentHelper(
     this.status,
@@ -46,9 +46,19 @@ class TaskComponentHelper {
     this.subtitle,
     this.icon,
     this.color,
-    this.startTime,
-    this.endTime,
+    this._actualProductionStartTime,
+    this._actualProductionEndTime
   );
+
+  final DateTime? _actualProductionStartTime;
+  final DateTime? _actualProductionEndTime;
+
+  String get timeDisplay => _actualProductionStartTime != null && _actualProductionEndTime != null?
+    // If production has ended, show total duration
+    _actualProductionEndTime?.difference(_actualProductionStartTime!).formatTime?? 'Just finished'
+    // If production has started but not ended, show how long it's been running
+    : _actualProductionStartTime != null? _actualProductionStartTime!.eventAgo
+    : 'Not Started';
 
   // ── Factory ────────────────────────────────────────────────────────────────
   factory TaskComponentHelper.get(Task task) {

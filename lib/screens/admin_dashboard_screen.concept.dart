@@ -1537,7 +1537,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  taskComponentHelper.labelTitle,
+                  taskComponentHelper.label,
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
                       color: taskComponentHelper.color, letterSpacing: 0.3),
                 ),

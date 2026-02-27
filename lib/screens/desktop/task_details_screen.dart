@@ -780,7 +780,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     final componentHelper = task.componentHelper(status: status);
 
     color = componentHelper.color;
-    label = componentHelper.labelTitle;
+    label = componentHelper.label;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
