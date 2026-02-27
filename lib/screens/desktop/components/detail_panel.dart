@@ -138,10 +138,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       member = null;
     }
 
-    final d = widget.task.dueDate;
+    final d = widget.task.createdAt;
+    final dueDate = widget.task.dueDate;
     final now = DateTime.now();
-    final isOverdue = d != null && d.isBefore(now);
-    final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
+    final isOverdue = dueDate != null && dueDate.isBefore(now);
+    final isSoon    = dueDate != null && !isOverdue && dueDate.difference(now).inDays <= 3;
     final next      = widget.task.status.nextStage;
 
     final progressBtnEnabled =
@@ -214,10 +215,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           Expanded(child: Text(member.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink3))),
                         ])),
                       _DetailMetaCell(
-                        label: 'Due Date',
-                        child: d != null
-                            ? Row(children: [
+                        label: 'Start Date',
+                        child: Row(children: [
                                 Text(fmtDate(d), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
+                                if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
+                                if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
+                              ])
+                      ),
+                      _DetailMetaCell(
+                        label: 'Due Date',
+                        child: dueDate != null
+                            ? Row(children: [
+                                Text(fmtDate(dueDate), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.ink3)),
                                 if (isOverdue) ...[const SizedBox(width: 6), const _Badge('Overdue', _T.red, _T.red50)],
                                 if (isSoon && !isOverdue) ...[const SizedBox(width: 6), const _Badge('Due soon', _T.amber, _T.amber50)],
                               ])
