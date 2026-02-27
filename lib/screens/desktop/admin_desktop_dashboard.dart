@@ -232,7 +232,7 @@ class _AdminDesktopDashboardScreenState
         _addTaskFocusNode.unfocus();
 
         setState(() {
-          _isAddingTask = false;          
+          _isAddingTask = false;
         });
       },
       child: LoadingOverlay(
