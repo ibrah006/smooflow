@@ -88,9 +88,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: widget.task.id, newStatus: nextStage);
     setState(() {});
+
+    widget.onAdvance();
   }
 
-  void _showMoveToNextStageDialog() {
+  void _showMoveToNextStageDialog() async {
 
     final nextStage = widget.task.status.nextStage;
 
@@ -114,6 +116,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           // Save notes to activity timeline
           // task.addActivity(notes);
         }
+
+        widget.onAdvance();
       },
     );
   }

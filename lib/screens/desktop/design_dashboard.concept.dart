@@ -160,6 +160,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
           : 'Task moved to "${stageInfo(next).label}"',
       next == TaskStatus.clientApproved ? _T.green : _T.blue,
     );
+
+    setState(() {});
   }
 
   /// Add a new project through the Riverpod notifier.

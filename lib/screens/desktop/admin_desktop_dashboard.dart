@@ -153,6 +153,8 @@ class _AdminDesktopDashboardScreenState
           : 'Task moved to "${stageInfo(next).label}"',
       next == TaskStatus.clientApproved ? _T.green : _T.blue,
     );
+
+    setState(() {});
   }
 
   // All pipeline tasks (same filter as DesignDashboardScreen)

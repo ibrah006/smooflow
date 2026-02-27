@@ -28,6 +28,7 @@ import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
+import 'package:smooflow/screens/printer_screen.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 import 'package:smooflow/screens/production_dashboard.concept.dart';
 import 'package:smooflow/screens/production_report_screen.dart';
@@ -352,8 +353,7 @@ class AppRoutes {
         screen = const InviteMemberScreen();
         break;
       case addPrinter:
-        // TODO
-        // screen = const PrinterScreen.add();
+        screen = const AddPrinterScreen.add();
         break;
       case projectReport:
         screen = const ProjectReportsScreen();
