@@ -7,7 +7,7 @@ DesignStageInfo stageInfo(TaskStatus s) {
   try {
   return [...kStages, DesignStageInfo(TaskStatus.delivery,  'Delivery',   'Delivery', Color(0xFF2563EB), Color(0xFFDBEAFE))].firstWhere((i) => i.stage == s);
   } catch(e) {
-    throw "culprint found, status: $s, kstages ln: ${kStages.length}";
+    throw "culprit found, status: $s, kstages ln: ${kStages.length}";
   }
 }
 int stageIndex(TaskStatus s) => kStages.indexWhere((i) => i.stage == s);

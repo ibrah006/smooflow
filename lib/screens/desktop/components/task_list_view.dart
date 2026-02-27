@@ -80,7 +80,7 @@ class TaskListView extends ConsumerWidget {
                 Expanded(flex: 2, child: _TableHeader('Project')),
                 Expanded(flex: 2, child: _TableHeader('Stage')),
                 Expanded(flex: 2, child: _TableHeader('Assignee')),
-                Expanded(flex: 1, child: _TableHeader('Due')),
+                Expanded(flex: 1, child: _TableHeader('Date')),
                 Expanded(flex: 1, child: _TableHeader('Priority')),
               ],
             ),
@@ -104,10 +104,10 @@ class TaskListView extends ConsumerWidget {
                 }
 
                 final s = stageInfo(t.status);
-                final d = t.dueDate;
+                final d = t.createdAt;
                 final now = DateTime.now();
-                final isOverdue = d != null && d.isBefore(now);
-                final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
+                // final isOverdue = d != null && d.isBefore(now);
+                // final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
 
                 return Material(
                   color: selectedTaskId == t.id ? _T.blue50 : _T.white,
@@ -156,14 +156,22 @@ class TaskListView extends ConsumerWidget {
                                   ])
                                 : const Text('—', style: TextStyle(color: _T.slate400)),
                           )),
-                          // Due date
+                          // Created date
                           Expanded(flex: 1, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              d != null ? fmtDate(d) : '—',
-                              style: TextStyle(fontSize: 12.5, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w400, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate500),
+                              fmtDate(d),
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400, color: _T.slate500),
                             ),
                           )),
+                          // Due date
+                          // Expanded(flex: 1, child: Padding(
+                          //   padding: const EdgeInsets.symmetric(horizontal: 4),
+                          //   child: Text(
+                          //     dueDate != null ? fmtDate(d) : '—',
+                          //     style: TextStyle(fontSize: 12.5, fontWeight: isOverdue || isSoon ? FontWeight.w600 : FontWeight.w400, color: isOverdue ? _T.red : isSoon ? _T.amber : _T.slate500),
+                          //   ),
+                          // )),
                           // Priority
                           Expanded(flex: 1, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
