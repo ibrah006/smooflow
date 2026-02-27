@@ -169,46 +169,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           ),
 
           // Stage stepper
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _T.slate200))),
-            child: Row(
-              children: List.generate(kStages.length * 2 - 1, (i) {
-                if (i.isOdd) {
-                  final stageIdx = i ~/ 2;
-                  final done = stageIdx < curIdx;
-                  return Expanded(child: Container(height: 2, color: done ? _T.blue : _T.slate200));
-                }
-                final idx = i ~/ 2;
-                final s = kStages[idx];
-                final isDone    = idx < curIdx;
-                final isCurrent = idx == curIdx;
-                return Column(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 26, height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDone ? _T.blue : isCurrent ? _T.white : _T.slate100,
-                        border: Border.all(color: isDone ? _T.blue : isCurrent ? _T.blue : _T.slate200, width: isCurrent ? 2 : 1.5),
-                        boxShadow: isCurrent ? [BoxShadow(color: _T.blue.withOpacity(0.15), blurRadius: 6, spreadRadius: 1)] : null,
-                      ),
-                      child: Center(
-                        child: isDone
-                            ? const Icon(Icons.check, size: 12, color: Colors.white)
-                            : isCurrent
-                                ? Container(width: 8, height: 8, decoration: BoxDecoration(color: s.color, shape: BoxShape.circle))
-                                : Container(width: 5, height: 5, decoration: const BoxDecoration(color: _T.slate300, shape: BoxShape.circle)),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(s.shortLabel, textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: isCurrent ? _T.blue : isDone ? _T.ink3 : _T.slate400)),
-                  ],
-                );
-              }),
-            ),
-          ),
+          _StageStepper(currentStatus: widget.task.status),
 
           // Scrollable body
           Expanded(
@@ -468,4 +429,194 @@ class _Badge extends StatelessWidget {
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
     child: Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE STEPPER — top-level milestones only
+//
+// Shows 6 milestone stages regardless of the task's granular status.
+// Intermediate statuses (e.g. waitingPrinting, printingCompleted) are mapped
+// to the correct milestone position so the dot and connector state is always
+// accurate.
+//
+// Milestone order:
+//   Designing → Printing → Finishing → Delivery → Installing → Completed
+//
+// Mapping rules:
+//   pending, designing, waitingApproval,
+//     clientApproved, revision          → milestone 0 (Designing)
+//   waitingPrinting, printing,
+//     printingCompleted                 → milestone 1 (Printing)
+//   finishing, productionCompleted      → milestone 2 (Finishing)
+//   waitingDelivery, delivery,
+//     delivered                         → milestone 3 (Delivery)
+//   waitingInstallation, installing     → milestone 4 (Installing)
+//   completed                           → milestone 5 (Completed)
+//   blocked / paused                    → same index as their last known phase
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Milestone definition ─────────────────────────────────────────────────────
+
+class _Milestone {
+  final String     shortLabel;
+  final TaskStatus status;   // the canonical status for this milestone dot
+  final Color      color;
+  const _Milestone(this.shortLabel, this.status, this.color);
+}
+
+const List<_Milestone> _kMilestones = [
+  _Milestone('Design',   TaskStatus.designing,  Color(0xFF8B5CF6)),
+  _Milestone('Print',    TaskStatus.printing,   Color(0xFF2563EB)),
+  _Milestone('Finish',   TaskStatus.finishing,  Color(0xFF0EA5E9)),
+  _Milestone('Delivery', TaskStatus.delivery,   Color(0xFF10B981)),
+  _Milestone('Install',  TaskStatus.installing, Color(0xFF10B981)),
+  _Milestone('Done',     TaskStatus.completed,  Color(0xFF10B981)),
+];
+
+// ── Status → milestone index ─────────────────────────────────────────────────
+// Returns the index of the milestone the task is currently AT (not past).
+// "AT" means: actively in this phase or waiting to enter the next one.
+
+int _milestoneIndexFor(TaskStatus status) => switch (status) {
+  // Design phase
+  TaskStatus.pending             => 0,
+  TaskStatus.designing           => 0,
+  TaskStatus.waitingApproval     => 0,
+  TaskStatus.clientApproved      => 0,
+  TaskStatus.revision            => 0,
+  // Printing phase
+  TaskStatus.waitingPrinting     => 1,
+  TaskStatus.printing            => 1,
+  TaskStatus.printingCompleted   => 1,
+  // Finishing phase
+  TaskStatus.finishing           => 2,
+  TaskStatus.productionCompleted => 2,
+  // Delivery phase
+  TaskStatus.waitingDelivery     => 3,
+  TaskStatus.delivery            => 3,
+  TaskStatus.delivered           => 3,
+  // Installation phase
+  TaskStatus.waitingInstallation => 4,
+  TaskStatus.installing          => 4,
+  // Complete
+  TaskStatus.completed           => 5,
+  // Cross-cutting: blocked/paused don't advance the milestone
+  // Default to design so we never throw; caller should handle these
+  // by reading the task's previous status if available.
+  TaskStatus.blocked             => 0,
+  TaskStatus.paused              => 0,
+};
+
+// ── Stepper widget ────────────────────────────────────────────────────────────
+
+class _StageStepper extends StatelessWidget {
+  final TaskStatus currentStatus;
+
+  const _StageStepper({required this.currentStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    final curIdx = _milestoneIndexFor(currentStatus);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
+      child: Row(
+        children: List.generate(_kMilestones.length * 2 - 1, (i) {
+
+          // ── Connector segment ─────────────────────────────────────────────
+          if (i.isOdd) {
+            final stageIdx = i ~/ 2;
+            // Segment is "done" when the milestone AFTER it is already past.
+            final done = stageIdx < curIdx;
+            return Expanded(
+              child: Container(
+                height: 2,
+                decoration: BoxDecoration(
+                  color: done ? _T.blue : _T.slate200,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            );
+          }
+
+          // ── Milestone dot + label ─────────────────────────────────────────
+          final idx       = i ~/ 2;
+          final m         = _kMilestones[idx];
+          final isDone    = idx < curIdx;
+          final isCurrent = idx == curIdx;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width:  26,
+                height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDone
+                      ? _T.blue
+                      : isCurrent
+                          ? _T.white
+                          : _T.slate100,
+                  border: Border.all(
+                    color: isDone
+                        ? _T.blue
+                        : isCurrent
+                            ? _T.blue
+                            : _T.slate200,
+                    width: isCurrent ? 2 : 1.5,
+                  ),
+                  boxShadow: isCurrent
+                      ? [BoxShadow(
+                          color:      _T.blue.withOpacity(0.15),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        )]
+                      : null,
+                ),
+                child: Center(
+                  child: isDone
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
+                      : isCurrent
+                          ? Container(
+                              width: 8, height: 8,
+                              decoration: BoxDecoration(
+                                color: m.color,
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                          : Container(
+                              width: 5, height: 5,
+                              decoration: const BoxDecoration(
+                                color: _T.slate300,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                m.shortLabel,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize:   9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: isCurrent
+                      ? _T.blue
+                      : isDone
+                          ? _T.ink3
+                          : _T.slate400,
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
 }
