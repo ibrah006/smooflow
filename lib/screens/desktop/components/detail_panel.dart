@@ -67,7 +67,7 @@ class DetailPanel extends ConsumerStatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onAdvance;
 
-  const DetailPanel({required this.task, required this.projects, required this.onClose, required this.onAdvance});
+  const DetailPanel({super.key, required this.task, required this.projects, required this.onClose, required this.onAdvance});
 
   @override
   ConsumerState<DetailPanel> createState() => __DetailPanelState();
