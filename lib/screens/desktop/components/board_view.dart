@@ -396,68 +396,70 @@ class _GroupTabState extends State<_GroupTab> {
       cursor:  SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit:  (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 130),
-        decoration: BoxDecoration(
-          // color: _hovered ? _T.slate50 : Colors.transparent,
-          border: Border(
-            bottom: widget.isOn
-                ? const BorderSide(color: _T.ink2, width: 2)
-                : widget.isPartial
-                    ? BorderSide(color: _T.slate400, width: 1.5)
-                    : BorderSide.none,
+      child: Container(
+        color: _hovered ? _T.slate50 : Colors.transparent,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: widget.isOn
+                  ? const BorderSide(color: _T.ink2, width: 2)
+                  : widget.isPartial
+                      ? BorderSide(color: _T.slate400, width: 1.5)
+                      : BorderSide.none,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize:     MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-
-            // Label tap zone
-            GestureDetector(
-              onTap: widget.onTap,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 130),
-                  style: TextStyle(
-                    fontSize:      11.5,
-                    fontWeight:    widget.isOn
-                        ? FontWeight.w600
-                        : widget.isPartial
-                            ? FontWeight.w500
-                            : FontWeight.w400,
-                    color:         labelColor,
-                    letterSpacing: 0.1,
+          child: Row(
+            mainAxisSize:     MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+        
+              // Label tap zone
+              GestureDetector(
+                onTap: widget.onTap,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 130),
+                    style: TextStyle(
+                      fontSize:      11.5,
+                      fontWeight:    widget.isOn
+                          ? FontWeight.w600
+                          : widget.isPartial
+                              ? FontWeight.w500
+                              : FontWeight.w400,
+                      color:         labelColor,
+                      letterSpacing: 0.1,
+                    ),
+                    child: Text(widget.group.label),
                   ),
-                  child: Text(widget.group.label),
                 ),
               ),
-            ),
-
-            // Chevron — separate tap zone, visible when active or hovered
-            AnimatedOpacity(
-              opacity:  (active || _hovered) ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 130),
-              child: GestureDetector(
-                onTap:    widget.onExpand,
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(2, 0, 12, 0),
-                  child: AnimatedRotation(
-                    turns:    widget.isExpanded ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size:  13,
-                      color: active ? _T.slate500 : _T.slate300,
+        
+              // Chevron — separate tap zone, visible when active or hovered
+              AnimatedOpacity(
+                opacity:  (active || _hovered) ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 130),
+                child: GestureDetector(
+                  onTap:    widget.onExpand,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(2, 0, 12, 0),
+                    child: AnimatedRotation(
+                      turns:    widget.isExpanded ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size:  13,
+                        color: active ? _T.slate500 : _T.slate300,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-
-          ],
+        
+            ],
+          ),
         ),
       ),
     );
@@ -596,39 +598,41 @@ class _StageToggleRowState extends State<_StageToggleRow> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 110),
-          margin:   const EdgeInsets.only(right: 2),
-          padding:  const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
-          decoration: BoxDecoration(
-            color:        _hovered ? _T.slate50 : Colors.transparent,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 120),
-                child: Icon(
-                  widget.isVisible
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  key:   ValueKey(widget.isVisible),
-                  size:  14,
-                  color: widget.isVisible ? _T.ink3 : _T.slate300,
+        child: Container(
+          color: _hovered ? _T.slate50 : Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 110),
+            margin:   const EdgeInsets.only(right: 2),
+            padding:  const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 120),
+                  child: Icon(
+                    widget.isVisible
+                        ? Icons.check_box_rounded
+                        : Icons.check_box_outline_blank_rounded,
+                    key:   ValueKey(widget.isVisible),
+                    size:  14,
+                    color: widget.isVisible ? _T.ink3 : _T.slate300,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 7),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 110),
-                style: TextStyle(
-                  fontSize:   11.5,
-                  fontWeight: widget.isVisible ? FontWeight.w500 : FontWeight.w400,
-                  color:      widget.isVisible ? _T.ink2 : _T.slate400,
+                const SizedBox(width: 7),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 110),
+                  style: TextStyle(
+                    fontSize:   11.5,
+                    fontWeight: widget.isVisible ? FontWeight.w500 : FontWeight.w400,
+                    color:      widget.isVisible ? _T.ink2 : _T.slate400,
+                  ),
+                  child: Text(widget.label),
                 ),
-                child: Text(widget.label),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
