@@ -175,7 +175,7 @@ class _BoardViewState extends State<BoardView> {
       for (final si in kStages)
         si.stage: widget.tasks.where((t) => t.status == si.stage).length,
     };
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -197,7 +197,7 @@ class _BoardViewState extends State<BoardView> {
         // ── Lane scroll ──────────────────────────────────────────────────────
         Expanded(
           child: Container(
-            color: _T.slate50,
+            // color: _T.slate50,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.all(16),
@@ -441,10 +441,10 @@ class _HideEmptyToggleState extends State<_HideEmptyToggle> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 130),
-          color: _hovered ? _T.slate50 : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           // 2px bottom border mirrors active-tab language
           decoration: BoxDecoration(
+            color: _hovered ? _T.slate50 : Colors.transparent,
             border: Border(
               bottom: widget.isOn
                   ? const BorderSide(color: _T.ink2, width: 2)
