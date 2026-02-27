@@ -890,19 +890,22 @@ class _MemberTableRowState extends State<_MemberTableRow> {
               // Role
               Expanded(
                 flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: roleBg,
-                    borderRadius: BorderRadius.circular(_T.r),
-                    border: Border.all(color: roleColor.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    m.role.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: roleColor,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: roleBg,
+                      borderRadius: BorderRadius.circular(_T.r),
+                      border: Border.all(color: roleColor.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      m.role.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: roleColor,
+                      ),
                     ),
                   ),
                 ),
