@@ -1013,21 +1013,21 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
     TaskStatus.clientApproved,
     TaskStatus.revision,
   ]),
-  _PipelineMilestone('Printing', TaskStatus.printing, [
+  _PipelineMilestone('Printing Department', TaskStatus.printing, [
     TaskStatus.waitingPrinting,
     TaskStatus.printing,
     TaskStatus.printingCompleted,
   ]),
-  _PipelineMilestone('Finishing', TaskStatus.finishing, [
+  _PipelineMilestone('Finishing Department', TaskStatus.finishing, [
     TaskStatus.finishing,
     TaskStatus.productionCompleted,
   ]),
-  _PipelineMilestone('Delivery', TaskStatus.delivery, [
+  _PipelineMilestone('Delivery Department', TaskStatus.delivery, [
     TaskStatus.waitingDelivery,
     TaskStatus.delivery,
     TaskStatus.delivered,
   ]),
-  _PipelineMilestone('Installing', TaskStatus.installing, [
+  _PipelineMilestone('Installation Department', TaskStatus.installing, [
     TaskStatus.waitingInstallation,
     TaskStatus.installing,
   ]),
@@ -1056,7 +1056,7 @@ String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.waitingApproval     => 'Waiting Approval',
   TaskStatus.clientApproved      => 'Client Approved',
   TaskStatus.revision            => 'Needs Revision',
-  TaskStatus.waitingPrinting     => 'Waiting for Print',
+  TaskStatus.waitingPrinting     => 'Handed to Print',
   TaskStatus.printing            => 'Printing',
   TaskStatus.printingCompleted   => 'Print Complete',
   TaskStatus.finishing           => 'Finishing',

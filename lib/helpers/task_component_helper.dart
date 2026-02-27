@@ -126,7 +126,7 @@ class TaskComponentHelper {
       case TaskStatus.waitingPrinting:
         return TaskComponentHelper(
           TaskStatus.waitingPrinting,
-          'Waiting for Printing',
+          'Handed to Printing',
           'Queued — awaiting printer availability',
           Icons.hourglass_top_rounded,
           _T.amber,
