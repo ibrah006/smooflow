@@ -287,7 +287,19 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 : ((next == TaskStatus.printing ||
                                     next == TaskStatus.designing ||
                                     next == TaskStatus.waitingApproval ||
-                                    (next == TaskStatus.delivery && LoginService.currentUser!.isAdmin))
+                                    ((
+                                        next == TaskStatus.waitingPrinting ||
+                                        next == TaskStatus.printingCompleted ||
+                                        next == TaskStatus.finishing ||
+                                        next == TaskStatus.productionCompleted ||
+                                        next == TaskStatus.waitingDelivery ||
+                                        next == TaskStatus.delivery ||
+                                        next == TaskStatus.waitingInstallation ||
+                                        next == TaskStatus.installing ||
+                                        next == TaskStatus.completed
+                                      )
+                                      && LoginService.currentUser!.isAdmin)
+                                  )
                                     ? _T.blue
                                     : Colors.grey.shade200),
                             borderRadius: BorderRadius.circular(_T.r),
