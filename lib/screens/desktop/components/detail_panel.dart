@@ -206,7 +206,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             // Menu — anchored above the button
             Positioned(
               left:  offset.dx,
-              top:   offset.dy - menuH - 6,
+              top:   offset.dy - menuH - (6 * (previous.length>5? (4*(previous.length-4)) : 1)),
               width: btnSize.width,
               child: FadeTransition(
                 opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
@@ -486,7 +486,7 @@ class _DetailFooter extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Column(
         children: [
-          isLocked
+          if (task.status != TaskStatus.completed) (isLocked
               // ── Locked state ─────────────────────────────────────────────────
               ? Row(
                   children: [
@@ -588,12 +588,12 @@ class _DetailFooter extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-          // ── Stage-back button (subordinate) ───────────────────────
+                )),
+                // ── Stage-back button (subordinate) ───────────────────────
                     if (canStageBack) ...[
                       const SizedBox(height: 1),
                       // Divider with label — visually separates the two actions
-                      Row(
+                      if (task.status != TaskStatus.completed) Row(
                         children: [
                           const Expanded(child: Divider(color: _T.slate200, height: 20)),
                           Padding(
