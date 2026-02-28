@@ -55,6 +55,15 @@ class TaskState {
       tasks: _tasks
     );
   }
+
+  TaskState updateTask(Task task) {
+    
+    _tasks.add(task);
+
+    return copyWith(
+      tasks: _tasks
+    );
+  }
   
   TaskState copyWith({
     List<Task>? tasks,

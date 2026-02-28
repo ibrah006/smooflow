@@ -414,7 +414,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   ) async {
     await _repo.update(task: task, billingStatus: billingStatus, ref: ref, quantity: quantity, size: size);
 
-    //  update state
+    state = state.updateTask(task);
   }
 
   // ---------------------------------------------------------------------
