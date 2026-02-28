@@ -251,7 +251,7 @@ class TaskRepo {
       return;
     }
 
-    final response = await ApiClient.http.post(
+    final response = await ApiClient.http.put(
       '/tasks/${task.id}',
       body: {
         "billingStatus": billingStatus?.name,
