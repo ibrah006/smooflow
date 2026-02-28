@@ -255,7 +255,6 @@ class _AdminDesktopDashboardScreenState
                   onViewChanged: (v) => setState(() => _view = v),
                   onProjectSelected: (id) => setState(() {
                     _selectedProjectId = id;
-                    _view = _AdminView.board;
                   }),
                 ),
                 Expanded(
