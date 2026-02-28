@@ -53,11 +53,78 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE ORDER
+// BILLING STATUS ENUM + METADATA
 //
-// The canonical linear sequence of statuses. Used to derive "previous stages"
-// for the stage-back feature. Cross-cutting statuses (blocked, paused,
-// revision) are excluded — they have no position in the linear chain.
+// If you create smooflow/enums/billing_status.dart later, move the enum there
+// and add its import at the top of this file.  The metadata class and the
+// _kBillingStatuses list should stay here — they are UI-layer concerns.
+// ─────────────────────────────────────────────────────────────────────────────
+enum BillingStatus { pending, quoteGiven, invoiced, foc, cancelled }
+
+class _BillingMeta {
+  final BillingStatus value;
+  final String        label;
+  final String        sublabel;   // one-liner shown inside the chip
+  final Color         color, bg;
+  final IconData      icon;
+  const _BillingMeta({
+    required this.value,
+    required this.label,
+    required this.sublabel,
+    required this.color,
+    required this.bg,
+    required this.icon,
+  });
+}
+
+const List<_BillingMeta> _kBilling = [
+  _BillingMeta(
+    value:    BillingStatus.pending,
+    label:    'Pending',
+    sublabel: 'Awaiting quote',
+    color:    _T.amber,
+    bg:       _T.amber50,
+    icon:     Icons.hourglass_empty_rounded,
+  ),
+  _BillingMeta(
+    value:    BillingStatus.quoteGiven,
+    label:    'Quote Given',
+    sublabel: 'Quote sent to client',
+    color:    _T.blue,
+    bg:       _T.blue50,
+    icon:     Icons.request_quote_outlined,
+  ),
+  _BillingMeta(
+    value:    BillingStatus.invoiced,
+    label:    'Invoiced',
+    sublabel: 'Invoice raised',
+    color:    _T.purple,
+    bg:       _T.purple50,
+    icon:     Icons.receipt_long_outlined,
+  ),
+  _BillingMeta(
+    value:    BillingStatus.foc,
+    label:    'FOC',
+    sublabel: 'Free of charge',
+    color:    _T.green,
+    bg:       _T.green50,
+    icon:     Icons.volunteer_activism_outlined,
+  ),
+  _BillingMeta(
+    value:    BillingStatus.cancelled,
+    label:    'Cancelled',
+    sublabel: 'Task cancelled',
+    color:    _T.red,
+    bg:       _T.red50,
+    icon:     Icons.cancel_outlined,
+  ),
+];
+
+_BillingMeta _billingMeta(BillingStatus s) =>
+    _kBilling.firstWhere((m) => m.value == s);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE ORDER
 // ─────────────────────────────────────────────────────────────────────────────
 const List<TaskStatus> _kStatusOrder = [
   TaskStatus.pending,
@@ -77,15 +144,12 @@ const List<TaskStatus> _kStatusOrder = [
   TaskStatus.completed,
 ];
 
-/// Returns all statuses that come before [current] in the linear chain.
-/// Returns empty list for cross-cutting statuses or [pending] (nothing before).
 List<TaskStatus> _previousStatuses(TaskStatus current) {
   final idx = _kStatusOrder.indexOf(current);
-  if (idx <= 0) return []; // pending or not in chain (blocked/paused/revision)
+  if (idx <= 0) return [];
   return _kStatusOrder.sublist(0, idx).reversed.toList();
 }
 
-/// Human-readable label for any status.
 String _statusLabel(TaskStatus s) => switch (s) {
   TaskStatus.pending             => 'Initialized',
   TaskStatus.designing           => 'Designing',
@@ -135,7 +199,71 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   bool _isProgressing = false;
 
-  // ── Unchanged data logic ──────────────────────────────────────────────────
+  // ── Billing state ─────────────────────────────────────────────────────────
+  // Tracks the in-panel selection before it is committed via Save.
+  late BillingStatus _billingSelection;
+  bool _billingSaving = false;
+
+  bool get _isAccountant =>
+      LoginService.currentUser?.role == 'accountant' ||
+      LoginService.currentUser?.isAdmin == true;
+
+  bool get _billingDirty {
+    final saved = widget.task.billingStatus ?? BillingStatus.pending;
+    return _billingSelection != saved;
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
+  }
+
+  @override
+  void didUpdateWidget(DetailPanel old) {
+    super.didUpdateWidget(old);
+    // Reset local billing selection when the panel is opened for a new task.
+    if (old.task.id != widget.task.id) {
+      _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
+    }
+  }
+
+  // ── Billing save ──────────────────────────────────────────────────────────
+
+  Future<void> _saveBillingStatus() async {
+    setState(() => _billingSaving = true);
+    try {
+      await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
+        taskId: widget.task.id,
+        status: _billingSelection,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Row(children: [
+            const Icon(Icons.check_circle_outline_rounded,
+                size: 15, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              'Billing updated to ${_billingMeta(_billingSelection).label}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ]),
+          backgroundColor: _T.ink,
+          behavior:        SnackBarBehavior.floating,
+          margin:          const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.r)),
+          duration: const Duration(seconds: 3),
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _billingSaving = false);
+    }
+  }
+
+  // ── Unchanged data logic (verbatim) ──────────────────────────────────────
 
   Future<void> approveDesignStage() async {
     final nextStage = widget.task.status.nextStage;
@@ -163,8 +291,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onAdvance();
   }
 
-  // ── Stage-back handler — only data call, no new logic ────────────────────
-
   Future<void> _stageBackTo(TaskStatus target) async {
     print("target task status: $target");
     await ref.watch(taskNotifierProvider.notifier).progressStage(
@@ -172,10 +298,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       newStatus: target,
     );
     setState(() {});
-    widget.onAdvance(); // reuse the same refresh callback
+    widget.onAdvance();
   }
-
-  // ── Stage-back overlay ────────────────────────────────────────────────────
 
   bool dismissed = false;
 
@@ -187,10 +311,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final Offset offset = btn.localToGlobal(Offset.zero, ancestor: overlay);
     final Size btnSize  = btn.size;
-
-    // Max height: 5 rows at ~40px each, or actual count — whichever is smaller
     final menuH = (previous.length * 40.0);
-
     dismissed = false;
 
     showGeneralDialog(
@@ -202,7 +323,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       transitionBuilder: (ctx, anim, _, __) {
         return Stack(
           children: [
-            // Invisible barrier that dismisses on tap
             Positioned.fill(
               child: GestureDetector(
                 onTap: () {
@@ -214,7 +334,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 child: const SizedBox.expand(),
               ),
             ),
-            // Menu — anchored above the button
             Positioned(
               left:  offset.dx,
               top:   offset.dy - menuH - 6,
@@ -227,8 +346,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     end:   Offset.zero,
                   ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
                   child: _StageBackMenu(
-                    statuses:   previous,
-                    onSelect:   (s) {
+                    statuses: previous,
+                    onSelect: (s) {
                       Navigator.of(ctx).pop();
                       _stageBackTo(s);
                     },
@@ -275,8 +394,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final progressBtnEnabled =
         next != TaskStatus.printing && next != null || ableToReinitialize;
 
-    // Stage-back: available for any status that has predecessors in the chain
     final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
+
+    // Print-specs visibility flags
+    final hasRef  = widget.task.reference?.isNotEmpty == true;
+    final hasSize = widget.task.size != null;
+    final hasQty  = widget.task.quantity != null;
+    final hasPrintSpecs = hasRef || hasSize || hasQty;
 
     return Container(
       width: _T.detailW,
@@ -395,6 +519,34 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   ),
                   const SizedBox(height: 18),
 
+                  // ── PRINT SPECIFICATIONS ─────────────────────────────────
+                  // Only rendered when at least one field has a value.
+                  if (hasPrintSpecs) ...[
+                    const _DetailSectionTitle('Print Specifications'),
+                    const SizedBox(height: 10),
+                    _PrintSpecsCard(
+                      reference: widget.task.ref,
+                      sizeW:     widget.task.sizeW,
+                      sizeH:     widget.task.sizeH,
+                      quantity:  widget.task.quantity,
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
+                  // ── BILLING ───────────────────────────────────────────────
+                  const _DetailSectionTitle('Billing'),
+                  const SizedBox(height: 10),
+                  _BillingCard(
+                    savedStatus:   widget.task.billingStatus ?? BillingStatus.pending,
+                    selection:     _billingSelection,
+                    isAccountant:  _isAccountant,
+                    isDirty:       _billingDirty,
+                    isSaving:      _billingSaving,
+                    onSelect:      (s) => setState(() => _billingSelection = s),
+                    onSave:        _saveBillingStatus,
+                  ),
+                  const SizedBox(height: 18),
+
                   // Description
                   if (widget.task.description.trim().isNotEmpty) ...[
                     const _DetailSectionTitle('Description'),
@@ -457,17 +609,580 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL FOOTER
+// PRINT SPECIFICATIONS CARD
 //
-// Three possible states:
-//   1. Locked (next == printing): lock icon + message, no actions.
-//   2. Normal: primary advance button. If canStageBack, a secondary
-//      "Stage back" text button sits below it.
+// Rendered only when at least one of ref / sizeW+sizeH / quantity is set.
 //
-// The stage-back button is visually subordinate:
-//   • No filled background, no border — plain text with a left-arrow icon.
-//   • slate500 colour — present but not competing with the primary action.
-//   • On tap, opens _StageBackMenu anchored above the button.
+// Anatomy:
+//   purple icon header  ← matches the print specs section in create_task_screen
+//   slate100 divider
+//   _SpecRow × N        ← icon slug + fixed-width label + value widget
+//
+// ref     → monospace code tag  (slate100 bg, slate200 border, rounding 5)
+// size    → large numerals + weight-300 × separator + "cm" suffix
+// qty     → large numeral + "pcs" suffix
+//
+// Rows that have no value are simply not rendered.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PrintSpecsCard extends StatelessWidget {
+  final String?  reference;
+  final String?  size;
+  final int?     quantity;
+
+  const _PrintSpecsCard({
+    required this.reference,
+    required this.size,
+    required this.quantity,
+  });
+
+  // "3.0" → "3", "3.5" → "3.5"
+  // String _dim(double v) =>
+  //     v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+
+  Widget specRow(String size) {
+    final sizeSplitted = size.split("×");
+
+    return Row(
+      mainAxisSize:        MainAxisSize.min,
+      crossAxisAlignment:  CrossAxisAlignment.baseline,
+      textBaseline:        TextBaseline.alphabetic,
+      children: [
+        Text(sizeSplitted[0],
+            style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 5),
+          child: Text('×',
+              style: TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w300, color: _T.slate300)),
+        ),
+        Text(sizeSplitted[1].split(" ")[0],
+            style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
+        if (sizeSplitted[1].split(" ").length > 1) ...[
+          const SizedBox(width: 5),
+          Text(sizeSplitted[1].split(" ")[1],
+              style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w500, color: _T.slate400)),
+        ]
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasRef  = reference?.isNotEmpty == true;
+    final hasSize = size!=null;
+    final hasQty  = quantity != null;
+
+    // Build only the rows that have data.
+    final rows = <Widget>[];
+
+    
+
+    if (hasRef) {
+      rows.add(_SpecRow(
+        icon:  Icons.tag_rounded,
+        label: 'Ref',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color:        _T.slate100,
+            borderRadius: BorderRadius.circular(5),
+            border:       Border.all(color: _T.slate200),
+          ),
+          child: Text(
+            reference!,
+            style: const TextStyle(
+              fontSize:   12,
+              fontWeight: FontWeight.w600,
+              color:      _T.ink3,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+      ));
+    }
+
+    if (hasSize) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
+      rows.add(_SpecRow(
+        icon:  Icons.crop_free_rounded,
+        label: 'Size',
+        child: specRow(size!)
+      ));
+    }
+
+    if (hasQty) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
+      rows.add(_SpecRow(
+        icon:  Icons.inventory_2_outlined,
+        label: 'Qty',
+        child: Row(
+          mainAxisSize:       MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline:       TextBaseline.alphabetic,
+          children: [
+            Text('$quantity',
+                style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
+            const SizedBox(width: 5),
+            const Text('pcs',
+                style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w500, color: _T.slate400)),
+          ],
+        ),
+      ));
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color:        _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border:       Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Card header ──────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+            child: Row(children: [
+              Container(
+                width: 30, height: 30,
+                decoration: BoxDecoration(
+                  color:        _T.purple50,
+                  borderRadius: BorderRadius.circular(8),
+                  border:       Border.all(color: _T.purple.withOpacity(0.2)),
+                ),
+                child: const Icon(Icons.straighten_outlined,
+                    size: 15, color: _T.purple),
+              ),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Print Specs',
+                      style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
+                  Text('Reference, dimensions & quantity',
+                      style: TextStyle(fontSize: 11, color: _T.slate400)),
+                ],
+              ),
+            ]),
+          ),
+
+          // ── Divider ──────────────────────────────────────────────────
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child:   Divider(height: 1, color: _T.slate100),
+          ),
+
+          // ── Spec rows ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child:   Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rows,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC ROW
+// icon slug (28×28, slate100) + fixed-width label (slate400) + value widget
+// ─────────────────────────────────────────────────────────────────────────────
+class _SpecRow extends StatelessWidget {
+  final IconData icon;
+  final String   label;
+  final Widget   child;
+  const _SpecRow({required this.icon, required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Container(
+        width: 28, height: 28,
+        decoration: BoxDecoration(
+          color:        _T.slate100,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Icon(icon, size: 14, color: _T.slate500),
+      ),
+      const SizedBox(width: 10),
+      SizedBox(
+        width: 38,
+        child: Text(label,
+            style: const TextStyle(
+              fontSize: 11.5, fontWeight: FontWeight.w500, color: _T.slate400)),
+      ),
+      child,
+    ],
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING CARD
+//
+// Green-themed header (finance = green). Always shows the current saved status
+// as a compact pill in the top-right of the header so any role can read it at
+// a glance without scrolling into the body.
+//
+// Body — two modes:
+//
+//   Accountant / Admin:
+//     Five chips in a Wrap (2 per row at the 364px content width).
+//     Each chip: icon circle + label + sublabel + check mark.
+//     Selecting a chip that differs from the saved status shows a "Save"
+//     FilledButton that slides in via AnimatedSize.
+//
+//   Everyone else:
+//     A large status badge (icon + label) + a lock note.
+//     Read-only; no interactive elements.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingCard extends StatelessWidget {
+  final BillingStatus              savedStatus;
+  final BillingStatus              selection;
+  final bool                       isAccountant;
+  final bool                       isDirty;
+  final bool                       isSaving;
+  final ValueChanged<BillingStatus> onSelect;
+  final VoidCallback               onSave;
+
+  const _BillingCard({
+    required this.savedStatus,
+    required this.selection,
+    required this.isAccountant,
+    required this.isDirty,
+    required this.isSaving,
+    required this.onSelect,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final saved = _billingMeta(savedStatus);
+
+    return Container(
+      decoration: BoxDecoration(
+        color:        _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border:       Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+
+          // ── Header ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 30, height: 30,
+                  decoration: BoxDecoration(
+                    color:        _T.green50,
+                    borderRadius: BorderRadius.circular(8),
+                    border:       Border.all(color: _T.green.withOpacity(0.2)),
+                  ),
+                  child: const Icon(Icons.receipt_long_outlined,
+                      size: 15, color: _T.green),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Billing Status',
+                          style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
+                      Text(
+                        isAccountant
+                            ? 'Select the current billing stage'
+                            : 'Managed by accounting',
+                        style: const TextStyle(fontSize: 11, color: _T.slate400),
+                      ),
+                    ],
+                  ),
+                ),
+                // Current saved status — always visible, any role can read this
+                _BillingPill(meta: saved),
+              ],
+            ),
+          ),
+
+          // ── Divider ──────────────────────────────────────────────────
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child:   Divider(height: 1, color: _T.slate100),
+          ),
+
+          // ── Body ─────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: isAccountant
+                ? _BillingPicker(
+                    selection: selection,
+                    isDirty:   isDirty,
+                    isSaving:  isSaving,
+                    onSelect:  onSelect,
+                    onSave:    onSave,
+                  )
+                : _BillingReadOnly(meta: saved),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING PILL — compact status indicator shown in card header
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingPill extends StatelessWidget {
+  final _BillingMeta meta;
+  const _BillingPill({required this.meta});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+    decoration: BoxDecoration(
+      color:        meta.bg,
+      borderRadius: BorderRadius.circular(99),
+      border:       Border.all(color: meta.color.withOpacity(0.3)),
+    ),
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: 5, height: 5,
+        decoration: BoxDecoration(color: meta.color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 5),
+      Text(meta.label,
+          style: TextStyle(
+            fontSize:   10.5,
+            fontWeight: FontWeight.w700,
+            color:      meta.color,
+          )),
+    ]),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING PICKER  (accountant / admin)
+//
+// Five chips in a Wrap. Panel content width = 400 − 18 − 18 − 14 − 14 = 336px.
+// Two chips per row: (336 − 8) / 2 = 164px each.
+//
+// Each chip:
+//   ┌──────────────────────────────────────────┐
+//   │ [icon 28×28]  Label         ✓ (if active)│
+//   │               sublabel                   │
+//   └──────────────────────────────────────────┘
+//
+// Selected chip: coloured bg + coloured border + coloured text + box shadow.
+// AnimatedSize drives the Save button in from zero height when isDirty.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingPicker extends StatelessWidget {
+  final BillingStatus              selection;
+  final bool                       isDirty;
+  final bool                       isSaving;
+  final ValueChanged<BillingStatus> onSelect;
+  final VoidCallback               onSave;
+
+  const _BillingPicker({
+    required this.selection,
+    required this.isDirty,
+    required this.isSaving,
+    required this.onSelect,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+
+        // Chip grid — Wrap so long labels never overflow
+        Wrap(
+          spacing:     8,
+          runSpacing:  8,
+          children: _kBilling.map((m) {
+            final active = selection == m.value;
+            return GestureDetector(
+              onTap: () => onSelect(m.value),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve:    Curves.easeOut,
+                width:    164,
+                padding:  const EdgeInsets.fromLTRB(10, 9, 10, 9),
+                decoration: BoxDecoration(
+                  color: active ? m.bg : _T.white,
+                  borderRadius: BorderRadius.circular(_T.r),
+                  border: Border.all(
+                    color: active ? m.color.withOpacity(0.45) : _T.slate200,
+                    width: active ? 1.5 : 1,
+                  ),
+                  boxShadow: active
+                      ? [BoxShadow(
+                          color:      m.color.withOpacity(0.12),
+                          blurRadius: 10,
+                          offset:     const Offset(0, 3))]
+                      : null,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon circle
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        color: active
+                            ? m.color.withOpacity(0.14)
+                            : _T.slate100,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Icon(m.icon,
+                          size:  14,
+                          color: active ? m.color : _T.slate400),
+                    ),
+                    const SizedBox(width: 8),
+                    // Label + sublabel
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Expanded(
+                              child: Text(m.label,
+                                  style: TextStyle(
+                                    fontSize:   12,
+                                    fontWeight: FontWeight.w700,
+                                    color: active ? m.color : _T.ink3,
+                                  )),
+                            ),
+                            // Check mark fades in when selected
+                            AnimatedOpacity(
+                              opacity:  active ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 150),
+                              child: Icon(Icons.check_circle_rounded,
+                                  size: 12, color: m.color),
+                            ),
+                          ]),
+                          const SizedBox(height: 2),
+                          Text(m.sublabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: active
+                                    ? m.color.withOpacity(0.7)
+                                    : _T.slate400,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        // Save button — only visible when selection differs from saved value.
+        // AnimatedSize collapses it to zero height when clean.
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve:    Curves.easeOutCubic,
+          child: isDirty
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: FilledButton.icon(
+                    onPressed: isSaving ? null : onSave,
+                    style: FilledButton.styleFrom(
+                      backgroundColor:         _T.blue,
+                      disabledBackgroundColor: _T.slate200,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(_T.r)),
+                    ),
+                    icon: isSaving
+                        ? const SizedBox(
+                            width: 14, height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.check_rounded, size: 16),
+                    label: Text(
+                      isSaving ? 'Saving…' : 'Update Billing Status',
+                      style: const TextStyle(
+                        fontSize:   13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING READ-ONLY  (non-accountant view)
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingReadOnly extends StatelessWidget {
+  final _BillingMeta meta;
+  const _BillingReadOnly({required this.meta});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      // Large badge with icon
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color:        meta.bg,
+          borderRadius: BorderRadius.circular(_T.r),
+          border:       Border.all(color: meta.color.withOpacity(0.3)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(meta.icon, size: 14, color: meta.color),
+          const SizedBox(width: 7),
+          Text(meta.label,
+              style: TextStyle(
+                fontSize:   13,
+                fontWeight: FontWeight.w700,
+                color:      meta.color,
+              )),
+        ]),
+      ),
+      const SizedBox(width: 10),
+      // Lock note
+      const Expanded(
+        child: Row(children: [
+          Icon(Icons.lock_outline_rounded, size: 11, color: _T.slate300),
+          SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Only accountants can update this',
+              style: TextStyle(fontSize: 10.5, color: _T.slate400),
+            ),
+          ),
+        ]),
+      ),
+    ],
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DETAIL FOOTER — verbatim from original
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailFooter extends StatelessWidget {
   final Task       task;
@@ -491,7 +1206,7 @@ class _DetailFooter extends StatelessWidget {
     required this.stageBackButtonKey,
     required this.onAdvanceTap,
     required this.onStageBackTap,
-    required this.isProgressing
+    required this.isProgressing,
   });
 
   @override
@@ -507,7 +1222,6 @@ class _DetailFooter extends StatelessWidget {
       child: Column(
         children: [
           if (task.status != TaskStatus.completed) (isLocked
-              // ── Locked state ─────────────────────────────────────────────────
               ? Row(
                   children: [
                     const Icon(Icons.lock_outline, size: 14, color: _T.slate400),
@@ -520,13 +1234,10 @@ class _DetailFooter extends StatelessWidget {
                     ),
                   ],
                 )
-              // ── Advance + optional stage-back ─────────────────────────────────
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-          
-                    // Section label
                     const Text(
                       'ADVANCE STAGE',
                       style: TextStyle(
@@ -537,17 +1248,15 @@ class _DetailFooter extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 9),
-          
-                    // Primary advance button — unchanged from original
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         key: advanceButtonKey,
-                        onTap: isProgressing? null : onAdvanceTap,
+                        onTap: isProgressing ? null : onAdvanceTap,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color: isProgressing? Colors.grey.shade100 : (ableToReinitialize
+                            color: isProgressing ? Colors.grey.shade100 : (ableToReinitialize
                                 ? _T.slate400
                                 : (next == TaskStatus.clientApproved)
                                     ? _T.green
@@ -566,7 +1275,7 @@ class _DetailFooter extends StatelessWidget {
                                         ? _T.blue
                                         : Colors.grey.shade200)),
                             borderRadius: BorderRadius.circular(_T.r),
-                            boxShadow: isProgressing? null : (progressBtnEnabled
+                            boxShadow: isProgressing ? null : (progressBtnEnabled
                                 ? [
                                     BoxShadow(
                                       color: (ableToReinitialize
@@ -592,7 +1301,7 @@ class _DetailFooter extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                isProgressing? "Progressing" : (next == TaskStatus.clientApproved
+                                isProgressing ? "Progressing" : (next == TaskStatus.clientApproved
                                     ? 'Confirm Client Approval'
                                     : ableToReinitialize
                                         ? 'Re-initialize Task'
@@ -600,7 +1309,7 @@ class _DetailFooter extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize:   13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isProgressing? Colors.grey.shade400 : (progressBtnEnabled ? Colors.white : Colors.grey.shade400),
+                                  color: isProgressing ? Colors.grey.shade400 : (progressBtnEnabled ? Colors.white : Colors.grey.shade400),
                                 ),
                               ),
                             ],
@@ -610,59 +1319,56 @@ class _DetailFooter extends StatelessWidget {
                     ),
                   ],
                 )),
-                // ── Stage-back button (subordinate) ───────────────────────
-                    if (canStageBack) ...[
-                      const SizedBox(height: 1),
-                      // Divider with label — visually separates the two actions
-                      if (task.status != TaskStatus.completed) Row(
-                        children: [
-                          const Expanded(child: Divider(color: _T.slate200, height: 20)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              'or',
-                              style: const TextStyle(
-                                fontSize:   10.5,
-                                color:      _T.slate400,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                          const Expanded(child: Divider(color: _T.slate200, height: 20)),
-                        ],
-                      ),
-                      // Stage-back trigger — text-only, no fill
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          key: stageBackButtonKey,
-                          onTap: onStageBackTap,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            decoration: BoxDecoration(
-                              color:        Colors.transparent,
-                              border:       Border.all(color: _T.slate200),
-                              borderRadius: BorderRadius.circular(_T.r),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate500),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Stage back',
-                                  style: TextStyle(
-                                    fontSize:   12,
-                                    fontWeight: FontWeight.w500,
-                                    color:      _T.slate500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+              if (canStageBack) ...[
+                const SizedBox(height: 1),
+                if (task.status != TaskStatus.completed) Row(
+                  children: [
+                    const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'or',
+                        style: const TextStyle(
+                          fontSize:   10.5,
+                          color:      _T.slate400,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                    ],
+                    ),
+                    const Expanded(child: Divider(color: _T.slate200, height: 20)),
+                  ],
+                ),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    key: stageBackButtonKey,
+                    onTap: onStageBackTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      decoration: BoxDecoration(
+                        color:        Colors.transparent,
+                        border:       Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate500),
+                          SizedBox(width: 6),
+                          Text(
+                            'Stage back',
+                            style: TextStyle(
+                              fontSize:   12,
+                              fontWeight: FontWeight.w500,
+                              color:      _T.slate500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
         ],
       ),
     );
@@ -670,16 +1376,7 @@ class _DetailFooter extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE BACK MENU
-//
-// A flat dropdown anchored above the "Stage back" button.
-// Shows all preceding statuses in reverse order (most recent first).
-//
-// Design language matches the _DetailDrawer in board_view.dart:
-//   • White surface, 1px slate200 border, rLg radius.
-//   • Rows: ink2 text, hover = slate50 bg, no fills.
-//   • A thin 2px amber left rule is the only colour signal — amber because
-//     staging back is a corrective/cautionary action, not a destructive one.
+// STAGE BACK MENU — verbatim from original
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackMenu extends StatelessWidget {
   final List<TaskStatus>          statuses;
@@ -714,8 +1411,6 @@ class _StageBackMenu extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-
-              // Header
               Container(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
                 decoration: const BoxDecoration(
@@ -743,8 +1438,6 @@ class _StageBackMenu extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Status rows
               ...statuses.asMap().entries.map((entry) {
                 final i  = entry.key;
                 final s  = entry.value;
@@ -755,7 +1448,6 @@ class _StageBackMenu extends StatelessWidget {
                   onTap:  () => onSelect(s),
                 );
               }),
-
             ],
           ),
         ),
@@ -765,7 +1457,7 @@ class _StageBackMenu extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE BACK ROW
+// STAGE BACK ROW — verbatim from original
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackRow extends StatefulWidget {
   final TaskStatus   status;
@@ -787,7 +1479,6 @@ class _StageBackRowState extends State<_StageBackRow> {
 
   @override
   Widget build(BuildContext context) {
-    // Show the position in the chain as a subtle numeric hint
     final chainIdx = _kStatusOrder.indexOf(widget.status);
 
     return MouseRegion(
@@ -808,8 +1499,6 @@ class _StageBackRowState extends State<_StageBackRow> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-          
-                // Chain position number — tabular, slate300, gives spatial context
                 SizedBox(
                   width: 18,
                   child: Text(
@@ -822,10 +1511,7 @@ class _StageBackRowState extends State<_StageBackRow> {
                     ),
                   ),
                 ),
-          
                 const SizedBox(width: 8),
-          
-                // Status label
                 Expanded(
                   child: Text(
                     _statusLabel(widget.status),
@@ -836,14 +1522,11 @@ class _StageBackRowState extends State<_StageBackRow> {
                     ),
                   ),
                 ),
-          
-                // Arrow — appears on hover
                 AnimatedOpacity(
                   opacity:  _hovered ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 100),
                   child: const Icon(Icons.arrow_back_rounded, size: 12, color: _T.slate400),
                 ),
-          
               ],
             ),
           ),
@@ -901,9 +1584,8 @@ class _Badge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE STEPPER — unchanged from previous version
+// STAGE STEPPER — verbatim from original
 // ─────────────────────────────────────────────────────────────────────────────
-
 class _Milestone {
   final String     shortLabel;
   final TaskStatus status;
@@ -1018,9 +1700,8 @@ class _StageStepper extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE — unchanged from previous version
+// STAGE PIPELINE — verbatim from original
 // ─────────────────────────────────────────────────────────────────────────────
-
 class _PipelineMilestone {
   final String           label;
   final TaskStatus       status;
@@ -1094,22 +1775,6 @@ String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.paused              => 'Paused',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE
-//
-// Rendering rules:
-//   • Always shows all 7 milestone rows.
-//   • When currentStatus is an intermediate sub-step within a milestone's
-//     subSteps list, that milestone injects a sub-step block after its row.
-//   • The sub-step block shows ONLY:
-//       – Every sibling that comes BEFORE the current status (all past)
-//       – The current status itself
-//     Future siblings are never shown.
-//   • Sub-steps render in strict enum order (matches _kPipelineMilestones
-//     subSteps list order, which mirrors the enum declaration).
-//   • Past siblings: ✓ check, ink3, same row style as done milestones.
-//   • Current sub-step: filled dot, stage colour, "Now" badge.
-// ─────────────────────────────────────────────────────────────────────────────
 class _StagePipeline extends StatelessWidget {
   final TaskStatus            currentStatus;
   final List<DesignStageInfo> stages;
@@ -1125,7 +1790,6 @@ class _StagePipeline extends StatelessWidget {
     final curMilestoneIdx = _milestoneOf(currentStatus);
     final intermediate    = _isIntermediate(currentStatus);
 
-    // Pre-resolve sub-step colours once (used for every row in the block).
     final subSi       = intermediate ? _infoFor(currentStatus) : null;
     final Color subFg = subSi?.color ?? _T.blue;
     final Color subBg = subSi?.bg    ?? _T.blue50;
@@ -1144,12 +1808,8 @@ class _StagePipeline extends StatelessWidget {
             final isDone    = idx < curMilestoneIdx;
             final isCurrent = idx == curMilestoneIdx;
 
-            // Inject sub-step rows only for the current milestone when
-            // the task is at an intermediate status inside it.
             final injectSubSteps = isCurrent && intermediate;
 
-            // The sub-steps to render: everything up to and including current.
-            // Because subSteps is in enum order, indexOf gives the correct cut.
             final List<TaskStatus> visibleSubSteps = injectSubSteps
                 ? milestone.subSteps.sublist(
                     0,
@@ -1157,10 +1817,6 @@ class _StagePipeline extends StatelessWidget {
                   )
                 : [];
 
-            // The milestone row itself has no bottom border when sub-steps
-            // follow it — the first sub-step row carries the top border.
-            // The last visual row (milestone or last sub-step) has no bottom
-            // border if it's the very last item in the whole list.
             final bool isLastMilestone = idx == _kPipelineMilestones.length - 1;
             final bool milestoneHasBorder = !injectSubSteps && !isLastMilestone;
 
@@ -1169,11 +1825,8 @@ class _StagePipeline extends StatelessWidget {
             final Color bgColor  = si?.bg    ?? _T.blue50;
 
             return <Widget>[
-
-              // ── Milestone row ─────────────────────────────────────────────
               Container(
                 decoration: BoxDecoration(
-                  // Highlight only when current AND no sub-step block follows
                   color: isCurrent && !injectSubSteps ? bgColor : Colors.transparent,
                   border: milestoneHasBorder
                       ? const Border(bottom: BorderSide(color: _T.slate100))
@@ -1182,8 +1835,6 @@ class _StagePipeline extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
-
-                    // Dot
                     Container(
                       width: 22, height: 22,
                       decoration: BoxDecoration(
@@ -1193,7 +1844,6 @@ class _StagePipeline extends StatelessWidget {
                                 ? dotColor
                                 : _T.slate100,
                         shape: BoxShape.circle,
-                        // Hollow ring when current but sub-steps follow
                         border: injectSubSteps && isCurrent
                             ? Border.all(color: dotColor.withOpacity(0.4), width: 1.5)
                             : null,
@@ -1215,10 +1865,7 @@ class _StagePipeline extends StatelessWidget {
                                   ),
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
-                    // Label
                     Expanded(
                       child: Text(
                         milestone.label,
@@ -1227,14 +1874,12 @@ class _StagePipeline extends StatelessWidget {
                           fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
                           color: isCurrent && !injectSubSteps
                               ? dotColor
-                              : isDone || isCurrent   // isCurrent = has sub-steps
+                              : isDone || isCurrent
                                   ? _T.ink3
                                   : _T.slate400,
                         ),
                       ),
                     ),
-
-                    // "Current" badge — only when milestone itself is current
                     if (isCurrent && !injectSubSteps)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -1245,24 +1890,19 @@ class _StagePipeline extends StatelessWidget {
                         ),
                         child: Text('Current', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: dotColor)),
                       ),
-
                     if (isDone)
                       const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
                   ],
                 ),
               ),
-
-              // ── Sub-step rows: past siblings + current, in enum order ─────
               ...visibleSubSteps.asMap().entries.map((subEntry) {
                 final subIdx    = subEntry.key;
                 final s         = subEntry.value;
                 final isCur     = s == currentStatus;
-                final isPast    = !isCur; // everything in the slice before current
+                final isPast    = !isCur;
                 final isLastSub = subIdx == visibleSubSteps.length - 1;
                 final isVeryLast = isLastSub && isLastMilestone;
 
-                // Past sub-steps use the milestone's resolved colour for the
-                // ✓ dot so they read as part of the same phase, not generic blue.
                 final rowSi       = _infoFor(s);
                 final Color rowFg = isCur ? subFg : (rowSi?.color ?? _T.blue);
 
@@ -1271,22 +1911,18 @@ class _StagePipeline extends StatelessWidget {
                     color: isCur ? subBg : Colors.transparent,
                     border: Border(
                       top: BorderSide(
-                        color: subIdx == 0
-                            ? _T.slate200        // first sub-step: heavier separator from milestone
-                            : _T.slate100,       // between sub-steps: light
+                        color: subIdx == 0 ? _T.slate200 : _T.slate100,
                       ),
                       bottom: isVeryLast
                           ? BorderSide.none
                           : isLastSub
-                              ? const BorderSide(color: _T.slate100) // last sub-step before next milestone
+                              ? const BorderSide(color: _T.slate100)
                               : BorderSide.none,
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     children: [
-
-                      // Dot — same size as milestone dots
                       Container(
                         width: 22, height: 22,
                         decoration: BoxDecoration(
@@ -1299,10 +1935,7 @@ class _StagePipeline extends StatelessWidget {
                               : Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
-                      // Label
                       Expanded(
                         child: Text(
                           _subLabel(s),
@@ -1313,12 +1946,8 @@ class _StagePipeline extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                      // Past sub-step: "✓ Done" text (same as milestone done state)
                       if (isPast)
                         const Text('✓ Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _T.slate400)),
-
-                      // Current sub-step: "Now" badge
                       if (isCur)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -1333,7 +1962,6 @@ class _StagePipeline extends StatelessWidget {
                   ),
                 );
               }),
-
             ];
           }).toList(),
         ),
