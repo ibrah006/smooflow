@@ -167,6 +167,9 @@ class Task {
   double? get productionQuantity=> _productionQuantity;
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
   DateTime get createdAt=> _createdAt;
+  String? get ref=> _ref;
+  String? get size=> _size;
+  int? get quantity=> _quantity;
 
   TaskPriority get priority => _priority;
 
