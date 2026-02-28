@@ -254,7 +254,7 @@ class TaskRepo {
     final response = await ApiClient.http.post(
       '/tasks/${task.id}',
       body: {
-        "billingStatus": billingStatus,
+        "billingStatus": billingStatus?.name,
         "ref": ref,
         "quantity": quantity,
         "size": size,
