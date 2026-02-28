@@ -12,7 +12,7 @@ import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/screens/delivery_dashboard_screen.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
-import 'package:smooflow/screens/desktop/design_create_task_screen.dart';
+import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
@@ -26,7 +26,6 @@ import 'package:smooflow/screens/add_project.dart';
 import 'package:smooflow/screens/create_join_organization_help_screen.dart';
 import 'package:smooflow/screens/create_organization_screen.dart';
 import 'package:smooflow/screens/flash_screen.dart';
-import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/screens/invite_member_screen.dart';
 import 'package:smooflow/screens/add_printer_screen.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
@@ -412,7 +411,7 @@ class AppRoutes {
         break;
       case designCreateTaskScreen:
         if (args is CreateTaskArgs) {
-          screen = DesignCreateTaskScreen(preselectedProjectId: args.preselectedProjectId, onCreateTask: args.onCreateTask);
+          screen = DesignCreateTaskScreen(initialProject: args.preselectedProjectId);
         }
         break;
       case printersManagement:

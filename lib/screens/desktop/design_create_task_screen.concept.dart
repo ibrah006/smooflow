@@ -117,7 +117,7 @@ _PriMeta _priMeta(TaskPriority p) =>
 // ─────────────────────────────────────────────────────────────────────────────
 class DesignCreateTaskScreen extends ConsumerStatefulWidget {
   /// Pre-selected project — null means "no pre-selection".
-  final Project? initialProject;
+  final String? initialProject;
 
   const DesignCreateTaskScreen({super.key, this.initialProject});
 
@@ -155,7 +155,9 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
   @override
   void initState() {
     super.initState();
-    _project = widget.initialProject;
+    Future.microtask(() {
+      _project = widget.initialProject!=null? ref.watch(projectByIdProvider(widget.initialProject!)) : null;
+    });
     // Rebuild summary on every keystroke
     for (final c in [_nameCtrl, _refCtrl, _wCtrl, _hCtrl, _qtyCtrl]) {
       c.addListener(_onFieldChange);
@@ -187,22 +189,29 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
     setState(() => _saving = true);
     HapticFeedback.mediumImpact();
 
+    final reference = _refCtrl.text.trim();
+
     try {
       final w   = double.tryParse(_wCtrl.text.trim());
       final h   = double.tryParse(_hCtrl.text.trim());
       final qty = int.tryParse(_qtyCtrl.text.trim());
 
-      await ref.read(taskNotifierProvider.notifier).createTask(
-        name:      _nameCtrl.text.trim(),
+      final newTask = Task.create(
+        name: _nameCtrl.text,
+        description: "",
+        dueDate: null,
+        assignees: [],
         projectId: _project!.id,
-        priority:  _priority!,
-        reference: _refCtrl.text.trim().isNotEmpty
-            ? _refCtrl.text.trim()
-            : null,
-        sizeW:     w,
-        sizeH:     h,
-        quantity:  _hasSize ? qty : null,
+        priority: _priority?? TaskPriority.normal,
+        ref: reference.isEmpty? null : reference,
+        size: "$w×${h}cm",
+        quantity: qty
       );
+
+      // await ref.read(createProjectTaskProvider(newTask));
+      await ref.watch(projectNotifierProvider.notifier).createTask(task: newTask);
+
+      ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
 
       if (mounted) {
         _snack('Task created successfully', isError: false);

@@ -117,6 +117,9 @@ class Task {
     // required double productionQuantity,
     TaskPriority priority = TaskPriority.normal,
     // required String stockTransactionBarcode,
+    String? ref,
+    String? size,
+    int? quantity
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -127,7 +130,10 @@ class Task {
        workActivityLogs = [],
        activityLogLastModified = null,
        progressLogIds = [],
-       _priority = priority;
+       _priority = priority,
+       _ref = ref,
+       _size = size,
+       _quantity = quantity;
 
   // To ensure toSet gives no duplicates
   @override
