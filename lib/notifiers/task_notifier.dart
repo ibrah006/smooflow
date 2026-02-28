@@ -409,6 +409,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     );
   }
 
+  // IF any of the fields to be updated is to be reset to a null value, just pass in empty string or default value like (empty string or 0)
   Future<void> update(
     {required Task task, required BillingStatus? billingStatus, required String? ref, required int? quantity, required String? size}
   ) async {

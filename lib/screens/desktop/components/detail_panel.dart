@@ -237,9 +237,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _saveBillingStatus() async {
     setState(() => _billingSaving = true);
     try {
-      await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
-        taskId: widget.task.id,
-        status: _billingSelection,
+      await ref.read(taskNotifierProvider.notifier).update(
+        task: widget.task,
+        billingStatus: null,
+        ref: null,
+        quantity: null,
+        size: null
       );
       if (mounted) {
         setState(() => _billingEditMode = false);
