@@ -113,7 +113,7 @@ const _kCols = [
     id: 'date', label: 'DATE', pickerLabel: 'Date Created',
     description: 'Date the task was created',
     icon: Icons.calendar_today_outlined,
-    mandatory: true, defaultOn: true, flex: 2,
+    mandatory: true, defaultOn: true, flex: 1,
   ),
   _ColDef(
     id: 'priority', label: 'PRIORITY', pickerLabel: 'Priority',
