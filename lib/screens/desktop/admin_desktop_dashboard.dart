@@ -13,6 +13,7 @@ import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -674,6 +675,20 @@ class _AdminTopbar extends StatelessWidget {
           //   ]),
           // ),
           const SizedBox(width: 12),
+
+          // Add Task
+          FilledButton.icon(
+            onPressed: () {
+              AppRoutes.navigateTo(context, AppRoutes.designCreateTaskScreen, arguments: CreateTaskArgs(preselectedProjectId: null));
+            },
+            style: FilledButton.styleFrom(
+              textStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+              iconSize: 13
+            ),
+            label: Text("Create Task"),
+            icon: Icon(Icons.add)),
+          
+          SizedBox(width: 15),
 
           // User chip — real user from LoginService
           if (user != null)

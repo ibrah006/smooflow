@@ -8,16 +8,17 @@ class CreateTaskScreenArgs {
 
 class CreateTaskArgs {
   final String? preselectedProjectId;
+  @Deprecated("Will be removed soon. Reason: the older design create task screen which required this input is no longer in use")
   final Function(
     String taskName,
     String projectId,
     String? notes,
     bool autoProgress,
     String? priority,
-  ) onCreateTask;
+  )? onCreateTask;
 
   const CreateTaskArgs({
     this.preselectedProjectId,
-    required this.onCreateTask,
+    this.onCreateTask,
   });
 }
