@@ -59,7 +59,7 @@ class _T {
 // column headers stay perfectly aligned with their cells.
 // ─────────────────────────────────────────────────────────────────────────────
 const double _kRowHPad       = 16.0; // left/right padding on the whole row
-const double _kColButtonW    = 94.0; // fixed width of the "Columns" button
+const double _kColButtonW    = 140.0; // fixed width of the "Columns" button
 const double _kColButtonGap  = 8.0;  // gap between flex columns and the button
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -795,50 +795,55 @@ class _ToggleColRowState extends State<_ToggleColRow> {
         onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 4),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Container(
             decoration: BoxDecoration(
               color: widget.enabled
                   ? _T.blue.withOpacity(0.05)
                   : (_hovering ? _T.slate50 : Colors.transparent),
-              borderRadius: BorderRadius.circular(_T.r),
               border: Border.all(
                 color: widget.enabled
                     ? _T.blue.withOpacity(0.2)
                     : (_hovering ? _T.slate200 : Colors.transparent),
               ),
+              borderRadius: BorderRadius.circular(_T.r),
             ),
-            child: Row(children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                width: 26, height: 26,
-                decoration: BoxDecoration(
-                  color: widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(widget.col.icon, size: 13,
-                    color: widget.enabled ? _T.blue : _T.slate400),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_T.r),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.col.pickerLabel,
-                        style: TextStyle(
-                          fontSize:   12.5,
-                          fontWeight: FontWeight.w600,
-                          color: widget.enabled ? _T.ink : _T.ink3,
-                        )),
-                    Text(widget.col.description,
-                        style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
-                  ],
+              child: Row(children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  width: 26, height: 26,
+                  decoration: BoxDecoration(
+                    color: widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(widget.col.icon, size: 13,
+                      color: widget.enabled ? _T.blue : _T.slate400),
                 ),
-              ),
-              const SizedBox(width: 8),
-              _MiniSwitch(value: widget.enabled, onChanged: (_) => widget.onTap()),
-            ]),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.col.pickerLabel,
+                          style: TextStyle(
+                            fontSize:   12.5,
+                            fontWeight: FontWeight.w600,
+                            color: widget.enabled ? _T.ink : _T.ink3,
+                          )),
+                      Text(widget.col.description,
+                          style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _MiniSwitch(value: widget.enabled, onChanged: (_) => widget.onTap()),
+              ]),
+            ),
           ),
         ),
       ),
