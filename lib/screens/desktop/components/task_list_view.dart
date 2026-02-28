@@ -95,7 +95,7 @@ const _kCols = [
     id: 'task', label: 'TASK', pickerLabel: 'Task Name',
     description: 'Task name',
     icon: Icons.drive_file_rename_outline_rounded,
-    mandatory: true, defaultOn: true, flex: 4,
+    mandatory: true, defaultOn: true, flex: 3,
   ),
   _ColDef(
     id: 'project', label: 'PROJECT', pickerLabel: 'Project',
@@ -107,7 +107,7 @@ const _kCols = [
     id: 'ref', label: 'REF', pickerLabel: 'Reference',
     description: 'Client reference or PO number',
     icon: Icons.tag_rounded,
-    mandatory: true, defaultOn: true, flex: 2,
+    mandatory: true, defaultOn: true, flex: 3,
   ),
   _ColDef(
     id: 'stage', label: 'STAGE', pickerLabel: 'Stage',
