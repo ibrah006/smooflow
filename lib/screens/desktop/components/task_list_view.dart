@@ -1,5 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
+//
+// Changes from previous version:
+//   • Table takes full available width — no right-padding reserved for button.
+//   • _ColumnPickerButton lives in a toolbar row ABOVE the column headers.
+//   • New `isDetailOpen` prop: when true, table animates to mandatory-only
+//     columns (because the detail panel steals horizontal space). When false,
+//     the user's saved optional columns animate back in.
+//   • Column show/hide is animated: each column's width and opacity transition
+//     smoothly using AnimatedContainer so the table reflows without jumping.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -21,18 +30,11 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue      = Color(0xFF2563EB);
-  static const blueHover = Color(0xFF1D4ED8);
-  static const blue100   = Color(0xFFDBEAFE);
   static const blue50    = Color(0xFFEFF6FF);
-  static const teal      = Color(0xFF38BDF8);
   static const green     = Color(0xFF10B981);
-  static const green50   = Color(0xFFECFDF5);
   static const amber     = Color(0xFFF59E0B);
-  static const amber50   = Color(0xFFFEF3C7);
   static const red       = Color(0xFFEF4444);
-  static const red50     = Color(0xFFFEE2E2);
   static const purple    = Color(0xFF8B5CF6);
-  static const purple50  = Color(0xFFF3E8FF);
   static const slate50   = Color(0xFFF8FAFC);
   static const slate100  = Color(0xFFF1F5F9);
   static const slate200  = Color(0xFFE2E8F0);
@@ -43,24 +45,18 @@ class _T {
   static const ink2      = Color(0xFF1E293B);
   static const ink3      = Color(0xFF334155);
   static const white     = Colors.white;
-  static const sidebarW  = 220.0;
-  static const topbarH   = 52.0;
-  static const detailW   = 400.0;
   static const r         = 8.0;
   static const rLg       = 12.0;
-  static const rXl       = 16.0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LAYOUT CONSTANTS
-//
-// The Columns button has a fixed width and sits outside the flex row.
-// Both the header and every data row reserve the same right-side space so
-// column headers stay perfectly aligned with their cells.
+// LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
-const double _kRowHPad       = 16.0; // left/right padding on the whole row
-const double _kColButtonW    = 140.0; // fixed width of the "Columns" button
-const double _kColButtonGap  = 8.0;  // gap between flex columns and the button
+const double _kRowHPad   = 16.0;  // uniform left/right padding on every row
+const double _kCellHPad  = 4.0;   // inner padding on each cell / header cell
+
+// Duration for column appear/disappear animation
+const _kColAnimDuration = Duration(milliseconds: 260);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN DEFINITIONS
@@ -90,7 +86,7 @@ class _ColDef {
 const _kCols = [
   _ColDef(
     id: 'task', label: 'TASK', pickerLabel: 'Task Name',
-    description: 'Task name and inline description',
+    description: 'Task name',
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true, defaultOn: true, flex: 4,
   ),
@@ -116,13 +112,13 @@ const _kCols = [
     id: 'date', label: 'DATE', pickerLabel: 'Date Created',
     description: 'Date the task was created',
     icon: Icons.calendar_today_outlined,
-    mandatory: true, defaultOn: true, flex: 1,
+    mandatory: true, defaultOn: true, flex: 2,
   ),
   _ColDef(
     id: 'priority', label: 'PRIORITY', pickerLabel: 'Priority',
     description: 'Urgent / High / Normal priority pill',
     icon: Icons.flag_outlined,
-    mandatory: false, defaultOn: true, flex: 1,
+    mandatory: false, defaultOn: true, flex: 2,
   ),
   _ColDef(
     id: 'size', label: 'SIZE', pickerLabel: 'Size',
@@ -134,7 +130,7 @@ const _kCols = [
     id: 'qty', label: 'QTY', pickerLabel: 'Quantity',
     description: 'Number of printed pieces',
     icon: Icons.inventory_2_outlined,
-    mandatory: false, defaultOn: false, flex: 1,
+    mandatory: false, defaultOn: false, flex: 2,
   ),
   _ColDef(
     id: 'assignee', label: 'ASSIGNEE', pickerLabel: 'Assignee',
@@ -142,16 +138,15 @@ const _kCols = [
     icon: Icons.person_outline_rounded,
     mandatory: false, defaultOn: false, flex: 2,
   ),
-  // _ColDef(
-  //   id: 'description', label: 'DESCRIPTION', pickerLabel: 'Description',
-  //   description: 'Task description (truncated)',
-  //   icon: Icons.notes_rounded,
-  //   mandatory: false, defaultOn: false, flex: 3,
-  // ),
 ];
 
 Set<String> get _kDefaultOptionalOn => _kCols
     .where((c) => !c.mandatory && c.defaultOn)
+    .map((c) => c.id)
+    .toSet();
+
+Set<String> get _kMandatoryIds => _kCols
+    .where((c) => c.mandatory)
     .map((c) => c.id)
     .toSet();
 
@@ -166,12 +161,17 @@ class TaskListView extends ConsumerStatefulWidget {
   final int?              selectedTaskId;
   final ValueChanged<int> onTaskSelected;
 
+  /// When true the detail panel is open — animate to mandatory columns only.
+  /// When false (panel closed) — animate back to the user's saved columns.
+  final bool              isDetailOpen;
+
   const TaskListView({
     super.key,
     required this.tasks,
     required this.projects,
     required this.selectedTaskId,
     required this.onTaskSelected,
+    this.isDetailOpen = false,
   });
 
   @override
@@ -179,15 +179,15 @@ class TaskListView extends ConsumerStatefulWidget {
 }
 
 class _TaskListViewState extends ConsumerState<TaskListView> {
+  /// Columns the user has explicitly enabled (optional only).
   Set<String> _visibleOptional = {};
 
-  Set<String> get _visible => {
-    ..._kCols.where((c) => c.mandatory).map((c) => c.id),
-    ..._visibleOptional,
-  };
-
-  List<_ColDef> get _visibleCols =>
-      _kCols.where((c) => _visible.contains(c.id)).toList();
+  /// The "effective" visible set — when detail panel is open, collapses to
+  /// mandatory only. Otherwise uses the user's saved optional set.
+  Set<String> get _effectiveVisible {
+    if (widget.isDetailOpen) return _kMandatoryIds;
+    return {..._kMandatoryIds, ..._visibleOptional};
+  }
 
   @override
   void initState() {
@@ -196,6 +196,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _loadPrefs();
   }
 
+  // ── Persistence ────────────────────────────────────────────────────────────
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final raw   = prefs.getString(_kPrefsKey);
@@ -224,42 +225,69 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _savePrefs();
   }
 
+  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final members = ref.watch(memberNotifierProvider).members;
-    final tasks   = widget.tasks.reversed.toList();
-    final cols    = _visibleCols;
+    final members   = ref.watch(memberNotifierProvider).members;
+    final tasks     = widget.tasks.reversed.toList();
+    // Pass full _kCols list — each column decides its own visibility/width.
+    final effective = _effectiveVisible;
 
     return Container(
       color: _T.slate50,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          // ── Header bar ────────────────────────────────────────────────
-          _HeaderBar(
-            cols:            cols,
+          // ── Toolbar (Columns button lives here, above the table) ──────────
+          _Toolbar(
             visibleOptional: _visibleOptional,
+            isDetailOpen:    widget.isDetailOpen,
             onToggle:        _toggleColumn,
             onReset:         _resetToDefaults,
           ),
 
-          const Divider(height: 1, thickness: 1, color: _T.slate200),
+          // ── Column header row ─────────────────────────────────────────────
+          Container(
+            color: _T.white,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
+                  child: _AnimatedColRow(
+                    effectiveVisible: effective,
+                    builder: (col, animFraction) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+                      child: Opacity(
+                        opacity: animFraction,
+                        child: Text(
+                          col.label,
+                          style: const TextStyle(
+                            fontSize:      10.5,
+                            fontWeight:    FontWeight.w700,
+                            letterSpacing: 0.7,
+                            color:         _T.slate400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(height: 1, thickness: 1, color: _T.slate200),
+              ],
+            ),
+          ),
 
-          // ── Rows ──────────────────────────────────────────────────────
+          // ── Data rows ─────────────────────────────────────────────────────
           Expanded(
             child: tasks.isEmpty
                 ? _EmptyState()
                 : ListView.separated(
-                    // Horizontal padding matches _kRowHPad exactly.
-                    // Right side = _kRowHPad + _kColButtonGap + _kColButtonW
-                    // so data cells occupy the same flex region as headers.
-                    padding: EdgeInsets.fromLTRB(
-                      _kRowHPad,
-                      8,
-                      _kRowHPad + _kColButtonGap + _kColButtonW,
-                      8,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _kRowHPad,
+                      vertical:   8,
                     ),
-                    itemCount: tasks.length,
+                    itemCount:        tasks.length,
                     separatorBuilder: (_, __) =>
                         const Divider(height: 1, thickness: 1, color: _T.slate100),
                     itemBuilder: (_, i) {
@@ -281,12 +309,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       }
 
                       return _TaskRow(
-                        task:       t,
-                        project:    p,
-                        assignee:   m,
-                        cols:       cols,
-                        isSelected: widget.selectedTaskId == t.id,
-                        onTap:      () => widget.onTaskSelected(t.id),
+                        task:            t,
+                        project:         p,
+                        assignee:        m,
+                        effectiveVisible: effective,
+                        isSelected:      widget.selectedTaskId == t.id,
+                        onTap:           () => widget.onTaskSelected(t.id),
                       );
                     },
                   ),
@@ -298,94 +326,221 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HEADER BAR
+// ANIMATED COLUMN ROW
 //
-// Layout: [_kRowHPad] [flex columns…] [_kColButtonGap] [_kColButtonW] [_kRowHPad]
+// Renders ALL _kCols in a single Row. Each column is wrapped in an
+// AnimatedContainer that transitions its width between its natural flex-based
+// size (visible) and 0 (hidden). Opacity fades in parallel.
 //
-// The flex columns in this Row occupy exactly the same horizontal space as
-// the flex columns in the ListView rows (which are padded identically on the
-// right). This is the single source of truth for alignment.
+// Because Flutter's Row with Expanded children doesn't support animating
+// flex, we use a LayoutBuilder to measure available width and allocate
+// pixel widths manually, then animate with AnimatedContainer.
+//
+// Visible columns share the available width proportionally to their flex.
+// Hidden columns animate from their last pixel size down to 0.
 // ─────────────────────────────────────────────────────────────────────────────
-class _HeaderBar extends StatelessWidget {
-  final List<_ColDef>          cols;
-  final Set<String>            visibleOptional;
-  final void Function(String)  onToggle;
-  final VoidCallback           onReset;
+typedef _ColCellBuilder = Widget Function(_ColDef col, double opacityFraction);
 
-  const _HeaderBar({
-    required this.cols,
+class _AnimatedColRow extends StatefulWidget {
+  final Set<String>    effectiveVisible;
+  final _ColCellBuilder builder;
+
+  const _AnimatedColRow({
+    required this.effectiveVisible,
+    required this.builder,
+  });
+
+  @override
+  State<_AnimatedColRow> createState() => _AnimatedColRowState();
+}
+
+class _AnimatedColRowState extends State<_AnimatedColRow>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _ac;
+  // Per-column target widths (0 = hidden, >0 = visible).
+  // Stored so we can lerp from previous to new target on each transition.
+  Map<String, double> _prevWidths  = {};
+  Map<String, double> _targetWidths = {};
+  double _lastAvailableWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ac = AnimationController(vsync: this, duration: _kColAnimDuration)
+      ..addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
+
+  Map<String, double> _computeTargets(double availWidth) {
+    final visibleCols = _kCols.where((c) => widget.effectiveVisible.contains(c.id)).toList();
+    final totalFlex   = visibleCols.fold<int>(0, (s, c) => s + c.flex);
+    final result      = <String, double>{};
+    for (final col in _kCols) {
+      if (widget.effectiveVisible.contains(col.id)) {
+        result[col.id] = totalFlex > 0 ? (col.flex / totalFlex) * availWidth : 0;
+      } else {
+        result[col.id] = 0;
+      }
+    }
+    return result;
+  }
+
+  void _startTransition(double availWidth) {
+    final newTargets = _computeTargets(availWidth);
+    // Only animate if something actually changed
+    bool changed = newTargets.entries.any(
+      (e) => (e.value - (_targetWidths[e.key] ?? 0)).abs() > 0.5,
+    );
+    if (!changed && availWidth == _lastAvailableWidth) return;
+
+    _prevWidths      = _currentWidths(availWidth);
+    _targetWidths    = newTargets;
+    _lastAvailableWidth = availWidth;
+    _ac.forward(from: 0);
+  }
+
+  // Interpolated widths at the current animation value
+  Map<String, double> _currentWidths(double availWidth) {
+    if (_targetWidths.isEmpty) return _computeTargets(availWidth);
+    final t = _ac.value;
+    return {
+      for (final col in _kCols)
+        col.id: _lerpD(
+          _prevWidths[col.id] ?? _targetWidths[col.id] ?? 0,
+          _targetWidths[col.id] ?? 0,
+          t,
+        ),
+    };
+  }
+
+  static double _lerpD(double a, double b, double t) => a + (b - a) * t;
+
+  @override
+  void didUpdateWidget(_AnimatedColRow old) {
+    super.didUpdateWidget(old);
+    if (old.effectiveVisible != widget.effectiveVisible && _lastAvailableWidth > 0) {
+      _startTransition(_lastAvailableWidth);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final avail = constraints.maxWidth;
+        // On first layout or available width change, recompute without animation
+        if (_lastAvailableWidth == 0) {
+          _targetWidths       = _computeTargets(avail);
+          _prevWidths         = Map.from(_targetWidths);
+          _lastAvailableWidth = avail;
+        } else if ((avail - _lastAvailableWidth).abs() > 1) {
+          // Window resize — snap immediately, no animation
+          _targetWidths       = _computeTargets(avail);
+          _prevWidths         = Map.from(_targetWidths);
+          _lastAvailableWidth = avail;
+        }
+
+        final widths = _currentWidths(avail);
+
+        return Row(
+          children: _kCols.map((col) {
+            final w       = widths[col.id] ?? 0;
+            final visible = widget.effectiveVisible.contains(col.id);
+            // Opacity: lerp from 0→1 (appear) or 1→0 (disappear) with the same timing
+            final opacity = visible
+                ? Curves.easeOut.transform(_ac.isAnimating ? _ac.value : 1.0)
+                : Curves.easeIn.transform(_ac.isAnimating ? (1 - _ac.value) : 0.0);
+
+            return SizedBox(
+              width: w,
+              child: w < 1
+                  ? const SizedBox.shrink()
+                  : widget.builder(col, opacity.clamp(0.0, 1.0)),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOLBAR
+//
+// A slim bar above the column headers that holds the Columns picker button
+// (and can host future controls like search/filter on the left).
+// When isDetailOpen, the button is disabled and shows a subtle "panel open"
+// hint so the user knows why their optional columns have collapsed.
+// ─────────────────────────────────────────────────────────────────────────────
+class _Toolbar extends StatelessWidget {
+  final Set<String>           visibleOptional;
+  final bool                  isDetailOpen;
+  final void Function(String) onToggle;
+  final VoidCallback          onReset;
+
+  const _Toolbar({
     required this.visibleOptional,
+    required this.isDetailOpen,
     required this.onToggle,
     required this.onReset,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasCustom = !_setsEqual(visibleOptional, _kDefaultOptionalOn);
-
     return Container(
-      color: _T.white,
-      padding: EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
+      height: 44,
+      decoration: const BoxDecoration(
+        color:  _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate100)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Left side — placeholder for future search/filter controls
+          const Spacer(),
 
-          // Flex column headers — same widths as the data cells
-          Expanded(
-            child: Row(
-              children: cols.map((c) => Expanded(
-                flex: c.flex,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    c.label,
-                    style: const TextStyle(
-                      fontSize:      10.5,
-                      fontWeight:    FontWeight.w700,
-                      letterSpacing: 0.7,
-                      color:         _T.slate400,
-                    ),
+          // Detail-open hint — replaces the button when panel is active
+          if (isDetailOpen)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(_T.r),
+                border:       Border.all(color: _T.slate200),
+              ),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.view_sidebar_outlined, size: 13, color: _T.slate400),
+                SizedBox(width: 6),
+                Text(
+                  'Showing core columns',
+                  style: TextStyle(
+                    fontSize:   11.5,
+                    fontWeight: FontWeight.w500,
+                    color:      _T.slate400,
                   ),
                 ),
-              )).toList(),
-            ),
-          ),
-
-          // Fixed gap — mirrors the right-side padding in ListView
-          const SizedBox(width: _kColButtonGap),
-
-          // Columns picker button — fixed width = _kColButtonW
-          SizedBox(
-            width: _kColButtonW,
-            child: _ColumnPickerButton(
+              ]),
+            )
+          else
+            _ColumnPickerButton(
               visibleOptional: visibleOptional,
               onToggle:        onToggle,
               onReset:         onReset,
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-bool _setsEqual(Set<String> a, Set<String> b) =>
-    a.length == b.length && a.containsAll(b);
-
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN PICKER BUTTON + OVERLAY
-//
-// FIX: markNeedsBuild() removed entirely.
-// The overlay rebuilds automatically via didUpdateWidget because the parent
-// (_HeaderBar → _TaskListViewState) calls setState when columns change,
-// which re-renders _ColumnPickerButton with fresh props, triggering
-// didUpdateWidget → _overlay?.markNeedsBuild() is NOT needed and causes
-// "setState during build" when the toggle fires while the panel is open.
-//
-// Instead the overlay is rebuilt via AnimatedBuilder on _ac (which is always
-// ticking while open), and the panel receives its state directly from widget
-// props passed through the OverlayEntry builder closure — which re-evaluates
-// on every frame while animating, and is invalidated by the parent rebuild.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerButton extends StatefulWidget {
   final Set<String>           visibleOptional;
@@ -407,10 +562,6 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
-
-  // Local copy of state that the overlay closure reads.
-  // Updated in didUpdateWidget so the panel sees fresh data without
-  // calling markNeedsBuild() during a build frame.
   late Set<String> _overlayVisible;
 
   late final AnimationController _ac = AnimationController(
@@ -418,13 +569,10 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
     duration: const Duration(milliseconds: 190),
   );
   late final Animation<double> _fade = CurvedAnimation(
-    parent:       _ac,
-    curve:        Curves.easeOut,
-    reverseCurve: Curves.easeIn,
+    parent: _ac, curve: Curves.easeOut, reverseCurve: Curves.easeIn,
   );
   late final Animation<Offset> _slide = Tween<Offset>(
-    begin: const Offset(0, -0.05),
-    end:   Offset.zero,
+    begin: const Offset(0, -0.05), end: Offset.zero,
   ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
 
   @override
@@ -436,11 +584,6 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   @override
   void didUpdateWidget(_ColumnPickerButton old) {
     super.didUpdateWidget(old);
-    // Keep our local copy in sync. The overlay closure reads _overlayVisible,
-    // and AnimatedBuilder on _ac will trigger a repaint on the next frame
-    // after the animation tick — but if the panel is static (animation done),
-    // we schedule a post-frame rebuild via markNeedsBuild safely here,
-    // because didUpdateWidget is called AFTER the current build completes.
     _overlayVisible = Set.from(widget.visibleOptional);
     if (_open) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -477,45 +620,39 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
     _overlay = null;
   }
 
-  OverlayEntry _buildOverlay() {
-    return OverlayEntry(
-      builder: (_) => Stack(
-        children: [
-          // Tap-away dismisser
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap:    _close,
-              child:    const SizedBox.expand(),
+  OverlayEntry _buildOverlay() => OverlayEntry(
+    builder: (_) => Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap:    _close,
+            child:    const SizedBox.expand(),
+          ),
+        ),
+        CompositedTransformFollower(
+          link:           _layerLink,
+          showWhenUnlinked: false,
+          targetAnchor:   Alignment.bottomRight,
+          followerAnchor: Alignment.topRight,
+          offset:         const Offset(0, 6),
+          child: AnimatedBuilder(
+            animation: _ac,
+            builder: (_, child) => FadeTransition(
+              opacity: _fade,
+              child:   SlideTransition(position: _slide, child: child),
+            ),
+            child: _ColumnPickerPanel(
+              visibleOptional: _overlayVisible,
+              onToggle:        widget.onToggle,
+              onReset:         widget.onReset,
+              onClose:         _close,
             ),
           ),
-          // Panel
-          CompositedTransformFollower(
-            link:             _layerLink,
-            showWhenUnlinked: false,
-            targetAnchor:     Alignment.bottomRight,
-            followerAnchor:   Alignment.topRight,
-            offset:           const Offset(0, 6),
-            child: AnimatedBuilder(
-              animation: _ac,
-              builder: (_, child) => FadeTransition(
-                opacity: _fade,
-                child:   SlideTransition(position: _slide, child: child),
-              ),
-              // child is rebuilt each time _overlay.markNeedsBuild() fires
-              // (post-frame, safe) or on the next animation tick.
-              child: _ColumnPickerPanel(
-                visibleOptional: _overlayVisible,
-                onToggle: widget.onToggle, // calls parent setState — no markNeedsBuild here
-                onReset:  widget.onReset,
-                onClose:  _close,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -532,31 +669,21 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
             duration: const Duration(milliseconds: 130),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: _open
-                  ? _T.slate100
-                  : (hasCustom ? _T.blue50 : _T.white),
+              color: _open ? _T.slate100 : (hasCustom ? _T.blue50 : _T.white),
               border: Border.all(
-                color: _open
-                    ? _T.slate300
+                color: _open ? _T.slate300
                     : (hasCustom ? _T.blue.withOpacity(0.3) : _T.slate200),
               ),
               borderRadius: BorderRadius.circular(_T.r),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(
-                Icons.view_column_outlined,
-                size:  14,
-                color: _open || hasCustom ? _T.blue : _T.slate400,
-              ),
+              Icon(Icons.view_column_outlined, size: 14,
+                  color: _open || hasCustom ? _T.blue : _T.slate400),
               const SizedBox(width: 6),
-              Text(
-                'Columns',
-                style: TextStyle(
-                  fontSize:   12,
-                  fontWeight: FontWeight.w600,
-                  color: _open || hasCustom ? _T.blue : _T.ink3,
-                ),
-              ),
+              Text('Columns', style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600,
+                color: _open || hasCustom ? _T.blue : _T.ink3,
+              )),
               if (optionalOnCount > 0) ...[
                 const SizedBox(width: 6),
                 Container(
@@ -565,14 +692,10 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                     color:        hasCustom ? _T.blue : _T.slate200,
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Text(
-                    '$optionalOnCount',
-                    style: TextStyle(
-                      fontSize:   9.5,
-                      fontWeight: FontWeight.w800,
-                      color: hasCustom ? Colors.white : _T.slate500,
-                    ),
-                  ),
+                  child: Text('$optionalOnCount', style: TextStyle(
+                    fontSize: 9.5, fontWeight: FontWeight.w800,
+                    color: hasCustom ? Colors.white : _T.slate500,
+                  )),
                 ),
               ],
               const SizedBox(width: 4),
@@ -591,7 +714,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COLUMN PICKER PANEL — unchanged logic, unchanged design
+// COLUMN PICKER PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerPanel extends StatelessWidget {
   final Set<String>           visibleOptional;
@@ -631,7 +754,6 @@ class _ColumnPickerPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             // Header
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
@@ -650,13 +772,10 @@ class _ColumnPickerPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Manage Columns', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
-                      Text('Customise what you see in the list', style: TextStyle(fontSize: 10.5, color: _T.slate400)),
-                    ],
-                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Manage Columns', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
+                    Text('Customise what you see in the list', style: TextStyle(fontSize: 10.5, color: _T.slate400)),
+                  ]),
                 ),
                 GestureDetector(
                   onTap: onClose,
@@ -668,33 +787,28 @@ class _ColumnPickerPanel extends StatelessWidget {
                 ),
               ]),
             ),
-
             // Body
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SectionLabel('Always visible'),
-                    const SizedBox(height: 8),
-                    ...mandatoryCols.map((c) => _LockedColRow(col: c)),
-                    const SizedBox(height: 16),
-                    const Divider(height: 1, color: _T.slate100),
-                    const SizedBox(height: 14),
-                    _SectionLabel('Optional columns'),
-                    const SizedBox(height: 8),
-                    ...optionalCols.map((c) => _ToggleColRow(
-                      col:     c,
-                      enabled: visibleOptional.contains(c.id),
-                      onTap:   () => onToggle(c.id),
-                    )),
-                    const SizedBox(height: 4),
-                  ],
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _SectionLabel('Always visible'),
+                  const SizedBox(height: 8),
+                  ...mandatoryCols.map((c) => _LockedColRow(col: c)),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1, color: _T.slate100),
+                  const SizedBox(height: 14),
+                  _SectionLabel('Optional columns'),
+                  const SizedBox(height: 8),
+                  ...optionalCols.map((c) => _ToggleColRow(
+                    col:     c,
+                    enabled: visibleOptional.contains(c.id),
+                    onTap:   () => onToggle(c.id),
+                  )),
+                  const SizedBox(height: 4),
+                ]),
               ),
             ),
-
             // Footer
             Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -708,19 +822,14 @@ class _ColumnPickerPanel extends StatelessWidget {
                 GestureDetector(
                   onTap: isDefault ? null : onReset,
                   child: MouseRegion(
-                    cursor: isDefault
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: Text(
-                      'Reset to defaults',
-                      style: TextStyle(
-                        fontSize:       12,
-                        fontWeight:     FontWeight.w600,
-                        color:          isDefault ? _T.slate300 : _T.slate500,
-                        decoration:     isDefault ? TextDecoration.none : TextDecoration.underline,
-                        decorationColor: _T.slate400,
-                      ),
-                    ),
+                    cursor: isDefault ? SystemMouseCursors.basic : SystemMouseCursors.click,
+                    child: Text('Reset to defaults', style: TextStyle(
+                      fontSize:        12,
+                      fontWeight:      FontWeight.w600,
+                      color:           isDefault ? _T.slate300 : _T.slate500,
+                      decoration:      isDefault ? TextDecoration.none : TextDecoration.underline,
+                      decorationColor: _T.slate400,
+                    )),
                   ),
                 ),
                 const Spacer(),
@@ -750,9 +859,8 @@ class _LockedColRow extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color:        _T.slate50,
-        borderRadius: BorderRadius.circular(_T.r),
-        border:       Border.all(color: _T.slate200),
+        color: _T.slate50, borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
       ),
       child: Row(children: [
         Container(
@@ -795,55 +903,44 @@ class _ToggleColRowState extends State<_ToggleColRow> {
         onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 4),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: widget.enabled
                   ? _T.blue.withOpacity(0.05)
                   : (_hovering ? _T.slate50 : Colors.transparent),
+              borderRadius: BorderRadius.circular(_T.r),
               border: Border.all(
-                color: widget.enabled
-                    ? _T.blue.withOpacity(0.2)
+                color: widget.enabled ? _T.blue.withOpacity(0.2)
                     : (_hovering ? _T.slate200 : Colors.transparent),
               ),
-              borderRadius: BorderRadius.circular(_T.r),
             ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_T.r),
+            child: Row(children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                width: 26, height: 26,
+                decoration: BoxDecoration(
+                  color: widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(widget.col.icon, size: 13,
+                    color: widget.enabled ? _T.blue : _T.slate400),
               ),
-              child: Row(children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
-                  width: 26, height: 26,
-                  decoration: BoxDecoration(
-                    color: widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(widget.col.icon, size: 13,
-                      color: widget.enabled ? _T.blue : _T.slate400),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.col.pickerLabel,
-                          style: TextStyle(
-                            fontSize:   12.5,
-                            fontWeight: FontWeight.w600,
-                            color: widget.enabled ? _T.ink : _T.ink3,
-                          )),
-                      Text(widget.col.description,
-                          style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _MiniSwitch(value: widget.enabled, onChanged: (_) => widget.onTap()),
-              ]),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(widget.col.pickerLabel, style: TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.w600,
+                    color: widget.enabled ? _T.ink : _T.ink3,
+                  )),
+                  Text(widget.col.description,
+                      style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
+                ]),
+              ),
+              const SizedBox(width: 8),
+              _MiniSwitch(value: widget.enabled, onChanged: (_) => widget.onTap()),
+            ]),
           ),
         ),
       ),
@@ -855,7 +952,7 @@ class _ToggleColRowState extends State<_ToggleColRow> {
 // MINI SWITCH
 // ─────────────────────────────────────────────────────────────────────────────
 class _MiniSwitch extends StatelessWidget {
-  final bool                value;
+  final bool value;
   final ValueChanged<bool>? onChanged;
   const _MiniSwitch({required this.value, this.onChanged});
 
@@ -863,13 +960,13 @@ class _MiniSwitch extends StatelessWidget {
   Widget build(BuildContext context) => SizedBox(
     height: 22,
     child: Switch(
-      value:                  value,
-      onChanged:              onChanged,
-      materialTapTargetSize:  MaterialTapTargetSize.shrinkWrap,
-      activeColor:            _T.blue,
-      inactiveThumbColor:     _T.slate300,
-      inactiveTrackColor:     _T.slate200,
-      trackOutlineColor:      WidgetStateProperty.all(Colors.transparent),
+      value:                 value,
+      onChanged:             onChanged,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      activeColor:           _T.blue,
+      inactiveThumbColor:    _T.slate300,
+      inactiveTrackColor:    _T.slate200,
+      trackOutlineColor:     WidgetStateProperty.all(Colors.transparent),
       thumbColor: WidgetStateProperty.resolveWith((states) =>
           states.contains(WidgetState.selected) ? Colors.white : _T.slate300),
     ),
@@ -887,33 +984,28 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text.toUpperCase(),
     style: const TextStyle(
-      fontSize:      9.5,
-      fontWeight:    FontWeight.w700,
-      letterSpacing: 0.8,
-      color:         _T.slate400,
+      fontSize: 9.5, fontWeight: FontWeight.w700,
+      letterSpacing: 0.8, color: _T.slate400,
     ),
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
-//
-// Padding: EdgeInsets.zero — the ListView already handles horizontal padding
-// via its own padding property. The flex cells align directly with headers.
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends StatefulWidget {
-  final Task      task;
-  final Project?  project;
-  final Member?   assignee;
-  final List<_ColDef> cols;
-  final bool      isSelected;
+  final Task          task;
+  final Project?      project;
+  final Member?       assignee;
+  final Set<String>   effectiveVisible;
+  final bool          isSelected;
   final VoidCallback  onTap;
 
   const _TaskRow({
     required this.task,
     required this.project,
     required this.assignee,
-    required this.cols,
+    required this.effectiveVisible,
     required this.isSelected,
     required this.onTap,
   });
@@ -944,26 +1036,22 @@ class _TaskRowState extends State<_TaskRow> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit:  (_) => setState(() => _hovered = false),
       child: Material(
-        color: widget.isSelected
-            ? _T.blue50
-            : (_hovered ? _T.slate50 : _T.white),
+        color: widget.isSelected ? _T.blue50 : (_hovered ? _T.slate50 : _T.white),
         borderRadius: BorderRadius.circular(_T.r),
         child: InkWell(
           onTap:        widget.onTap,
           borderRadius: BorderRadius.circular(_T.r),
           child: Padding(
-            // Vertical padding only — horizontal comes from the ListView padding
             padding: const EdgeInsets.symmetric(vertical: 11),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: widget.cols.map((c) => Expanded(
-                flex: c.flex,
-                child: Padding(
-                  // Cell inner padding — matches header cell padding exactly
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _cellFor(c, t, p, m, s, dateDisplay),
+            child: _AnimatedColRow(
+              effectiveVisible: widget.effectiveVisible,
+              builder: (col, opacity) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+                child: Opacity(
+                  opacity: opacity,
+                  child: _cellFor(col, t, p, m, s, dateDisplay),
                 ),
-              )).toList(),
+              ),
             ),
           ),
         ),
@@ -973,10 +1061,8 @@ class _TaskRowState extends State<_TaskRow> {
 
   Widget _cellFor(_ColDef col, Task t, Project? p, Member? m, dynamic s, String date) {
     return switch (col.id) {
-      'task' => Text(
-          t.name,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink),
-        ),
+      'task' => Text(t.name,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink)),
 
       'project' => p != null
           ? Row(children: [
@@ -992,22 +1078,18 @@ class _TaskRowState extends State<_TaskRow> {
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color:        _T.slate100,
-                borderRadius: BorderRadius.circular(4),
-                border:       Border.all(color: _T.slate200),
+                color: _T.slate100, borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: _T.slate200),
               ),
-              child: Text(t.ref!,
-                  style: const TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w600,
-                    color: _T.ink3, fontFamily: 'monospace',
-                  ),
-                  overflow: TextOverflow.ellipsis),
+              child: Text(t.ref!, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                      color: _T.ink3, fontFamily: 'monospace')),
             )
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
-      'stage' => StagePill(stageInfo: s),
+      'stage'    => StagePill(stageInfo: s),
 
-      'date' => Text(date,
+      'date'     => Text(date,
           style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
 
       'priority' => PriorityPill(priority: t.priority),
@@ -1017,16 +1099,14 @@ class _TaskRowState extends State<_TaskRow> {
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
                 TextSpan(text: t.size),
-                const TextSpan(text: ' cm',
-                    style: TextStyle(fontSize: 11, color: _T.slate400)),
+                const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
               ],
             ))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'qty' => t.quantity != null
-          ? Text('${t.quantity}',
-              style: const TextStyle(
-                  fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3))
+          ? Text('${t.quantity}', style: const TextStyle(
+              fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'assignee' => m != null
@@ -1036,16 +1116,6 @@ class _TaskRowState extends State<_TaskRow> {
               Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
             ])
-          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
-
-      'description' => t.description.isNotEmpty
-          ? Text(
-              t.description.length > 60
-                  ? '${t.description.substring(0, 60)}…'
-                  : t.description,
-              style: const TextStyle(fontSize: 11.5, color: _T.slate400),
-              overflow: TextOverflow.ellipsis,
-            )
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       _ => const SizedBox.shrink(),
@@ -1065,8 +1135,7 @@ class _EmptyState extends StatelessWidget {
         Container(
           width: 52, height: 52,
           decoration: BoxDecoration(
-            color:        _T.slate100,
-            borderRadius: BorderRadius.circular(14),
+            color: _T.slate100, borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.assignment_outlined, size: 24, color: _T.slate400),
         ),
@@ -1080,3 +1149,9 @@ class _EmptyState extends StatelessWidget {
     ),
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+bool _setsEqual(Set<String> a, Set<String> b) =>
+    a.length == b.length && a.containsAll(b);

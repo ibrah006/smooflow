@@ -166,6 +166,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   // ── Stage-back handler — only data call, no new logic ────────────────────
 
   Future<void> _stageBackTo(TaskStatus target) async {
+    print("target task status: $target");
     await ref.watch(taskNotifierProvider.notifier).progressStage(
       taskId:    widget.task.id,
       newStatus: target,
