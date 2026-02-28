@@ -7,6 +7,7 @@ import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -59,7 +60,6 @@ class _T {
 // and add its import at the top of this file.  The metadata class and the
 // _kBillingStatuses list should stay here — they are UI-layer concerns.
 // ─────────────────────────────────────────────────────────────────────────────
-enum BillingStatus { pending, quoteGiven, invoiced, foc, cancelled }
 
 class _BillingMeta {
   final BillingStatus value;
@@ -235,10 +235,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _saveBillingStatus() async {
     setState(() => _billingSaving = true);
     try {
-      await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
-        taskId: widget.task.id,
-        status: _billingSelection,
-      );
+      // await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
+      //   taskId: widget.task.id,
+      //   status: _billingSelection,
+      // );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Row(children: [
@@ -397,7 +398,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
 
     // Print-specs visibility flags
-    final hasRef  = widget.task.reference?.isNotEmpty == true;
+    final hasRef  = widget.task.ref?.isNotEmpty == true;
     final hasSize = widget.task.size != null;
     final hasQty  = widget.task.quantity != null;
     final hasPrintSpecs = hasRef || hasSize || hasQty;
@@ -526,8 +527,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     const SizedBox(height: 10),
                     _PrintSpecsCard(
                       reference: widget.task.ref,
-                      sizeW:     widget.task.sizeW,
-                      sizeH:     widget.task.sizeH,
+                      size:     widget.task.size,
                       quantity:  widget.task.quantity,
                     ),
                     const SizedBox(height: 18),

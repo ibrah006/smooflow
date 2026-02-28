@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/helpers/task_component_helper.dart';
@@ -47,6 +48,8 @@ class Task {
   String? _ref, _size;
   int? _quantity;
 
+  BillingStatus _billingStatus;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -75,7 +78,8 @@ class Task {
     required DateTime createdAt,
     required String? ref,
     required String? size,
-    required int? quantity
+    required int? quantity,
+    required BillingStatus billingStatus
   }) : _id = id,
        _name = name,
        _description = description,
@@ -93,7 +97,8 @@ class Task {
        _createdAt = createdAt,
        _ref = ref,
        _size = size,
-       _quantity = quantity {
+       _quantity = quantity,
+       _billingStatus = billingStatus {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
     _actualProductionStartTime = actualProductionStartTime;
@@ -134,7 +139,8 @@ class Task {
        _ref = ref,
        _size = size,
        _quantity = quantity,
-       _createdAt = DateTime.now();
+       _createdAt = DateTime.now(),
+       _billingStatus = BillingStatus.pending;
 
   // To ensure toSet gives no duplicates
   @override
@@ -179,6 +185,8 @@ class Task {
   int? get quantity=> _quantity;
 
   TaskPriority get priority => _priority;
+
+  BillingStatus get billingStatus => _billingStatus;
 
   void addAssignee(String userId) {
     _assignees.add(userId);
@@ -249,6 +257,10 @@ class Task {
     _quantity = quantity;
   }
 
+  set billingStatus(BillingStatus value) {
+    _billingStatus = value;
+  }
+
   factory Task.fromJson(Map<String, dynamic> json) {
 
     final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
@@ -305,7 +317,8 @@ class Task {
               : null,
       ref: json["ref"],
       size: json["size"],
-      quantity: json["quantity"]
+      quantity: json["quantity"],
+      billingStatus: json["billingStatus"] == null? BillingStatus.pending : BillingStatus.values.byName(json["billingStatus"])
     );
   }
 
@@ -322,7 +335,8 @@ class Task {
       workActivityLogs = original.workActivityLogs,
       _ref = original._ref,
       _size = original._size,
-      _quantity = original._quantity {
+      _quantity = original._quantity,
+      _billingStatus = original._billingStatus {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -345,7 +359,7 @@ class Task {
   @Deprecated(
     "This constructor is deprecated and will be removed in future versions",
   )
-  Task.empty() : progressLogIds = [], workActivityLogs = [];
+  Task.empty() : progressLogIds = [], workActivityLogs = [], _billingStatus = BillingStatus.pending;
 
   // Copy With method
   @Deprecated(
@@ -415,6 +429,12 @@ class Task {
     newTask._color = color ?? _color;
     newTask._icon = icon ?? _icon;
 
+    newTask.size = size;
+    newTask.ref = ref;
+    newTask.quantity = quantity;
+
+    newTask.billingStatus = billingStatus;
+
     return newTask;
   }
 
@@ -451,6 +471,7 @@ class Task {
       'ref': _ref,
       'size': _size,
       'quantity': _quantity,
+      "billingStatus": billingStatus.name
     };
     try {
       return {'id': id, ...json};
