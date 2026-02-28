@@ -179,7 +179,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
       _isLoading = true;
     });
     
-    // try {
+    try {
       final newTask = Task.create(
         name: _nameCtrl.text,
         description: "",
@@ -193,9 +193,9 @@ class _TaskCardState extends ConsumerState<TaskCard>
       await ref.watch(projectNotifierProvider.notifier).createTask(task: newTask);
 
       ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
-    // } catch(e) {
-    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
-    // }
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
+    }
 
     setState(() {
       _isLoading = false;
