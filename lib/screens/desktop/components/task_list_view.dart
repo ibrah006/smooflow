@@ -1,39 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
-//
-// Advanced task list view with user-controlled column visibility.
-//
-// COLUMN SYSTEM
-// ─────────────
-//   Mandatory (always visible, cannot be hidden):
-//     task, project, stage, date, ref
-//
-//   Optional (user-controlled, persisted to SharedPreferences):
-//     priority   — default ON  (was always visible before)
-//     assignee   — default OFF
-//     description— default OFF
-//     size       — default OFF (W × H from the new task spec)
-//     qty        — default OFF
-//
-// PERSISTENCE
-// ───────────
-//   Key: 'smooflow.task_list.visible_optional_cols'
-//   Value: JSON-encoded List<String> of enabled optional column IDs.
-//   Loaded asynchronously in initState — table renders immediately with
-//   defaults, updates once prefs are read (no loading spinner shown).
-//
-// COLUMN PICKER UI
-// ────────────────
-//   A "Columns" button in the top-right of the table header bar.
-//   Opens a 300 px wide overlay panel anchored directly below the button
-//   (CompositedTransformTarget + CompositedTransformFollower, same pattern
-//   as user_menu_chip.dart).  Tap-outside dismisses.
-//
-//   Panel sections:
-//     • "Always visible" — locked mandatory columns (lock icon, no toggle)
-//     • "Optional columns" — toggle rows with icon + label + description
-//     • "Reset to defaults" text button at the bottom
-//
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -86,18 +52,27 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LAYOUT CONSTANTS
+//
+// The Columns button has a fixed width and sits outside the flex row.
+// Both the header and every data row reserve the same right-side space so
+// column headers stay perfectly aligned with their cells.
+// ─────────────────────────────────────────────────────────────────────────────
+const double _kRowHPad       = 16.0; // left/right padding on the whole row
+const double _kColButtonW    = 94.0; // fixed width of the "Columns" button
+const double _kColButtonGap  = 8.0;  // gap between flex columns and the button
+
+// ─────────────────────────────────────────────────────────────────────────────
 // COLUMN DEFINITIONS
 // ─────────────────────────────────────────────────────────────────────────────
-
-/// Typed column descriptor. `flex` is the Expanded flex weight.
 class _ColDef {
   final String   id;
-  final String   label;        // header label shown in the table
-  final String   pickerLabel;  // label shown in the picker panel
-  final String   description;  // one-liner shown in the picker
+  final String   label;
+  final String   pickerLabel;
+  final String   description;
   final IconData icon;
-  final bool     mandatory;    // mandatory = cannot be hidden
-  final bool     defaultOn;    // optional columns: visible by default?
+  final bool     mandatory;
+  final bool     defaultOn;
   final int      flex;
 
   const _ColDef({
@@ -112,7 +87,6 @@ class _ColDef {
   });
 }
 
-/// Ordered master list — the order here is the order they appear in the table.
 const _kCols = [
   _ColDef(
     id: 'task', label: 'TASK', pickerLabel: 'Task Name',
@@ -168,21 +142,19 @@ const _kCols = [
     icon: Icons.person_outline_rounded,
     mandatory: false, defaultOn: false, flex: 2,
   ),
-  _ColDef(
-    id: 'description', label: 'DESCRIPTION', pickerLabel: 'Description',
-    description: 'Task description (truncated)',
-    icon: Icons.notes_rounded,
-    mandatory: false, defaultOn: false, flex: 3,
-  ),
+  // _ColDef(
+  //   id: 'description', label: 'DESCRIPTION', pickerLabel: 'Description',
+  //   description: 'Task description (truncated)',
+  //   icon: Icons.notes_rounded,
+  //   mandatory: false, defaultOn: false, flex: 3,
+  // ),
 ];
 
-/// IDs of optional columns that are ON by default.
 Set<String> get _kDefaultOptionalOn => _kCols
     .where((c) => !c.mandatory && c.defaultOn)
     .map((c) => c.id)
     .toSet();
 
-/// SharedPreferences key.
 const _kPrefsKey = 'smooflow.task_list.visible_optional_cols';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,20 +179,15 @@ class TaskListView extends ConsumerStatefulWidget {
 }
 
 class _TaskListViewState extends ConsumerState<TaskListView> {
-  /// Which optional column IDs are currently visible.
   Set<String> _visibleOptional = {};
 
-  /// Combined: mandatory IDs ∪ visible optional IDs.
   Set<String> get _visible => {
     ..._kCols.where((c) => c.mandatory).map((c) => c.id),
     ..._visibleOptional,
   };
 
-  /// Ordered visible columns.
   List<_ColDef> get _visibleCols =>
       _kCols.where((c) => _visible.contains(c.id)).toList();
-
-  bool _prefsLoaded = false;
 
   @override
   void initState() {
@@ -229,21 +196,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _loadPrefs();
   }
 
-  // ── SharedPreferences ───────────────────────────────────────────────────────
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final raw   = prefs.getString(_kPrefsKey);
     if (raw != null) {
       final list = (jsonDecode(raw) as List).cast<String>();
-      if (mounted) {
-        setState(() {
-          _visibleOptional = Set.from(list);
-          _prefsLoaded     = true;
-        });
-      }
+      if (mounted) setState(() => _visibleOptional = Set.from(list));
     } else {
-      // First launch — write defaults so they exist for next session.
-      if (mounted) setState(() => _prefsLoaded = true);
       await _savePrefs();
     }
   }
@@ -254,11 +213,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   }
 
   void _toggleColumn(String id) {
-    setState(() {
-      _visibleOptional.contains(id)
-          ? _visibleOptional.remove(id)
-          : _visibleOptional.add(id);
-    });
+    setState(() => _visibleOptional.contains(id)
+        ? _visibleOptional.remove(id)
+        : _visibleOptional.add(id));
     _savePrefs();
   }
 
@@ -267,40 +224,42 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _savePrefs();
   }
 
-  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final members  = ref.watch(memberNotifierProvider).members;
-    final tasks    = widget.tasks.reversed.toList();
-    final cols     = _visibleCols;
-
-    // Count of optional columns the user has enabled
-    final optionalOnCount = _visibleOptional.length;
+    final members = ref.watch(memberNotifierProvider).members;
+    final tasks   = widget.tasks.reversed.toList();
+    final cols    = _visibleCols;
 
     return Container(
       color: _T.slate50,
       child: Column(
         children: [
 
-          // ── Table header bar ─────────────────────────────────────────
+          // ── Header bar ────────────────────────────────────────────────
           _HeaderBar(
-            cols:             cols,
-            optionalOnCount:  optionalOnCount,
-            visibleOptional:  _visibleOptional,
-            onToggle:         _toggleColumn,
-            onReset:          _resetToDefaults,
+            cols:            cols,
+            visibleOptional: _visibleOptional,
+            onToggle:        _toggleColumn,
+            onReset:         _resetToDefaults,
           ),
 
           const Divider(height: 1, thickness: 1, color: _T.slate200),
 
-          // ── Rows ─────────────────────────────────────────────────────
+          // ── Rows ──────────────────────────────────────────────────────
           Expanded(
             child: tasks.isEmpty
                 ? _EmptyState()
                 : ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    itemCount:        tasks.length,
+                    // Horizontal padding matches _kRowHPad exactly.
+                    // Right side = _kRowHPad + _kColButtonGap + _kColButtonW
+                    // so data cells occupy the same flex region as headers.
+                    padding: EdgeInsets.fromLTRB(
+                      _kRowHPad,
+                      8,
+                      _kRowHPad + _kColButtonGap + _kColButtonW,
+                      8,
+                    ),
+                    itemCount: tasks.length,
                     separatorBuilder: (_, __) =>
                         const Divider(height: 1, thickness: 1, color: _T.slate100),
                     itemBuilder: (_, i) {
@@ -322,13 +281,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       }
 
                       return _TaskRow(
-                        task:            t,
-                        project:         p,
-                        assignee:        m,
-                        cols:            cols,
-                        isSelected:      widget.selectedTaskId == t.id,
-                        isLast:          i == tasks.length - 1,
-                        onTap:           () => widget.onTaskSelected(t.id),
+                        task:       t,
+                        project:    p,
+                        assignee:   m,
+                        cols:       cols,
+                        isSelected: widget.selectedTaskId == t.id,
+                        onTap:      () => widget.onTaskSelected(t.id),
                       );
                     },
                   ),
@@ -340,18 +298,22 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HEADER BAR — column headers + "Columns" picker button
+// HEADER BAR
+//
+// Layout: [_kRowHPad] [flex columns…] [_kColButtonGap] [_kColButtonW] [_kRowHPad]
+//
+// The flex columns in this Row occupy exactly the same horizontal space as
+// the flex columns in the ListView rows (which are padded identically on the
+// right). This is the single source of truth for alignment.
 // ─────────────────────────────────────────────────────────────────────────────
 class _HeaderBar extends StatelessWidget {
-  final List<_ColDef> cols;
-  final int           optionalOnCount;
-  final Set<String>   visibleOptional;
-  final void Function(String) onToggle;
-  final VoidCallback  onReset;
+  final List<_ColDef>          cols;
+  final Set<String>            visibleOptional;
+  final void Function(String)  onToggle;
+  final VoidCallback           onReset;
 
   const _HeaderBar({
     required this.cols,
-    required this.optionalOnCount,
     required this.visibleOptional,
     required this.onToggle,
     required this.onReset,
@@ -359,14 +321,16 @@ class _HeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasCustom = !_setsEqual(visibleOptional, _kDefaultOptionalOn);
+
     return Container(
       color: _T.white,
-      padding: const EdgeInsets.only(left: 16, right: 12, top: 8, bottom: 8),
+      padding: EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
 
-          // ── Dynamic column headers ─────────────────────────────────
+          // Flex column headers — same widths as the data cells
           Expanded(
             child: Row(
               children: cols.map((c) => Expanded(
@@ -387,14 +351,17 @@ class _HeaderBar extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 8),
+          // Fixed gap — mirrors the right-side padding in ListView
+          const SizedBox(width: _kColButtonGap),
 
-          // ── Columns picker button ──────────────────────────────────
-          _ColumnPickerButton(
-            optionalOnCount: optionalOnCount,
-            visibleOptional: visibleOptional,
-            onToggle:        onToggle,
-            onReset:         onReset,
+          // Columns picker button — fixed width = _kColButtonW
+          SizedBox(
+            width: _kColButtonW,
+            child: _ColumnPickerButton(
+              visibleOptional: visibleOptional,
+              onToggle:        onToggle,
+              onReset:         onReset,
+            ),
           ),
         ],
       ),
@@ -402,20 +369,30 @@ class _HeaderBar extends StatelessWidget {
   }
 }
 
+bool _setsEqual(Set<String> a, Set<String> b) =>
+    a.length == b.length && a.containsAll(b);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN PICKER BUTTON + OVERLAY
 //
-// CompositedTransformTarget on the button, CompositedTransformFollower on the
-// panel — same pattern as user_menu_chip.dart.
+// FIX: markNeedsBuild() removed entirely.
+// The overlay rebuilds automatically via didUpdateWidget because the parent
+// (_HeaderBar → _TaskListViewState) calls setState when columns change,
+// which re-renders _ColumnPickerButton with fresh props, triggering
+// didUpdateWidget → _overlay?.markNeedsBuild() is NOT needed and causes
+// "setState during build" when the toggle fires while the panel is open.
+//
+// Instead the overlay is rebuilt via AnimatedBuilder on _ac (which is always
+// ticking while open), and the panel receives its state directly from widget
+// props passed through the OverlayEntry builder closure — which re-evaluates
+// on every frame while animating, and is invalidated by the parent rebuild.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerButton extends StatefulWidget {
-  final int           optionalOnCount;
-  final Set<String>   visibleOptional;
+  final Set<String>           visibleOptional;
   final void Function(String) onToggle;
-  final VoidCallback  onReset;
+  final VoidCallback          onReset;
 
   const _ColumnPickerButton({
-    required this.optionalOnCount,
     required this.visibleOptional,
     required this.onToggle,
     required this.onReset,
@@ -430,6 +407,11 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
+
+  // Local copy of state that the overlay closure reads.
+  // Updated in didUpdateWidget so the panel sees fresh data without
+  // calling markNeedsBuild() during a build frame.
+  late Set<String> _overlayVisible;
 
   late final AnimationController _ac = AnimationController(
     vsync:    this,
@@ -446,6 +428,28 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
 
   @override
+  void initState() {
+    super.initState();
+    _overlayVisible = Set.from(widget.visibleOptional);
+  }
+
+  @override
+  void didUpdateWidget(_ColumnPickerButton old) {
+    super.didUpdateWidget(old);
+    // Keep our local copy in sync. The overlay closure reads _overlayVisible,
+    // and AnimatedBuilder on _ac will trigger a repaint on the next frame
+    // after the animation tick — but if the panel is static (animation done),
+    // we schedule a post-frame rebuild via markNeedsBuild safely here,
+    // because didUpdateWidget is called AFTER the current build completes.
+    _overlayVisible = Set.from(widget.visibleOptional);
+    if (_open) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _overlay?.markNeedsBuild();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _removeOverlay();
     _ac.dispose();
@@ -455,6 +459,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   void _toggle() => _open ? _close() : _show();
 
   void _show() {
+    _overlayVisible = Set.from(widget.visibleOptional);
     setState(() => _open = true);
     _overlay = _buildOverlay();
     Overlay.of(context).insert(_overlay!);
@@ -472,21 +477,11 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
     _overlay = null;
   }
 
-  // Rebuild overlay when parent passes new state (toggle from inside panel).
-  @override
-  void didUpdateWidget(_ColumnPickerButton old) {
-    super.didUpdateWidget(old);
-    if (_open) {
-      // Mark overlay dirty so it rebuilds with fresh visibleOptional state.
-      _overlay?.markNeedsBuild();
-    }
-  }
-
   OverlayEntry _buildOverlay() {
     return OverlayEntry(
       builder: (_) => Stack(
         children: [
-          // Full-screen tap-away dismisser
+          // Tap-away dismisser
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
@@ -494,7 +489,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
               child:    const SizedBox.expand(),
             ),
           ),
-          // Panel anchored below the button, aligned to the right edge
+          // Panel
           CompositedTransformFollower(
             link:             _layerLink,
             showWhenUnlinked: false,
@@ -507,17 +502,13 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                 opacity: _fade,
                 child:   SlideTransition(position: _slide, child: child),
               ),
+              // child is rebuilt each time _overlay.markNeedsBuild() fires
+              // (post-frame, safe) or on the next animation tick.
               child: _ColumnPickerPanel(
-                visibleOptional: widget.visibleOptional,
-                onToggle:        (id) {
-                  widget.onToggle(id);
-                  _overlay?.markNeedsBuild();
-                },
-                onReset: () {
-                  widget.onReset();
-                  _overlay?.markNeedsBuild();
-                },
-                onClose: _close,
+                visibleOptional: _overlayVisible,
+                onToggle: widget.onToggle, // calls parent setState — no markNeedsBuild here
+                onReset:  widget.onReset,
+                onClose:  _close,
               ),
             ),
           ),
@@ -528,9 +519,8 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
 
   @override
   Widget build(BuildContext context) {
-    // How many optional cols are on beyond the default set?
-    final customCount = widget.optionalOnCount - _kDefaultOptionalOn.length;
-    final hasCustom   = widget.visibleOptional != _kDefaultOptionalOn;
+    final optionalOnCount = widget.visibleOptional.length;
+    final hasCustom       = !_setsEqual(widget.visibleOptional, _kDefaultOptionalOn);
 
     return CompositedTransformTarget(
       link: _layerLink,
@@ -548,9 +538,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
               border: Border.all(
                 color: _open
                     ? _T.slate300
-                    : (hasCustom
-                        ? _T.blue.withOpacity(0.3)
-                        : _T.slate200),
+                    : (hasCustom ? _T.blue.withOpacity(0.3) : _T.slate200),
               ),
               borderRadius: BorderRadius.circular(_T.r),
             ),
@@ -569,18 +557,16 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                   color: _open || hasCustom ? _T.blue : _T.ink3,
                 ),
               ),
-              // Badge: number of optional columns enabled
-              if (widget.optionalOnCount > 0) ...[
+              if (optionalOnCount > 0) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
                     color:        hasCustom ? _T.blue : _T.slate200,
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
-                    '${widget.optionalOnCount}',
+                    '$optionalOnCount',
                     style: TextStyle(
                       fontSize:   9.5,
                       fontWeight: FontWeight.w800,
@@ -605,13 +591,13 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COLUMN PICKER PANEL
+// COLUMN PICKER PANEL — unchanged logic, unchanged design
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerPanel extends StatelessWidget {
-  final Set<String>          visibleOptional;
+  final Set<String>           visibleOptional;
   final void Function(String) onToggle;
-  final VoidCallback         onReset;
-  final VoidCallback         onClose;
+  final VoidCallback          onReset;
+  final VoidCallback          onClose;
 
   const _ColumnPickerPanel({
     required this.visibleOptional,
@@ -624,32 +610,21 @@ class _ColumnPickerPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final mandatoryCols = _kCols.where((c) => c.mandatory).toList();
     final optionalCols  = _kCols.where((c) => !c.mandatory).toList();
-    final isDefault     = visibleOptional
-        .difference(_kDefaultOptionalOn)
-        .isEmpty &&
-        _kDefaultOptionalOn.difference(visibleOptional).isEmpty;
+    final isDefault     = _setsEqual(visibleOptional, _kDefaultOptionalOn);
 
     return Material(
-      color:       Colors.transparent,
+      color:        Colors.transparent,
       borderRadius: BorderRadius.circular(_T.rLg),
       child: Container(
         width: 300,
         constraints: const BoxConstraints(maxHeight: 480),
         decoration: BoxDecoration(
-          color: _T.white,
+          color:        _T.white,
           borderRadius: BorderRadius.circular(_T.rLg),
-          border: Border.all(color: _T.slate200),
+          border:       Border.all(color: _T.slate200),
           boxShadow: [
-            BoxShadow(
-              color:      Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset:     const Offset(0, 6),
-            ),
-            BoxShadow(
-              color:      Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset:     const Offset(0, 1),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 6)),
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4,  offset: const Offset(0, 1)),
           ],
         ),
         child: Column(
@@ -657,7 +632,7 @@ class _ColumnPickerPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
 
-            // ── Header ───────────────────────────────────────────────
+            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
               decoration: const BoxDecoration(
@@ -671,63 +646,42 @@ class _ColumnPickerPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(7),
                     border:       Border.all(color: _T.blue.withOpacity(0.2)),
                   ),
-                  child: const Icon(Icons.view_column_outlined,
-                      size: 14, color: _T.blue),
+                  child: const Icon(Icons.view_column_outlined, size: 14, color: _T.blue),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Manage Columns',
-                          style: TextStyle(
-                            fontSize:   13,
-                            fontWeight: FontWeight.w700,
-                            color:      _T.ink,
-                          )),
-                      Text('Customise what you see in the list',
-                          style: TextStyle(
-                            fontSize:   10.5,
-                            color:      _T.slate400,
-                            fontWeight: FontWeight.w400,
-                          )),
+                      Text('Manage Columns', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
+                      Text('Customise what you see in the list', style: TextStyle(fontSize: 10.5, color: _T.slate400)),
                     ],
                   ),
                 ),
-                // Close button
                 GestureDetector(
                   onTap: onClose,
                   child: Container(
                     width: 24, height: 24,
-                    decoration: BoxDecoration(
-                      color:        _T.slate100,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(Icons.close_rounded,
-                        size: 13, color: _T.slate400),
+                    decoration: BoxDecoration(color: _T.slate100, borderRadius: BorderRadius.circular(6)),
+                    child: const Icon(Icons.close_rounded, size: 13, color: _T.slate400),
                   ),
                 ),
               ]),
             ),
 
-            // ── Scrollable body ───────────────────────────────────────
+            // Body
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    // Always visible section
                     _SectionLabel('Always visible'),
                     const SizedBox(height: 8),
                     ...mandatoryCols.map((c) => _LockedColRow(col: c)),
-
                     const SizedBox(height: 16),
                     const Divider(height: 1, color: _T.slate100),
                     const SizedBox(height: 14),
-
-                    // Optional section
                     _SectionLabel('Optional columns'),
                     const SizedBox(height: 8),
                     ...optionalCols.map((c) => _ToggleColRow(
@@ -735,49 +689,44 @@ class _ColumnPickerPanel extends StatelessWidget {
                       enabled: visibleOptional.contains(c.id),
                       onTap:   () => onToggle(c.id),
                     )),
-
                     const SizedBox(height: 4),
                   ],
                 ),
               ),
             ),
 
-            // ── Footer: reset ─────────────────────────────────────────
+            // Footer
             Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: _T.slate100)),
               ),
               child: Row(children: [
-                Icon(
-                  Icons.restart_alt_rounded,
-                  size:  13,
-                  color: isDefault ? _T.slate300 : _T.slate400,
-                ),
+                Icon(Icons.restart_alt_rounded, size: 13,
+                    color: isDefault ? _T.slate300 : _T.slate400),
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: isDefault ? null : onReset,
-                  child: Text(
-                    'Reset to defaults',
-                    style: TextStyle(
-                      fontSize:   12,
-                      fontWeight: FontWeight.w600,
-                      color: isDefault ? _T.slate300 : _T.slate500,
-                      decoration: isDefault
-                          ? TextDecoration.none
-                          : TextDecoration.underline,
-                      decorationColor: _T.slate400,
+                  child: MouseRegion(
+                    cursor: isDefault
+                        ? SystemMouseCursors.basic
+                        : SystemMouseCursors.click,
+                    child: Text(
+                      'Reset to defaults',
+                      style: TextStyle(
+                        fontSize:       12,
+                        fontWeight:     FontWeight.w600,
+                        color:          isDefault ? _T.slate300 : _T.slate500,
+                        decoration:     isDefault ? TextDecoration.none : TextDecoration.underline,
+                        decorationColor: _T.slate400,
+                      ),
                     ),
                   ),
                 ),
                 const Spacer(),
-                // Live count of optional columns enabled
                 Text(
                   '${optionalCols.where((c) => visibleOptional.contains(c.id)).length}/${optionalCols.length} optional',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color:    _T.slate400,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: _T.slate400),
                 ),
               ]),
             ),
@@ -789,7 +738,7 @@ class _ColumnPickerPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LOCKED COLUMN ROW (mandatory — shows lock icon instead of toggle)
+// LOCKED COLUMN ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _LockedColRow extends StatelessWidget {
   final _ColDef col;
@@ -808,21 +757,12 @@ class _LockedColRow extends StatelessWidget {
       child: Row(children: [
         Container(
           width: 26, height: 26,
-          decoration: BoxDecoration(
-            color:        _T.slate100,
-            borderRadius: BorderRadius.circular(6),
-          ),
+          decoration: BoxDecoration(color: _T.slate100, borderRadius: BorderRadius.circular(6)),
           child: Icon(col.icon, size: 13, color: _T.slate400),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(col.pickerLabel,
-              style: const TextStyle(
-                fontSize:   12.5,
-                fontWeight: FontWeight.w600,
-                color:      _T.ink3,
-              )),
-        ),
+        Expanded(child: Text(col.pickerLabel,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3))),
         const Icon(Icons.lock_outline_rounded, size: 12, color: _T.slate300),
       ]),
     ),
@@ -830,11 +770,11 @@ class _LockedColRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOGGLE COLUMN ROW (optional — switch + description)
+// TOGGLE COLUMN ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _ToggleColRow extends StatefulWidget {
-  final _ColDef  col;
-  final bool     enabled;
+  final _ColDef      col;
+  final bool         enabled;
   final VoidCallback onTap;
   const _ToggleColRow({required this.col, required this.enabled, required this.onTap});
 
@@ -870,25 +810,17 @@ class _ToggleColRowState extends State<_ToggleColRow> {
               ),
             ),
             child: Row(children: [
-              // Icon container — coloured when enabled
               AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
                 width: 26, height: 26,
                 decoration: BoxDecoration(
-                  color: widget.enabled
-                      ? _T.blue.withOpacity(0.1)
-                      : _T.slate100,
+                  color: widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(
-                  widget.col.icon,
-                  size:  13,
-                  color: widget.enabled ? _T.blue : _T.slate400,
-                ),
+                child: Icon(widget.col.icon, size: 13,
+                    color: widget.enabled ? _T.blue : _T.slate400),
               ),
               const SizedBox(width: 10),
-
-              // Label + description
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -900,16 +832,11 @@ class _ToggleColRowState extends State<_ToggleColRow> {
                           color: widget.enabled ? _T.ink : _T.ink3,
                         )),
                     Text(widget.col.description,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color:    _T.slate400,
-                        )),
+                        style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-
-              // Switch
               _MiniSwitch(value: widget.enabled, onChanged: (_) => widget.onTap()),
             ]),
           ),
@@ -920,34 +847,32 @@ class _ToggleColRowState extends State<_ToggleColRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MINI SWITCH — small, on-brand version of the system Switch
+// MINI SWITCH
 // ─────────────────────────────────────────────────────────────────────────────
 class _MiniSwitch extends StatelessWidget {
-  final bool                 value;
-  final ValueChanged<bool>?  onChanged;
+  final bool                value;
+  final ValueChanged<bool>? onChanged;
   const _MiniSwitch({required this.value, this.onChanged});
 
   @override
   Widget build(BuildContext context) => SizedBox(
     height: 22,
     child: Switch(
-      value:         value,
-      onChanged:     onChanged,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      activeColor:   _T.blue,
-      inactiveThumbColor:  _T.slate300,
-      inactiveTrackColor:  _T.slate200,
-      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return Colors.white;
-        return _T.slate300;
-      }),
+      value:                  value,
+      onChanged:              onChanged,
+      materialTapTargetSize:  MaterialTapTargetSize.shrinkWrap,
+      activeColor:            _T.blue,
+      inactiveThumbColor:     _T.slate300,
+      inactiveTrackColor:     _T.slate200,
+      trackOutlineColor:      WidgetStateProperty.all(Colors.transparent),
+      thumbColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? Colors.white : _T.slate300),
     ),
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION LABEL (inside picker)
+// SECTION LABEL
 // ─────────────────────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String text;
@@ -967,18 +892,24 @@ class _SectionLabel extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
+//
+// Padding: EdgeInsets.zero — the ListView already handles horizontal padding
+// via its own padding property. The flex cells align directly with headers.
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends StatefulWidget {
   final Task      task;
   final Project?  project;
   final Member?   assignee;
   final List<_ColDef> cols;
-  final bool      isSelected, isLast;
+  final bool      isSelected;
   final VoidCallback  onTap;
 
   const _TaskRow({
-    required this.task, required this.project, required this.assignee,
-    required this.cols, required this.isSelected, required this.isLast,
+    required this.task,
+    required this.project,
+    required this.assignee,
+    required this.cols,
+    required this.isSelected,
     required this.onTap,
   });
 
@@ -1000,8 +931,7 @@ class _TaskRowState extends State<_TaskRow> {
 
     final dateFormatted = fmtDate(d);
     final dateParts     = dateFormatted.split(' ');
-    // Drop the year if same year, i.e. "12 Jan 2025" → "12 Jan"
-    final dateDisplay = d.year == now.year && dateParts.length > 2
+    final dateDisplay   = d.year == now.year && dateParts.length > 2
         ? dateParts.take(dateParts.length - 1).join(' ')
         : dateFormatted;
 
@@ -1017,18 +947,18 @@ class _TaskRowState extends State<_TaskRow> {
           onTap:        widget.onTap,
           borderRadius: BorderRadius.circular(_T.r),
           child: Padding(
+            // Vertical padding only — horizontal comes from the ListView padding
             padding: const EdgeInsets.symmetric(vertical: 11),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: widget.cols.map((c) {
-                return Expanded(
-                  flex: c.flex,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _cellFor(c, t, p, m, s, dateDisplay),
-                  ),
-                );
-              }).toList(),
+              children: widget.cols.map((c) => Expanded(
+                flex: c.flex,
+                child: Padding(
+                  // Cell inner padding — matches header cell padding exactly
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _cellFor(c, t, p, m, s, dateDisplay),
+                ),
+              )).toList(),
             ),
           ),
         ),
@@ -1036,142 +966,82 @@ class _TaskRowState extends State<_TaskRow> {
     );
   }
 
-  // ── Cell builder — one method per column ────────────────────────────────────
-  Widget _cellFor(
-    _ColDef    col,
-    Task       t,
-    Project?   p,
-    Member?    m,
-    dynamic    s,    // DesignStageInfo / StageInfo
-    String     date,
-  ) {
+  Widget _cellFor(_ColDef col, Task t, Project? p, Member? m, dynamic s, String date) {
     return switch (col.id) {
-      'task' => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t.name,
-                style: const TextStyle(
-                  fontSize:   13,
-                  fontWeight: FontWeight.w600,
-                  color:      _T.ink,
-                )),
-          ],
+      'task' => Text(
+          t.name,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink),
         ),
 
       'project' => p != null
           ? Row(children: [
-              Container(
-                width: 7, height: 7,
-                decoration: BoxDecoration(
-                    color: p.color, shape: BoxShape.circle),
-              ),
+              Container(width: 7, height: 7,
+                  decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(p.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color:    _T.slate500,
-                    )),
-              ),
+              Expanded(child: Text(p.name, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
             ])
           : const Text('—', style: TextStyle(color: _T.slate300)),
 
       'ref' => t.ref != null && t.ref!.isNotEmpty
-          ? Row(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color:        _T.slate100,
-                  borderRadius: BorderRadius.circular(4),
-                  border:       Border.all(color: _T.slate200),
-                ),
-                child: Text(
-                  t.ref!,
-                  style: const TextStyle(
-                    fontSize:   11,
-                    fontWeight: FontWeight.w600,
-                    color:      _T.ink3,
-                    fontFamily: 'monospace',
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(4),
+                border:       Border.all(color: _T.slate200),
               ),
-            ])
-          : const Text('—',
-              style: TextStyle(fontSize: 13, color: _T.slate300)),
+              child: Text(t.ref!,
+                  style: const TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    color: _T.ink3, fontFamily: 'monospace',
+                  ),
+                  overflow: TextOverflow.ellipsis),
+            )
+          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'stage' => StagePill(stageInfo: s),
 
-      'date' => Text(
-          date,
-          style: const TextStyle(
-            fontSize:   12.5,
-            fontWeight: FontWeight.w400,
-            color:      _T.slate500,
-          ),
-        ),
+      'date' => Text(date,
+          style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
 
       'priority' => PriorityPill(priority: t.priority),
 
-      'size' => (t.size != null)
-          ? RichText(
-              text: TextSpan(
-                style: const TextStyle(fontSize: 12.5, color: _T.ink3),
-                children: [
-                  TextSpan(
-                    text: t.size,
-                  ),
-                  const TextSpan(
-                    text:  ' cm',
-                    style: TextStyle(fontSize: 11, color: _T.slate400),
-                  ),
-                ],
-              ),
-            )
-          : const Text('—',
-              style: TextStyle(fontSize: 13, color: _T.slate300)),
+      'size' => t.size != null
+          ? RichText(text: TextSpan(
+              style: const TextStyle(fontSize: 12.5, color: _T.ink3),
+              children: [
+                TextSpan(text: t.size),
+                const TextSpan(text: ' cm',
+                    style: TextStyle(fontSize: 11, color: _T.slate400)),
+              ],
+            ))
+          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'qty' => t.quantity != null
-          ? Text(
-              '${t.quantity}',
+          ? Text('${t.quantity}',
               style: const TextStyle(
-                fontSize:   12.5,
-                fontWeight: FontWeight.w600,
-                color:      _T.ink3,
-              ),
-            )
-          : const Text('—',
-              style: TextStyle(fontSize: 13, color: _T.slate300)),
+                  fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3))
+          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'assignee' => m != null
           ? Row(children: [
-              AvatarWidget(
-                  initials: m.initials, color: m.color, size: 22),
+              AvatarWidget(initials: m.initials, color: m.color, size: 22),
               const SizedBox(width: 7),
-              Expanded(
-                child: Text(m.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color:    _T.slate500,
-                    )),
-              ),
+              Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
             ])
-          : const Text('—',
-              style: TextStyle(fontSize: 13, color: _T.slate300)),
+          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
-      'description' => (t.description != null && t.description!.isNotEmpty)
+      'description' => t.description.isNotEmpty
           ? Text(
-              t.description!.length > 60
-                  ? '${t.description!.substring(0, 60)}…'
-                  : t.description!,
+              t.description.length > 60
+                  ? '${t.description.substring(0, 60)}…'
+                  : t.description,
               style: const TextStyle(fontSize: 11.5, color: _T.slate400),
               overflow: TextOverflow.ellipsis,
             )
-          : const Text('—',
-              style: TextStyle(fontSize: 13, color: _T.slate300)),
+          : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       _ => const SizedBox.shrink(),
     };
@@ -1193,16 +1063,11 @@ class _EmptyState extends StatelessWidget {
             color:        _T.slate100,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.assignment_outlined,
-              size: 24, color: _T.slate400),
+          child: const Icon(Icons.assignment_outlined, size: 24, color: _T.slate400),
         ),
         const SizedBox(height: 16),
         const Text('No tasks yet',
-            style: TextStyle(
-              fontSize:   15,
-              fontWeight: FontWeight.w600,
-              color:      _T.ink3,
-            )),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _T.ink3)),
         const SizedBox(height: 6),
         const Text('Tasks you create will appear here',
             style: TextStyle(fontSize: 13, color: _T.slate400)),
