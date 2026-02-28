@@ -118,7 +118,7 @@ const _kCols = [
     id: 'priority', label: 'PRIORITY', pickerLabel: 'Priority',
     description: 'Urgent / High / Normal priority pill',
     icon: Icons.flag_outlined,
-    mandatory: false, defaultOn: true, flex: 2,
+    mandatory: false, defaultOn: true, flex: 1,
   ),
   _ColDef(
     id: 'size', label: 'SIZE', pickerLabel: 'Size',
