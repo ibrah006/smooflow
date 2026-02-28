@@ -239,7 +239,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     try {
       await ref.read(taskNotifierProvider.notifier).update(
         task: widget.task,
-        billingStatus: null,
+        billingStatus: _billingSelection,
         ref: null,
         quantity: null,
         size: null
