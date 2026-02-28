@@ -230,6 +230,18 @@ class Task {
     _stockTransactionBarcode = stockTransactionBarcode;
   }
 
+  set ref(String? ref) {
+    _ref = ref;
+  }
+
+  set size(String? size) {
+    _size = size;
+  }
+
+  set quantity(int? quantity) {
+    _quantity = quantity;
+  }
+
   factory Task.fromJson(Map<String, dynamic> json) {
 
     final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
