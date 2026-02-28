@@ -244,6 +244,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         quantity: null,
         size: null
       );
+      widget.task.billingStatus = _billingSelection;
       if (mounted) {
         setState(() => _billingEditMode = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
