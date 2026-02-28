@@ -330,7 +330,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                                 const SizedBox(height: 16),
 
                                 // Priority
-                                _FieldLabel.required('Priority'),
+                                _FieldLabel('Priority'),
                                 const SizedBox(height: 9),
                                 _PriorityPicker(
                                   selected:   _priority,
@@ -597,23 +597,10 @@ class _ProjectDropdown extends StatelessWidget {
       dropdownColor:  _T.white,
       borderRadius:   BorderRadius.circular(_T.rLg),
       decoration: InputDecoration(
-        prefixIcon: Padding(
+        prefixIcon: value != null? null : Padding(
           padding: const EdgeInsets.only(left: 12, right: 8),
           child: value != null
-              // Live project colour dot
-              ? Container(
-                  width: 8, height: 8,
-                  decoration: BoxDecoration(
-                    color:  value!.color,
-                    shape:  BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: value!.color.withOpacity(0.35),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                )
+              ? null
               : const Icon(Icons.folder_outlined, size: 15, color: _T.slate400),
         ),
         prefixIconConstraints:
@@ -643,11 +630,12 @@ class _ProjectDropdown extends StatelessWidget {
       items: projects.map((p) => DropdownMenuItem<Project>(
         value: p,
         child: Row(children: [
+          const SizedBox(width: 9),
           Container(
             width: 8, height: 8,
             decoration: BoxDecoration(color: p.color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: 16),
           Text(p.name),
         ]),
       )).toList(),

@@ -133,7 +133,8 @@ class Task {
        _priority = priority,
        _ref = ref,
        _size = size,
-       _quantity = quantity;
+       _quantity = quantity,
+       _createdAt = DateTime.now();
 
   // To ensure toSet gives no duplicates
   @override
