@@ -130,7 +130,7 @@ const _kCols = [
     id: 'qty', label: 'QTY', pickerLabel: 'Quantity',
     description: 'Number of printed pieces',
     icon: Icons.inventory_2_outlined,
-    mandatory: false, defaultOn: false, flex: 2,
+    mandatory: false, defaultOn: false, flex: 1,
   ),
   _ColDef(
     id: 'assignee', label: 'ASSIGNEE', pickerLabel: 'Assignee',
