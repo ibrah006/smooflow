@@ -24,6 +24,7 @@ import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
+import 'package:smooflow/enums/billing_status.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -85,16 +86,10 @@ class _ColDef {
 
 const _kCols = [
   _ColDef(
-    id: 'date', label: 'DATE', pickerLabel: 'Date Created',
-    description: 'Date the task was created',
-    icon: Icons.calendar_today_outlined,
-    mandatory: true, defaultOn: true, flex: 1,
-  ),
-  _ColDef(
     id: 'task', label: 'TASK', pickerLabel: 'Task Name',
     description: 'Task name',
     icon: Icons.drive_file_rename_outline_rounded,
-    mandatory: true, defaultOn: true, flex: 3,
+    mandatory: true, defaultOn: true, flex: 4,
   ),
   _ColDef(
     id: 'project', label: 'PROJECT', pickerLabel: 'Project',
@@ -106,7 +101,7 @@ const _kCols = [
     id: 'ref', label: 'REF', pickerLabel: 'Reference',
     description: 'Client reference or PO number',
     icon: Icons.tag_rounded,
-    mandatory: true, defaultOn: true, flex: 3,
+    mandatory: true, defaultOn: true, flex: 2,
   ),
   _ColDef(
     id: 'stage', label: 'STAGE', pickerLabel: 'Stage',
@@ -115,10 +110,16 @@ const _kCols = [
     mandatory: true, defaultOn: true, flex: 2,
   ),
   _ColDef(
+    id: 'date', label: 'DATE', pickerLabel: 'Date Created',
+    description: 'Date the task was created',
+    icon: Icons.calendar_today_outlined,
+    mandatory: true, defaultOn: true, flex: 2,
+  ),
+  _ColDef(
     id: 'priority', label: 'PRIORITY', pickerLabel: 'Priority',
     description: 'Urgent / High / Normal priority pill',
     icon: Icons.flag_outlined,
-    mandatory: false, defaultOn: true, flex: 1,
+    mandatory: false, defaultOn: true, flex: 2,
   ),
   _ColDef(
     id: 'size', label: 'SIZE', pickerLabel: 'Size',
@@ -130,15 +131,29 @@ const _kCols = [
     id: 'qty', label: 'QTY', pickerLabel: 'Quantity',
     description: 'Number of printed pieces',
     icon: Icons.inventory_2_outlined,
-    mandatory: false, defaultOn: false, flex: 1,
-  ),
-  _ColDef(
-    id: 'assignee', label: 'ASSIGNEE', pickerLabel: 'Assignee',
-    description: 'Assigned team member',
-    icon: Icons.person_outline_rounded,
     mandatory: false, defaultOn: false, flex: 2,
   ),
+  // _ColDef(
+  //   id: 'assignee', label: 'ASSIGNEE', pickerLabel: 'Assignee',
+  //   description: 'Assigned team member',
+  //   icon: Icons.person_outline_rounded,
+  //   mandatory: false, defaultOn: false, flex: 2,
+  // ),
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING — pinned trailing column
+//
+// Kept outside _kCols so it is structurally guaranteed to render last.
+// It is always visible, always mandatory, and never participates in the
+// optional-column toggle system.
+// ─────────────────────────────────────────────────────────────────────────────
+const _kBillingCol = _ColDef(
+  id: 'billing', label: 'BILLING', pickerLabel: 'Billing Status',
+  description: 'Invoice and payment status',
+  icon: Icons.receipt_long_outlined,
+  mandatory: true, defaultOn: true, flex: 1,
+);
 
 Set<String> get _kDefaultOptionalOn => _kCols
     .where((c) => !c.mandatory && c.defaultOn)
@@ -255,7 +270,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
                   child: _AnimatedColRow(
-                    effectiveVisible: effective,
+                    effectiveVisible:  effective,
+                    pinnedTrailingCol: _kBillingCol,
                     builder: (col, animFraction) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
                       child: Opacity(
@@ -342,12 +358,16 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 typedef _ColCellBuilder = Widget Function(_ColDef col, double opacityFraction);
 
 class _AnimatedColRow extends StatefulWidget {
-  final Set<String>    effectiveVisible;
+  final Set<String>     effectiveVisible;
   final _ColCellBuilder builder;
+  // When provided, this column is rendered at a fixed width AFTER all
+  // animated columns — it is always visible and never animated in/out.
+  final _ColDef?        pinnedTrailingCol;
 
   const _AnimatedColRow({
     required this.effectiveVisible,
     required this.builder,
+    this.pinnedTrailingCol,
   });
 
   @override
@@ -358,9 +378,7 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
     with SingleTickerProviderStateMixin {
 
   late AnimationController _ac;
-  // Per-column target widths (0 = hidden, >0 = visible).
-  // Stored so we can lerp from previous to new target on each transition.
-  Map<String, double> _prevWidths  = {};
+  Map<String, double> _prevWidths   = {};
   Map<String, double> _targetWidths = {};
   double _lastAvailableWidth = 0;
 
@@ -377,42 +395,50 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
     super.dispose();
   }
 
+  // ── Width allocation ───────────────────────────────────────────────────────
+  // The pinned column takes its proportional share of the total available
+  // width first; the remaining animated columns share what's left.
+
+  double _pinnedWidth(double availWidth) {
+    final p = widget.pinnedTrailingCol;
+    if (p == null) return 0;
+    final visibleCols = _kCols.where((c) => widget.effectiveVisible.contains(c.id)).toList();
+    final totalFlex   = visibleCols.fold<int>(0, (s, c) => s + c.flex) + p.flex;
+    return totalFlex > 0 ? (p.flex / totalFlex) * availWidth : 0;
+  }
+
   Map<String, double> _computeTargets(double availWidth) {
+    final animAvail   = availWidth - _pinnedWidth(availWidth);
     final visibleCols = _kCols.where((c) => widget.effectiveVisible.contains(c.id)).toList();
     final totalFlex   = visibleCols.fold<int>(0, (s, c) => s + c.flex);
     final result      = <String, double>{};
     for (final col in _kCols) {
-      if (widget.effectiveVisible.contains(col.id)) {
-        result[col.id] = totalFlex > 0 ? (col.flex / totalFlex) * availWidth : 0;
-      } else {
-        result[col.id] = 0;
-      }
+      result[col.id] = (widget.effectiveVisible.contains(col.id) && totalFlex > 0)
+          ? (col.flex / totalFlex) * animAvail
+          : 0;
     }
     return result;
   }
 
   void _startTransition(double availWidth) {
     final newTargets = _computeTargets(availWidth);
-    // Only animate if something actually changed
-    bool changed = newTargets.entries.any(
+    final changed    = newTargets.entries.any(
       (e) => (e.value - (_targetWidths[e.key] ?? 0)).abs() > 0.5,
     );
     if (!changed && availWidth == _lastAvailableWidth) return;
-
-    _prevWidths      = _currentWidths(availWidth);
-    _targetWidths    = newTargets;
+    _prevWidths         = _currentWidths(availWidth);
+    _targetWidths       = newTargets;
     _lastAvailableWidth = availWidth;
     _ac.forward(from: 0);
   }
 
-  // Interpolated widths at the current animation value
   Map<String, double> _currentWidths(double availWidth) {
     if (_targetWidths.isEmpty) return _computeTargets(availWidth);
     final t = _ac.value;
     return {
       for (final col in _kCols)
         col.id: _lerpD(
-          _prevWidths[col.id] ?? _targetWidths[col.id] ?? 0,
+          _prevWidths[col.id]  ?? _targetWidths[col.id] ?? 0,
           _targetWidths[col.id] ?? 0,
           t,
         ),
@@ -434,36 +460,43 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final avail = constraints.maxWidth;
-        // On first layout or available width change, recompute without animation
         if (_lastAvailableWidth == 0) {
           _targetWidths       = _computeTargets(avail);
           _prevWidths         = Map.from(_targetWidths);
           _lastAvailableWidth = avail;
         } else if ((avail - _lastAvailableWidth).abs() > 1) {
-          // Window resize — snap immediately, no animation
           _targetWidths       = _computeTargets(avail);
           _prevWidths         = Map.from(_targetWidths);
           _lastAvailableWidth = avail;
         }
 
-        final widths = _currentWidths(avail);
+        final widths      = _currentWidths(avail);
+        final pinnedW     = _pinnedWidth(avail);
+        final pinned      = widget.pinnedTrailingCol;
 
         return Row(
-          children: _kCols.map((col) {
-            final w       = widths[col.id] ?? 0;
-            final visible = widget.effectiveVisible.contains(col.id);
-            // Opacity: lerp from 0→1 (appear) or 1→0 (disappear) with the same timing
-            final opacity = visible
-                ? Curves.easeOut.transform(_ac.isAnimating ? _ac.value : 1.0)
-                : Curves.easeIn.transform(_ac.isAnimating ? (1 - _ac.value) : 0.0);
+          children: [
+            // ── Animated columns ────────────────────────────────────────
+            ..._kCols.map((col) {
+              final w       = widths[col.id] ?? 0;
+              final visible = widget.effectiveVisible.contains(col.id);
+              final opacity = visible
+                  ? Curves.easeOut.transform(_ac.isAnimating ? _ac.value : 1.0)
+                  : Curves.easeIn.transform(_ac.isAnimating ? (1 - _ac.value) : 0.0);
+              return SizedBox(
+                width: w,
+                child: w < 1 ? const SizedBox.shrink()
+                    : widget.builder(col, opacity.clamp(0.0, 1.0)),
+              );
+            }),
 
-            return SizedBox(
-              width: w,
-              child: w < 1
-                  ? const SizedBox.shrink()
-                  : widget.builder(col, opacity.clamp(0.0, 1.0)),
-            );
-          }).toList(),
+            // ── Pinned billing column — always last, always full opacity ─
+            if (pinned != null)
+              SizedBox(
+                width: pinnedW,
+                child: widget.builder(pinned, 1.0),
+              ),
+          ],
         );
       },
     );
@@ -795,6 +828,9 @@ class _ColumnPickerPanel extends StatelessWidget {
                   _SectionLabel('Always visible'),
                   const SizedBox(height: 8),
                   ...mandatoryCols.map((c) => _LockedColRow(col: c)),
+                  // Billing is pinned last — shown here to make its mandatory
+                  // status visible to the user, with a position hint.
+                  _LockedColRow(col: _kBillingCol, trailingHint: 'Always last'),
                   const SizedBox(height: 16),
                   const Divider(height: 1, color: _T.slate100),
                   const SizedBox(height: 14),
@@ -850,8 +886,9 @@ class _ColumnPickerPanel extends StatelessWidget {
 // LOCKED COLUMN ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _LockedColRow extends StatelessWidget {
-  final _ColDef col;
-  const _LockedColRow({required this.col});
+  final _ColDef  col;
+  final String?  trailingHint; // optional secondary label, e.g. "Always last"
+  const _LockedColRow({required this.col, this.trailingHint});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -871,6 +908,12 @@ class _LockedColRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Text(col.pickerLabel,
             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3))),
+        if (trailingHint != null) ...[
+          Text(trailingHint!, style: const TextStyle(
+            fontSize: 10, fontWeight: FontWeight.w500, color: _T.slate400,
+          )),
+          const SizedBox(width: 6),
+        ],
         const Icon(Icons.lock_outline_rounded, size: 12, color: _T.slate300),
       ]),
     ),
@@ -1044,7 +1087,8 @@ class _TaskRowState extends State<_TaskRow> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 11),
             child: _AnimatedColRow(
-              effectiveVisible: widget.effectiveVisible,
+              effectiveVisible:  widget.effectiveVisible,
+              pinnedTrailingCol: _kBillingCol,
               builder: (col, opacity) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
                 child: Opacity(
@@ -1098,10 +1142,8 @@ class _TaskRowState extends State<_TaskRow> {
           ? RichText(text: TextSpan(
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
-                TextSpan(text: t.size!.split(" ")[0]),
-                if (t.size!.split(" ").length > 1)
-                  TextSpan(text: t.size!.split(" ")[1], style: TextStyle(fontSize: 11, color: _T.slate400)),
-                // const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
+                TextSpan(text: t.size),
+                const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
               ],
             ))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
@@ -1120,8 +1162,42 @@ class _TaskRowState extends State<_TaskRow> {
             ])
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
+      'billing' => _BillingStatusCell(status: t.billingStatus),
+
       _ => const SizedBox.shrink(),
     };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING STATUS CELL
+//
+// Renders a compact pill for the task's billing/payment state.
+// Adjust BillingStatus values to match your actual enum.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingStatusCell extends StatelessWidget {
+  final BillingStatus? status;
+  const _BillingStatusCell({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == null) {
+      return const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300));
+    }
+
+    final (String label, Color fg, Color bg) = switch (status!) {
+      BillingStatus.pending    => ('-',    _T.amber,  const Color(0xFFFEF3C7)),
+      BillingStatus.invoiced  => ('Invoiced',  _T.blue,   _T.blue50),
+      BillingStatus.foc      => ('FOC',      _T.green,  const Color(0xFFECFDF5)),
+      BillingStatus.cancelled   => ('Cancelled',   _T.red,    const Color(0xFFFEE2E2)),
+      BillingStatus.quoteGiven    => ('Quote',    _T.slate400, _T.slate100),
+    };
+
+    return Text(label, style: TextStyle(
+        fontSize:   11,
+        fontWeight: FontWeight.w600,
+        color:      Colors.black,
+      ));
   }
 }
 
