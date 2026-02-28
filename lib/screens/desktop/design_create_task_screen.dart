@@ -4,6 +4,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 
+@Deprecated("Will be replaced by DesignCreateTaskScreen.concept.dart")
 class DesignCreateTaskScreen extends ConsumerStatefulWidget {
   final String? preselectedProjectId;
   final Function(

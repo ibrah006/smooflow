@@ -108,6 +108,7 @@ const List<_Milestone> _kMilestones = [
   _Milestone('Completed',   TaskStatus.completed),
 ];
 
+@Deprecated("Not In USE")
 // ─────────────────────────────────────────────────────────────────────────────
 // BOARD VIEW
 // ─────────────────────────────────────────────────────────────────────────────
