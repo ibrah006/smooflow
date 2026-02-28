@@ -49,7 +49,7 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     double? maxWidth,
     double? printSpeed,
   }) async {
-    try {
+    // try {
       final printer = await _repo.createPrinter(
         name: name,
         nickname: nickname,
@@ -62,10 +62,10 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
         printers: [...state.printers, printer],
         totalPrintersCount: state.totalPrintersCount + 1,
         activePrinters: printer.isActive? [...state.activePrinters, printer] : null);
-    } catch (e) {
-      print("error occurred while creating printer: $e");
-      state = state.copyWith(error: e.toString());
-    }
+    // } catch (e) {
+    //   print("error occurred while creating printer: $e");
+    //   state = state.copyWith(error: e.toString());
+    // }
   }
 
   // -------------------------------

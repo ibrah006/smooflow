@@ -52,7 +52,7 @@ class PrinterRepo {
       throw Exception('Failed to create printer');
     }
 
-    return Printer.fromJson(res.body as Map<String, dynamic>);
+    return Printer.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   // --------------------------------------------------

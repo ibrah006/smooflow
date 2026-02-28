@@ -336,16 +336,16 @@ class _AddPrinterScreenState extends ConsumerState<AddPrinterScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-      try {
+      // try {
         await ref.read(printerNotifierProvider.notifier).createPrinter(
           name:     _nameController.text,
           nickname: _nicknameController.text,
           location: _locationController.text,
         );
-      } catch (e) {
-        _snack('Failed to add printer. Please try again.', isError: true);
-        return;
-      }
+      // } catch (e) {
+      //   _snack('Failed to add printer. Please try again.', isError: true);
+      //   return;
+      // }
       Navigator.pop(context);
       _snack(widget.printer != null ? 'Printer updated' : 'Printer added',
           isError: false);

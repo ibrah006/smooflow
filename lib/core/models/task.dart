@@ -44,6 +44,9 @@ class Task {
 
   late final DateTime _createdAt;
 
+  String? _ref, _size;
+  int? _quantity;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -69,7 +72,10 @@ class Task {
     required String? stockTransactionBarcode,
     required DateTime? actualProductionStartTime,
     required DateTime? actualProductionEndTime,
-    required DateTime createdAt
+    required DateTime createdAt,
+    required String? ref,
+    required String? size,
+    required int quantity
   }) : _id = id,
        _name = name,
        _description = description,
@@ -84,7 +90,10 @@ class Task {
        _productionQuantity = productionQuantity,
        _priority = priority,
        _stockTransactionBarcode = stockTransactionBarcode,
-       _createdAt = createdAt {
+       _createdAt = createdAt,
+       _ref = ref,
+       _size = size,
+       _quantity = quantity {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
     _actualProductionStartTime = actualProductionStartTime;
@@ -272,6 +281,9 @@ class Task {
       actualProductionEndTime: json['actualProductionEndTime'] != null
               ? DateTime.parse(json['actualProductionEndTime'])
               : null,
+      ref: json["ref"],
+      size: json["size"],
+      quantity: json["quantity"]
     );
   }
 
@@ -285,7 +297,10 @@ class Task {
       _projectId = original.projectId,
       _dateCompleted = original._dateCompleted,
       progressLogIds = original.progressLogIds,
-      workActivityLogs = original.workActivityLogs {
+      workActivityLogs = original.workActivityLogs,
+      _ref = original._ref,
+      _size = original._size,
+      _quantity = original._quantity {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -411,6 +426,9 @@ class Task {
       'productionQuantity': _productionQuantity,
       'priority': TaskPriority.values.indexOf(_priority),
       'barcode': _stockTransactionBarcode,
+      'ref': _ref,
+      'size': _size,
+      'quantity': _quantity,
     };
     try {
       return {'id': id, ...json};
