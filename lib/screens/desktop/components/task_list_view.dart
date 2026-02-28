@@ -1119,16 +1119,9 @@ class _TaskRowState extends State<_TaskRow> {
           : const Text('—', style: TextStyle(color: _T.slate300)),
 
       'ref' => t.ref != null && t.ref!.isNotEmpty
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: _T.slate100, borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: _T.slate200),
-              ),
-              child: Text(t.ref!, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                      color: _T.ink3, fontFamily: 'monospace')),
-            )
+          ? Text(t.ref!, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                  color: _T.ink3, fontFamily: 'monospace'))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'stage'    => StagePill(stageInfo: s),
