@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/notifiers/task_notifier.dart';
@@ -101,6 +102,7 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
 });
 
 class TaskProvider {
+
   /// This is the main function to call when changing task state (progressing stage, assigning/unassigning printer, etc)
   static Future<void> setTaskState({
     required WidgetRef ref,
@@ -109,7 +111,7 @@ class TaskProvider {
     /// Pass null when unnassigning printer from task or when progressing task stage without needing to assign a printer (e.g. progressing to completed status)
     String? printerId,
     String? stockTransactionBarcode,
-    String? materialId
+    String? materialId,
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";

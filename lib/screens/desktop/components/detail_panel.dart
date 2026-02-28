@@ -237,11 +237,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _saveBillingStatus() async {
     setState(() => _billingSaving = true);
     try {
-      // Implement
-      // await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
-      //   taskId: widget.task.id,
-      //   status: _billingSelection,
-      // );
+      await ref.read(taskNotifierProvider.notifier).updateBillingStatus(
+        taskId: widget.task.id,
+        status: _billingSelection,
+      );
       if (mounted) {
         setState(() => _billingEditMode = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

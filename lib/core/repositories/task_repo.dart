@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -221,7 +222,6 @@ class TaskRepo {
     required int productionQuantity,
     required String barcode
   }) async {
-    print("scheduling print job with printerId: $printerId, materialId: $materialId, progressStage: $progressStage, runs: $runs, productionQuantity: $productionQuantity, barcode: $barcode");
     final response = await ApiClient.http.post(
       '/tasks/$taskId/schedule-job',
       body: {
@@ -241,5 +241,29 @@ class TaskRepo {
     }
 
     // Successfully scheduled print job
+  }
+
+  Future<void> update({required Task task, required BillingStatus? billingStatus, required String? ref, required int? quantity, required String? size}) async {
+
+    if (billingStatus == task.billingStatus && ref == task.ref && quantity == task.quantity && size == task.size) {
+      // Abort update
+      // Nothing to update
+      return;
+    }
+
+    final response = await ApiClient.http.post(
+      '/tasks/${task.id}',
+      body: {
+        "billingStatus": billingStatus,
+        "ref": ref,
+        "quantity": quantity,
+        "size": size,
+      }
+    );
+
+    if (response.statusCode != 200) {
+      // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
+      throw jsonDecode(response.body)["message"];
+    }
   }
 }

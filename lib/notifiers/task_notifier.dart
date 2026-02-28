@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/local_http.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -406,6 +407,14 @@ class TaskNotifier extends StateNotifier<TaskState> {
         return task;
       }).toList()
     );
+  }
+
+  Future<void> update(
+    {required Task task, required BillingStatus? billingStatus, required String? ref, required int? quantity, required String? size}
+  ) async {
+    await _repo.update(task: task, billingStatus: billingStatus, ref: ref, quantity: quantity, size: size);
+
+    //  update state
   }
 
   // ---------------------------------------------------------------------
