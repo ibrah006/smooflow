@@ -75,7 +75,7 @@ class Task {
     required DateTime createdAt,
     required String? ref,
     required String? size,
-    required int quantity
+    required int? quantity
   }) : _id = id,
        _name = name,
        _description = description,
