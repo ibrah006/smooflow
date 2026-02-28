@@ -1098,8 +1098,10 @@ class _TaskRowState extends State<_TaskRow> {
           ? RichText(text: TextSpan(
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
-                TextSpan(text: t.size),
-                const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
+                TextSpan(text: t.size!.split(" ")[0]),
+                if (t.size!.split(" ").length > 1)
+                  TextSpan(text: t.size!.split(" ")[1], style: TextStyle(fontSize: 11, color: _T.slate400)),
+                // const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
               ],
             ))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),

@@ -204,7 +204,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
         projectId: _project!.id,
         priority: _priority?? TaskPriority.normal,
         ref: reference.isEmpty? null : reference,
-        size: "$w×${h}cm",
+        size: "$w×${h} cm",
         quantity: qty
       );
 
