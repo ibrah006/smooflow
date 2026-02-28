@@ -41,7 +41,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   loadTaskToMemory(Task task) {
-    state = state.insert(0, task);
+    state = state.add(task);
   }
 
   List<Task> byStatus({required TaskStatus? status}) {

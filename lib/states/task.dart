@@ -43,7 +43,15 @@ class TaskState {
 
     _tasks.insert(index, task);
 
-    return TaskState(
+    return copyWith(
+      tasks: _tasks
+    );
+  }
+
+  TaskState add(Task task) {
+    _tasks.add(task);
+
+    return copyWith(
       tasks: _tasks
     );
   }

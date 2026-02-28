@@ -80,7 +80,7 @@ class TaskListView extends ConsumerWidget {
                 Expanded(flex: 3, child: _TableHeader('Task')),
                 Expanded(flex: 2, child: _TableHeader('Project')),
                 Expanded(flex: 2, child: _TableHeader('Stage')),
-                Expanded(flex: 2, child: _TableHeader('Assignee')),
+                // Expanded(flex: 2, child: _TableHeader('Assignee')),
                 Expanded(flex: 1, child: _TableHeader('Date')),
                 Expanded(flex: 1, child: _TableHeader('Priority')),
               ],
@@ -152,16 +152,16 @@ class TaskListView extends ConsumerWidget {
                             child: StagePill(stageInfo: s),
                           )),
                           // Assignee — always occupies its flex slot
-                          Expanded(flex: 2, child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: m != null
-                                ? Row(children: [
-                                    AvatarWidget(initials: m.initials, color: m.color, size: 22),
-                                    const SizedBox(width: 7),
-                                    Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
-                                  ])
-                                : const Text('—', style: TextStyle(color: _T.slate400)),
-                          )),
+                          // Expanded(flex: 2, child: Padding(
+                          //   padding: const EdgeInsets.symmetric(horizontal: 4),
+                          //   child: m != null
+                          //       ? Row(children: [
+                          //           AvatarWidget(initials: m.initials, color: m.color, size: 22),
+                          //           const SizedBox(width: 7),
+                          //           Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: _T.slate500))),
+                          //         ])
+                          //       : const Text('—', style: TextStyle(color: _T.slate400)),
+                          // )),
                           // Created date
                           Expanded(flex: 1, child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
