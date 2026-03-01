@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/app_database.dart';
 import '../../providers/accounts_providers.dart';
 import 'components/kpi_card.dart';
 
@@ -86,21 +87,21 @@ class AccountsDashboardScreen extends ConsumerWidget {
                   label: 'New Invoice',
                   icon: Icons.add_circle_outline,
                   color: const Color(0xFF2563EB),
-                  onTap: () => context.go('/accounts/invoices/create'),
+                  onTap: () {}//('/accounts/invoices/create'),
                 ),
                 const SizedBox(width: 12),
                 _QuickAction(
                   label: 'Record Payment',
                   icon: Icons.payments_outlined,
                   color: const Color(0xFF10B981),
-                  onTap: () => context.go('/accounts/payments'),
+                  onTap: () {}//('/accounts/payments'),
                 ),
                 const SizedBox(width: 12),
                 _QuickAction(
                   label: 'View All Invoices',
                   icon: Icons.list_alt_outlined,
                   color: const Color(0xFF8B5CF6),
-                  onTap: () => context.go('/accounts/invoices'),
+                  onTap: () {}//('/accounts/invoices'),
                 ),
               ],
             ),
@@ -113,7 +114,7 @@ class AccountsDashboardScreen extends ConsumerWidget {
               children: [
                 _SectionTitle('Recent Invoices'),
                 TextButton(
-                  onPressed: () => context.go('/accounts/invoices'),
+                  onPressed: () {},// context.go('/accounts/invoices'),
                   child: const Text('View all →',
                       style: TextStyle(color: Color(0xFF2563EB))),
                 ),
@@ -128,7 +129,7 @@ class AccountsDashboardScreen extends ConsumerWidget {
                 if (recent.isEmpty) {
                   return _EmptyState(
                     message: 'No invoices yet',
-                    onAction: () => context.go('/accounts/invoices/create'),
+                    onAction: () {},//context.go('/accounts/invoices/create'),
                     actionLabel: 'Create your first invoice',
                   );
                 }
@@ -275,8 +276,8 @@ class _RecentInvoicesTable extends StatelessWidget {
             return Column(
               children: [
                 InkWell(
-                  onTap: () =>
-                      context.go('/accounts/invoices/${i.id}'),
+                  onTap: () {},
+                      //context.go('/accounts/invoices/${i.id}'),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
