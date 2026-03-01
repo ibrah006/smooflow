@@ -1,7 +1,6 @@
 // lib/screens/printer/schedule_job_screen.dart
 import 'dart:math';
 
-import 'package:cupertino_calendar_picker/cupertino_calendar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/extensions/date_time_format.dart';
@@ -852,18 +851,18 @@ class _ScheduleJobScreenState extends ConsumerState<SchedulePrintJobScreen> {
               ],
             ),
             children: [
-              SizedBox(
-                width: 350,
-                child: CupertinoCalendar(
-                  onDateTimeChanged: (value) => setState(() => _selectedStartDateTime = value),
-                  minimumDateTime: DateTime.now().subtract(const Duration(days: 1)),
-                  maximumDateTime: DateTime.now().add(const Duration(days: 365)),
-                  initialDateTime: _selectedStartDateTime?? DateTime.now(),
-                  currentDateTime: _selectedStartDateTime,
-                  timeLabel: 'Start Time',
-                  mode: CupertinoCalendarMode.dateTime,
-                ),
-              ),
+              // SizedBox(
+              //   width: 350,
+              //   child: CupertinoCalendar(
+              //     onDateTimeChanged: (value) => setState(() => _selectedStartDateTime = value),
+              //     minimumDateTime: DateTime.now().subtract(const Duration(days: 1)),
+              //     maximumDateTime: DateTime.now().add(const Duration(days: 365)),
+              //     initialDateTime: _selectedStartDateTime?? DateTime.now(),
+              //     currentDateTime: _selectedStartDateTime,
+              //     timeLabel: 'Start Time',
+              //     mode: CupertinoCalendarMode.dateTime,
+              //   ),
+              // ),
               TextButton(
                 onPressed: () {
                   _selectedStartDateTime = null;

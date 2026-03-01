@@ -12,10 +12,7 @@ ProductionReportResponse _$ProductionReportResponseFromJson(
   success: json['success'] as bool,
   period: json['period'] as String,
   generatedAt: json['generatedAt'] as String,
-  data: ProductionReportDetails.fromJson({
-    ...json['data'] as Map<String, dynamic>,
-    "period": json['period'] as String,
-  }),
+  data: ProductionReportDetails.fromJson(json['data'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$ProductionReportResponseToJson(
@@ -41,7 +38,9 @@ ProductionReportDetails _$ProductionReportDetailsFromJson(
     json['downtimeAndIssues'] as Map<String, dynamic>,
   ),
   period: $enumDecode(_$ReportPeriodEnumMap, json['period']),
-  printJobsOverview: PrintJobsOverview.fromJson(json['printJobsOverview'])
+  printJobsOverview: PrintJobsOverview.fromJson(
+    json['printJobsOverview'] as Map<String, dynamic>,
+  ),
 );
 
 Map<String, dynamic> _$ProductionReportDetailsToJson(
@@ -51,6 +50,7 @@ Map<String, dynamic> _$ProductionReportDetailsToJson(
   'printerUtilization': instance.printerUtilization,
   'downtimeAndIssues': instance.downtimeAndIssues,
   'period': _$ReportPeriodEnumMap[instance.period]!,
+  'printJobsOverview': instance.printJobsOverview,
 };
 
 const _$ReportPeriodEnumMap = {

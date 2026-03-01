@@ -69,6 +69,7 @@ class _T {
   static const topbarH  = 52.0;
   static const detailW  = 400.0;
 
+  // radius
   static const r   = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
