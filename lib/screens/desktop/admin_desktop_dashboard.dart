@@ -1117,7 +1117,7 @@ class _StageFunnelChart extends StatelessWidget {
         final count = counts[i];
         final pct   = count / total;
 
-        return Padding(
+        return count < 1? SizedBox() : Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(children: [
             SizedBox(
