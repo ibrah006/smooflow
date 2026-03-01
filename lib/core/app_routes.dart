@@ -11,6 +11,7 @@ import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/screens/delivery_dashboard_screen.dart';
+import 'package:smooflow/screens/desktop/accounts_dashbaord.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
@@ -165,6 +166,9 @@ class AppRoutes {
   // Viewer role home
   static const viewerHome = "/viewer";
 
+  // Accounts dashboard
+  static const accountsDashboard = "/accounts/dashboard";
+
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
     String? routeName = settings.name;
@@ -178,6 +182,10 @@ class AppRoutes {
         final role = LoginService.currentUser!.role.toLowerCase();
         if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
           // Desktop Home
+
+          // debug
+          // routeName = AppRoutes.accountsDashboard;
+
           if (role == 'admin') {
             routeName = AppRoutes.adminDesktopDashboardScreen;
           } else if (role == 'production' || role == 'production-head') {
@@ -430,6 +438,9 @@ class AppRoutes {
         break;
       case viewerHome:
         screen = ViewerHomeScreen();
+        break;
+      case accountsDashboard:
+        screen = AccountsDashboardScreen();
         break;
     }
 
