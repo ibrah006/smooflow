@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/app_database.dart';
+import 'package:smooflow/screens/desktop/components/invoice_status_badge.dart';
 import '../../providers/accounts_providers.dart';
 import 'components/kpi_card.dart';
 
@@ -411,6 +412,72 @@ class _KpiSkeleton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// screens/desktop/components/kpi_card.dart
+// ─────────────────────────────────────────────────────────────────────────────
+
+class KpiCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final Color? valueColor;
+
+  const KpiCard({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 4),
+                Text(value,
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: valueColor ?? const Color(0xFF0F172A))),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
