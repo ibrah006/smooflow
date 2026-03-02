@@ -3,12 +3,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/permission_gate.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
@@ -19,7 +21,7 @@ import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS
+// DESIGN TOKENS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue       = Color(0xFF2563EB);
@@ -54,7 +56,7 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING METADATA
+// BILLING METADATA  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingMeta {
   final BillingStatus value;
@@ -119,7 +121,7 @@ _BillingMeta _billingMeta(BillingStatus s) =>
     _kBilling.firstWhere((m) => m.value == s);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE ORDER
+// STAGE ORDER  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 const List<TaskStatus> _kStatusOrder = [
   TaskStatus.pending,
@@ -376,6 +378,16 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     );
   }
 
+  // ── Print Job action ──────────────────────────────────────────────────────
+
+  Future<void> _showPrinterSelectionDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder: (ctx) => _PrinterSelectionDialog(task: widget.task),
+    );
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -419,6 +431,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final hasSize       = widget.task.size != null;
     final hasQty        = widget.task.quantity != null;
     final hasPrintSpecs = hasRef || hasSize || hasQty;
+
+    // Print job CTA visibility
+    final isWaitingPrinting = widget.task.status == TaskStatus.waitingPrinting;
 
     return Container(
       width: _T.detailW,
@@ -626,6 +641,24 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   ),
                   const SizedBox(height: 18),
 
+                  // ── START PRINT JOB (production / admin only) ─────────────
+                  if (isWaitingPrinting)
+                    PermissionGate(
+                      permission: UserPermission.schedulePrintAction,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _DetailSectionTitle('Print Job'),
+                          const SizedBox(height: 10),
+                          _StartPrintJobCard(
+                            task:     widget.task,
+                            onTap:    _showPrinterSelectionDialog,
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                      ),
+                    ),
+
                   // Description
                   if (widget.task.description.trim().isNotEmpty) ...[
                     const _DetailSectionTitle('Description'),
@@ -687,7 +720,544 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRINT SPECIFICATIONS CARD
+// START PRINT JOB CARD
+// Shown only when task.status == TaskStatus.waitingPrinting.
+// Wrapped in PermissionGate by the parent — no extra auth checks needed here.
+// ─────────────────────────────────────────────────────────────────────────────
+class _StartPrintJobCard extends StatefulWidget {
+  final Task         task;
+  final VoidCallback onTap;
+
+  const _StartPrintJobCard({required this.task, required this.onTap});
+
+  @override
+  State<_StartPrintJobCard> createState() => _StartPrintJobCardState();
+}
+
+class _StartPrintJobCardState extends State<_StartPrintJobCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve:    Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color:        _hovered ? const Color(0xFFEFF6FF) : _T.white,
+            borderRadius: BorderRadius.circular(_T.rLg),
+            border: Border.all(
+              color: _hovered ? _T.blue.withOpacity(0.45) : _T.slate200,
+              width: _hovered ? 1.5 : 1.0,
+            ),
+            boxShadow: _hovered
+                ? [BoxShadow(
+                    color:      _T.blue.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset:     const Offset(0, 3))]
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                // Icon badge
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: _hovered
+                        ? _T.blue.withOpacity(0.12)
+                        : _T.blue50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _T.blue.withOpacity(_hovered ? 0.3 : 0.15)),
+                  ),
+                  child: Icon(Icons.print_rounded,
+                      size: 18,
+                      color: _hovered ? _T.blue : _T.blue.withOpacity(0.7)),
+                ),
+                const SizedBox(width: 12),
+                // Text
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Start Print Job',
+                        style: TextStyle(
+                          fontSize:   13.5,
+                          fontWeight: FontWeight.w700,
+                          color:      _T.ink,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Select a printer and begin production',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color:    _T.slate400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Chevron
+                AnimatedOpacity(
+                  opacity:  _hovered ? 1.0 : 0.45,
+                  duration: const Duration(milliseconds: 160),
+                  child: Container(
+                    width: 26, height: 26,
+                    decoration: BoxDecoration(
+                      color:        _hovered ? _T.blue : _T.slate100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.chevron_right_rounded,
+                        size: 15,
+                        color: _hovered ? Colors.white : _T.slate400),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRINTER SELECTION DIALOG
+// Lets the user pick an available printer then confirm to start the print job.
+// All data wiring (providers, API calls) is left for the caller to implement —
+// the dialog exposes the selected printer via onConfirm.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PrinterSelectionDialog extends ConsumerStatefulWidget {
+  final Task task;
+
+  const _PrinterSelectionDialog({required this.task});
+
+  @override
+  ConsumerState<_PrinterSelectionDialog> createState() =>
+      _PrinterSelectionDialogState();
+}
+
+class _PrinterSelectionDialogState
+    extends ConsumerState<_PrinterSelectionDialog> {
+  String? _selectedPrinterId;
+  bool    _starting = false;
+
+  // ── Temporary stub — replace with your real printer provider ──────────────
+  // Replace this with ref.watch(printerNotifierProvider).printers or similar.
+  // Each item must expose: id, name, nickname, isAvailable, statusLabel, statusColor, statusBackgroundColor
+  List<_PrinterStub> get _printers => []; // <-- wire your provider here
+
+  bool get _canConfirm => _selectedPrinterId != null && !_starting;
+
+  Future<void> _confirm() async {
+    if (!_canConfirm) return;
+    setState(() => _starting = true);
+    // TODO: call your print-job start API here, e.g.:
+    // await ref.read(printerNotifierProvider.notifier)
+    //     .startPrintJob(taskId: widget.task.id, printerId: _selectedPrinterId!);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding:    const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+      child: Container(
+        width:       360,
+        decoration: BoxDecoration(
+          color:        _T.white,
+          borderRadius: BorderRadius.circular(_T.rXl),
+          border:       Border.all(color: _T.slate200),
+          boxShadow: [
+            BoxShadow(
+              color:      Colors.black.withOpacity(0.10),
+              blurRadius: 24,
+              offset:     const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+
+            // ── Header ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34, height: 34,
+                    decoration: BoxDecoration(
+                      color:        _T.blue50,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: _T.blue.withOpacity(0.2)),
+                    ),
+                    child: const Icon(Icons.print_rounded,
+                        size: 16, color: _T.blue),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Start Print Job',
+                            style: TextStyle(
+                              fontSize:   15,
+                              fontWeight: FontWeight.w700,
+                              color:      _T.ink,
+                            )),
+                        Text('Select a printer to assign this job',
+                            style: TextStyle(
+                                fontSize: 11.5, color: _T.slate400)),
+                      ],
+                    ),
+                  ),
+                  // Close
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 26, height: 26,
+                        decoration: BoxDecoration(
+                          border:       Border.all(color: _T.slate200),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: const Icon(Icons.close,
+                            size: 13, color: _T.slate400),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Task chip ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color:        _T.slate50,
+                  border:       Border.all(color: _T.slate200),
+                  borderRadius: BorderRadius.circular(_T.r),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.assignment_outlined,
+                      size: 13, color: _T.slate400),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      widget.task.name,
+                      style: const TextStyle(
+                        fontSize:   12.5,
+                        fontWeight: FontWeight.w600,
+                        color:      _T.ink3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color:        _T.amber50,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: const Text('TASK-ID',
+                        style: TextStyle(
+                            fontSize:   9.5,
+                            fontWeight: FontWeight.w700,
+                            color:      _T.amber)),
+                  ),
+                ]),
+              ),
+            ),
+
+            // ── Section label ─────────────────────────────────────────────
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Text(
+                'AVAILABLE PRINTERS',
+                style: TextStyle(
+                  fontSize:      9,
+                  fontWeight:    FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color:         _T.slate400,
+                ),
+              ),
+            ),
+
+            // ── Printer list ──────────────────────────────────────────────
+            if (_printers.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  decoration: BoxDecoration(
+                    color:        _T.slate50,
+                    border:       Border.all(color: _T.slate200),
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
+                  child: Column(children: [
+                    Icon(Icons.print_disabled_outlined,
+                        size: 22, color: _T.slate300),
+                    const SizedBox(height: 8),
+                    const Text('No printers available',
+                        style: TextStyle(
+                            fontSize:   12.5,
+                            fontWeight: FontWeight.w500,
+                            color:      _T.slate400)),
+                    const SizedBox(height: 2),
+                    const Text('All printers are busy or offline',
+                        style:
+                            TextStyle(fontSize: 11, color: _T.slate300)),
+                  ]),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Column(
+                  children: _printers.map((p) {
+                    final selected = _selectedPrinterId == p.id;
+                    return _PrinterRow(
+                      printer:    p,
+                      isSelected: selected,
+                      onTap: p.isAvailable
+                          ? () => setState(
+                              () => _selectedPrinterId =
+                                  selected ? null : p.id)
+                          : null,
+                    );
+                  }).toList(),
+                ),
+              ),
+
+            const SizedBox(height: 4),
+            const Divider(height: 1, color: _T.slate100),
+
+            // ── Footer ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Row(
+                children: [
+                  // Cancel
+                  Expanded(
+                    child: _GhostButton(
+                      label: 'Cancel',
+                      onTap: _starting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Confirm
+                  Expanded(
+                    flex: 2,
+                    child: _FilledActionButton(
+                      label:   _starting ? 'Starting…' : 'Start Print Job',
+                      icon:    _starting ? null : Icons.print_rounded,
+                      loading: _starting,
+                      enabled: _canConfirm,
+                      onTap:   _confirm,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRINTER ROW  — single selectable printer item inside the dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Minimal stub so the UI compiles before you wire a real printer model.
+/// Replace usages of [_PrinterStub] with your actual Printer class from
+/// printer.dart — just make sure the same fields exist (they already do).
+class _PrinterStub {
+  final String id;
+  final String name;
+  final String nickname;
+  final bool   isAvailable;
+  final String statusLabel;
+  final Color  statusColor;
+  final Color  statusBackgroundColor;
+
+  const _PrinterStub({
+    required this.id,
+    required this.name,
+    required this.nickname,
+    required this.isAvailable,
+    required this.statusLabel,
+    required this.statusColor,
+    required this.statusBackgroundColor,
+  });
+}
+
+class _PrinterRow extends StatefulWidget {
+  final _PrinterStub  printer;
+  final bool          isSelected;
+  final VoidCallback? onTap;
+
+  const _PrinterRow({
+    required this.printer,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_PrinterRow> createState() => _PrinterRowState();
+}
+
+class _PrinterRowState extends State<_PrinterRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled  = widget.onTap == null;
+    final selected  = widget.isSelected;
+    final p         = widget.printer;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: MouseRegion(
+        cursor:  disabled
+            ? SystemMouseCursors.forbidden
+            : SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit:  (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: disabled
+                  ? _T.slate50
+                  : selected
+                      ? _T.blue50
+                      : _hovered
+                          ? const Color(0xFFF8FBFF)
+                          : _T.white,
+              borderRadius: BorderRadius.circular(_T.r),
+              border: Border.all(
+                color: selected
+                    ? _T.blue.withOpacity(0.45)
+                    : disabled
+                        ? _T.slate100
+                        : _hovered
+                            ? _T.slate300
+                            : _T.slate200,
+                width: selected ? 1.5 : 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Printer icon badge
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: disabled
+                        ? _T.slate100
+                        : selected
+                            ? _T.blue.withOpacity(0.12)
+                            : _T.slate100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.print_outlined,
+                    size:  16,
+                    color: disabled
+                        ? _T.slate300
+                        : selected
+                            ? _T.blue
+                            : _T.slate500,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Name + nickname
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.name,
+                        style: TextStyle(
+                          fontSize:   13,
+                          fontWeight: FontWeight.w600,
+                          color: disabled ? _T.slate400 : _T.ink,
+                        ),
+                      ),
+                      if (p.nickname.isNotEmpty) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          p.nickname,
+                          style: const TextStyle(
+                              fontSize: 11, color: _T.slate400),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Status pill
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: p.statusBackgroundColor,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      width: 5, height: 5,
+                      decoration: BoxDecoration(
+                          color: p.statusColor, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      p.statusLabel,
+                      style: TextStyle(
+                        fontSize:   10.5,
+                        fontWeight: FontWeight.w700,
+                        color:      p.statusColor,
+                      ),
+                    ),
+                  ]),
+                ),
+                if (selected) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.check_circle_rounded,
+                      size: 16, color: _T.blue),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRINT SPECIFICATIONS CARD  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _PrintSpecsCard extends StatelessWidget {
   final String? reference;
@@ -849,7 +1419,7 @@ class _PrintSpecsCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SPEC ROW
+// SPEC ROW  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _SpecRow extends StatelessWidget {
   final IconData icon;
@@ -884,23 +1454,7 @@ class _SpecRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING CARD
-//
-// Anatomy — two distinct modes driven by [isEditMode]:
-//
-//  VIEW MODE (default):
-//    Clean single row: icon + "Billing Status" label + status pill on the right.
-//    Accountants see a small "Edit" text-button next to the pill.
-//    Non-accountants see the same row, no edit affordance.
-//
-//  EDIT MODE (accountant only, entered via the Edit button):
-//    AnimatedSwitcher slides the picker panel in below the header row.
-//    Picker shows the five status chips (2-column Wrap).
-//    Footer row: [Cancel] ghost button + [Save] filled button.
-//    Save button disabled while isSaving or !isDirty.
-//
-// No section-level divider is drawn between the header and the picker so the
-// card feels like a single unit in both modes.
+// BILLING CARD  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingCard extends StatelessWidget {
   final BillingStatus              savedStatus;
@@ -951,13 +1505,10 @@ class _BillingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
-          // ── Header row ───────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
             child: Row(
               children: [
-                // Icon badge
                 Container(
                   width: 30, height: 30,
                   decoration: BoxDecoration(
@@ -968,7 +1519,6 @@ class _BillingCard extends StatelessWidget {
                   child: Icon(saved.icon, size: 15, color: saved.color),
                 ),
                 const SizedBox(width: 10),
-                // Label
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -983,7 +1533,6 @@ class _BillingCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Right side: pill + optional edit button
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -997,8 +1546,6 @@ class _BillingCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── Edit panel (slides in/out) ────────────────────────────────
           AnimatedSize(
             duration: const Duration(milliseconds: 240),
             curve:    Curves.easeOutCubic,
@@ -1013,8 +1560,6 @@ class _BillingCard extends StatelessWidget {
                   )
                 : const SizedBox.shrink(),
           ),
-
-          // ── Read-only lock note (non-accountants only, view mode) ─────
           if (!isAccountant)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -1022,9 +1567,8 @@ class _BillingCard extends StatelessWidget {
                 const Icon(Icons.lock_outline_rounded,
                     size: 11, color: _T.slate300),
                 const SizedBox(width: 4),
-                Text('Managed by accounting',
-                    style: const TextStyle(
-                        fontSize: 10.5, color: _T.slate400)),
+                const Text('Managed by accounting',
+                    style: TextStyle(fontSize: 10.5, color: _T.slate400)),
               ]),
             ),
         ],
@@ -1034,7 +1578,7 @@ class _BillingCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EDIT BUTTON  — small ghost "Edit" affordance in the card header
+// EDIT BUTTON  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _EditButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -1080,14 +1624,7 @@ class _EditButtonState extends State<_EditButton> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING EDIT PANEL
-//
-// Rendered inside an AnimatedSize so it glides open / closed.
-// Structure:
-//   thin slate100 top divider
-//   section label "SELECT STATUS"
-//   Wrap of 5 chips (2 per row)
-//   footer: [Cancel] + [Save / Saving…]
+// BILLING EDIT PANEL  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingEditPanel extends StatelessWidget {
   final BillingStatus              selection;
@@ -1111,12 +1648,8 @@ class _BillingEditPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-
-        // Divider
         const Divider(height: 1, color: _T.slate100),
         const SizedBox(height: 14),
-
-        // Section label
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 14),
           child: Text(
@@ -1130,8 +1663,6 @@ class _BillingEditPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-
-        // Chips
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Wrap(
@@ -1215,10 +1746,7 @@ class _BillingEditPanel extends StatelessWidget {
             }).toList(),
           ),
         ),
-
         const SizedBox(height: 14),
-
-        // ── Footer action row ────────────────────────────────────────────
         Container(
           decoration: const BoxDecoration(
             color:  _T.slate50,
@@ -1231,8 +1759,6 @@ class _BillingEditPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
           child: Row(
             children: [
-
-              // Cancel
               Expanded(
                 child: _GhostButton(
                   label:   'Cancel',
@@ -1240,8 +1766,6 @@ class _BillingEditPanel extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-
-              // Save
               Expanded(
                 flex: 2,
                 child: _FilledActionButton(
@@ -1261,7 +1785,7 @@ class _BillingEditPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SMALL REUSABLE BUTTONS used in the billing footer
+// SHARED SMALL BUTTONS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _GhostButton extends StatefulWidget {
   final String       label;
@@ -1372,7 +1896,7 @@ class _FilledActionButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING PILL  — compact status indicator in the card header
+// BILLING PILL  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingPill extends StatelessWidget {
   final _BillingMeta meta;
@@ -1402,7 +1926,7 @@ class _BillingPill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL FOOTER
+// DETAIL FOOTER  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailFooter extends StatelessWidget {
   final Task        task;
@@ -1614,16 +2138,13 @@ class _DetailFooter extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE BACK MENU
+// STAGE BACK MENU  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackMenu extends StatelessWidget {
   final List<TaskStatus>         statuses;
   final ValueChanged<TaskStatus> onSelect;
 
-  const _StageBackMenu({
-    required this.statuses,
-    required this.onSelect,
-  });
+  const _StageBackMenu({required this.statuses, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -1692,18 +2213,14 @@ class _StageBackMenu extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE BACK ROW
+// STAGE BACK ROW  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackRow extends StatefulWidget {
   final TaskStatus   status;
   final bool         isLast;
   final VoidCallback onTap;
 
-  const _StageBackRow({
-    required this.status,
-    required this.isLast,
-    required this.onTap,
-  });
+  const _StageBackRow({required this.status, required this.isLast, required this.onTap});
 
   @override
   State<_StageBackRow> createState() => _StageBackRowState();
@@ -1731,8 +2248,7 @@ class _StageBackRowState extends State<_StageBackRow> {
                   ? null
                   : const Border(bottom: BorderSide(color: _T.slate100)),
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(children: [
               SizedBox(
                 width: 18,
@@ -1772,9 +2288,8 @@ class _StageBackRowState extends State<_StageBackRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARED SMALL COMPONENTS
+// SHARED SMALL COMPONENTS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
-
 class _DetailSectionTitle extends StatelessWidget {
   final String text;
   const _DetailSectionTitle(this.text);
@@ -1826,7 +2341,7 @@ class _Badge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE STEPPER
+// STAGE STEPPER  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _Milestone {
   final String     shortLabel;
@@ -1956,7 +2471,7 @@ class _StageStepper extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE
+// STAGE PIPELINE  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _PipelineMilestone {
   final String           label;
