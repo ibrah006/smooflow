@@ -451,24 +451,6 @@ class _ProjectHeader extends StatelessWidget {
                 letterSpacing: -0.2,
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color:        _T.slate100,
-                borderRadius: BorderRadius.circular(99),
-                border:       Border.all(color: _T.slate200),
-              ),
-              child: const Text(
-                'Filtered',
-                style: TextStyle(
-                  fontSize:   10,
-                  fontWeight: FontWeight.w600,
-                  color:      _T.slate500,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
           ] else ...[
             const Icon(Icons.folder_open_outlined, size: 15, color: _T.slate400),
             const SizedBox(width: 8),
