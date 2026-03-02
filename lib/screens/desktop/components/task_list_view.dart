@@ -202,13 +202,17 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   Set<String> get _effectiveVisible {
     final base = widget.isDetailOpen
         ? _kMandatoryIds
-        : {..._kMandatoryIds, ..._visibleOptional};
+        : {..._kMandatoryIds, ..._visibleOptional, };
 
-    if (_singleProject) {
-      // Strip 'project' from whatever is showing
-      return base.difference({'project'});
-    }
-    return base;
+    // if (!_singleProject) {
+    //   // Strip 'project' from whatever is showing
+    //   return base.add('project');
+    // }
+    return {
+      ...base,
+      // Show the project column when all tasks are viewed
+      if (!_singleProject) 'project'
+    };
   }
 
   Project? get _activeProject => widget.selectedProjectId == null
@@ -700,6 +704,7 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
 
   @override
   Widget build(BuildContext context) {
+
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final avail = constraints.maxWidth;
@@ -727,7 +732,7 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
                   : Curves.easeIn.transform(_ac.isAnimating ? (1 - _ac.value) : 0.0);
               return SizedBox(
                 width: w,
-                child: w < 1 ? const SizedBox.shrink()
+                child: w < 1 ? (const SizedBox.shrink())
                     : widget.builder(col, opacity.clamp(0.0, 1.0)),
               );
             }),
