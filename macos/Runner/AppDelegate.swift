@@ -16,7 +16,6 @@ class AppDelegate: FlutterAppDelegate {
 
     override func applicationDidFinishLaunching(_ aNotification: Notification) {
         super.applicationDidFinishLaunching(aNotification)
-//        GeneratedPluginRegistrant.register(with: self)
 
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
