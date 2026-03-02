@@ -8,14 +8,15 @@ class StagePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.centerLeft,
-    child: Wrap(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(color: stageInfo.bg, borderRadius: BorderRadius.circular(99)),
-          child: Text(stageInfo.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stageInfo.color)),
-        ),
-      ],
-    ),
+    child: Text(stageInfo.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stageInfo.color))
+    // Wrap(
+    //   children: [
+    //     Container(
+    //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    //       decoration: BoxDecoration(color: stageInfo.bg, borderRadius: BorderRadius.circular(99)),
+    //       child: Text(stageInfo.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stageInfo.color)),
+    //     ),
+    //   ],
+    // ),
   );
 }

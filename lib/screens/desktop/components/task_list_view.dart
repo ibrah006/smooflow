@@ -92,16 +92,16 @@ const _kCols = [
     mandatory: true, defaultOn: true, flex: 1,
   ),
   _ColDef(
-    id: 'task', label: 'TASK', pickerLabel: 'Task Name',
-    description: 'Task name',
-    icon: Icons.drive_file_rename_outline_rounded,
-    mandatory: true, defaultOn: true, flex: 3,
-  ),
-  _ColDef(
     id: 'project', label: 'PROJECT', pickerLabel: 'Project',
     description: 'Colour-coded project name',
     icon: Icons.folder_outlined,
     mandatory: true, defaultOn: true, flex: 2,
+  ),
+  _ColDef(
+    id: 'task', label: 'TASK', pickerLabel: 'Task Name',
+    description: 'Task name',
+    icon: Icons.drive_file_rename_outline_rounded,
+    mandatory: true, defaultOn: true, flex: 3,
   ),
   _ColDef(
     id: 'ref', label: 'REF', pickerLabel: 'Reference',
@@ -1138,8 +1138,8 @@ class _TaskRowState extends State<_TaskRow> {
           ? RichText(text: TextSpan(
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
-                TextSpan(text: t.size),
-                const TextSpan(text: ' cm', style: TextStyle(fontSize: 11, color: _T.slate400)),
+                TextSpan(text: t.size!.split(" ")[0]),
+                TextSpan(text: t.size!.split(" ").length > 1? t.size!.split(" ")[1] : "", style: TextStyle(fontSize: 11, color: _T.slate400)),
               ],
             ))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
