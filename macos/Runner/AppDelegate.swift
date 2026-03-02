@@ -23,5 +23,7 @@ class AppDelegate: FlutterAppDelegate {
         updaterDelegate: nil,
         userDriverDelegate: nil
     )
+      
+    updaterController.updater.feedURL = URL(string: "https://workflow-backend-production.up.railway.app/updates/mac")
   }
 }
