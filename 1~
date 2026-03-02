@@ -1,0 +1,68 @@
+[   +1 ms] --- xcodebuild: WARNING: Using the first of multiple matching destinations:
+[   +1 ms] --- xcodebuild: WARNING: Using the first of multiple matching destinations:
+[        ] { platform:macOS, arch:arm64, id:00008122-001178EE1AA1001C, name:My Mac }
+[        ] { platform:macOS, arch:arm64, id:00008122-001178EE1AA1001C, name:My Mac }
+[        ] { platform:macOS, arch:x86_64, id:00008122-001178EE1AA1001C, name:My Mac }
+[        ] { platform:macOS, arch:x86_64, id:00008122-001178EE1AA1001C, name:My Mac }
+[   +7 ms] ** BUILD FAILED **
+[   +7 ms] ** BUILD FAILED **
+[        ] The following build commands failed:
+[        ] The following build commands failed:
+[        ] 	SwiftCompile normal arm64 Compiling\ AppDelegate.swift /Users/ibrahimmn/Desktop/Code/flutter/smooflow/macos/Runner/AppDelegate.swift (in target 'Runner' from project 'Runner')
+[        ] 	SwiftCompile normal arm64 Compiling\ AppDelegate.swift /Users/ibrahimmn/Desktop/Code/flutter/smooflow/macos/Runner/AppDelegate.swift (in target 'Runner' from project 'Runner')
+[        ] 	SwiftCompile normal arm64 /Users/ibrahimmn/Desktop/Code/flutter/smooflow/macos/Runner/AppDelegate.swift (in target 'Runner' from project 'Runner')
+[        ] 	SwiftCompile normal arm64 /Users/ibrahimmn/Desktop/Code/flutter/smooflow/macos/Runner/AppDelegate.swift (in target 'Runner' from project 'Runner')
+[        ] 	Building workspace Runner with scheme Runner and configuration Debug
+[        ] 	Building workspace Runner with scheme Runner and configuration Debug
+[        ] (3 failures)
+[        ] (3 failures)
+[   +1 ms] Error: Build process failed
+[   +1 ms] Error: Build process failed
+[  +27 ms] 
+           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
+           #1      RunCommand.runCommand (package:flutter_tools/src/commands/run.dart:867:9)
+           <asynchronous suspension>
+           #2      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1563:27)
+           <asynchronous suspension>
+           #3      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #4      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+           <asynchronous suspension>
+           #5      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:494:9)
+           <asynchronous suspension>
+           #6      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #7      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+           <asynchronous suspension>
+           #8      run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:98:11)
+           <asynchronous suspension>
+           #9      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #10     main (package:flutter_tools/executable.dart:102:3)
+           <asynchronous suspension>
+
+
+[  +27 ms] 
+           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
+           #1      RunCommand.runCommand (package:flutter_tools/src/commands/run.dart:867:9)
+           <asynchronous suspension>
+           #2      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1563:27)
+           <asynchronous suspension>
+           #3      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #4      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+           <asynchronous suspension>
+           #5      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:494:9)
+           <asynchronous suspension>
+           #6      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #7      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+           <asynchronous suspension>
+           #8      run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:98:11)
+           <asynchronous suspension>
+           #9      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #10     main (package:flutter_tools/executable.dart:102:3)
+           <asynchronous suspension>
+
+
