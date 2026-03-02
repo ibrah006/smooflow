@@ -944,20 +944,23 @@ class _ToggleColRowState extends State<_ToggleColRow> {
       onExit:  (_) => setState(() => _hovering = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 4),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          decoration: BoxDecoration(
+            color: widget.enabled
+                ? _T.blue.withOpacity(0.05)
+                : (_hovering ? _T.slate50 : Colors.transparent),
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: widget.enabled ? _T.blue.withOpacity(0.2)
+                  : (_hovering ? _T.slate200 : Colors.transparent),
+            ),
+          ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: widget.enabled
-                  ? _T.blue.withOpacity(0.05)
-                  : (_hovering ? _T.slate50 : Colors.transparent),
               borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(
-                color: widget.enabled ? _T.blue.withOpacity(0.2)
-                    : (_hovering ? _T.slate200 : Colors.transparent),
-              ),
             ),
             child: Row(children: [
               AnimatedContainer(
