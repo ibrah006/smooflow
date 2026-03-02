@@ -1,7 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// ADMIN ANALYTICS DASHBOARD — real data edition
-// Drop this file alongside your existing design_dashboard.dart.
-// All mock data replaced with real Riverpod providers + your actual models.
+// ADMIN ANALYTICS DASHBOARD — updated
+//
+// Changes from previous version:
+//   • Board and List nav items removed from sidebar — view switching now lives
+//     inside TaskListView's own header bar.
+//   • _AdminView enum no longer has .board — just .overview / .list / .clients
+//     / .team.
+//   • selectedProjectId is passed down to TaskListView so it can hide the
+//     project column and display the correct header label.
+//   • onAddTask / addTaskFocusNode / isAddingTask forwarded to TaskListView
+//     so the embedded BoardView can still create tasks.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
@@ -25,7 +33,6 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
-import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
@@ -36,7 +43,7 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
+// DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue      = Color(0xFF2563EB);
@@ -69,31 +76,21 @@ class _T {
   static const topbarH  = 52.0;
   static const detailW  = 400.0;
 
-  // radius
   static const r   = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stage metadata — mirrors kStages from design_dashboard.dart
+// Stage metadata
 // ─────────────────────────────────────────────────────────────────────────────
-// class _StageInfo {
-//   final TaskStatus status;
-//   final String label;
-//   final String shortLabel;
-//   final Color color;
-//   final Color bg;
-//   const _StageInfo(this.status, this.label, this.shortLabel, this.color, this.bg);
-// }
-
 DesignStageInfo _stageInfo(TaskStatus s) =>
     kStages.firstWhere((i) => i.stage == s, orElse: () => kStages.first);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VIEW ENUM
+// VIEW ENUM — board removed; view switching lives inside TaskListView
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, board, list, clients, team }
+enum _AdminView { overview, list, clients, team }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -108,55 +105,53 @@ class AdminDesktopDashboardScreen extends ConsumerStatefulWidget {
 
 class _AdminDesktopDashboardScreenState
     extends ConsumerState<AdminDesktopDashboardScreen> {
-  _AdminView _view = _AdminView.overview;
-  String? _selectedProjectId;
-  int?    _selectedTaskId;
-
-  String _searchQuery = '';
+  _AdminView _view             = _AdminView.overview;
+  String?    _selectedProjectId;
+  int?       _selectedTaskId;
+  String     _searchQuery      = '';
 
   final FocusNode _addTaskFocusNode = FocusNode();
-  bool _isAddingTask = false;
-
+  bool _isAddingTask  = false;
   bool _isInitLoading = true;
 
-  void _selectTask(int id) {
-    setState(() {
-      _selectedTaskId = id;
-    });
-  }
-
-  void _closeDetail()      => setState(() => _selectedTaskId = null);
+  void _selectTask(int id)  => setState(() => _selectedTaskId = id);
+  void _closeDetail()       => setState(() => _selectedTaskId = null);
 
   Task? get _selectedTask => _selectedTaskId == null
       ? null
-      : _tasks.cast<Task?>().firstWhere((t) => t!.id == _selectedTaskId, orElse: () => null);
+      : _tasks.cast<Task?>().firstWhere(
+            (t) => t!.id == _selectedTaskId,
+            orElse: () => null,
+          );
 
-  Future<void> _showSnack(context, String msg, Color color) async {
+  Future<void> _showSnack(BuildContext ctx, String msg, Color color) async {
     kRootScaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Row(children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+              width: 8,
+              height: 8,
+              decoration:
+                  BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 10),
-          Flexible(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+          Flexible(
+              child: Text(msg,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w500))),
         ]),
         backgroundColor: _T.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rLg)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_T.rLg)),
         duration: const Duration(seconds: 3),
         elevation: 8,
       ),
     );
   }
 
-  /// Advance the selected task to the next stage via the Riverpod notifier.
   Future<void> _advanceTask(Task advancedTask) async {
     final next = advancedTask.status;
-    // if (advancedTask.status == null) return;
-
-    // Persist through notifier
-    // await ref.read(taskNotifierProvider.notifier).updateTaskStatus(task.id, next);
-
     _showSnack(
       context,
       next == TaskStatus.clientApproved
@@ -164,11 +159,9 @@ class _AdminDesktopDashboardScreenState
           : 'Task moved to "${stageInfo(next).label}"',
       next == TaskStatus.clientApproved ? _T.green : _T.blue,
     );
-
     setState(() {});
   }
 
-  // All pipeline tasks (same filter as DesignDashboardScreen)
   List<Task> get _pipelineTasks =>
       ref.watch(taskNotifierProvider).tasks.where((t) =>
           t.status == TaskStatus.pending ||
@@ -179,24 +172,17 @@ class _AdminDesktopDashboardScreenState
 
   List<Project> get _projects => ref.watch(projectNotifierProvider);
   List<Member>  get _members  => ref.watch(memberNotifierProvider).members;
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks;
+  List<Task>    get _tasks    => ref.watch(taskNotifierProvider).tasks;
 
-  List<Task> get _visibleTasks {
-    return _tasks.where((t) {
-      if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
-      // if (_filter == TaskFilter.mine && !t.assignees.contains(_currentUser.id)) return false;
-      // if (_filter == TaskFilter.overdue) {
-      //   final d = t.dueDate;
-      //   if (d == null || !d.isBefore(DateTime.now())) return false;
-      // }
-      final q = _searchQuery.toLowerCase().trim();
-      if (q.isNotEmpty) {
-        return t.name.toLowerCase().contains(q) ||
-            (t.description ?? '').toLowerCase().contains(q);
-      }
-      return true;
-    }).toList();
-  }
+  List<Task> get _visibleTasks => _tasks.where((t) {
+    if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
+    final q = _searchQuery.toLowerCase().trim();
+    if (q.isNotEmpty) {
+      return t.name.toLowerCase().contains(q) ||
+          (t.description ?? '').toLowerCase().contains(q);
+    }
+    return true;
+  }).toList();
 
   @override
   void initState() {
@@ -207,40 +193,26 @@ class _AdminDesktopDashboardScreenState
       await ref.read(taskNotifierProvider.notifier).loadAll();
       await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
       await ref.read(memberNotifierProvider.notifier).members;
-      setState(() {
-        _isInitLoading = false;
-      });
+      if (mounted) setState(() => _isInitLoading = false);
     });
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.escape) {
-        // Close detail
-        if (_selectedTaskId != null) _closeDetail();
-        return KeyEventResult.handled;
-      }
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape &&
+        _selectedTaskId != null) {
+      _closeDetail();
+      return KeyEventResult.handled;
     }
-
     return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
-
-    print("task ln: ${_visibleTasks.length}");
-
-    print("selected task: ${_selectedTaskId}");
-
     return GestureDetector(
       onTap: () {
-        // unfocus from add new task 
-        print("unfocus now from add new task");
         _addTaskFocusNode.unfocus();
-
-        setState(() {
-          _isAddingTask = false;
-        });
+        setState(() => _isAddingTask = false);
       },
       child: LoadingOverlay(
         isLoading: _isInitLoading,
@@ -248,21 +220,26 @@ class _AdminDesktopDashboardScreenState
           backgroundColor: _T.slate50,
           body: Focus(
             autofocus: true,
-            // onKeyEvent: (_, event) => KeyEventResult.ignored,
             onKeyEvent: _handleKey,
             child: Row(
               children: [
+                // ── Sidebar ─────────────────────────────────────────────
                 _AdminSidebar(
-                  currentView: _view,
-                  selectedProjectId: _selectedProjectId,
-                  projects: _projects,
-                  tasks: _pipelineTasks,
-                  members: _members,
-                  onViewChanged: (v) => setState(() => _view = v),
-                  onProjectSelected: (id) => setState(() {
+                  currentView:        _view,
+                  selectedProjectId:  _selectedProjectId,
+                  projects:           _projects,
+                  tasks:              _pipelineTasks,
+                  members:            _members,
+                  onViewChanged:      (v) => setState(() => _view = v),
+                  onProjectSelected:  (id) => setState(() {
                     _selectedProjectId = id;
+                    // Switch to list view when a project is selected so the
+                    // user immediately sees filtered results.
+                    if (_view == _AdminView.overview) _view = _AdminView.list;
                   }),
                 ),
+
+                // ── Main content ────────────────────────────────────────
                 Expanded(
                   child: Column(
                     children: [
@@ -271,48 +248,47 @@ class _AdminDesktopDashboardScreenState
                         child: Row(
                           children: [
                             Expanded(
-                              child: 
-                              _view == _AdminView.overview
-                            ? _AdminAnalyticsView(
-                                tasks: _pipelineTasks,
-                                projects: _projects,
-                                members: _members,
-                              )
-                            : _view == _AdminView.board? BoardView(
-                                          tasks: _visibleTasks,
-                                          projects: _projects,
-                                          selectedTaskId: _selectedTaskId,
-                                          onTaskSelected: _selectTask,
-                                          onAddTask: _showTaskModal,
-                                          addTaskFocusNode: _addTaskFocusNode,
-                                          isAddingTask: _isAddingTask,
-                                          selectedProjectId: _selectedProjectId
-                                        ) :  _view == _AdminView.list? TaskListView(
-                                        tasks: _visibleTasks,
-                                        projects: _projects,
-                                        selectedTaskId: _selectedTaskId,
-                                        onTaskSelected: _selectTask,
-                                        isDetailOpen: _selectedTaskId != null,
-                                      ) :
-                                      _view == _AdminView.clients? ClientsPage() : ManageMembersPage()
-                                      
+                              child: _view == _AdminView.overview
+                                  ? _AdminAnalyticsView(
+                                      tasks:    _pipelineTasks,
+                                      projects: _projects,
+                                      members:  _members,
+                                    )
+                                  : _view == _AdminView.list
+                                      ? TaskListView(
+                                          tasks:             _visibleTasks,
+                                          projects:          _projects,
+                                          selectedProjectId: _selectedProjectId,
+                                          selectedTaskId:    _selectedTaskId,
+                                          onTaskSelected:    _selectTask,
+                                          isDetailOpen:      _selectedTaskId != null,
+                                          onAddTask:         _showTaskModal,
+                                          addTaskFocusNode:  _addTaskFocusNode,
+                                          isAddingTask:      _isAddingTask,
+                                        )
+                                      : _view == _AdminView.clients
+                                          ? ClientsPage()
+                                          : ManageMembersPage(),
                             ),
-                            // ── Detail panel ──────────────────────────────────
+
+                            // ── Detail panel ──────────────────────────
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 220),
                               curve: Curves.easeInOut,
                               width: _selectedTaskId != null ? _T.detailW : 0,
-                              child: _selectedTaskId != null && _selectedTask != null
+                              child: _selectedTaskId != null &&
+                                      _selectedTask != null
                                   ? DetailPanel(
-                                      task: _selectedTask!,
-                                      projects: _projects,
-                                      onClose: _closeDetail,
-                                      onAdvance: () => _advanceTask(_selectedTask!),
+                                      task:      _selectedTask!,
+                                      projects:  _projects,
+                                      onClose:   _closeDetail,
+                                      onAdvance: () =>
+                                          _advanceTask(_selectedTask!),
                                     )
                                   : const SizedBox.shrink(),
                             ),
                           ],
-                        )
+                        ),
                       ),
                     ],
                   ),
@@ -325,24 +301,26 @@ class _AdminDesktopDashboardScreenState
     );
   }
 
-  void _showTaskModal() async {
-    // Determine next id from current task list
-    final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
+  void _showTaskModal() {
+    final nextId = (_tasks.isEmpty
+            ? 0
+            : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) +
+        1;
     showDialog(
       context: context,
       builder: (_) => TaskModal(
-        projects: _projects,
+        projects:            _projects,
         preselectedProjectId: _selectedProjectId,
-        nextId: nextId,
+        nextId:              nextId,
       ),
     );
-
     setState(() {});
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIDEBAR
+// SIDEBAR — Board and List tabs removed; only Overview / Clients / Team remain
+// as nav items. Project list acts as the primary view-switch into the list.
 // ─────────────────────────────────────────────────────────────────────────────
 class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
@@ -372,21 +350,28 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+              width: 8,
+              height: 8,
+              decoration:
+                  BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 10),
-          Flexible(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+          Flexible(
+              child: Text(msg,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w500))),
         ]),
         backgroundColor: _T.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rLg)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_T.rLg)),
         duration: const Duration(seconds: 3),
         elevation: 8,
       ),
     );
   }
 
-  /// Add a new project through the Riverpod notifier.
   Future<void> _addProject(Project p) async {
     await ref.read(projectNotifierProvider.notifier).create(p);
     if (!mounted) return;
@@ -408,41 +393,39 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Logo ─────────────────────────────────────────────────────
+          // ── Logo ───────────────────────────────────────────────────────
           Container(
             height: _T.topbarH,
             decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0x10FFFFFF)))),
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Logo(size: 25),
-                const SizedBox(width: 9),
-                const Text('smooflow',
+            child: Row(children: [
+              Logo(size: 25),
+              const SizedBox(width: 9),
+              const Text('smooflow',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.6,
+                      color: Colors.white)),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                    color: _T.amber.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(4)),
+                child: const Text('ADMIN',
                     style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.6,
-                        color: Colors.white)),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: _T.amber.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4)),
-                  child: const Text('ADMIN',
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                          color: Color(0xFFFCD34D))),
-                ),
-              ],
-            ),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: Color(0xFFFCD34D))),
+              ),
+            ]),
           ),
 
-          // ── Nav ──────────────────────────────────────────────────────
+          // ── Nav ────────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
             child: Column(
@@ -451,62 +434,55 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 _SidebarLabel('Workspace'),
                 const SizedBox(height: 4),
                 _SidebarNavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Overview',
+                  icon:     Icons.bar_chart_rounded,
+                  label:    'Overview',
                   isActive: widget.currentView == _AdminView.overview,
-                  onTap: () => widget.onViewChanged(_AdminView.overview),
+                  onTap:    () => widget.onViewChanged(_AdminView.overview),
                 ),
+                // Tasks nav item → goes straight to list view with no filter
                 _SidebarNavItem(
-                  icon: Icons.view_kanban_outlined,
-                  label: 'Board',
-                  isActive: widget.currentView == _AdminView.board,
-                  badge: widget.tasks
-                      .where((t) => t.status != TaskStatus.clientApproved)
-                      .length
-                      .toString(),
-                  onTap: () => widget.onViewChanged(_AdminView.board),
-                ),
-                _SidebarNavItem(
-                  icon: Icons.list_alt_outlined,
-                  label: 'List',
-                  isActive: widget.currentView == _AdminView.list,
-                  onTap: () => widget.onViewChanged(_AdminView.list),
+                  icon:     Icons.assignment_outlined,
+                  label:    'All Tasks',
+                  isActive: widget.currentView == _AdminView.list &&
+                      widget.selectedProjectId == null,
+                  badge: widget.tasks.length > 0
+                      ? widget.tasks.length.toString()
+                      : null,
+                  onTap: () {
+                    widget.onProjectSelected(null);
+                    widget.onViewChanged(_AdminView.list);
+                  },
                 ),
               ],
             ),
           ),
 
-          // ── Projects ─────────────────────────────────────────────────
+          // ── Projects ───────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 4),
             child: _SidebarLabel('Projects'),
           ),
-          const SizedBox(height: 4),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: [
-                  _SidebarProjectRow(
-                    name: 'All projects',
-                    color: _T.slate400,
-                    count: widget.tasks.length,
-                    isActive: widget.selectedProjectId == null,
-                    onTap: () => widget.onProjectSelected(null),
-                  ),
-                  ...widget.projects.map((p) {
-                    final cnt =
-                        widget.tasks.where((t) => t.projectId == p.id).length;
-                    return _SidebarProjectRow(
-                      name: p.name,
-                      color: p.color,
-                      count: cnt,
-                      isActive: widget.selectedProjectId == p.id,
-                      onTap: () => widget.onProjectSelected(p.id),
-                    );
-                  }),
-                ],
+                children: widget.projects.map((p) {
+                  final cnt =
+                      widget.tasks.where((t) => t.projectId == p.id).length;
+                  final isActive = widget.selectedProjectId == p.id &&
+                      widget.currentView == _AdminView.list;
+                  return _SidebarProjectRow(
+                    name:     p.name,
+                    color:    p.color,
+                    count:    cnt,
+                    isActive: isActive,
+                    onTap:    () {
+                      widget.onProjectSelected(p.id);
+                      widget.onViewChanged(_AdminView.list);
+                    },
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -514,59 +490,58 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
             child: InkWell(
-              onTap: _showProjectModal,
+              onTap:        _showProjectModal,
               borderRadius: BorderRadius.circular(_T.r),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withOpacity(0.14), width: 1.5),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.14), width: 1.5),
                   borderRadius: BorderRadius.circular(_T.r),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add, size: 14, color: Colors.white.withOpacity(0.4)),
+                    Icon(Icons.add,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.4)),
                     const SizedBox(width: 7),
-                    Text('New Project', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.4))),
+                    Text('New Project',
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.4))),
                   ],
                 ),
               ),
             ),
           ),
 
+          // ── Manage ─────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
             child: _SidebarLabel('Manage'),
           ),
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              children: [
-                _SidebarNavItem(
-                  icon: Icons.supervisor_account_sharp,
-                  label: 'Clients',
-                  isActive: widget.currentView == _AdminView.clients,
-                  onTap: () => widget.onViewChanged(_AdminView.clients),
-                )
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              children: [
-                _SidebarNavItem(
-                  icon: Icons.supervisor_account_sharp,
-                  label: 'Manage Team',
-                  isActive: widget.currentView == _AdminView.team,
-                  onTap: () => widget.onViewChanged(_AdminView.team),
-                )
-              ],
-            ),
+            child: Column(children: [
+              _SidebarNavItem(
+                icon:     Icons.supervisor_account_sharp,
+                label:    'Clients',
+                isActive: widget.currentView == _AdminView.clients,
+                onTap:    () => widget.onViewChanged(_AdminView.clients),
+              ),
+              _SidebarNavItem(
+                icon:     Icons.people_outline_rounded,
+                label:    'Manage Team',
+                isActive: widget.currentView == _AdminView.team,
+                onTap:    () => widget.onViewChanged(_AdminView.team),
+              ),
+            ]),
           ),
 
-          // ── Team ─────────────────────────────────────────────────────
+          // ── Team ───────────────────────────────────────────────────────
           Container(
             decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
@@ -585,7 +560,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(children: [
                         _AvatarWidget(
-                            initials: m.initials, color: m.color, size: 26),
+                            initials: m.initials,
+                            color:    m.color,
+                            size:     26),
                         const SizedBox(width: 8),
                         Expanded(
                             child: Text(m.name,
@@ -593,7 +570,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.white.withOpacity(0.5)))),
-                        // Online dot — always green for simplicity since Member has no isOnline field
                         Container(
                             width: 6,
                             height: 6,
@@ -615,105 +591,82 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _AdminTopbar extends StatelessWidget {
   final _AdminView currentView;
-
   const _AdminTopbar({required this.currentView});
 
   @override
   Widget build(BuildContext context) {
-    final now   = DateTime.now();
-    final hour  = now.hour;
-    final greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    final user  = LoginService.currentUser;
+    final now      = DateTime.now();
+    final hour     = now.hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+    final user = LoginService.currentUser;
 
     return Container(
       height: _T.topbarH,
       decoration: const BoxDecoration(
-          color: _T.white,
+          color:  _T.white,
           border: Border(bottom: BorderSide(color: _T.slate200))),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          if (currentView == _AdminView.overview) ...[
-            Text('$greeting${user != null ? ", ${user.nameShort}" : ""}',
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _T.ink3)),
-            const SizedBox(width: 8),
-            Container(
-                width: 4,
-                height: 4,
-                decoration: const BoxDecoration(
-                    color: _T.slate300, shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Text(_fmtDateFull(now),
-                style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
-          ] else
-            Text(
-              currentView == _AdminView.board ? 'Design Board' : 'Task List',
+      child: Row(children: [
+        if (currentView == _AdminView.overview) ...[
+          Text('$greeting${user != null ? ", ${user.nameShort}" : ""}',
               style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3),
-            ),
+                  fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3)),
+          const SizedBox(width: 8),
+          Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                  color: _T.slate300, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+          Text(_fmtDateFull(now),
+              style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
+        ] else
+          Text(
+            currentView == _AdminView.list
+                ? 'Tasks'
+                : currentView == _AdminView.clients
+                    ? 'Clients'
+                    : 'Team',
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3),
+          ),
 
-          const Spacer(),
+        const Spacer(),
+        const SizedBox(width: 12),
 
-          // Live indicator
-          // Container(
-          //   padding:
-          //       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          //   decoration: BoxDecoration(
-          //       color: _T.green50,
-          //       border:
-          //           Border.all(color: _T.green.withOpacity(0.3)),
-          //       borderRadius: BorderRadius.circular(99)),
-          //   child: Row(children: [
-          //     Container(
-          //         width: 6,
-          //         height: 6,
-          //         decoration: const BoxDecoration(
-          //             color: _T.green, shape: BoxShape.circle)),
-          //     const SizedBox(width: 6),
-          //     const Text('Live',
-          //         style: TextStyle(
-          //             fontSize: 11.5,
-          //             fontWeight: FontWeight.w700,
-          //             color: _T.green)),
-          //   ]),
-          // ),
-          const SizedBox(width: 12),
-
-          // Add Task
-          FilledButton.icon(
-            onPressed: () {
-              AppRoutes.navigateTo(context, AppRoutes.designCreateTaskScreen, arguments: CreateTaskArgs(preselectedProjectId: null));
+        FilledButton.icon(
+          onPressed: () {
+            AppRoutes.navigateTo(context, AppRoutes.designCreateTaskScreen,
+                arguments: CreateTaskArgs(preselectedProjectId: null));
+          },
+          style: FilledButton.styleFrom(
+            textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+            iconSize: 13,
+          ),
+          label: const Text('Create Task'),
+          icon:  const Icon(Icons.add),
+        ),
+        const SizedBox(width: 15),
+        if (user != null)
+          UserMenuChip(
+            onLogout: () async {
+              await LoginService.logout();
+              if (context.mounted) {
+                AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
+              }
             },
-            style: FilledButton.styleFrom(
-              textStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-              iconSize: 13
-            ),
-            label: Text("Create Task"),
-            icon: Icon(Icons.add)),
-          
-          SizedBox(width: 15),
-
-          // User chip — real user from LoginService
-          if (user != null)
-            UserMenuChip(
-              onLogout: () async {
-                await LoginService.logout();
-                if (context.mounted) {
-                  AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
-                }
-              },
-            )
-        ],
-      ),
+          ),
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANALYTICS VIEW — receives real Task / Project / Member lists
+// ANALYTICS VIEW — unchanged from previous version
 // ─────────────────────────────────────────────────────────────────────────────
 class _AdminAnalyticsView extends StatefulWidget {
   final List<Task>    tasks;
@@ -757,7 +710,6 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
     final projects = widget.projects;
     final members  = widget.members;
 
-    // ── Computed stats from real data ─────────────────────────────────────
     final totalActive = tasks
         .where((t) =>
             t.status != TaskStatus.clientApproved &&
@@ -787,7 +739,6 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Row 1: KPI strip ───────────────────────────────────────────
           FadeTransition(
             opacity: _stagger(0.0, 0.4),
             child: SlideTransition(
@@ -796,130 +747,101 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
                   .animate(_stagger(0.0, 0.4)),
               child: Row(children: [
                 _KpiCard(
-                  label: 'Active Tasks',
-                  value: '$totalActive',
-                  delta: totalActive > 0
-                      ? '$totalActive in flight'
-                      : 'All clear',
+                  label: 'Active Tasks', value: '$totalActive',
+                  delta: totalActive > 0 ? '$totalActive in flight' : 'All clear',
                   deltaPositive: null,
                   icon: Icons.assignment_outlined,
-                  iconColor: _T.blue,
-                  iconBg: _T.blue50,
+                  iconColor: _T.blue, iconBg: _T.blue50,
                 ),
                 const SizedBox(width: 12),
                 _KpiCard(
-                  label: 'In Review',
-                  value: '$inReview',
-                  delta: 'Awaiting approval',
-                  deltaPositive: null,
+                  label: 'In Review', value: '$inReview',
+                  delta: 'Awaiting approval', deltaPositive: null,
                   icon: Icons.hourglass_top_rounded,
-                  iconColor: _T.amber,
-                  iconBg: _T.amber50,
+                  iconColor: _T.amber, iconBg: _T.amber50,
                 ),
                 const SizedBox(width: 12),
                 _KpiCard(
-                  label: 'Overdue',
-                  value: '$overdue',
+                  label: 'Overdue', value: '$overdue',
                   delta: overdue > 0 ? 'Needs attention' : 'All on track',
                   deltaPositive: overdue == 0,
                   icon: Icons.warning_amber_rounded,
-                  iconColor: _T.red,
-                  iconBg: _T.red50,
+                  iconColor: _T.red, iconBg: _T.red50,
                 ),
                 const SizedBox(width: 12),
                 _KpiCard(
-                  label: 'Approved Today',
-                  value: '$approvedToday',
-                  delta: 'Client sign-offs',
-                  deltaPositive: approvedToday > 0,
+                  label: 'Approved Today', value: '$approvedToday',
+                  delta: 'Client sign-offs', deltaPositive: approvedToday > 0,
                   icon: Icons.check_circle_outline_rounded,
-                  iconColor: _T.green,
-                  iconBg: _T.green50,
+                  iconColor: _T.green, iconBg: _T.green50,
                 ),
                 const SizedBox(width: 12),
                 _KpiCard(
-                  label: 'Print Queue',
-                  value: '$printQueue',
-                  delta: 'Ready for production',
-                  deltaPositive: null,
+                  label: 'Print Queue', value: '$printQueue',
+                  delta: 'Ready for production', deltaPositive: null,
                   icon: Icons.print_outlined,
-                  iconColor: _T.purple,
-                  iconBg: _T.purple50,
+                  iconColor: _T.purple, iconBg: _T.purple50,
                 ),
               ]),
             ),
           ),
           const SizedBox(height: 16),
-
-          // ── Row 2: Stage distribution + Throughput ─────────────────────
           FadeTransition(
             opacity: _stagger(0.15, 0.55),
             child: SlideTransition(
               position: Tween<Offset>(
                       begin: const Offset(0, 0.04), end: Offset.zero)
                   .animate(_stagger(0.15, 0.55)),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: _AnalyticsCard(
-                      title: 'Stage Distribution',
-                      subtitle: 'Tasks by pipeline stage',
-                      child: _StageFunnelChart(tasks: tasks),
-                    ),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                  flex: 5,
+                  child: _AnalyticsCard(
+                    title: 'Stage Distribution',
+                    subtitle: 'Tasks by pipeline stage',
+                    child: _StageFunnelChart(tasks: tasks),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 4,
-                    child: _AnalyticsCard(
-                      title: 'Priority Breakdown',
-                      subtitle: 'Across all active tasks',
-                      child: _PriorityDonutChart(tasks: tasks),
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 4,
+                  child: _AnalyticsCard(
+                    title: 'Priority Breakdown',
+                    subtitle: 'Across all active tasks',
+                    child: _PriorityDonutChart(tasks: tasks),
                   ),
-                ],
-              ),
+                ),
+              ]),
             ),
           ),
           const SizedBox(height: 16),
-
-          // ── Row 3: Team workload + Project health ──────────────────────
           FadeTransition(
             opacity: _stagger(0.3, 0.7),
             child: SlideTransition(
               position: Tween<Offset>(
                       begin: const Offset(0, 0.04), end: Offset.zero)
                   .animate(_stagger(0.3, 0.7)),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: _AnalyticsCard(
-                      title: 'Team Workload',
-                      subtitle: 'Active tasks per designer',
-                      child: _TeamWorkloadChart(
-                          members: members, tasks: tasks),
-                    ),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                  flex: 4,
+                  child: _AnalyticsCard(
+                    title: 'Team Workload',
+                    subtitle: 'Active tasks per designer',
+                    child: _TeamWorkloadChart(members: members, tasks: tasks),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 5,
-                    child: _AnalyticsCard(
-                      title: 'Project Health',
-                      subtitle: 'Stage breakdown & overdue risk per project',
-                      child: _ProjectHealthGrid(
-                          projects: projects, tasks: tasks),
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 5,
+                  child: _AnalyticsCard(
+                    title: 'Project Health',
+                    subtitle: 'Stage breakdown & overdue risk per project',
+                    child: _ProjectHealthGrid(projects: projects, tasks: tasks),
                   ),
-                ],
-              ),
+                ),
+              ]),
             ),
           ),
           const SizedBox(height: 16),
-
-          // ── Row 4: Overdue tasks list ──────────────────────────────────
           if (overdue > 0)
             FadeTransition(
               opacity: _stagger(0.45, 0.85),
@@ -931,13 +853,10 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
                   title: 'Overdue Tasks',
                   subtitle: 'Past due date — needs action',
                   child: _OverdueTasksList(
-                      tasks: tasks,
-                      projects: projects,
-                      members: members),
+                      tasks: tasks, projects: projects, members: members),
                 ),
               ),
             ),
-
           const SizedBox(height: 20),
         ],
       ),
@@ -952,10 +871,10 @@ class _KpiCard extends StatelessWidget {
   final String label;
   final String value;
   final String delta;
-  final bool? deltaPositive;
+  final bool?  deltaPositive;
   final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
+  final Color    iconColor;
+  final Color    iconBg;
 
   const _KpiCard({
     required this.label,
@@ -982,50 +901,38 @@ class _KpiCard extends StatelessWidget {
             color: _T.white,
             border: Border.all(color: _T.slate200),
             borderRadius: BorderRadius.circular(_T.rLg)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(_T.r)),
-                child: Icon(icon, size: 17, color: iconColor),
-              ),
-              const Spacer(),
-              Icon(
-                deltaPositive == null
-                    ? Icons.remove
-                    : deltaPositive!
-                        ? Icons.trending_up_rounded
-                        : Icons.trending_down_rounded,
-                size: 14,
-                color: deltaColor,
-              ),
-            ]),
-            const SizedBox(height: 12),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _T.ink,
-                    letterSpacing: -1,
-                    height: 1)),
-            const SizedBox(height: 4),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _T.ink3)),
-            const SizedBox(height: 6),
-            Text(delta,
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: deltaColor)),
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                  color: iconBg, borderRadius: BorderRadius.circular(_T.r)),
+              child: Icon(icon, size: 17, color: iconColor),
+            ),
+            const Spacer(),
+            Icon(
+              deltaPositive == null
+                  ? Icons.remove
+                  : deltaPositive!
+                      ? Icons.trending_up_rounded
+                      : Icons.trending_down_rounded,
+              size: 14, color: deltaColor,
+            ),
+          ]),
+          const SizedBox(height: 12),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 28, fontWeight: FontWeight.w800,
+                  color: _T.ink, letterSpacing: -1, height: 1)),
+          const SizedBox(height: 4),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
+          const SizedBox(height: 6),
+          Text(delta,
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w500, color: deltaColor)),
+        ]),
       ),
     );
   }
@@ -1053,50 +960,40 @@ class _AnalyticsCard extends StatelessWidget {
           color: _T.white,
           border: Border.all(color: _T.slate200),
           borderRadius: BorderRadius.circular(_T.rLg)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _T.ink,
-                          letterSpacing: -0.2)),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 11.5,
-                          color: _T.slate400,
-                          fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ),
-            Container(
-              width: 24, height: 24,
-              decoration: BoxDecoration(
-                  border: Border.all(color: _T.slate200),
-                  borderRadius: BorderRadius.circular(_T.r)),
-              child: const Icon(Icons.more_horiz,
-                  size: 13, color: _T.slate400),
-            ),
-          ]),
-          const SizedBox(height: 16),
-          const Divider(height: 1, thickness: 1, color: _T.slate100),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w700,
+                      color: _T.ink, letterSpacing: -0.2)),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 11.5, color: _T.slate400,
+                      fontWeight: FontWeight.w500)),
+            ]),
+          ),
+          Container(
+            width: 24, height: 24,
+            decoration: BoxDecoration(
+                border: Border.all(color: _T.slate200),
+                borderRadius: BorderRadius.circular(_T.r)),
+            child: const Icon(Icons.more_horiz, size: 13, color: _T.slate400),
+          ),
+        ]),
+        const SizedBox(height: 16),
+        const Divider(height: 1, thickness: 1, color: _T.slate100),
+        const SizedBox(height: 16),
+        child,
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE FUNNEL CHART — real Task list
+// STAGE FUNNEL CHART
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageFunnelChart extends StatelessWidget {
   final List<Task> tasks;
@@ -1104,9 +1001,8 @@ class _StageFunnelChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final counts = kStages
-        .map((s) => tasks.where((t) => t.status == s.stage).length)
-        .toList();
+    final counts =
+        kStages.map((s) => tasks.where((t) => t.status == s.stage).length).toList();
     final total = counts.fold(0, (a, b) => a + b);
     if (total == 0) {
       return const Padding(
@@ -1119,78 +1015,74 @@ class _StageFunnelChart extends StatelessWidget {
 
     return Column(
       children: kStages.asMap().entries.map((entry) {
-        final i = entry.key;
-        final s = entry.value;
+        final i     = entry.key;
+        final s     = entry.value;
         final count = counts[i];
         final pct   = count / total;
 
-        return count < 1? SizedBox() : Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(children: [
-            SizedBox(
-              width: 130,
-              child: Text(s.label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _T.ink3)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: LayoutBuilder(builder: (context, constraints) {
-                return Stack(children: [
-                  Container(
-                      height: 26,
-                      decoration: BoxDecoration(
-                          color: _T.slate100,
-                          borderRadius: BorderRadius.circular(_T.r))),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.easeOutCubic,
-                    height: 26,
-                    width: constraints.maxWidth * pct,
-                    decoration: BoxDecoration(
-                        color: s.bg,
-                        border: Border.all(
-                            color: s.color.withOpacity(0.4)),
-                        borderRadius: BorderRadius.circular(_T.r)),
-                    child: count > 0
-                        ? Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 10),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text('$count',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: s.color)),
-                            ))
-                        : null,
+        return count < 1
+            ? const SizedBox()
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(children: [
+                  SizedBox(
+                    width: 130,
+                    child: Text(s.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w500, color: _T.ink3)),
                   ),
-                ]);
-              }),
-            ),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 38,
-              child: Text('${(pct * 100).round()}%',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: _T.slate500)),
-            ),
-          ]),
-        );
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      return Stack(children: [
+                        Container(
+                            height: 26,
+                            decoration: BoxDecoration(
+                                color: _T.slate100,
+                                borderRadius: BorderRadius.circular(_T.r))),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOutCubic,
+                          height: 26,
+                          width: constraints.maxWidth * pct,
+                          decoration: BoxDecoration(
+                              color: s.bg,
+                              border: Border.all(color: s.color.withOpacity(0.4)),
+                              borderRadius: BorderRadius.circular(_T.r)),
+                          child: count > 0
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text('$count',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: s.color)),
+                                  ))
+                              : null,
+                        ),
+                      ]);
+                    }),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 38,
+                    child: Text('${(pct * 100).round()}%',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                            fontSize: 11.5, fontWeight: FontWeight.w600, color: _T.slate500)),
+                  ),
+                ]),
+              );
       }).toList(),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TEAM WORKLOAD CHART — real Member + Task lists
+// TEAM WORKLOAD CHART
 // ─────────────────────────────────────────────────────────────────────────────
 class _TeamWorkloadChart extends StatelessWidget {
   final List<Member> members;
@@ -1218,15 +1110,13 @@ class _TeamWorkloadChart extends StatelessWidget {
                 t.status != TaskStatus.clientApproved &&
                 t.status != TaskStatus.printing)
             .length;
-
         final overdueCount = tasks
             .where((t) =>
                 t.assignees.contains(m.id) &&
                 t.dueDate != null &&
                 t.dueDate!.isBefore(DateTime.now()))
             .length;
-
-        final frac        = (active / capacity).clamp(0.0, 1.0);
+        final frac         = (active / capacity).clamp(0.0, 1.0);
         final isOverloaded = frac > 0.75;
 
         return Padding(
@@ -1235,60 +1125,50 @@ class _TeamWorkloadChart extends StatelessWidget {
             _AvatarWidget(initials: m.initials, color: m.color, size: 28),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Text(m.name,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _T.ink3)),
-                    const Spacer(),
-                    Text('$active / $capacity',
-                        style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            color: isOverloaded
-                                ? _T.amber
-                                : _T.slate400)),
-                    if (overdueCount > 0) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                            color: _T.red50,
-                            borderRadius: BorderRadius.circular(4)),
-                        child: Text('$overdueCount overdue',
-                            style: const TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: _T.red)),
-                      ),
-                    ],
-                  ]),
-                  const SizedBox(height: 5),
-                  LayoutBuilder(builder: (context, constraints) {
-                    return Stack(children: [
-                      Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                              color: _T.slate100,
-                              borderRadius: BorderRadius.circular(3))),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeOutCubic,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Text(m.name,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
+                  const Spacer(),
+                  Text('$active / $capacity',
+                      style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: isOverloaded ? _T.amber : _T.slate400)),
+                  if (overdueCount > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                          color: _T.red50,
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('$overdueCount overdue',
+                          style: const TextStyle(
+                              fontSize: 9.5, fontWeight: FontWeight.w700, color: _T.red)),
+                    ),
+                  ],
+                ]),
+                const SizedBox(height: 5),
+                LayoutBuilder(builder: (context, constraints) {
+                  return Stack(children: [
+                    Container(
                         height: 6,
-                        width: constraints.maxWidth * frac,
                         decoration: BoxDecoration(
-                            color: isOverloaded ? _T.amber : m.color,
-                            borderRadius: BorderRadius.circular(3)),
-                      ),
-                    ]);
-                  }),
-                ],
-              ),
+                            color: _T.slate100,
+                            borderRadius: BorderRadius.circular(3))),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOutCubic,
+                      height: 6,
+                      width: constraints.maxWidth * frac,
+                      decoration: BoxDecoration(
+                          color: isOverloaded ? _T.amber : m.color,
+                          borderRadius: BorderRadius.circular(3)),
+                    ),
+                  ]);
+                }),
+              ]),
             ),
           ]),
         );
@@ -1298,7 +1178,7 @@ class _TeamWorkloadChart extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROJECT HEALTH GRID — real Project + Task lists
+// PROJECT HEALTH GRID
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectHealthGrid extends StatelessWidget {
   final List<Project> projects;
@@ -1319,122 +1199,101 @@ class _ProjectHealthGrid extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        // Header
-        const Padding(
-          padding: EdgeInsets.only(bottom: 10),
+    return Column(children: [
+      const Padding(
+        padding: EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          Expanded(flex: 3, child: _ColHeader('Project')),
+          Expanded(flex: 4, child: _ColHeader('Stage breakdown')),
+          Expanded(flex: 1, child: _ColHeader('Total')),
+          Expanded(flex: 1, child: _ColHeader('⚠︎')),
+        ]),
+      ),
+      ...projectsWithTasks.map((p) {
+        final ptasks = tasks.where((t) => t.projectId == p.id).toList();
+        final total  = ptasks.length;
+        final overdueCount = ptasks
+            .where((t) =>
+                t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
+            .length;
+        final stageCounts =
+            kStages.map((s) => ptasks.where((t) => t.status == s.stage).length).toList();
+        final stageColors = kStages.map((s) => s.color).toList();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+              color: _T.slate50,
+              borderRadius: BorderRadius.circular(_T.r),
+              border: Border.all(color: _T.slate100)),
           child: Row(children: [
-            Expanded(flex: 3, child: _ColHeader('Project')),
-            Expanded(flex: 4, child: _ColHeader('Stage breakdown')),
-            Expanded(flex: 1, child: _ColHeader('Total')),
-            Expanded(flex: 1, child: _ColHeader('⚠︎')),
-          ]),
-        ),
-        ...projectsWithTasks.map((p) {
-          final ptasks = tasks.where((t) => t.projectId == p.id).toList();
-          final total  = ptasks.length;
-
-          final overdueCount = ptasks
-              .where((t) =>
-                  t.dueDate != null &&
-                  t.dueDate!.isBefore(DateTime.now()))
-              .length;
-
-          final stageCounts = kStages
-              .map((s) =>
-                  ptasks.where((t) => t.status == s.stage).length)
-              .toList();
-          final stageColors = kStages.map((s) => s.color).toList();
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: _T.slate50,
-                borderRadius: BorderRadius.circular(_T.r),
-                border: Border.all(color: _T.slate100)),
-            child: Row(children: [
-              // Name
-              Expanded(
-                flex: 3,
-                child: Row(children: [
-                  Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                          color: p.color, shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: Text(p.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _T.ink3))),
-                ]),
-              ),
-              // Stage micro-bar
-              Expanded(
-                flex: 4,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: Row(
-                      children: List.generate(5, (i) {
-                        if (stageCounts[i] == 0) return const SizedBox.shrink();
-                        return Flexible(
+            Expanded(
+              flex: 3,
+              child: Row(children: [
+                Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(p.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3))),
+              ]),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: Row(
+                    children: List.generate(5, (i) {
+                      if (stageCounts[i] == 0) return const SizedBox.shrink();
+                      return Flexible(
                           flex: stageCounts[i],
-                          child: Container(
-                              height: 8, color: stageColors[i]),
-                        );
-                      }),
-                    ),
+                          child: Container(height: 8, color: stageColors[i]));
+                    }),
                   ),
                 ),
               ),
-              // Total
-              Expanded(
-                flex: 1,
-                child: Text('$total',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _T.ink3)),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text('$total',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: overdueCount > 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: _T.red50,
+                            borderRadius: BorderRadius.circular(99)),
+                        child: Text('$overdueCount',
+                            style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: _T.red)))
+                    : const Text('—',
+                        style: TextStyle(fontSize: 12, color: _T.slate300)),
               ),
-              // Overdue
-              Expanded(
-                flex: 1,
-                child: Center(
-                  child: overdueCount > 0
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                              color: _T.red50,
-                              borderRadius: BorderRadius.circular(99)),
-                          child: Text('$overdueCount',
-                              style: const TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _T.red)))
-                      : const Text('—',
-                          style: TextStyle(
-                              fontSize: 12, color: _T.slate300)),
-                ),
-              ),
-            ]),
-          );
-        }),
-      ],
-    );
+            ),
+          ]),
+        );
+      }),
+    ]);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRIORITY DONUT CHART — real Task list
+// PRIORITY DONUT CHART
 // ─────────────────────────────────────────────────────────────────────────────
 class _PriorityDonutChart extends StatelessWidget {
   final List<Task> tasks;
@@ -1451,8 +1310,7 @@ class _PriorityDonutChart extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(
-            child: Text('No tasks',
-                style: TextStyle(fontSize: 12, color: _T.slate400))),
+            child: Text('No tasks', style: TextStyle(fontSize: 12, color: _T.slate400))),
       );
     }
 
@@ -1461,28 +1319,20 @@ class _PriorityDonutChart extends StatelessWidget {
         height: 140,
         child: CustomPaint(
           painter: _DonutPainter(
-            values: [urgent.toDouble(), high.toDouble(), normal.toDouble()],
-            colors: [_T.red, _T.amber, _T.slate300],
+            values:      [urgent.toDouble(), high.toDouble(), normal.toDouble()],
+            colors:      [_T.red, _T.amber, _T.slate300],
             strokeWidth: 20,
           ),
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$total',
-                    style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: _T.ink,
-                        letterSpacing: -1,
-                        height: 1)),
-                const Text('tasks',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: _T.slate400)),
-              ],
-            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text('$total',
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w800,
+                      color: _T.ink, letterSpacing: -1, height: 1)),
+              const Text('tasks',
+                  style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w500, color: _T.slate400)),
+            ]),
           ),
         ),
       ),
@@ -1490,8 +1340,8 @@ class _PriorityDonutChart extends StatelessWidget {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _DonutLegendItem(color: _T.red,    label: 'Urgent', count: urgent),
-          _DonutLegendItem(color: _T.amber,  label: 'High',   count: high),
+          _DonutLegendItem(color: _T.red,     label: 'Urgent', count: urgent),
+          _DonutLegendItem(color: _T.amber,   label: 'High',   count: high),
           _DonutLegendItem(color: _T.slate300, label: 'Normal', count: normal),
         ],
       ),
@@ -1507,14 +1357,11 @@ class _DonutLegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Container(
-        width: 10,
-        height: 10,
+    Container(width: 10, height: 10,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
     const SizedBox(height: 4),
     Text('$count',
-        style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w800, color: _T.ink)),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _T.ink)),
     Text(label,
         style: const TextStyle(
             fontSize: 10.5, color: _T.slate400, fontWeight: FontWeight.w500)),
@@ -1524,7 +1371,7 @@ class _DonutLegendItem extends StatelessWidget {
 class _DonutPainter extends CustomPainter {
   final List<double> values;
   final List<Color>  colors;
-  final double strokeWidth;
+  final double       strokeWidth;
   const _DonutPainter({required this.values, required this.colors, required this.strokeWidth});
 
   @override
@@ -1542,10 +1389,10 @@ class _DonutPainter extends CustomPainter {
       canvas.drawArc(
           rect, startAngle, sweep, false,
           Paint()
-            ..color = colors[i]
-            ..style = PaintingStyle.stroke
+            ..color      = colors[i]
+            ..style      = PaintingStyle.stroke
             ..strokeWidth = strokeWidth
-            ..strokeCap = StrokeCap.round);
+            ..strokeCap  = StrokeCap.round);
       startAngle += sweep + gap;
     }
   }
@@ -1555,29 +1402,29 @@ class _DonutPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OVERDUE TASKS LIST — replaces activity feed; shows real overdue tasks
+// OVERDUE TASKS LIST
 // ─────────────────────────────────────────────────────────────────────────────
 class _OverdueTasksList extends StatelessWidget {
   final List<Task>    tasks;
   final List<Project> projects;
   final List<Member>  members;
-  const _OverdueTasksList({required this.tasks, required this.projects, required this.members});
+  const _OverdueTasksList(
+      {required this.tasks, required this.projects, required this.members});
 
   @override
   Widget build(BuildContext context) {
     final overdue = tasks
-        .where((t) =>
-            t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
+        .where((t) => t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
         .toList()
-      ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!)); // oldest first
+      ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
     if (overdue.isEmpty) return const SizedBox.shrink();
 
     return Column(
       children: overdue.map((t) {
-        final proj = projects.cast<Project?>()
-                .firstWhere((p) => p!.id == t.projectId, orElse: () => null);
-
+        final proj = projects
+            .cast<Project?>()
+            .firstWhere((p) => p!.id == t.projectId, orElse: () => null);
         Member? assignee;
         try {
           assignee = members.firstWhere((m) => t.assignees.contains(m.id));
@@ -1590,15 +1437,13 @@ class _OverdueTasksList extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _T.red50,
+            color:  _T.red50,
             border: Border.all(color: _T.red.withOpacity(0.2)),
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: Row(children: [
-            // Priority accent
             Container(
-              width: 3,
-              height: 36,
+              width: 3, height: 36,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 color: t.priority == TaskPriority.urgent
@@ -1609,66 +1454,46 @@ class _OverdueTasksList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Task info
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t.name,
-                      style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: _T.ink)),
-                  const SizedBox(height: 3),
-                  Row(children: [
-                    if (proj != null) ...[
-                      Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                              color: proj.color, shape: BoxShape.circle)),
-                      const SizedBox(width: 5),
-                      Text(proj.name,
-                          style: const TextStyle(
-                              fontSize: 11, color: _T.slate500)),
-                      const SizedBox(width: 8),
-                    ],
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t.name,
+                    style: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink)),
+                const SizedBox(height: 3),
+                Row(children: [
+                  if (proj != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1),
-                      decoration: BoxDecoration(
-                          color: si.bg,
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text(si.shortLabel,
-                          style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: si.color)),
-                    ),
-                  ]),
-                ],
-              ),
+                        width: 6, height: 6,
+                        decoration: BoxDecoration(
+                            color: proj.color, shape: BoxShape.circle)),
+                    const SizedBox(width: 5),
+                    Text(proj.name,
+                        style: const TextStyle(fontSize: 11, color: _T.slate500)),
+                    const SizedBox(width: 8),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                        color: si.bg, borderRadius: BorderRadius.circular(4)),
+                    child: Text(si.shortLabel,
+                        style: TextStyle(
+                            fontSize: 9.5, fontWeight: FontWeight.w700, color: si.color)),
+                  ),
+                ]),
+              ]),
             ),
-            // Assignee
             if (assignee != null) ...[
-              _AvatarWidget(
-                  initials: assignee.initials,
-                  color: assignee.color,
-                  size: 24),
+              _AvatarWidget(initials: assignee.initials, color: assignee.color, size: 24),
               const SizedBox(width: 10),
             ],
-            // Days late badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                  color: _T.red,
-                  borderRadius: BorderRadius.circular(6)),
+                  color: _T.red, borderRadius: BorderRadius.circular(6)),
               child: Text(
                 daysLate == 0 ? 'Due today' : '$daysLate d late',
                 style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white),
+                    fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
           ]),
@@ -1685,7 +1510,8 @@ class _AvatarWidget extends StatelessWidget {
   final String initials;
   final Color  color;
   final double size;
-  const _AvatarWidget({required this.initials, required this.color, required this.size});
+  const _AvatarWidget(
+      {required this.initials, required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1718,26 +1544,29 @@ class _SidebarLabel extends StatelessWidget {
 }
 
 class _SidebarNavItem extends StatelessWidget {
-  final IconData icon;
-  final String   label;
-  final bool     isActive;
-  final String?  badge;
+  final IconData     icon;
+  final String       label;
+  final bool         isActive;
+  final String?      badge;
   final VoidCallback onTap;
 
   const _SidebarNavItem({
-    required this.icon, required this.label, required this.isActive,
-    required this.onTap, this.badge,
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isActive ? _T.blue.withOpacity(0.25) : Colors.transparent,
+      color:        isActive ? _T.blue.withOpacity(0.25) : Colors.transparent,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: onTap,
+        onTap:        onTap,
         borderRadius: BorderRadius.circular(_T.r),
-        hoverColor: Colors.white.withOpacity(0.07),
+        hoverColor:   Colors.white.withOpacity(0.07),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(children: [
@@ -1749,14 +1578,17 @@ class _SidebarNavItem extends StatelessWidget {
                 child: Text(label,
                     style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: Colors.white.withOpacity(isActive ? 1.0 : 0.5)))),
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: Colors.white
+                            .withOpacity(isActive ? 1.0 : 0.5)))),
             if (badge != null)
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
                 decoration: BoxDecoration(
-                    color: _T.blue, borderRadius: BorderRadius.circular(99)),
+                    color: _T.blue,
+                    borderRadius: BorderRadius.circular(99)),
                 child: Text(badge!,
                     style: const TextStyle(
                         fontSize: 10,
@@ -1778,25 +1610,27 @@ class _SidebarProjectRow extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SidebarProjectRow({
-    required this.name, required this.color, required this.count,
-    required this.isActive, required this.onTap,
+    required this.name,
+    required this.color,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isActive ? Colors.white.withOpacity(0.1) : Colors.transparent,
+      color:        isActive ? Colors.white.withOpacity(0.1) : Colors.transparent,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: onTap,
+        onTap:        onTap,
         borderRadius: BorderRadius.circular(_T.r),
-        hoverColor: Colors.white.withOpacity(0.06),
+        hoverColor:   Colors.white.withOpacity(0.06),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(children: [
             Container(
-                width: 8,
-                height: 8,
+                width: 8, height: 8,
                 decoration:
                     BoxDecoration(color: color, shape: BoxShape.circle)),
             const SizedBox(width: 9),
@@ -1833,55 +1667,6 @@ class _ColHeader extends StatelessWidget {
           color: _T.slate400));
 }
 
-class _LogoMark extends StatelessWidget {
-  final double size;
-  const _LogoMark({required this.size});
-  @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size(size, size), painter: _LogoPainter());
-}
-
-class _LogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(w * 0.19, h * 0.66), w * 0.065,
-        paint..color = Colors.white.withOpacity(0.5));
-    canvas.drawCircle(Offset(w * 0.48, h * 0.34), w * 0.065,
-        paint..color = Colors.white.withOpacity(0.7));
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.19, h * 0.66)
-        ..cubicTo(w * 0.19, h * 0.66, w * 0.30, h * 0.34, w * 0.48, h * 0.34)
-        ..cubicTo(w * 0.66, h * 0.34, w * 0.64, h * 0.66, w * 0.81, h * 0.55),
-      Paint()
-        ..color = Colors.white.withOpacity(0.35)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.055
-        ..strokeCap = StrokeCap.round,
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.35, h * 0.51)
-        ..lineTo(w * 0.48, h * 0.65)
-        ..lineTo(w * 0.81, h * 0.33),
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w * 0.077
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1889,7 +1674,10 @@ bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
 String _fmtDateFull(DateTime d) {
-  const days   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
   return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
 }

@@ -1,14 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
 //
-// Changes from previous version:
-//   • Table takes full available width — no right-padding reserved for button.
-//   • _ColumnPickerButton lives in a toolbar row ABOVE the column headers.
-//   • New `isDetailOpen` prop: when true, table animates to mandatory-only
-//     columns (because the detail panel steals horizontal space). When false,
-//     the user's saved optional columns animate back in.
-//   • Column show/hide is animated: each column's width and opacity transition
-//     smoothly using AnimatedContainer so the table reflows without jumping.
+// Changes:
+//   • Project column is hidden when a single project is selected (filter active).
+//   • A header bar at the top shows the active project name (or "All Projects").
+//   • List / Board toggle tabs live in this header bar — sidebar no longer
+//     switches between these two views.
+//   • BoardView is embedded as a sub-view when the Board tab is active.
+//   • All previous animated column / column-picker behaviour is preserved.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -21,6 +20,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
@@ -53,11 +53,14 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
-const double _kRowHPad   = 16.0;  // uniform left/right padding on every row
-const double _kCellHPad  = 4.0;   // inner padding on each cell / header cell
+const double _kRowHPad   = 16.0;
+const double _kCellHPad  = 4.0;
+const _kColAnimDuration  = Duration(milliseconds: 260);
 
-// Duration for column appear/disappear animation
-const _kColAnimDuration = Duration(milliseconds: 260);
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW MODE
+// ─────────────────────────────────────────────────────────────────────────────
+enum _ViewMode { list, board }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN DEFINITIONS
@@ -95,7 +98,7 @@ const _kCols = [
     id: 'project', label: 'PROJECT', pickerLabel: 'Project',
     description: 'Colour-coded project name',
     icon: Icons.folder_outlined,
-    mandatory: true, defaultOn: true, flex: 2,
+    mandatory: false, defaultOn: true, flex: 2,
   ),
   _ColDef(
     id: 'task', label: 'TASK', pickerLabel: 'Task Name',
@@ -133,21 +136,8 @@ const _kCols = [
     icon: Icons.inventory_2_outlined,
     mandatory: false, defaultOn: false, flex: 2,
   ),
-  // _ColDef(
-  //   id: 'assignee', label: 'ASSIGNEE', pickerLabel: 'Assignee',
-  //   description: 'Assigned team member',
-  //   icon: Icons.person_outline_rounded,
-  //   mandatory: false, defaultOn: false, flex: 2,
-  // ),
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BILLING — pinned trailing column
-//
-// Kept outside _kCols so it is structurally guaranteed to render last.
-// It is always visible, always mandatory, and never participates in the
-// optional-column toggle system.
-// ─────────────────────────────────────────────────────────────────────────────
 const _kBillingCol = _ColDef(
   id: 'billing', label: 'BILLING', pickerLabel: 'Billing Status',
   description: 'Invoice and payment status',
@@ -165,7 +155,8 @@ Set<String> get _kMandatoryIds => _kCols
     .map((c) => c.id)
     .toSet();
 
-const _kPrefsKey = 'smooflow.task_list.visible_optional_cols';
+const _kPrefsKey     = 'smooflow.task_list.visible_optional_cols';
+const _kViewModeKey  = 'smooflow.task_list.view_mode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK LIST VIEW
@@ -173,12 +164,15 @@ const _kPrefsKey = 'smooflow.task_list.visible_optional_cols';
 class TaskListView extends ConsumerStatefulWidget {
   final List<Task>        tasks;
   final List<Project>     projects;
+  final String?           selectedProjectId;   // null = "All Projects"
   final int?              selectedTaskId;
   final ValueChanged<int> onTaskSelected;
-
-  /// When true the detail panel is open — animate to mandatory columns only.
-  /// When false (panel closed) — animate back to the user's saved columns.
   final bool              isDetailOpen;
+
+  // Board view pass-through props
+  final VoidCallback?     onAddTask;
+  final FocusNode?        addTaskFocusNode;
+  final bool              isAddingTask;
 
   const TaskListView({
     super.key,
@@ -186,7 +180,11 @@ class TaskListView extends ConsumerStatefulWidget {
     required this.projects,
     required this.selectedTaskId,
     required this.onTaskSelected,
+    this.selectedProjectId,
     this.isDetailOpen = false,
+    this.onAddTask,
+    this.addTaskFocusNode,
+    this.isAddingTask = false,
   });
 
   @override
@@ -194,16 +192,33 @@ class TaskListView extends ConsumerStatefulWidget {
 }
 
 class _TaskListViewState extends ConsumerState<TaskListView> {
-  /// Columns the user has explicitly enabled (optional only).
-  Set<String> _visibleOptional = {};
+  Set<String>  _visibleOptional = {};
+  _ViewMode    _viewMode        = _ViewMode.list;
 
-  /// The "effective" visible set — when detail panel is open, collapses to
-  /// mandatory only. Otherwise uses the user's saved optional set.
+  // ── Derived: are we in single-project mode? ────────────────────────────────
+  bool get _singleProject => widget.selectedProjectId != null;
+
+  /// The project column should only show when "All Projects" is selected.
   Set<String> get _effectiveVisible {
-    if (widget.isDetailOpen) return _kMandatoryIds;
-    return {..._kMandatoryIds, ..._visibleOptional};
+    final base = widget.isDetailOpen
+        ? _kMandatoryIds
+        : {..._kMandatoryIds, ..._visibleOptional};
+
+    if (_singleProject) {
+      // Strip 'project' from whatever is showing
+      return base.difference({'project'});
+    }
+    return base;
   }
 
+  Project? get _activeProject => widget.selectedProjectId == null
+      ? null
+      : widget.projects.cast<Project?>().firstWhere(
+            (p) => p!.id == widget.selectedProjectId,
+            orElse: () => null,
+          );
+
+  // ── Persistence ────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -211,33 +226,51 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _loadPrefs();
   }
 
-  // ── Persistence ────────────────────────────────────────────────────────────
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw   = prefs.getString(_kPrefsKey);
+
+    // Column prefs
+    final raw = prefs.getString(_kPrefsKey);
     if (raw != null) {
       final list = (jsonDecode(raw) as List).cast<String>();
       if (mounted) setState(() => _visibleOptional = Set.from(list));
     } else {
-      await _savePrefs();
+      await _saveColPrefs();
+    }
+
+    // View mode pref
+    final vm = prefs.getString(_kViewModeKey);
+    if (vm != null && mounted) {
+      setState(() => _viewMode = vm == 'board' ? _ViewMode.board : _ViewMode.list);
     }
   }
 
-  Future<void> _savePrefs() async {
+  Future<void> _saveColPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kPrefsKey, jsonEncode(_visibleOptional.toList()));
+  }
+
+  Future<void> _saveViewMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kViewModeKey, _viewMode == _ViewMode.board ? 'board' : 'list');
   }
 
   void _toggleColumn(String id) {
     setState(() => _visibleOptional.contains(id)
         ? _visibleOptional.remove(id)
         : _visibleOptional.add(id));
-    _savePrefs();
+    _saveColPrefs();
   }
 
   void _resetToDefaults() {
     setState(() => _visibleOptional = Set.from(_kDefaultOptionalOn));
-    _savePrefs();
+    _saveColPrefs();
+  }
+
+  void _setViewMode(_ViewMode mode) {
+    if (_viewMode == mode) return;
+    setState(() => _viewMode = mode);
+    _saveViewMode();
   }
 
   // ── Build ───────────────────────────────────────────────────────────────────
@@ -245,7 +278,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   Widget build(BuildContext context) {
     final members   = ref.watch(memberNotifierProvider).members;
     final tasks     = widget.tasks.reversed.toList();
-    // Pass full _kCols list — each column decides its own visibility/width.
     final effective = _effectiveVisible;
 
     return Container(
@@ -254,86 +286,205 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          // ── Toolbar (Columns button lives here, above the table) ──────────
-          _Toolbar(
-            visibleOptional: _visibleOptional,
-            isDetailOpen:    widget.isDetailOpen,
-            onToggle:        _toggleColumn,
-            onReset:         _resetToDefaults,
+          // ── Project header + view mode tabs ──────────────────────────────
+          _ProjectHeader(
+            activeProject:   _activeProject,
+            viewMode:        _viewMode,
+            onViewModeChanged: _setViewMode,
           ),
 
-          // ── Column header row ─────────────────────────────────────────────
-          Container(
-            color: _T.white,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
-                  child: _AnimatedColRow(
-                    effectiveVisible:  effective,
-                    pinnedTrailingCol: _kBillingCol,
-                    builder: (col, animFraction) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
-                      child: Opacity(
-                        opacity: animFraction,
-                        child: Text(
-                          col.label,
-                          style: const TextStyle(
-                            fontSize:      10.5,
-                            fontWeight:    FontWeight.w700,
-                            letterSpacing: 0.7,
-                            color:         _T.slate400,
+          // ── Board sub-view ───────────────────────────────────────────────
+          if (_viewMode == _ViewMode.board)
+            Expanded(
+              child: BoardView(
+                tasks:               widget.tasks,
+                projects:            widget.projects,
+                selectedTaskId:      widget.selectedTaskId,
+                onTaskSelected:      widget.onTaskSelected,
+                onAddTask:           widget.onAddTask ?? () {},
+                addTaskFocusNode:    widget.addTaskFocusNode ?? FocusNode(),
+                isAddingTask:        widget.isAddingTask,
+                selectedProjectId:   widget.selectedProjectId,
+              ),
+            )
+          else ...[
+            // ── Toolbar (column picker) ─────────────────────────────────
+            _Toolbar(
+              visibleOptional:  _visibleOptional,
+              isDetailOpen:     widget.isDetailOpen,
+              singleProject:    _singleProject,
+              onToggle:         _toggleColumn,
+              onReset:          _resetToDefaults,
+            ),
+
+            // ── Column header row ────────────────────────────────────────
+            Container(
+              color: _T.white,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(_kRowHPad, 8, _kRowHPad, 8),
+                    child: _AnimatedColRow(
+                      effectiveVisible:  effective,
+                      pinnedTrailingCol: _kBillingCol,
+                      builder: (col, animFraction) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+                        child: Opacity(
+                          opacity: animFraction,
+                          child: Text(
+                            col.label,
+                            style: const TextStyle(
+                              fontSize:      10.5,
+                              fontWeight:    FontWeight.w700,
+                              letterSpacing: 0.7,
+                              color:         _T.slate400,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const Divider(height: 1, thickness: 1, color: _T.slate200),
-              ],
+                  const Divider(height: 1, thickness: 1, color: _T.slate200),
+                ],
+              ),
             ),
-          ),
 
-          // ── Data rows ─────────────────────────────────────────────────────
-          Expanded(
-            child: tasks.isEmpty
-                ? _EmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: _kRowHPad,
-                      vertical:   8,
+            // ── Data rows ──────────────────────────────────────────────
+            Expanded(
+              child: tasks.isEmpty
+                  ? _EmptyState()
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _kRowHPad,
+                        vertical:   8,
+                      ),
+                      itemCount:        tasks.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(height: 1, thickness: 1, color: _T.slate100),
+                      itemBuilder: (_, i) {
+                        final t = tasks[i];
+                        final p = widget.projects
+                                .cast<Project?>()
+                                .firstWhere(
+                                  (pr) => pr!.id == t.projectId,
+                                  orElse: () => null,
+                                ) ??
+                            widget.projects.firstOrNull;
+
+                        Member? m;
+                        try {
+                          m = members.firstWhere(
+                              (mem) => t.assignees.contains(mem.id));
+                        } catch (_) {
+                          m = null;
+                        }
+
+                        return _TaskRow(
+                          task:              t,
+                          project:           p,
+                          assignee:          m,
+                          effectiveVisible:  effective,
+                          isSelected:        widget.selectedTaskId == t.id,
+                          onTap:             () => widget.onTaskSelected(t.id),
+                        );
+                      },
                     ),
-                    itemCount:        tasks.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, thickness: 1, color: _T.slate100),
-                    itemBuilder: (_, i) {
-                      final t = tasks[i];
-                      final p = widget.projects
-                              .cast<Project?>()
-                              .firstWhere(
-                                (pr) => pr!.id == t.projectId,
-                                orElse: () => null,
-                              ) ??
-                          widget.projects.firstOrNull;
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
-                      Member? m;
-                      try {
-                        m = members.firstWhere(
-                            (mem) => t.assignees.contains(mem.id));
-                      } catch (_) {
-                        m = null;
-                      }
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT HEADER
+//
+// Shows the active project name (or "All Projects") with its colour dot, plus
+// the List / Board view-mode toggle tabs on the trailing edge.
+// ─────────────────────────────────────────────────────────────────────────────
+class _ProjectHeader extends StatelessWidget {
+  final Project?                   activeProject;
+  final _ViewMode                  viewMode;
+  final ValueChanged<_ViewMode>    onViewModeChanged;
 
-                      return _TaskRow(
-                        task:            t,
-                        project:         p,
-                        assignee:        m,
-                        effectiveVisible: effective,
-                        isSelected:      widget.selectedTaskId == t.id,
-                        onTap:           () => widget.onTaskSelected(t.id),
-                      );
-                    },
-                  ),
+  const _ProjectHeader({
+    required this.activeProject,
+    required this.viewMode,
+    required this.onViewModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isFiltered = activeProject != null;
+
+    return Container(
+      height: 48,
+      decoration: const BoxDecoration(
+        color:  _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
+      child: Row(
+        children: [
+          // ── Project indicator ─────────────────────────────────────────
+          if (isFiltered) ...[
+            Container(
+              width:  9,
+              height: 9,
+              decoration: BoxDecoration(
+                color:  activeProject!.color,
+                shape:  BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              activeProject!.name,
+              style: const TextStyle(
+                fontSize:   14,
+                fontWeight: FontWeight.w700,
+                color:      _T.ink,
+                letterSpacing: -0.2,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(99),
+                border:       Border.all(color: _T.slate200),
+              ),
+              child: const Text(
+                'Filtered',
+                style: TextStyle(
+                  fontSize:   10,
+                  fontWeight: FontWeight.w600,
+                  color:      _T.slate500,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ] else ...[
+            const Icon(Icons.folder_open_outlined, size: 15, color: _T.slate400),
+            const SizedBox(width: 8),
+            const Text(
+              'All Projects',
+              style: TextStyle(
+                fontSize:   14,
+                fontWeight: FontWeight.w700,
+                color:      _T.ink,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+
+          const Spacer(),
+
+          // ── View mode toggle ──────────────────────────────────────────
+          _ViewToggle(
+            current:  viewMode,
+            onChange: onViewModeChanged,
           ),
         ],
       ),
@@ -342,26 +493,122 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VIEW TOGGLE  (List / Board pill tabs)
+// ─────────────────────────────────────────────────────────────────────────────
+class _ViewToggle extends StatelessWidget {
+  final _ViewMode             current;
+  final ValueChanged<_ViewMode> onChange;
+
+  const _ViewToggle({required this.current, required this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(
+        color:        _T.slate100,
+        borderRadius: BorderRadius.circular(_T.r),
+        border:       Border.all(color: _T.slate200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ToggleTab(
+            icon:      Icons.list_alt_outlined,
+            label:     'List',
+            isActive:  current == _ViewMode.list,
+            isFirst:   true,
+            onTap:     () => onChange(_ViewMode.list),
+          ),
+          _ToggleTab(
+            icon:      Icons.view_kanban_outlined,
+            label:     'Board',
+            isActive:  current == _ViewMode.board,
+            isFirst:   false,
+            onTap:     () => onChange(_ViewMode.board),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleTab extends StatefulWidget {
+  final IconData     icon;
+  final String       label;
+  final bool         isActive;
+  final bool         isFirst;
+  final VoidCallback onTap;
+
+  const _ToggleTab({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.isFirst,
+    required this.onTap,
+  });
+
+  @override
+  State<_ToggleTab> createState() => _ToggleTabState();
+}
+
+class _ToggleTabState extends State<_ToggleTab> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = widget.isFirst
+        ? const BorderRadius.horizontal(left: Radius.circular(7))
+        : const BorderRadius.horizontal(right: Radius.circular(7));
+
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: widget.isActive
+                ? _T.white
+                : (_hovered ? _T.slate50 : Colors.transparent),
+            borderRadius: radius,
+            boxShadow: widget.isActive
+                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                : null,
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(
+              widget.icon,
+              size:  13,
+              color: widget.isActive ? _T.blue : _T.slate400,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              widget.label,
+              style: TextStyle(
+                fontSize:   11.5,
+                fontWeight: FontWeight.w600,
+                color:      widget.isActive ? _T.ink : _T.slate500,
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ANIMATED COLUMN ROW
-//
-// Renders ALL _kCols in a single Row. Each column is wrapped in an
-// AnimatedContainer that transitions its width between its natural flex-based
-// size (visible) and 0 (hidden). Opacity fades in parallel.
-//
-// Because Flutter's Row with Expanded children doesn't support animating
-// flex, we use a LayoutBuilder to measure available width and allocate
-// pixel widths manually, then animate with AnimatedContainer.
-//
-// Visible columns share the available width proportionally to their flex.
-// Hidden columns animate from their last pixel size down to 0.
 // ─────────────────────────────────────────────────────────────────────────────
 typedef _ColCellBuilder = Widget Function(_ColDef col, double opacityFraction);
 
 class _AnimatedColRow extends StatefulWidget {
   final Set<String>     effectiveVisible;
   final _ColCellBuilder builder;
-  // When provided, this column is rendered at a fixed width AFTER all
-  // animated columns — it is always visible and never animated in/out.
   final _ColDef?        pinnedTrailingCol;
 
   const _AnimatedColRow({
@@ -394,10 +641,6 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
     _ac.dispose();
     super.dispose();
   }
-
-  // ── Width allocation ───────────────────────────────────────────────────────
-  // The pinned column takes its proportional share of the total available
-  // width first; the remaining animated columns share what's left.
 
   double _pinnedWidth(double availWidth) {
     final p = widget.pinnedTrailingCol;
@@ -470,13 +713,12 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
           _lastAvailableWidth = avail;
         }
 
-        final widths      = _currentWidths(avail);
-        final pinnedW     = _pinnedWidth(avail);
-        final pinned      = widget.pinnedTrailingCol;
+        final widths  = _currentWidths(avail);
+        final pinnedW = _pinnedWidth(avail);
+        final pinned  = widget.pinnedTrailingCol;
 
         return Row(
           children: [
-            // ── Animated columns ────────────────────────────────────────
             ..._kCols.map((col) {
               final w       = widths[col.id] ?? 0;
               final visible = widget.effectiveVisible.contains(col.id);
@@ -489,8 +731,6 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
                     : widget.builder(col, opacity.clamp(0.0, 1.0)),
               );
             }),
-
-            // ── Pinned billing column — always last, always full opacity ─
             if (pinned != null)
               SizedBox(
                 width: pinnedW,
@@ -505,21 +745,18 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOOLBAR
-//
-// A slim bar above the column headers that holds the Columns picker button
-// (and can host future controls like search/filter on the left).
-// When isDetailOpen, the button is disabled and shows a subtle "panel open"
-// hint so the user knows why their optional columns have collapsed.
 // ─────────────────────────────────────────────────────────────────────────────
 class _Toolbar extends StatelessWidget {
   final Set<String>           visibleOptional;
   final bool                  isDetailOpen;
+  final bool                  singleProject;
   final void Function(String) onToggle;
   final VoidCallback          onReset;
 
   const _Toolbar({
     required this.visibleOptional,
     required this.isDetailOpen,
+    required this.singleProject,
     required this.onToggle,
     required this.onReset,
   });
@@ -527,7 +764,7 @@ class _Toolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: 40,
       decoration: const BoxDecoration(
         color:  _T.white,
         border: Border(bottom: BorderSide(color: _T.slate100)),
@@ -535,13 +772,21 @@ class _Toolbar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
         children: [
-          // Left side — placeholder for future search/filter controls
+          // Task count hint when filtered
+          if (singleProject)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Text(
+                'Project column hidden while filtered',
+                style: TextStyle(fontSize: 11, color: _T.slate400),
+              ),
+            ),
+
           const Spacer(),
 
-          // Detail-open hint — replaces the button when panel is active
           if (isDetailOpen)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color:        _T.slate100,
                 borderRadius: BorderRadius.circular(_T.r),
@@ -552,17 +797,14 @@ class _Toolbar extends StatelessWidget {
                 SizedBox(width: 6),
                 Text(
                   'Showing core columns',
-                  style: TextStyle(
-                    fontSize:   11.5,
-                    fontWeight: FontWeight.w500,
-                    color:      _T.slate400,
-                  ),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: _T.slate400),
                 ),
               ]),
             )
           else
             _ColumnPickerButton(
               visibleOptional: visibleOptional,
+              singleProject:   singleProject,
               onToggle:        onToggle,
               onReset:         onReset,
             ),
@@ -577,11 +819,13 @@ class _Toolbar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerButton extends StatefulWidget {
   final Set<String>           visibleOptional;
+  final bool                  singleProject;
   final void Function(String) onToggle;
   final VoidCallback          onReset;
 
   const _ColumnPickerButton({
     required this.visibleOptional,
+    required this.singleProject,
     required this.onToggle,
     required this.onReset,
   });
@@ -598,8 +842,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   late Set<String> _overlayVisible;
 
   late final AnimationController _ac = AnimationController(
-    vsync:    this,
-    duration: const Duration(milliseconds: 190),
+    vsync: this, duration: const Duration(milliseconds: 190),
   );
   late final Animation<double> _fade = CurvedAnimation(
     parent: _ac, curve: Curves.easeOut, reverseCurve: Curves.easeIn,
@@ -664,11 +907,11 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
           ),
         ),
         CompositedTransformFollower(
-          link:           _layerLink,
+          link:             _layerLink,
           showWhenUnlinked: false,
-          targetAnchor:   Alignment.bottomRight,
-          followerAnchor: Alignment.topRight,
-          offset:         const Offset(0, 6),
+          targetAnchor:     Alignment.bottomRight,
+          followerAnchor:   Alignment.topRight,
+          offset:           const Offset(0, 6),
           child: AnimatedBuilder(
             animation: _ac,
             builder: (_, child) => FadeTransition(
@@ -677,6 +920,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
             ),
             child: _ColumnPickerPanel(
               visibleOptional: _overlayVisible,
+              singleProject:   widget.singleProject,
               onToggle:        widget.onToggle,
               onReset:         widget.onReset,
               onClose:         _close,
@@ -700,7 +944,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
           onTap: _toggle,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: _open ? _T.slate100 : (hasCustom ? _T.blue50 : _T.white),
               border: Border.all(
@@ -751,12 +995,14 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColumnPickerPanel extends StatelessWidget {
   final Set<String>           visibleOptional;
+  final bool                  singleProject;
   final void Function(String) onToggle;
   final VoidCallback          onReset;
   final VoidCallback          onClose;
 
   const _ColumnPickerPanel({
     required this.visibleOptional,
+    required this.singleProject,
     required this.onToggle,
     required this.onReset,
     required this.onClose,
@@ -764,16 +1010,26 @@ class _ColumnPickerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mandatoryCols = _kCols.where((c) => c.mandatory).toList();
-    final optionalCols  = _kCols.where((c) => !c.mandatory).toList();
-    final isDefault     = _setsEqual(visibleOptional, _kDefaultOptionalOn);
+    // When in single-project mode, project col is always hidden — exclude it
+    // from the "Always visible" section since it doesn't appear anyway.
+    final mandatoryCols = _kCols
+        .where((c) => c.mandatory)
+        .toList();
+    final optionalCols  = _kCols
+        .where((c) => !c.mandatory && c.id != 'project')
+        .toList();
+
+    // Project col shown as a special "auto" row
+    final projectCol = _kCols.firstWhere((c) => c.id == 'project');
+
+    final isDefault  = _setsEqual(visibleOptional, _kDefaultOptionalOn);
 
     return Material(
       color:        Colors.transparent,
       borderRadius: BorderRadius.circular(_T.rLg),
       child: Container(
         width: 300,
-        constraints: const BoxConstraints(maxHeight: 480),
+        constraints: const BoxConstraints(maxHeight: 520),
         decoration: BoxDecoration(
           color:        _T.white,
           borderRadius: BorderRadius.circular(_T.rLg),
@@ -828,12 +1084,25 @@ class _ColumnPickerPanel extends StatelessWidget {
                   _SectionLabel('Always visible'),
                   const SizedBox(height: 8),
                   ...mandatoryCols.map((c) => _LockedColRow(col: c)),
-                  // Billing is pinned last — shown here to make its mandatory
-                  // status visible to the user, with a position hint.
                   _LockedColRow(col: _kBillingCol, trailingHint: 'Always last'),
                   const SizedBox(height: 16),
                   const Divider(height: 1, color: _T.slate100),
                   const SizedBox(height: 14),
+
+                  // Project column — special: auto-managed by filter
+                  _SectionLabel('Auto-managed'),
+                  const SizedBox(height: 8),
+                  _AutoColRow(
+                    col:   projectCol,
+                    label: singleProject
+                        ? 'Hidden — project filter active'
+                        : 'Visible — all projects shown',
+                    active: !singleProject,
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1, color: _T.slate100),
+                  const SizedBox(height: 14),
+
                   _SectionLabel('Optional columns'),
                   const SizedBox(height: 8),
                   ...optionalCols.map((c) => _ToggleColRow(
@@ -883,11 +1152,64 @@ class _ColumnPickerPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AUTO-MANAGED COLUMN ROW  (project column — controlled by filter)
+// ─────────────────────────────────────────────────────────────────────────────
+class _AutoColRow extends StatelessWidget {
+  final _ColDef col;
+  final String  label;
+  final bool    active;
+
+  const _AutoColRow({required this.col, required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: active ? _T.blue50 : _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(
+          color: active ? _T.blue.withOpacity(0.2) : _T.slate200,
+        ),
+      ),
+      child: Row(children: [
+        Container(
+          width: 26, height: 26,
+          decoration: BoxDecoration(
+            color: active ? _T.blue.withOpacity(0.1) : _T.slate100,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(col.icon, size: 13, color: active ? _T.blue : _T.slate400),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(col.pickerLabel,
+                style: TextStyle(
+                  fontSize: 12.5, fontWeight: FontWeight.w600,
+                  color: active ? _T.ink : _T.ink3,
+                )),
+            Text(label,
+                style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
+          ]),
+        ),
+        Icon(
+          active ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          size: 13,
+          color: active ? _T.blue : _T.slate300,
+        ),
+      ]),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // LOCKED COLUMN ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _LockedColRow extends StatelessWidget {
   final _ColDef  col;
-  final String?  trailingHint; // optional secondary label, e.g. "Always last"
+  final String?  trailingHint;
   const _LockedColRow({required this.col, this.trailingHint});
 
   @override
@@ -959,9 +1281,7 @@ class _ToggleColRowState extends State<_ToggleColRow> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(_T.r)),
             child: Row(children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
@@ -1128,18 +1448,18 @@ class _TaskRowState extends State<_TaskRow> {
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
 
       'stage'    => StagePill(stageInfo: s),
-
-      'date'     => Text(date,
-          style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
-
+      'date'     => Text(date, style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
       'priority' => PriorityPill(priority: t.priority),
 
       'size' => t.size != null
           ? RichText(text: TextSpan(
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
-                TextSpan(text: t.size!.split(" ")[0]),
-                TextSpan(text: t.size!.split(" ").length > 1? t.size!.split(" ")[1] : "", style: TextStyle(fontSize: 11, color: _T.slate400)),
+                TextSpan(text: t.size!.split(' ')[0]),
+                TextSpan(
+                  text: t.size!.split(' ').length > 1 ? t.size!.split(' ')[1] : '',
+                  style: const TextStyle(fontSize: 11, color: _T.slate400),
+                ),
               ],
             ))
           : const Text('—', style: TextStyle(fontSize: 13, color: _T.slate300)),
@@ -1167,9 +1487,6 @@ class _TaskRowState extends State<_TaskRow> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BILLING STATUS CELL
-//
-// Renders a compact pill for the task's billing/payment state.
-// Adjust BillingStatus values to match your actual enum.
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingStatusCell extends StatelessWidget {
   final BillingStatus? status;
@@ -1182,18 +1499,16 @@ class _BillingStatusCell extends StatelessWidget {
     }
 
     final (String label, Color fg, Color bg) = switch (status!) {
-      BillingStatus.pending    => ('-',    _T.amber,  const Color(0xFFFEF3C7)),
-      BillingStatus.invoiced  => ('Invoiced',  _T.blue,   _T.blue50),
-      BillingStatus.foc      => ('FOC',      _T.green,  const Color(0xFFECFDF5)),
-      BillingStatus.cancelled   => ('Cancelled',   _T.red,    const Color(0xFFFEE2E2)),
-      BillingStatus.quoteGiven    => ('Quote',    _T.slate400, _T.slate100),
+      BillingStatus.pending    => ('-',          _T.amber,     const Color(0xFFFEF3C7)),
+      BillingStatus.invoiced   => ('Invoiced',   _T.blue,      _T.blue50),
+      BillingStatus.foc        => ('FOC',        _T.green,     const Color(0xFFECFDF5)),
+      BillingStatus.cancelled  => ('Cancelled',  _T.red,       const Color(0xFFFEE2E2)),
+      BillingStatus.quoteGiven => ('Quote',      _T.slate400,  _T.slate100),
     };
 
     return Text(label, style: TextStyle(
-        fontSize:   11,
-        fontWeight: FontWeight.w600,
-        color:      Colors.black,
-      ));
+      fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black,
+    ));
   }
 }
 
