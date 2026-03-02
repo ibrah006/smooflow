@@ -968,7 +968,7 @@ class _BillingCard extends StatelessWidget {
                               fontSize:   12.5,
                               fontWeight: FontWeight.w600,
                               color:      _T.ink)),
-                      Text('Finance & invoicing stage',
+                      Text('Finance & invoicing',
                           style: TextStyle(fontSize: 10.5, color: _T.slate400)),
                     ],
                   ),
