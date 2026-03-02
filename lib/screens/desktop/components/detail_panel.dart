@@ -383,11 +383,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   // ── Print Job action ──────────────────────────────────────────────────────
 
   Future<void> _startPrintJobScreen() async {
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.35),
-      builder: (ctx) => _PrinterSelectionDialog(task: widget.task),
-    );
 
     AppRoutes.navigateTo(context, AppRoutes.startPrintJob, arguments: SchedulePrintJobArgs.details(task: widget.task));
   }
