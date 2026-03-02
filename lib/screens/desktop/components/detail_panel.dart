@@ -541,7 +541,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ]),
                         ),
                       _DetailMetaCell(
-                        label: 'Start Date',
+                        label: 'Date',
                         child: Row(children: [
                           Text(fmtDate(d),
                               style: TextStyle(
