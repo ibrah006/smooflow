@@ -28,6 +28,8 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+    <key>com.apple.security.network.client</key>
+    <true/>
     <key>SUFeedURL</key>
     <string>https://workflow-backend-production.up.railway.app/updates/mac</string>
 </dict>
