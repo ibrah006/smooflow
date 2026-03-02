@@ -91,6 +91,9 @@ The app focuses on **project management, team collaboration, and production moni
 
 ---
 
+<!-- cd build/macos/Build/Products/Release -->
+<!-- zip -r MyApp.zip MyApp.app -->
+
 ## 🔒 License
 
 This project is **proprietary / source-available**.

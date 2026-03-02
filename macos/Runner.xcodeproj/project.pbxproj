@@ -418,13 +418,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -578,11 +574,23 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 33E5194F232828860026EE4D /* AppInfo.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/DebugProfile.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/file_picker\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/file_selector_macos\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/mobile_scanner\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/path_provider_foundation\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/printing\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/screen_retriever_macos\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/shared_preferences_foundation\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/window_manager\"",
+				);
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -710,6 +718,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 33E5194F232828860026EE4D /* AppInfo.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/DebugProfile.entitlements;
@@ -730,11 +739,24 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 33E5194F232828860026EE4D /* AppInfo.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/file_picker\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/file_selector_macos\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/mobile_scanner\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/path_provider_foundation\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/printing\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/screen_retriever_macos\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/shared_preferences_foundation\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/window_manager\"",
+					"$(PROJECT_DIR)/Runner",
+				);
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
