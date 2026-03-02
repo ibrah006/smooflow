@@ -119,7 +119,12 @@ class _AdminDesktopDashboardScreenState
 
   bool _isInitLoading = true;
 
-  void _selectTask(int id) => setState(() => _selectedTaskId = id);
+  void _selectTask(int id) {
+    setState(() {
+      _selectedTaskId = id;
+    });
+  }
+
   void _closeDetail()      => setState(() => _selectedTaskId = null);
 
   Task? get _selectedTask => _selectedTaskId == null
@@ -287,6 +292,7 @@ class _AdminDesktopDashboardScreenState
                                         projects: _projects,
                                         selectedTaskId: _selectedTaskId,
                                         onTaskSelected: _selectTask,
+                                        isDetailOpen: _selectedTaskId != null,
                                       ) :
                                       _view == _AdminView.clients? ClientsPage() : ManageMembersPage()
                                       
