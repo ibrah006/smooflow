@@ -516,8 +516,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     mainAxisSpacing:   10,
                     children: [
                       _DetailMetaCell(
-                          label: 'Current Stage',
-                          child: StagePill(stageInfo: si)),
+                        label: 'Current Stage',
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: si.bg, borderRadius: BorderRadius.circular(99)),
+                              child: StagePill(stageInfo: si),
+                            ),
+                          ],
+                        ),
+                      ),
                       _DetailMetaCell(
                           label: 'Priority',
                           child: PriorityPill(priority: widget.task.priority)),
