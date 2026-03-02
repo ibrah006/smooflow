@@ -92,7 +92,7 @@ flutter_launcher_icons:
   ios: true
   windows:
     generate: true
-    image_path: "assets/icons/app_icon.png"
+    image_path: "assets/icons/logo.png"
 
   macos:
     generate: true
@@ -119,6 +119,7 @@ flutter:
     - assets/icons/no_tasks_icon_dark.svg
     - assets/icons/app_icon.png
     - assets/icons/logo.svg
+    - assets/icons/logo.png
 
     # Images
     - assets/images/logo_long.png
