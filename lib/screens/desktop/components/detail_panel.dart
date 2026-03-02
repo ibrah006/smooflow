@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/permission_gate.dart';
+import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -380,12 +382,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // ── Print Job action ──────────────────────────────────────────────────────
 
-  Future<void> _showPrinterSelectionDialog() async {
+  Future<void> _startPrintJobScreen() async {
     await showDialog<void>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
       builder: (ctx) => _PrinterSelectionDialog(task: widget.task),
     );
+
+    AppRoutes.navigateTo(context, AppRoutes.startPrintJob, arguments: SchedulePrintJobArgs.details(task: widget.task));
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -652,7 +656,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           const SizedBox(height: 10),
                           _StartPrintJobCard(
                             task:     widget.task,
-                            onTap:    _showPrinterSelectionDialog,
+                            onTap:    _startPrintJobScreen,
                           ),
                           const SizedBox(height: 18),
                         ],
