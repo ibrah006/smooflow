@@ -12,16 +12,16 @@ class AppDelegate: FlutterAppDelegate {
     return true
   }
     
-    var updaterController: SPUStandardUpdaterController!
+  var updaterController: SPUStandardUpdaterController!
 
-    override func applicationDidFinishLaunching(_ aNotification: Notification) {
-        super.applicationDidFinishLaunching(aNotification)
-        RegisterGeneratedPlugins(registry: self)
+  override func applicationDidFinishLaunching(_ aNotification: Notification) {
+    super.applicationDidFinishLaunching(aNotification)
+    // RegisterGeneratedPlugins(registry: self)  <-- Removed, not needed.
 
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
-    }
+    updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
+  }
 }
