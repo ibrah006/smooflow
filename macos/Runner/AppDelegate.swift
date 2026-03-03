@@ -1,6 +1,7 @@
 import Cocoa
 import FlutterMacOS
 import Sparkle
+import os.log
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -17,11 +18,15 @@ class AppDelegate: FlutterAppDelegate {
   override func applicationDidFinishLaunching(_ aNotification: Notification) {
     super.applicationDidFinishLaunching(aNotification)
     // RegisterGeneratedPlugins(registry: self)  <-- Removed, not needed.
+      
+    NSLog("🔥 App launched")
 
     updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
         userDriverDelegate: nil
     )
+      
+    print("🔥 Sparkle initialized")
   }
 }

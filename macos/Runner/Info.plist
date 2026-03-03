@@ -38,5 +38,11 @@
 	<string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>0</integer>
 </dict>
 </plist>
