@@ -35,7 +35,7 @@
 	<key>SUFeedURL</key>
 	<string>https://workflow-backend-production.up.railway.app/updates/mac/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
+    <string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>SUEnableAutomaticChecks</key>
