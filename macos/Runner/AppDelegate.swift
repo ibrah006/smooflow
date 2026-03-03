@@ -28,5 +28,7 @@ class AppDelegate: FlutterAppDelegate {
     )
       
     print("🔥 Sparkle initialized")
+      
+      updaterController.checkForUpdates(nil);
   }
 }
