@@ -14,6 +14,8 @@ class AppDelegate: FlutterAppDelegate {
   }
     
   var updaterController: SPUStandardUpdaterController!
+    
+  let updaterDelegate = UpdaterLoggerDelegate()
 
   override func applicationDidFinishLaunching(_ aNotification: Notification) {
       print("🔥 App launched")
@@ -31,4 +33,20 @@ class AppDelegate: FlutterAppDelegate {
       super.applicationDidFinishLaunching(aNotification)
     // RegisterGeneratedPlugins(registry: self)  <-- Removed, not needed.
   }
+}
+
+class UpdaterLoggerDelegate: NSObject, SPUUpdaterDelegate, SPUDownloadDataDelegate {
+
+    func updater(_ updater: SPUUpdater, willDownloadUpdate item: SUAppcastItem, with request: URLRequest) {
+        print("🔥 Sparkle will start downloading update from: \(request.url?.absoluteString ?? "unknown")")
+    }
+
+    func updater(_ updater: SPUUpdater, didDownloadUpdate item: SUAppcastItem, downloadData: SPUDownloadData) {
+        // This is where you can see the temporary file
+        if let tempURL = downloadData.fileURL {
+            print("🔥 Sparkle downloaded zip to temporary path: \(tempURL.path)")
+        } else {
+            print("⚠️ Could not get temporary zip path")
+        }
+    }
 }
