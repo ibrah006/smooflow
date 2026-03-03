@@ -28,7 +28,6 @@
 		33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 33CC10F42044A3C60003C045 /* MainMenu.xib */; };
 		33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC11122044BFA00003C045 /* MainFlutterWindow.swift */; };
 		4F4210BA3D303C272382BF64 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29CF0C23F74E17669B7770D3 /* Pods_RunnerTests.framework */; };
-		623610702F55B6AD002E82AB /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6236106F2F55B6AD002E82AB /* Sparkle */; };
 		7CEEFC680F0C7F2B774AD784 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D60A44EFD9841089C9A7337C /* Pods_Runner.framework */; };
 /* End PBXBuildFile section */
 
@@ -92,7 +91,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				623610702F55B6AD002E82AB /* Sparkle in Frameworks */,
 				7CEEFC680F0C7F2B774AD784 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -281,9 +279,6 @@
 				Base,
 			);
 			mainGroup = 33CC10E42044A3C60003C045;
-			packageReferences = (
-				6236106E2F55B6AD002E82AB /* XCRemoteSwiftPackageReference "Sparkle" */,
-			);
 			productRefGroup = 33CC10EE2044A3C60003C045 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -822,25 +817,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		6236106E2F55B6AD002E82AB /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		6236106F2F55B6AD002E82AB /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6236106E2F55B6AD002E82AB /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 33CC10E52044A3C60003C045 /* Project object */;
 }
