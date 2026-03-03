@@ -106,16 +106,14 @@ class _FlashScreenState extends State<FlashScreen> {
   @override
   void initState() {
     super.initState();
+    
+    _desktopUpdaterController = DesktopUpdaterController(
+        appArchiveUrl: Uri.parse(
+          "https://workflow-backend-production.up.railway.app/updates/mac/app-archive.json",
+        ),
+    );
 
     Future.microtask(() async {
-      _desktopUpdaterController = DesktopUpdaterController(
-          appArchiveUrl: Uri.parse(
-            "https://workflow-backend-production.up.railway.app/updates/mac/updates.json",
-          ),
-      );
-      setState(() {
-        
-      });
       // await initialize();
     });
   }

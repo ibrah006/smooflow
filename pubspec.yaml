@@ -72,6 +72,7 @@ dependencies:
   auto_updater: ^1.0.0
   desktop_updater:
     path: ../desktop_updater
+  archive: ^4.0.9
 
 dev_dependencies:
   flutter_test:
