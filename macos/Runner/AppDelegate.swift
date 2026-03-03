@@ -16,19 +16,17 @@ class AppDelegate: FlutterAppDelegate {
   var updaterController: SPUStandardUpdaterController!
 
   override func applicationDidFinishLaunching(_ aNotification: Notification) {
+    print("🔥 App launched")
+    
+      updaterController = SPUStandardUpdaterController(
+          startingUpdater: true,
+          updaterDelegate: nil,
+          userDriverDelegate: nil
+      )
+        
+      print("🔥 Sparkle initialized")
+      
     super.applicationDidFinishLaunching(aNotification)
     // RegisterGeneratedPlugins(registry: self)  <-- Removed, not needed.
-      
-    NSLog("🔥 App launched")
-
-    updaterController = SPUStandardUpdaterController(
-        startingUpdater: true,
-        updaterDelegate: nil,
-        userDriverDelegate: nil
-    )
-      
-    print("🔥 Sparkle initialized")
-      
-      updaterController.checkForUpdates(nil);
   }
 }
