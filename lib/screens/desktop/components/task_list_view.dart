@@ -553,34 +553,39 @@ class _ToggleTabState extends State<_ToggleTab> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Container(
           decoration: BoxDecoration(
             color: widget.isActive
-                ? _T.white
-                : (_hovered ? _T.slate50 : Colors.transparent),
+                  ? _T.white
+                  : (_hovered ? _T.slate50 : Colors.transparent),
             borderRadius: radius,
-            boxShadow: widget.isActive
-                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                : null,
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(
-              widget.icon,
-              size:  13,
-              color: widget.isActive ? _T.blue : _T.slate400,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              boxShadow: widget.isActive
+                  ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                  : null,
             ),
-            const SizedBox(width: 5),
-            Text(
-              widget.label,
-              style: TextStyle(
-                fontSize:   11.5,
-                fontWeight: FontWeight.w600,
-                color:      widget.isActive ? _T.ink : _T.slate500,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(
+                widget.icon,
+                size:  13,
+                color: widget.isActive ? _T.blue : _T.slate400,
               ),
-            ),
-          ]),
+              const SizedBox(width: 5),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize:   11.5,
+                  fontWeight: FontWeight.w600,
+                  color:      widget.isActive ? _T.ink : _T.slate500,
+                ),
+              ),
+            ]),
+          ),
         ),
       ),
     );
