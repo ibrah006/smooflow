@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:desktop_updater/updater_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
@@ -23,6 +24,8 @@ class FlashScreen extends StatefulWidget {
 }
 
 class _FlashScreenState extends State<FlashScreen> {
+
+  late DesktopUpdaterController _desktopUpdaterController;
 
   initialize() async {
     await LoginService.isLoggedIn().then((IsLoggedInStatus isLoggedInStatus) async {
@@ -102,6 +105,12 @@ class _FlashScreenState extends State<FlashScreen> {
   @override
   void initState() {
     super.initState();
+
+    _desktopUpdaterController = DesktopUpdaterController(
+        appArchiveUrl: Uri.parse(
+          "https://https://workflow-backend-production.up.railway.app/updates.json",
+        ),
+    );
 
     Future.microtask(() async {
       await initialize();
