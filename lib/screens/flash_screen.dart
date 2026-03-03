@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:desktop_updater/updater_controller.dart';
+import 'package:desktop_updater/widget/update_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
@@ -106,14 +107,16 @@ class _FlashScreenState extends State<FlashScreen> {
   void initState() {
     super.initState();
 
-    _desktopUpdaterController = DesktopUpdaterController(
-        appArchiveUrl: Uri.parse(
-          "https://https://workflow-backend-production.up.railway.app/updates.json",
-        ),
-    );
-
     Future.microtask(() async {
-      await initialize();
+      _desktopUpdaterController = DesktopUpdaterController(
+          appArchiveUrl: Uri.parse(
+            "https://workflow-backend-production.up.railway.app/updates/mac/updates.json",
+          ),
+      );
+      setState(() {
+        
+      });
+      // await initialize();
     });
   }
 
@@ -140,63 +143,66 @@ class _FlashScreenState extends State<FlashScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: 100),
-            SizedBox(
-              width: screenWidth < 340? screenWidth : 340,
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  Row(
-                    spacing: 15,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(width: 60, "assets/icons/logo.svg"),
-                      Text(
-                        "smooflow",
-                        style: textTheme.headlineLarge!.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 40,
-                          fontFamily: "Plus Jakarta Sans",
-                          letterSpacing: -1.5,
-                          color: Color(0xFF0F172A)
+      body: DesktopUpdateWidget(
+        controller: _desktopUpdaterController,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(height: 100),
+              SizedBox(
+                width: screenWidth < 340? screenWidth : 340,
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Row(
+                      spacing: 15,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(width: 60, "assets/icons/logo.svg"),
+                        Text(
+                          "smooflow",
+                          style: textTheme.headlineLarge!.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 40,
+                            fontFamily: "Plus Jakarta Sans",
+                            letterSpacing: -1.5,
+                            color: Color(0xFF0F172A)
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Transform.rotate(
-                    angle: pi/5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
-                      child: Text("BETA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontFamily: "Plus Jakarta Sans", letterSpacing: 0, fontSize: 13)),
+                      ],
                     ),
-                  )
-                ],
+                    Transform.rotate(
+                      angle: pi/5,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                        child: Text("BETA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontFamily: "Plus Jakarta Sans", letterSpacing: 0, fontSize: 13)),
+                      ),
+                    )
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 13),
-            Text(
-              "Streamlining Large-Format Printing.",
-              style: textTheme.bodyMedium!.copyWith(
-                fontFamily: "Plus Jakarta Sans",
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Color.fromARGB(255, 90, 96, 103)
+              SizedBox(height: 13),
+              Text(
+                "Streamlining Large-Format Printing.",
+                style: textTheme.bodyMedium!.copyWith(
+                  fontFamily: "Plus Jakarta Sans",
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color.fromARGB(255, 90, 96, 103)
+                ),
               ),
-            ),
-            Lottie.asset(
-              'assets/animations/loading.json',
-              width: 150,
-              height: 150,
-            ),
-          ],
+              Lottie.asset(
+                'assets/animations/loading.json',
+                width: 150,
+                height: 150,
+              ),
+            ],
+          ),
         ),
       ),
     );
