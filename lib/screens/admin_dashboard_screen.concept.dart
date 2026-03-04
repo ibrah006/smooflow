@@ -133,13 +133,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     super.initState();
 
     Future.microtask(() async {
-      await ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
-      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).loadAll();
-      await ref.watch(materialNotifierProvider.notifier).fetchMaterials();
-      await ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
-      await ref.watch(memberNotifierProvider.notifier).members;
+      ref.watch(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+      ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      ref.watch(taskNotifierProvider.notifier).loadAll();
+      ref.watch(materialNotifierProvider.notifier).fetchMaterials();
+      ref.watch(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      ref.watch(memberNotifierProvider.notifier).members;
     });
 
     _searchFocus.addListener(() {

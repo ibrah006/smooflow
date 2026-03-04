@@ -305,12 +305,14 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
     final tasksTodayIds = tasksToday.map((task)=> task.id);
 
-    state.tasks.removeWhere((task)=> tasksTodayIds.contains(task.id));
+    state.copyWith(
+      tasks: state.tasks.where((task)=> !tasksTodayIds.contains(task.id)).toList()
+    );
 
     // Update Tasks
-    state = state.copyWith(
-      tasks: tasksToday
-    );
+    // state = state.copyWith(
+    //   tasks: tasksToday
+    // );
   }
 
   Future<void> _assignPrinter({required int taskId, required String printerId}) async {
