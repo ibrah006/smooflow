@@ -517,6 +517,23 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
+           // ── Projects ───────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 4),
+            child: _SidebarLabel('Operations'),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(children: [
+              _SidebarNavItem(
+                icon:     Icons.print_rounded,
+                label:    'Printers',
+                isActive: widget.currentView == _AdminView.clients,
+                onTap:    () => widget.onViewChanged(_AdminView.clients),
+              ),
+            ]),
+          ),
+
           // ── Manage ─────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),

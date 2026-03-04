@@ -15,6 +15,7 @@ import 'package:smooflow/screens/desktop/accounts_dashbaord.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
+import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/start_print_job_desktop.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
@@ -172,6 +173,7 @@ class AppRoutes {
   
   // Production
   static const startPrintJob = "/desktop/production/start-job";
+  static const printManagementDesktop = "/desktop/production/manage";
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
@@ -449,6 +451,9 @@ class AppRoutes {
       case startPrintJob:
         if (args is SchedulePrintJobArgs)
           screen = StartPrintJobScreen(task: args.task);
+        break;
+      case printManagementDesktop:
+        screen = DesktopPrinterManagementScreen();
         break;
     }
 
