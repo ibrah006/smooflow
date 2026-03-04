@@ -2056,7 +2056,7 @@ class _TransactionRow extends StatelessWidget {
   const _TransactionRow({required this.transaction, required this.unit});
   @override
   Widget build(BuildContext context) {
-    final isIn   = transaction.type == 'in';
+    final isIn   = transaction.type == TransactionType.stockIn;
     final color  = isIn ? _T.green : _T.red;
     return Column(children: [
       Padding(
@@ -2072,9 +2072,9 @@ class _TransactionRow extends StatelessWidget {
             Text(isIn ? 'Stock In' : 'Stock Out',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
             if (transaction.notes != null)
-              Text(transaction.note!, style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
+              Text(transaction.notes!, style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
           ])),
-          Text('${isIn ? '+' : '−'}${_fmtStock(transaction.qty)} $unit',
+          Text('${isIn ? '+' : '−'}${_fmtStock(transaction.quantity)} $unit',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
         ]),
       ),
