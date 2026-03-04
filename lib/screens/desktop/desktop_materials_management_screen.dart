@@ -505,43 +505,48 @@ class _MaterialListTileState extends State<_MaterialListTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Container(
           decoration: BoxDecoration(
             color: selected ? _T.blue50 : _hovered ? _T.slate50 : Colors.transparent,
-            borderRadius: BorderRadius.circular(_T.r),
-            border: Border.all(
-              color: selected ? _T.blue.withOpacity(0.35) : _hovered ? _T.slate200 : _T.slate200,
-              width: selected ? 1.5 : 1,
-            ),
+              borderRadius: BorderRadius.circular(_T.r),
           ),
-          child: Row(children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: selected ? _T.blue.withOpacity(0.10) : _T.slate100,
-                borderRadius: BorderRadius.circular(9),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              border: Border.all(
+                color: selected ? _T.blue.withOpacity(0.35) : _hovered ? _T.slate200 : _T.slate200,
+                width: selected ? 1.5 : 1,
               ),
-              child: Icon(Icons.layers_outlined, size: 17,
-                  color: selected ? _T.blue : _T.slate500),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(m.name, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: selected ? _T.blue : _T.ink)),
-                Text('${_fmtStock(m.currentStock)} ${m.unitShort}',
-                    style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
-              ]),
-            ),
-            _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue),
-            ],
-          ]),
+            child: Row(children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: selected ? _T.blue.withOpacity(0.10) : _T.slate100,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(Icons.layers_outlined, size: 17,
+                    color: selected ? _T.blue : _T.slate500),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(m.name, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                          color: selected ? _T.blue : _T.ink)),
+                  Text('${_fmtStock(m.currentStock)} ${m.unitShort}',
+                      style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
+                ]),
+              ),
+              _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue),
+              ],
+            ]),
+          ),
         ),
       ),
     );
@@ -811,8 +816,8 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
                     // Barcode card
                     _SectionCard(
                       icon:      Icons.qr_code_outlined,
-                      iconColor: _T.purple,
-                      iconBg:    _T.purple50,
+                      iconColor: _T.ink,
+                      iconBg:    _T.ink3.withOpacity(0.1),
                       title:     'Barcode',
                       subtitle:  'Scan or export for stock operations',
                       child: Column(children: [
@@ -826,8 +831,8 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
                           child: OutlinedButton.icon(
                             onPressed: () => exportToJpg(context, _barcodeKey),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: _T.purple,
-                              side: BorderSide(color: _T.purple.withOpacity(0.4)),
+                              foregroundColor: _T.ink,
+                              side: BorderSide(color: _T.ink.withOpacity(0.4)),
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)),
                               textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
