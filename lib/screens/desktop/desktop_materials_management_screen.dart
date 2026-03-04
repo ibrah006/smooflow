@@ -575,7 +575,10 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
   @override
   void dispose() { _tabs.dispose(); super.dispose(); }
 
-  void _showStockDialog({required bool isIn}) {
+  void _showStockDialog({
+    @Deprecated("Will no longer use the material detail panel to stock out beacuse stock out requires to move that specific item udner the material category")
+    required bool isIn
+  }) {
     showDialog<void>(
       context:      context,
       barrierColor: Colors.black.withOpacity(0.35),
@@ -585,14 +588,19 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
         onConfirm: (double qty, String? note) async {
           Navigator.of(context).pop();
           if (isIn) {
-            //TODO
-            // await ref.read(materialNotifierProvider.notifier)
-            //     .addStock(widget.material.id, qty, note: note);
-          } else {
-            //TODO
-            // await ref.read(materialNotifierProvider.notifier)
-            //     .removeStock(widget.material.id, qty, note: note);
+            await ref
+                .read(materialNotifierProvider.notifier)
+                .stockIn(widget.material.id, qty);
           }
+          // else {
+          //   await ref
+          //       .read(materialNotifierProvider.notifier)
+          //       .stockOut(
+          //         widget.transaction.barcode!,
+          //         qty,
+          //         projectId: widget.projectId,
+          //       );
+          // }
           widget.onUpdate();
           _snack(
             isIn ? 'Stock added successfully' : 'Stock removed successfully',
@@ -695,19 +703,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
             ),
             const SizedBox(width: 8),
             // Stock-out button
-            OutlinedButton.icon(
-              onPressed: m.isCriticalStock ? null : () => _showStockDialog(isIn: false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _T.red,
-                disabledForegroundColor: _T.slate300,
-                side: BorderSide(color: m.isCriticalStock ? _T.slate200 : _T.red.withOpacity(0.4)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)),
-                textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-              ),
-              icon:  const Icon(Icons.remove_rounded, size: 15),
-              label: const Text('Stock Out'),
-            ),
+            // Discontinued Stock out functionality from here
           ]),
         ),
 
