@@ -893,36 +893,41 @@ class _MaterialNameTileState extends State<_MaterialNameTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Container(
           decoration: BoxDecoration(
             color:        _hovered ? _T.purple50 : Colors.transparent,
-            borderRadius: BorderRadius.circular(_T.r),
+              borderRadius: BorderRadius.circular(_T.r),
             border:       Border.all(
-                color: _hovered ? _T.purple.withOpacity(0.3) : _T.slate200),
+                  color: _hovered ? _T.purple.withOpacity(0.3) : _T.slate200),
           ),
-          child: Row(children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color:        _T.slate100,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: const Icon(Icons.layers_outlined, size: 14, color: _T.slate500),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(m.name, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12.5,
-                      fontWeight: FontWeight.w600, color: _T.ink)),
-              Text('${_fmtQty(m.currentStock)} ${m.unitShort} available',
-                  style: const TextStyle(fontSize: 11, color: _T.slate400)),
-            ])),
-            _StatusPill(label: stockLabel, color: stockColor, bg: stockBg),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
-          ]),
+            child: Row(children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color:        _T.slate100,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(Icons.layers_outlined, size: 14, color: _T.slate500),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(m.name, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12.5,
+                        fontWeight: FontWeight.w600, color: _T.ink)),
+                Text('${_fmtQty(m.currentStock)} ${m.unitShort} available',
+                    style: const TextStyle(fontSize: 11, color: _T.slate400)),
+              ])),
+              _StatusPill(label: stockLabel, color: stockColor, bg: stockBg),
+              const SizedBox(width: 6),
+              const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
+            ]),
+          ),
         ),
       ),
     );
