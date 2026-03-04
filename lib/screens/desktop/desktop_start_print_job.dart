@@ -774,40 +774,45 @@ class _PrinterTileState extends State<_PrinterTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Container(
           decoration: BoxDecoration(
-            color:        selected ? _T.blue50 : _hovered ? _T.slate50 : Colors.transparent,
+            color: selected ? _T.blue50 : _hovered ? _T.slate50 : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
-            border:       Border.all(
-              color: selected ? _T.blue.withOpacity(0.4) : _T.slate200,
-              width: selected ? 1.5 : 1,
-            ),
           ),
-          child: Row(children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color:        selected ? _T.blue.withOpacity(0.10) : _T.slate100,
-                borderRadius: BorderRadius.circular(7),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              border:       Border.all(
+                color: selected ? _T.blue.withOpacity(0.4) : _T.slate200,
+                width: selected ? 1.5 : 1,
               ),
-              child: Icon(Icons.print_outlined, size: 15,
-                  color: selected ? _T.blue : _T.slate500),
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600,
-                  color: selected ? _T.blue : _T.ink)),
-              if ((p.nickname ?? '').isNotEmpty)
-                Text(p.nickname!, style: const TextStyle(fontSize: 11, color: _T.slate400)),
-            ])),
-            _StatusPill(label: 'Available', color: _T.green, bg: _T.green50),
-            if (selected) ...[
-              const SizedBox(width: 8),
-              const Icon(Icons.check_circle_rounded, size: 15, color: _T.blue),
-            ],
-          ]),
+            child: Row(children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color:        selected ? _T.blue.withOpacity(0.10) : _T.slate100,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(Icons.print_outlined, size: 15,
+                    color: selected ? _T.blue : _T.slate500),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(p.name, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600,
+                    color: selected ? _T.blue : _T.ink)),
+                if ((p.nickname ?? '').isNotEmpty)
+                  Text(p.nickname!, style: const TextStyle(fontSize: 11, color: _T.slate400)),
+              ])),
+              _StatusPill(label: 'Available', color: _T.green, bg: _T.green50),
+              if (selected) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.check_circle_rounded, size: 15, color: _T.blue),
+              ],
+            ]),
+          ),
         ),
       ),
     );
