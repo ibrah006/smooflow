@@ -8,16 +8,16 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/export_barcodes_args.dart';
 
-class DesktopMaterialManagementScreen extends ConsumerStatefulWidget {
-  const DesktopMaterialManagementScreen({super.key});
+class DesktopMaterialListScreen extends ConsumerStatefulWidget {
+  const DesktopMaterialListScreen({super.key});
 
   @override
-  ConsumerState<DesktopMaterialManagementScreen> createState() =>
+  ConsumerState<DesktopMaterialListScreen> createState() =>
       _DesktopMaterialListScreenState();
 }
 
 class _DesktopMaterialListScreenState
-    extends ConsumerState<DesktopMaterialManagementScreen> {
+    extends ConsumerState<DesktopMaterialListScreen> {
   @override
   void initState() {
     // TODO: implement initState

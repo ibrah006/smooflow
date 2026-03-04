@@ -273,7 +273,7 @@ class _AdminDesktopDashboardScreenState
                                           ? ClientsPage()
                                           : _view == _AdminView.team? ManageMembersPage()
                                             : _view == _AdminView.printers? DesktopPrinterManagementScreen()
-                                              : DesktopMaterialManagementScreen(),
+                                              : DesktopMaterialListScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
