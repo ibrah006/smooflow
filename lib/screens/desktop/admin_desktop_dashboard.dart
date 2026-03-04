@@ -40,6 +40,7 @@ import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
@@ -273,7 +274,7 @@ class _AdminDesktopDashboardScreenState
                                           ? ClientsPage()
                                           : _view == _AdminView.team? ManageMembersPage()
                                             : _view == _AdminView.printers? DesktopPrinterManagementScreen()
-                                              : DesktopMaterialListScreen(),
+                                              : DesktopMaterialsManagementScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
