@@ -20,7 +20,7 @@ import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/start_print_job_desktop.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
-import 'package:smooflow/screens/desktop_materials_management_screen.dart';
+import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/join_organization_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
@@ -458,7 +458,7 @@ class AppRoutes {
         screen = DesktopPrinterManagementScreen();
         break;
       case printMaterialsManagement:
-        screen = DesktopMaterialsListScreen();
+        screen = DesktopMaterialsManagementScreen();
         break;
     }
 
