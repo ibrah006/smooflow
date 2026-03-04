@@ -582,11 +582,11 @@ class _ColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate200,
+                color:  isDone ? _T.green : _T.slate100,
                 shape:  BoxShape.circle,
               ),
               child: Center(child: Text(stepNum,
-                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
+                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.slate400))),
             ),
             const SizedBox(width: 6),
             Text(title, style: const TextStyle(fontSize: 12.5,
@@ -668,11 +668,11 @@ class _MaterialColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate200,
+                color:  isDone ? _T.green : _T.slate100,
                 shape:  BoxShape.circle,
               ),
               child: Center(child: const Text('2',
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
+                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.slate400))),
             ),
             const SizedBox(width: 6),
             Text(
