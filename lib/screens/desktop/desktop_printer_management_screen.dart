@@ -355,66 +355,71 @@ class _PrinterListTileState extends State<_PrinterListTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Container(
           decoration: BoxDecoration(
             color: selected
-                ? _T.blue50
-                : _hovered ? _T.slate50 : Colors.transparent,
+                  ? _T.blue50
+                  : _hovered ? _T.slate50 : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
-            border: Border.all(
-              color: selected
-                  ? _T.blue.withOpacity(0.35)
-                  : _hovered ? _T.slate200 : _T.slate200,
-              width: selected ? 1.5 : 1,
-            ),
           ),
-          child: Row(children: [
-            // Icon
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              border: Border.all(
                 color: selected
-                    ? _T.blue.withOpacity(0.10)
-                    : _T.slate100,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(Icons.print_outlined,
-                  size: 17,
-                  color: selected ? _T.blue : _T.slate500),
-            ),
-            const SizedBox(width: 12),
-
-            // Name + nickname
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize:   13,
-                        fontWeight: FontWeight.w600,
-                        color:      selected ? _T.blue : _T.ink,
-                      )),
-                  Text(p.nickname,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 11.5, color: _T.slate400)),
-                ],
+                    ? _T.blue.withOpacity(0.35)
+                    : _hovered ? _T.slate200 : _T.slate200,
+                width: selected ? 1.5 : 1,
               ),
             ),
-
-            // Status pill
-            _StatusPill(label: statusText, color: dotColor, bg: dotBg),
-
-            if (selected) ...[
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 16, color: _T.blue),
-            ],
-          ]),
+            child: Row(children: [
+              // Icon
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? _T.blue.withOpacity(0.10)
+                      : _T.slate100,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(Icons.print_outlined,
+                    size: 17,
+                    color: selected ? _T.blue : _T.slate500),
+              ),
+              const SizedBox(width: 12),
+          
+              // Name + nickname
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize:   13,
+                          fontWeight: FontWeight.w600,
+                          color:      selected ? _T.blue : _T.ink,
+                        )),
+                    Text(p.nickname,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 11.5, color: _T.slate400)),
+                  ],
+                ),
+              ),
+          
+              // Status pill
+              _StatusPill(label: statusText, color: dotColor, bg: dotBg),
+          
+              if (selected) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 16, color: _T.blue),
+              ],
+            ]),
+          ),
         ),
       ),
     );
