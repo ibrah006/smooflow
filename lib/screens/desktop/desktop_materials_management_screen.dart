@@ -33,6 +33,7 @@ import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -414,32 +415,14 @@ class _Topbar extends StatelessWidget {
       border: Border(bottom: BorderSide(color: _T.slate200)),
     ),
     child: Row(children: [
-      Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(_T.r),
-        child: InkWell(
-          onTap:        () => Navigator.of(context).maybePop(),
-          borderRadius: BorderRadius.circular(_T.r),
-          child: Container(
-            width: 34, height: 34,
-            decoration: BoxDecoration(
-              color:        _T.slate100,
-              borderRadius: BorderRadius.circular(_T.r),
-              border:       Border.all(color: _T.slate200),
-            ),
-            child: const Icon(Icons.arrow_back_rounded, size: 17, color: _T.ink3),
-          ),
-        ),
-      ),
-      const SizedBox(width: 14),
       Container(
         width: 32, height: 32,
-        decoration: BoxDecoration(
-          color:        _T.purple50,
-          borderRadius: BorderRadius.circular(9),
-          border:       Border.all(color: _T.purple.withOpacity(0.2)),
-        ),
-        child: const Icon(Icons.layers_outlined, size: 16, color: _T.purple),
+        // decoration: BoxDecoration(
+        //   color:        _T.ink.withOpacity(.1),
+        //   borderRadius: BorderRadius.circular(9),
+        //   border:       Border.all(color: _T.ink.withOpacity(0.2)),
+        // ),
+        child: const Icon(CupertinoIcons.cube_box_fill, size: 27, color: _T.ink),
       ),
       const SizedBox(width: 12),
       const Column(
