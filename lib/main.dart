@@ -18,10 +18,10 @@ void main(List<String> args) async {
   // await autoUpdater.setFeedURL(feedURL);
   // await autoUpdater.setScheduledCheckInterval(3600);
 
-  await autoUpdater.setFeedURL(
-    'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/mac/appcast.xml',
-  );
-  await autoUpdater.checkForUpdates();
+  // await autoUpdater.setFeedURL(
+  //   'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/mac/appcast.xml',
+  // );
+  // await autoUpdater.checkForUpdates();
 
   if (!Platform.isAndroid && !Platform.isIOS) {
     await windowManager.ensureInitialized();

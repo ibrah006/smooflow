@@ -28,6 +28,10 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUEnableDownloaderService</key>
 	<true/>
 	<key>SUEnableinstallerLauncherService</key>
@@ -35,14 +39,10 @@
 	<key>SUFeedURL</key>
 	<string>https://workflow-backend-production.up.railway.app/updates/mac/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-    <string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
-	<key>com.apple.security.network.client</key>
-	<true/>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
-	<key>SUAutomaticallyUpdate</key>
-	<true/>
+	<string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
 	<key>SUScheduledCheckInterval</key>
 	<integer>0</integer>
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>
