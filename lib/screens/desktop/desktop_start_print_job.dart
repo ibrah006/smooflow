@@ -266,7 +266,7 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
 
       await _assignPrinter();        
 
-      if (mounted) Navigator.of(context).pop();
+      Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _submitting = false);
     }
@@ -278,6 +278,10 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
     for (final c in [_materialSearchCtrl, _barcodeSearchCtrl, _qtyCtrl]) {
       c.addListener(() => setState(() {}));
     }
+
+    Future.microtask(() async{
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    });
   }
 
   @override
