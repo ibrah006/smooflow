@@ -668,15 +668,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
               ),
             ),
             const SizedBox(width: 14),
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color:        _T.slate100,
-                borderRadius: BorderRadius.circular(9),
-                border:       Border.all(color: _T.slate200),
-              ),
-              child: const Icon(Icons.layers_outlined, size: 16, color: _T.slate500),
-            ),
+            const Icon(Icons.layers_outlined, size: 28, color: _T.slate500),
             const SizedBox(width: 12),
             Expanded(
               child: Column(mainAxisSize: MainAxisSize.min,
