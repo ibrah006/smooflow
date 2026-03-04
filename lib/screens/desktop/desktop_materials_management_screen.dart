@@ -2051,7 +2051,7 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _TransactionRow extends StatelessWidget {
-  final dynamic transaction;
+  final StockTransaction transaction;
   final String  unit;
   const _TransactionRow({required this.transaction, required this.unit});
   @override
