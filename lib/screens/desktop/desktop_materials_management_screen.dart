@@ -39,6 +39,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/product_barcode.dart';
 import 'package:smooflow/core/models/material.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
@@ -571,7 +572,16 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
   final _barcodeKey = GlobalKey();
 
   @override
-  void initState() { super.initState(); _tabs = TabController(length: 2, vsync: this); }
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+
+    Future.microtask(() {
+      ref
+          .watch(materialNotifierProvider.notifier)
+          .fetchMaterialTransactions(widget.material.id);
+    });
+  }
   @override
   void dispose() { _tabs.dispose(); super.dispose(); }
 
@@ -849,57 +859,93 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
 // ─────────────────────────────────────────────────────────────────────────────
 // STOCK HISTORY TAB
 // ─────────────────────────────────────────────────────────────────────────────
-class _StockHistoryTab extends ConsumerWidget {
+class _StockHistoryTab extends ConsumerStatefulWidget {
   final MaterialModel material;
-  const _StockHistoryTab({required this.material});
+
+  const _StockHistoryTab({
+    required this.material,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // final transactions = material.stockTransactions ?? [];
+  ConsumerState<_StockHistoryTab> createState() => _StockHistoryTabState();
+}
 
-    // if transactions.isEmpty
-    if (true) {
+class _StockHistoryTabState extends ConsumerState<_StockHistoryTab> {
+
+  List<StockTransaction> get _transactions =>
+      ref.watch(materialNotifierProvider)
+          .byMaterial(widget.material.id);
+
+  @override
+  Widget build(BuildContext context) {
+    final transactions = _transactions;
+
+    if (transactions.isEmpty) {
       return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.swap_vert_rounded, size: 28, color: _T.slate300),
-          const SizedBox(height: 10),
-          const Text('No stock movements yet',
-              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: _T.slate400)),
-          const SizedBox(height: 4),
-          const Text('Use Stock In / Stock Out to record changes',
-              style: TextStyle(fontSize: 12, color: _T.slate300)),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.swap_vert_rounded, size: 28, color: _T.slate300),
+            SizedBox(height: 10),
+            Text(
+              'No stock movements yet',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: _T.slate400,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Use Stock In / Stock Out to record changes',
+              style: TextStyle(fontSize: 12, color: _T.slate300),
+            ),
+          ],
+        ),
       );
     }
 
-    // Uncomment this
-    // return SingleChildScrollView(
-    //   padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
-    //   child: ConstrainedBox(
-    //     constraints: const BoxConstraints(maxWidth: 680),
-    //     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    //       const Text('Stock History',
-    //           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
-    //               color: _T.ink, letterSpacing: -0.5)),
-    //       const SizedBox(height: 4),
-    //       Text('${transactions.length} movement${transactions.length == 1 ? '' : 's'} recorded',
-    //           style: const TextStyle(fontSize: 13, color: _T.slate400)),
-    //       const SizedBox(height: 24),
-    //       _SectionCard(
-    //         icon:      Icons.swap_vert_rounded,
-    //         iconColor: _T.blue,
-    //         iconBg:    _T.blue50,
-    //         title:     'Movements',
-    //         subtitle:  'Chronological stock changes',
-    //         child: Column(
-    //           children: transactions
-    //               .map((t) => _TransactionRow(transaction: t, unit: material.unitShort))
-    //               .toList(),
-    //         ),
-    //       ),
-    //     ]),
-    //   ),
-    // );
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Stock History',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: _T.ink,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${transactions.length} movement${transactions.length == 1 ? '' : 's'} recorded',
+              style: const TextStyle(fontSize: 13, color: _T.slate400),
+            ),
+            const SizedBox(height: 24),
+            _SectionCard(
+              icon: Icons.swap_vert_rounded,
+              iconColor: _T.blue,
+              iconBg: _T.blue50,
+              title: 'Movements',
+              subtitle: 'Chronological stock changes',
+              child: Column(
+                children: transactions
+                    .map((t) => _TransactionRow(
+                          transaction: t,
+                          unit: widget.material.unitShort,
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -2025,7 +2071,7 @@ class _TransactionRow extends StatelessWidget {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(isIn ? 'Stock In' : 'Stock Out',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
-            if (transaction.note != null)
+            if (transaction.notes != null)
               Text(transaction.note!, style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
           ])),
           Text('${isIn ? '+' : '−'}${_fmtStock(transaction.qty)} $unit',
