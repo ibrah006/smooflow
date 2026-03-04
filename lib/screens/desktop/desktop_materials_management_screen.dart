@@ -962,6 +962,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
       _snack('Material created', isError: false);
       widget.onSaved();
     } catch (e) {
+      print("this is the error: $e");
       _snack('Failed to create material', isError: true);
       setState(() => _saving = false);
     }
