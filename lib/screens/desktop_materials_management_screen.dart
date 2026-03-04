@@ -595,11 +595,13 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
         onConfirm: (double qty, String? note) async {
           Navigator.of(context).pop();
           if (isIn) {
-            await ref.read(materialNotifierProvider.notifier)
-                .addStock(widget.material.id, qty, note: note);
+            //TODO
+            // await ref.read(materialNotifierProvider.notifier)
+            //     .addStock(widget.material.id, qty, note: note);
           } else {
-            await ref.read(materialNotifierProvider.notifier)
-                .removeStock(widget.material.id, qty, note: note);
+            //TODO
+            // await ref.read(materialNotifierProvider.notifier)
+            //     .removeStock(widget.material.id, qty, note: note);
           }
           widget.onUpdate();
           _snack(
@@ -874,9 +876,10 @@ class _StockHistoryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactions = material.stockTransactions ?? [];
+    // final transactions = material.stockTransactions ?? [];
 
-    if (transactions.isEmpty) {
+    // if transactions.isEmpty
+    if (true) {
       return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.swap_vert_rounded, size: 28, color: _T.slate300),
@@ -890,33 +893,34 @@ class _StockHistoryTab extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Stock History',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
-                  color: _T.ink, letterSpacing: -0.5)),
-          const SizedBox(height: 4),
-          Text('${transactions.length} movement${transactions.length == 1 ? '' : 's'} recorded',
-              style: const TextStyle(fontSize: 13, color: _T.slate400)),
-          const SizedBox(height: 24),
-          _SectionCard(
-            icon:      Icons.swap_vert_rounded,
-            iconColor: _T.blue,
-            iconBg:    _T.blue50,
-            title:     'Movements',
-            subtitle:  'Chronological stock changes',
-            child: Column(
-              children: transactions
-                  .map((t) => _TransactionRow(transaction: t, unit: material.unitShort))
-                  .toList(),
-            ),
-          ),
-        ]),
-      ),
-    );
+    // Uncomment this
+    // return SingleChildScrollView(
+    //   padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
+    //   child: ConstrainedBox(
+    //     constraints: const BoxConstraints(maxWidth: 680),
+    //     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    //       const Text('Stock History',
+    //           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
+    //               color: _T.ink, letterSpacing: -0.5)),
+    //       const SizedBox(height: 4),
+    //       Text('${transactions.length} movement${transactions.length == 1 ? '' : 's'} recorded',
+    //           style: const TextStyle(fontSize: 13, color: _T.slate400)),
+    //       const SizedBox(height: 24),
+    //       _SectionCard(
+    //         icon:      Icons.swap_vert_rounded,
+    //         iconColor: _T.blue,
+    //         iconBg:    _T.blue50,
+    //         title:     'Movements',
+    //         subtitle:  'Chronological stock changes',
+    //         child: Column(
+    //           children: transactions
+    //               .map((t) => _TransactionRow(transaction: t, unit: material.unitShort))
+    //               .toList(),
+    //         ),
+    //       ),
+    //     ]),
+    //   ),
+    // );
   }
 }
 
