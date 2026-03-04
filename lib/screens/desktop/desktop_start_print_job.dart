@@ -650,7 +650,7 @@ class _MaterialColHeader extends StatelessWidget {
             ),
           ]),
           Text(
-            phase == 2 ? 'Select a specific item' : 'Search by name or barcode',
+            phase == 2 ? 'Select a material item' : 'Search by name or barcode',
             style: const TextStyle(fontSize: 10.5, color: _T.slate400),
           ),
         ],
