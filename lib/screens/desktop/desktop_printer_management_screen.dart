@@ -88,16 +88,16 @@ String    _sLabel(PrinterStatus s) => switch (s) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class ManagePrintersScreen extends ConsumerStatefulWidget {
-  const ManagePrintersScreen({super.key});
+class DesktopPrinterManagementScreen extends ConsumerStatefulWidget {
+  const DesktopPrinterManagementScreen({super.key});
 
   @override
-  ConsumerState<ManagePrintersScreen> createState() =>
+  ConsumerState<DesktopPrinterManagementScreen> createState() =>
       _ManagePrintersScreenState();
 }
 
 class _ManagePrintersScreenState
-    extends ConsumerState<ManagePrintersScreen> {
+    extends ConsumerState<DesktopPrinterManagementScreen> {
   Printer? _selected;
   bool     _showCreate = false;
 
