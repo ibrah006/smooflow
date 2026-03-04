@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,7 @@ import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
+import 'package:smooflow/screens/desktop_material_list_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -91,7 +93,7 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM — board removed; view switching lives inside TaskListView
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, list, clients, team, printers }
+enum _AdminView { overview, list, clients, team, printers, inventory }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -270,7 +272,8 @@ class _AdminDesktopDashboardScreenState
                                       : _view == _AdminView.clients
                                           ? ClientsPage()
                                           : _view == _AdminView.team? ManageMembersPage()
-                                            : DesktopPrinterManagementScreen(),
+                                            : _view == _AdminView.printers? DesktopPrinterManagementScreen()
+                                              : DesktopMaterialManagementScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
@@ -532,6 +535,12 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 label:    'Printers',
                 isActive: widget.currentView == _AdminView.printers,
                 onTap:    () => widget.onViewChanged(_AdminView.printers),
+              ),
+              _SidebarNavItem(
+                icon:     CupertinoIcons.cube_box,
+                label:    'Materials',
+                isActive: widget.currentView == _AdminView.inventory,
+                onTap:    () => widget.onViewChanged(_AdminView.inventory),
               ),
             ]),
           ),
