@@ -266,7 +266,9 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
 
       await _assignPrinter();        
 
-      Navigator.of(context).pop();
+      setState(() {});
+
+      if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _submitting = false);
     }
@@ -1344,13 +1346,14 @@ class _UsagePanel extends StatelessWidget {
         maxQty:    maxQty,
         submitted: submitted,
         qtyValid:  qtyValid,
+        taskId: task.id
       ),
       const SizedBox(height: 20),
       const Divider(height: 1, color: _T.slate200),
       const SizedBox(height: 16),
 
       // ── CTA ────────────────────────────────────────────────────────────
-      _CtaButton(canSubmit: canSubmit, submitting: submitting, onTap: onSubmit),
+      _CtaButton(canSubmit: canSubmit, submitting: submitting, onTap: onSubmit, task: task),
       const SizedBox(height: 10),
 
       // Hint text
@@ -1484,19 +1487,20 @@ class _SummaryRow extends StatelessWidget {
 }
 
 // ── Quantity input ─────────────────────────────────────────────────────────────
-class _QtyInput extends StatefulWidget {
+class _QtyInput extends ConsumerStatefulWidget {
   final StockTransaction?     stockItem;
   final MaterialModel?        material;
   final TextEditingController controller;
   final double?               maxQty;
   final bool                  submitted, qtyValid;
+  final int taskId;
   const _QtyInput({required this.stockItem, required this.material,
     required this.controller, required this.maxQty,
-    required this.submitted, required this.qtyValid});
-  @override State<_QtyInput> createState() => _QtyInputState();
+    required this.submitted, required this.qtyValid, required this.taskId});
+  @override ConsumerState<_QtyInput> createState() => _QtyInputState();
 }
 
-class _QtyInputState extends State<_QtyInput> {
+class _QtyInputState extends ConsumerState<_QtyInput> {
   final _focus = FocusNode();
   bool _focused = false;
   @override
@@ -1505,6 +1509,8 @@ class _QtyInputState extends State<_QtyInput> {
     _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
   }
   @override void dispose() { _focus.dispose(); super.dispose(); }
+
+  Task get task=> ref.watch(taskNotifierProvider).taskById(widget.taskId)!;
 
   @override
   Widget build(BuildContext context) {
@@ -1599,7 +1605,8 @@ class _QtyInputState extends State<_QtyInput> {
 class _CtaButton extends StatefulWidget {
   final bool canSubmit, submitting;
   final VoidCallback onTap;
-  const _CtaButton({required this.canSubmit, required this.submitting, required this.onTap});
+  final Task task;
+  const _CtaButton({required this.canSubmit, required this.submitting, required this.onTap, required this.task});
   @override State<_CtaButton> createState() => _CtaButtonState();
 }
 
@@ -1618,11 +1625,11 @@ class _CtaButtonState extends State<_CtaButton> {
           duration: const Duration(milliseconds: 140),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color:        widget.submitting ? _T.slate100
-                : active ? (_hovered ? _T.blueHover : _T.blue) : _T.slate100,
+            color: widget.task.printerId != null? _T.slate100 : (widget.submitting ? _T.slate100
+                : active ? (_hovered ? _T.blueHover : _T.blue) : _T.slate100),
             borderRadius: BorderRadius.circular(_T.r),
-            boxShadow: active ? [BoxShadow(color: _T.blue.withOpacity(0.25),
-                blurRadius: 8, offset: const Offset(0, 2))] : null,
+            boxShadow: widget.task.printerId != null? null : (active ? [BoxShadow(color: _T.blue.withOpacity(0.25),
+                blurRadius: 8, offset: const Offset(0, 2))] : null),
           ),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             if (widget.submitting)
@@ -1630,12 +1637,12 @@ class _CtaButtonState extends State<_CtaButton> {
                 child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
             else
               Icon(Icons.print_rounded, size: 15,
-                  color: active ? Colors.white : _T.slate300),
+                  color: widget.task.printerId != null? _T.slate300 : (active ? Colors.white : _T.slate300)),
             const SizedBox(width: 8),
             Text(
-              widget.submitting ? 'Starting…' : 'Start Print Job',
+              widget.task.printerId != null? 'Printer Assigned' : widget.submitting ? 'Starting…' : 'Start Print Job',
               style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: active || widget.submitting ? Colors.white : _T.slate300),
+                  color: widget.task.printerId != null? _T.slate300 : (active || widget.submitting ? Colors.white : _T.slate300)),
             ),
           ]),
         ),
