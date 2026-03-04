@@ -490,6 +490,11 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
   @override
   void initState() {
     super.initState();
+
+    Future.microtask(() async{
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    });
+
     _nameCtrl = TextEditingController(text: widget.printer?.name     ?? '');
     _nickCtrl = TextEditingController(text: widget.printer?.nickname ?? '');
     _locCtrl  = TextEditingController(text: widget.printer?.location ?? '');
