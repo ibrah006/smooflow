@@ -48,6 +48,8 @@ class PrinterRepo {
       },
     );
 
+    print("create printer endpoint- status code: ${res.statusCode}, body: ${res.body}");
+
     if (res.statusCode != 201) {
       throw Exception('Failed to create printer');
     }
