@@ -626,28 +626,6 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
               ),
               const SizedBox(width: 14),
 
-              // Icon badge
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  color: _isEditing ? _T.slate100 : _T.blue50,
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(
-                    color: _isEditing
-                        ? _T.slate200
-                        : _T.blue.withOpacity(0.2),
-                  ),
-                ),
-                child: Icon(
-                  _isEditing
-                      ? Icons.print_outlined
-                      : Icons.add_rounded,
-                  size:  16,
-                  color: _isEditing ? _T.slate500 : _T.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-
               // Dual-line title
               Expanded(
                 child: Column(
