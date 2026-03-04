@@ -174,6 +174,7 @@ class AppRoutes {
   // Production
   static const startPrintJob = "/desktop/production/start-job";
   static const printManagementDesktop = "/desktop/production/manage";
+  static const printMaterialsManagement = "/desktop/inventory";
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // Extract route name and arguments
@@ -437,7 +438,7 @@ class AppRoutes {
         screen = AdminDesktopDashboardScreen();
         break;
       case desktopMaterials:
-        screen = DesktopMaterialListScreen();
+        screen = DesktopMaterialManagementScreen();
         break;
       case deliveryDashbaord:
         screen = DeliveryDashboardScreen();
@@ -454,6 +455,9 @@ class AppRoutes {
         break;
       case printManagementDesktop:
         screen = DesktopPrinterManagementScreen();
+        break;
+      case printMaterialsManagement:
+        screen = DesktopMaterialManagementScreen();
         break;
     }
 
