@@ -39,6 +39,7 @@ import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 
@@ -90,7 +91,7 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM — board removed; view switching lives inside TaskListView
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, list, clients, team }
+enum _AdminView { overview, list, clients, team, printers }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -268,7 +269,8 @@ class _AdminDesktopDashboardScreenState
                                         )
                                       : _view == _AdminView.clients
                                           ? ClientsPage()
-                                          : ManageMembersPage(),
+                                          : _view == _AdminView.team? ManageMembersPage()
+                                            : DesktopPrinterManagementScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
@@ -528,8 +530,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               _SidebarNavItem(
                 icon:     Icons.print_rounded,
                 label:    'Printers',
-                isActive: widget.currentView == _AdminView.clients,
-                onTap:    () => widget.onViewChanged(_AdminView.clients),
+                isActive: widget.currentView == _AdminView.printers,
+                onTap:    () => widget.onViewChanged(_AdminView.printers),
               ),
             ]),
           ),
