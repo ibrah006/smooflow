@@ -91,12 +91,13 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
         printSpeed: printSpeed,
       );
 
-      final list = [...state.printers];
-      final index = list.indexWhere((e) => e.id == id);
-
-      if (index != -1) {
-        list[index] = updated;
-      }
+      final list = [...state.printers].map((e){
+        if (e.id == id) {
+          return updated;
+        } else {
+          return e;
+        }
+      }).toList();
 
       state = state.copyWith(printers: list);
     } catch (e) {

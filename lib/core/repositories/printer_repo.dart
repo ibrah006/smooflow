@@ -10,7 +10,7 @@ class PrinterRepo {
 
   // --------------------------------------------------
   // GET /printers
-  // --------------------------------------------------
+// --------------------------------------------------
   Future<List<Printer>> getPrinters() async {
     final res = await ApiClient.http.get('/printers');
 
