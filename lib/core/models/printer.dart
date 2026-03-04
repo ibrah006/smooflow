@@ -88,7 +88,7 @@ class Printer {
       createdAt: DateTime.parse(json['createdAt']),
       currentJobId: json['currentTaskId'],
       workMinutes: json['workMinutes'],
-      totalJobsCompleted: (json['tasks'] as List).length,
+      totalJobsCompleted: (json['tasks'] as List?)?.length?? 0,
     );
   }
 
