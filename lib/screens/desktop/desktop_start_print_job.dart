@@ -25,7 +25,7 @@
 // ──────────────────────────
 //   TODO-1  Replace _printers getter with real provider
 //   TODO-2  Replace _allMaterials getter with real provider
-//   TODO-3  Replace _stockItemsFor() with real provider call
+//   TODO-3  _stockItemsFor() fetches async via provider and caches in _stockItems
 //   TODO-4  Implement _submit() with real stockOut API call
 //
 // DESIGN SYSTEM
@@ -97,6 +97,13 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
   final _barcodeSearchCtrl  = TextEditingController();
   bool  _barcodeMode        = false; // true = search by barcode
 
+  // ── Stock item cache ───────────────────────────────────────────────────────
+  // Keyed by materialId. Populated lazily when a material is selected or when
+  // barcode search needs to scan all materials' transactions.
+  // Kept across material changes so repeated selections don't re-fetch.
+  final Map<String, List<StockTransaction>> _stockItems   = {};
+  bool                                      _stockLoading = false;
+
   // ── Usage ──────────────────────────────────────────────────────────────────
   final _qtyCtrl = TextEditingController();
   bool  _submitting = false;
@@ -136,21 +143,41 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
         .toList();
   }
 
-  // TODO-3: replace with real provider — returns stockIn transactions for this
-  // material that have remaining quantity (not fully consumed).
-  List<StockTransaction> _stockItemsFor(String materialId) =>
-      ref.watch(materialNotifierProvider)
-          .byMaterial(materialId)
+  // Fetches stockIn transactions for [materialId] from the provider, caches
+  // the result in _stockItems, and returns only uncommitted stockIn entries
+  // with remaining quantity — sorted FIFO (oldest first).
+  Future<void> _fetchStockItems(String materialId) async {
+    if (_stockItems.containsKey(materialId)) return; // already cached
+    setState(() => _stockLoading = true);
+    try {
+      final all = await ref
+          .read(materialNotifierProvider.notifier)
+          .fetchMaterialTransactions(materialId);
+      if (!mounted) return;
+      _stockItems[materialId] = all
           .where((t) => t.type == TransactionType.stockIn && t.quantity > 0)
           .toList()
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt)); // FIFO order
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    } finally {
+      if (mounted) setState(() => _stockLoading = false);
+    }
+  }
 
-  // Barcode search: find a stockIn transaction by exact or partial barcode
+  // Returns the cached list for [materialId], or empty while loading.
+  List<StockTransaction> _cachedItemsFor(String materialId) =>
+      _stockItems[materialId] ?? [];
+
+  // Barcode search across all cached materials' items.
+  // For barcode mode we also eagerly pre-fetch any materials not yet cached.
   List<StockTransaction> get _barcodeResults {
     final q = _barcodeSearchCtrl.text.trim().toLowerCase();
     if (q.isEmpty) return [];
-    return _allMaterials
-        .expand((m) => _stockItemsFor(m.id))
+    // Kick off fetches for any un-cached materials (fire-and-forget).
+    for (final m in _allMaterials) {
+      if (!_stockItems.containsKey(m.id)) _fetchStockItems(m.id);
+    }
+    return _stockItems.values
+        .expand((list) => list)
         .where((t) => t.barcode != null && t.barcode!.toLowerCase().contains(q))
         .toList();
   }
@@ -164,6 +191,8 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
       _qtyCtrl.clear();
       _qtySubmitted = false;
     });
+    // Fetch stock items for this material if not already cached.
+    _fetchStockItems(m.id);
   }
 
   void _selectStockItem(StockTransaction t) {
@@ -253,7 +282,9 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stockItems = _material != null ? _stockItemsFor(_material!.id) : <StockTransaction>[];
+    final stockItems = _material != null
+        ? _cachedItemsFor(_material!.id)
+        : <StockTransaction>[];
 
     return Scaffold(
       backgroundColor: _T.slate50,
@@ -321,6 +352,7 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
                     : _StockItemPhase(
                         material:   _material!,
                         stockItems: stockItems,
+                        isLoading:  _stockLoading,
                         selected:   _stockItem,
                         onSelect:   _selectStockItem,
                       ),
@@ -550,11 +582,11 @@ class _ColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate100,
+                color:  isDone ? _T.green : _T.slate200,
                 shape:  BoxShape.circle,
               ),
               child: Center(child: Text(stepNum,
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.slate400))),
+                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
             ),
             const SizedBox(width: 6),
             Text(title, style: const TextStyle(fontSize: 12.5,
@@ -636,11 +668,11 @@ class _MaterialColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate100,
+                color:  isDone ? _T.green : _T.slate200,
                 shape:  BoxShape.circle,
               ),
               child: Center(child: const Text('2',
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.slate400))),
+                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
             ),
             const SizedBox(width: 6),
             Text(
@@ -650,7 +682,7 @@ class _MaterialColHeader extends StatelessWidget {
             ),
           ]),
           Text(
-            phase == 2 ? 'Select a material item' : 'Search by name or barcode',
+            phase == 2 ? 'Select a specific item' : 'Search by name or barcode',
             style: const TextStyle(fontSize: 10.5, color: _T.slate400),
           ),
         ],
@@ -893,41 +925,36 @@ class _MaterialNameTileState extends State<_MaterialNameTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color:        _hovered ? _T.purple50 : Colors.transparent,
-              borderRadius: BorderRadius.circular(_T.r),
+            borderRadius: BorderRadius.circular(_T.r),
             border:       Border.all(
-                  color: _hovered ? _T.purple.withOpacity(0.3) : _T.slate200),
+                color: _hovered ? _T.purple.withOpacity(0.3) : _T.slate200),
           ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            child: Row(children: [
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  color:        _T.slate100,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: const Icon(Icons.layers_outlined, size: 14, color: _T.slate500),
+          child: Row(children: [
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(7),
               ),
-              const SizedBox(width: 10),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(m.name, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5,
-                        fontWeight: FontWeight.w600, color: _T.ink)),
-                Text('${_fmtQty(m.currentStock)} ${m.unitShort} available',
-                    style: const TextStyle(fontSize: 11, color: _T.slate400)),
-              ])),
-              _StatusPill(label: stockLabel, color: stockColor, bg: stockBg),
-              const SizedBox(width: 6),
-              const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
-            ]),
-          ),
+              child: const Icon(Icons.layers_outlined, size: 14, color: _T.slate500),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(m.name, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12.5,
+                      fontWeight: FontWeight.w600, color: _T.ink)),
+              Text('${_fmtQty(m.currentStock)} ${m.unitShort} available',
+                  style: const TextStyle(fontSize: 11, color: _T.slate400)),
+            ])),
+            _StatusPill(label: stockLabel, color: stockColor, bg: stockBg),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
+          ]),
         ),
       ),
     );
@@ -1057,13 +1084,26 @@ class _BarcodeResultTileState extends State<_BarcodeResultTile> {
 class _StockItemPhase extends StatelessWidget {
   final MaterialModel          material;
   final List<StockTransaction> stockItems;
+  final bool                   isLoading;
   final StockTransaction?      selected;
   final ValueChanged<StockTransaction> onSelect;
   const _StockItemPhase({required this.material, required this.stockItems,
-    required this.selected, required this.onSelect});
+    required this.isLoading, required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          SizedBox(width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: _T.purple)),
+          SizedBox(height: 12),
+          Text('Loading items…',
+              style: TextStyle(fontSize: 12, color: _T.slate400)),
+        ]),
+      );
+    }
+
     if (stockItems.isEmpty) {
       return const _EmptyState(
         icon:     Icons.inventory_2_outlined,
