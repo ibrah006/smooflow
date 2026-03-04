@@ -117,6 +117,14 @@ class _DesktopManagePrintersScreenState
       setState(() { _selected = null; _showCreate = false; });
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async{
+      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final all      = ref.watch(printerNotifierProvider).printers;
     final filtered = _q.isEmpty
@@ -496,10 +504,6 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
   void initState() {
     super.initState();
 
-    Future.microtask(() async{
-      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
-    });
-
     _nameCtrl = TextEditingController(text: widget.printer?.name     ?? '');
     _nickCtrl = TextEditingController(text: widget.printer?.nickname ?? '');
     _locCtrl  = TextEditingController(text: widget.printer?.location ?? '');
@@ -597,7 +601,6 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
   @override
   Widget build(BuildContext context) {
-    print("we're at the build");
     return Container(
       decoration: const BoxDecoration(
         color:  _T.slate50,
