@@ -257,12 +257,12 @@ class _Topbar extends StatelessWidget {
       // Icon badge
       Container(
         width: 32, height: 32,
-        decoration: BoxDecoration(
-          color:        _T.blue50,
-          borderRadius: BorderRadius.circular(9),
-          border:       Border.all(color: _T.blue.withOpacity(0.2)),
-        ),
-        child: const Icon(Icons.print_rounded, size: 16, color: _T.blue),
+        // decoration: BoxDecoration(
+        //   color:        _T.ink.withOpacity(.1),
+        //   borderRadius: BorderRadius.circular(9),
+        //   border:       Border.all(color: _T.ink.withOpacity(0.2)),
+        // ),
+        child: const Icon(Icons.print_rounded, size: 27, color: _T.ink),
       ),
       const SizedBox(width: 12),
 
