@@ -69,9 +69,8 @@ dependencies:
   window_manager: ^0.5.1
   path_provider: ^2.1.5
   drift: ^2.28.0
-  desktop_updater:
-    path: ../desktop_updater
   archive: ^4.0.9
+  auto_updater: ^1.0.0
 
 dev_dependencies:
   flutter_test:
