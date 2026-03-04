@@ -93,10 +93,10 @@ class DesktopPrinterManagementScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<DesktopPrinterManagementScreen> createState() =>
-      _ManagePrintersScreenState();
+      _DesktopManagePrintersScreenState();
 }
 
-class _ManagePrintersScreenState
+class _DesktopManagePrintersScreenState
     extends ConsumerState<DesktopPrinterManagementScreen> {
   Printer? _selected;
   bool     _showCreate = false;
@@ -597,6 +597,7 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
   @override
   Widget build(BuildContext context) {
+    print("we're at the build");
     return Container(
       decoration: const BoxDecoration(
         color:  _T.slate50,

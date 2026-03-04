@@ -14,10 +14,11 @@ class PrinterRepo {
   Future<List<Printer>> getPrinters() async {
     final res = await ApiClient.http.get('/printers');
 
-    print("fetch printers response body: ${res.statusCode}");
+    print("fetch printers response st code: ${res.statusCode},\nbody: ${res.body}");
 
     return (jsonDecode(res.body) as List).map((e) => Printer.fromJson(e)).toList();
   }
+
 
   // --------------------------------------------------
   // GET /printers/:id
