@@ -89,6 +89,30 @@ The app focuses on **project management, team collaboration, and production moni
 ### Login And Auth
 <img src="assets/screenshots/login.png" alt="Description" width="250"/>
 
+## Create Installers
+
+### Macos
+Build release:
+```bash
+flutter build macos --release
+```
+Create DMG installer:
+```bash
+mkdir -p build/macos/Build/Products/Release/installer                                             
+
+create-dmg \
+  --volname "Smooflow" \
+  --volicon "assets/icons/logo.png" \
+  --window-pos 200 120 \
+  --window-size 800 400 \
+  --icon-size 128 \
+  --icon "smooflow.app" 200 190 \
+  --hide-extension "smooflow.app" \
+  --app-drop-link 600 185 \
+  "build/macos/Build/Products/Release/installer/Smooflow-1.0.dmg" \
+  "build/macos/Build/Products/Release/smooflow.app"
+```
+
 ---
 
 ## 🔒 License
