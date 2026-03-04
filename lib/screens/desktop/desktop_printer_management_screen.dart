@@ -253,26 +253,6 @@ class _Topbar extends StatelessWidget {
       border: Border(bottom: BorderSide(color: _T.slate200)),
     ),
     child: Row(children: [
-      // Back
-      Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(_T.r),
-        child: InkWell(
-          onTap:        () => Navigator.of(context).maybePop(),
-          borderRadius: BorderRadius.circular(_T.r),
-          child: Container(
-            width: 34, height: 34,
-            decoration: BoxDecoration(
-              color:        _T.slate100,
-              borderRadius: BorderRadius.circular(_T.r),
-              border:       Border.all(color: _T.slate200),
-            ),
-            child: const Icon(Icons.arrow_back_rounded,
-                size: 17, color: _T.ink3),
-          ),
-        ),
-      ),
-      const SizedBox(width: 14),
 
       // Icon badge
       Container(
