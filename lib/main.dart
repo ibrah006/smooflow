@@ -1,7 +1,6 @@
 import 'dart:io';
 
 // import 'package:auto_updater/auto_updater.dart';
-import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,15 +13,6 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main(List<String> args) async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-
-  // String feedURL = 'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/mac/appcast.xml';
-  // await autoUpdater.setFeedURL(feedURL);
-  // await autoUpdater.setScheduledCheckInterval(3600);
-
-  await autoUpdater.setFeedURL(
-    'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/mac/appcast.xml',
-  );
-  await autoUpdater.checkForUpdates();
 
   if (!Platform.isAndroid && !Platform.isIOS) {
     await windowManager.ensureInitialized();
