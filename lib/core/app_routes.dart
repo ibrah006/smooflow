@@ -458,7 +458,7 @@ class AppRoutes {
         screen = DesktopPrinterManagementScreen();
         break;
       case printMaterialsManagement:
-        screen = DesktopMaterialsManagementScreen();
+        screen = DesktopMaterialsListScreen();
         break;
     }
 

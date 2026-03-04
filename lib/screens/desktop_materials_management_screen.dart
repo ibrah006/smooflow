@@ -72,16 +72,16 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class DesktopMaterialsManagementScreen extends ConsumerStatefulWidget {
-  const DesktopMaterialsManagementScreen({super.key});
+class DesktopMaterialsListScreen extends ConsumerStatefulWidget {
+  const DesktopMaterialsListScreen({super.key});
 
   @override
-  ConsumerState<DesktopMaterialsManagementScreen> createState() =>
+  ConsumerState<DesktopMaterialsListScreen> createState() =>
       _ManageMaterialsScreenState();
 }
 
 class _ManageMaterialsScreenState
-    extends ConsumerState<DesktopMaterialsManagementScreen> {
+    extends ConsumerState<DesktopMaterialsListScreen> {
   MaterialModel? _selected;
   bool           _showCreate = false;
 
