@@ -958,7 +958,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
         minStockLevel: double.tryParse(_minStockCtrl.text.trim()) ?? 0.0,
       );
       await ref.read(materialNotifierProvider.notifier)
-          .createMaterials([material]);
+          .createMaterial(material);
       _snack('Material created', isError: false);
       widget.onSaved();
     } catch (e) {

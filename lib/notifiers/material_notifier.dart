@@ -51,6 +51,13 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   Future<List<MaterialModel>> createMaterials(
     List<MaterialModel> materials,
   ) async {
+
+    if (materials.length == 1) {
+      return [await createMaterial(materials.first)];
+    } else if (materials.isEmpty) {
+      return [];
+    }
+
     state = state.copyWith(isLoading: true);
     // TODO: Do this in the backend
     // Check to see if it already exists
