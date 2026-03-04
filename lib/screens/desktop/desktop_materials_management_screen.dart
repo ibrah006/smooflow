@@ -733,6 +733,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel>
             padding:          const EdgeInsets.symmetric(horizontal: 20),
             tabAlignment:     TabAlignment.start,
             isScrollable:     true,
+            dividerColor: Colors.grey.shade300,
             tabs: const [
               Tab(text: 'Overview'),
               Tab(text: 'Stock History'),
