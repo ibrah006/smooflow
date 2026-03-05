@@ -930,9 +930,10 @@ class _MemberTableRowState extends State<_MemberTableRow> {
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _IconBtn(Icons.edit_outlined, widget.onEdit),
-                          const SizedBox(width: 4),
-                          _IconBtn(Icons.more_vert_rounded, () {}),
+                          if (LoginService.currentUser!.email == m.email) SizedBox(width: 30)
+                          else _IconBtn(Icons.edit_outlined, widget.onEdit),
+                          // const SizedBox(width: 4),
+                          // _IconBtn(Icons.more_vert_rounded, () {}),
                         ],
                       )
                     : const SizedBox.shrink(),
