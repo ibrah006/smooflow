@@ -559,13 +559,13 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
           color: _T.white,
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
           child: Row(children: [
-            _KpiChip(label: 'Received',  value: '${_fmtStock(totalReceived)} ${m.unitShort}',  color: _T.blue,  bg: _T.blue50),
+            _KpiChip(label: 'Received',  value: '${_fmtStock(totalReceived)} ${m.unitShort}',  color: _T.blue,  bg: _T.blue50.withValues(alpha: 0.5)),
             const SizedBox(width: 8),
-            _KpiChip(label: 'Consumed',  value: '${_fmtStock(totalConsumed)} ${m.unitShort}',  color: _T.red,   bg: _T.red50),
+            _KpiChip(label: 'Consumed',  value: '${_fmtStock(totalConsumed)} ${m.unitShort}',  color: _T.red,   bg: _T.red50.withValues(alpha: 0.5)),
             const SizedBox(width: 8),
-            _KpiChip(label: 'Remaining', value: '${_fmtStock(totalRemaining)} ${m.unitShort}', color: stockColor, bg: stockBg),
+            _KpiChip(label: 'Remaining', value: '${_fmtStock(totalRemaining)} ${m.unitShort}', color: stockColor, bg: stockBg.withValues(alpha: 0.5)),
             const SizedBox(width: 8),
-            _KpiChip(label: 'Batches',   value: '${batches.length}',                           color: _T.purple, bg: _T.purple50),
+            _KpiChip(label: 'Batches',   value: '${batches.length}',                           color: _T.purple, bg: _T.purple50.withValues(alpha: 0.5)),
           ]),
         ),
 
