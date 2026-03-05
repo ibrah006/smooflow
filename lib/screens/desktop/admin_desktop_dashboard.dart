@@ -585,46 +585,47 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               ),
             ]),
           ),
+          SizedBox(height: 30)
 
           // ── Team ───────────────────────────────────────────────────────
-          Container(
-            decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('DESIGN TEAM',
-                    style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
-                        color: Colors.white.withOpacity(0.25))),
-                const SizedBox(height: 10),
-                ...widget.members.map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(children: [
-                        _AvatarWidget(
-                            initials: m.initials,
-                            color:    m.color,
-                            size:     26),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: Text(m.name,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(0.5)))),
-                        Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                                color: _T.green, shape: BoxShape.circle)),
-                      ]),
-                    )),
-              ],
-            ),
-          ),
+          // Container(
+          //   decoration: const BoxDecoration(
+          //       border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
+          //   padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       Text('DESIGN TEAM',
+          //           style: TextStyle(
+          //               fontSize: 9.5,
+          //               fontWeight: FontWeight.w700,
+          //               letterSpacing: 1.0,
+          //               color: Colors.white.withOpacity(0.25))),
+          //       const SizedBox(height: 10),
+          //       ...widget.members.map((m) => Padding(
+          //             padding: const EdgeInsets.only(bottom: 8),
+          //             child: Row(children: [
+          //               _AvatarWidget(
+          //                   initials: m.initials,
+          //                   color:    m.color,
+          //                   size:     26),
+          //               const SizedBox(width: 8),
+          //               Expanded(
+          //                   child: Text(m.name,
+          //                       style: TextStyle(
+          //                           fontSize: 12,
+          //                           fontWeight: FontWeight.w500,
+          //                           color: Colors.white.withOpacity(0.5)))),
+          //               Container(
+          //                   width: 6,
+          //                   height: 6,
+          //                   decoration: const BoxDecoration(
+          //                       color: _T.green, shape: BoxShape.circle)),
+          //             ]),
+          //           )),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
