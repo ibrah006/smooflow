@@ -54,6 +54,8 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
+const _NULL_VALUE = "-0xx0";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,8 +202,8 @@ _ReportsData _computeReports({
   required List<Project>          allProjects,
   required List<Task>             allTasks,
   required _Period                period,
-  required String?                filterMaterialId,
-  required String?                filterProjectId,
+  required String              filterMaterialId,
+  required String                filterProjectId,
 }) {
   final now   = DateTime.now();
   final since = DateTime(now.year, now.month - period.months + 1, 1);
@@ -213,10 +215,10 @@ _ReportsData _computeReports({
           !t.createdAt.isBefore(since))
       .toList();
 
-  if (filterMaterialId != null) {
+  if (filterMaterialId != _NULL_VALUE) {
     txns = txns.where((t) => t.materialId == filterMaterialId).toList();
   }
-  if (filterProjectId != null) {
+  if (filterProjectId != _NULL_VALUE) {
     txns = txns.where((t) => t.projectId == filterProjectId).toList();
   }
 
@@ -332,8 +334,10 @@ class DesktopReportsScreen extends ConsumerStatefulWidget {
 class _MaterialReportsScreenState
     extends ConsumerState<DesktopReportsScreen> {
   _Period  _period            = _Period.months12;
-  String?  _filterMaterialId;
-  String?  _filterProjectId;
+  // null/intial value: -0xx0
+  String  _filterMaterialId = "-0xx0";
+  // null/intial value: -0xx0
+  String  _filterProjectId = "-0xx0";
   _ReportsData _data          = _ReportsData.empty();
   bool        _loading        = true;
 
@@ -445,11 +449,11 @@ class _MaterialReportsScreenState
 // ─────────────────────────────────────────────────────────────────────────────
 class _ReportsTopbar extends StatelessWidget {
   final _Period             period;
-  final String?             filterMaterialId, filterProjectId;
+  final String             filterMaterialId, filterProjectId;
   final List<MaterialModel> allMaterials;
   final List<Project>       allProjects;
   final ValueChanged<_Period>  onPeriod;
-  final ValueChanged<String?>  onMaterial, onProject;
+  final ValueChanged<String>  onMaterial, onProject;
 
   const _ReportsTopbar({
     required this.period,
@@ -499,51 +503,51 @@ class _ReportsTopbar extends StatelessWidget {
         itemLabel:   (p) => p.label,
         selected:    period,
         onChanged:   (p) {
-          if (p!=null) onPeriod(p);
+          if (p!=_NULL_VALUE) onPeriod(p);
         },
         accentColor: _T.blue,
       ),
       const SizedBox(width: 8),
 
       // Material filter
-      _FilterDropdown<String?>(
+      _FilterDropdown<String>(
         icon:        Icons.layers_outlined,
-        label:       filterMaterialId == null
+        label:       filterMaterialId == _NULL_VALUE
             ? 'All materials'
             : allMaterials.cast<MaterialModel?>()
                 .firstWhere((m) => m?.id == filterMaterialId, orElse: () => null)
                 ?.name ?? 'All materials',
-        items:       [null, ...allMaterials.map((m) => m.id)],
-        itemLabel:   (id) => id == null
+        items:       [_NULL_VALUE, ...allMaterials.map((m) => m.id)],
+        itemLabel:   (id) => id == _NULL_VALUE
             ? 'All materials'
             : allMaterials.cast<MaterialModel?>()
                 .firstWhere((m) => m?.id == id, orElse: () => null)
-                ?.name ?? id!,
+                ?.name ?? id,
         selected:    filterMaterialId,
         onChanged:   onMaterial,
         accentColor: _T.purple,
-        hasReset:    filterMaterialId != null,
+        hasReset:    filterMaterialId != _NULL_VALUE,
       ),
       const SizedBox(width: 8),
 
       // Project filter
-      _FilterDropdown<String?>(
+      _FilterDropdown<String>(
         icon:        Icons.folder_outlined,
-        label:       filterProjectId == null
+        label:       filterProjectId == _NULL_VALUE
             ? 'All projects'
             : allProjects.cast<Project?>()
                 .firstWhere((p) => p?.id == filterProjectId, orElse: () => null)
                 ?.name ?? 'All projects',
-        items:       [null, ...allProjects.map((p) => p.id)],
-        itemLabel:   (id) => id == null
+        items:       [_NULL_VALUE, ...allProjects.map((p) => p.id)],
+        itemLabel:   (id) => id == _NULL_VALUE
             ? 'All projects'
             : allProjects.cast<Project?>()
                 .firstWhere((p) => p?.id == id, orElse: () => null)
-                ?.name ?? id!,
+                ?.name ?? id,
         selected:    filterProjectId,
         onChanged:   onProject,
         accentColor: _T.green,
-        hasReset:    filterProjectId != null,
+        hasReset:    filterProjectId != _NULL_VALUE,
       ),
     ]),
   );
@@ -915,11 +919,15 @@ class _MonthlyTrendChart extends StatefulWidget {
 }
 
 class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
-  // materialId → visible (null key = 'Other')
-  Map<String?, bool> _visible = {};
+  late Map<String?, bool> _visible;
+  late List<_LineSeries>  _series;
 
-  // The resolved series: top 4 by total + optional 'Other'
-  late List<_LineSeries> _series;
+  // Hover state — null means no point is hovered
+  _HoveredPoint? _hovered;
+
+  // Chart layout constants (must match painter)
+  static const double _yLabelWidth = 42.0;
+  static const double _chartHeight = 180.0;
 
   @override
   void initState() {
@@ -934,24 +942,19 @@ class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
   }
 
   void _buildSeries() {
-    // Aggregate total per materialId across all months
     final totals = <String, double>{};
     for (final m in widget.months) {
       for (final e in m.byMaterial.entries) {
         totals[e.key] = (totals[e.key] ?? 0) + e.value;
       }
     }
-
-    // Top 4 by total
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final top4Ids = sorted.take(4).map((e) => e.key).toSet();
+    final top4Ids  = sorted.take(4).map((e) => e.key).toSet();
     final hasOther = sorted.length > 4;
 
-    // Build a value list (one per month) for each series
     List<double> valuesFor(String? id) => widget.months.map((m) {
       if (id == null) {
-        // 'Other' = sum of everything NOT in top4
         return m.byMaterial.entries
             .where((e) => !top4Ids.contains(e.key))
             .fold(0.0, (s, e) => s + e.value);
@@ -976,12 +979,55 @@ class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
         ),
     ];
 
-    // Initialise visibility (preserve existing toggles where possible)
     final prev = _visible;
-    _visible = {
-      for (final s in _series)
-        s.id: prev[s.id] ?? true,
-    };
+    _visible = { for (final s in _series) s.id: prev[s.id] ?? true };
+  }
+
+  double get _maxVal {
+    double m = 0;
+    for (final s in _series) {
+      if (_visible[s.id] != true) continue;
+      for (final v in s.values) { if (v > m) m = v; }
+    }
+    return m == 0 ? 1 : m;
+  }
+
+  // Given a local cursor offset within the chart canvas area (i.e. already
+  // offset by _yLabelWidth on the left), find the closest visible data point
+  // within a 20px snap radius.
+  void _onHover(Offset localPos, double canvasW, double canvasH) {
+    final n = widget.months.length;
+    if (n == 0) return;
+    final slotW  = canvasW / n;
+    final maxVal = _maxVal;
+
+    _HoveredPoint? best;
+    double bestDist = 20.0; // snap radius in px
+
+    for (final s in _series) {
+      if (_visible[s.id] != true) continue;
+      for (int i = 0; i < s.values.length; i++) {
+        final v = s.values[i];
+        if (v == 0) continue;
+        final x = slotW * i + slotW / 2;
+        final y = canvasH - (v / maxVal) * canvasH;
+        final dist = (localPos - Offset(x, y)).distance;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = _HoveredPoint(
+            seriesId:    s.id,
+            seriesLabel: s.label,
+            seriesColor: s.color,
+            monthLabel:  widget.months[i].label,
+            value:       v,
+            dx:          x,
+            dy:          y.clamp(0.0, canvasH),
+          );
+        }
+      }
+    }
+
+    setState(() => _hovered = best);
   }
 
   @override
@@ -990,15 +1036,7 @@ class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
       return _noData('No consumption data in this period');
     }
 
-    // Max value across visible series (for Y-axis scaling)
-    double maxVal = 0;
-    for (final s in _series) {
-      if (_visible[s.id] != true) continue;
-      for (final v in s.values) {
-        if (v > maxVal) maxVal = v;
-      }
-    }
-    if (maxVal == 0) maxVal = 1;
+    final maxVal = _maxVal;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,37 +1048,34 @@ class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
           children: _series.map((s) {
             final on = _visible[s.id] ?? true;
             return GestureDetector(
-              onTap: () => setState(() => _visible[s.id] = !on),
+              onTap: () => setState(() {
+                _visible[s.id] = !on;
+                _hovered = null;
+              }),
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: on ? s.color.withOpacity(0.1) : _T.slate100,
+                    color:        on ? s.color.withOpacity(0.1) : _T.slate100,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: on ? s.color.withOpacity(0.4) : _T.slate200,
-                    ),
+                    border:       Border.all(
+                        color: on ? s.color.withOpacity(0.4) : _T.slate200),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       width: 7, height: 7,
                       decoration: BoxDecoration(
-                        color: on ? s.color : _T.slate300,
-                        shape: BoxShape.circle,
-                      ),
+                          color: on ? s.color : _T.slate300,
+                          shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      s.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: on ? s.color : _T.slate400,
-                      ),
-                    ),
+                    Text(s.label, style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w600,
+                      color: on ? s.color : _T.slate400,
+                    )),
                   ]),
                 ),
               ),
@@ -1049,43 +1084,185 @@ class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
         ),
         const SizedBox(height: 20),
 
-        // ── Chart ─────────────────────────────────────────────────────
+        // ── Chart area (Y-labels left + canvas right) ─────────────────
         SizedBox(
-          height: 180,
-          child: CustomPaint(
-            painter: _LineChartPainter(
-              months:  widget.months,
-              series:  _series,
-              visible: _visible,
-              maxVal:  maxVal,
-            ),
-            size: Size.infinite,
+          height: _chartHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Y-axis labels
+              SizedBox(
+                width: _yLabelWidth,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(5, (i) {
+                    final v = maxVal * (4 - i) / 4;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        v.toInt().toString(),
+                        style: const TextStyle(
+                          fontSize: 9, fontWeight: FontWeight.w600,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              // Line chart + hover overlay
+              Expanded(
+                child: LayoutBuilder(builder: (_, constraints) {
+                  final canvasW = constraints.maxWidth;
+                  final canvasH = _chartHeight;
+                  return MouseRegion(
+                    onHover:  (e) => _onHover(e.localPosition, canvasW, canvasH),
+                    onExit:   (_) => setState(() => _hovered = null),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Painter
+                        CustomPaint(
+                          size: Size(canvasW, canvasH),
+                          painter: _LineChartPainter(
+                            months:  widget.months,
+                            series:  _series,
+                            visible: _visible,
+                            maxVal:  maxVal,
+                            hovered: _hovered,
+                          ),
+                        ),
+
+                        // Tooltip overlay
+                        if (_hovered != null)
+                          _TooltipOverlay(
+                            point:    _hovered!,
+                            canvasW:  canvasW,
+                            canvasH:  canvasH,
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ),
 
-        // ── X-axis month labels ────────────────────────────────────────
+        // ── X-axis month labels ───────────────────────────────────────
         const SizedBox(height: 6),
-        Row(
-          children: widget.months.map((m) => Expanded(
-            child: Text(
-              m.label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w600,
-                color: _T.slate400,
-              ),
-            ),
-          )).toList(),
+        Padding(
+          padding: const EdgeInsets.only(left: _yLabelWidth),
+          child: Row(
+            children: widget.months.map((m) => Expanded(
+              child: Text(m.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 9.5,
+                    fontWeight: FontWeight.w600, color: _T.slate400)),
+            )).toList(),
+          ),
         ),
       ],
     );
   }
 }
 
+// ─── Hovered point model ──────────────────────────────────────────────────────
+class _HoveredPoint {
+  final String? seriesId;
+  final String  seriesLabel;
+  final Color   seriesColor;
+  final String  monthLabel;
+  final double  value;
+  final double  dx; // x within canvas
+  final double  dy; // y within canvas
+  const _HoveredPoint({
+    required this.seriesId,
+    required this.seriesLabel,
+    required this.seriesColor,
+    required this.monthLabel,
+    required this.value,
+    required this.dx,
+    required this.dy,
+  });
+}
+
+// ─── Tooltip overlay (positioned widget, no painter) ─────────────────────────
+class _TooltipOverlay extends StatelessWidget {
+  final _HoveredPoint point;
+  final double        canvasW, canvasH;
+  const _TooltipOverlay({
+    required this.point,
+    required this.canvasW,
+    required this.canvasH,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const tooltipW = 130.0;
+    const tooltipH = 52.0;
+    const gap      = 10.0;
+
+    // Prefer tooltip above the dot; flip below if too close to top
+    double top = point.dy - tooltipH - gap;
+    if (top < 0) top = point.dy + gap;
+
+    // Prefer tooltip to the right; flip left if it would overflow
+    double left = point.dx - tooltipW / 2;
+    left = left.clamp(0.0, canvasW - tooltipW);
+
+    return Positioned(
+      left: left,
+      top:  top,
+      child: IgnorePointer(
+        child: Container(
+          width:   tooltipW,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color:        _T.ink,
+            borderRadius: BorderRadius.circular(_T.r),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.18),
+                  blurRadius: 12, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(children: [
+                Container(width: 6, height: 6,
+                    decoration: BoxDecoration(
+                        color: point.seriesColor, shape: BoxShape.circle)),
+                const SizedBox(width: 6),
+                Expanded(child: Text(point.seriesLabel,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10.5,
+                        fontWeight: FontWeight.w600, color: _T.white))),
+              ]),
+              const SizedBox(height: 4),
+              Row(children: [
+                Text(point.monthLabel,
+                    style: const TextStyle(fontSize: 10,
+                        color: _T.slate400, fontWeight: FontWeight.w500)),
+                const Spacer(),
+                Text(_fmtQty(point.value),
+                    style: TextStyle(fontSize: 12,
+                        fontWeight: FontWeight.w800, color: point.seriesColor)),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Line series model ────────────────────────────────────────────────────────
 class _LineSeries {
-  final String? id;   // null = 'Other'
+  final String? id;
   final String  label;
   final Color   color;
   final List<double> values;
@@ -1099,16 +1276,18 @@ class _LineSeries {
 
 // ─── Painter ──────────────────────────────────────────────────────────────────
 class _LineChartPainter extends CustomPainter {
-  final List<_MonthBucket>    months;
-  final List<_LineSeries>     series;
-  final Map<String?, bool>    visible;
-  final double                maxVal;
+  final List<_MonthBucket>  months;
+  final List<_LineSeries>   series;
+  final Map<String?, bool>  visible;
+  final double              maxVal;
+  final _HoveredPoint?      hovered;
 
   const _LineChartPainter({
     required this.months,
     required this.series,
     required this.visible,
     required this.maxVal,
+    this.hovered,
   });
 
   @override
@@ -1118,46 +1297,35 @@ class _LineChartPainter extends CustomPainter {
     final n = months.length;
     if (n < 2) return;
 
-    // ── Horizontal grid lines (4 lines) ───────────────────────────────
-    final gridPaint = Paint()
-      ..color = _T.slate100
-      ..strokeWidth = 1;
-    const gridLines = 4;
-    for (int i = 0; i <= gridLines; i++) {
-      final y = h - (i / gridLines) * h;
+    // ── Grid lines ────────────────────────────────────────────────────
+    final gridPaint = Paint()..color = _T.slate100..strokeWidth = 1;
+    for (int i = 0; i <= 4; i++) {
+      final y = h - (i / 4) * h;
       canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
     }
 
-    // ── X positions (centred within equal-width slots) ─────────────────
-    List<double> xPos(int count) {
-      final slotW = w / count;
-      return List.generate(count, (i) => slotW * i + slotW / 2);
-    }
-    final xs = xPos(n);
+    // ── X positions ───────────────────────────────────────────────────
+    final slotW = w / n;
+    List<Offset> pointsFor(_LineSeries s) => List.generate(n, (i) {
+      final v = s.values[i];
+      final x = slotW * i + slotW / 2;
+      final y = h - (maxVal > 0 ? (v / maxVal) * h : 0);
+      return Offset(x, y.clamp(0.0, h));
+    });
 
-    // ── Draw each visible series ───────────────────────────────────────
+    // ── Draw series ───────────────────────────────────────────────────
     for (final s in series) {
       if (visible[s.id] != true) continue;
+      final pts = pointsFor(s);
 
-      final pts = List.generate(n, (i) {
-        final v = s.values[i];
-        final x = xs[i];
-        final y = h - (maxVal > 0 ? (v / maxVal) * h : 0);
-        return Offset(x, y.clamp(0.0, h));
-      });
-
-      // Area fill (subtle)
+      // Area fill
       final areaPath = Path()..moveTo(pts.first.dx, h);
       for (final p in pts) areaPath.lineTo(p.dx, p.dy);
       areaPath..lineTo(pts.last.dx, h)..close();
-      canvas.drawPath(
-        areaPath,
-        Paint()
-          ..color = s.color.withOpacity(0.06)
-          ..style = PaintingStyle.fill,
-      );
+      canvas.drawPath(areaPath,
+          Paint()..color = s.color.withOpacity(0.06)..style = PaintingStyle.fill);
 
-      // Line (smooth via cubicBezier)
+      // Smooth line
       final linePath = Path()..moveTo(pts.first.dx, pts.first.dy);
       for (int i = 0; i < pts.length - 1; i++) {
         final cp1 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i].dy);
@@ -1165,33 +1333,41 @@ class _LineChartPainter extends CustomPainter {
         linePath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
             pts[i + 1].dx, pts[i + 1].dy);
       }
-      canvas.drawPath(
-        linePath,
-        Paint()
-          ..color       = s.color
-          ..strokeWidth = 2.0
-          ..style       = PaintingStyle.stroke
-          ..strokeCap   = StrokeCap.round
-          ..strokeJoin  = StrokeJoin.round,
-      );
+      canvas.drawPath(linePath,
+          Paint()
+            ..color       = s.color
+            ..strokeWidth = 2.0
+            ..style       = PaintingStyle.stroke
+            ..strokeCap   = StrokeCap.round
+            ..strokeJoin  = StrokeJoin.round);
 
-      // Dots on each data point
-      final dotPaint      = Paint()..color = s.color;
-      final dotBorderPaint = Paint()
-        ..color       = _T.white
-        ..style       = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-      for (final p in pts) {
-        canvas.drawCircle(p, 3.5, dotPaint);
-        canvas.drawCircle(p, 3.5, dotBorderPaint);
+      // Dots — enlarge the hovered one
+      for (int i = 0; i < pts.length; i++) {
+        if (s.values[i] == 0) continue;
+        final p         = pts[i];
+        final isHovered = hovered?.seriesId == s.id &&
+            (hovered!.dx - p.dx).abs() < 1.0;
+        final radius    = isHovered ? 5.5 : 3.5;
+
+        canvas.drawCircle(p, radius,
+            Paint()..color = s.color);
+        canvas.drawCircle(p, radius,
+            Paint()
+              ..color       = _T.white
+              ..style       = PaintingStyle.stroke
+              ..strokeWidth = isHovered ? 2.0 : 1.5);
       }
     }
   }
 
   @override
   bool shouldRepaint(_LineChartPainter old) =>
-      old.visible != visible || old.maxVal != maxVal || old.series != series;
+      old.visible != visible ||
+      old.maxVal  != maxVal  ||
+      old.series  != series  ||
+      old.hovered != hovered;
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MATERIAL DONUT + RANKED LIST
@@ -1677,7 +1853,7 @@ class _EfficiencyTable extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TOP JOBS TABLE
 // ─────────────────────────────────────────────────────────────────────────────
-class _TopJobsTable extends StatelessWidget {
+class _TopJobsTable extends ConsumerWidget {
   final List<StockTransaction>  jobs;
   final String Function(String) matName;
   final String Function(String) matUnit;
@@ -1685,8 +1861,10 @@ class _TopJobsTable extends StatelessWidget {
   const _TopJobsTable({required this.jobs, required this.matName,
     required this.matUnit, required this.matColor});
 
+  String projectName(WidgetRef ref, String projectId)=> ref.watch(projectByIdProvider(projectId))!.name;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     if (jobs.isEmpty) return _noData('No job data in this period');
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1745,18 +1923,22 @@ class _TopJobsTable extends StatelessWidget {
             Expanded(flex: 2, child: Text(dateStr,
                 style: const TextStyle(fontSize: 11.5, color: _T.slate500))),
             Expanded(flex: 3, child: t.projectId != null
-              ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _T.slate100,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(t.projectId!,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10.5,
-                          fontWeight: FontWeight.w600, color: _T.slate500,
-                          fontFamily: 'monospace')),
-                )
+              ? Wrap(
+                children: [
+                  Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _T.slate100,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(projectName(ref, t.projectId!),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 10.5,
+                              fontWeight: FontWeight.w600, color: _T.slate500,
+                              fontFamily: 'monospace')),
+                    ),
+                ],
+              )
               : const Text('—', style: TextStyle(fontSize: 11, color: _T.slate300))),
             Expanded(flex: 2, child: t.barcode != null
               ? Text(
