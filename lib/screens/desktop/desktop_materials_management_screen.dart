@@ -695,7 +695,7 @@ class _BatchInventoryPanel extends StatelessWidget {
                 border: Border(bottom: BorderSide(color: _T.slate100))),
             child: Row(children: [
               const SizedBox(width: 8),
-              Expanded(flex: 3, child: _ColHdr('BARCODE / REF')),
+              Expanded(flex: 3, child: _ColHdr('BARCODE')),
               Expanded(flex: 2, child: _ColHdr('RECEIVED')),
               Expanded(flex: 2, child: _ColHdr('QTY IN')),
               Expanded(flex: 2, child: _ColHdr('CONSUMED')),
