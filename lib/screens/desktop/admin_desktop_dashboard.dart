@@ -42,6 +42,7 @@ import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
+import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
@@ -94,7 +95,7 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM — board removed; view switching lives inside TaskListView
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, list, clients, team, printers, inventory }
+enum _AdminView { overview, list, clients, team, printers, inventory, reports }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -280,7 +281,8 @@ class _AdminDesktopDashboardScreenState
                                           ? ClientsPage()
                                           : _view == _AdminView.team? ManageMembersPage()
                                             : _view == _AdminView.printers? DesktopPrinterManagementScreen()
-                                              : DesktopMaterialsManagementScreen(),
+                                              : _view == _AdminView.inventory? DesktopMaterialsManagementScreen()
+                                                : DesktopReportsScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
@@ -464,6 +466,13 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     widget.onProjectSelected(null);
                     widget.onViewChanged(_AdminView.list);
                   },
+                ),
+                // Reports Page
+                _SidebarNavItem(
+                  icon:     Icons.analytics_rounded,
+                  label:    'Reports',
+                  isActive: widget.currentView == _AdminView.reports,
+                  onTap:    () => widget.onViewChanged(_AdminView.reports),
                 ),
               ],
             ),
