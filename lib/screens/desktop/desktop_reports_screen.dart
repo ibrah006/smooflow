@@ -899,101 +899,298 @@ class _Card extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MONTHLY TREND CHART — stacked horizontal bar per month
+// MONTHLY TREND CHART — line chart, top 4 materials + "Other", toggleable legend
 // ─────────────────────────────────────────────────────────────────────────────
-class _MonthlyTrendChart extends StatelessWidget {
+class _MonthlyTrendChart extends StatefulWidget {
   final List<_MonthBucket>      months;
   final Color Function(String)  matColor;
   final String Function(String) matName;
-  const _MonthlyTrendChart({required this.months, required this.matColor,
-    required this.matName});
+  const _MonthlyTrendChart({
+    required this.months,
+    required this.matColor,
+    required this.matName,
+  });
+  @override
+  State<_MonthlyTrendChart> createState() => _MonthlyTrendChartState();
+}
+
+class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
+  // materialId → visible (null key = 'Other')
+  Map<String?, bool> _visible = {};
+
+  // The resolved series: top 4 by total + optional 'Other'
+  late List<_LineSeries> _series;
+
+  @override
+  void initState() {
+    super.initState();
+    _buildSeries();
+  }
+
+  @override
+  void didUpdateWidget(_MonthlyTrendChart old) {
+    super.didUpdateWidget(old);
+    _buildSeries();
+  }
+
+  void _buildSeries() {
+    // Aggregate total per materialId across all months
+    final totals = <String, double>{};
+    for (final m in widget.months) {
+      for (final e in m.byMaterial.entries) {
+        totals[e.key] = (totals[e.key] ?? 0) + e.value;
+      }
+    }
+
+    // Top 4 by total
+    final sorted = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top4Ids = sorted.take(4).map((e) => e.key).toSet();
+    final hasOther = sorted.length > 4;
+
+    // Build a value list (one per month) for each series
+    List<double> valuesFor(String? id) => widget.months.map((m) {
+      if (id == null) {
+        // 'Other' = sum of everything NOT in top4
+        return m.byMaterial.entries
+            .where((e) => !top4Ids.contains(e.key))
+            .fold(0.0, (s, e) => s + e.value);
+      }
+      return m.byMaterial[id] ?? 0.0;
+    }).toList();
+
+    _series = [
+      for (final id in top4Ids)
+        _LineSeries(
+          id:     id,
+          label:  widget.matName(id),
+          color:  widget.matColor(id),
+          values: valuesFor(id),
+        ),
+      if (hasOther)
+        _LineSeries(
+          id:     null,
+          label:  'Other',
+          color:  _T.slate300,
+          values: valuesFor(null),
+        ),
+    ];
+
+    // Initialise visibility (preserve existing toggles where possible)
+    final prev = _visible;
+    _visible = {
+      for (final s in _series)
+        s.id: prev[s.id] ?? true,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (months.every((m) => m.total == 0)) {
+    if (widget.months.every((m) => m.total == 0)) {
       return _noData('No consumption data in this period');
     }
 
-    final maxVal = months.map((m) => m.total).fold(0.0, math.max);
+    // Max value across visible series (for Y-axis scaling)
+    double maxVal = 0;
+    for (final s in _series) {
+      if (_visible[s.id] != true) continue;
+      for (final v in s.values) {
+        if (v > maxVal) maxVal = v;
+      }
+    }
+    if (maxVal == 0) maxVal = 1;
 
-    // Build legend from all unique materialIds seen
-    final allMatIds = <String>{};
-    for (final m in months) allMatIds.addAll(m.byMaterial.keys);
-    final matIds = allMatIds.toList();
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // Legend
-      Wrap(spacing: 12, runSpacing: 6, children: matIds.map((id) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 8, height: 8,
-              decoration: BoxDecoration(color: matColor(id), shape: BoxShape.circle)),
-          const SizedBox(width: 5),
-          Text(matName(id), style: const TextStyle(fontSize: 10.5,
-              fontWeight: FontWeight.w500, color: _T.slate500)),
-        ],
-      )).toList()),
-      const SizedBox(height: 16),
-
-      // Bars
-      ...months.map((m) {
-        final frac = maxVal > 0 ? m.total / maxVal : 0.0;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 9),
-          child: Row(children: [
-            // Month label
-            SizedBox(width: 36,
-              child: Text(m.label, style: const TextStyle(fontSize: 11,
-                  fontWeight: FontWeight.w600, color: _T.slate500))),
-            const SizedBox(width: 10),
-            // Stacked bar
-            Expanded(child: LayoutBuilder(builder: (_, c) {
-              return Stack(children: [
-                Container(height: 22,
-                    decoration: BoxDecoration(color: _T.slate100,
-                        borderRadius: BorderRadius.circular(5))),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 600),
-                  curve:    Curves.easeOutCubic,
-                  height:   22,
-                  width:    c.maxWidth * frac,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Legend chips ──────────────────────────────────────────────
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: _series.map((s) {
+            final on = _visible[s.id] ?? true;
+            return GestureDetector(
+              onTap: () => setState(() => _visible[s.id] = !on),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5)),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(5),
-                    child: Row(
-                      children: m.total > 0
-                          ? matIds.where((id) => (m.byMaterial[id] ?? 0) > 0).map((id) {
-                              final seg = m.byMaterial[id]! / m.total;
-                              return Flexible(
-                                flex: (seg * 100).round(),
-                                child: Container(color: matColor(id)),
-                              );
-                            }).toList()
-                          : [const SizedBox.shrink()],
+                    color: on ? s.color.withOpacity(0.1) : _T.slate100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: on ? s.color.withOpacity(0.4) : _T.slate200,
                     ),
                   ),
-                ),
-                if (m.total > 0)
-                  Positioned(
-                    left: math.max(c.maxWidth * frac - 60, 4),
-                    top: 0, bottom: 0,
-                    child: Center(child: Text(
-                      _fmtQty(m.total),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: frac > 0.15 ? _T.white : _T.slate500,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 7, height: 7,
+                      decoration: BoxDecoration(
+                        color: on ? s.color : _T.slate300,
+                        shape: BoxShape.circle,
                       ),
-                    )),
-                  ),
-              ]);
-            })),
-          ]),
-        );
-      }),
-    ]);
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      s.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: on ? s.color : _T.slate400,
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 20),
+
+        // ── Chart ─────────────────────────────────────────────────────
+        SizedBox(
+          height: 180,
+          child: CustomPaint(
+            painter: _LineChartPainter(
+              months:  widget.months,
+              series:  _series,
+              visible: _visible,
+              maxVal:  maxVal,
+            ),
+            size: Size.infinite,
+          ),
+        ),
+
+        // ── X-axis month labels ────────────────────────────────────────
+        const SizedBox(height: 6),
+        Row(
+          children: widget.months.map((m) => Expanded(
+            child: Text(
+              m.label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: _T.slate400,
+              ),
+            ),
+          )).toList(),
+        ),
+      ],
+    );
   }
+}
+
+// ─── Line series model ────────────────────────────────────────────────────────
+class _LineSeries {
+  final String? id;   // null = 'Other'
+  final String  label;
+  final Color   color;
+  final List<double> values;
+  const _LineSeries({
+    required this.id,
+    required this.label,
+    required this.color,
+    required this.values,
+  });
+}
+
+// ─── Painter ──────────────────────────────────────────────────────────────────
+class _LineChartPainter extends CustomPainter {
+  final List<_MonthBucket>    months;
+  final List<_LineSeries>     series;
+  final Map<String?, bool>    visible;
+  final double                maxVal;
+
+  const _LineChartPainter({
+    required this.months,
+    required this.series,
+    required this.visible,
+    required this.maxVal,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final n = months.length;
+    if (n < 2) return;
+
+    // ── Horizontal grid lines (4 lines) ───────────────────────────────
+    final gridPaint = Paint()
+      ..color = _T.slate100
+      ..strokeWidth = 1;
+    const gridLines = 4;
+    for (int i = 0; i <= gridLines; i++) {
+      final y = h - (i / gridLines) * h;
+      canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
+    }
+
+    // ── X positions (centred within equal-width slots) ─────────────────
+    List<double> xPos(int count) {
+      final slotW = w / count;
+      return List.generate(count, (i) => slotW * i + slotW / 2);
+    }
+    final xs = xPos(n);
+
+    // ── Draw each visible series ───────────────────────────────────────
+    for (final s in series) {
+      if (visible[s.id] != true) continue;
+
+      final pts = List.generate(n, (i) {
+        final v = s.values[i];
+        final x = xs[i];
+        final y = h - (maxVal > 0 ? (v / maxVal) * h : 0);
+        return Offset(x, y.clamp(0.0, h));
+      });
+
+      // Area fill (subtle)
+      final areaPath = Path()..moveTo(pts.first.dx, h);
+      for (final p in pts) areaPath.lineTo(p.dx, p.dy);
+      areaPath..lineTo(pts.last.dx, h)..close();
+      canvas.drawPath(
+        areaPath,
+        Paint()
+          ..color = s.color.withOpacity(0.06)
+          ..style = PaintingStyle.fill,
+      );
+
+      // Line (smooth via cubicBezier)
+      final linePath = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (int i = 0; i < pts.length - 1; i++) {
+        final cp1 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i].dy);
+        final cp2 = Offset((pts[i].dx + pts[i + 1].dx) / 2, pts[i + 1].dy);
+        linePath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
+            pts[i + 1].dx, pts[i + 1].dy);
+      }
+      canvas.drawPath(
+        linePath,
+        Paint()
+          ..color       = s.color
+          ..strokeWidth = 2.0
+          ..style       = PaintingStyle.stroke
+          ..strokeCap   = StrokeCap.round
+          ..strokeJoin  = StrokeJoin.round,
+      );
+
+      // Dots on each data point
+      final dotPaint      = Paint()..color = s.color;
+      final dotBorderPaint = Paint()
+        ..color       = _T.white
+        ..style       = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      for (final p in pts) {
+        canvas.drawCircle(p, 3.5, dotPaint);
+        canvas.drawCircle(p, 3.5, dotBorderPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LineChartPainter old) =>
+      old.visible != visible || old.maxVal != maxVal || old.series != series;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
