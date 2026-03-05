@@ -527,15 +527,15 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(m.name, style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700,
+                    fontSize: 14, fontWeight: FontWeight.w600,
                     color: _T.ink, letterSpacing: -0.2)),
                 Text(m.unit, style: const TextStyle(
                     fontSize: 10.5, color: _T.slate400,
                     fontWeight: FontWeight.w500)),
               ],
             )),
-            _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
-            const SizedBox(width: 12),
+            // _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
+            // const SizedBox(width: 12),
             FilledButton.icon(
               onPressed: _showStockInDialog,
               style: FilledButton.styleFrom(backgroundColor: _T.green,
@@ -668,24 +668,27 @@ class _BatchInventoryPanel extends StatelessWidget {
         decoration: const BoxDecoration(
             color: _T.white,
             border: Border(bottom: BorderSide(color: _T.slate100))),
-        child: Row(children: [
-          Container(width: 26, height: 26,
-            decoration: BoxDecoration(color: _T.green50,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: _T.green.withOpacity(0.2))),
-            child: const Icon(Icons.inbox_rounded, size: 13, color: _T.green)),
-          const SizedBox(width: 10),
-          Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Inventory Batches',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                    color: _T.ink, letterSpacing: -0.1)),
-            Text('${batches.length} batch${batches.length == 1 ? '' : 'es'} · FIFO order',
-                style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
-          ])),
-          Spacer(),
-          kpi
-        ]),
+        child: Stack(
+          // alignment: Alignment.centerRight,
+          children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: Row(children: [
+                Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Inventory Batches',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                          color: _T.ink, letterSpacing: -0.1)),
+                  Text('${batches.length} batch${batches.length == 1 ? '' : 'es'} · FIFO order',
+                      style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
+                ]))
+              ]),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: kpi)
+          ],
+        ),
       ),
 
       if (batches.isEmpty)
