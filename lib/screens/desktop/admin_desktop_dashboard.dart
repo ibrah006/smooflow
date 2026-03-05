@@ -195,6 +195,7 @@ class _AdminDesktopDashboardScreenState
     Future.microtask(() async {
       await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
       await ref.read(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.read(materialNotifierProvider.notifier).fetchTransactions();
       await ref.read(taskNotifierProvider.notifier).loadAll();
       await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
       await ref.read(memberNotifierProvider.notifier).members;
