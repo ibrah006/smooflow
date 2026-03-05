@@ -340,11 +340,19 @@ class _MaterialReportsScreenState
   @override
   void initState() {
     super.initState();
-    Future.microtask(_recompute);
+
+
+    Future.microtask(() async {
+      setState(() {
+        _loading = true;
+      });
+      await ref.read(materialNotifierProvider.notifier).fetchMaterials();
+      await ref.read(materialNotifierProvider.notifier).fetchTransactions();
+      _recompute();
+    });
   }
 
   Future<void> _recompute() async {
-    setState(() => _loading = true);
     final mats  = ref.read(materialNotifierProvider).materials;
     final txns  = ref.read(materialNotifierProvider).transactions;
     final projs = ref.read(projectNotifierProvider);
