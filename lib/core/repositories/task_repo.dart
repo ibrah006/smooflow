@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -213,7 +214,8 @@ class TaskRepo {
     // Successfully unasssigned priner to task and ended print job
   }
 
-  Future<void> schedulePrint({
+  // Returns stock out transaction, if committed
+  Future<StockTransaction?> schedulePrint({
     required int taskId,
     required String printerId,
     required String materialId,
@@ -230,7 +232,7 @@ class TaskRepo {
         "progressStage": progressStage,
         "runs": runs,
         "productionQuantity": productionQuantity,
-        "barcode": barcode
+        "barcode": barcode,
       }
     );
 
@@ -239,6 +241,12 @@ class TaskRepo {
       // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
       throw jsonDecode(response.body)["message"];
     }
+
+    final Map<String, dynamic>? rawStockOutTransaction = (jsonDecode(response.body) as Map)["stockOutTransaction"];
+
+    return rawStockOutTransaction!=null?
+      StockTransaction.fromJson(rawStockOutTransaction)
+      : null;
 
     // Successfully scheduled print job
   }

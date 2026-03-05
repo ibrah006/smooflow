@@ -350,14 +350,29 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }
 
   // Do not use this by itself. Use it with TaskNotifer.assignPrinter and PrinterNotifier.assignTask
-  void commitStockOutTransaction({required String transactionBarcode}) {
+  /// PERHAPS, updating the name of the function to something that would make more sense is recommended
+  /// because it sounds like we're about to commit a stock out transaction that's already in memory
+  /// but realistically we're just about to load it into memory
+  /// and updating its source batch's stock availability
+  void commitStockOutTransaction({required StockTransaction stockOutTransaction}) {
     state.transactions = state.transactions.map((transaction) {
-      if (transaction.barcode == transactionBarcode) {
-        transaction.committed = true;
+      if (
+        transaction.barcode
+          // Same as source batch
+          == stockOutTransaction.barcode
+          && transaction.type == TransactionType.stockIn) {
+
+        // If source batch found, update its stock level/availablility
+        transaction.quantity -= stockOutTransaction.quantity;
       }
 
       return transaction;
     }).toList();
+
+    // Add new Stock out transaction to memory
+    state.copyWith(
+      transaction: stockOutTransaction
+    );
   }
 }
 

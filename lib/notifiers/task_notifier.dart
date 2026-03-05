@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/local_http.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -376,7 +377,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
     }
   }
 
-  Future<void> schedulePrint({
+  // Returns stock out transaction, if committed
+  Future<StockTransaction?> schedulePrint({
     required int taskId,
     required String printerId,
     required String materialId,
@@ -385,7 +387,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required int productionQuantity,
     required String barcode
   }) async {
-    await _repo.schedulePrint(
+    final stockOutTransaction = await _repo.schedulePrint(
       taskId: taskId,
       printerId: printerId,
       materialId: materialId,
@@ -409,6 +411,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
         return task;
       }).toList()
     );
+
+    return stockOutTransaction;
   }
 
   // IF any of the fields to be updated is to be reset to a null value, just pass in empty string or default value like (empty string or 0)

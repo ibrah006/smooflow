@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -80,7 +82,8 @@ final createTaskActivityLogProvider = Provider.family<Future<void>, int>((
       .startWorkSession(taskId: taskId, newLogId: workActivityLog.id);
 });
 
-@Deprecated("Use TaskProvider.setTaskState instead")
+/// ----- DEPRECATED, DO NOT USE -----
+@Deprecated("DEPRECATED, DO NOT USE. Use TaskProvider.setTaskState instead")
 final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
   ref,
   taskStateParams,
@@ -93,7 +96,7 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
 
     // Commit stock out transaction
     if (taskStateParams.stockTransactionBarcode!=null){
-      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskStateParams.stockTransactionBarcode!);
+      // ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskStateParams.stockTransactionBarcode!);
     }
   } else {
     await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskStateParams.id, newStatus: taskStateParams.newTaskStatus);
@@ -112,20 +115,23 @@ class TaskProvider {
     String? printerId,
     String? stockTransactionBarcode,
     String? materialId,
+    int? stockOutQuantity
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
     }
-    if (printerId != null && (materialId == null || stockTransactionBarcode == null)) {
-      throw "Material ID and stock transaction barcode must be provided when assigning printer to task for printing";
+    if (printerId != null && (materialId == null || stockTransactionBarcode == null || stockOutQuantity == null)) {
+      throw "Material ID and stock transaction barcode & stock out id must be provided when assigning printer to task for printing";
     }
 
+    late final StockTransaction? stockOutTransaction;
+
     if (printerId != null) {
-      await ref.watch(taskNotifierProvider.notifier).schedulePrint(
+      stockOutTransaction = await ref.watch(taskNotifierProvider.notifier).schedulePrint(
         taskId: taskId,
         printerId: printerId,
         materialId: materialId!, // This value is not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
-        productionQuantity: 1, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+        productionQuantity: stockOutQuantity!, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
         barcode: stockTransactionBarcode!
       );
     } else {
@@ -139,8 +145,19 @@ class TaskProvider {
     }
 
     // Commit stock out transaction
-    if (stockTransactionBarcode != null){
-      ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: stockTransactionBarcode);
+    if (stockTransactionBarcode != null) {
+      print("committing stock out transaction, barcode: ${stockTransactionBarcode}");
+
+      try {
+        // stockTransactionBarcode != null implies that stockOutTransaction != null,
+        // we will still catch for error anyways.
+        ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(
+          stockOutTransaction: stockOutTransaction!
+        );
+      } catch(e) {
+        print("actual error: $e");
+        throw "Commit stock out transaction requested but server did not return updated stock out transaction";
+      }
     }
   }
 }

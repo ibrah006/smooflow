@@ -32,7 +32,9 @@ class StockTransaction {
   final String id;
   final String materialId;
   final TransactionType type;
-  final double quantity;
+  double _quantity;
+
+  double get quantity => _quantity;
   final double balanceAfter;
   final String? barcode;
   final String? notes;
@@ -46,7 +48,7 @@ class StockTransaction {
     required this.id,
     required this.materialId,
     required this.type,
-    required this.quantity,
+    required double quantity,
     required this.balanceAfter,
     required this.createdById,
     required this.createdAt,
@@ -55,7 +57,11 @@ class StockTransaction {
     this.projectId,
     this.taskId,
     required bool committed
-  }) : _committed = committed;
+  }) : _quantity = quantity, _committed = committed;
+
+  set quantity(double quantity) {
+    _quantity = quantity;
+  }
 
   // To ensure toSet gives no duplicates
   @override

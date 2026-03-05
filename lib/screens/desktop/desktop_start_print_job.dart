@@ -255,6 +255,7 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
       newStatus: TaskStatus.printing,
       materialId: _material!.id,
       stockTransactionBarcode: _stockItem!.barcode,
+      stockOutQuantity: _qty!.toInt()
     );
   }
 
