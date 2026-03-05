@@ -234,7 +234,13 @@ class _AdminDesktopDashboardScreenState
                   projects:           _projects,
                   tasks:              _pipelineTasks,
                   members:            _members,
-                  onViewChanged:      (v) => setState(() => _view = v),
+                  onViewChanged:      (v) {
+
+                    setState(() {
+                      _view = v;
+                    });
+                    _closeDetail();
+                  },
                   onProjectSelected:  (id) => setState(() {
                     _selectedProjectId = id;
                     // Switch to list view when a project is selected so the
