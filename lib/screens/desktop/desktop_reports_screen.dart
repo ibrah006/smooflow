@@ -478,12 +478,12 @@ class _ReportsTopbar extends StatelessWidget {
       // Icon badge
       Container(
         width: 32, height: 32,
-        decoration: BoxDecoration(
-          color:        _T.blue50,
-          borderRadius: BorderRadius.circular(9),
-          border:       Border.all(color: _T.blue.withOpacity(0.2)),
-        ),
-        child: const Icon(Icons.bar_chart_rounded, size: 16, color: _T.blue),
+        // decoration: BoxDecoration(
+        //   color:        _T.blue50,
+        //   borderRadius: BorderRadius.circular(9),
+        //   border:       Border.all(color: _T.blue.withOpacity(0.2)),
+        // ),
+        child: const Icon(Icons.bar_chart_rounded, size: 32, color: _T.blue),
       ),
       const SizedBox(width: 12),
       Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
