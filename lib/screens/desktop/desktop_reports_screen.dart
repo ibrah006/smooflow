@@ -335,9 +335,9 @@ class _MaterialReportsScreenState
     extends ConsumerState<DesktopReportsScreen> {
   _Period  _period            = _Period.months12;
   // null/intial value: -0xx0
-  String  _filterMaterialId = "-0xx0";
+  String  _filterMaterialId = _NULL_VALUE;
   // null/intial value: -0xx0
-  String  _filterProjectId = "-0xx0";
+  String  _filterProjectId = _NULL_VALUE;
   _ReportsData _data          = _ReportsData.empty();
   bool        _loading        = true;
 
@@ -919,7 +919,7 @@ class _MonthlyTrendChart extends StatefulWidget {
 }
 
 class _MonthlyTrendChartState extends State<_MonthlyTrendChart> {
-  late Map<String?, bool> _visible;
+  Map<String?, bool> _visible = {};
   late List<_LineSeries>  _series;
 
   // Hover state — null means no point is hovered
