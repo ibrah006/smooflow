@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // manage_materials_screen.dart  (DesktopMaterialsManagementScreen)
 //
-// Identical to the canonical v2 screen — only _TransactionRow and
-// _StockHistoryTab have been updated to use real StockTransaction fields:
-//   • TransactionType enum  (stockIn / stockOut / adjustment)
-//   • balanceAfter          (running balance chip)
-//   • committed             (badge on stock-out rows)
-//   • notes, projectId, taskId, barcode, createdAt (rich meta row)
+// Inventory-aware materials management.  Real inventory model:
+//   Material        = a category / type  (e.g. "Vinyl Roll 3.2m")
+//   Batch (StockIn) = a real physical item received — one inventory unit
+//   Consumption     = a StockOut whose sourceTransactionId → parent batch
+//
+// Layout: left list → right panel (topbar + KPI strip + batch table | detail)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:io';
@@ -17,11 +17,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/components/product_barcode.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/providers/material_provider.dart';
-import 'package:smooflow/utils/exportBarcodeToJpg.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -381,174 +379,223 @@ class _MaterialListTileState extends State<_MaterialListTile> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL PANEL
+// DETAIL PANEL  — inventory-aware, batch-first view
+//
+// Layout
+// ──────
+//   58px topbar   — material name + stock status + Stock In CTA
+//   ─────────────────────────────────────────────────────────────────
+//   LEFT (55%)                     │ RIGHT (45%)
+//   ───────────────────────────────┼──────────────────────────────────
+//   Inventory Batches header row   │  [idle]  Select a batch →
+//   Batches table (stockIn txns):  │  [batch] Batch detail card
+//     barcode · received · orig    │          + consumption list
+//     qty · consumed · remaining   │            (stockOut txns for
+//     · status pill · FIFO rank    │             this batch)
+//
+// Terminology
+// ───────────
+//   Batch      — a StockIn transaction; a real physical item received
+//   Consumption — a StockOut transaction whose sourceTransactionId
+//                  points to a batch
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailPanel extends ConsumerStatefulWidget {
-  final MaterialModel material; final VoidCallback onClose, onUpdate;
-  const _DetailPanel({super.key, required this.material, required this.onClose, required this.onUpdate});
+  final MaterialModel material;
+  final VoidCallback  onClose, onUpdate;
+  const _DetailPanel({super.key, required this.material,
+      required this.onClose, required this.onUpdate});
   @override ConsumerState<_DetailPanel> createState() => _DetailPanelState();
 }
-class _DetailPanelState extends ConsumerState<_DetailPanel> with SingleTickerProviderStateMixin {
-  late TabController _tabs;
-  final _barcodeKey = GlobalKey();
+
+class _DetailPanelState extends ConsumerState<_DetailPanel> {
+  StockTransaction? _selectedBatch;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
     Future.microtask(() =>
-        ref.read(materialNotifierProvider.notifier).fetchMaterialTransactions(widget.material.id));
+        ref.read(materialNotifierProvider.notifier)
+            .fetchMaterialTransactions(widget.material.id));
   }
-  @override void dispose() { _tabs.dispose(); super.dispose(); }
 
-  void _showStockDialog() {
+  // ── All transactions for this material ────────────────────────────────────
+  List<StockTransaction> _allTxns() =>
+      ref.watch(materialNotifierProvider).byMaterial(widget.material.id).toList();
+
+  // ── Batches = stockIn entries, sorted oldest-first (FIFO) ────────────────
+  List<StockTransaction> _batches(List<StockTransaction> all) =>
+      all.where((t) => t.type == TransactionType.stockIn)
+         .toList()
+         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  // ── Consumptions against a specific batch ────────────────────────────────
+  List<StockTransaction> _consumptions(
+      List<StockTransaction> all, String batchId) =>
+      all
+        .where((t) =>
+            t.type == TransactionType.stockOut &&
+            t.id == batchId)
+        .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+  // ── Remaining qty on a batch ──────────────────────────────────────────────
+  double _remaining(StockTransaction batch, List<StockTransaction> all) {
+    final consumed = _consumptions(all, batch.id)
+        .fold(0.0, (s, t) => s + t.quantity);
+    return (batch.quantity - consumed).clamp(0.0, double.infinity);
+  }
+
+  void _showStockInDialog() {
     showDialog<void>(
       context: context, barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => _StockAdjustDialog(
         material: widget.material,
-        onConfirm: (double qty, String? note) async {
+        onConfirm: (qty, note) async {
           Navigator.of(context).pop();
-          await ref.read(materialNotifierProvider.notifier).stockIn(widget.material.id, qty);
+          await ref.read(materialNotifierProvider.notifier)
+              .stockIn(widget.material.id, qty);
           widget.onUpdate();
-          _snack('Stock added successfully', isError: false);
+          _snack('Batch received — ${_fmtStock(qty)} ${widget.material.unitShort} added',
+              isError: false);
         },
       ),
     );
   }
 
-  void _snack(String msg, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded, size: 15, color: Colors.white),
-        const SizedBox(width: 8),
-        Expanded(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
-      ]),
-      backgroundColor: _T.ink, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)), duration: const Duration(seconds: 3),
-    ));
-  }
+  void _snack(String msg, {required bool isError}) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          Icon(isError ? Icons.error_outline_rounded
+              : Icons.check_circle_outline_rounded,
+              size: 15, color: Colors.white),
+          const SizedBox(width: 8),
+          Expanded(child: Text(msg,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+        ]),
+        backgroundColor: _T.ink, behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)),
+        duration: const Duration(seconds: 3),
+      ));
 
   @override
   Widget build(BuildContext context) {
-    final m = widget.material;
+    final m    = widget.material;
+    final all  = _allTxns();
+    final batches = _batches(all);
+
+    // Aggregate totals for header KPIs
+    final totalReceived = batches.fold(0.0, (s, b) => s + b.quantity);
+    final totalConsumed = all
+        .where((t) => t.type == TransactionType.stockOut)
+        .fold(0.0, (s, t) => s + t.quantity);
+    final totalRemaining = batches
+        .fold(0.0, (s, b) => s + _remaining(b, all));
+
     final Color stockColor; final Color stockBg; final String stockLabel;
-    if (m.isCriticalStock) { stockColor = _T.red; stockBg = _T.red50; stockLabel = 'Out of stock'; }
-    else if (m.isLowStock)  { stockColor = _T.amber; stockBg = _T.amber50; stockLabel = 'Low stock'; }
-    else                    { stockColor = _T.green; stockBg = _T.green50; stockLabel = 'In stock'; }
+    if (m.isCriticalStock)     { stockColor = _T.red;   stockBg = _T.red50;   stockLabel = 'Out of stock'; }
+    else if (m.isLowStock)     { stockColor = _T.amber; stockBg = _T.amber50; stockLabel = 'Low stock'; }
+    else                       { stockColor = _T.green; stockBg = _T.green50; stockLabel = 'In stock'; }
 
     return Container(
-      decoration: const BoxDecoration(color: _T.slate50, border: Border(left: BorderSide(color: _T.slate200))),
+      decoration: const BoxDecoration(
+          color: _T.slate50,
+          border: Border(left: BorderSide(color: _T.slate200))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-        // Panel topbar
+        // ── Top bar ──────────────────────────────────────────────────────
         Container(
           height: 58, padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: const BoxDecoration(color: _T.white, border: Border(bottom: BorderSide(color: _T.slate200))),
+          decoration: const BoxDecoration(
+              color: _T.white,
+              border: Border(bottom: BorderSide(color: _T.slate200))),
           child: Row(children: [
-            Material(color: Colors.transparent, borderRadius: BorderRadius.circular(_T.r),
-              child: InkWell(onTap: widget.onClose, borderRadius: BorderRadius.circular(_T.r),
+            Material(color: Colors.transparent,
+              borderRadius: BorderRadius.circular(_T.r),
+              child: InkWell(onTap: widget.onClose,
+                borderRadius: BorderRadius.circular(_T.r),
                 child: Container(width: 34, height: 34,
-                  decoration: BoxDecoration(color: _T.slate100, borderRadius: BorderRadius.circular(_T.r), border: Border.all(color: _T.slate200)),
+                  decoration: BoxDecoration(color: _T.slate100,
+                      borderRadius: BorderRadius.circular(_T.r),
+                      border: Border.all(color: _T.slate200)),
                   child: const Icon(Icons.close_rounded, size: 17, color: _T.ink3)))),
             const SizedBox(width: 14),
-            const Icon(Icons.layers_outlined, size: 28, color: _T.slate500),
+            Container(width: 32, height: 32,
+              decoration: BoxDecoration(color: _T.blue50,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: _T.blue.withOpacity(0.2))),
+              child: const Icon(Icons.layers_outlined, size: 15, color: _T.blue)),
             const SizedBox(width: 12),
-            Expanded(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(m.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink, letterSpacing: -0.2)),
-              Text(m.unit, style: const TextStyle(fontSize: 10.5, color: _T.slate400, fontWeight: FontWeight.w500)),
-            ])),
+            Expanded(child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(m.name, style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700,
+                    color: _T.ink, letterSpacing: -0.2)),
+                Text(m.unit, style: const TextStyle(
+                    fontSize: 10.5, color: _T.slate400,
+                    fontWeight: FontWeight.w500)),
+              ],
+            )),
             _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
             const SizedBox(width: 12),
             FilledButton.icon(
-              onPressed: _showStockDialog,
+              onPressed: _showStockInDialog,
               style: FilledButton.styleFrom(backgroundColor: _T.green,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)),
-                textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-              icon: const Icon(Icons.add_rounded, size: 15), label: const Text('Stock In'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_T.r)),
+                textStyle: const TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.w700)),
+              icon: const Icon(Icons.add_rounded, size: 15),
+              label: const Text('Receive Batch'),
             ),
           ]),
         ),
 
-        // Tab bar
+        // ── KPI strip ─────────────────────────────────────────────────────
         Container(
           color: _T.white,
-          child: TabBar(
-            controller: _tabs,
-            labelColor: _T.blue, unselectedLabelColor: _T.slate400,
-            indicatorColor: _T.blue, indicatorWeight: 2,
-            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            tabAlignment: TabAlignment.start, isScrollable: true,
-            dividerColor: Colors.grey.shade300,
-            tabs: const [Tab(text: 'Overview'), Tab(text: 'Stock History')],
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+          child: Row(children: [
+            _KpiChip(label: 'Received',  value: '${_fmtStock(totalReceived)} ${m.unitShort}',  color: _T.blue,  bg: _T.blue50),
+            const SizedBox(width: 8),
+            _KpiChip(label: 'Consumed',  value: '${_fmtStock(totalConsumed)} ${m.unitShort}',  color: _T.red,   bg: _T.red50),
+            const SizedBox(width: 8),
+            _KpiChip(label: 'Remaining', value: '${_fmtStock(totalRemaining)} ${m.unitShort}', color: stockColor, bg: stockBg),
+            const SizedBox(width: 8),
+            _KpiChip(label: 'Batches',   value: '${batches.length}',                           color: _T.purple, bg: _T.purple50),
+          ]),
         ),
 
-        // Tab views
-        Expanded(child: TabBarView(controller: _tabs, children: [
+        // ── Body: batch table + batch detail side-by-side ─────────────────
+        Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-          // ── Overview ────────────────────────────────────────────────
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 680),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Material Overview', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _T.ink, letterSpacing: -0.5)),
-                const SizedBox(height: 4),
-                const Text('Stock levels and material details.', style: TextStyle(fontSize: 13, color: _T.slate400)),
-                const SizedBox(height: 24),
-                _SectionCard(
-                  icon: Icons.inventory_2_outlined, iconColor: stockColor, iconBg: stockBg,
-                  title: 'Stock Level', subtitle: 'Current inventory quantities',
-                  child: Column(children: [
-                    Row(children: [
-                      Expanded(child: _MetricCell(label: 'Current Stock', value: '${_fmtStock(m.currentStock)} ${m.unitShort}', icon: Icons.inventory_2_outlined, color: stockColor)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _MetricCell(label: 'Min Stock Level', value: '${_fmtStock(m.minStockLevel)} ${m.unitShort}', icon: Icons.warning_amber_outlined, color: _T.amber)),
-                    ]),
-                    if (m.minStockLevel > 0) ...[const SizedBox(height: 16), _StockBar(current: m.currentStock, min: m.minStockLevel)],
-                  ]),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  icon: Icons.info_outline_rounded, iconColor: _T.blue, iconBg: _T.blue50,
-                  title: 'Material Details', subtitle: 'Name, unit and description',
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _DetailRow(label: 'Name',         value: m.name),
-                    _DetailRow(label: 'Measure Type', value: m.measureType.name.replaceAll('_', ' ')),
-                    _DetailRow(label: 'Unit',         value: m.unit),
-                    _DetailRow(label: 'Unit Short',   value: m.unitShort),
-                    if (m.description != null) _DetailRow(label: 'Description', value: m.description!),
-                    _DetailRow(label: 'Added', value: '${m.createdAt.day}/${m.createdAt.month}/${m.createdAt.year}', isLast: true),
-                  ]),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  icon: Icons.qr_code_outlined, iconColor: _T.ink, iconBg: _T.ink3.withOpacity(0.1),
-                  title: 'Barcode', subtitle: 'Scan or export for stock operations',
-                  child: Column(children: [
-                    RepaintBoundary(key: _barcodeKey, child: ProductBarcode(barcode: m.barcode)),
-                    const SizedBox(height: 14),
-                    Align(alignment: Alignment.centerRight,
-                      child: OutlinedButton.icon(
-                        onPressed: () => exportToJpg(context, _barcodeKey),
-                        style: OutlinedButton.styleFrom(foregroundColor: _T.ink,
-                          side: BorderSide(color: _T.ink.withOpacity(0.4)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.r)),
-                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                        icon: const Icon(Icons.file_download_outlined, size: 15), label: const Text('Export Barcode'),
-                      )),
-                  ]),
-                ),
-              ]),
-            ),
-          ),
+          // ── LEFT: batch inventory table ──────────────────────────────
+          Expanded(flex: 55, child: _BatchInventoryPanel(
+            batches:         batches,
+            allTxns:         all,
+            unit:            m.unitShort,
+            selectedBatchId: _selectedBatch?.id,
+            remaining:       (b) => _remaining(b, all),
+            onSelect: (b) => setState(() =>
+                _selectedBatch = (_selectedBatch?.id == b.id) ? null : b),
+          )),
 
-          // ── Stock History ────────────────────────────────────────────
-          _StockHistoryTab(material: m),
+          // Vertical divider
+          Container(width: 1, color: _T.slate200),
+
+          // ── RIGHT: batch detail ───────────────────────────────────────
+          Expanded(flex: 45, child: _selectedBatch == null
+              ? _BatchIdlePane()
+              : _BatchDetailPanel(
+                  key:          ValueKey(_selectedBatch!.id),
+                  batch:        _selectedBatch!,
+                  consumptions: _consumptions(all, _selectedBatch!.id),
+                  unit:         m.unitShort,
+                  remaining:    _remaining(_selectedBatch!, all),
+                )),
         ])),
       ]),
     );
@@ -556,325 +603,540 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> with SingleTickerPro
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STOCK HISTORY TAB
+// KPI CHIP  — small coloured label+value pill for the header strip
 // ─────────────────────────────────────────────────────────────────────────────
-class _StockHistoryTab extends ConsumerStatefulWidget {
-  final MaterialModel material;
-  const _StockHistoryTab({required this.material});
-  @override ConsumerState<_StockHistoryTab> createState() => _StockHistoryTabState();
+class _KpiChip extends StatelessWidget {
+  final String label, value; final Color color, bg;
+  const _KpiChip({required this.label, required this.value,
+      required this.color, required this.bg});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(color: bg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: color.withOpacity(0.25))),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, children: [
+      Text(label, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700,
+          color: color.withOpacity(0.7), letterSpacing: 0.3)),
+      const SizedBox(height: 1),
+      Text(value, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800,
+          color: color)),
+    ]),
+  );
 }
 
-class _StockHistoryTabState extends ConsumerState<_StockHistoryTab> {
-  // Sort: newest first
-  List<StockTransaction> get _transactions =>
-      (ref.watch(materialNotifierProvider).byMaterial(widget.material.id).toList())
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+// ─────────────────────────────────────────────────────────────────────────────
+// BATCH INVENTORY PANEL  — left half of detail panel
+// Shows all StockIn entries (batches) as a clean inventory table.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BatchInventoryPanel extends StatelessWidget {
+  final List<StockTransaction>      batches;
+  final List<StockTransaction>      allTxns;
+  final String                      unit;
+  final String?                     selectedBatchId;
+  final double Function(StockTransaction) remaining;
+  final ValueChanged<StockTransaction> onSelect;
+
+  const _BatchInventoryPanel({
+    required this.batches,
+    required this.allTxns,
+    required this.unit,
+    required this.selectedBatchId,
+    required this.remaining,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final transactions = _transactions;
-
-    if (transactions.isEmpty) {
-      return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: const [
-          Icon(Icons.swap_vert_rounded, size: 28, color: _T.slate300),
-          SizedBox(height: 10),
-          Text('No stock movements yet',
-              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: _T.slate400)),
-          SizedBox(height: 4),
-          Text('Use Stock In to record incoming batches',
-              style: TextStyle(fontSize: 12, color: _T.slate300)),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // ── Section header ───────────────────────────────────────────────
+      Container(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
+        decoration: const BoxDecoration(
+            color: _T.white,
+            border: Border(bottom: BorderSide(color: _T.slate100))),
+        child: Row(children: [
+          Container(width: 26, height: 26,
+            decoration: BoxDecoration(color: _T.green50,
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: _T.green.withOpacity(0.2))),
+            child: const Icon(Icons.inbox_rounded, size: 13, color: _T.green)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Inventory Batches',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                    color: _T.ink, letterSpacing: -0.1)),
+            Text('${batches.length} batch${batches.length == 1 ? '' : 'es'} · FIFO order',
+                style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
+          ])),
         ]),
-      );
+      ),
+
+      if (batches.isEmpty)
+        Expanded(child: Center(child: Column(
+          mainAxisSize: MainAxisSize.min, children: const [
+          Icon(Icons.inbox_outlined, size: 26, color: _T.slate300),
+          SizedBox(height: 10),
+          Text('No batches received yet',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: _T.slate400)),
+          SizedBox(height: 4),
+          Text('Click "Receive Batch" to record incoming stock',
+              style: TextStyle(fontSize: 11.5, color: _T.slate300)),
+        ])))
+      else
+        Expanded(child: Column(children: [
+          // Column header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _T.slate100))),
+            child: Row(children: [
+              const SizedBox(width: 8),
+              Expanded(flex: 3, child: _ColHdr('BARCODE / REF')),
+              Expanded(flex: 2, child: _ColHdr('RECEIVED')),
+              Expanded(flex: 2, child: _ColHdr('QTY IN')),
+              Expanded(flex: 2, child: _ColHdr('CONSUMED')),
+              Expanded(flex: 2, child: _ColHdr('REMAINING')),
+              const SizedBox(width: 8),
+            ]),
+          ),
+          // Batch rows
+          Expanded(child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+            itemCount: batches.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 3),
+            itemBuilder: (_, i) {
+              final b        = batches[i];
+              final rem      = remaining(b);
+              final consumed = b.quantity - rem;
+              final isSelected = selectedBatchId == b.id;
+              final isEmpty   = rem <= 0;
+              return _BatchRow(
+                batch:      b,
+                unit:       unit,
+                consumed:   consumed,
+                remaining:  rem,
+                fifoRank:   i + 1,
+                isSelected: isSelected,
+                isEmpty:    isEmpty,
+                onTap:      () => onSelect(b),
+              );
+            },
+          )),
+        ])),
+    ]);
+  }
+}
+
+class _ColHdr extends StatelessWidget {
+  final String text;
+  const _ColHdr(this.text);
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700,
+          letterSpacing: 0.5, color: _T.slate400));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BATCH ROW
+// ─────────────────────────────────────────────────────────────────────────────
+class _BatchRow extends StatefulWidget {
+  final StockTransaction batch;
+  final String           unit;
+  final double           consumed, remaining;
+  final int              fifoRank;
+  final bool             isSelected, isEmpty;
+  final VoidCallback     onTap;
+  const _BatchRow({required this.batch, required this.unit,
+      required this.consumed, required this.remaining,
+      required this.fifoRank, required this.isSelected,
+      required this.isEmpty, required this.onTap});
+  @override State<_BatchRow> createState() => _BatchRowState();
+}
+
+class _BatchRowState extends State<_BatchRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.batch;
+    final dt = b.createdAt;
+    final dateStr = '${dt.day.toString().padLeft(2,'0')}/'
+        '${dt.month.toString().padLeft(2,'0')}/${dt.year}';
+
+    // Status
+    final Color pillColor; final Color pillBg; final String pillLabel;
+    if (widget.isEmpty) {
+      pillColor = _T.slate400; pillBg = _T.slate100; pillLabel = 'Depleted';
+    } else if (widget.remaining < b.quantity * 0.25) {
+      pillColor = _T.amber; pillBg = _T.amber50; pillLabel = 'Low';
+    } else {
+      pillColor = _T.green; pillBg = _T.green50; pillLabel = 'Available';
     }
 
-    // Summary stats across all transactions
-    final totalIn  = transactions.where((t) => t.type == TransactionType.stockIn).fold(0.0, (s, t) => s + t.quantity);
-    final totalOut = transactions.where((t) => t.type == TransactionType.stockOut).fold(0.0, (s, t) => s + t.quantity);
-    final adjustments = transactions.where((t) => t.type == TransactionType.adjustment).length;
+    final sel = widget.isSelected;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Stock History',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _T.ink, letterSpacing: -0.5)),
-          const SizedBox(height: 4),
-          Text('${transactions.length} movement${transactions.length == 1 ? '' : 's'} recorded',
-              style: const TextStyle(fontSize: 13, color: _T.slate400)),
-          const SizedBox(height: 20),
-
-          // Summary stat row
-          Row(children: [
-            Expanded(child: _MetricCell(
-              label: 'Total In',
-              value: '${_fmtStock(totalIn)} ${widget.material.unitShort}',
-              icon:  Icons.add_circle_outline_rounded,
-              color: _T.green,
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: _MetricCell(
-              label: 'Total Out',
-              value: '${_fmtStock(totalOut)} ${widget.material.unitShort}',
-              icon:  Icons.remove_circle_outline_rounded,
-              color: _T.red,
-            )),
-            if (adjustments > 0) ...[
-              const SizedBox(width: 12),
-              Expanded(child: _MetricCell(
-                label: 'Adjustments',
-                value: '$adjustments',
-                icon:  Icons.tune_rounded,
-                color: _T.purple,
-              )),
-            ],
-          ]),
-          const SizedBox(height: 20),
-
-          // Transactions list
-          _SectionCard(
-            icon: Icons.swap_vert_rounded, iconColor: _T.blue, iconBg: _T.blue50,
-            title: 'Movements', subtitle: 'Most recent first',
-            child: Column(
-              children: transactions.map((t) => _TransactionRow(
-                transaction: t,
-                unit: widget.material.unitShort,
-              )).toList(),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: sel
+                ? _T.blue50
+                : _hovered ? _T.slate50 : _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: sel ? _T.blue.withOpacity(0.4) : _T.slate200,
+              width: sel ? 1.5 : 1,
             ),
           ),
-        ]),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+
+            // FIFO rank badge
+            Container(
+              width: 20, height: 20,
+              decoration: BoxDecoration(
+                color: sel ? _T.blue : _T.slate100,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Center(child: Text('${widget.fifoRank}',
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
+                      color: sel ? _T.white : _T.slate400))),
+            ),
+            const SizedBox(width: 8),
+
+            // Barcode / ref
+            Expanded(flex: 3, child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (b.barcode != null)
+                Row(children: [
+                  const Icon(Icons.qr_code_rounded, size: 10, color: _T.slate400),
+                  const SizedBox(width: 4),
+                  Flexible(child: Text(
+                    b.barcode!.length > 14
+                        ? '${b.barcode!.substring(0,14)}…'
+                        : b.barcode!,
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: _T.ink3, fontFamily: 'monospace'),
+                  )),
+                ])
+              else
+                Text('Batch #${widget.fifoRank}',
+                    style: const TextStyle(fontSize: 11,
+                        fontWeight: FontWeight.w600, color: _T.slate500)),
+              if (b.notes != null)
+                Text(b.notes!, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: _T.slate400)),
+            ])),
+
+            // Received date
+            Expanded(flex: 2, child: Text(dateStr,
+                style: const TextStyle(fontSize: 11, color: _T.slate500))),
+
+            // Qty In
+            Expanded(flex: 2, child: Text(
+                '${_fmtStock(b.quantity)} ${widget.unit}',
+                style: const TextStyle(fontSize: 11.5,
+                    fontWeight: FontWeight.w600, color: _T.ink3))),
+
+            // Consumed
+            Expanded(flex: 2, child: Text(
+                widget.consumed > 0
+                    ? '−${_fmtStock(widget.consumed)} ${widget.unit}'
+                    : '—',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
+                    color: widget.consumed > 0 ? _T.red : _T.slate300))),
+
+            // Remaining + status
+            Expanded(flex: 2, child: Row(children: [
+              Text(_fmtStock(widget.remaining),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
+                      color: pillColor)),
+              const SizedBox(width: 5),
+              _StockPill(label: pillLabel, color: pillColor, bg: pillBg),
+            ])),
+
+            // Chevron
+            const SizedBox(width: 4),
+            AnimatedOpacity(
+              opacity: sel ? 1.0 : (_hovered ? 0.5 : 0.0),
+              duration: const Duration(milliseconds: 120),
+              child: Icon(Icons.chevron_right_rounded, size: 15,
+                  color: sel ? _T.blue : _T.slate400),
+            ),
+          ]),
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TRANSACTION ROW  — uses all real StockTransaction fields
+// BATCH DETAIL PANEL  — right half when a batch is selected
 // ─────────────────────────────────────────────────────────────────────────────
-class _TransactionRow extends StatefulWidget {
-  final StockTransaction transaction;
-  final String           unit;
-  const _TransactionRow({required this.transaction, required this.unit});
-  @override State<_TransactionRow> createState() => _TransactionRowState();
-}
-
-class _TransactionRowState extends State<_TransactionRow> {
-  bool _expanded = false;
+class _BatchDetailPanel extends StatelessWidget {
+  final StockTransaction       batch;
+  final List<StockTransaction> consumptions;
+  final String                 unit;
+  final double                 remaining;
+  const _BatchDetailPanel({super.key, required this.batch,
+      required this.consumptions, required this.unit, required this.remaining});
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.transaction;
+    final b      = batch;
+    final dt     = b.createdAt;
+    final dateStr = '${dt.day.toString().padLeft(2,'0')}/'
+        '${dt.month.toString().padLeft(2,'0')}/${dt.year}  '
+        '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+    final consumed = b.quantity - remaining;
+    final usePct   = b.quantity > 0 ? (consumed / b.quantity).clamp(0.0,1.0) : 0.0;
 
-    // ── Type metadata ──────────────────────────────────────────────────────
-    final Color typeColor;
-    final Color typeBg;
-    final IconData typeIcon;
-    final String typeLabel;
-    final String quantityPrefix;
+    final Color statusColor; final String statusLabel; final Color statusBg;
+    if (remaining <= 0)                         { statusColor = _T.slate400; statusBg = _T.slate100; statusLabel = 'Depleted'; }
+    else if (remaining < b.quantity * 0.25)     { statusColor = _T.amber;   statusBg = _T.amber50;  statusLabel = 'Low';      }
+    else                                         { statusColor = _T.green;   statusBg = _T.green50;  statusLabel = 'Available';}
 
-    switch (t.type) {
-      case TransactionType.stockIn:
-        typeColor      = _T.green;
-        typeBg         = _T.green50;
-        typeIcon       = Icons.add_rounded;
-        typeLabel      = 'Stock In';
-        quantityPrefix = '+';
-        break;
-      case TransactionType.stockOut:
-        typeColor      = _T.red;
-        typeBg         = _T.red50;
-        typeIcon       = Icons.remove_rounded;
-        typeLabel      = 'Stock Out';
-        quantityPrefix = '−';
-        break;
-      case TransactionType.adjustment:
-        typeColor      = _T.purple;
-        typeBg         = _T.purple50;
-        typeIcon       = Icons.tune_rounded;
-        typeLabel      = 'Adjustment';
-        quantityPrefix = '±';
-        break;
-    }
-
-    // ── Date formatting ────────────────────────────────────────────────────
-    final dt  = t.createdAt;
-    final now = DateTime.now();
-    final String dateLabel;
-    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-      dateLabel = 'Today ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
-    } else {
-      dateLabel = '${dt.day}/${dt.month}/${dt.year}  ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
-    }
-
-    // ── Has expandable metadata? ───────────────────────────────────────────
-    // Barcode is shown inline on stockIn rows, so exclude it from the
-    // "has extra" check for stockIn — it won't appear in the expanded section.
-    final hasExtra = t.notes != null || t.projectId != null || t.taskId != null ||
-        (t.barcode != null && t.type != TransactionType.stockIn);
-
-    // Inline barcode: only stock-in entries represent a physical batch with a barcode
-    final showInlineBarcode = t.type == TransactionType.stockIn && t.barcode != null;
-
-    return Column(children: [
-      // ── Main row ──────────────────────────────────────────────────────────
-      InkWell(
-        onTap: hasExtra ? () => setState(() => _expanded = !_expanded) : null,
-        borderRadius: BorderRadius.circular(_T.r),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-
-            // Type icon badge
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(color: typeBg, borderRadius: BorderRadius.circular(8)),
-              child: Icon(typeIcon, size: 15, color: typeColor),
-            ),
-            const SizedBox(width: 12),
-
-            // Label + date + commit badge
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Text(typeLabel,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: typeColor)),
-                  const SizedBox(width: 8),
-                  // Committed badge (stock-out only)
-                  if (t.type == TransactionType.stockOut)
-                    _CommitBadge(committed: t.committed),
-                ]),
-                const SizedBox(height: 2),
-                Text(dateLabel,
-                    style: const TextStyle(fontSize: 11, color: _T.slate400)),
-              ]),
-            ),
-
-            // ── Inline barcode chip — stock-in entries only ───────────────
-            if (showInlineBarcode) ...[
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color:        _T.slate100,
-                  borderRadius: BorderRadius.circular(6),
-                  border:       Border.all(color: _T.slate200),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.qr_code_rounded, size: 11, color: _T.slate400),
-                  const SizedBox(width: 5),
-                  Text(
-                    t.barcode!.length > 14
-                        ? '${t.barcode!.substring(0, 14)}…'
-                        : t.barcode!,
-                    style: const TextStyle(
-                      fontSize:   10.5,
-                      fontWeight: FontWeight.w600,
-                      color:      _T.ink3,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ]),
-              ),
-            ],
-
-            const SizedBox(width: 12),
-
-            // Balance after chip
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('$quantityPrefix${_fmtStock(t.quantity)} ${widget.unit}',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: typeColor)),
-              const SizedBox(height: 2),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                const Text('Balance ', style: TextStyle(fontSize: 10.5, color: _T.slate400)),
-                Text('${_fmtStock(t.balanceAfter)} ${widget.unit}',
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: _T.ink3)),
-              ]),
-            ]),
-
-            // Expand chevron
-            if (hasExtra) ...[
-              const SizedBox(width: 8),
-              AnimatedRotation(
-                turns:    _expanded ? 0.5 : 0.0,
-                duration: const Duration(milliseconds: 150),
-                child: const Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 16, color: _T.slate400),
-              ),
-            ],
-          ]),
-        ),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Section header
+      Container(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
+        decoration: const BoxDecoration(color: _T.white,
+            border: Border(bottom: BorderSide(color: _T.slate100))),
+        child: Row(children: [
+          Container(width: 26, height: 26,
+            decoration: BoxDecoration(color: _T.purple50,
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: _T.purple.withOpacity(0.2))),
+            child: const Icon(Icons.inventory_rounded, size: 12, color: _T.purple)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Batch Detail',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                    color: _T.ink, letterSpacing: -0.1)),
+            Text(b.barcode ?? 'No barcode',
+                style: const TextStyle(fontSize: 10.5, color: _T.slate400,
+                    fontFamily: 'monospace')),
+          ])),
+          _StockPill(label: statusLabel, color: statusColor, bg: statusBg),
+        ]),
       ),
 
-      // ── Expanded meta section ─────────────────────────────────────────────
-      if (hasExtra)
-        AnimatedCrossFade(
-          firstChild:  const SizedBox(width: double.infinity),
-          secondChild: _TransactionMeta(transaction: t),
-          crossFadeState: _expanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 180),
-        ),
+      Expanded(child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      const Divider(height: 1, color: _T.slate100),
+          // ── Batch info card ─────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: _T.white,
+                borderRadius: BorderRadius.circular(_T.rLg),
+                border: Border.all(color: _T.slate200)),
+            child: Column(children: [
+              _BatchInfoRow(icon: Icons.calendar_today_outlined,
+                  label: 'Received', value: dateStr),
+              const Divider(height: 16, color: _T.slate100),
+              _BatchInfoRow(icon: Icons.add_circle_outline_rounded,
+                  label: 'Original Qty',
+                  value: '${_fmtStock(b.quantity)} $unit',
+                  valueColor: _T.green),
+              const Divider(height: 16, color: _T.slate100),
+              _BatchInfoRow(icon: Icons.remove_circle_outline_rounded,
+                  label: 'Total Consumed',
+                  value: consumed > 0 ? '−${_fmtStock(consumed)} $unit' : '—',
+                  valueColor: consumed > 0 ? _T.red : _T.slate300),
+              const Divider(height: 16, color: _T.slate100),
+              _BatchInfoRow(icon: Icons.inventory_2_outlined,
+                  label: 'Remaining',
+                  value: '${_fmtStock(remaining)} $unit',
+                  valueColor: statusColor),
+              if (b.quantity > 0) ...[
+                const SizedBox(height: 12),
+                // Usage bar
+                Row(children: [
+                  Expanded(child: ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: usePct, minHeight: 6,
+                      backgroundColor: _T.slate100,
+                      color: statusColor,
+                    ),
+                  )),
+                  const SizedBox(width: 10),
+                  Text('${(usePct * 100).round()}% used',
+                      style: TextStyle(fontSize: 10.5,
+                          fontWeight: FontWeight.w700, color: statusColor)),
+                ]),
+              ],
+              if (b.notes != null) ...[
+                const Divider(height: 16, color: _T.slate100),
+                _BatchInfoRow(icon: Icons.notes_rounded,
+                    label: 'Note', value: b.notes!),
+              ],
+            ]),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Consumption history ────────────────────────────────────
+          Row(children: [
+            Container(width: 24, height: 24,
+              decoration: BoxDecoration(color: _T.red50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _T.red.withOpacity(0.2))),
+              child: const Icon(Icons.output_rounded, size: 11, color: _T.red)),
+            const SizedBox(width: 9),
+            Text('Consumption History',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                    color: _T.ink, letterSpacing: -0.1)),
+            const Spacer(),
+            Text('${consumptions.length} event${consumptions.length == 1 ? '' : 's'}',
+                style: const TextStyle(fontSize: 11, color: _T.slate400)),
+          ]),
+          const SizedBox(height: 10),
+
+          if (consumptions.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              decoration: BoxDecoration(color: _T.white,
+                  borderRadius: BorderRadius.circular(_T.rLg),
+                  border: Border.all(color: _T.slate200)),
+              child: const Center(child: Text('No consumption yet — batch is untouched',
+                  style: TextStyle(fontSize: 12, color: _T.slate400))),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(color: _T.white,
+                  borderRadius: BorderRadius.circular(_T.rLg),
+                  border: Border.all(color: _T.slate200)),
+              child: Column(
+                children: consumptions.asMap().entries.map((e) {
+                  final isLast = e.key == consumptions.length - 1;
+                  return _ConsumptionRow(txn: e.value, unit: unit, isLast: isLast);
+                }).toList(),
+              ),
+            ),
+        ]),
+      )),
+    ]);
+  }
+}
+
+class _BatchInfoRow extends StatelessWidget {
+  final IconData icon; final String label, value; final Color? valueColor;
+  const _BatchInfoRow({required this.icon, required this.label,
+      required this.value, this.valueColor});
+  @override
+  Widget build(BuildContext context) => Row(children: [
+    Icon(icon, size: 13, color: _T.slate400),
+    const SizedBox(width: 8),
+    SizedBox(width: 110, child: Text(label,
+        style: const TextStyle(fontSize: 11.5, color: _T.slate500))),
+    Expanded(child: Text(value,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+            color: valueColor ?? _T.ink3))),
+  ]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSUMPTION ROW  — a single StockOut event inside the batch detail
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConsumptionRow extends StatelessWidget {
+  final StockTransaction txn;
+  final String           unit;
+  final bool             isLast;
+  const _ConsumptionRow({required this.txn, required this.unit,
+      required this.isLast});
+
+  @override
+  Widget build(BuildContext context) {
+    final dt = txn.createdAt;
+    final now = DateTime.now();
+    final dateStr = (dt.year == now.year && dt.month == now.month && dt.day == now.day)
+        ? 'Today ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}'
+        : '${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}';
+
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(children: [
+          // Type icon
+          Container(width: 28, height: 28,
+            decoration: BoxDecoration(color: _T.red50,
+                borderRadius: BorderRadius.circular(7)),
+            child: const Icon(Icons.output_rounded, size: 13, color: _T.red)),
+          const SizedBox(width: 10),
+          // Info
+          Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text('−${_fmtStock(txn.quantity)} $unit',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
+                      color: _T.red)),
+              const SizedBox(width: 8),
+              if (txn.committed)
+                _CommitBadge(committed: true)
+              else
+                _CommitBadge(committed: false),
+            ]),
+            const SizedBox(height: 2),
+            Text(dateStr, style: const TextStyle(fontSize: 11, color: _T.slate400)),
+          ])),
+          // Project / task context
+          if (txn.projectId != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: _T.slate100,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: _T.slate200)),
+              child: Text(txn.projectId!,
+                  style: const TextStyle(fontSize: 10,
+                      fontWeight: FontWeight.w600, color: _T.slate500,
+                      fontFamily: 'monospace')),
+            ),
+        ]),
+      ),
+      if (!isLast)
+        const Divider(height: 1, color: _T.slate100, indent: 14, endIndent: 14),
     ]);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TRANSACTION META — expanded detail section
+// BATCH IDLE PANE
 // ─────────────────────────────────────────────────────────────────────────────
-class _TransactionMeta extends StatelessWidget {
-  final StockTransaction transaction;
-  const _TransactionMeta({required this.transaction});
-
+class _BatchIdlePane extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    final t = transaction;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color:        _T.slate50,
-        borderRadius: BorderRadius.circular(_T.r),
-        border:       Border.all(color: _T.slate200),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (t.notes != null) ...[
-          _MetaLine(icon: Icons.notes_rounded,      label: 'Note',    value: t.notes!),
-          const SizedBox(height: 6),
-        ],
-        if (t.projectId != null) ...[
-          _MetaLine(icon: Icons.folder_outlined,    label: 'Project', value: t.projectId!),
-          const SizedBox(height: 6),
-        ],
-        if (t.taskId != null) ...[
-          _MetaLine(icon: Icons.assignment_outlined, label: 'Task',   value: '#${t.taskId}'),
-          const SizedBox(height: 6),
-        ],
-        // Barcode is already shown inline on stock-in rows — only show here
-        // for stock-out and adjustment entries where it adds audit context.
-        if (t.barcode != null && t.type != TransactionType.stockIn)
-          _MetaLine(icon: Icons.qr_code_rounded, label: 'Barcode', value: t.barcode!,
-              mono: true),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(width: 48, height: 48,
+        decoration: BoxDecoration(color: _T.slate100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _T.slate200)),
+        child: const Icon(Icons.touch_app_outlined, size: 22, color: _T.slate400)),
+      const SizedBox(height: 12),
+      const Text('Select a batch',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.slate400)),
+      const SizedBox(height: 4),
+      const Text('Tap a row on the left to see its consumption history',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11.5, color: _T.slate300)),
+    ]),
+  );
 }
 
-class _MetaLine extends StatelessWidget {
-  final IconData icon; final String label, value; final bool mono;
-  const _MetaLine({required this.icon, required this.label, required this.value, this.mono = false});
-  @override
-  Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Icon(icon, size: 13, color: _T.slate400),
-    const SizedBox(width: 6),
-    Text('$label  ', style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
-    Expanded(child: Text(value, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
-        color: _T.ink3, fontFamily: mono ? 'monospace' : null))),
-  ]);
-}
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMMIT BADGE — shown on stock-out rows
@@ -1525,60 +1787,8 @@ class _SearchBar extends StatelessWidget {
   );
 }
 
-class _MetricCell extends StatelessWidget {
-  final String label, value; final IconData icon; final Color color;
-  const _MetricCell({required this.label, required this.value, required this.icon, required this.color});
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    decoration: BoxDecoration(color: _T.slate50, borderRadius: BorderRadius.circular(_T.r), border: Border.all(color: _T.slate200)),
-    child: Row(children: [
-      Container(width: 32, height: 32, decoration: BoxDecoration(color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, size: 15, color: color)),
-      const SizedBox(width: 10),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _T.slate400, letterSpacing: 0.3)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _T.ink3)),
-      ])),
-    ]),
-  );
-}
 
-class _StockBar extends StatelessWidget {
-  final double current, min;
-  const _StockBar({required this.current, required this.min});
-  @override
-  Widget build(BuildContext context) {
-    final ratio = (current / (min * 2)).clamp(0.0, 1.0);
-    final Color barColor = current <= 0 ? _T.red : current < min ? _T.amber : _T.green;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        const Text('Stock level', style: TextStyle(fontSize: 11, color: _T.slate400)),
-        const Spacer(),
-        Text('${(ratio * 100).round()}%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: barColor)),
-      ]),
-      const SizedBox(height: 6),
-      ClipRRect(borderRadius: BorderRadius.circular(99),
-        child: LinearProgressIndicator(value: ratio, minHeight: 6, backgroundColor: _T.slate100, color: barColor)),
-      const SizedBox(height: 5),
-      Text('Min: ${_fmtStock(min)}  ·  Target: ${_fmtStock(min * 2)}', style: const TextStyle(fontSize: 10.5, color: _T.slate400)),
-    ]);
-  }
-}
 
-class _DetailRow extends StatelessWidget {
-  final String label, value; final bool isLast;
-  const _DetailRow({required this.label, required this.value, this.isLast = false});
-  @override
-  Widget build(BuildContext context) => Column(children: [
-    Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Row(children: [
-      SizedBox(width: 120, child: Text(label, style: const TextStyle(fontSize: 12, color: _T.slate400))),
-      Expanded(child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3))),
-    ])),
-    if (!isLast) const Divider(height: 1, color: _T.slate100),
-  ]);
-}
 
 class _EmptyListState extends StatelessWidget {
   final bool hasSearch;
