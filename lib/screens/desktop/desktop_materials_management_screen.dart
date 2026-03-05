@@ -520,11 +520,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       border: Border.all(color: _T.slate200)),
                   child: const Icon(Icons.close_rounded, size: 17, color: _T.ink3)))),
             const SizedBox(width: 14),
-            Container(width: 32, height: 32,
-              decoration: BoxDecoration(color: _T.blue50,
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(color: _T.blue.withOpacity(0.2))),
-              child: const Icon(Icons.layers_outlined, size: 15, color: _T.blue)),
+            const Icon(Icons.layers_outlined, size: 26, color: _T.blue),
             const SizedBox(width: 12),
             Expanded(child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1009,7 +1005,7 @@ class _BatchDetailPanel extends StatelessWidget {
 
           if (consumptions.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 22),
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 10),
               decoration: BoxDecoration(color: _T.white,
                   borderRadius: BorderRadius.circular(_T.rLg),
                   border: Border.all(color: _T.slate200)),
