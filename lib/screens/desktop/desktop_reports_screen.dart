@@ -322,15 +322,15 @@ _ReportsData _computeReports({
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class MaterialReportsScreen extends ConsumerStatefulWidget {
-  const MaterialReportsScreen({super.key});
+class DesktopReportsScreen extends ConsumerStatefulWidget {
+  const DesktopReportsScreen({super.key});
   @override
-  ConsumerState<MaterialReportsScreen> createState() =>
+  ConsumerState<DesktopReportsScreen> createState() =>
       _MaterialReportsScreenState();
 }
 
 class _MaterialReportsScreenState
-    extends ConsumerState<MaterialReportsScreen> {
+    extends ConsumerState<DesktopReportsScreen> {
   _Period  _period            = _Period.months12;
   String?  _filterMaterialId;
   String?  _filterProjectId;
