@@ -498,7 +498,9 @@ class _ReportsTopbar extends StatelessWidget {
         items:       _Period.values,
         itemLabel:   (p) => p.label,
         selected:    period,
-        onChanged:   onPeriod,
+        onChanged:   (p) {
+          if (p!=null) onPeriod(p);
+        },
         accentColor: _T.blue,
       ),
       const SizedBox(width: 8),
@@ -555,8 +557,8 @@ class _FilterDropdown<T> extends StatelessWidget {
   final String           label;
   final List<T>          items;
   final String Function(T) itemLabel;
-  final T                selected;
-  final ValueChanged<T>  onChanged;
+  final T selected;
+  final ValueChanged<T> onChanged;
   final Color            accentColor;
   final bool             hasReset;
   const _FilterDropdown({
