@@ -694,7 +694,7 @@ class _BatchInventoryPanel extends StatelessWidget {
             decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: _T.slate100))),
             child: Row(children: [
-              Expanded(flex: 3, child: _ColHdr('BARCODE')),
+              Expanded(flex: 2, child: _ColHdr('BARCODE')),
               Expanded(flex: 2, child: _ColHdr('RECEIVED')),
               Expanded(flex: 2, child: _ColHdr('QTY IN')),
               Expanded(flex: 2, child: _ColHdr('CONSUMED')),
@@ -796,82 +796,86 @@ class _BatchRowState extends State<_BatchRow> {
               width: sel ? 1.5 : 1,
             ),
           ),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-
-            // FIFO rank badge
-            // Container(
-            //   width: 20, height: 20,
-            //   decoration: BoxDecoration(
-            //     color: sel ? _T.blue : _T.slate100,
-            //     borderRadius: BorderRadius.circular(5),
-            //   ),
-            //   child: Center(child: Text('${widget.fifoRank}',
-            //       style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
-            //           color: sel ? _T.white : _T.slate400))),
-            // ),
-            // const SizedBox(width: 8),
-
-            // Barcode / ref
-            Expanded(flex: 3, child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (b.barcode != null)
-                Row(children: [
-                  // const Icon(Icons.qr_code_rounded, size: 10, color: _T.slate400),
-                  // const SizedBox(width: 4),
-                  Flexible(child: Text(
-                    b.barcode!.length > 14
-                        ? '${b.barcode!.substring(0,14)}…'
-                        : b.barcode!,
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w700,
-                        color: _T.ink3, fontFamily: 'monospace'),
-                  )),
-                ])
-              else
-                Text('Batch #${widget.fifoRank}',
-                    style: const TextStyle(fontSize: 11,
-                        fontWeight: FontWeight.w600, color: _T.slate500)),
-              if (b.notes != null)
-                Text(b.notes!, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10, color: _T.slate400)),
-            ])),
-
-            // Received date
-            Expanded(flex: 2, child: Text(dateStr,
-                style: const TextStyle(fontSize: 11, color: _T.slate500))),
-
-            // Qty In
-            Expanded(flex: 2, child: Text(
-                '${_fmtStock(b.quantity)} ${widget.unit}',
-                style: const TextStyle(fontSize: 11.5,
-                    fontWeight: FontWeight.w600, color: _T.ink3))),
-
-            // Consumed
-            Expanded(flex: 2, child: Text(
-                widget.consumed > 0
-                    ? '−${_fmtStock(widget.consumed)} ${widget.unit}'
-                    : '—',
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
-                    color: widget.consumed > 0 ? _T.red : _T.slate300))),
-
-            // Remaining + status
-            // Expanded(flex: 2, child: Row(children: [
-            //   Text(_fmtStock(widget.remaining),
-            //       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
-            //           color: pillColor)),
-            //   const SizedBox(width: 5),
-            //   _StockPill(label: pillLabel, color: pillColor, bg: pillBg),
-            // ])),
-
-            // Chevron
-            const SizedBox(width: 4),
-            AnimatedOpacity(
-              opacity: sel ? 1.0 : (_hovered ? 0.5 : 0.0),
-              duration: const Duration(milliseconds: 120),
-              child: Icon(Icons.chevron_right_rounded, size: 15,
-                  color: sel ? _T.blue : _T.slate400),
-            ),
-          ]),
+          child: Stack(
+            alignment: Alignment.centerRight,
+            children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              
+                // FIFO rank badge
+                // Container(
+                //   width: 20, height: 20,
+                //   decoration: BoxDecoration(
+                //     color: sel ? _T.blue : _T.slate100,
+                //     borderRadius: BorderRadius.circular(5),
+                //   ),
+                //   child: Center(child: Text('${widget.fifoRank}',
+                //       style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
+                //           color: sel ? _T.white : _T.slate400))),
+                // ),
+                // const SizedBox(width: 8),
+              
+                // Barcode / ref
+                Expanded(flex: 2, child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  if (b.barcode != null)
+                    Row(children: [
+                      // const Icon(Icons.qr_code_rounded, size: 10, color: _T.slate400),
+                      // const SizedBox(width: 4),
+                      Flexible(child: Text(
+                        b.barcode!.length > 14
+                            ? '${b.barcode!.substring(0,14)}…'
+                            : b.barcode!,
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w700,
+                            color: _T.ink3, fontFamily: 'monospace'),
+                      )),
+                    ])
+                  else
+                    Text('Batch #${widget.fifoRank}',
+                        style: const TextStyle(fontSize: 11,
+                            fontWeight: FontWeight.w600, color: _T.slate500)),
+                  if (b.notes != null)
+                    Text(b.notes!, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: _T.slate400)),
+                ])),
+              
+                // Received date
+                Expanded(flex: 2, child: Text(dateStr,
+                    style: const TextStyle(fontSize: 11, color: _T.slate500))),
+              
+                // Qty In
+                Expanded(flex: 2, child: Text(
+                    '${_fmtStock(b.quantity)} ${widget.unit}',
+                    style: const TextStyle(fontSize: 11.5,
+                        fontWeight: FontWeight.w600, color: _T.ink3))),
+              
+                // Consumed
+                Expanded(flex: 2, child: Text(
+                    widget.consumed > 0
+                        ? '−${_fmtStock(widget.consumed)} ${widget.unit}'
+                        : '—',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
+                        color: widget.consumed > 0 ? _T.red : _T.slate300))),
+              
+                // Remaining + status
+                // Expanded(flex: 2, child: Row(children: [
+                //   Text(_fmtStock(widget.remaining),
+                //       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
+                //           color: pillColor)),
+                //   const SizedBox(width: 5),
+                //   _StockPill(label: pillLabel, color: pillColor, bg: pillBg),
+                // ])),            
+              ]),
+              // Chevron
+              const SizedBox(width: 4),
+              AnimatedOpacity(
+                opacity: sel ? 1.0 : (_hovered ? 0.5 : 0.0),
+                duration: const Duration(milliseconds: 120),
+                child: Icon(Icons.chevron_right_rounded, size: 15,
+                    color: sel ? _T.blue : _T.slate400),
+              ),
+            ],
+          ),
         ),
       ),
     );
