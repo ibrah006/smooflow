@@ -1712,7 +1712,7 @@ class _PrimaryButton extends StatelessWidget {
       color: disabled? color.withOpacity(0.5) : color,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: disabled? () {} : onTap,
+        onTap: disabled? null : onTap,
         borderRadius: BorderRadius.circular(_T.r),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 11),
