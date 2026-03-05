@@ -694,13 +694,11 @@ class _BatchInventoryPanel extends StatelessWidget {
             decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: _T.slate100))),
             child: Row(children: [
-              const SizedBox(width: 8),
               Expanded(flex: 3, child: _ColHdr('BARCODE')),
               Expanded(flex: 2, child: _ColHdr('RECEIVED')),
               Expanded(flex: 2, child: _ColHdr('QTY IN')),
               Expanded(flex: 2, child: _ColHdr('CONSUMED')),
-              Expanded(flex: 2, child: _ColHdr('REMAINING')),
-              const SizedBox(width: 8),
+              // Expanded(flex: 2, child: _ColHdr('REMAINING')),
             ]),
           ),
           // Batch rows
@@ -801,25 +799,25 @@ class _BatchRowState extends State<_BatchRow> {
           child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
 
             // FIFO rank badge
-            Container(
-              width: 20, height: 20,
-              decoration: BoxDecoration(
-                color: sel ? _T.blue : _T.slate100,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Center(child: Text('${widget.fifoRank}',
-                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
-                      color: sel ? _T.white : _T.slate400))),
-            ),
-            const SizedBox(width: 8),
+            // Container(
+            //   width: 20, height: 20,
+            //   decoration: BoxDecoration(
+            //     color: sel ? _T.blue : _T.slate100,
+            //     borderRadius: BorderRadius.circular(5),
+            //   ),
+            //   child: Center(child: Text('${widget.fifoRank}',
+            //       style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
+            //           color: sel ? _T.white : _T.slate400))),
+            // ),
+            // const SizedBox(width: 8),
 
             // Barcode / ref
             Expanded(flex: 3, child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start, children: [
               if (b.barcode != null)
                 Row(children: [
-                  const Icon(Icons.qr_code_rounded, size: 10, color: _T.slate400),
-                  const SizedBox(width: 4),
+                  // const Icon(Icons.qr_code_rounded, size: 10, color: _T.slate400),
+                  // const SizedBox(width: 4),
                   Flexible(child: Text(
                     b.barcode!.length > 14
                         ? '${b.barcode!.substring(0,14)}…'
@@ -857,13 +855,13 @@ class _BatchRowState extends State<_BatchRow> {
                     color: widget.consumed > 0 ? _T.red : _T.slate300))),
 
             // Remaining + status
-            Expanded(flex: 2, child: Row(children: [
-              Text(_fmtStock(widget.remaining),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
-                      color: pillColor)),
-              const SizedBox(width: 5),
-              _StockPill(label: pillLabel, color: pillColor, bg: pillBg),
-            ])),
+            // Expanded(flex: 2, child: Row(children: [
+            //   Text(_fmtStock(widget.remaining),
+            //       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
+            //           color: pillColor)),
+            //   const SizedBox(width: 5),
+            //   _StockPill(label: pillLabel, color: pillColor, bg: pillBg),
+            // ])),
 
             // Chevron
             const SizedBox(width: 4),
@@ -1134,9 +1132,6 @@ class _BatchIdlePane extends StatelessWidget {
     ]),
   );
 }
-
-
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMMIT BADGE — shown on stock-out rows
