@@ -219,7 +219,7 @@ class _ManageMaterialsScreenState
               decoration: const BoxDecoration(color: _T.white, border: Border(right: BorderSide(color: _T.slate200))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _T.slate200))),
                   child: Row(children: [
                     _StatChip(value: '$totalMaterials', label: 'Total',       color: _T.slate500, bg: _T.slate100),
@@ -555,13 +555,26 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
           color: _T.white,
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
           child: Row(children: [
-            _KpiChip(label: 'Received',  value: '${_fmtStock(totalReceived)} ${m.unitShort}',  color: _T.blue,  bg: _T.blue50.withValues(alpha: 0.5)),
-            const SizedBox(width: 8),
-            _KpiChip(label: 'Consumed',  value: '${_fmtStock(totalConsumed)} ${m.unitShort}',  color: _T.red,   bg: _T.red50.withValues(alpha: 0.5)),
-            const SizedBox(width: 8),
-            _KpiChip(label: 'Remaining', value: '${_fmtStock(totalRemaining)} ${m.unitShort}', color: stockColor, bg: stockBg.withValues(alpha: 0.5)),
-            const SizedBox(width: 8),
-            _KpiChip(label: 'Batches',   value: '${batches.length}',                           color: _T.purple, bg: _T.purple50.withValues(alpha: 0.5)),
+            // _KpiChip(label: 'Received',  value: '${_fmtStock(totalReceived)} ${m.unitShort}',  color: _T.blue,  bg: _T.blue50.withValues(alpha: 0.5)),
+            // const SizedBox(width: 8),
+            // _KpiChip(label: 'Consumed',  value: '${_fmtStock(totalConsumed)} ${m.unitShort}',  color: _T.red,   bg: _T.red50.withValues(alpha: 0.5)),
+            // const SizedBox(width: 8),
+            Expanded(
+              flex: 55,
+              child: Wrap(
+                children: [
+                  _KpiChip(label: 'Total Remaining', value: '${_fmtStock(totalRemaining)} ${m.unitShort}', color: stockColor, bg: stockBg.withValues(alpha: 0.5)),
+                ],
+              )
+            ),
+            // SizedBox(width: 3),
+            // Container(width: 1, color: _T.slate200, height: 40),
+            // Expanded(
+            //   flex: 45,
+            //   child: SizedBox()
+            // )
+            // const SizedBox(width: 8),
+            // _KpiChip(label: 'Batches',   value: '${batches.length}',                           color: _T.purple, bg: _T.purple50.withValues(alpha: 0.5)),
           ]),
         ),
 
