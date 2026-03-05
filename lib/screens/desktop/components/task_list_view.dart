@@ -198,21 +198,22 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   // ── Derived: are we in single-project mode? ────────────────────────────────
   bool get _singleProject => widget.selectedProjectId != null;
 
-  /// The project column should only show when "All Projects" is selected.
+  /// When the detail panel is open only 'date' and 'task' are shown so the
+  /// list columns don't compete with the panel for space. The full column
+  /// state is restored the moment the panel closes — nothing is mutated,
+  /// this is purely derived from widget.isDetailOpen.
+  static const _kDetailCols = {'date', 'task'};
+
   Set<String> get _effectiveVisible {
     final base = widget.isDetailOpen
-        ? _kMandatoryIds
-        : {..._kMandatoryIds, ..._visibleOptional, };
+        ? _kDetailCols
+        : {..._kMandatoryIds, ..._visibleOptional};
 
-    // if (!_singleProject) {
-    //   // Strip 'project' from whatever is showing
-    //   return base.add('project');
-    // }
-    return {
-      ...base,
-      // Show the project column when all tasks are viewed
-      if (!_singleProject) 'project'
-    };
+    if (_singleProject) {
+      // Strip 'project' from whatever is showing
+      return base.difference({'project'});
+    }
+    return base;
   }
 
   Project? get _activeProject => widget.selectedProjectId == null
@@ -451,6 +452,24 @@ class _ProjectHeader extends StatelessWidget {
                 letterSpacing: -0.2,
               ),
             ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(99),
+                border:       Border.all(color: _T.slate200),
+              ),
+              child: const Text(
+                'Filtered',
+                style: TextStyle(
+                  fontSize:   10,
+                  fontWeight: FontWeight.w600,
+                  color:      _T.slate500,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
           ] else ...[
             const Icon(Icons.folder_open_outlined, size: 15, color: _T.slate400),
             const SizedBox(width: 8),
@@ -553,39 +572,34 @@ class _ToggleTabState extends State<_ToggleTab> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: widget.isActive
-                  ? _T.white
-                  : (_hovered ? _T.slate50 : Colors.transparent),
+                ? _T.white
+                : (_hovered ? _T.slate50 : Colors.transparent),
             borderRadius: radius,
+            boxShadow: widget.isActive
+                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                : null,
           ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              boxShadow: widget.isActive
-                  ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                  : null,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(
+              widget.icon,
+              size:  13,
+              color: widget.isActive ? _T.blue : _T.slate400,
             ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(
-                widget.icon,
-                size:  13,
-                color: widget.isActive ? _T.blue : _T.slate400,
+            const SizedBox(width: 5),
+            Text(
+              widget.label,
+              style: TextStyle(
+                fontSize:   11.5,
+                fontWeight: FontWeight.w600,
+                color:      widget.isActive ? _T.ink : _T.slate500,
               ),
-              const SizedBox(width: 5),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize:   11.5,
-                  fontWeight: FontWeight.w600,
-                  color:      widget.isActive ? _T.ink : _T.slate500,
-                ),
-              ),
-            ]),
-          ),
+            ),
+          ]),
         ),
       ),
     );
@@ -691,7 +705,6 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
 
   @override
   Widget build(BuildContext context) {
-
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final avail = constraints.maxWidth;
@@ -719,7 +732,7 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
                   : Curves.easeIn.transform(_ac.isAnimating ? (1 - _ac.value) : 0.0);
               return SizedBox(
                 width: w,
-                child: w < 1 ? (const SizedBox.shrink())
+                child: w < 1 ? const SizedBox.shrink()
                     : widget.builder(col, opacity.clamp(0.0, 1.0)),
               );
             }),
