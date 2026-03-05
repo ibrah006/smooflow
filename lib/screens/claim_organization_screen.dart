@@ -303,16 +303,16 @@ class _ClaimOrganizationScreenState
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
-                    late final route;
-                    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-                      // route = AppRoutes.designDashboard;
-                      route = AppRoutes.adminDesktopDashboardScreen;
-                    } else {
-                      // route = AppRoutes.admin;
-                      route = AppRoutes.productionDashboard;
-                    }
-                    AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
+                    AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+                    // late final route;
+                    // if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+                    //   // route = AppRoutes.designDashboard;
+                    //   route = AppRoutes.adminDesktopDashboardScreen;
+                    // } else {
+                    //   // route = AppRoutes.admin;
+                    //   route = AppRoutes.productionDashboard;
+                    // }
+                    // AppRoutes.navigateAndRemoveUntil(context, route, predicate: (Route<dynamic> route) => false);
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey.shade200),
