@@ -18,8 +18,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/connection_status_banner.dart';
 import 'package:smooflow/core/api/websocket_clients/member_websocket.dart';
 import 'package:smooflow/core/models/member.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/table_view_mode.dart';
+import 'package:smooflow/enums/invitation_send_satus.dart';
+import 'package:smooflow/extensions/email.dart';
+import 'package:smooflow/providers/invitation_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/desktop/components/error_view.dart';
 import 'package:smooflow/screens/desktop/components/kpi_card.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
@@ -1631,6 +1636,7 @@ class _RoleBadge extends StatelessWidget {
       case 'manager':  return _T.blue;
       case 'designer': return _T.green;
       case 'delivery': return _T.amber;
+      case 'accounts': return _T.ink2;
       default:         return _T.slate400;
     }
   }
@@ -1641,6 +1647,7 @@ class _RoleBadge extends StatelessWidget {
       case 'manager':  return _T.blue50;
       case 'designer': return _T.green50;
       case 'delivery': return _T.amber50;
+      case 'accounts': return _T.ink3.withOpacity(0.1);
       default:         return _T.slate100;
     }
   }
@@ -1712,7 +1719,7 @@ class _PrimaryButton extends StatelessWidget {
       color: disabled? color.withOpacity(0.5) : color,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: disabled? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(_T.r),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 11),
@@ -1785,60 +1792,654 @@ class _OutlineButton extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ROLE METADATA  (identical to invite_member_screen.dart)
+// ─────────────────────────────────────────────────────────────────────────────
+class _Role {
+  final String   value;
+  final String   label;
+  final String   description;
+  final Color    color;
+  final Color    bg;
+  final IconData icon;
+  const _Role({
+    required this.value,    required this.label,
+    required this.description,
+    required this.color,    required this.bg,
+    required this.icon,
+  });
+}
+
+final _kRoles = [
+  _Role(
+    value: 'admin',       label: 'Admin',
+    description: 'Full access',
+    color: _T.blue,       bg: _T.blue50,
+    icon: Icons.shield_outlined,
+  ),
+  _Role(
+    value: 'design',      label: 'Design',
+    description: 'Design department',
+    color: _T.purple,     bg: _T.purple50,
+    icon: Icons.palette_outlined,
+  ),
+  _Role(
+    value: 'production',  label: 'Production',
+    description: 'Print & production',
+    color: _T.amber,      bg: _T.amber50,
+    icon: Icons.print_outlined,
+  ),
+  _Role(
+    value: 'accounts',  label: 'Accounts',
+    description: 'Accounts department',
+    color: _T.ink2,      bg: _T.ink2.withOpacity(0.1),
+    icon: Icons.account_tree_sharp,
+  ),
+  _Role(
+    value: 'delivery',    label: 'Delivery',
+    description: 'Handle deliveries',
+    color: _T.green,      bg: _T.green50,
+    icon: Icons.local_shipping_outlined,
+  ),
+  _Role(
+    value: 'viewer',      label: 'Viewer',
+    description: 'Read-only',
+    color: _T.slate500,   bg: _T.slate100,
+    icon: Icons.visibility_outlined,
+  ),
+];
+
+_Role? _roleByValue(String? v) =>
+    v == null ? null : _kRoles.cast<_Role?>()
+        .firstWhere((r) => r?.value == v, orElse: () => null);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INVITE MEMBER BOTTOM SHEET
 // ─────────────────────────────────────────────────────────────────────────────
-class _InviteMemberSheet extends StatelessWidget {
+class _InviteMemberSheet extends ConsumerStatefulWidget {
   final Member? existing;
   const _InviteMemberSheet({this.existing});
 
   @override
+  ConsumerState<_InviteMemberSheet> createState() =>
+      _InviteMemberSheetState();
+}
+
+class _InviteMemberSheetState
+    extends ConsumerState<_InviteMemberSheet> {
+  // ── Form state ─────────────────────────────────────────────────────────────
+  final _emailCtrl  = TextEditingController();
+  final _emailFocus = FocusNode();
+  String? _selectedRole;
+  bool    _busy     = false;
+
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) {
+      // Pre-populate role from existing member
+      _selectedRole = widget.existing!.role;
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _emailFocus.dispose();
+    super.dispose();
+  }
+
+  // ── INVITE LOGIC (lifted verbatim from InviteMemberScreen._send) ───────────
+  Future<void> _sendInvite() async {
+    final email = _emailCtrl.text.toLowerCase().trim();
+
+    // Own-email guard
+    if (email == LoginService.currentUser?.email) {
+      _snack("You can't invite yourself.", isError: true);
+      return;
+    }
+    // Empty / invalid
+    if (email.isEmpty || !email.isEmail) {
+      _snack('Enter a valid email address.', isError: true);
+      return;
+    }
+    // Role not selected
+    if (_selectedRole == null) {
+      _snack('Please select a role for this member.', isError: true);
+      return;
+    }
+
+    final orgFuture = ref.read(
+        organizationNotifierProvider.notifier).getCurrentOrganization;
+    final org = await orgFuture;
+
+    // Private domain mismatch
+    if (email.isPrivateEmail &&
+        org.privateDomain != null &&
+        email != org.privateDomain) {
+      _snack(
+        "This email's domain doesn't match your organisation's private domain.",
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() => _busy = true);
+    HapticFeedback.lightImpact();
+
+    final result = await ref
+        .read(invitationNotifierProvider.notifier)
+        .sendInvitation(email: email, role: _selectedRole);
+
+    setState(() => _busy = false);
+
+    switch (result) {
+      case InvitationSendStatus.success:
+        HapticFeedback.mediumImpact();
+        if (mounted) Navigator.of(context).pop();
+        _snack('Invitation sent to $email', isError: false);
+      case InvitationSendStatus.alreadyPending:
+        _snack(
+          'An invitation to this person is already pending.',
+          isError: true,
+        );
+      default:
+        _snack('Failed to send invitation. Please try again.', isError: true);
+    }
+  }
+
+  // ── EDIT ROLE LOGIC ────────────────────────────────────────────────────────
+  Future<void> _saveRole() async {
+    if (_selectedRole == null) {
+      _snack('Please select a role.', isError: true);
+      return;
+    }
+    if (_selectedRole == widget.existing!.role) {
+      // Nothing changed — dismiss silently
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() => _busy = true);
+    HapticFeedback.lightImpact();
+
+    try {
+      // TODO
+      // await ref
+      //     .read(memberNotifierProvider.notifier)
+      //     .updateMemberRole(widget.existing!.id, _selectedRole!);
+      HapticFeedback.mediumImpact();
+      if (mounted) Navigator.of(context).pop();
+      _snack('Role updated to ${_roleByValue(_selectedRole)?.label ?? _selectedRole}.', isError: false);
+    } catch (e) {
+      _snack(e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _snack(String msg, {required bool isError}) {
+    // Show on the root scaffold, not the sheet (sheet may already be popping)
+    final messenger = ScaffoldMessenger.maybeOf(
+        Navigator.of(context, rootNavigator: true).context)
+        ?? ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(
+      content: Row(children: [
+        Icon(
+          isError
+              ? Icons.error_outline_rounded
+              : Icons.check_circle_outline_rounded,
+          size: 15, color: Colors.white,
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: Text(msg,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500))),
+      ]),
+      backgroundColor: _T.ink,
+      behavior:        SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r)),
+      duration: const Duration(seconds: 4),
+    ));
+  }
+
+  // ── BUILD ──────────────────────────────────────────────────────────────────
+  @override
   Widget build(BuildContext context) {
+    final role = _roleByValue(_selectedRole);
+
     return Container(
-      color: Colors.transparent,
-      child: AnimatedScale(
-        scale: 1.0,
-        duration: const Duration(milliseconds: 300),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: _T.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+      decoration: const BoxDecoration(
+        color:        _T.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(_T.rXl)),
+      ),
+      // Handle + sheet content
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+        // ── Drag handle ────────────────────────────────────────────────
+        Center(child: Container(
+          margin: const EdgeInsets.only(top: 12, bottom: 4),
+          width: 36, height: 4,
+          decoration: BoxDecoration(
+              color: _T.slate200,
+              borderRadius: BorderRadius.circular(2)),
+        )),
+
+        // ── Topbar row ─────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 12, 0),
+          child: Row(children: [
+            // Icon badge
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color:        _isEdit ? _T.purple50 : _T.blue50,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                    color: (_isEdit ? _T.purple : _T.blue).withOpacity(0.2)),
+              ),
+              child: Icon(
+                _isEdit
+                    ? Icons.manage_accounts_outlined
+                    : Icons.person_add_outlined,
+                size: 15,
+                color: _isEdit ? _T.purple : _T.blue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isEdit ? 'Edit Role' : 'Invite Member',
+                  style: const TextStyle(fontSize: 15,
+                      fontWeight: FontWeight.w700, color: _T.ink,
+                      letterSpacing: -0.2),
+                ),
+                Text(
+                  _isEdit
+                      ? 'Change the role for ${widget.existing!.name}'
+                      : 'Send a role-specific invitation',
+                  style: const TextStyle(fontSize: 10.5,
+                      color: _T.slate400, fontWeight: FontWeight.w500),
+                ),
+              ],
+            )),
+            // Close button
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Navigator.of(context).pop(),
+                borderRadius: BorderRadius.circular(_T.r),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: const Icon(Icons.close_rounded,
+                      size: 18, color: _T.slate400),
+                ),
+              ),
+            ),
+          ]),
+        ),
+
+        // ── Divider ────────────────────────────────────────────────────
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Divider(height: 1, color: _T.slate100),
+        ),
+
+        // ── Body (scrollable for small screens) ────────────────────────
+        Flexible(child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+              20, 0, 20,
+              MediaQuery.of(context).viewInsets.bottom + 24),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                existing != null ? 'Edit Member' : 'Invite Member',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: _T.ink,
+
+              // ── Edit mode: member identity card ───────────────────────
+              if (_isEdit) ...[
+                _MemberIdentityCard(member: widget.existing!),
+                const SizedBox(height: 20),
+              ],
+
+              // ── Invite mode: email field ──────────────────────────────
+              if (!_isEdit) ...[
+                const _FieldLabel('Email address'),
+                const SizedBox(height: 7),
+                _SheetTextField(
+                  controller:   _emailCtrl,
+                  focusNode:    _emailFocus,
+                  hintText:     'colleague@domain.com',
+                  prefixIcon:   Icons.alternate_email_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // ── Role picker (both modes) ───────────────────────────────
+              const _FieldLabel('Role'),
+              const SizedBox(height: 10),
+              _RolePickerGrid(
+                selected:   _selectedRole,
+                onSelected: (r) => setState(() => _selectedRole = r),
+              ),
+              const SizedBox(height: 24),
+
+              // ── CTA ───────────────────────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : (_isEdit ? _saveRole : _sendInvite),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _isEdit
+                        ? (role?.color ?? _T.purple)
+                        : _T.blue,
+                    disabledBackgroundColor: _T.slate100,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.rLg)),
+                  ),
+                  icon: _busy
+                      ? const SizedBox(width: 16, height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.5, color: Colors.white))
+                      : Icon(
+                          _isEdit
+                              ? Icons.check_rounded
+                              : Icons.send_rounded,
+                          size: 16),
+                  label: Text(
+                    _busy
+                        ? (_isEdit ? 'Saving…' : 'Sending…')
+                        : (_isEdit ? 'Save Role' : 'Send Invitation'),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Placeholder for form
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _T.slate50,
-                  borderRadius: BorderRadius.circular(_T.rLg),
-                  border: Border.all(color: _T.slate200),
-                ),
-                child: const Text(
-                  'Invite/Edit form to be implemented',
-                  style: TextStyle(color: _T.slate400),
-                ),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
+        )),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEMBER IDENTITY CARD  (edit mode only)
+// Shows avatar + name + email + current role pill so context is clear.
+// ─────────────────────────────────────────────────────────────────────────────
+class _MemberIdentityCard extends StatelessWidget {
+  final Member member;
+  const _MemberIdentityCard({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final role = _roleByValue(member.role);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color:        _T.slate50,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border:       Border.all(color: _T.slate200),
+      ),
+      child: Row(children: [
+        // Avatar circle
+        Container(
+          width: 42, height: 42,
+          decoration: BoxDecoration(
+            color:  role?.bg ?? _T.blue50,
+            shape:  BoxShape.circle,
+            border: Border.all(
+                color: (role?.color ?? _T.blue).withOpacity(0.25)),
+          ),
+          child: Center(child: Text(
+            member.initials,
+            style: TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w800,
+              color: role?.color ?? _T.blue,
+            ),
+          )),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(member.name,
+                style: const TextStyle(fontSize: 13.5,
+                    fontWeight: FontWeight.w700, color: _T.ink)),
+            const SizedBox(height: 2),
+            Text(member.email,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11.5, color: _T.slate400,
+                    fontWeight: FontWeight.w500)),
+          ],
+        )),
+        const SizedBox(width: 10),
+        // Current role pill
+        if (role != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color:        role.bg,
+              borderRadius: BorderRadius.circular(99),
+              border:       Border.all(color: role.color.withOpacity(0.3)),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(role.icon, size: 11, color: role.color),
+              const SizedBox(width: 4),
+              Text(role.label,
+                  style: TextStyle(fontSize: 10.5,
+                      fontWeight: FontWeight.w700, color: role.color)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROLE PICKER GRID
+// 2-column grid of cards — more spacious than the horizontal scroll used on
+// mobile, works cleanly at desktop sheet widths (typically 480–640 px).
+// Each card: icon badge · label · description · animated selection state.
+// ─────────────────────────────────────────────────────────────────────────────
+class _RolePickerGrid extends StatelessWidget {
+  final String?               selected;
+  final ValueChanged<String?> onSelected;
+  const _RolePickerGrid({required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount:   2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing:  10,
+      childAspectRatio: 3.2,
+      shrinkWrap:       true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: _kRoles.map((role) {
+        final active = selected == role.value;
+        return _RoleCard(role: role, active: active,
+            onTap: () => onSelected(active ? null : role.value));
+      }).toList(),
+    );
+  }
+}
+
+class _RoleCard extends StatefulWidget {
+  final _Role        role;
+  final bool         active;
+  final VoidCallback onTap;
+  const _RoleCard({required this.role, required this.active,
+      required this.onTap});
+  @override State<_RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<_RoleCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.role;
+    final a = widget.active;
+
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          decoration: BoxDecoration(
+            color: a
+                ? r.bg
+                : _hovered
+                    ? _T.slate50
+                    : _T.white,
+            borderRadius: BorderRadius.circular(_T.rLg),
+            border: Border.all(
+              color: a
+                  ? r.color.withOpacity(0.55)
+                  : _hovered
+                      ? _T.slate300
+                      : _T.slate200,
+              width: a ? 1.5 : 1,
+            ),
+            boxShadow: a
+                ? [BoxShadow(
+                    color:      r.color.withOpacity(0.10),
+                    blurRadius: 10,
+                    offset:     const Offset(0, 3))]
+                : null,
+          ),
+          child: Row(children: [
+            // Icon badge
+            Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                color:        a ? r.color.withOpacity(0.15) : _T.slate100,
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Icon(r.icon, size: 13,
+                  color: a ? r.color : _T.slate400),
+            ),
+            const SizedBox(width: 10),
+            // Labels
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:  MainAxisAlignment.center,
+              children: [
+                Text(r.label, style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: a ? FontWeight.w700 : FontWeight.w600,
+                  color: a ? r.color : _T.ink3,
+                )),
+                Text(r.description, style: TextStyle(
+                  fontSize: 10.5,
+                  color: a ? r.color.withOpacity(0.65) : _T.slate400,
+                  fontWeight: FontWeight.w400,
+                )),
+              ],
+            )),
+            // Check mark
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 140),
+              opacity: a ? 1.0 : 0.0,
+              child: Icon(Icons.check_circle_rounded,
+                  size: 15, color: r.color),
+            ),
+          ]),
         ),
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEXT FIELD  (focus-animated, matches _SmooField from other screens)
+// ─────────────────────────────────────────────────────────────────────────────
+class _SheetTextField extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode?            focusNode;
+  final String                hintText;
+  final IconData              prefixIcon;
+  final TextInputType?        keyboardType;
+  const _SheetTextField({
+    required this.controller,
+    required this.hintText,
+    required this.prefixIcon,
+    this.focusNode,
+    this.keyboardType,
+  });
+  @override State<_SheetTextField> createState() => _SheetTextFieldState();
+}
+
+class _SheetTextFieldState extends State<_SheetTextField> {
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode?.addListener(_onFocus);
+  }
+  void _onFocus() =>
+      setState(() => _focused = widget.focusNode?.hasFocus ?? false);
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_onFocus);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+    duration: const Duration(milliseconds: 150),
+    decoration: BoxDecoration(
+      color:        _focused ? _T.white : _T.slate50,
+      borderRadius: BorderRadius.circular(_T.r),
+      border:       Border.all(
+        color: _focused ? _T.blue : _T.slate200,
+        width: _focused ? 1.5 : 1,
+      ),
+    ),
+    child: TextField(
+      controller:   widget.controller,
+      focusNode:    widget.focusNode,
+      keyboardType: widget.keyboardType,
+      style: const TextStyle(
+          fontSize: 13.5, color: _T.ink, fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        hintText:  widget.hintText,
+        hintStyle: const TextStyle(
+            fontSize: 13.5, color: _T.slate300, fontWeight: FontWeight.w400),
+        prefixIcon: Icon(widget.prefixIcon, size: 16, color: _T.slate400),
+        border:           InputBorder.none,
+        contentPadding:   const EdgeInsets.symmetric(
+            vertical: 12, horizontal: 14),
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIELD LABEL
+// ─────────────────────────────────────────────────────────────────────────────
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w700,
+          color: _T.slate500, letterSpacing: 0.2));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
