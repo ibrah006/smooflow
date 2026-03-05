@@ -642,7 +642,7 @@ class _ReportsBody extends StatelessWidget {
       const SizedBox(height: 24),
 
       // ── Row 1: Monthly trend (wide) + Donut split ──────────────────
-      IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(flex: 3, child: _Card(
           icon:      Icons.stacked_bar_chart_rounded,
           iconColor: _T.blue,
@@ -668,11 +668,11 @@ class _ReportsBody extends StatelessWidget {
             matColor:  matColor,
           ),
         )),
-      ])),
+      ]),
       const SizedBox(height: 16),
 
-      // ── Row 2: By Project + By Client ─────────────────────────────
-      IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // // ── Row 2: By Project + By Client ─────────────────────────────
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: _Card(
           icon:      Icons.folder_open_outlined,
           iconColor: _T.green,
@@ -700,32 +700,35 @@ class _ReportsBody extends StatelessWidget {
             matUnit:  matUnit,
           ),
         )),
-      ])),
+      ]),
       const SizedBox(height: 16),
 
-      // ── Row 3: Stock Health + Efficiency table ─────────────────────
-      IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Expanded(flex: 2, child: _Card(
-          icon:      Icons.inventory_2_outlined,
-          iconColor: _T.amber,
-          iconBg:    _T.amber50,
-          title:     'Stock Health',
-          subtitle:  'Current stock vs minimum threshold',
-          child:     _StockHealthChart(allMats: allMats),
-        )),
-        const SizedBox(width: 16),
-        Expanded(flex: 3, child: _Card(
-          icon:      Icons.analytics_outlined,
-          iconColor: _T.orange,
-          iconBg:    _T.orange50,
-          title:     'Avg Consumption per Job',
-          subtitle:  'Useful for estimating material for upcoming runs',
-          child:     _EfficiencyTable(
-            materials: data.materials,
-            matColor:  matColor,
-          ),
-        )),
-      ])),
+      // // ── Row 3: Stock Health + Efficiency table ─────────────────────
+      SizedBox(
+        height: 290,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(flex: 2, child: _Card(
+            icon:      Icons.inventory_2_outlined,
+            iconColor: _T.amber,
+            iconBg:    _T.amber50,
+            title:     'Stock Health',
+            subtitle:  'Current stock vs minimum threshold',
+            child:     _StockHealthChart(allMats: allMats),
+          )),
+          const SizedBox(width: 16),
+          Expanded(flex: 3, child: _Card(
+            icon:      Icons.analytics_outlined,
+            iconColor: _T.orange,
+            iconBg:    _T.orange50,
+            title:     'Avg Consumption per Job',
+            subtitle:  'Useful for estimating material for upcoming runs',
+            child:     _EfficiencyTable(
+              materials: data.materials,
+              matColor:  matColor,
+            ),
+          )),
+        ]),
+      ),
       const SizedBox(height: 16),
 
       // ── Row 4: Top jobs table (full width) ─────────────────────────
@@ -1490,7 +1493,7 @@ class _TopJobsTable extends StatelessWidget {
           Expanded(flex: 3, child: _TblHeader('PROJECT')),
           Expanded(flex: 2, child: _TblHeader('BARCODE')),
           Expanded(flex: 2, child: _TblHeader('QUANTITY')),
-          SizedBox(width: 40),
+          SizedBox(width: 12),
         ]),
       ),
       const Divider(height: 1, color: _T.slate100),
@@ -1512,17 +1515,17 @@ class _TopJobsTable extends StatelessWidget {
           ),
           child: Row(children: [
             // Rank badge
-            Container(
-              width: 20, height: 20,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color:        i < 3 ? c.withOpacity(0.15) : _T.slate100,
-                shape:        BoxShape.circle,
-              ),
-              child: Center(child: Text('${i + 1}',
-                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
-                      color: i < 3 ? c : _T.slate400))),
-            ),
+            // Container(
+            //   width: 20, height: 20,
+            //   margin: const EdgeInsets.only(right: 10),
+            //   decoration: BoxDecoration(
+            //     color:        i < 3 ? c.withOpacity(0.15) : _T.slate100,
+            //     shape:        BoxShape.circle,
+            //   ),
+            //   child: Center(child: Text('${i + 1}',
+            //       style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800,
+            //           color: i < 3 ? c : _T.slate400))),
+            // ),
             Expanded(flex: 3, child: Row(children: [
               Container(width: 7, height: 7,
                   margin: const EdgeInsets.only(right: 7),
@@ -1555,13 +1558,15 @@ class _TopJobsTable extends StatelessWidget {
                       : t.barcode!,
                   style: const TextStyle(fontSize: 10.5, color: _T.slate400,
                       fontFamily: 'monospace'))
-              : const Text('—', style: TextStyle(fontSize: 11, color: _T.slate300))),
+              : Padding(
+                padding: const EdgeInsets.only(left:12.0),
+                child: const Text('—', style: TextStyle(fontSize: 11, color: _T.slate300)),
+              )),
             Expanded(flex: 2, child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text('${_fmtQty(t.quantity)} ${matUnit(t.materialId)}',
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800,
-                        color: c)),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
               ],
             )),
           ]),
