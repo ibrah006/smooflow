@@ -718,31 +718,28 @@ class _ReportsBody extends StatelessWidget {
       const SizedBox(height: 16),
 
       // // ── Row 3: Stock Health + Efficiency table ─────────────────────
-      SizedBox(
-        height: 290,
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Expanded(flex: 2, child: _Card(
-            icon:      Icons.inventory_2_outlined,
-            iconColor: _T.amber,
-            iconBg:    _T.amber50,
-            title:     'Stock Health',
-            subtitle:  'Current stock vs minimum threshold',
-            child:     _StockHealthChart(allMats: allMats),
-          )),
-          const SizedBox(width: 16),
-          Expanded(flex: 3, child: _Card(
-            icon:      Icons.analytics_outlined,
-            iconColor: _T.orange,
-            iconBg:    _T.orange50,
-            title:     'Avg Consumption per Job',
-            subtitle:  'Useful for estimating material for upcoming runs',
-            child:     _EfficiencyTable(
-              materials: data.materials,
-              matColor:  matColor,
-            ),
-          )),
-        ]),
-      ),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(flex: 2, child: _Card(
+          icon:      Icons.inventory_2_outlined,
+          iconColor: _T.amber,
+          iconBg:    _T.amber50,
+          title:     'Stock Health',
+          subtitle:  'Current stock vs minimum threshold',
+          child:     _StockHealthChart(allMats: allMats),
+        )),
+        const SizedBox(width: 16),
+        Expanded(flex: 3, child: _Card(
+          icon:      Icons.analytics_outlined,
+          iconColor: _T.orange,
+          iconBg:    _T.orange50,
+          title:     'Avg Consumption per Job',
+          subtitle:  'Useful for estimating material for upcoming runs',
+          child:     _EfficiencyTable(
+            materials: data.materials,
+            matColor:  matColor,
+          ),
+        )),
+      ]),
       const SizedBox(height: 16),
 
       // ── Row 4: Top jobs table (full width) ─────────────────────────
@@ -1781,7 +1778,7 @@ class _EfficiencyTable extends StatelessWidget {
   Widget build(BuildContext context) {
     if (materials.isEmpty) return _noData('No job data to analyse');
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
       // Header
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
