@@ -352,19 +352,19 @@ class _MaterialListTileState extends State<_MaterialListTile> {
           ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(_T.r),
               border: Border.all(color: selected ? _T.blue.withOpacity(0.35) : _T.slate200, width: selected ? 1.5 : 1),
             ),
             child: Row(children: [
-              Container(width: 36, height: 36,
+              Container(width: 26, height: 26,
                 decoration: BoxDecoration(color: selected ? _T.blue.withOpacity(0.10) : _T.slate100, borderRadius: BorderRadius.circular(9)),
                 child: Icon(Icons.layers_outlined, size: 17, color: selected ? _T.blue : _T.slate500)),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(m.name, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? _T.blue : _T.ink)),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: selected ? _T.blue : _T.ink)),
                 Text('${_fmtStock(m.currentStock)} ${m.unitShort}',
                     style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
               ])),
