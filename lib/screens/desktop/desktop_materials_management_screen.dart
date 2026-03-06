@@ -357,20 +357,27 @@ class _MaterialListTileState extends State<_MaterialListTile> {
               borderRadius: BorderRadius.circular(_T.r),
               border: Border.all(color: selected ? _T.blue.withOpacity(0.35) : _T.slate200, width: selected ? 1.5 : 1),
             ),
-            child: Row(children: [
-              Container(width: 26, height: 26,
-                decoration: BoxDecoration(color: selected ? _T.blue.withOpacity(0.10) : _T.slate100, borderRadius: BorderRadius.circular(9)),
-                child: Icon(Icons.layers_outlined, size: 17, color: selected ? _T.blue : _T.slate500)),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(m.name, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: selected ? _T.blue : _T.ink)),
-                Text('${_fmtStock(m.currentStock)} ${m.unitShort}',
-                    style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
-              ])),
-              _StockPill(label: stockLabel, color: stockColor, bg: stockBg),
-              if (selected) ...[const SizedBox(width: 6), const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue)],
-            ]),
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                Row(children: [
+                  Container(width: 26, height: 26,
+                    decoration: BoxDecoration(color: selected ? _T.blue.withOpacity(0.10) : _T.slate100, borderRadius: BorderRadius.circular(9)),
+                    child: Icon(Icons.layers_outlined, size: 17, color: selected ? _T.blue : _T.slate500)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(m.name, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: selected ? _T.blue : _T.ink)),
+                    Text('${_fmtStock(m.currentStock)} ${m.unitShort}',
+                        style: const TextStyle(fontSize: 11.5, color: _T.slate400)),
+                  ])),
+                  if (selected) ...[const SizedBox(width: 6), const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue)],
+                ]),
+                Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: _StockPill(label: stockLabel, color: stockColor, bg: stockBg, collapsed: !_hovered)),
+              ],
+            ),
           ),
         ),
       ),
@@ -1726,16 +1733,17 @@ class _FieldLabel extends StatelessWidget {
 // MISC SHARED WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 class _StockPill extends StatelessWidget {
-  final String label; final Color color, bg;
-  const _StockPill({required this.label, required this.color, required this.bg});
+  final String label; final Color color, bg; final bool collapsed;
+  const _StockPill({required this.label, required this.color, required this.bg, this.collapsed = false});
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => AnimatedContainer(
+    duration: Duration(milliseconds: 350),
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 5, height: 5, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 5),
-      Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      if (!collapsed) ... [const SizedBox(width: 5),
+      Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),]
     ]),
   );
 }
