@@ -374,7 +374,7 @@ class _MaterialListTileState extends State<_MaterialListTile> {
                   if (selected) ...[const SizedBox(width: 6), const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue)],
                 ]),
                 Container(
-                  padding: EdgeInsets.only(right: 12),
+                  padding: EdgeInsets.only(right: 12, left: 5),
                   child: _StockPill(label: stockLabel, color: stockColor, bg: stockBg, collapsed: !_hovered)),
               ],
             ),
