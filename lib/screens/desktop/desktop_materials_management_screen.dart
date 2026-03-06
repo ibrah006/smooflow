@@ -373,8 +373,8 @@ class _MaterialListTileState extends State<_MaterialListTile> {
                   ])),
                   if (selected) ...[const SizedBox(width: 6), const Icon(Icons.chevron_right_rounded, size: 16, color: _T.blue)],
                 ]),
-                Padding(
-                  padding: EdgeInsets.only(right: 10),
+                Container(
+                  padding: EdgeInsets.only(right: 12),
                   child: _StockPill(label: stockLabel, color: stockColor, bg: stockBg, collapsed: !_hovered)),
               ],
             ),
@@ -1736,8 +1736,7 @@ class _StockPill extends StatelessWidget {
   final String label; final Color color, bg; final bool collapsed;
   const _StockPill({required this.label, required this.color, required this.bg, this.collapsed = false});
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: Duration(milliseconds: 350),
+  Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
