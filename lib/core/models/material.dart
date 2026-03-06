@@ -175,6 +175,22 @@ class MaterialModel {
       return Color(0xFF10B981);
     }
   }
+  
+  String get unitLong {
+    switch (measureType) {
+      case MeasureType.running_meter:
+        return "Running Meter";
+      case MeasureType.item_quantity:
+        return "Item Quantity";
+      case MeasureType.kilograms:
+        return "Kilogram";
+      case MeasureType.liters:
+        "Liters";
+      default:
+        return "Square Meter";
+    }
+    return "";
+  }
 
   String get unit {
     switch (measureType) {

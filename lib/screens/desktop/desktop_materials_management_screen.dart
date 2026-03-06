@@ -1242,7 +1242,7 @@ class _StockAdjustDialogState extends State<_StockAdjustDialog> {
               ),
               const SizedBox(height: 16),
               _NumField(
-                controller: _qtyCtrl, label: 'Quantity', hint: 'e.g. 5',
+                controller: _qtyCtrl, label: m.unitLong, hint: 'e.g. 5',
                 required: true, suffix: m.unitShort, onChanged: (_) => setState(() {}),
                 error: _submitted && !_qtyOk ? 'Enter a valid quantity' : null,
               ),
