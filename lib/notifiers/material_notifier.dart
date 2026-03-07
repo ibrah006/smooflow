@@ -355,6 +355,10 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   /// but realistically we're just about to load it into memory
   /// and updating its source batch's stock availability
   void commitStockOutTransaction({required StockTransaction stockOutTransaction}) {
+    final updatedMaterial = state.materials.firstWhere((material)=> material.id == stockOutTransaction.materialId);
+
+    updatedMaterial.currentStock -= stockOutTransaction.quantity;
+
     state.transactions = state.transactions.map((transaction) {
       if (
         transaction.barcode
@@ -371,7 +375,8 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
 
     // Add new Stock out transaction to memory
     state.copyWith(
-      transaction: stockOutTransaction
+      transaction: stockOutTransaction,
+      material: updatedMaterial
     );
   }
 }
