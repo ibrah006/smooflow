@@ -21,7 +21,7 @@ class Task {
   int? _runs;
   double? _productionQuantity;
   late final TaskPriority _priority;
-  @Deprecated("TASK NOW HAS MANY-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
+  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   String? _stockTransactionBarcode;
 
   DateTime? _actualProductionStartTime;
@@ -179,7 +179,7 @@ class Task {
   DateTime? get actualProductionEndTime => _actualProductionEndTime;
   int? get runs => _runs;
   double? get productionQuantity=> _productionQuantity;
-  @Deprecated("TASK NOW HAS MANY-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
+  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
   DateTime get createdAt=> _createdAt;
   String? get ref=> _ref;
@@ -243,7 +243,7 @@ class Task {
     _productionQuantity = productionQuantity;
   }
 
-  @Deprecated("TASK NOW HAS MANY-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
+  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   set stockTransactionBarcode(String? stockTransactionBarcode) {
     _stockTransactionBarcode = stockTransactionBarcode;
   }
