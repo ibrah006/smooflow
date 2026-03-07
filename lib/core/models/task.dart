@@ -327,7 +327,7 @@ class Task {
       size: json["size"],
       quantity: json["quantity"],
       billingStatus: json["billingStatus"] == null? BillingStatus.pending : BillingStatus.values.byName(json["billingStatus"]),
-      stockTransactionIds: (json["stckTransactions"] as List).map((e)=> e['id'] as String).toList()
+      stockTransactionIds: (json["stockTransactions"] as List?)?.map((e)=> e['id'] as String).toList()?? []
     );
   }
 
