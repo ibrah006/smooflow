@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/company.dart';
+import 'package:smooflow/extensions/color_hex.dart';
 
 import 'user.dart';
 
@@ -78,13 +79,10 @@ class Project {
     required this.progressLogs,
     required this.materialLogs,
     required this.progressLogLastModifiedAt,
-    required this.createdAt
+    required this.createdAt,
+    required this.color
   }) : _status = status,
-       taskLastModifiedAt = null,
-       color = [Color(0xFF2563EB),
-    Color(0xFF8B5CF6),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B)][Random().nextInt(4)];
+       taskLastModifiedAt = null;
 
   Project.create({
     required this.name,
@@ -154,7 +152,8 @@ class Project {
               )
               .toList() ??
           [],
-      createdAt: DateTime.parse(json['createdAt'])
+      createdAt: DateTime.parse(json['createdAt']),
+      color: (json['color'] as String).toColor()!
     );
   }
 
