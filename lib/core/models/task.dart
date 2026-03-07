@@ -23,6 +23,7 @@ class Task {
   late final TaskPriority _priority;
   @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   String? _stockTransactionBarcode;
+  List<String> _stockTransactionIds;
 
   DateTime? _actualProductionStartTime;
   DateTime? _actualProductionEndTime;
@@ -80,7 +81,8 @@ class Task {
     required String? ref,
     required String? size,
     required int? quantity,
-    required BillingStatus billingStatus
+    required BillingStatus billingStatus,
+    required List<String> stockTransactionIds
   }) : _id = id,
        _name = name,
        _description = description,
@@ -99,7 +101,8 @@ class Task {
        _ref = ref,
        _size = size,
        _quantity = quantity,
-       _billingStatus = billingStatus {
+       _billingStatus = billingStatus,
+       _stockTransactionIds = stockTransactionIds {
     _status = TaskStatus.values.byName(status);
     _productionDuration = productionDuration;
     _actualProductionStartTime = actualProductionStartTime;
@@ -141,7 +144,8 @@ class Task {
        _size = size,
        _quantity = quantity,
        _createdAt = DateTime.now(),
-       _billingStatus = BillingStatus.pending;
+       _billingStatus = BillingStatus.pending,
+       _stockTransactionIds = [];
 
   // To ensure toSet gives no duplicates
   @override
@@ -181,6 +185,7 @@ class Task {
   double? get productionQuantity=> _productionQuantity;
   @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
+  List<String> get stockTransactionIds=> _stockTransactionIds;
   DateTime get createdAt=> _createdAt;
   String? get ref=> _ref;
   String? get size=> _size;
@@ -321,7 +326,8 @@ class Task {
       ref: json["ref"],
       size: json["size"],
       quantity: json["quantity"],
-      billingStatus: json["billingStatus"] == null? BillingStatus.pending : BillingStatus.values.byName(json["billingStatus"])
+      billingStatus: json["billingStatus"] == null? BillingStatus.pending : BillingStatus.values.byName(json["billingStatus"]),
+      stockTransactionIds: (json["stckTransactions"] as List).map((e)=> e['id'] as String).toList()
     );
   }
 
@@ -339,7 +345,8 @@ class Task {
       _ref = original._ref,
       _size = original._size,
       _quantity = original._quantity,
-      _billingStatus = original._billingStatus {
+      _billingStatus = original._billingStatus,
+      _stockTransactionIds = original._stockTransactionIds {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -362,7 +369,7 @@ class Task {
   @Deprecated(
     "This constructor is deprecated and will be removed in future versions",
   )
-  Task.empty() : progressLogIds = [], workActivityLogs = [], _billingStatus = BillingStatus.pending;
+  Task.empty() : progressLogIds = [], workActivityLogs = [], _billingStatus = BillingStatus.pending, _stockTransactionIds = [];
 
   // Copy With method
   @Deprecated(
