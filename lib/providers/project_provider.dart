@@ -27,6 +27,18 @@ final projectByIdProvider = Provider.family<Project?, String>((ref, id) {
   }
 });
 
+final projectByIdFutureProvider = Provider.family<Future<Project?>, String>((ref, id) async {
+  final projects = ref.watch(projectNotifierProvider);
+  try {
+    return projects.firstWhere(
+      (project) => project.id == id,
+      // orElse: () => null,
+    );
+  } catch (e) {
+    return ref.read(projectNotifierProvider.notifier).getProjectbyId(id: id);
+  }
+});
+
 // It has a placeholder value, it gets overridden in the project screen
 final currentProjectProvider = Provider<Project>((ref) {
   throw UnimplementedError('Override this in your screen.');

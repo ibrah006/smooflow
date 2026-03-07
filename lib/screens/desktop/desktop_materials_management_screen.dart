@@ -18,8 +18,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/material.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -437,11 +441,12 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
 
   // ── Consumptions against a specific batch ────────────────────────────────
   List<StockTransaction> _consumptions(
-      List<StockTransaction> all, String batchId) =>
+      List<StockTransaction> all, String batchBarcode) =>
       all
+        // All the stock out that sourced from this barcode
         .where((t) =>
             t.type == TransactionType.stockOut &&
-            t.id == batchId)
+            t.barcode == batchBarcode)
         .toList()
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -609,7 +614,8 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
               : _BatchDetailPanel(
                   key:          ValueKey(_selectedBatch!.id),
                   batch:        _selectedBatch!,
-                  consumptions: _consumptions(all, _selectedBatch!.id),
+                  // Barcode is never NULL
+                  consumptions: _consumptions(all, _selectedBatch!.barcode!),
                   unit:         m.unitShort,
                   remaining:    _remaining(_selectedBatch!, all),
                 )),
@@ -1077,16 +1083,44 @@ class _BatchInfoRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSUMPTION ROW  — a single StockOut event inside the batch detail
 // ─────────────────────────────────────────────────────────────────────────────
-class _ConsumptionRow extends StatelessWidget {
+class _ConsumptionRow extends ConsumerStatefulWidget {
   final StockTransaction txn;
   final String           unit;
   final bool             isLast;
-  const _ConsumptionRow({required this.txn, required this.unit,
+  _ConsumptionRow({required this.txn, required this.unit,
       required this.isLast});
 
   @override
+  ConsumerState<_ConsumptionRow> createState() => _ConsumptionRowState();
+}
+
+class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
+  late final Future<Project?> projectFuture;
+
+  late final Future<Task?> taskFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      taskFuture = ref.watch(taskByIdProvider(widget.txn.taskId!));
+
+      taskFuture.asStream().listen((data) {
+        if (data != null) {
+          projectFuture = ref.watch(projectByIdFutureProvider(data.projectId));
+        } else {
+          projectFuture = Future.delayed(Duration.zero).then((value) {
+            return null;
+          });
+        }
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final dt = txn.createdAt;
+    final dt = widget.txn.createdAt;
     final now = DateTime.now();
     final dateStr = (dt.year == now.year && dt.month == now.month && dt.day == now.day)
         ? 'Today ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}'
@@ -1106,11 +1140,11 @@ class _ConsumptionRow extends StatelessWidget {
           Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text('−${_fmtStock(txn.quantity)} $unit',
+              Text('−${_fmtStock(widget.txn.quantity)} ${widget.unit}',
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
                       color: _T.red)),
               const SizedBox(width: 8),
-              if (txn.committed)
+              if (widget.txn.committed)
                 _CommitBadge(committed: true)
               else
                 _CommitBadge(committed: false),
@@ -1119,20 +1153,20 @@ class _ConsumptionRow extends StatelessWidget {
             Text(dateStr, style: const TextStyle(fontSize: 11, color: _T.slate400)),
           ])),
           // Project / task context
-          if (txn.projectId != null)
+          if (widget.txn.projectId != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(color: _T.slate100,
                   borderRadius: BorderRadius.circular(5),
                   border: Border.all(color: _T.slate200)),
-              child: Text(txn.projectId!,
+              child: Text(widget.txn.projectId!,
                   style: const TextStyle(fontSize: 10,
                       fontWeight: FontWeight.w600, color: _T.slate500,
                       fontFamily: 'monospace')),
             ),
         ]),
       ),
-      if (!isLast)
+      if (!widget.isLast)
         const Divider(height: 1, color: _T.slate100, indent: 14, endIndent: 14),
     ]);
   }

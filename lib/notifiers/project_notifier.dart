@@ -65,6 +65,16 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     }
   }
 
+  // Get project by ID
+  Future<Project?> getProjectbyId({
+    // Can be found in [OrganizationState].projectsLastAdded
+    required String id,
+  }) async {
+    final project = await _repo.projectById(id);
+
+    return project;
+  }
+
   @Deprecated("When there are too many projects to be loaded into the memory, this method won't be efficient. As we may or may not have all the active projects in memory. Use [activeProjectsLengthValue] instead")
   int get activeProjectsLength {
     return state
