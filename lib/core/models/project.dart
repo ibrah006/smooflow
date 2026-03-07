@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -173,6 +174,7 @@ class Project {
       'client': client.toJson(),
       'priority': priority,
       'progressLogs': progressLogs.map((logId) => {"id": logId}).toList(),
+      "color": color.toHex()
     };
   }
 
