@@ -406,7 +406,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
           task.actualProductionStartTime = DateTime.now();
           task.runs = runs;
           task.productionQuantity = productionQuantity.toDouble();
-          task.stockTransactionBarcode = barcode;
+          // task.stockTransactionBarcode = barcode;
+          task.stockTransactionIds.add(stockOutTransaction!.id);
         }
         return task;
       }).toList()

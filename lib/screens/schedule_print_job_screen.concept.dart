@@ -377,12 +377,14 @@ class _SchedulePrintJobScreenState extends ConsumerState<SchedulePrintJobScreen>
           runs = task.runs ?? 1;
           productionQuantity = task.productionQuantity?.toInt()?? 0;
           selectedMaterialId = task.materialId?.isEmpty ?? true ? null : task.materialId;
+          throw "DEV ERR 102. Set (component) selectedStockItemBarcode is @deprecated. Account for possible multiple stock transactions for a task.";
           selectedStockItemBarcode = task.stockTransactionBarcode;
           scheduledStartTime = task.productionStartTime;
         });
 
         selectedPrinterId = null;
-        stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
+        // stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionBarcode != null);
+        stockItemAlreadySpecified = selectedTask != null && (selectedTask!.stockTransactionIds.isNotEmpty);
 
         showModalBottomSheet(
           context: context,
