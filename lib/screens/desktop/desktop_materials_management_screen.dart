@@ -1116,6 +1116,7 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
           });
         }
       });
+      setState(() {});
     });
   }
 
@@ -1126,6 +1127,13 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
     final dateStr = (dt.year == now.year && dt.month == now.month && dt.day == now.day)
         ? 'Today ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}'
         : '${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}';
+
+    try {
+      taskFuture;
+    }catch(e) {
+      // Not initialize yet
+      return SizedBox();
+    }
 
     return Column(children: [
       Padding(
@@ -1145,10 +1153,10 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
                       color: _T.red)),
               const SizedBox(width: 8),
-              if (widget.txn.committed)
-                _CommitBadge(committed: true)
-              else
-                _CommitBadge(committed: false),
+              // if (widget.txn.committed)
+              //   _CommitBadge(committed: true)
+              // else
+              //   _CommitBadge(committed: false),
             ]),
             const SizedBox(height: 2),
             Text(dateStr, style: const TextStyle(fontSize: 11, color: _T.slate400)),
