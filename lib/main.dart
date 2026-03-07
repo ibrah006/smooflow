@@ -42,7 +42,8 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
+        // Slate
+        scaffoldBackgroundColor: Color(0xFFF8FAFC),
         colorScheme: ColorScheme(
           brightness: Brightness.light, // You can choose light or dark here
           // primary: Colors.indigo, // Main button color

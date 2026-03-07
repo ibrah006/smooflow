@@ -223,7 +223,6 @@ class _AdminDesktopDashboardScreenState
       child: LoadingOverlay(
         isLoading: _isInitLoading,
         child: Scaffold(
-          backgroundColor: _T.slate50,
           body: Focus(
             autofocus: true,
             onKeyEvent: _handleKey,
