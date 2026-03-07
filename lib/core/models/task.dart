@@ -178,6 +178,7 @@ class Task {
   DateTime? get actualProductionEndTime => _actualProductionEndTime;
   int? get runs => _runs;
   double? get productionQuantity=> _productionQuantity;
+  @Deprecated("TASK NOW HAS MANY-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
   String? get stockTransactionBarcode=> _stockTransactionBarcode;
   DateTime get createdAt=> _createdAt;
   String? get ref=> _ref;
