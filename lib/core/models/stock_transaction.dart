@@ -41,7 +41,6 @@ class StockTransaction {
   final String? projectId;
   final String createdById;
   final DateTime createdAt;
-  @Deprecated("STOCK_TRANSACTION NOW HAS MANY-MANY RELATION WITH TASK. To be completely replaced by task IDs")
   final int? taskId;
   late bool _committed;
 
