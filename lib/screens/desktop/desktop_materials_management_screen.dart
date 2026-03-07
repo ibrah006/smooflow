@@ -11,6 +11,7 @@
 
 import 'dart:io';
 
+import 'package:card_loading/card_loading.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -1153,16 +1154,40 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
             Text(dateStr, style: const TextStyle(fontSize: 11, color: _T.slate400)),
           ])),
           // Project / task context
-          if (widget.txn.projectId != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: _T.slate100,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: _T.slate200)),
-              child: Text(widget.txn.projectId!,
-                  style: const TextStyle(fontSize: 10,
-                      fontWeight: FontWeight.w600, color: _T.slate500,
-                      fontFamily: 'monospace')),
+          if (widget.txn.taskId != null)
+            FutureBuilder(
+              future: taskFuture,
+              builder: (context, asyncSnapshot) {
+
+                final task = asyncSnapshot.data;
+
+                if (task == null) {
+                  return CardLoading(height: 20, width: double.infinity);
+                }
+
+                return FutureBuilder(
+                  future: projectFuture,
+                  builder: (context, asyncSnapshot) {
+
+                    final project = asyncSnapshot.data;
+
+                    if (project == null) {
+                      return CardLoading(height: 20, width: double.infinity);
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: _T.slate100,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(color: _T.slate200)),
+                      child: Text(project.name,
+                          style: const TextStyle(fontSize: 10,
+                              fontWeight: FontWeight.w600, color: _T.slate500,
+                              fontFamily: 'monospace')),
+                    );
+                  }
+                );
+              }
             ),
         ]),
       ),
