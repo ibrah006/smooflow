@@ -168,12 +168,7 @@ class _AdminDesktopDashboardScreenState
   }
 
   List<Task> get _pipelineTasks =>
-      ref.watch(taskNotifierProvider).tasks.where((t) =>
-          t.status == TaskStatus.pending ||
-          t.status == TaskStatus.designing ||
-          t.status == TaskStatus.waitingApproval ||
-          t.status == TaskStatus.clientApproved ||
-          t.status == TaskStatus.printing).toList();
+      ref.watch(taskNotifierProvider).tasks;
 
   List<Project> get _projects => ref.watch(projectNotifierProvider);
   List<Member>  get _members  => ref.watch(memberNotifierProvider).members;
@@ -757,8 +752,7 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
 
     final totalActive = tasks
         .where((t) =>
-            t.status != TaskStatus.clientApproved &&
-            t.status != TaskStatus.printing)
+            !(t.status == TaskStatus.completed || t.status == TaskStatus.blocked))
         .length;
 
     final inReview =
