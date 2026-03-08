@@ -46,7 +46,11 @@ class MemberNotifier extends StateNotifier<MemberState> {
   }
 
   Future<void> updateMemberRole(String memberId, String newRole) async {
-    repo.updateMemberRole(memberId, newRole);
+    await repo.updateMemberRole(memberId, newRole);
+    
+    state = state.copyWith(
+      member: state.members.firstWhere((member)=> member.id == memberId)..role = newRole
+    );
   }
 
   /// Optional: clear state (e.g., on logout)

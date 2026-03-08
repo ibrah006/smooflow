@@ -8,18 +8,22 @@ class Member {
   final String id;
   final String name;
   final String email;
-  final String role;
+  String _role;
+
+  String get role => _role;
   final DateTime createdAt;
   final List<int> activeTasks;
+
+  set role (String role)=> _role = role;
 
   Member({
     required this.id,
     required this.name,
     required this.email,
-    required this.role,
+    required String role,
     required this.createdAt,
     required this.activeTasks
-  }) {
+  }) : _role = role {
     color = [Color(0xFF2563EB),
     Color(0xFF8B5CF6),
     Color(0xFF10B981),
