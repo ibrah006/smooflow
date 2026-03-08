@@ -21,6 +21,7 @@ class WelcomeToOrganizationDialog extends ConsumerStatefulWidget {
 
 class _WelcomeToOrganizationDialogState
     extends ConsumerState<WelcomeToOrganizationDialog> {
+  @Deprecated("No longer let users who join organization pick roles themselves")
   String? selectedRole;
 
   @override
@@ -81,53 +82,53 @@ class _WelcomeToOrganizationDialogState
                   const SizedBox(height: 24),
 
                   // Dropdown
-                  DropdownButtonFormField<String>(
-                    icon: Transform.rotate(
-                      angle: pi / 2,
-                      child: Icon(Icons.chevron_right),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: "Select Role",
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1.25,
-                        ),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1.25,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade200,
-                          width: 1.25,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                    ),
-                    items: List.generate(departments.length, (index) {
-                      final status = departments.elementAt(index).name;
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(
-                          "${status[0].toUpperCase()}${status.substring(1)}",
-                        ),
-                      );
-                    }),
-                    onChanged: (value) {
-                      selectedRole = value;
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                  // DropdownButtonFormField<String>(
+                  //   icon: Transform.rotate(
+                  //     angle: pi / 2,
+                  //     child: Icon(Icons.chevron_right),
+                  //   ),
+                  //   decoration: InputDecoration(
+                  //     hintText: "Select Role",
+                  //     enabledBorder: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(10),
+                  //       borderSide: BorderSide(
+                  //         color: Colors.grey.shade200,
+                  //         width: 1.25,
+                  //       ),
+                  //     ),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(10),
+                  //       borderSide: BorderSide(
+                  //         color: Colors.grey.shade200,
+                  //         width: 1.25,
+                  //       ),
+                  //     ),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(10),
+                  //       borderSide: BorderSide(
+                  //         color: Colors.grey.shade200,
+                  //         width: 1.25,
+                  //       ),
+                  //     ),
+                  //     contentPadding: const EdgeInsets.symmetric(
+                  //       horizontal: 12,
+                  //       vertical: 14,
+                  //     ),
+                  //   ),
+                  //   items: List.generate(departments.length, (index) {
+                  //     final status = departments.elementAt(index).name;
+                  //     return DropdownMenuItem(
+                  //       value: status,
+                  //       child: Text(
+                  //         "${status[0].toUpperCase()}${status.substring(1)}",
+                  //       ),
+                  //     );
+                  //   }),
+                  //   onChanged: (value) {
+                  //     selectedRole = value;
+                  //   },
+                  // ),
+                  // const SizedBox(height: 24),
 
                   // Continue button
                   SizedBox(
@@ -137,21 +138,21 @@ class _WelcomeToOrganizationDialogState
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       onPressed: () async {
-                        selectedRole = selectedRole?.trim();
+                        // selectedRole = selectedRole?.trim();
 
-                        if (selectedRole == null ||
-                            (selectedRole?.isEmpty ?? false)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Please select a Role")),
-                          );
-                          return;
-                        }
+                        // if (selectedRole == null ||
+                        //     (selectedRole?.isEmpty ?? false)) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(content: Text("Please select a Role")),
+                        //   );
+                        //   return;
+                        // }
                         // join organization
                         await ref
                             .read(organizationNotifierProvider.notifier)
                             .joinOrganization(
                               widget.organization.id,
-                              role: selectedRole!,
+                              role: "member",
                             );
 
                         final state = ref.read(organizationNotifierProvider);

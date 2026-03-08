@@ -200,6 +200,8 @@ class AppRoutes {
             routeName = AppRoutes.desktopMaterials;
           } else if (role == "design") {
             routeName = AppRoutes.designDashboard;
+          } else {
+            // routeName = AppRoutes.viewerHomeDesktop;
           }
         } else {
           // Mobile Home
