@@ -601,7 +601,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
             allTxns:         all,
             unit:            m.unitShort,
             selectedBatchId: _selectedBatch?.id,
-            selectedBatchBarcode: _selectedBatch!.barcode!,
+            selectedBatchBarcode: _selectedBatch?.barcode!,
             remaining:       (b) => _remaining(b, all),
             onSelect: (b) => setState(() =>
                 _selectedBatch = (_selectedBatch?.id == b.id) ? null : b),
@@ -664,7 +664,7 @@ class _BatchInventoryPanel extends StatelessWidget {
   final double Function(StockTransaction) remaining;
   final ValueChanged<StockTransaction> onSelect;
   final Widget kpi;
-  final String selectedBatchBarcode;
+  final String? selectedBatchBarcode;
 
   const _BatchInventoryPanel({
     required this.batches,
