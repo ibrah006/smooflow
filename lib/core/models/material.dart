@@ -66,7 +66,6 @@ class MaterialModel {
        createdById = LoginService.currentUser!.id;
 
   factory MaterialModel.fromJson(Map<String, dynamic> json) {
-    print("material json: ${json}");
     return MaterialModel(
       id: json['id'],
       name: json['name'].toString().toLowerCase(),
