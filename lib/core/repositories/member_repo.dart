@@ -43,9 +43,12 @@ class MemberRepo {
     }
   }
 
-  Future<void> updateMemberRole(String memberId) async {
+  Future<void> updateMemberRole(String memberId, String newRole) async {
     final response = await ApiClient.http.put(
       "organizations/members/$memberId/role",
+      body: {
+        "role": newRole
+      }
     );
 
     if (response.statusCode != 200) {

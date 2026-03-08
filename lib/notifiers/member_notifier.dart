@@ -45,8 +45,8 @@ class MemberNotifier extends StateNotifier<MemberState> {
     }
   }
 
-  Future<void> updateMemberRole(String memberId) async {
-    repo.updateMemberRole(memberId);
+  Future<void> updateMemberRole(String memberId, String newRole) async {
+    repo.updateMemberRole(memberId, newRole);
   }
 
   /// Optional: clear state (e.g., on logout)
