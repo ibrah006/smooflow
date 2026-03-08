@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// member_home_screen.dart
+// desktop_viweer_home_screen.dart
 //
 // Viewer / Member role home screen — read-only workspace overview.
 //
@@ -23,8 +23,10 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS  (identical to admin_desktop_dashboard.dart)
@@ -57,41 +59,6 @@ class _T {
   static const rXl = 16.0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtDateFull(DateTime d) {
-  const days   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
-}
-
-String _statusLabel(TaskStatus s) {
-  switch (s) {
-    case TaskStatus.pending:         return 'Pending';
-    case TaskStatus.designing:       return 'In Design';
-    case TaskStatus.waitingApproval: return 'Awaiting Approval';
-    case TaskStatus.clientApproved:  return 'Client Approved';
-    case TaskStatus.printing:        return 'Printing';
-    case TaskStatus.completed:            return 'Done';
-    default:                         return 'Unknown';
-  }
-}
-
-Color _statusColor(TaskStatus s) {
-  switch (s) {
-    case TaskStatus.pending:         return _T.slate400;
-    case TaskStatus.designing:       return _T.blue;
-    case TaskStatus.waitingApproval: return _T.amber;
-    case TaskStatus.clientApproved:  return _T.green;
-    case TaskStatus.printing:        return const Color(0xFF8B5CF6);
-    case TaskStatus.done:            return _T.green;
-    default:                         return _T.slate400;
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -116,7 +83,7 @@ class _MemberHomeScreenState extends ConsumerState<MemberHomeScreen> {
   List<Project> get _activeProjects => _projects.where((p) {
     final tasks = _tasksFor(p.id);
     return tasks.any((t) =>
-        t.status != TaskStatus.done);
+        t.status != TaskStatus.completed);
   }).toList();
 
   @override
@@ -341,7 +308,7 @@ class _MemberTopbar extends StatelessWidget {
             decoration: const BoxDecoration(
                 color: _T.slate300, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(_fmtDateFull(now),
+        Text(fmtDate(now),
             style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
         const Spacer(),
         if (user != null)
@@ -573,7 +540,7 @@ class _ProjectCardState extends State<_ProjectCard> {
   bool _hovered = false;
 
   int get _total    => widget.tasks.length;
-  int get _done     => widget.tasks.where((t) => t.status == TaskStatus.done).length;
+  int get _done     => widget.tasks.where((t) => t.status == TaskStatus.completed).length;
   int get _active   => widget.tasks.where((t) =>
       t.status == TaskStatus.designing ||
       t.status == TaskStatus.printing).length;
@@ -583,22 +550,23 @@ class _ProjectCardState extends State<_ProjectCard> {
 
   double get _progress => _total == 0 ? 0 : _done / _total;
 
-  // Most common non-done status
-  TaskStatus? get _dominantStatus {
-    final active = widget.tasks.where((t) => t.status != TaskStatus.done);
-    if (active.isEmpty) return TaskStatus.done;
+  // Task representing the most common non-completed status
+  Task? get _dominantTask {
+    final active = widget.tasks.where((t) => t.status != TaskStatus.completed).toList();
+    if (active.isEmpty) return widget.tasks.isNotEmpty ? widget.tasks.first : null;
     final counts = <TaskStatus, int>{};
     for (final t in active) {
       counts[t.status] = (counts[t.status] ?? 0) + 1;
     }
-    return counts.entries
+    final dominantStatus = counts.entries
         .reduce((a, b) => a.value >= b.value ? a : b)
         .key;
+    return active.firstWhere((t) => t.status == dominantStatus);
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = _dominantStatus;
+    final dominantTask = _dominantTask;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -648,8 +616,8 @@ class _ProjectCardState extends State<_ProjectCard> {
                               color: _T.ink)),
                     ),
                     // Status chip
-                    if (status != null)
-                      _StatusChip(status: status),
+                    if (dominantTask != null)
+                      _StatusChip(task: dominantTask),
                   ]),
 
                   // Progress bar
@@ -730,17 +698,17 @@ class _ProjectCardState extends State<_ProjectCard> {
                             color: _T.slate400)),
                     const SizedBox(height: 8),
                     ...widget.tasks
-                        .where((t) => t.status != TaskStatus.done)
+                        .where((t) => t.status != TaskStatus.completed)
                         .take(3)
                         .map((t) => _TaskPreviewRow(task: t)),
                     if (widget.tasks
-                            .where((t) => t.status != TaskStatus.done)
+                            .where((t) => t.status != TaskStatus.completed)
                             .length >
                         3)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          '+ ${widget.tasks.where((t) => t.status != TaskStatus.done).length - 3} more tasks',
+                          '+ ${widget.tasks.where((t) => t.status != TaskStatus.completed).length - 3} more tasks',
                           style: const TextStyle(
                               fontSize: 11.5,
                               color: _T.slate400),
@@ -761,19 +729,20 @@ class _ProjectCardState extends State<_ProjectCard> {
 // STATUS CHIP
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatusChip extends StatelessWidget {
-  final TaskStatus status;
-  const _StatusChip({required this.status});
+  final Task task;
+  const _StatusChip({required this.task});
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(status);
+    final helper = TaskComponentHelper.get(task);
+    final color  = helper.color;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(99),
           border: Border.all(color: color.withOpacity(0.25))),
-      child: Text(_statusLabel(status),
+      child: Text(helper.label,
           style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
@@ -791,7 +760,8 @@ class _TaskPreviewRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(task.status);
+    final helper = TaskComponentHelper.get(task);
+    final color  = helper.color;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(children: [
@@ -811,7 +781,7 @@ class _TaskPreviewRow extends StatelessWidget {
                   color: _T.ink3)),
         ),
         const SizedBox(width: 8),
-        Text(_statusLabel(task.status),
+        Text(helper.label,
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
