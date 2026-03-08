@@ -63,14 +63,14 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class MemberHomeScreen extends ConsumerStatefulWidget {
-  const MemberHomeScreen({super.key});
+class DesktopViewerHomeScreen extends ConsumerStatefulWidget {
+  const DesktopViewerHomeScreen({super.key});
 
   @override
-  ConsumerState<MemberHomeScreen> createState() => _MemberHomeScreenState();
+  ConsumerState<DesktopViewerHomeScreen> createState() => _MemberHomeScreenState();
 }
 
-class _MemberHomeScreenState extends ConsumerState<MemberHomeScreen> {
+class _MemberHomeScreenState extends ConsumerState<DesktopViewerHomeScreen> {
   bool _isLoading = true;
   String? _selectedProjectId;
 

@@ -457,6 +457,9 @@ class AppRoutes {
       case viewerHomeMobile:
         screen = ViewerHomeScreen();
         break;
+      case viewerHomeDesktop:
+        screen = Desktop;
+        break;
       case accountsDashboard:
         screen = AccountsDashboardScreen();
         break;
