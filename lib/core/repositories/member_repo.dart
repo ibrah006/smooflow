@@ -45,7 +45,7 @@ class MemberRepo {
 
   Future<void> updateMemberRole(String memberId, String newRole) async {
     final response = await ApiClient.http.put(
-      "organizations/members/$memberId/role",
+      "/organizations/members/$memberId/role",
       body: {
         "role": newRole
       }
