@@ -18,6 +18,7 @@ import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/design_dashboard.concept.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
+import 'package:smooflow/screens/desktop/desktop_viewer_home_screen.dart';
 import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_start_print_job.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
@@ -458,7 +459,7 @@ class AppRoutes {
         screen = ViewerHomeScreen();
         break;
       case viewerHomeDesktop:
-        screen = Desktop;
+        screen = DesktopViewerHomeScreen();
         break;
       case accountsDashboard:
         screen = AccountsDashboardScreen();
