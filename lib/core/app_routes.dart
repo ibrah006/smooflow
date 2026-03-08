@@ -10,6 +10,7 @@ import 'package:smooflow/core/args/project_args.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/delivery_dashboard_screen.dart';
 import 'package:smooflow/screens/desktop/accounts_dashbaord.dart';
 import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
@@ -249,6 +250,9 @@ class AppRoutes {
         break;
       case joinOrganization:
         screen = JoinOrganizationScreen();
+        break;
+      case createJoinOrg:
+        screen = const CreateJoinOrganizationScreen();
         break;
       case createJoinOrgHelp:
         screen = const CreateJoinOrganizationHelpScreen();
