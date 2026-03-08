@@ -169,7 +169,8 @@ class AppRoutes {
   static const deliveryDashbaord = "/delivery/dashboard";
 
   // Viewer role home
-  static const viewerHome = "/viewer";
+  static const viewerHomeMobile = "/desktop/viewer";
+  static const viewerHomeDesktop = "/mobile/viewer";
 
   // Accounts dashboard
   static const accountsDashboard = "/desktop/accounts/dashboard";
@@ -203,7 +204,7 @@ class AppRoutes {
           } else if (role == "design") {
             routeName = AppRoutes.designDashboard;
           } else {
-            // routeName = AppRoutes.viewerHomeDesktop;
+            routeName = AppRoutes.viewerHomeDesktop;
           }
         } else {
           // Mobile Home
@@ -219,7 +220,7 @@ class AppRoutes {
             // routeName = AppRoutes.designDashboard;
             // No home route for design on mobile
           } else {
-            routeName = AppRoutes.viewerHome;
+            routeName = AppRoutes.viewerHomeMobile;
           }
 
           // // route = AppRoutes.admin;
@@ -453,7 +454,7 @@ class AppRoutes {
       case deliveryDashbaord:
         screen = DeliveryDashboardScreen();
         break;
-      case viewerHome:
+      case viewerHomeMobile:
         screen = ViewerHomeScreen();
         break;
       case accountsDashboard:
