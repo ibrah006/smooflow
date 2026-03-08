@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/args/claim_organization_args.dart';
+import 'package:smooflow/core/args/create_join_organization_args.dart';
 import 'package:smooflow/core/args/materials_preview_args.dart';
 import 'package:smooflow/core/args/printers_management_args.dart';
 import 'package:smooflow/core/args/project_args.dart';
@@ -252,7 +253,9 @@ class AppRoutes {
         screen = JoinOrganizationScreen();
         break;
       case createJoinOrg:
-        screen = const CreateJoinOrganizationScreen();
+        if (args is CreateJoinOrganizationArgs) {
+          screen = CreateJoinOrganizationScreen(autoInviteOrganization: args.autoInviteOrganization);
+        }
         break;
       case createJoinOrgHelp:
         screen = const CreateJoinOrganizationHelpScreen();
