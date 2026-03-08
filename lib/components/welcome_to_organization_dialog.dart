@@ -69,8 +69,8 @@ class _WelcomeToOrganizationDialogState
 
                   // Subtitle
                   Text(
-                    'You’ve successfully joined the organization.\n\n'
-                    'To get started, please select your role or department within the organization',
+                    'Connect with your team by joining your organization.\n\n'
+                    "Once you're in, you'll be able to collaborate on print jobs, manage materials, and track production together.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
