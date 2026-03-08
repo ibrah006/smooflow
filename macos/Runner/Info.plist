@@ -42,7 +42,5 @@
     <string>https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/mac/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string> -->
-	<key>com.apple.security.files.user-selected.read-only</key>
-	<true/>
 </dict>
 </plist>
