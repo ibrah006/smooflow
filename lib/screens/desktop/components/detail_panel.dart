@@ -289,6 +289,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onAdvance();
   }
 
+  /// DO NOT use this function to progress task to printing stage
   Future<void> _showMoveToNextStageDialog() async {
     late final TaskStatus nextStage;
     if (widget.task.status == TaskStatus.paused ||
@@ -296,13 +297,21 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       nextStage = TaskStatus.pending;
     } else if (widget.task.status == TaskStatus.completed) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No explicit next stage from current phase")));
+          const SnackBar(content: Text("No next stage from current phase")));
       return;
     } else {
       nextStage = widget.task.status.nextStage!;
     }
-    await ref.watch(taskNotifierProvider.notifier)
-        .progressStage(taskId: widget.task.id, newStatus: nextStage);
+
+    // await ref.watch(taskNotifierProvider.notifier)
+    //     .progressStage(taskId: widget.task.id, newStatus: nextStage);
+    await TaskProvider.setTaskState(
+      ref: ref,
+      taskId: widget.task.id,
+      printerId: null,
+      newStatus: nextStage
+    );
+
     setState(() {});
     widget.onAdvance();
   }
