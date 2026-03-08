@@ -833,6 +833,8 @@ class _MemberTableRow extends StatefulWidget {
 class _MemberTableRowState extends State<_MemberTableRow> {
   bool _hovered = false;
 
+  bool canUpdateRole(Member m)=> LoginService.currentUser!.email != m.email && ['admin', 'manager'].contains(LoginService.currentUser!.role.toLowerCase());
+
   @override
   Widget build(BuildContext context) {
     final m = widget.member;
@@ -930,7 +932,7 @@ class _MemberTableRowState extends State<_MemberTableRow> {
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (LoginService.currentUser!.email == m.email) SizedBox(width: 30)
+                          if (!canUpdateRole(m)) SizedBox(width: 30)
                           else _IconBtn(Icons.edit_outlined, widget.onEdit),
                           // const SizedBox(width: 4),
                           // _IconBtn(Icons.more_vert_rounded, () {}),
@@ -1213,6 +1215,8 @@ class _MemberDetailPanel extends StatelessWidget {
     this.onResendInvite,
   });
 
+  bool canUpdateRole(Member m)=> LoginService.currentUser!.email != m.email && ['admin', 'manager'].contains(LoginService.currentUser!.role.toLowerCase());
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   bool get _recentlyActive => true;
@@ -1423,7 +1427,7 @@ class _MemberDetailPanel extends StatelessWidget {
                   label: 'Edit Role',
                   color: _T.blue,
                   onTap: onEdit,
-                  disabled: true,
+                  disabled: !canUpdateRole(m),
                 ),
 
                 // Resend invite (optional)
