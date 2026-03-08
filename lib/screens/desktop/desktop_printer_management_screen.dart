@@ -100,6 +100,7 @@ class _DesktopManagePrintersScreenState
     extends ConsumerState<DesktopPrinterManagementScreen> {
   Printer? _selected;
   bool     _showCreate = false;
+  bool _loading = true;
 
   final _searchCtrl = TextEditingController();
   String get _q => _searchCtrl.text.trim().toLowerCase();
@@ -119,8 +120,10 @@ class _DesktopManagePrintersScreenState
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async{
-      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    Future.microtask(() async {
+    setState(() => _loading = true);                          
+      await ref.read(printerNotifierProvider.notifier).fetchPrinters();
+      if (mounted) setState(() => _loading = false);          
     });
   }
 
@@ -196,22 +199,24 @@ class _DesktopManagePrintersScreenState
 
                     // Rows
                     Expanded(
-                      child: filtered.isEmpty
-                          ? _EmptyListState(hasSearch: _q.isNotEmpty)
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                              itemCount: filtered.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 4),
-                              itemBuilder: (_, i) {
-                                final p = filtered[i];
-                                return _PrinterListTile(
-                                  printer:    p,
-                                  isSelected: _selected?.id == p.id,
-                                  onTap: () => _selectPrinter(p),
-                                );
-                              },
-                            ),
+                      child: _loading
+                          ? _PrinterListSkeleton()
+                          : filtered.isEmpty
+                              ? _EmptyListState(hasSearch: _q.isNotEmpty)
+                              : ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 4),
+                                  itemBuilder: (_, i) {
+                                    final p = filtered[i];
+                                    return _PrinterListTile(
+                                      printer:    p,
+                                      isSelected: _selected?.id == p.id,
+                                      onTap: () => _selectPrinter(p),
+                                    );
+                                  },
+                                ),
                     ),
                   ],
                 ),
@@ -1587,5 +1592,98 @@ class _FieldLabel extends StatelessWidget {
         ),
       ],
     ],
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRINTER LIST SKELETON — shown while fetchPrinters() is in flight
+// ─────────────────────────────────────────────────────────────────────────────
+class _PrinterListSkeleton extends StatefulWidget {
+  @override
+  State<_PrinterListSkeleton> createState() => _PrinterListSkeletonState();
+}
+
+class _PrinterListSkeletonState extends State<_PrinterListSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double>   _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync:    this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _anim,
+    builder: (_, __) {
+      final shimmer = Color.lerp(_T.slate100, _T.slate200, _anim.value)!;
+      final shimmerDark = Color.lerp(_T.slate200, _T.slate300, _anim.value)!;
+      return ListView.separated(
+        padding:          const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        itemCount:        6,
+        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        itemBuilder: (_, __) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color:        _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border:       Border.all(color: _T.slate200),
+          ),
+          child: Row(children: [
+            // Icon placeholder
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color:        shimmer,
+                borderRadius: BorderRadius.circular(9),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Name + nickname placeholders
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 11,
+                    width:  130,
+                    decoration: BoxDecoration(
+                      color:        shimmerDark,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Container(
+                    height: 9,
+                    width:  80,
+                    decoration: BoxDecoration(
+                      color:        shimmer,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Status pill placeholder
+            Container(
+              height: 22, width: 52,
+              decoration: BoxDecoration(
+                color:        shimmer,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ]),
+        ),
+      );
+    },
   );
 }

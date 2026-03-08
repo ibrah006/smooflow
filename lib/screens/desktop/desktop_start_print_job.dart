@@ -42,10 +42,8 @@ import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -105,6 +103,7 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
   // Kept across material changes so repeated selections don't re-fetch.
   final Map<String, List<StockTransaction>> _stockItems   = {};
   bool                                      _stockLoading = false;
+  bool                                      _printersLoading = false;
 
   // ── Usage ──────────────────────────────────────────────────────────────────
   final _qtyCtrl = TextEditingController();
@@ -237,38 +236,22 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
     });
   }
 
-  Future<void> _assignPrinter() async {
-
-    final printer = ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.id == _printer!.id);
-
-    // await ref.read(setTaskStateProvider(TaskStateParams(
-    //   id: selectedTask!.id,
-    //   printerId: printer.id,
-    //   stockTransactionBarcode: selectedTask!.stockTransactionBarcode,
-    //   newTaskStatus: TaskStatus.printing
-    // )));
-
-    await TaskProvider.setTaskState(
-      ref: ref,
-      taskId: widget.task.id,
-      printerId: printer.id,
-      newStatus: TaskStatus.printing,
-      materialId: _material!.id,
-      stockTransactionBarcode: _stockItem!.barcode,
-      stockOutQuantity: _qty!.toInt()
-    );
-  }
-
   Future<void> _submit() async {
     setState(() => _qtySubmitted = true);
     if (!_canSubmit || _submitting) return;
     setState(() => _submitting = true);
     try {
-
-      await _assignPrinter();        
-
-      setState(() {});
-
+      // TODO-4: implement real stock-out call, e.g.:
+      // await ref.read(materialNotifierProvider.notifier).stockOut(
+      //   barcode:   _stockItem!.barcode!,
+      //   quantity:  _qty!,
+      //   projectId: widget.task.projectId,
+      //   taskId:    widget.task.id,
+      // );
+      // await ref.read(printerNotifierProvider.notifier).startPrintJob(
+      //   taskId:    widget.task.id,
+      //   printerId: _printer!.id,
+      // );
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _submitting = false);
@@ -281,9 +264,10 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
     for (final c in [_materialSearchCtrl, _barcodeSearchCtrl, _qtyCtrl]) {
       c.addListener(() => setState(() {}));
     }
-
-    Future.microtask(() async{
-      await ref.watch(printerNotifierProvider.notifier).fetchPrinters();
+    Future.microtask(() async {
+      setState(() => _printersLoading = true);
+      await ref.read(printerNotifierProvider.notifier).fetchPrinters();
+      if (mounted) setState(() => _printersLoading = false);
     });
   }
 
@@ -334,9 +318,10 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
                   isDone:    _printer != null,
                 ),
                 child: _PrinterList(
-                  printers: _printers,
-                  selected: _printer,
-                  onSelect: (p) => setState(() => _printer = p),
+                  printers:  _printers,
+                  selected:  _printer,
+                  isLoading: _printersLoading,
+                  onSelect:  (p) => setState(() => _printer = p),
                 ),
               ),
             ),
@@ -604,11 +589,11 @@ class _ColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate100,
+                color:  isDone ? _T.green : _T.slate200,
                 shape:  BoxShape.circle,
               ),
               child: Center(child: Text(stepNum,
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: isDone ? _T.white : _T.slate400))),
+                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
             ),
             const SizedBox(width: 6),
             Text(title, style: const TextStyle(fontSize: 12.5,
@@ -690,11 +675,11 @@ class _MaterialColHeader extends StatelessWidget {
             Container(
               width: 16, height: 16,
               decoration: BoxDecoration(
-                color:  isDone ? _T.green : _T.slate100,
+                color:  isDone ? _T.green : _T.slate200,
                 shape:  BoxShape.circle,
               ),
-              child: Center(child: Text('2',
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: isDone ? _T.white : _T.slate400))),
+              child: Center(child: const Text('2',
+                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: _T.white))),
             ),
             const SizedBox(width: 6),
             Text(
@@ -745,14 +730,152 @@ class _MaterialColHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // PRINTER LIST
 // ─────────────────────────────────────────────────────────────────────────────
-class _PrinterList extends StatelessWidget {
-  final List<Printer> printers;
-  final Printer?      selected;
-  final ValueChanged<Printer> onSelect;
-  const _PrinterList({required this.printers, required this.selected, required this.onSelect});
+class _PrinterLoadingState extends StatefulWidget {
+  @override
+  State<_PrinterLoadingState> createState() => _PrinterLoadingStateState();
+}
+
+class _PrinterLoadingStateState extends State<_PrinterLoadingState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _fade =
+      Tween(begin: 0.4, end: 1.0).animate(
+        CurvedAnimation(parent: _ac, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Subtle instructional text
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10, left: 2),
+            child: FadeTransition(
+              opacity: _fade,
+              child: const Text(
+                'Fetching available printers…',
+                style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: _T.slate400),
+              ),
+            ),
+          ),
+          // Three skeleton tiles
+          ...List.generate(3, (i) => _SkeletonPrinterTile(
+            delay: Duration(milliseconds: i * 80),
+            ac: _ac,
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonPrinterTile extends StatelessWidget {
+  final Duration          delay;
+  final AnimationController ac;
+  const _SkeletonPrinterTile({required this.delay, required this.ac});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: AnimatedBuilder(
+        animation: ac,
+        builder: (_, __) {
+          // Stagger each tile slightly using a phase-shifted sine
+          final phase = (ac.value + delay.inMilliseconds / 1200.0) % 1.0;
+          final opacity = 0.35 + 0.45 * (1 - (phase - 0.5).abs() * 2).clamp(0.0, 1.0);
+          return Opacity(
+            opacity: opacity,
+            child: Container(
+              height: 58,
+              decoration: BoxDecoration(
+                color:        _T.slate100,
+                borderRadius: BorderRadius.circular(_T.r),
+                border:       Border.all(color: _T.slate200),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(children: [
+                // Icon placeholder
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color:        _T.slate200,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Text placeholders
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment:  MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 10,
+                        width:  120,
+                        decoration: BoxDecoration(
+                          color:        _T.slate200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 8,
+                        width:  80,
+                        decoration: BoxDecoration(
+                          color:        _T.slate200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Status pill placeholder
+                Container(
+                  height: 18,
+                  width:  60,
+                  decoration: BoxDecoration(
+                    color:        _T.slate200,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PrinterList extends StatelessWidget {
+  final List<Printer>         printers;
+  final Printer?              selected;
+  final bool                  isLoading;
+  final ValueChanged<Printer> onSelect;
+  const _PrinterList({required this.printers, required this.selected,
+    required this.isLoading, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return _PrinterLoadingState();
+    }
     if (printers.isEmpty) {
       return _EmptyState(
         icon:     Icons.print_disabled_outlined,
@@ -798,7 +921,7 @@ class _PrinterTileState extends State<_PrinterTile> {
         onTap: widget.onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: selected ? _T.blue50 : _hovered ? _T.slate50 : Colors.transparent,
+            color:        selected ? _T.blue50 : _hovered ? _T.slate50 : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: AnimatedContainer(
@@ -1078,32 +1201,37 @@ class _BarcodeResultTileState extends State<_BarcodeResultTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Container(
           decoration: BoxDecoration(
             color:        _hovered ? _T.amber50 : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
-            border:       Border.all(
-                color: _hovered ? _T.amber.withOpacity(0.35) : _T.slate200),
           ),
-          child: Row(children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(color: _T.amber50, borderRadius: BorderRadius.circular(7),
-                  border: Border.all(color: _T.amber.withOpacity(0.2))),
-              child: const Icon(Icons.qr_code_rounded, size: 14, color: _T.amber),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              border:       Border.all(
+                  color: _hovered ? _T.amber.withOpacity(0.35) : _T.slate200),
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(t.barcode ?? '—',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
-                      color: _T.ink3, fontFamily: 'monospace')),
-              Text('${_fmtQty(t.quantity)} available',
-                  style: const TextStyle(fontSize: 11, color: _T.slate400)),
-            ])),
-            const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
-          ]),
+            child: Row(children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(color: _T.amber50, borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: _T.amber.withOpacity(0.2))),
+                child: const Icon(Icons.qr_code_rounded, size: 14, color: _T.amber),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t.barcode ?? '—',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                        color: _T.ink3, fontFamily: 'monospace')),
+                Text('${_fmtQty(t.quantity)} available',
+                    style: const TextStyle(fontSize: 11, color: _T.slate400)),
+              ])),
+              const Icon(Icons.chevron_right_rounded, size: 15, color: _T.slate300),
+            ]),
+          ),
         ),
       ),
     );
@@ -1215,84 +1343,89 @@ class _StockItemTileState extends State<_StockItemTile> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.all(12),
+        child: Container(
           decoration: BoxDecoration(
             color:        selected ? _T.purple50 : _hovered ? _T.slate50 : _T.white,
             borderRadius: BorderRadius.circular(_T.r),
-            border:       Border.all(
-              color: selected ? _T.purple.withOpacity(0.4) : _T.slate200,
-              width: selected ? 1.5 : 1,
-            ),
-            boxShadow: selected ? [BoxShadow(
-              color:  _T.purple.withOpacity(0.08),
-              blurRadius: 8, offset: const Offset(0, 2),
-            )] : null,
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Top row: quantity + check
-            Row(children: [
-              Container(
-                width: 30, height: 30,
-                decoration: BoxDecoration(
-                  color:        selected ? _T.purple.withOpacity(0.10) : _T.slate100,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Icon(Icons.inventory_2_outlined, size: 14,
-                    color: selected ? _T.purple : _T.slate500),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              border:       Border.all(
+                color: selected ? _T.purple.withOpacity(0.4) : _T.slate200,
+                width: selected ? 1.5 : 1,
               ),
-              const SizedBox(width: 10),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(
-                  '${_fmtQty(t.quantity)} ${m.unitShort}',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800,
-                      color: selected ? _T.purple : _T.ink),
-                ),
-                Text(dateLabel, style: const TextStyle(fontSize: 11, color: _T.slate400)),
-              ])),
-              if (selected)
-                const Icon(Icons.check_circle_rounded, size: 16, color: _T.purple),
-            ]),
-            // Barcode row
-            if (t.barcode != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color:        selected ? _T.white : _T.slate50,
-                  borderRadius: BorderRadius.circular(6),
-                  border:       Border.all(
-                      color: selected ? _T.purple.withOpacity(0.2) : _T.slate200),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.qr_code_rounded, size: 11,
-                      color: selected ? _T.purple : _T.slate400),
-                  const SizedBox(width: 6),
-                  Text(
-                    t.barcode!,
-                    style: TextStyle(
-                      fontSize:   10.5,
-                      fontWeight: FontWeight.w600,
-                      color:      selected ? _T.purple : _T.ink3,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ]),
-              ),
-            ],
-            // Notes if present
-            if (t.notes != null) ...[
-              const SizedBox(height: 6),
+              boxShadow: selected ? [BoxShadow(
+                color:  _T.purple.withOpacity(0.08),
+                blurRadius: 8, offset: const Offset(0, 2),
+              )] : null,
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Top row: quantity + check
               Row(children: [
-                const Icon(Icons.notes_rounded, size: 11, color: _T.slate400),
-                const SizedBox(width: 5),
-                Expanded(child: Text(t.notes!,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: _T.slate400))),
+                Container(
+                  width: 30, height: 30,
+                  decoration: BoxDecoration(
+                    color:        selected ? _T.purple.withOpacity(0.10) : _T.slate100,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Icon(Icons.inventory_2_outlined, size: 14,
+                      color: selected ? _T.purple : _T.slate500),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    '${_fmtQty(t.quantity)} ${m.unitShort}',
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800,
+                        color: selected ? _T.purple : _T.ink),
+                  ),
+                  Text(dateLabel, style: const TextStyle(fontSize: 11, color: _T.slate400)),
+                ])),
+                if (selected)
+                  const Icon(Icons.check_circle_rounded, size: 16, color: _T.purple),
               ]),
-            ],
-          ]),
+              // Barcode row
+              if (t.barcode != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color:        selected ? _T.white : _T.slate50,
+                    borderRadius: BorderRadius.circular(6),
+                    border:       Border.all(
+                        color: selected ? _T.purple.withOpacity(0.2) : _T.slate200),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.qr_code_rounded, size: 11,
+                        color: selected ? _T.purple : _T.slate400),
+                    const SizedBox(width: 6),
+                    Text(
+                      t.barcode!,
+                      style: TextStyle(
+                        fontSize:   10.5,
+                        fontWeight: FontWeight.w600,
+                        color:      selected ? _T.purple : _T.ink3,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+              // Notes if present
+              if (t.notes != null) ...[
+                const SizedBox(height: 6),
+                Row(children: [
+                  const Icon(Icons.notes_rounded, size: 11, color: _T.slate400),
+                  const SizedBox(width: 5),
+                  Expanded(child: Text(t.notes!,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: _T.slate400))),
+                ]),
+              ],
+            ]),
+          ),
         ),
       ),
     );
@@ -1347,14 +1480,13 @@ class _UsagePanel extends StatelessWidget {
         maxQty:    maxQty,
         submitted: submitted,
         qtyValid:  qtyValid,
-        taskId: task.id
       ),
       const SizedBox(height: 20),
       const Divider(height: 1, color: _T.slate200),
       const SizedBox(height: 16),
 
       // ── CTA ────────────────────────────────────────────────────────────
-      _CtaButton(canSubmit: canSubmit, submitting: submitting, onTap: onSubmit, task: task),
+      _CtaButton(canSubmit: canSubmit, submitting: submitting, onTap: onSubmit),
       const SizedBox(height: 10),
 
       // Hint text
@@ -1488,20 +1620,19 @@ class _SummaryRow extends StatelessWidget {
 }
 
 // ── Quantity input ─────────────────────────────────────────────────────────────
-class _QtyInput extends ConsumerStatefulWidget {
+class _QtyInput extends StatefulWidget {
   final StockTransaction?     stockItem;
   final MaterialModel?        material;
   final TextEditingController controller;
   final double?               maxQty;
   final bool                  submitted, qtyValid;
-  final int taskId;
   const _QtyInput({required this.stockItem, required this.material,
     required this.controller, required this.maxQty,
-    required this.submitted, required this.qtyValid, required this.taskId});
-  @override ConsumerState<_QtyInput> createState() => _QtyInputState();
+    required this.submitted, required this.qtyValid});
+  @override State<_QtyInput> createState() => _QtyInputState();
 }
 
-class _QtyInputState extends ConsumerState<_QtyInput> {
+class _QtyInputState extends State<_QtyInput> {
   final _focus = FocusNode();
   bool _focused = false;
   @override
@@ -1510,8 +1641,6 @@ class _QtyInputState extends ConsumerState<_QtyInput> {
     _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
   }
   @override void dispose() { _focus.dispose(); super.dispose(); }
-
-  Task get task=> ref.watch(taskNotifierProvider).taskById(widget.taskId)!;
 
   @override
   Widget build(BuildContext context) {
@@ -1606,8 +1735,7 @@ class _QtyInputState extends ConsumerState<_QtyInput> {
 class _CtaButton extends StatefulWidget {
   final bool canSubmit, submitting;
   final VoidCallback onTap;
-  final Task task;
-  const _CtaButton({required this.canSubmit, required this.submitting, required this.onTap, required this.task});
+  const _CtaButton({required this.canSubmit, required this.submitting, required this.onTap});
   @override State<_CtaButton> createState() => _CtaButtonState();
 }
 
@@ -1622,30 +1750,35 @@ class _CtaButtonState extends State<_CtaButton> {
       onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: active ? widget.onTap : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Container(
           decoration: BoxDecoration(
-            color: widget.task.printerId != null? _T.slate100 : (widget.submitting ? _T.slate100
-                : active ? (_hovered ? _T.blueHover : _T.blue) : _T.slate100),
+            color:        widget.submitting ? _T.slate100
+                  : active ? (_hovered ? _T.blueHover : _T.blue) : _T.slate100,
             borderRadius: BorderRadius.circular(_T.r),
-            boxShadow: widget.task.printerId != null? null : (active ? [BoxShadow(color: _T.blue.withOpacity(0.25),
-                blurRadius: 8, offset: const Offset(0, 2))] : null),
           ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            if (widget.submitting)
-              const SizedBox(width: 14, height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-            else
-              Icon(Icons.print_rounded, size: 15,
-                  color: widget.task.printerId != null? _T.slate300 : (active ? Colors.white : _T.slate300)),
-            const SizedBox(width: 8),
-            Text(
-              widget.task.printerId != null? 'Printer Assigned' : widget.submitting ? 'Starting…' : 'Start Print Job',
-              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: widget.task.printerId != null? _T.slate300 : (active || widget.submitting ? Colors.white : _T.slate300)),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+              boxShadow: active ? [BoxShadow(color: _T.blue.withOpacity(0.25),
+                  blurRadius: 8, offset: const Offset(0, 2))] : null,
             ),
-          ]),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (widget.submitting)
+                const SizedBox(width: 14, height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+              else
+                Icon(Icons.print_rounded, size: 15,
+                    color: active ? Colors.white : _T.slate300),
+              const SizedBox(width: 8),
+              Text(
+                widget.submitting ? 'Starting…' : 'Start Print Job',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
+                    color: active || widget.submitting ? Colors.white : _T.slate300),
+              ),
+            ]),
+          ),
         ),
       ),
     );
