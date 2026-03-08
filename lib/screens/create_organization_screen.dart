@@ -202,14 +202,13 @@ class _CreateOrganizationScreenState
 
                         // If relogin not success, re-direct to login screen to login manually
                         if (!isSuccess) {
+                          print("Is NOT Success");
                           AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login, predicate: (Route<dynamic> route) => false);
                           return;
                         }
 
                         AppRoutes.navigateAndRemoveUntil(context, orgResponse.privateDomainAvailable
                                         ? AppRoutes.claimOrganization : AppRoutes.home, arguments: orgResponse.privateDomainAvailable ? ClaimOrganizationArgs(privateDomain: orgResponse.privateDomain!) : null, predicate: (Route<dynamic> route) => false);
-                        
-                        AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
 
                         setState(() {
                           _isLoading = false;
