@@ -157,17 +157,17 @@ class _FlashScreenState extends State<FlashScreen> {
                       ),
                     ],
                   ),
-                  Transform.rotate(
-                    angle: pi/5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
-                      child: Text("BETA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontFamily: "Plus Jakarta Sans", letterSpacing: 0, fontSize: 13)),
-                    ),
-                  )
+                  // Transform.rotate(
+                  //   angle: pi/5,
+                  //   child: Container(
+                  //     decoration: BoxDecoration(
+                  //       color: Color(0xFFEF4444),
+                  //       borderRadius: BorderRadius.circular(20),
+                  //     ),
+                  //     padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                  //     child: Text("BETA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontFamily: "Plus Jakarta Sans", letterSpacing: 0, fontSize: 13)),
+                  //   ),
+                  // )
                 ],
               ),
             ),
