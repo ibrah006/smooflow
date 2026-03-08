@@ -45,6 +45,10 @@ class MemberNotifier extends StateNotifier<MemberState> {
     }
   }
 
+  Future<void> updateMemberRole(String memberId) async {
+    repo.updateMemberRole(memberId);
+  }
+
   /// Optional: clear state (e.g., on logout)
   void reset() {
     state = const MemberState();

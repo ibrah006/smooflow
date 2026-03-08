@@ -42,4 +42,14 @@ class MemberRepo {
       );
     }
   }
+
+  Future<void> updateMemberRole(String memberId) async {
+    final response = await ApiClient.http.put(
+      "organizations/members/$memberId/role",
+    );
+
+    if (response.statusCode != 200) {
+      throw jsonDecode(response.body)["message"];
+    }
+  }
 }
