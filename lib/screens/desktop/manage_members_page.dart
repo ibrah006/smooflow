@@ -1967,7 +1967,6 @@ class _InviteMemberSheetState
     HapticFeedback.lightImpact();
 
     try {
-      // TODO
       await ref
           .read(memberNotifierProvider.notifier)
           .updateMemberRole(widget.existing!.id, _selectedRole!);
