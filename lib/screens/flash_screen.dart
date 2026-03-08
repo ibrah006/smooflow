@@ -46,7 +46,7 @@ class _FlashScreenState extends State<FlashScreen> {
           // orgId == null is taken care of, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
           await LoginService.relogin();
 
-          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.admin, predicate: (Route<dynamic> route) => false);
+          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
         } catch (e) {
           // Not linked to any organization
 
