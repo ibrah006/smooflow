@@ -22,6 +22,7 @@ import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -600,6 +601,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
             allTxns:         all,
             unit:            m.unitShort,
             selectedBatchId: _selectedBatch?.id,
+            selectedBatchBarcode: _selectedBatch!.barcode!,
             remaining:       (b) => _remaining(b, all),
             onSelect: (b) => setState(() =>
                 _selectedBatch = (_selectedBatch?.id == b.id) ? null : b),
@@ -662,6 +664,7 @@ class _BatchInventoryPanel extends StatelessWidget {
   final double Function(StockTransaction) remaining;
   final ValueChanged<StockTransaction> onSelect;
   final Widget kpi;
+  final String selectedBatchBarcode;
 
   const _BatchInventoryPanel({
     required this.batches,
@@ -670,8 +673,12 @@ class _BatchInventoryPanel extends StatelessWidget {
     required this.selectedBatchId,
     required this.remaining,
     required this.onSelect,
-    required this.kpi
+    required this.kpi,
+    required this.selectedBatchBarcode
   });
+
+  
+  double get usedQuantityInBatch => allTxns.where((txn)=> txn.barcode == selectedBatchBarcode && txn.type == TransactionType.stockOut).toList().totalQuantity;
 
   @override
   Widget build(BuildContext context) {
@@ -740,7 +747,7 @@ class _BatchInventoryPanel extends StatelessWidget {
             itemBuilder: (_, i) {
               final b        = batches[i];
               final rem      = remaining(b);
-              final consumed = b.quantity - rem;
+              final consumed = usedQuantityInBatch;
               final isSelected = selectedBatchId == b.id;
               final isEmpty   = rem <= 0;
               return _BatchRow(
