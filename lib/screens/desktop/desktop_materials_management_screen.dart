@@ -883,14 +883,14 @@ class _BatchRowState extends State<_BatchRow> {
               
                 // Qty In
                 Expanded(flex: 2, child: Text(
-                    '${_fmtStock(b.quantity)} ${widget.unit}',
+                    '${_fmtStock(b.quantity + widget.consumed)} ${widget.unit}',
                     style: const TextStyle(fontSize: 11.5,
                         fontWeight: FontWeight.w600, color: _T.ink3))),
               
                 // Consumed
                 Expanded(flex: 2, child: Text(
                     widget.consumed > 0
-                        ? '−${_fmtStock(widget.consumed)} ${widget.unit}'
+                        ? '${_fmtStock(widget.consumed)} ${widget.unit}'
                         : '—',
                     style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
                         color: widget.consumed > 0 ? _T.red : _T.slate300))),
