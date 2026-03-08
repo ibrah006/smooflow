@@ -1461,7 +1461,7 @@ class _TaskRowState extends State<_TaskRow> {
       'date'     => Text(date, style: const TextStyle(fontSize: 12.5, color: _T.slate500)),
       'priority' => PriorityPill(priority: t.priority),
 
-      'size' => t.size != null
+      'size' => t.size != null && !t.size!.contains("null")
           ? RichText(text: TextSpan(
               style: const TextStyle(fontSize: 12.5, color: _T.ink3),
               children: [
