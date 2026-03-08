@@ -938,7 +938,7 @@ class _BatchDetailPanel extends StatelessWidget {
     final dateStr = '${dt.day.toString().padLeft(2,'0')}/'
         '${dt.month.toString().padLeft(2,'0')}/${dt.year}  '
         '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
-    final consumed = b.quantity - remaining;
+    final consumed = consumptions.totalQuantity;
     final usePct   = b.quantity > 0 ? (consumed / b.quantity).clamp(0.0,1.0) : 0.0;
 
     final Color statusColor; final String statusLabel; final Color statusBg;
@@ -988,12 +988,12 @@ class _BatchDetailPanel extends StatelessWidget {
               const Divider(height: 16, color: _T.slate100),
               _BatchInfoRow(icon: Icons.add_circle_outline_rounded,
                   label: 'Original Qty',
-                  value: '${_fmtStock(b.quantity)} $unit',
+                  value: '${_fmtStock(remaining + consumed)} $unit',
                   valueColor: _T.green),
               const Divider(height: 16, color: _T.slate100),
               _BatchInfoRow(icon: Icons.remove_circle_outline_rounded,
                   label: 'Total Consumed',
-                  value: consumed > 0 ? '−${_fmtStock(consumed)} $unit' : '—',
+                  value: consumed > 0 ? '${_fmtStock(consumed)} $unit' : '—',
                   valueColor: consumed > 0 ? _T.red : _T.slate300),
               const Divider(height: 16, color: _T.slate100),
               _BatchInfoRow(icon: Icons.inventory_2_outlined,
