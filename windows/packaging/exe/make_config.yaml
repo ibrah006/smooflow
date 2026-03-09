@@ -1,0 +1,7 @@
+app_id: com.ibrahimmn.smooflow
+publisher: Ibrahim
+publisher_url: https://compactad.com
+display_name: SmooFlow
+create_desktop_icon: true
+locales:
+  - en

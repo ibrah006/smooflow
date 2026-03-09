@@ -1,0 +1,9 @@
+
+output: dist/
+releases:
+  - name: windows-release
+    jobs:
+      - name: build-windows
+        package:
+          platform: windows
+          target: exe

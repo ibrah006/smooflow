@@ -14,6 +14,14 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+//
+// WinSparkle
+//
+
+// And verify signature using DSA public key:
+DSAPub      DSAPEM      "../../dsa_pub.pem"
+
+/////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
