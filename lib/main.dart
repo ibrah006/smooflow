@@ -32,7 +32,7 @@ void main(List<String> args) async {
 
     // Setup Auto updater
     if (Platform.isWindows) {
-      String feedURL = dotenv.env['API_URL']! + '/updates/win64.exe';
+      String feedURL = dotenv.env['API_URL']! + '/updates/appcast.xml';
       await autoUpdater.setFeedURL(feedURL);
       await autoUpdater.checkForUpdates();
       await autoUpdater.setScheduledCheckInterval(3600);
