@@ -1,6 +1,7 @@
 import 'dart:io';
 
 // import 'package:auto_updater/auto_updater.dart';
+import 'package:auto_updater/auto_updater.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main(List<String> args) async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
+  
 
   if (!Platform.isAndroid && !Platform.isIOS) {
     await windowManager.ensureInitialized();
@@ -27,6 +29,14 @@ void main(List<String> args) async {
       await windowManager.show();
       await windowManager.focus();
     });
+
+    // Setup Auto updater
+    if (Platform.isWindows) {
+      String feedURL = dotenv.env['API_URL']! + '/updates/win64.exe';
+      await autoUpdater.setFeedURL(feedURL);
+      await autoUpdater.checkForUpdates();
+      await autoUpdater.setScheduledCheckInterval(3600);
+    }
   }
 
   runApp(ProviderScope(child: App()));
