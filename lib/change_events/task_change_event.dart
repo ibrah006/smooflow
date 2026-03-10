@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Task change event types
@@ -73,7 +75,7 @@ enum ConnectionStatus {
 
 /// Task WebSocket Client
 class TaskWebSocketClient {
-  final String authToken;
+  final String authToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
   IO.Socket? _socket;
 
   // Status streams
@@ -88,7 +90,7 @@ class TaskWebSocketClient {
   final int _maxReconnectAttempts = 5;
   final Set<int> _subscribedTasks = {};
 
-  TaskWebSocketClient({required this.authToken});
+  TaskWebSocketClient();
 
   // Getters for streams
   Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;

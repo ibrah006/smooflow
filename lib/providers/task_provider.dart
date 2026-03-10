@@ -115,11 +115,8 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
 
 /// WebSocket client provider
 final taskWebSocketClientProvider = Provider<TaskWebSocketClient>((ref) {
-  // Get auth token from your auth provider
-  final authToken = ref.watch(authTokenProvider);
   
   final client = TaskWebSocketClient(
-    authToken: authToken,
   );
 
   client.connect();
@@ -456,11 +453,6 @@ class TaskStats {
     required this.highPriority,
   });
 }
-
-/// Replace with your actual auth token provider
-final authTokenProvider = Provider<String>((ref) {
-  return 'your-jwt-token';
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EXISTING TASKPROVIDER CLASS (retained for backward compatibility)

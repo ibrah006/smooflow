@@ -434,9 +434,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   /// Initialize WebSocket and setup listeners
   Future<void> _initializeSocket() async {
 
-    final jwtToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
-
-    _client = TaskWebSocketClient(authToken: jwtToken);
+    _client = TaskWebSocketClient();
 
     // Listen to connection status
     _client.connectionStatus.listen((status) {
