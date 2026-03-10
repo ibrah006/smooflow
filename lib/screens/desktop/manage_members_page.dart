@@ -1971,9 +1971,9 @@ class _InviteMemberSheetState
     HapticFeedback.lightImpact();
 
     try {
-      await ref
-          .read(memberNotifierProvider.notifier)
-          .updateMemberRole(widget.existing!.id, _selectedRole!);
+      // await ref
+      //     .read(memberNotifierProvider.notifier)
+      //     .updateMemberRole(widget.existing!.id, _selectedRole!);
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop();
       _snack('Role updated to ${_roleByValue(_selectedRole)?.label ?? _selectedRole}.', isError: false);

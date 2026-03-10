@@ -678,7 +678,7 @@ class _BatchInventoryPanel extends StatelessWidget {
   });
 
   
-  double get usedQuantityInBatch => allTxns.where((txn)=> txn.barcode == selectedBatchBarcode && txn.type == TransactionType.stockOut).toList().totalQuantity;
+  double usedQuantityInBatch(String batchBarcode) => allTxns.where((txn)=> txn.barcode == batchBarcode && txn.type == TransactionType.stockOut).toList().totalQuantity;
 
   @override
   Widget build(BuildContext context) {
@@ -747,7 +747,7 @@ class _BatchInventoryPanel extends StatelessWidget {
             itemBuilder: (_, i) {
               final b        = batches[i];
               final rem      = remaining(b);
-              final consumed = usedQuantityInBatch;
+              final consumed = usedQuantityInBatch(b.barcode!);
               final isSelected = selectedBatchId == b.id;
               final isEmpty   = rem <= 0;
               return _BatchRow(

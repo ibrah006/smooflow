@@ -190,7 +190,7 @@ class _DesktopManagePrintersScreenState
 
                     // Search
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                       child: _SearchBar(
                         controller: _searchCtrl,
                         onChanged:  (_) => setState(() {}),

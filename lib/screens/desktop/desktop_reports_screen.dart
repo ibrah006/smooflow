@@ -717,29 +717,28 @@ class _ReportsBody extends StatelessWidget {
       ]),
       const SizedBox(height: 16),
 
+       _Card(
+        icon:      Icons.analytics_outlined,
+        iconColor: _T.orange,
+        iconBg:    _T.orange50,
+        title:     'Avg Consumption per Job',
+        subtitle:  'Useful for estimating material for upcoming runs',
+        child:     _EfficiencyTable(
+          materials: data.materials,
+          matColor:  matColor,
+        ),
+      ),
+      const SizedBox(height: 16),
+
       // // ── Row 3: Stock Health + Efficiency table ─────────────────────
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(flex: 2, child: _Card(
-          icon:      Icons.inventory_2_outlined,
-          iconColor: _T.amber,
-          iconBg:    _T.amber50,
-          title:     'Stock Health',
-          subtitle:  'Current stock vs minimum threshold',
-          child:     _StockHealthChart(allMats: allMats),
-        )),
-        const SizedBox(width: 16),
-        Expanded(flex: 3, child: _Card(
-          icon:      Icons.analytics_outlined,
-          iconColor: _T.orange,
-          iconBg:    _T.orange50,
-          title:     'Avg Consumption per Job',
-          subtitle:  'Useful for estimating material for upcoming runs',
-          child:     _EfficiencyTable(
-            materials: data.materials,
-            matColor:  matColor,
-          ),
-        )),
-      ]),
+      _Card(
+        icon:      Icons.inventory_2_outlined,
+        iconColor: _T.amber,
+        iconBg:    _T.amber50,
+        title:     'Stock Health',
+        subtitle:  'Current stock vs minimum threshold',
+        child:     _StockHealthChart(allMats: allMats),
+      ),
       const SizedBox(height: 16),
 
       // ── Row 4: Top jobs table (full width) ─────────────────────────
