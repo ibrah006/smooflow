@@ -224,7 +224,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   // ── Persistence ────────────────────────────────────────────────────────────
   @override
-  void `initState`() {
+  void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
 
