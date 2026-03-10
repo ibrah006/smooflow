@@ -174,15 +174,15 @@ class _AdminDesktopDashboardScreenState
   List<Member>  get _members  => ref.watch(memberNotifierProvider).members;
   List<Task>    get _tasks    => ref.watch(taskNotifierProvider).tasks;
 
-  List<Task> get _visibleTasks => _tasks.where((t) {
-    if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
-    final q = _searchQuery.toLowerCase().trim();
-    if (q.isNotEmpty) {
-      return t.name.toLowerCase().contains(q) ||
-          (t.description ?? '').toLowerCase().contains(q);
-    }
-    return true;
-  }).toList();
+  // List<Task> get _visibleTasks => _tasks.where((t) {
+  //   if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
+  //   final q = _searchQuery.toLowerCase().trim();
+  //   if (q.isNotEmpty) {
+  //     return t.name.toLowerCase().contains(q) ||
+  //         (t.description ?? '').toLowerCase().contains(q);
+  //   }
+  //   return true;
+  // }).toList();
 
   @override
   void initState() {
@@ -262,7 +262,7 @@ class _AdminDesktopDashboardScreenState
                                     )
                                   : _view == _AdminView.list
                                       ? TaskListView(
-                                          tasks:             _visibleTasks,
+                                          // tasks:             _visibleTasks,
                                           projects:          _projects,
                                           selectedProjectId: _selectedProjectId,
                                           selectedTaskId:    _selectedTaskId,

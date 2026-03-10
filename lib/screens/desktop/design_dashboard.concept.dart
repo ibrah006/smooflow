@@ -288,7 +288,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                       selectedProjectId: _selectedProjectId
                                     )
                                 : TaskListView(
-                                    tasks: _visibleTasks,
+                                    // tasks: _visibleTasks,
                                     projects: _projects,
                                     selectedTaskId: _selectedTaskId,
                                     onTaskSelected: _selectTask,

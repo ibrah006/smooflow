@@ -19,6 +19,7 @@ import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
@@ -162,7 +163,6 @@ const _kViewModeKey  = 'smooflow.task_list.view_mode';
 // TASK LIST VIEW
 // ─────────────────────────────────────────────────────────────────────────────
 class TaskListView extends ConsumerStatefulWidget {
-  final List<Task>        tasks;
   final List<Project>     projects;
   final String?           selectedProjectId;   // null = "All Projects"
   final int?              selectedTaskId;
@@ -176,7 +176,6 @@ class TaskListView extends ConsumerStatefulWidget {
 
   const TaskListView({
     super.key,
-    required this.tasks,
     required this.projects,
     required this.selectedTaskId,
     required this.onTaskSelected,
@@ -228,6 +227,10 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(taskListProvider.notifier).loadTasks();
+    });
     _loadPrefs();
   }
 
@@ -282,7 +285,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   @override
   Widget build(BuildContext context) {
     final members   = ref.watch(memberNotifierProvider).members;
-    final tasks     = widget.tasks.reversed.toList();
+    final taskState = ref.watch(taskListProvider);
+    final tasks     = taskState.tasks.reversed.toList();
     final effective = _effectiveVisible;
 
     return Container(
@@ -302,7 +306,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
           if (_viewMode == _ViewMode.board)
             Expanded(
               child: BoardView(
-                tasks:               widget.tasks,
+                tasks:               taskState.tasks,
                 projects:            widget.projects,
                 selectedTaskId:      widget.selectedTaskId,
                 onTaskSelected:      widget.onTaskSelected,
