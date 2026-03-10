@@ -224,13 +224,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   // ── Persistence ────────────────────────────────────────────────────────────
   @override
-  void initState() {
+  void `initState`() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(taskListProvider.notifier).loadTasks();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   ref.read(taskListProvider.notifier).loadTasks();
+    // });
     _loadPrefs();
   }
 

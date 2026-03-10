@@ -108,16 +108,23 @@ class TaskWebSocketClient {
     _updateStatus(ConnectionStatus.connecting);
 
     try {
+      // _socket = IO.io(
+      //   ApiClient.http.baseUrl,
+      //   IO.OptionBuilder()
+      //       .setPath('/ws/tasks')
+      //       .setTransports(['websocket', 'polling'])
+      //       .setAuth({'token': authToken})
+      //       .enableReconnection()
+      //       .setReconnectionDelay(1000)
+      //       .setReconnectionDelayMax(5000)
+      //       .setReconnectionAttempts(_maxReconnectAttempts)
+      //       .build(),
+      // );
       _socket = IO.io(
-        ApiClient.http.baseUrl,
+        '${ApiClient.http.baseUrl}/tasks',
         IO.OptionBuilder()
-            .setPath('/ws/tasks')
-            .setTransports(['websocket', 'polling'])
+            .setTransports(['websocket'])
             .setAuth({'token': authToken})
-            .enableReconnection()
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(_maxReconnectAttempts)
             .build(),
       );
 
