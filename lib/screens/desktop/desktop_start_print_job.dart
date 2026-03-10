@@ -42,8 +42,10 @@ import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -236,22 +238,37 @@ class _StartPrintJobScreenState extends ConsumerState<StartPrintJobScreen> {
     });
   }
 
+  Future<void> _assignPrinter() async {
+
+    final printer = ref.watch(printerNotifierProvider).printers.firstWhere((p) => p.id == _printer!.id);
+
+    // await ref.read(setTaskStateProvider(TaskStateParams(
+    //   id: selectedTask!.id,
+    //   printerId: printer.id,
+    //   stockTransactionBarcode: selectedTask!.stockTransactionBarcode,
+    //   newTaskStatus: TaskStatus.printing
+    // )));
+
+    await TaskProvider.setTaskState(
+      ref: ref,
+      taskId: widget.task.id,
+      printerId: printer.id,
+      newStatus: TaskStatus.printing,
+      materialId: _material!.id,
+      stockTransactionBarcode: _stockItem!.barcode,
+      stockOutQuantity: _qty!.toInt()
+    );
+  }
+
   Future<void> _submit() async {
     setState(() => _qtySubmitted = true);
     if (!_canSubmit || _submitting) return;
     setState(() => _submitting = true);
     try {
-      // TODO-4: implement real stock-out call, e.g.:
-      // await ref.read(materialNotifierProvider.notifier).stockOut(
-      //   barcode:   _stockItem!.barcode!,
-      //   quantity:  _qty!,
-      //   projectId: widget.task.projectId,
-      //   taskId:    widget.task.id,
-      // );
-      // await ref.read(printerNotifierProvider.notifier).startPrintJob(
-      //   taskId:    widget.task.id,
-      //   printerId: _printer!.id,
-      // );
+      await _assignPrinter();        
+
+      setState(() {});
+      
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _submitting = false);
