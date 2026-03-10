@@ -373,11 +373,21 @@ class Task {
   )
   Task.empty() : progressLogIds = [], workActivityLogs = [], _billingStatus = BillingStatus.pending, _stockTransactionIds = [];
 
-  // Copy With method
-  @Deprecated(
-    "This constructor is deprecated and will be removed in future versions",
-  )
-  Task copyWithSafe({
+  /// Creates a copy of this Task with specified fields replaced.
+  /// Returns a new Task instance with updated values while preserving unchanged ones.
+  /// 
+  /// This is the recommended way to create modified Task instances, especially useful
+  /// for state management and immutable data patterns (e.g., with Riverpod).
+  /// 
+  /// Example:
+  /// ```dart
+  /// final updatedTask = task.copyWith(
+  ///   name: 'New Name',
+  ///   status: TaskStatus.completed,
+  ///   dateCompleted: DateTime.now(),
+  /// );
+  /// ```
+  Task copyWith({
     int? id,
     String? name,
     String? description,
@@ -388,65 +398,66 @@ class Task {
     DateTime? dateCompleted,
     Color? color,
     IconData? icon,
-    List<MaterialLog>? estimatedMaterials,
-    List<MaterialLog>? usedMaterials,
+    int? productionDuration,
+    String? printerId,
+    String? materialId,
+    DateTime? productionStartTime,
+    int? runs,
+    double? productionQuantity,
+    TaskPriority? priority,
+    String? stockTransactionBarcode,
+    DateTime? actualProductionStartTime,
+    DateTime? actualProductionEndTime,
+    String? ref,
+    String? size,
+    int? quantity,
+    BillingStatus? billingStatus,
+    List<String>? stockTransactionIds,
+    List<String>? progressLogIds,
+    DateTime? updatedAt,
+    DateTime? activityLogLastModified,
+    DateTime? assigneeLastAdded,
   }) {
-    final Task newTask = Task.empty();
-
-    try {
-      newTask._id = id ?? _id;
-    } catch (_) {
-      if (id != null) newTask._id = id;
-    }
-
-    try {
-      newTask._name = name ?? _name;
-    } catch (_) {
-      if (name != null) newTask._name = name;
-    }
-
-    try {
-      newTask._description = description ?? _description;
-    } catch (_) {
-      if (description != null) newTask._description = description;
-    }
-
-    try {
-      newTask._dueDate = dueDate ?? _dueDate;
-    } catch (_) {
-      if (dueDate != null) newTask._dueDate = dueDate;
-    }
-
-    if (status != null) {
-      newTask.status = status;
-    } else {
-      try {
-        newTask.status = _status;
-      } catch (_) {}
-    }
-
-    try {
-      newTask._assignees = assignees ?? _assignees;
-    } catch (_) {
-      if (assignees != null) newTask._assignees = assignees;
-    }
-
-    try {
-      newTask._projectId = projectId ?? _projectId;
-    } catch (_) {
-      if (projectId != null) newTask._projectId = projectId;
-    }
-
-    newTask._dateCompleted = dateCompleted ?? _dateCompleted;
-    newTask._color = color ?? _color;
-    newTask._icon = icon ?? _icon;
-
-    newTask.size = size;
-    newTask.ref = ref;
-    newTask.quantity = quantity;
-
-    newTask.billingStatus = billingStatus;
-
+    final newTask = Task(
+      id: id ?? _id,
+      name: name ?? _name,
+      description: description ?? _description,
+      dueDate: dueDate ?? _dueDate,
+      status: status?.name ?? _status.name,
+      assignees: assignees ?? _assignees,
+      projectId: projectId ?? _projectId,
+      dateCompleted: dateCompleted ?? _dateCompleted,
+      productionDuration: productionDuration ?? _productionDuration,
+      printerId: printerId ?? _printerId,
+      materialId: materialId ?? _materialId,
+      productionStartTime: productionStartTime ?? _productionStartTime,
+      runs: runs ?? _runs ?? 1,
+      productionQuantity: productionQuantity ?? _productionQuantity,
+      priority: priority ?? _priority,
+      stockTransactionBarcode: stockTransactionBarcode ?? _stockTransactionBarcode,
+      actualProductionStartTime: actualProductionStartTime ?? _actualProductionStartTime,
+      actualProductionEndTime: actualProductionEndTime ?? _actualProductionEndTime,
+      createdAt: _createdAt,
+      ref: ref ?? _ref,
+      size: size ?? _size,
+      quantity: quantity ?? _quantity,
+      billingStatus: billingStatus ?? _billingStatus,
+      stockTransactionIds: stockTransactionIds ?? _stockTransactionIds,
+      progressLogIds: progressLogIds ?? this.progressLogIds,
+      estimatedMaterials: [],
+      usedMaterials: [],
+      workActivityLogs: workActivityLogs,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+    
+    // Set color and icon via setters (not constructor parameters)
+    newTask.color = color ?? _color;
+    newTask.icon = icon ?? _icon;
+    
+    // Preserve other timestamp fields
+    newTask.activityLogLastModified = activityLogLastModified ?? this.activityLogLastModified;
+    newTask.assigneeLastAdded = assigneeLastAdded ?? this.assigneeLastAdded;
+    
     return newTask;
   }
 
