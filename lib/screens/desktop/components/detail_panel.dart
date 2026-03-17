@@ -2022,20 +2022,7 @@ class _DetailFooter extends StatelessWidget {
                                       ? _T.slate400
                                       : next == TaskStatus.clientApproved
                                           ? _T.green
-                                          : (next == TaskStatus.designing ||
-                                                  next == TaskStatus.waitingApproval ||
-                                                  ((next == TaskStatus.waitingPrinting ||
-                                                          next == TaskStatus.printingCompleted ||
-                                                          next == TaskStatus.finishing ||
-                                                          next == TaskStatus.productionCompleted ||
-                                                          next == TaskStatus.waitingDelivery ||
-                                                          next == TaskStatus.delivery ||
-                                                          next == TaskStatus.waitingInstallation ||
-                                                          next == TaskStatus.installing ||
-                                                          next == TaskStatus.completed) &&
-                                                      LoginService.currentUser!.isAdmin))
-                                              ? _T.blue
-                                              : Colors.grey.shade200,
+                                          : _T.blue,
                               borderRadius: BorderRadius.circular(_T.r),
                               boxShadow: isProgressing
                                   ? null
