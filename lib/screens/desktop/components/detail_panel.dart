@@ -720,9 +720,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 }
               } catch(e) {
                 print("error caught, to be investigated. e: $e");
+              } finally {
                 setState(() => _isProgressing = false);
               }
-              setState(() => _isProgressing = false);
             },
             onStageBackTap: _showStageBackMenu,
           ),
