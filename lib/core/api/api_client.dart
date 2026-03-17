@@ -5,5 +5,5 @@ class ApiClient {
   static get _liveServerUrl => dotenv.env['API_URL'];
   static var localDevUrl = 'http://localhost:3000';
 
-  static final LocalHttp http = LocalHttp(baseUrl: localDevUrl);
+  static final LocalHttp http = LocalHttp(baseUrl: _liveServerUrl);
 }

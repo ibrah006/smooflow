@@ -15,6 +15,8 @@ import 'package:smooflow/states/task.dart';
 // EXISTING PROVIDERS (kept for backward compatibility)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// TODO: MIGRATE TO USING TASK LIST PROVIDER that works well with web socket
+
 final taskRepoProvider = Provider<TaskRepo>((ref) => TaskRepo());
 
 final taskNotifierProvider = StateNotifierProvider<TaskNotifier, TaskState>((

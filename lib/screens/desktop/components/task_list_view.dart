@@ -504,14 +504,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 18),
+            Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
             Text(message),
           ],
         ),
         duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: color,
+        behavior: SnackBarBehavior.floating
       ),
     );
   }

@@ -183,12 +183,12 @@ class TaskWebSocketClient {
 
     // Task change events
     _socket!.on('task:changed', (data) {
-      try {
+      // try {
         final event = TaskChangeEvent.fromJson(data as Map<String, dynamic>);
         _taskChangeController.add(event);
-      } catch (e) {
-        print('Error parsing task:changed event: $e');
-      }
+      // } catch (e) {
+      //   print('Error parsing task:changed event: $e');
+      // }
     });
 
     _socket!.on('task:updated', (data) {
