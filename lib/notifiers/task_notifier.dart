@@ -563,7 +563,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   List<Task> getTasksByStatus(TaskStatus status) {
     return state.tasks.where((task) => task.status == status).toList();
   }
-  
+
   /// Get tasks sorted by priority
   List<Task> getTasksByPriority() {
     final sortedTasks = List<Task>.from(state.tasks);
