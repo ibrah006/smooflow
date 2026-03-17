@@ -712,17 +712,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             onAdvanceTap: () async {
               if (!progressBtnEnabled) return;
               setState(() => _isProgressing = true);
-              try {
-                if (next == TaskStatus.clientApproved) {
-                  await approveDesignStage();
-                } else {
-                  await _showMoveToNextStageDialog();
-                }
-              } catch(e) {
-                print("error caught, to be investigated. e: $e");
-              } finally {
-                setState(() => _isProgressing = false);
+
+              if (next == TaskStatus.clientApproved) {
+                await approveDesignStage();
+              } else {
+                await _showMoveToNextStageDialog();
               }
+              
+              setState(() => _isProgressing = false);
             },
             onStageBackTap: _showStageBackMenu,
           ),
