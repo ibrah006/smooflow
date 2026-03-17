@@ -431,8 +431,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // LISTENING TO WEB SCOKET UPDATES
   // ---------------------------------------------------------------------
 
-  ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
-
   /// Initialize WebSocket and setup listeners
   Future<void> _initializeSocket() async {
 
@@ -440,7 +438,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
     // Listen to connection status
     _client.connectionStatus.listen((status) {
-      _connectionStatus = status;
+      state.connectionStatus = status;
     });
 
     // Listen to task changes
