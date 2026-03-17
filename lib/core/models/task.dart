@@ -417,6 +417,7 @@ class Task {
     DateTime? updatedAt,
     DateTime? activityLogLastModified,
     DateTime? assigneeLastAdded,
+    List<int>? workActivityLogs
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -446,7 +447,7 @@ class Task {
       progressLogIds: progressLogIds ?? this.progressLogIds,
       estimatedMaterials: [],
       usedMaterials: [],
-      workActivityLogs: workActivityLogs,
+      workActivityLogs: workActivityLogs?? this.workActivityLogs,
       updatedAt: updatedAt ?? this.updatedAt,
     );
     

@@ -1,13 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
 //
-// Changes:
-//   • Project column is hidden when a single project is selected (filter active).
-//   • A header bar at the top shows the active project name (or "All Projects").
-//   • List / Board toggle tabs live in this header bar — sidebar no longer
-//     switches between these two views.
-//   • BoardView is embedded as a sub-view when the Board tab is active.
-//   • All previous animated column / column-picker behaviour is preserved.
+// Complete task list view with real-time WebSocket updates.
+// This version uses ONLY the WebSocket approach for real-time synchronization.
+//
+// Changes from original:
+//   • Converted to ConsumerStatefulWidget for Riverpod integration
+//   • Uses taskListProvider instead of local state
+//   • Automatically receives real-time updates via WebSocket
+//   • Project column is hidden when a single project is selected (filter active)
+//   • List / Board toggle tabs live in the header bar
+//   • All previous animated column / column-picker behaviour is preserved
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -15,17 +18,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/member_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/enums/billing_status.dart';
+import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -49,6 +53,7 @@ class _T {
   static const white     = Colors.white;
   static const r         = 8.0;
   static const rLg       = 12.0;
+  static const red50      = Color(0xFFFEE2E2);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,7 +165,7 @@ const _kPrefsKey     = 'smooflow.task_list.visible_optional_cols';
 const _kViewModeKey  = 'smooflow.task_list.view_mode';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASK LIST VIEW
+// TASK LIST VIEW (WebSocket-powered)
 // ─────────────────────────────────────────────────────────────────────────────
 class TaskListView extends ConsumerStatefulWidget {
   final List<Project>     projects;
@@ -227,11 +232,23 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
-
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   ref.read(taskListProvider.notifier).loadTasks();
-    // });
     _loadPrefs();
+    
+    // Load tasks via WebSocket on mount
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTasks();
+    });
+  }
+
+  void _loadTasks() {
+    final filters = <String, dynamic>{};
+    
+    // If a project is selected, filter by project
+    if (widget.selectedProjectId != null) {
+      filters['projectId'] = widget.selectedProjectId;
+    }
+    
+    ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
   }
 
   Future<void> _loadPrefs() async {
@@ -285,9 +302,31 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   @override
   Widget build(BuildContext context) {
     final members   = ref.watch(memberNotifierProvider).members;
-    final taskState = ref.watch(taskListProvider);
-    final tasks     = taskState.tasks.reversed.toList();
+    
+    // WebSocket real-time task state
+    final taskState = ref.watch(taskNotifierProvider);
+    final allTasks = taskState.tasks;
+    final isLoading = taskState.isLoading;
+    final error = taskState.error;
+    final connectionStatus = ref.watch(taskConnectionStatusProvider);
+    
+    // Filter tasks by selected project if needed
+    final tasks = widget.selectedProjectId != null
+        ? allTasks.where((t) => t.projectId.toString() == widget.selectedProjectId).toList()
+        : allTasks;
+    
+    final reversedTasks = tasks.reversed.toList();
     final effective = _effectiveVisible;
+
+    // Listen for real-time task changes and show notifications
+    ref.listen<AsyncValue<TaskChangeEvent>>(
+      taskChangesStreamProvider,
+      (previous, next) {
+        next.whenData((event) {
+          _showTaskChangeNotification(context, event);
+        });
+      },
+    );
 
     return Container(
       color: _T.slate50,
@@ -295,18 +334,19 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          // ── Project header + view mode tabs ──────────────────────────────
+          // ── Project header + view mode tabs + connection status ──────────
           _ProjectHeader(
             activeProject:   _activeProject,
             viewMode:        _viewMode,
             onViewModeChanged: _setViewMode,
+            connectionStatus: connectionStatus,
           ),
 
           // ── Board sub-view ───────────────────────────────────────────────
           if (_viewMode == _ViewMode.board)
             Expanded(
               child: BoardView(
-                tasks:               taskState.tasks,
+                tasks:               tasks,
                 projects:            widget.projects,
                 selectedTaskId:      widget.selectedTaskId,
                 onTaskSelected:      widget.onTaskSelected,
@@ -360,47 +400,118 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
             // ── Data rows ──────────────────────────────────────────────
             Expanded(
-              child: tasks.isEmpty
-                  ? _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: _kRowHPad,
-                        vertical:   8,
-                      ),
-                      itemCount:        tasks.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, thickness: 1, color: _T.slate100),
-                      itemBuilder: (_, i) {
-                        final t = tasks[i];
-                        final p = widget.projects
-                                .cast<Project?>()
-                                .firstWhere(
-                                  (pr) => pr!.id == t.projectId,
-                                  orElse: () => null,
-                                ) ??
-                            widget.projects.firstOrNull;
+              child: isLoading && tasks.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : error != null
+                      ? _ErrorState(
+                          error: error,
+                          onRetry: () {
+                            ref.read(taskNotifierProvider.notifier).clearError();
+                            _loadTasks();
+                          },
+                        )
+                      : tasks.isEmpty
+                          ? _EmptyState()
+                          : RefreshIndicator(
+                              onRefresh: () async {
+                                await ref.read(taskNotifierProvider.notifier).refreshTasks();
+                              },
+                              child: ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: _kRowHPad,
+                                  vertical:   8,
+                                ),
+                                itemCount:        reversedTasks.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1, thickness: 1, color: _T.slate100),
+                                itemBuilder: (_, i) {
+                                  final t = reversedTasks[i];
+                                  final p = widget.projects
+                                          .cast<Project?>()
+                                          .firstWhere(
+                                            (pr) => pr!.id == t.projectId.toString(),
+                                            orElse: () => null,
+                                          ) ??
+                                      widget.projects.firstOrNull;
 
-                        Member? m;
-                        try {
-                          m = members.firstWhere(
-                              (mem) => t.assignees.contains(mem.id));
-                        } catch (_) {
-                          m = null;
-                        }
+                                  Member? m;
+                                  try {
+                                    m = members.firstWhere(
+                                        (mem) => t.assignees.contains(mem.id));
+                                  } catch (_) {
+                                    m = null;
+                                  }
 
-                        return _TaskRow(
-                          task:              t,
-                          project:           p,
-                          assignee:          m,
-                          effectiveVisible:  effective,
-                          isSelected:        widget.selectedTaskId == t.id,
-                          onTap:             () => widget.onTaskSelected(t.id),
-                        );
-                      },
-                    ),
+                                  return _TaskRow(
+                                    task:              t,
+                                    project:           p,
+                                    assignee:          m,
+                                    effectiveVisible:  effective,
+                                    isSelected:        widget.selectedTaskId == t.id,
+                                    onTap:             () => widget.onTaskSelected(t.id),
+                                  );
+                                },
+                              ),
+                            ),
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _showTaskChangeNotification(BuildContext context, TaskChangeEvent event) {
+    String message;
+    IconData icon;
+    Color color;
+
+    switch (event.type) {
+      case TaskChangeType.created:
+        message = 'New task created';
+        icon = Icons.add_task;
+        color = _T.green;
+        break;
+      case TaskChangeType.updated:
+        message = 'Task updated';
+        icon = Icons.update;
+        color = _T.blue;
+        break;
+      case TaskChangeType.deleted:
+        message = 'Task deleted';
+        icon = Icons.delete;
+        color = _T.red;
+        break;
+      case TaskChangeType.statusChanged:
+        message = 'Task status changed';
+        icon = Icons.swap_horiz;
+        color = _T.amber;
+        break;
+      case TaskChangeType.assigneeAdded:
+        message = 'Assignee added';
+        icon = Icons.person_add;
+        color = _T.purple;
+        break;
+      case TaskChangeType.assigneeRemoved:
+        message = 'Assignee removed';
+        icon = Icons.person_remove;
+        color = _T.slate400;
+        break;
+    }
+
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: color,
       ),
     );
   }
@@ -410,17 +521,19 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 // PROJECT HEADER
 //
 // Shows the active project name (or "All Projects") with its colour dot, plus
-// the List / Board view-mode toggle tabs on the trailing edge.
+// the List / Board view-mode toggle tabs and connection status indicator.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectHeader extends StatelessWidget {
   final Project?                   activeProject;
   final _ViewMode                  viewMode;
   final ValueChanged<_ViewMode>    onViewModeChanged;
+  final AsyncValue<ConnectionStatus> connectionStatus;
 
   const _ProjectHeader({
     required this.activeProject,
     required this.viewMode,
     required this.onViewModeChanged,
+    required this.connectionStatus,
   });
 
   @override
@@ -490,10 +603,141 @@ class _ProjectHeader extends StatelessWidget {
 
           const Spacer(),
 
+          // ── Connection status indicator ───────────────────────────────
+          connectionStatus.when(
+            data: (status) => _ConnectionIndicator(status: status),
+            loading: () => const SizedBox(width: 8),
+            error: (_, __) => const SizedBox(width: 8),
+          ),
+
+          const SizedBox(width: 12),
+
           // ── View mode toggle ──────────────────────────────────────────
           _ViewToggle(
             current:  viewMode,
             onChange: onViewModeChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONNECTION INDICATOR
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConnectionIndicator extends StatelessWidget {
+  final ConnectionStatus status;
+
+  const _ConnectionIndicator({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    IconData icon;
+    String tooltip;
+
+    switch (status) {
+      case ConnectionStatus.connected:
+        color = _T.green;
+        icon = Icons.cloud_done;
+        tooltip = 'Connected - Real-time updates active';
+        break;
+      case ConnectionStatus.connecting:
+        color = _T.amber;
+        icon = Icons.cloud_sync;
+        tooltip = 'Connecting...';
+        break;
+      case ConnectionStatus.reconnecting:
+        color = _T.amber;
+        icon = Icons.cloud_sync;
+        tooltip = 'Reconnecting...';
+        break;
+      case ConnectionStatus.disconnected:
+        color = _T.slate400;
+        icon = Icons.cloud_off;
+        tooltip = 'Disconnected';
+        break;
+      case ConnectionStatus.error:
+        color = _T.red;
+        icon = Icons.cloud_off;
+        tooltip = 'Connection error';
+        break;
+    }
+
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              status == ConnectionStatus.connected ? 'Live' : 'Offline',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ERROR STATE
+// ─────────────────────────────────────────────────────────────────────────────
+class _ErrorState extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: _T.red,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.error_outline, size: 24, color: _T.red),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Failed to load tasks',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _T.ink3),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            error,
+            style: const TextStyle(fontSize: 13, color: _T.slate400),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.blue,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),

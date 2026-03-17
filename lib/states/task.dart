@@ -1,4 +1,5 @@
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 
 class TaskState {
 
@@ -32,12 +33,21 @@ class TaskState {
     _selectedTask = value;
   }
 
+  ConnectionStatus _connectionStatus;
+
+  ConnectionStatus get connectionStatus => _connectionStatus;
+
+  set connectionStatus(ConnectionStatus value) {
+    _connectionStatus = value;
+  }
+
   TaskState({
       List<Task> tasks = const [],
       bool isLoading = false,
       String? error,
-      Task? selectedTask
-  }) : _error = error, _isLoading = isLoading, _tasks = tasks, _selectedTask = selectedTask;
+      Task? selectedTask,
+      ConnectionStatus connectionStatus = ConnectionStatus.disconnected
+  }) : _error = error, _isLoading = isLoading, _tasks = tasks, _selectedTask = selectedTask, _connectionStatus = connectionStatus;
 
   TaskState insert(int index, Task task) {
 
@@ -70,7 +80,8 @@ class TaskState {
     bool? isLoading,
     String? error,
     Task? newTask,
-    Task? selectedTask
+    Task? selectedTask,
+    ConnectionStatus? connectionStatus
   }) {
 
     late final List<Task> ts;
@@ -91,7 +102,8 @@ class TaskState {
       tasks: ts,
       isLoading: isLoading ?? _isLoading,
       error: error,
-      selectedTask: selectedTask
+      selectedTask: selectedTask,
+      connectionStatus: connectionStatus ?? _connectionStatus
     );
   }
 

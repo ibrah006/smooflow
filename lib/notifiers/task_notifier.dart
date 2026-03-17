@@ -12,9 +12,12 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
-  TaskNotifier(this._repo) : super(TaskState());
+  TaskNotifier(this._repo) : super(TaskState()) {
+    _initializeSocket();
+  }
 
   final TaskRepo _repo;
+  late final TaskWebSocketClient _client;
 
   static const _dataReloadMinInterval = Duration(seconds: 30);
 
@@ -23,8 +26,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   bool get loading => _loading;
   Task? get activeTask => _activeTask;
-
-  late final TaskWebSocketClient _client;
+  ConnectionStatus get connectionStatus => state.connectionStatus;
 
   List<Task> get todaysProductionTasks {
     return state.tasks.where((task) {

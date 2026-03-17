@@ -15,7 +15,7 @@ enum TaskChangeType {
   assigneeRemoved,
 }
 
-/// Task change event
+/// Task change event from WebSocket
 class TaskChangeEvent {
   final TaskChangeType type;
   final int taskId;
