@@ -26,33 +26,33 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 // DESIGN TOKENS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  static const blue       = Color(0xFF2563EB);
-  static const blueHover  = Color(0xFF1D4ED8);
-  static const blue100    = Color(0xFFDBEAFE);
-  static const blue50     = Color(0xFFEFF6FF);
-  static const teal       = Color(0xFF38BDF8);
-  static const green      = Color(0xFF10B981);
-  static const green50    = Color(0xFFECFDF5);
-  static const amber      = Color(0xFFF59E0B);
-  static const amber50    = Color(0xFFFEF3C7);
-  static const red        = Color(0xFFEF4444);
-  static const red50      = Color(0xFFFEE2E2);
-  static const purple     = Color(0xFF8B5CF6);
-  static const purple50   = Color(0xFFF3E8FF);
-  static const slate50    = Color(0xFFF8FAFC);
-  static const slate100   = Color(0xFFF1F5F9);
-  static const slate200   = Color(0xFFE2E8F0);
-  static const slate300   = Color(0xFFCBD5E1);
-  static const slate400   = Color(0xFF94A3B8);
-  static const slate500   = Color(0xFF64748B);
-  static const ink        = Color(0xFF0F172A);
-  static const ink2       = Color(0xFF1E293B);
-  static const ink3       = Color(0xFF334155);
-  static const white      = Colors.white;
-  static const sidebarW  = 220.0;
-  static const topbarH   = 52.0;
-  static const detailW   = 400.0;
-  static const r   = 8.0;
+  static const blue = Color(0xFF2563EB);
+  static const blueHover = Color(0xFF1D4ED8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const teal = Color(0xFF38BDF8);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
+  static const sidebarW = 220.0;
+  static const topbarH = 52.0;
+  static const detailW = 400.0;
+  static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
@@ -62,10 +62,10 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingMeta {
   final BillingStatus value;
-  final String        label;
-  final String        sublabel;
-  final Color         color, bg;
-  final IconData      icon;
+  final String label;
+  final String sublabel;
+  final Color color, bg;
+  final IconData icon;
   const _BillingMeta({
     required this.value,
     required this.label,
@@ -78,44 +78,44 @@ class _BillingMeta {
 
 const List<_BillingMeta> _kBilling = [
   _BillingMeta(
-    value:    BillingStatus.pending,
-    label:    'Pending',
+    value: BillingStatus.pending,
+    label: 'Pending',
     sublabel: 'Awaiting quote',
-    color:    _T.amber,
-    bg:       _T.amber50,
-    icon:     Icons.hourglass_empty_rounded,
+    color: _T.amber,
+    bg: _T.amber50,
+    icon: Icons.hourglass_empty_rounded,
   ),
   _BillingMeta(
-    value:    BillingStatus.quoteGiven,
-    label:    'Quote Given',
+    value: BillingStatus.quoteGiven,
+    label: 'Quote Given',
     sublabel: 'Quote sent to client',
-    color:    _T.blue,
-    bg:       _T.blue50,
-    icon:     Icons.request_quote_outlined,
+    color: _T.blue,
+    bg: _T.blue50,
+    icon: Icons.request_quote_outlined,
   ),
   _BillingMeta(
-    value:    BillingStatus.invoiced,
-    label:    'Invoiced',
+    value: BillingStatus.invoiced,
+    label: 'Invoiced',
     sublabel: 'Invoice raised',
-    color:    _T.purple,
-    bg:       _T.purple50,
-    icon:     Icons.receipt_long_outlined,
+    color: _T.purple,
+    bg: _T.purple50,
+    icon: Icons.receipt_long_outlined,
   ),
   _BillingMeta(
-    value:    BillingStatus.foc,
-    label:    'FOC',
+    value: BillingStatus.foc,
+    label: 'FOC',
     sublabel: 'Free of charge',
-    color:    _T.green,
-    bg:       _T.green50,
-    icon:     Icons.volunteer_activism_outlined,
+    color: _T.green,
+    bg: _T.green50,
+    icon: Icons.volunteer_activism_outlined,
   ),
   _BillingMeta(
-    value:    BillingStatus.cancelled,
-    label:    'Cancelled',
+    value: BillingStatus.cancelled,
+    label: 'Cancelled',
     sublabel: 'Task cancelled',
-    color:    _T.red,
-    bg:       _T.red50,
-    icon:     Icons.cancel_outlined,
+    color: _T.red,
+    bg: _T.red50,
+    icon: Icons.cancel_outlined,
   ),
 ];
 
@@ -150,24 +150,24 @@ List<TaskStatus> _previousStatuses(TaskStatus current) {
 }
 
 String _statusLabel(TaskStatus s) => switch (s) {
-  TaskStatus.pending             => 'Initialized',
-  TaskStatus.designing           => 'Designing',
-  TaskStatus.waitingApproval     => 'Waiting Approval',
-  TaskStatus.clientApproved      => 'Client Approved',
-  TaskStatus.waitingPrinting     => 'Waiting Printing',
-  TaskStatus.printing            => 'Printing',
-  TaskStatus.printingCompleted   => 'Print Complete',
-  TaskStatus.finishing           => 'Finishing',
+  TaskStatus.pending => 'Initialized',
+  TaskStatus.designing => 'Designing',
+  TaskStatus.waitingApproval => 'Waiting Approval',
+  TaskStatus.clientApproved => 'Client Approved',
+  TaskStatus.waitingPrinting => 'Waiting Printing',
+  TaskStatus.printing => 'Printing',
+  TaskStatus.printingCompleted => 'Print Complete',
+  TaskStatus.finishing => 'Finishing',
   TaskStatus.productionCompleted => 'Production Complete',
-  TaskStatus.waitingDelivery     => 'Waiting Delivery',
-  TaskStatus.delivery            => 'Out for Delivery',
-  TaskStatus.delivered           => 'Delivered',
+  TaskStatus.waitingDelivery => 'Waiting Delivery',
+  TaskStatus.delivery => 'Out for Delivery',
+  TaskStatus.delivered => 'Delivered',
   TaskStatus.waitingInstallation => 'Waiting Installation',
-  TaskStatus.installing          => 'Installing',
-  TaskStatus.completed           => 'Completed',
-  TaskStatus.blocked             => 'Blocked',
-  TaskStatus.paused              => 'Paused',
-  TaskStatus.revision            => 'Needs Revision',
+  TaskStatus.installing => 'Installing',
+  TaskStatus.completed => 'Completed',
+  TaskStatus.blocked => 'Blocked',
+  TaskStatus.paused => 'Paused',
+  TaskStatus.revision => 'Needs Revision',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -192,8 +192,7 @@ class DetailPanel extends ConsumerStatefulWidget {
 }
 
 class __DetailPanelState extends ConsumerState<DetailPanel> {
-
-  final GlobalKey _advanceButtonKey   = GlobalKey();
+  final GlobalKey _advanceButtonKey = GlobalKey();
   final GlobalKey _stageBackButtonKey = GlobalKey();
 
   bool _isProgressing = false;
@@ -201,7 +200,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   // ── Billing state ─────────────────────────────────────────────────────────
   late BillingStatus _billingSelection;
   bool _billingEditMode = false;
-  bool _billingSaving   = false;
+  bool _billingSaving = false;
 
   bool get _isAccountant =>
       LoginService.currentUser?.role == 'accountant' ||
@@ -225,7 +224,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     super.didUpdateWidget(old);
     if (old.task.id != widget.task.id) {
       _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
-      _billingEditMode  = false;
+      _billingEditMode = false;
     }
   }
 
@@ -235,39 +234,52 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   void _cancelBillingEdit() => setState(() {
     _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
-    _billingEditMode  = false;
+    _billingEditMode = false;
   });
 
   Future<void> _saveBillingStatus() async {
     setState(() => _billingSaving = true);
     try {
-      await ref.read(taskNotifierProvider.notifier).update(
-        task: widget.task,
-        billingStatus: _billingSelection,
-        ref: null,
-        quantity: null,
-        size: null
-      );
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            billingStatus: _billingSelection,
+            ref: null,
+            quantity: null,
+            size: null,
+          );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
         setState(() => _billingEditMode = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const Icon(Icons.check_circle_outline_rounded,
-                size: 15, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              'Billing updated to ${_billingMeta(_billingSelection).label}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  size: 15,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Billing updated to ${_billingMeta(_billingSelection).label}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ]),
-          backgroundColor: _T.ink,
-          behavior:        SnackBarBehavior.floating,
-          margin:          const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r)),
-          duration: const Duration(seconds: 3),
-        ));
+            backgroundColor: _T.ink,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _billingSaving = false);
@@ -279,11 +291,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> approveDesignStage() async {
     final nextStage = widget.task.status.nextStage;
     if (nextStage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to advance stage")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to advance stage")));
       return;
     }
-    await ref.watch(taskNotifierProvider.notifier)
+    await ref
+        .watch(taskNotifierProvider.notifier)
         .progressStage(taskId: widget.task.id, newStatus: nextStage);
     setState(() {});
     widget.onAdvance();
@@ -297,7 +311,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       nextStage = TaskStatus.pending;
     } else if (widget.task.status == TaskStatus.completed) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No next stage from current phase")));
+        const SnackBar(content: Text("No next stage from current phase")),
+      );
       return;
     } else {
       nextStage = widget.task.status.nextStage!;
@@ -309,7 +324,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       ref: ref,
       taskId: widget.task.id,
       printerId: null,
-      newStatus: nextStage
+      newStatus: nextStage,
     );
 
     setState(() {});
@@ -317,10 +332,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   Future<void> _stageBackTo(TaskStatus target) async {
-    await ref.watch(taskNotifierProvider.notifier).progressStage(
-      taskId:    widget.task.id,
-      newStatus: target,
-    );
+    await ref
+        .watch(taskNotifierProvider.notifier)
+        .progressStage(taskId: widget.task.id, newStatus: target);
     setState(() {});
     widget.onAdvance();
   }
@@ -335,16 +349,16 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         _stageBackButtonKey.currentContext!.findRenderObject() as RenderBox;
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
-    final Offset offset  = btn.localToGlobal(Offset.zero, ancestor: overlay);
-    final Size   btnSize = btn.size;
-    final double menuH   = (previous.length * 40.0);
+    final Offset offset = btn.localToGlobal(Offset.zero, ancestor: overlay);
+    final Size btnSize = btn.size;
+    final double menuH = (previous.length * 40.0);
     dismissed = false;
 
     showGeneralDialog(
-      context:            context,
-      barrierColor:       Colors.transparent,
+      context: context,
+      barrierColor: Colors.transparent,
       barrierDismissible: true,
-      barrierLabel:       'stage-back',
+      barrierLabel: 'stage-back',
       pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
       transitionBuilder: (ctx, anim, _, __) {
         return Stack(
@@ -361,17 +375,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               ),
             ),
             Positioned(
-              left:  offset.dx,
-              top:   offset.dy - menuH - 6,
+              left: offset.dx,
+              top: offset.dy - menuH - 6,
               width: btnSize.width,
               child: FadeTransition(
                 opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
                 child: SlideTransition(
                   position: Tween<Offset>(
                     begin: const Offset(0, 0.06),
-                    end:   Offset.zero,
+                    end: Offset.zero,
                   ).animate(
-                      CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+                  ),
                   child: _StageBackMenu(
                     statuses: previous,
                     onSelect: (s) {
@@ -392,19 +407,23 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   // ── Print Job action ──────────────────────────────────────────────────────
 
   Future<void> _startPrintJobScreen() async {
-
-    AppRoutes.navigateTo(context, AppRoutes.startPrintJob, arguments: SchedulePrintJobArgs.details(task: widget.task));
+    AppRoutes.navigateTo(
+      context,
+      AppRoutes.startPrintJob,
+      arguments: SchedulePrintJobArgs.details(task: widget.task),
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final si   = stageInfo(widget.task.status);
-    final proj = widget.projects
-            .cast<Project?>()
-            .firstWhere((p) => p!.id == widget.task.projectId,
-                orElse: () => null) ??
+    final si = stageInfo(widget.task.status);
+    final proj =
+        widget.projects.cast<Project?>().firstWhere(
+          (p) => p!.id == widget.task.projectId,
+          orElse: () => null,
+        ) ??
         widget.projects.first;
 
     Member? member;
@@ -417,16 +436,16 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       member = null;
     }
 
-    final d         = widget.task.createdAt;
-    final dueDate   = widget.task.dueDate;
-    final now       = DateTime.now();
+    final d = widget.task.createdAt;
+    final dueDate = widget.task.dueDate;
+    final now = DateTime.now();
     final isOverdue = dueDate != null && dueDate.isBefore(now);
-    final isSoon    = dueDate != null &&
-        !isOverdue &&
-        dueDate.difference(now).inDays <= 3;
-    final next      = widget.task.status.nextStage;
+    final isSoon =
+        dueDate != null && !isOverdue && dueDate.difference(now).inDays <= 3;
+    final next = widget.task.status.nextStage;
 
-    final ableToReinitialize = widget.task.status == TaskStatus.paused ||
+    final ableToReinitialize =
+        widget.task.status == TaskStatus.paused ||
         widget.task.status == TaskStatus.blocked;
 
     final progressBtnEnabled =
@@ -435,9 +454,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
 
     // Print-specs visibility
-    final hasRef        = widget.task.ref?.isNotEmpty == true;
-    final hasSize       = widget.task.size != null;
-    final hasQty        = widget.task.quantity != null;
+    final hasRef = widget.task.ref?.isNotEmpty == true;
+    final hasSize = widget.task.size != null;
+    final hasQty = widget.task.quantity != null;
     final hasPrintSpecs = hasRef || hasSize || hasQty;
 
     // Print job CTA visibility
@@ -446,17 +465,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     return Container(
       width: _T.detailW,
       decoration: const BoxDecoration(
-        color:  _T.white,
+        color: _T.white,
         border: Border(left: BorderSide(color: _T.slate200)),
       ),
       child: Column(
         children: [
-
           // ── Top bar ───────────────────────────────────────────────────────
           Container(
-            height:    _T.topbarH,
+            height: _T.topbarH,
             decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: _T.slate200))),
+              border: Border(bottom: BorderSide(color: _T.slate200)),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
@@ -465,12 +484,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   child: GestureDetector(
                     onTap: widget.onClose,
                     child: Container(
-                      width: 26, height: 26,
+                      width: 26,
+                      height: 26,
                       decoration: BoxDecoration(
-                        border:       Border.all(color: _T.slate200),
+                        border: Border.all(color: _T.slate200),
                         borderRadius: BorderRadius.circular(_T.r),
                       ),
-                      child: const Icon(Icons.close, size: 13, color: _T.slate400),
+                      child: const Icon(
+                        Icons.close,
+                        size: 13,
+                        color: _T.slate400,
+                      ),
                     ),
                   ),
                 ),
@@ -478,10 +502,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 Text(
                   'TASK-${widget.task.id}',
                   style: const TextStyle(
-                    fontSize:      11,
-                    fontWeight:    FontWeight.w700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
-                    color:         _T.slate400,
+                    color: _T.slate400,
                   ),
                 ),
                 const Spacer(),
@@ -499,44 +523,52 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   // Title
                   Text(
                     widget.task.name,
                     style: const TextStyle(
-                      fontFamily:    'Plus Jakarta Sans',
-                      fontSize:      16,
-                      fontWeight:    FontWeight.w700,
-                      color:         _T.ink,
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink,
                       letterSpacing: -0.3,
-                      height:        1.35,
+                      height: 1.35,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(children: [
-                    Container(
-                        width: 8, height: 8,
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
                         decoration: BoxDecoration(
-                            color: proj.color, shape: BoxShape.circle)),
-                    const SizedBox(width: 5),
-                    Text(proj.name,
+                          color: proj.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        proj.name,
                         style: const TextStyle(
-                            fontSize:   11.5,
-                            fontWeight: FontWeight.w600,
-                            color:      _T.slate500)),
-                  ]),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _T.slate500,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 18),
 
                   // Details grid
                   const _DetailSectionTitle('Details'),
                   const SizedBox(height: 10),
                   GridView.count(
-                    shrinkWrap:        true,
-                    physics:           const NeverScrollableScrollPhysics(),
-                    crossAxisCount:    2,
-                    childAspectRatio:  2.8,
-                    crossAxisSpacing:  10,
-                    mainAxisSpacing:   10,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    childAspectRatio: 2.8,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
                     children: [
                       _DetailMetaCell(
                         label: 'Current Stage',
@@ -544,77 +576,113 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(color: si.bg, borderRadius: BorderRadius.circular(99)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: si.bg,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
                               child: StagePill(stageInfo: si),
                             ),
                           ],
                         ),
                       ),
                       _DetailMetaCell(
-                          label: 'Priority',
-                          child: PriorityPill(priority: widget.task.priority)),
+                        label: 'Priority',
+                        child: PriorityPill(priority: widget.task.priority),
+                      ),
                       if (member != null)
                         _DetailMetaCell(
                           label: 'Assignee',
-                          child: Row(children: [
-                            AvatarWidget(
+                          child: Row(
+                            children: [
+                              AvatarWidget(
                                 initials: member.initials,
-                                color:    member.color,
-                                size:     22),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(member.name,
-                                  overflow:  TextOverflow.ellipsis,
+                                color: member.color,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  member.name,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                      fontSize:   13,
-                                      fontWeight: FontWeight.w500,
-                                      color:      _T.ink3)),
-                            ),
-                          ]),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: _T.ink3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       _DetailMetaCell(
                         label: 'Date',
-                        child: Row(children: [
-                          Text(fmtDate(d),
+                        child: Row(
+                          children: [
+                            Text(
+                              fmtDate(d),
                               style: TextStyle(
-                                  fontSize:   13,
-                                  fontWeight: FontWeight.w500,
-                                  color: isOverdue
-                                      ? _T.red
-                                      : isSoon ? _T.amber : _T.ink3)),
-                          if (isOverdue) ...[
-                            const SizedBox(width: 6),
-                            const _Badge('Overdue', _T.red, _T.red50),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    isOverdue
+                                        ? _T.red
+                                        : isSoon
+                                        ? _T.amber
+                                        : _T.ink3,
+                              ),
+                            ),
+                            if (isOverdue) ...[
+                              const SizedBox(width: 6),
+                              const _Badge('Overdue', _T.red, _T.red50),
+                            ],
+                            if (isSoon && !isOverdue) ...[
+                              const SizedBox(width: 6),
+                              const _Badge('Due soon', _T.amber, _T.amber50),
+                            ],
                           ],
-                          if (isSoon && !isOverdue) ...[
-                            const SizedBox(width: 6),
-                            const _Badge('Due soon', _T.amber, _T.amber50),
-                          ],
-                        ]),
+                        ),
                       ),
                       _DetailMetaCell(
                         label: 'Due Date',
-                        child: dueDate != null
-                            ? Row(children: [
-                                Text(fmtDate(dueDate),
-                                    style: TextStyle(
-                                        fontSize:   13,
+                        child:
+                            dueDate != null
+                                ? Row(
+                                  children: [
+                                    Text(
+                                      fmtDate(dueDate),
+                                      style: TextStyle(
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w500,
-                                        color: isOverdue
-                                            ? _T.red
-                                            : isSoon ? _T.amber : _T.ink3)),
-                                if (isOverdue) ...[
-                                  const SizedBox(width: 6),
-                                  const _Badge('Overdue', _T.red, _T.red50),
-                                ],
-                                if (isSoon && !isOverdue) ...[
-                                  const SizedBox(width: 6),
-                                  const _Badge('Due soon', _T.amber, _T.amber50),
-                                ],
-                              ])
-                            : const Text('—',
-                                style: TextStyle(color: _T.slate400)),
+                                        color:
+                                            isOverdue
+                                                ? _T.red
+                                                : isSoon
+                                                ? _T.amber
+                                                : _T.ink3,
+                                      ),
+                                    ),
+                                    if (isOverdue) ...[
+                                      const SizedBox(width: 6),
+                                      const _Badge('Overdue', _T.red, _T.red50),
+                                    ],
+                                    if (isSoon && !isOverdue) ...[
+                                      const SizedBox(width: 6),
+                                      const _Badge(
+                                        'Due soon',
+                                        _T.amber,
+                                        _T.amber50,
+                                      ),
+                                    ],
+                                  ],
+                                )
+                                : const Text(
+                                  '—',
+                                  style: TextStyle(color: _T.slate400),
+                                ),
                       ),
                     ],
                   ),
@@ -626,8 +694,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     const SizedBox(height: 10),
                     _PrintSpecsCard(
                       reference: widget.task.ref,
-                      size:      widget.task.size,
-                      quantity:  widget.task.quantity,
+                      size: widget.task.size,
+                      quantity: widget.task.quantity,
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -636,16 +704,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   const _DetailSectionTitle('Billing'),
                   const SizedBox(height: 10),
                   _BillingCard(
-                    savedStatus:  widget.task.billingStatus ?? BillingStatus.pending,
-                    selection:    _billingSelection,
+                    savedStatus:
+                        widget.task.billingStatus ?? BillingStatus.pending,
+                    selection: _billingSelection,
                     isAccountant: _isAccountant,
-                    isEditMode:   _billingEditMode,
-                    isDirty:      _billingDirty,
-                    isSaving:     _billingSaving,
-                    onEdit:       _enterBillingEditMode,
-                    onCancel:     _cancelBillingEdit,
-                    onSelect:     (s) => setState(() => _billingSelection = s),
-                    onSave:       _saveBillingStatus,
+                    isEditMode: _billingEditMode,
+                    isDirty: _billingDirty,
+                    isSaving: _billingSaving,
+                    onEdit: _enterBillingEditMode,
+                    onCancel: _cancelBillingEdit,
+                    onSelect: (s) => setState(() => _billingSelection = s),
+                    onSave: _saveBillingStatus,
                   ),
                   const SizedBox(height: 18),
 
@@ -659,8 +728,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           const _DetailSectionTitle('Print Job'),
                           const SizedBox(height: 10),
                           _StartPrintJobCard(
-                            task:     widget.task,
-                            onTap:    _startPrintJobScreen,
+                            task: widget.task,
+                            onTap: _startPrintJobScreen,
                           ),
                           const SizedBox(height: 18),
                         ],
@@ -674,15 +743,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color:        _T.slate50,
-                        border:       Border.all(color: _T.slate200),
+                        color: _T.slate50,
+                        border: Border.all(color: _T.slate200),
                         borderRadius: BorderRadius.circular(_T.r),
                       ),
-                      child: Text(widget.task.description,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              color:    _T.slate500,
-                              height:   1.65)),
+                      child: Text(
+                        widget.task.description,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _T.slate500,
+                          height: 1.65,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -692,7 +764,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   const SizedBox(height: 8),
                   _StagePipeline(
                     currentStatus: widget.task.status,
-                    stages:        kStages,
+                    stages: kStages,
                   ),
                 ],
               ),
@@ -701,14 +773,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
           // ── Footer ────────────────────────────────────────────────────────
           _DetailFooter(
-            task:               widget.task,
-            next:               next,
+            task: widget.task,
+            next: next,
             progressBtnEnabled: progressBtnEnabled,
             ableToReinitialize: ableToReinitialize,
-            canStageBack:       canStageBack,
-            advanceButtonKey:   _advanceButtonKey,
+            canStageBack: canStageBack,
+            advanceButtonKey: _advanceButtonKey,
             stageBackButtonKey: _stageBackButtonKey,
-            isProgressing:      _isProgressing,
+            isProgressing: _isProgressing,
             onAdvanceTap: () async {
               if (!progressBtnEnabled) return;
               setState(() => _isProgressing = true);
@@ -718,7 +790,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               } else {
                 await _showMoveToNextStageDialog();
               }
-              
+
               setState(() => _isProgressing = false);
             },
             onStageBackTap: _showStageBackMenu,
@@ -735,7 +807,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 // Wrapped in PermissionGate by the parent — no extra auth checks needed here.
 // ─────────────────────────────────────────────────────────────────────────────
 class _StartPrintJobCard extends StatefulWidget {
-  final Task         task;
+  final Task task;
   final VoidCallback onTap;
 
   const _StartPrintJobCard({required this.task, required this.onTap});
@@ -750,27 +822,31 @@ class _StartPrintJobCardState extends State<_StartPrintJobCard> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor:  SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          curve:    Curves.easeOutCubic,
+          curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color:        _hovered ? const Color(0xFFEFF6FF) : _T.white,
+            color: _hovered ? const Color(0xFFEFF6FF) : _T.white,
             borderRadius: BorderRadius.circular(_T.rLg),
             border: Border.all(
               color: _hovered ? _T.blue.withOpacity(0.45) : _T.slate200,
               width: _hovered ? 1.5 : 1.0,
             ),
-            boxShadow: _hovered
-                ? [BoxShadow(
-                    color:      _T.blue.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset:     const Offset(0, 3))]
-                : null,
+            boxShadow:
+                _hovered
+                    ? [
+                      BoxShadow(
+                        color: _T.blue.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                    : null,
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -779,18 +855,20 @@ class _StartPrintJobCardState extends State<_StartPrintJobCard> {
                 // Icon badge
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
-                  width: 38, height: 38,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    color: _hovered
-                        ? _T.blue.withOpacity(0.12)
-                        : _T.blue50,
+                    color: _hovered ? _T.blue.withOpacity(0.12) : _T.blue50,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: _T.blue.withOpacity(_hovered ? 0.3 : 0.15)),
+                      color: _T.blue.withOpacity(_hovered ? 0.3 : 0.15),
+                    ),
                   ),
-                  child: Icon(Icons.print_rounded,
-                      size: 18,
-                      color: _hovered ? _T.blue : _T.blue.withOpacity(0.7)),
+                  child: Icon(
+                    Icons.print_rounded,
+                    size: 18,
+                    color: _hovered ? _T.blue : _T.blue.withOpacity(0.7),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Text
@@ -801,35 +879,35 @@ class _StartPrintJobCardState extends State<_StartPrintJobCard> {
                       Text(
                         'Start Print Job',
                         style: TextStyle(
-                          fontSize:   13.5,
+                          fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color:      _T.ink,
+                          color: _T.ink,
                         ),
                       ),
                       SizedBox(height: 2),
                       Text(
                         'Select a printer and begin production',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color:    _T.slate400,
-                        ),
+                        style: TextStyle(fontSize: 11.5, color: _T.slate400),
                       ),
                     ],
                   ),
                 ),
                 // Chevron
                 AnimatedOpacity(
-                  opacity:  _hovered ? 1.0 : 0.45,
+                  opacity: _hovered ? 1.0 : 0.45,
                   duration: const Duration(milliseconds: 160),
                   child: Container(
-                    width: 26, height: 26,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
-                      color:        _hovered ? _T.blue : _T.slate100,
+                      color: _hovered ? _T.blue : _T.slate100,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.chevron_right_rounded,
-                        size: 15,
-                        color: _hovered ? Colors.white : _T.slate400),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 15,
+                      color: _hovered ? Colors.white : _T.slate400,
+                    ),
                   ),
                 ),
               ],
@@ -860,7 +938,7 @@ class _PrinterSelectionDialog extends ConsumerStatefulWidget {
 class _PrinterSelectionDialogState
     extends ConsumerState<_PrinterSelectionDialog> {
   String? _selectedPrinterId;
-  bool    _starting = false;
+  bool _starting = false;
 
   // ── Temporary stub — replace with your real printer provider ──────────────
   // Replace this with ref.watch(printerNotifierProvider).printers or similar.
@@ -882,18 +960,18 @@ class _PrinterSelectionDialogState
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding:    const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Container(
-        width:       360,
+        width: 360,
         decoration: BoxDecoration(
-          color:        _T.white,
+          color: _T.white,
           borderRadius: BorderRadius.circular(_T.rXl),
-          border:       Border.all(color: _T.slate200),
+          border: Border.all(color: _T.slate200),
           boxShadow: [
             BoxShadow(
-              color:      Colors.black.withOpacity(0.10),
+              color: Colors.black.withOpacity(0.10),
               blurRadius: 24,
-              offset:     const Offset(0, 8),
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -901,36 +979,42 @@ class _PrinterSelectionDialogState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             // ── Header ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
               child: Row(
                 children: [
                   Container(
-                    width: 34, height: 34,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
-                      color:        _T.blue50,
+                      color: _T.blue50,
                       borderRadius: BorderRadius.circular(9),
                       border: Border.all(color: _T.blue.withOpacity(0.2)),
                     ),
-                    child: const Icon(Icons.print_rounded,
-                        size: 16, color: _T.blue),
+                    child: const Icon(
+                      Icons.print_rounded,
+                      size: 16,
+                      color: _T.blue,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Start Print Job',
-                            style: TextStyle(
-                              fontSize:   15,
-                              fontWeight: FontWeight.w700,
-                              color:      _T.ink,
-                            )),
-                        Text('Select a printer to assign this job',
-                            style: TextStyle(
-                                fontSize: 11.5, color: _T.slate400)),
+                        Text(
+                          'Start Print Job',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: _T.ink,
+                          ),
+                        ),
+                        Text(
+                          'Select a printer to assign this job',
+                          style: TextStyle(fontSize: 11.5, color: _T.slate400),
+                        ),
                       ],
                     ),
                   ),
@@ -940,13 +1024,17 @@ class _PrinterSelectionDialogState
                     child: GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Container(
-                        width: 26, height: 26,
+                        width: 26,
+                        height: 26,
                         decoration: BoxDecoration(
-                          border:       Border.all(color: _T.slate200),
+                          border: Border.all(color: _T.slate200),
                           borderRadius: BorderRadius.circular(7),
                         ),
-                        child: const Icon(Icons.close,
-                            size: 13, color: _T.slate400),
+                        child: const Icon(
+                          Icons.close,
+                          size: 13,
+                          color: _T.slate400,
+                        ),
                       ),
                     ),
                   ),
@@ -958,41 +1046,54 @@ class _PrinterSelectionDialogState
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color:        _T.slate50,
-                  border:       Border.all(color: _T.slate200),
+                  color: _T.slate50,
+                  border: Border.all(color: _T.slate200),
                   borderRadius: BorderRadius.circular(_T.r),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.assignment_outlined,
-                      size: 13, color: _T.slate400),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      widget.task.name,
-                      style: const TextStyle(
-                        fontSize:   12.5,
-                        fontWeight: FontWeight.w600,
-                        color:      _T.ink3,
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.assignment_outlined,
+                      size: 13,
+                      color: _T.slate400,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        widget.task.name,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: _T.ink3,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color:        _T.amber50,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: const Text('TASK-ID',
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _T.amber50,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: const Text(
+                        'TASK-ID',
                         style: TextStyle(
-                            fontSize:   9.5,
-                            fontWeight: FontWeight.w700,
-                            color:      _T.amber)),
-                  ),
-                ]),
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: _T.amber,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -1002,10 +1103,10 @@ class _PrinterSelectionDialogState
               child: Text(
                 'AVAILABLE PRINTERS',
                 style: TextStyle(
-                  fontSize:      9,
-                  fontWeight:    FontWeight.w700,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
-                  color:         _T.slate400,
+                  color: _T.slate400,
                 ),
               ),
             ),
@@ -1017,42 +1118,55 @@ class _PrinterSelectionDialogState
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 22),
                   decoration: BoxDecoration(
-                    color:        _T.slate50,
-                    border:       Border.all(color: _T.slate200),
+                    color: _T.slate50,
+                    border: Border.all(color: _T.slate200),
                     borderRadius: BorderRadius.circular(_T.r),
                   ),
-                  child: Column(children: [
-                    Icon(Icons.print_disabled_outlined,
-                        size: 22, color: _T.slate300),
-                    const SizedBox(height: 8),
-                    const Text('No printers available',
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.print_disabled_outlined,
+                        size: 22,
+                        color: _T.slate300,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'No printers available',
                         style: TextStyle(
-                            fontSize:   12.5,
-                            fontWeight: FontWeight.w500,
-                            color:      _T.slate400)),
-                    const SizedBox(height: 2),
-                    const Text('All printers are busy or offline',
-                        style:
-                            TextStyle(fontSize: 11, color: _T.slate300)),
-                  ]),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: _T.slate400,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'All printers are busy or offline',
+                        style: TextStyle(fontSize: 11, color: _T.slate300),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 child: Column(
-                  children: _printers.map((p) {
-                    final selected = _selectedPrinterId == p.id;
-                    return _PrinterRow(
-                      printer:    p,
-                      isSelected: selected,
-                      onTap: p.isAvailable
-                          ? () => setState(
-                              () => _selectedPrinterId =
-                                  selected ? null : p.id)
-                          : null,
-                    );
-                  }).toList(),
+                  children:
+                      _printers.map((p) {
+                        final selected = _selectedPrinterId == p.id;
+                        return _PrinterRow(
+                          printer: p,
+                          isSelected: selected,
+                          onTap:
+                              p.isAvailable
+                                  ? () => setState(
+                                    () =>
+                                        _selectedPrinterId =
+                                            selected ? null : p.id,
+                                  )
+                                  : null,
+                        );
+                      }).toList(),
                 ),
               ),
 
@@ -1068,9 +1182,8 @@ class _PrinterSelectionDialogState
                   Expanded(
                     child: _GhostButton(
                       label: 'Cancel',
-                      onTap: _starting
-                          ? null
-                          : () => Navigator.of(context).pop(),
+                      onTap:
+                          _starting ? null : () => Navigator.of(context).pop(),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1078,11 +1191,11 @@ class _PrinterSelectionDialogState
                   Expanded(
                     flex: 2,
                     child: _FilledActionButton(
-                      label:   _starting ? 'Starting…' : 'Start Print Job',
-                      icon:    _starting ? null : Icons.print_rounded,
+                      label: _starting ? 'Starting…' : 'Start Print Job',
+                      icon: _starting ? null : Icons.print_rounded,
                       loading: _starting,
                       enabled: _canConfirm,
-                      onTap:   _confirm,
+                      onTap: _confirm,
                     ),
                   ),
                 ],
@@ -1106,10 +1219,10 @@ class _PrinterStub {
   final String id;
   final String name;
   final String nickname;
-  final bool   isAvailable;
+  final bool isAvailable;
   final String statusLabel;
-  final Color  statusColor;
-  final Color  statusBackgroundColor;
+  final Color statusColor;
+  final Color statusBackgroundColor;
 
   const _PrinterStub({
     required this.id,
@@ -1123,8 +1236,8 @@ class _PrinterStub {
 }
 
 class _PrinterRow extends StatefulWidget {
-  final _PrinterStub  printer;
-  final bool          isSelected;
+  final _PrinterStub printer;
+  final bool isSelected;
   final VoidCallback? onTap;
 
   const _PrinterRow({
@@ -1142,40 +1255,41 @@ class _PrinterRowState extends State<_PrinterRow> {
 
   @override
   Widget build(BuildContext context) {
-    final disabled  = widget.onTap == null;
-    final selected  = widget.isSelected;
-    final p         = widget.printer;
+    final disabled = widget.onTap == null;
+    final selected = widget.isSelected;
+    final p = widget.printer;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: MouseRegion(
-        cursor:  disabled
-            ? SystemMouseCursors.forbidden
-            : SystemMouseCursors.click,
+        cursor:
+            disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hovered = true),
-        onExit:  (_) => setState(() => _hovered = false),
+        onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: disabled
-                  ? _T.slate50
-                  : selected
+              color:
+                  disabled
+                      ? _T.slate50
+                      : selected
                       ? _T.blue50
                       : _hovered
-                          ? const Color(0xFFF8FBFF)
-                          : _T.white,
+                      ? const Color(0xFFF8FBFF)
+                      : _T.white,
               borderRadius: BorderRadius.circular(_T.r),
               border: Border.all(
-                color: selected
-                    ? _T.blue.withOpacity(0.45)
-                    : disabled
+                color:
+                    selected
+                        ? _T.blue.withOpacity(0.45)
+                        : disabled
                         ? _T.slate100
                         : _hovered
-                            ? _T.slate300
-                            : _T.slate200,
+                        ? _T.slate300
+                        : _T.slate200,
                 width: selected ? 1.5 : 1.0,
               ),
             ),
@@ -1183,21 +1297,24 @@ class _PrinterRowState extends State<_PrinterRow> {
               children: [
                 // Printer icon badge
                 Container(
-                  width: 34, height: 34,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
-                    color: disabled
-                        ? _T.slate100
-                        : selected
+                    color:
+                        disabled
+                            ? _T.slate100
+                            : selected
                             ? _T.blue.withOpacity(0.12)
                             : _T.slate100,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.print_outlined,
-                    size:  16,
-                    color: disabled
-                        ? _T.slate300
-                        : selected
+                    size: 16,
+                    color:
+                        disabled
+                            ? _T.slate300
+                            : selected
                             ? _T.blue
                             : _T.slate500,
                   ),
@@ -1211,7 +1328,7 @@ class _PrinterRowState extends State<_PrinterRow> {
                       Text(
                         p.name,
                         style: TextStyle(
-                          fontSize:   13,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: disabled ? _T.slate400 : _T.ink,
                         ),
@@ -1221,7 +1338,9 @@ class _PrinterRowState extends State<_PrinterRow> {
                         Text(
                           p.nickname,
                           style: const TextStyle(
-                              fontSize: 11, color: _T.slate400),
+                            fontSize: 11,
+                            color: _T.slate400,
+                          ),
                         ),
                       ],
                     ],
@@ -1230,32 +1349,43 @@ class _PrinterRowState extends State<_PrinterRow> {
                 // Status pill
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: p.statusBackgroundColor,
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                      width: 5, height: 5,
-                      decoration: BoxDecoration(
-                          color: p.statusColor, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      p.statusLabel,
-                      style: TextStyle(
-                        fontSize:   10.5,
-                        fontWeight: FontWeight.w700,
-                        color:      p.statusColor,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: p.statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                  ]),
+                      const SizedBox(width: 4),
+                      Text(
+                        p.statusLabel,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: p.statusColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 if (selected) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.check_circle_rounded,
-                      size: 16, color: _T.blue),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 16,
+                    color: _T.blue,
+                  ),
                 ],
               ],
             ),
@@ -1272,7 +1402,7 @@ class _PrinterRowState extends State<_PrinterRow> {
 class _PrintSpecsCard extends StatelessWidget {
   final String? reference;
   final String? size;
-  final int?    quantity;
+  final int? quantity;
 
   const _PrintSpecsCard({
     required this.reference,
@@ -1283,31 +1413,51 @@ class _PrintSpecsCard extends StatelessWidget {
   Widget _sizeWidget(String size) {
     final parts = size.split('×');
     final right = parts.length > 1 ? parts[1].trim() : '';
-    final rightNum  = right.split(' ').first;
+    final rightNum = right.split(' ').first;
     final rightUnit = right.split(' ').length > 1 ? right.split(' ')[1] : '';
 
     return Row(
-      mainAxisSize:       MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline:       TextBaseline.alphabetic,
+      textBaseline: TextBaseline.alphabetic,
       children: [
-        Text(parts[0].trim(),
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
+        Text(
+          parts[0].trim(),
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: _T.ink,
+          ),
+        ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 5),
-          child: Text('×',
-              style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w300, color: _T.slate300)),
+          child: Text(
+            '×',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w300,
+              color: _T.slate300,
+            ),
+          ),
         ),
-        Text(rightNum,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
+        Text(
+          rightNum,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: _T.ink,
+          ),
+        ),
         if (rightUnit.isNotEmpty) ...[
           const SizedBox(width: 5),
-          Text(rightUnit,
-              style: const TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w500, color: _T.slate400)),
+          Text(
+            rightUnit,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: _T.slate400,
+            ),
+          ),
         ],
       ],
     );
@@ -1315,109 +1465,138 @@ class _PrintSpecsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasRef  = reference?.isNotEmpty == true;
+    final hasRef = reference?.isNotEmpty == true;
     final hasSize = size != null;
-    final hasQty  = quantity != null;
+    final hasQty = quantity != null;
 
     final rows = <Widget>[];
 
     if (hasRef) {
-      rows.add(_SpecRow(
-        icon:  Icons.tag_rounded,
-        label: 'Ref',
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color:        _T.slate100,
-            borderRadius: BorderRadius.circular(5),
-            border:       Border.all(color: _T.slate200),
-          ),
-          child: Text(
-            reference!,
-            style: const TextStyle(
-              fontSize:   12,
-              fontWeight: FontWeight.w600,
-              color:      _T.ink3,
-              fontFamily: 'monospace',
+      rows.add(
+        _SpecRow(
+          icon: Icons.tag_rounded,
+          label: 'Ref',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: _T.slate200),
+            ),
+            child: Text(
+              reference!,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _T.ink3,
+                fontFamily: 'monospace',
+              ),
             ),
           ),
         ),
-      ));
+      );
     }
 
     if (hasSize) {
       if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
-      rows.add(_SpecRow(
-        icon:  Icons.crop_free_rounded,
-        label: 'Size',
-        child: _sizeWidget(size!),
-      ));
+      rows.add(
+        _SpecRow(
+          icon: Icons.crop_free_rounded,
+          label: 'Size',
+          child: _sizeWidget(size!),
+        ),
+      );
     }
 
     if (hasQty) {
       if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
-      rows.add(_SpecRow(
-        icon:  Icons.inventory_2_outlined,
-        label: 'Qty',
-        child: Row(
-          mainAxisSize:       MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline:       TextBaseline.alphabetic,
-          children: [
-            Text('$quantity',
+      rows.add(
+        _SpecRow(
+          icon: Icons.inventory_2_outlined,
+          label: 'Qty',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '$quantity',
                 style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700, color: _T.ink)),
-            const SizedBox(width: 5),
-            const Text('pcs',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                ),
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                'pcs',
                 style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w500, color: _T.slate400)),
-          ],
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: _T.slate400,
+                ),
+              ),
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color:        _T.white,
+        color: _T.white,
         borderRadius: BorderRadius.circular(_T.rLg),
-        border:       Border.all(color: _T.slate200),
+        border: Border.all(color: _T.slate200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-            child: Row(children: [
-              Container(
-                width: 30, height: 30,
-                decoration: BoxDecoration(
-                  color:        _T.purple50,
-                  borderRadius: BorderRadius.circular(8),
-                  border:       Border.all(color: _T.purple.withOpacity(0.2)),
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _T.purple50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _T.purple.withOpacity(0.2)),
+                  ),
+                  child: const Icon(
+                    Icons.straighten_outlined,
+                    size: 15,
+                    color: _T.purple,
+                  ),
                 ),
-                child: const Icon(Icons.straighten_outlined,
-                    size: 15, color: _T.purple),
-              ),
-              const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Print Specs',
+                const SizedBox(width: 10),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Print Specs',
                       style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
-                  Text('Reference, dimensions & quantity',
-                      style: TextStyle(fontSize: 11, color: _T.slate400)),
-                ],
-              ),
-            ]),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink,
+                      ),
+                    ),
+                    Text(
+                      'Reference, dimensions & quantity',
+                      style: TextStyle(fontSize: 11, color: _T.slate400),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child:   Divider(height: 1, color: _T.slate100),
+            child: Divider(height: 1, color: _T.slate100),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child:   Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: rows,
             ),
@@ -1433,18 +1612,23 @@ class _PrintSpecsCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SpecRow extends StatelessWidget {
   final IconData icon;
-  final String   label;
-  final Widget   child;
-  const _SpecRow({required this.icon, required this.label, required this.child});
+  final String label;
+  final Widget child;
+  const _SpecRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Container(
-        width: 28, height: 28,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
-          color:        _T.slate100,
+          color: _T.slate100,
           borderRadius: BorderRadius.circular(7),
         ),
         child: Icon(icon, size: 14, color: _T.slate500),
@@ -1452,11 +1636,14 @@ class _SpecRow extends StatelessWidget {
       const SizedBox(width: 10),
       SizedBox(
         width: 38,
-        child: Text(label,
-            style: const TextStyle(
-                fontSize:   11.5,
-                fontWeight: FontWeight.w500,
-                color:      _T.slate400)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+            color: _T.slate400,
+          ),
+        ),
       ),
       child,
     ],
@@ -1467,16 +1654,16 @@ class _SpecRow extends StatelessWidget {
 // BILLING CARD  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingCard extends StatelessWidget {
-  final BillingStatus              savedStatus;
-  final BillingStatus              selection;
-  final bool                       isAccountant;
-  final bool                       isEditMode;
-  final bool                       isDirty;
-  final bool                       isSaving;
-  final VoidCallback               onEdit;
-  final VoidCallback               onCancel;
+  final BillingStatus savedStatus;
+  final BillingStatus selection;
+  final bool isAccountant;
+  final bool isEditMode;
+  final bool isDirty;
+  final bool isSaving;
+  final VoidCallback onEdit;
+  final VoidCallback onCancel;
   final ValueChanged<BillingStatus> onSelect;
-  final VoidCallback               onSave;
+  final VoidCallback onSave;
 
   const _BillingCard({
     required this.savedStatus,
@@ -1497,20 +1684,24 @@ class _BillingCard extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      curve:    Curves.easeOutCubic,
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color:        _T.white,
+        color: _T.white,
         borderRadius: BorderRadius.circular(_T.rLg),
         border: Border.all(
           color: isEditMode ? _T.slate300 : _T.slate200,
           width: isEditMode ? 1.5 : 1.0,
         ),
-        boxShadow: isEditMode
-            ? [BoxShadow(
-                color:      Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset:     const Offset(0, 3))]
-            : null,
+        boxShadow:
+            isEditMode
+                ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1520,9 +1711,10 @@ class _BillingCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 30, height: 30,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
-                    color:        saved.bg,
+                    color: saved.bg,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: saved.color.withOpacity(0.2)),
                   ),
@@ -1533,13 +1725,18 @@ class _BillingCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Billing Status',
-                          style: TextStyle(
-                              fontSize:   12.5,
-                              fontWeight: FontWeight.w600,
-                              color:      _T.ink)),
-                      Text('Finance & invoicing',
-                          style: TextStyle(fontSize: 10.5, color: _T.slate400)),
+                      Text(
+                        'Billing Status',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: _T.ink,
+                        ),
+                      ),
+                      Text(
+                        'Finance & invoicing',
+                        style: TextStyle(fontSize: 10.5, color: _T.slate400),
+                      ),
                     ],
                   ),
                 ),
@@ -1558,28 +1755,36 @@ class _BillingCard extends StatelessWidget {
           ),
           AnimatedSize(
             duration: const Duration(milliseconds: 240),
-            curve:    Curves.easeOutCubic,
-            child: isEditMode
-                ? _BillingEditPanel(
-                    selection: selection,
-                    isDirty:   isDirty,
-                    isSaving:  isSaving,
-                    onSelect:  onSelect,
-                    onCancel:  onCancel,
-                    onSave:    onSave,
-                  )
-                : const SizedBox.shrink(),
+            curve: Curves.easeOutCubic,
+            child:
+                isEditMode
+                    ? _BillingEditPanel(
+                      selection: selection,
+                      isDirty: isDirty,
+                      isSaving: isSaving,
+                      onSelect: onSelect,
+                      onCancel: onCancel,
+                      onSave: onSave,
+                    )
+                    : const SizedBox.shrink(),
           ),
           if (!isAccountant)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Row(children: [
-                const Icon(Icons.lock_outline_rounded,
-                    size: 11, color: _T.slate300),
-                const SizedBox(width: 4),
-                const Text('Managed by accounting',
-                    style: TextStyle(fontSize: 10.5, color: _T.slate400)),
-              ]),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.lock_outline_rounded,
+                    size: 11,
+                    color: _T.slate300,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Managed by accounting',
+                    style: TextStyle(fontSize: 10.5, color: _T.slate400),
+                  ),
+                ],
+              ),
             ),
         ],
       ),
@@ -1603,31 +1808,38 @@ class _EditButtonState extends State<_EditButton> {
 
   @override
   Widget build(BuildContext context) => MouseRegion(
-    cursor:  SystemMouseCursors.click,
+    cursor: SystemMouseCursors.click,
     onEnter: (_) => setState(() => _hovered = true),
-    onExit:  (_) => setState(() => _hovered = false),
+    onExit: (_) => setState(() => _hovered = false),
     child: GestureDetector(
       onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color:        _hovered ? _T.slate100 : _T.slate50,
+          color: _hovered ? _T.slate100 : _T.slate50,
           borderRadius: BorderRadius.circular(6),
-          border:       Border.all(color: _T.slate200),
+          border: Border.all(color: _T.slate200),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.edit_outlined,
-              size:  11,
-              color: _hovered ? _T.ink3 : _T.slate400),
-          const SizedBox(width: 4),
-          Text('Edit',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.edit_outlined,
+              size: 11,
+              color: _hovered ? _T.ink3 : _T.slate400,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Edit',
               style: TextStyle(
-                fontSize:   11,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color:      _hovered ? _T.ink3 : _T.slate500,
-              )),
-        ]),
+                color: _hovered ? _T.ink3 : _T.slate500,
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -1637,12 +1849,12 @@ class _EditButtonState extends State<_EditButton> {
 // BILLING EDIT PANEL  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingEditPanel extends StatelessWidget {
-  final BillingStatus              selection;
-  final bool                       isDirty;
-  final bool                       isSaving;
+  final BillingStatus selection;
+  final bool isDirty;
+  final bool isSaving;
   final ValueChanged<BillingStatus> onSelect;
-  final VoidCallback               onCancel;
-  final VoidCallback               onSave;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
 
   const _BillingEditPanel({
     required this.selection,
@@ -1665,10 +1877,10 @@ class _BillingEditPanel extends StatelessWidget {
           child: Text(
             'SELECT STATUS',
             style: TextStyle(
-              fontSize:      9,
-              fontWeight:    FontWeight.w700,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
               letterSpacing: 1.1,
-              color:         _T.slate400,
+              color: _T.slate400,
             ),
           ),
         ),
@@ -1676,93 +1888,115 @@ class _BillingEditPanel extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Wrap(
-            spacing:    8,
+            spacing: 8,
             runSpacing: 8,
-            children: _kBilling.map((m) {
-              final active = selection == m.value;
-              return GestureDetector(
-                onTap: () => onSelect(m.value),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
-                  curve:    Curves.easeOut,
-                  width:    164,
-                  padding:  const EdgeInsets.fromLTRB(10, 9, 10, 9),
-                  decoration: BoxDecoration(
-                    color: active ? m.bg : _T.white,
-                    borderRadius: BorderRadius.circular(_T.r),
-                    border: Border.all(
-                      color: active ? m.color.withOpacity(0.5) : _T.slate200,
-                      width: active ? 1.5 : 1,
+            children:
+                _kBilling.map((m) {
+                  final active = selection == m.value;
+                  return GestureDetector(
+                    onTap: () => onSelect(m.value),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
+                      curve: Curves.easeOut,
+                      width: 164,
+                      padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
+                      decoration: BoxDecoration(
+                        color: active ? m.bg : _T.white,
+                        borderRadius: BorderRadius.circular(_T.r),
+                        border: Border.all(
+                          color:
+                              active ? m.color.withOpacity(0.5) : _T.slate200,
+                          width: active ? 1.5 : 1,
+                        ),
+                        boxShadow:
+                            active
+                                ? [
+                                  BoxShadow(
+                                    color: m.color.withOpacity(0.10),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                                : null,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 140),
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color:
+                                  active
+                                      ? m.color.withOpacity(0.14)
+                                      : _T.slate100,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Icon(
+                              m.icon,
+                              size: 13,
+                              color: active ? m.color : _T.slate400,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        m.label,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: active ? m.color : _T.ink3,
+                                        ),
+                                      ),
+                                    ),
+                                    AnimatedOpacity(
+                                      opacity: active ? 1.0 : 0.0,
+                                      duration: const Duration(
+                                        milliseconds: 140,
+                                      ),
+                                      child: Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 11,
+                                        color: m.color,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  m.sublabel,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    color:
+                                        active
+                                            ? m.color.withOpacity(0.65)
+                                            : _T.slate400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    boxShadow: active
-                        ? [BoxShadow(
-                            color:      m.color.withOpacity(0.10),
-                            blurRadius: 8,
-                            offset:     const Offset(0, 2))]
-                        : null,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 140),
-                        width: 26, height: 26,
-                        decoration: BoxDecoration(
-                          color: active
-                              ? m.color.withOpacity(0.14)
-                              : _T.slate100,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Icon(m.icon,
-                            size:  13,
-                            color: active ? m.color : _T.slate400),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [
-                              Expanded(
-                                child: Text(m.label,
-                                    style: TextStyle(
-                                      fontSize:   11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color:      active ? m.color : _T.ink3,
-                                    )),
-                              ),
-                              AnimatedOpacity(
-                                opacity:  active ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 140),
-                                child: Icon(Icons.check_circle_rounded,
-                                    size: 11, color: m.color),
-                              ),
-                            ]),
-                            const SizedBox(height: 2),
-                            Text(m.sublabel,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  color: active
-                                      ? m.color.withOpacity(0.65)
-                                      : _T.slate400,
-                                )),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ),
         const SizedBox(height: 14),
         Container(
           decoration: const BoxDecoration(
-            color:  _T.slate50,
+            color: _T.slate50,
             border: Border(top: BorderSide(color: _T.slate100)),
             borderRadius: BorderRadius.only(
-              bottomLeft:  Radius.circular(_T.rLg),
+              bottomLeft: Radius.circular(_T.rLg),
               bottomRight: Radius.circular(_T.rLg),
             ),
           ),
@@ -1771,19 +2005,19 @@ class _BillingEditPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _GhostButton(
-                  label:   'Cancel',
-                  onTap:   isSaving ? null : onCancel,
+                  label: 'Cancel',
+                  onTap: isSaving ? null : onCancel,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 flex: 2,
                 child: _FilledActionButton(
-                  label:    isSaving ? 'Saving…' : 'Save Changes',
-                  icon:     isSaving ? null : Icons.check_rounded,
-                  loading:  isSaving,
-                  enabled:  isDirty && !isSaving,
-                  onTap:    onSave,
+                  label: isSaving ? 'Saving…' : 'Save Changes',
+                  icon: isSaving ? null : Icons.check_rounded,
+                  loading: isSaving,
+                  enabled: isDirty && !isSaving,
+                  onTap: onSave,
                 ),
               ),
             ],
@@ -1798,7 +2032,7 @@ class _BillingEditPanel extends StatelessWidget {
 // SHARED SMALL BUTTONS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _GhostButton extends StatefulWidget {
-  final String       label;
+  final String label;
   final VoidCallback? onTap;
   const _GhostButton({required this.label, this.onTap});
 
@@ -1813,9 +2047,10 @@ class _GhostButtonState extends State<_GhostButton> {
   Widget build(BuildContext context) {
     final disabled = widget.onTap == null;
     return MouseRegion(
-      cursor:  disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      cursor:
+          disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
@@ -1830,9 +2065,9 @@ class _GhostButtonState extends State<_GhostButton> {
             child: Text(
               widget.label,
               style: TextStyle(
-                fontSize:   12.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color:      disabled ? _T.slate300 : _T.slate500,
+                color: disabled ? _T.slate300 : _T.slate500,
               ),
             ),
           ),
@@ -1843,10 +2078,10 @@ class _GhostButtonState extends State<_GhostButton> {
 }
 
 class _FilledActionButton extends StatelessWidget {
-  final String    label;
+  final String label;
   final IconData? icon;
-  final bool      loading;
-  final bool      enabled;
+  final bool loading;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _FilledActionButton({
@@ -1869,32 +2104,42 @@ class _FilledActionButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: enabled ? _T.blue : _T.slate100,
             borderRadius: BorderRadius.circular(_T.r),
-            boxShadow: enabled
-                ? [BoxShadow(
-                    color:      _T.blue.withOpacity(0.25),
-                    blurRadius: 8,
-                    offset:     const Offset(0, 2))]
-                : null,
+            boxShadow:
+                enabled
+                    ? [
+                      BoxShadow(
+                        color: _T.blue.withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (loading)
                 const SizedBox(
-                  width: 13, height: 13,
+                  width: 13,
+                  height: 13,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               else if (icon != null)
-                Icon(icon, size: 13,
-                    color: enabled ? Colors.white : _T.slate400),
+                Icon(
+                  icon,
+                  size: 13,
+                  color: enabled ? Colors.white : _T.slate400,
+                ),
               if (!loading && icon != null) const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize:   12.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color:      enabled ? Colors.white : _T.slate400,
+                  color: enabled ? Colors.white : _T.slate400,
                 ),
               ),
             ],
@@ -1916,22 +2161,29 @@ class _BillingPill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
-      color:        meta.bg,
+      color: meta.bg,
       borderRadius: BorderRadius.circular(99),
-      border:       Border.all(color: meta.color.withOpacity(0.3)),
+      border: Border.all(color: meta.color.withOpacity(0.3)),
     ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-          width: 5, height: 5,
-          decoration: BoxDecoration(color: meta.color, shape: BoxShape.circle)),
-      const SizedBox(width: 5),
-      Text(meta.label,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 5,
+          height: 5,
+          decoration: BoxDecoration(color: meta.color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          meta.label,
           style: TextStyle(
-            fontSize:   10.5,
+            fontSize: 10.5,
             fontWeight: FontWeight.w700,
-            color:      meta.color,
-          )),
-    ]),
+            color: meta.color,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -1939,16 +2191,16 @@ class _BillingPill extends StatelessWidget {
 // DETAIL FOOTER  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailFooter extends StatelessWidget {
-  final Task        task;
+  final Task task;
   final TaskStatus? next;
-  final bool        progressBtnEnabled;
-  final bool        ableToReinitialize;
-  final bool        canStageBack;
-  final GlobalKey   advanceButtonKey;
-  final GlobalKey   stageBackButtonKey;
+  final bool progressBtnEnabled;
+  final bool ableToReinitialize;
+  final bool canStageBack;
+  final GlobalKey advanceButtonKey;
+  final GlobalKey stageBackButtonKey;
   final VoidCallback onAdvanceTap;
   final VoidCallback onStageBackTap;
-  final bool        isProgressing;
+  final bool isProgressing;
 
   const _DetailFooter({
     required this.task,
@@ -1969,7 +2221,7 @@ class _DetailFooter extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color:  _T.slate50,
+        color: _T.slate50,
         border: Border(top: BorderSide(color: _T.slate200)),
       ),
       padding: const EdgeInsets.all(14),
@@ -1977,128 +2229,150 @@ class _DetailFooter extends StatelessWidget {
         children: [
           if (task.status != TaskStatus.completed)
             (isLocked
-                ? Row(children: [
-                    const Icon(Icons.lock_outline,
-                        size: 14, color: _T.slate400),
+                ? Row(
+                  children: [
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 14,
+                      color: _T.slate400,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Handed off to production'
                         '${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
                         style: const TextStyle(
-                            fontSize: 12.5, color: _T.slate400),
-                      ),
-                    ),
-                  ])
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize:       MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'ADVANCE STAGE',
-                        style: TextStyle(
-                          fontSize:      9.5,
-                          fontWeight:    FontWeight.w700,
-                          letterSpacing: 1.0,
-                          color:         _T.slate400,
+                          fontSize: 12.5,
+                          color: _T.slate400,
                         ),
                       ),
-                      const SizedBox(height: 9),
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          key: advanceButtonKey,
-                          onTap: isProgressing ? null : onAdvanceTap,
-                          child: Container(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: isProgressing
-                                  ? Colors.grey.shade100
-                                  : ableToReinitialize
-                                      ? _T.slate400
-                                      : next == TaskStatus.clientApproved
-                                          ? _T.green
-                                          : _T.blue,
-                              borderRadius: BorderRadius.circular(_T.r),
-                              boxShadow: isProgressing
-                                  ? null
-                                  : progressBtnEnabled
-                                      ? [
-                                          BoxShadow(
-                                            color: (ableToReinitialize
-                                                    ? _T.slate400
-                                                    : next == TaskStatus.clientApproved
-                                                        ? _T.green
-                                                        : _T.blue)
-                                                .withOpacity(0.28),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ]
-                                      : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (isProgressing)
-                                  SizedBox(
-                                    width: 20, height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2.75,
-                                        color: Colors.grey.shade400),
-                                  )
-                                else
-                                  Icon(
-                                    progressBtnEnabled
-                                        ? Icons.check
-                                        : Icons.arrow_forward,
-                                    size:  15,
-                                    color: progressBtnEnabled
-                                        ? Colors.white
-                                        : Colors.grey.shade400,
+                    ),
+                  ],
+                )
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'ADVANCE STAGE',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                        color: _T.slate400,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        key: advanceButtonKey,
+                        onTap: isProgressing ? null : onAdvanceTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          decoration: BoxDecoration(
+                            color:
+                                isProgressing
+                                    ? Colors.grey.shade100
+                                    : ableToReinitialize
+                                    ? _T.slate400
+                                    : next == TaskStatus.clientApproved
+                                    ? _T.green
+                                    : _T.blue,
+                            borderRadius: BorderRadius.circular(_T.r),
+                            boxShadow:
+                                isProgressing
+                                    ? null
+                                    : progressBtnEnabled
+                                    ? [
+                                      BoxShadow(
+                                        color: (ableToReinitialize
+                                                ? _T.slate400
+                                                : next ==
+                                                    TaskStatus.clientApproved
+                                                ? _T.green
+                                                : _T.blue)
+                                            .withOpacity(0.28),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                    : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isProgressing)
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.75,
+                                    color: Colors.grey.shade400,
                                   ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  isProgressing
-                                      ? 'Progressing'
-                                      : next == TaskStatus.clientApproved
-                                          ? 'Confirm Client Approval'
-                                          : ableToReinitialize
-                                              ? 'Re-initialize Task'
-                                              : 'Move to "${stageInfo(next!).label}"',
-                                  style: TextStyle(
-                                    fontSize:   13.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: isProgressing
-                                        ? Colors.grey.shade400
-                                        : progressBtnEnabled
-                                            ? Colors.white
-                                            : Colors.grey.shade400,
-                                  ),
+                                )
+                              else
+                                Icon(
+                                  progressBtnEnabled
+                                      ? Icons.check
+                                      : Icons.arrow_forward,
+                                  size: 15,
+                                  color:
+                                      progressBtnEnabled
+                                          ? Colors.white
+                                          : Colors.grey.shade400,
                                 ),
-                              ],
-                            ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isProgressing
+                                    ? 'Progressing'
+                                    : next == TaskStatus.clientApproved
+                                    ? 'Confirm Client Approval'
+                                    : ableToReinitialize
+                                    ? 'Re-initialize Task'
+                                    : 'Move to "${stageInfo(next!).label}"',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color:
+                                      isProgressing
+                                          ? Colors.grey.shade400
+                                          : progressBtnEnabled
+                                          ? Colors.white
+                                          : Colors.grey.shade400,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  )),
+                    ),
+                  ],
+                )),
           if (canStageBack) ...[
             const SizedBox(height: 1),
             if (task.status != TaskStatus.completed)
-              Row(children: [
-                const Expanded(child: Divider(color: _T.slate200, height: 20)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('or',
+              Row(
+                children: [
+                  const Expanded(
+                    child: Divider(color: _T.slate200, height: 20),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'or',
                       style: const TextStyle(
-                          fontSize:   10.5,
-                          color:      _T.slate400,
-                          fontWeight: FontWeight.w400)),
-                ),
-                const Expanded(child: Divider(color: _T.slate200, height: 20)),
-              ]),
+                        fontSize: 10.5,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Divider(color: _T.slate200, height: 20),
+                  ),
+                ],
+              ),
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
@@ -2107,21 +2381,27 @@ class _DetailFooter extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   decoration: BoxDecoration(
-                    color:        Colors.transparent,
-                    border:       Border.all(color: _T.slate200),
+                    color: Colors.transparent,
+                    border: Border.all(color: _T.slate200),
                     borderRadius: BorderRadius.circular(_T.r),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.arrow_back_rounded,
-                          size: 12, color: _T.slate500),
+                      Icon(
+                        Icons.arrow_back_rounded,
+                        size: 12,
+                        color: _T.slate500,
+                      ),
                       SizedBox(width: 6),
-                      Text('Stage back',
-                          style: TextStyle(
-                              fontSize:   12,
-                              fontWeight: FontWeight.w500,
-                              color:      _T.slate500)),
+                      Text(
+                        'Stage back',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: _T.slate500,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -2138,7 +2418,7 @@ class _DetailFooter extends StatelessWidget {
 // STAGE BACK MENU  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackMenu extends StatelessWidget {
-  final List<TaskStatus>         statuses;
+  final List<TaskStatus> statuses;
   final ValueChanged<TaskStatus> onSelect;
 
   const _StageBackMenu({required this.statuses, required this.onSelect});
@@ -2146,59 +2426,63 @@ class _StageBackMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color:     Colors.transparent,
+      color: Colors.transparent,
       elevation: 0,
       child: Container(
         decoration: BoxDecoration(
-          color:        _T.white,
-          border:       Border.all(color: _T.slate200),
+          color: _T.white,
+          border: Border.all(color: _T.slate200),
           borderRadius: BorderRadius.circular(_T.rLg),
           boxShadow: [
             BoxShadow(
-              color:      Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 16,
-              offset:     const Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(_T.rLg),
           child: Column(
-            mainAxisSize:        MainAxisSize.min,
-            crossAxisAlignment:  CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
                 decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: _T.slate100))),
-                child: Row(children: [
-                  Container(
-                    width: 2, height: 12,
-                    decoration: BoxDecoration(
-                      color:        _T.amber,
-                      borderRadius: BorderRadius.circular(1),
+                  border: Border(bottom: BorderSide(color: _T.slate100)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 2,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _T.amber,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'MOVE BACK TO',
-                    style: TextStyle(
-                      fontSize:      9.5,
-                      fontWeight:    FontWeight.w700,
-                      letterSpacing: 0.9,
-                      color:         _T.slate500,
+                    const SizedBox(width: 8),
+                    const Text(
+                      'MOVE BACK TO',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.9,
+                        color: _T.slate500,
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ),
               ...statuses.asMap().entries.map((entry) {
-                final i      = entry.key;
-                final s      = entry.value;
+                final i = entry.key;
+                final s = entry.value;
                 final isLast = i == statuses.length - 1;
                 return _StageBackRow(
                   status: s,
                   isLast: isLast,
-                  onTap:  () => onSelect(s),
+                  onTap: () => onSelect(s),
                 );
               }),
             ],
@@ -2213,11 +2497,15 @@ class _StageBackMenu extends StatelessWidget {
 // STAGE BACK ROW  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageBackRow extends StatefulWidget {
-  final TaskStatus   status;
-  final bool         isLast;
+  final TaskStatus status;
+  final bool isLast;
   final VoidCallback onTap;
 
-  const _StageBackRow({required this.status, required this.isLast, required this.onTap});
+  const _StageBackRow({
+    required this.status,
+    required this.isLast,
+    required this.onTap,
+  });
 
   @override
   State<_StageBackRow> createState() => _StageBackRowState();
@@ -2231,9 +2519,9 @@ class _StageBackRowState extends State<_StageBackRow> {
     final chainIdx = _kStatusOrder.indexOf(widget.status);
 
     return MouseRegion(
-      cursor:  SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
@@ -2241,42 +2529,48 @@ class _StageBackRowState extends State<_StageBackRow> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             decoration: BoxDecoration(
-              border: widget.isLast
-                  ? null
-                  : const Border(bottom: BorderSide(color: _T.slate100)),
+              border:
+                  widget.isLast
+                      ? null
+                      : const Border(bottom: BorderSide(color: _T.slate100)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(children: [
-              SizedBox(
-                width: 18,
-                child: Text(
-                  '${chainIdx + 1}',
-                  style: const TextStyle(
-                    fontSize:     10,
-                    fontWeight:   FontWeight.w600,
-                    color:        _T.slate300,
-                    fontFeatures: [FontFeature.tabularFigures()],
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  child: Text(
+                    '${chainIdx + 1}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate300,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _statusLabel(widget.status),
-                  style: const TextStyle(
-                    fontSize:   12.5,
-                    fontWeight: FontWeight.w500,
-                    color:      _T.ink2,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _statusLabel(widget.status),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: _T.ink2,
+                    ),
                   ),
                 ),
-              ),
-              AnimatedOpacity(
-                opacity:  _hovered ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 100),
-                child: const Icon(Icons.arrow_back_rounded,
-                    size: 12, color: _T.slate400),
-              ),
-            ]),
+                AnimatedOpacity(
+                  opacity: _hovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 100),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    size: 12,
+                    color: _T.slate400,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2294,10 +2588,10 @@ class _DetailSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text.toUpperCase(),
     style: const TextStyle(
-      fontSize:      9.5,
-      fontWeight:    FontWeight.w700,
+      fontSize: 9.5,
+      fontWeight: FontWeight.w700,
       letterSpacing: 1.0,
-      color:         _T.slate400,
+      color: _T.slate400,
     ),
   );
 }
@@ -2311,9 +2605,14 @@ class _DetailMetaCell extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label,
-          style: const TextStyle(
-              fontSize: 10.5, fontWeight: FontWeight.w600, color: _T.slate400)),
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: _T.slate400,
+        ),
+      ),
       const SizedBox(height: 4),
       child,
     ],
@@ -2322,18 +2621,23 @@ class _DetailMetaCell extends StatelessWidget {
 
 class _Badge extends StatelessWidget {
   final String text;
-  final Color  color, bg;
+  final Color color, bg;
   const _Badge(this.text, this.color, this.bg);
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
     decoration: BoxDecoration(
-        color: bg, borderRadius: BorderRadius.circular(99)),
-    child: Text(text,
-        style: TextStyle(
-            fontSize:   10.5,
-            fontWeight: FontWeight.w700,
-            color:      color)),
+      color: bg,
+      borderRadius: BorderRadius.circular(99),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 10.5,
+        fontWeight: FontWeight.w700,
+        color: color,
+      ),
+    ),
   );
 }
 
@@ -2341,40 +2645,40 @@ class _Badge extends StatelessWidget {
 // STAGE STEPPER  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _Milestone {
-  final String     shortLabel;
+  final String shortLabel;
   final TaskStatus status;
-  final Color      color;
+  final Color color;
   const _Milestone(this.shortLabel, this.status, this.color);
 }
 
 const List<_Milestone> _kMilestones = [
-  _Milestone('Design',   TaskStatus.designing,  Color(0xFF8B5CF6)),
-  _Milestone('Print',    TaskStatus.printing,   Color(0xFF2563EB)),
-  _Milestone('Finish',   TaskStatus.finishing,  Color(0xFF0EA5E9)),
-  _Milestone('Delivery', TaskStatus.delivery,   Color(0xFF10B981)),
-  _Milestone('Install',  TaskStatus.installing, Color(0xFF10B981)),
-  _Milestone('Done',     TaskStatus.completed,  Color(0xFF10B981)),
+  _Milestone('Design', TaskStatus.designing, Color(0xFF8B5CF6)),
+  _Milestone('Print', TaskStatus.printing, Color(0xFF2563EB)),
+  _Milestone('Finish', TaskStatus.finishing, Color(0xFF0EA5E9)),
+  _Milestone('Delivery', TaskStatus.delivery, Color(0xFF10B981)),
+  _Milestone('Install', TaskStatus.installing, Color(0xFF10B981)),
+  _Milestone('Done', TaskStatus.completed, Color(0xFF10B981)),
 ];
 
 int _milestoneIndexFor(TaskStatus status) => switch (status) {
-  TaskStatus.pending             => 0,
-  TaskStatus.designing           => 0,
-  TaskStatus.waitingApproval     => 0,
-  TaskStatus.clientApproved      => 0,
-  TaskStatus.revision            => 0,
-  TaskStatus.waitingPrinting     => 1,
-  TaskStatus.printing            => 1,
-  TaskStatus.printingCompleted   => 1,
-  TaskStatus.finishing           => 2,
+  TaskStatus.pending => 0,
+  TaskStatus.designing => 0,
+  TaskStatus.waitingApproval => 0,
+  TaskStatus.clientApproved => 0,
+  TaskStatus.revision => 0,
+  TaskStatus.waitingPrinting => 1,
+  TaskStatus.printing => 1,
+  TaskStatus.printingCompleted => 1,
+  TaskStatus.finishing => 2,
   TaskStatus.productionCompleted => 2,
-  TaskStatus.waitingDelivery     => 3,
-  TaskStatus.delivery            => 3,
-  TaskStatus.delivered           => 3,
+  TaskStatus.waitingDelivery => 3,
+  TaskStatus.delivery => 3,
+  TaskStatus.delivered => 3,
   TaskStatus.waitingInstallation => 4,
-  TaskStatus.installing          => 4,
-  TaskStatus.completed           => 5,
-  TaskStatus.blocked             => 0,
-  TaskStatus.paused              => 0,
+  TaskStatus.installing => 4,
+  TaskStatus.completed => 5,
+  TaskStatus.blocked => 0,
+  TaskStatus.paused => 0,
 };
 
 class _StageStepper extends StatelessWidget {
@@ -2388,7 +2692,8 @@ class _StageStepper extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: _T.slate200))),
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
       child: Row(
         children: List.generate(_kMilestones.length * 2 - 1, (i) {
           if (i.isOdd) {
@@ -2397,15 +2702,15 @@ class _StageStepper extends StatelessWidget {
               child: Container(
                 height: 2,
                 decoration: BoxDecoration(
-                  color:        done ? _T.blue : _T.slate200,
+                  color: done ? _T.blue : _T.slate200,
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
             );
           }
-          final idx       = i ~/ 2;
-          final m         = _kMilestones[idx];
-          final isDone    = idx < curIdx;
+          final idx = i ~/ 2;
+          final m = _kMilestones[idx];
+          final isDone = idx < curIdx;
           final isCurrent = idx == curIdx;
 
           return Column(
@@ -2413,37 +2718,61 @@ class _StageStepper extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 26, height: 26,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDone
-                      ? _T.blue
-                      : isCurrent ? _T.white : _T.slate100,
+                  color:
+                      isDone
+                          ? _T.blue
+                          : isCurrent
+                          ? _T.white
+                          : _T.slate100,
                   border: Border.all(
-                    color: isDone
-                        ? _T.blue
-                        : isCurrent ? _T.blue : _T.slate200,
+                    color:
+                        isDone
+                            ? _T.blue
+                            : isCurrent
+                            ? _T.blue
+                            : _T.slate200,
                     width: isCurrent ? 2 : 1.5,
                   ),
-                  boxShadow: isCurrent
-                      ? [BoxShadow(
-                          color:      _T.blue.withOpacity(0.15),
-                          blurRadius: 6,
-                          spreadRadius: 1)]
-                      : null,
+                  boxShadow:
+                      isCurrent
+                          ? [
+                            BoxShadow(
+                              color: _T.blue.withOpacity(0.15),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                          : null,
                 ),
                 child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check, size: 12, color: Colors.white)
-                      : isCurrent
+                  child:
+                      isDone
+                          ? const Icon(
+                            Icons.check,
+                            size: 12,
+                            color: Colors.white,
+                          )
+                          : isCurrent
                           ? Container(
-                              width: 8, height: 8,
-                              decoration: BoxDecoration(
-                                  color: m.color, shape: BoxShape.circle))
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: m.color,
+                              shape: BoxShape.circle,
+                            ),
+                          )
                           : Container(
-                              width: 5, height: 5,
-                              decoration: const BoxDecoration(
-                                  color: _T.slate300, shape: BoxShape.circle)),
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: _T.slate300,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                 ),
               ),
               const SizedBox(height: 5),
@@ -2451,12 +2780,15 @@ class _StageStepper extends StatelessWidget {
                 m.shortLabel,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize:      9,
-                  fontWeight:    FontWeight.w700,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
-                  color: isCurrent
-                      ? _T.blue
-                      : isDone ? _T.ink3 : _T.slate400,
+                  color:
+                      isCurrent
+                          ? _T.blue
+                          : isDone
+                          ? _T.ink3
+                          : _T.slate400,
                 ),
               ),
             ],
@@ -2471,8 +2803,8 @@ class _StageStepper extends StatelessWidget {
 // STAGE PIPELINE  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 class _PipelineMilestone {
-  final String           label;
-  final TaskStatus       status;
+  final String label;
+  final TaskStatus status;
   final List<TaskStatus> subSteps;
   const _PipelineMilestone(this.label, this.status, this.subSteps);
 }
@@ -2523,28 +2855,28 @@ bool _isIntermediate(TaskStatus s) {
 }
 
 String _subLabel(TaskStatus s) => switch (s) {
-  TaskStatus.pending             => 'Initialized',
-  TaskStatus.designing           => 'Designing',
-  TaskStatus.waitingApproval     => 'Waiting Approval',
-  TaskStatus.clientApproved      => 'Client Approved',
-  TaskStatus.revision            => 'Needs Revision',
-  TaskStatus.waitingPrinting     => 'Handed to Print',
-  TaskStatus.printing            => 'Printing',
-  TaskStatus.printingCompleted   => 'Print Complete',
-  TaskStatus.finishing           => 'Finishing',
+  TaskStatus.pending => 'Initialized',
+  TaskStatus.designing => 'Designing',
+  TaskStatus.waitingApproval => 'Waiting Approval',
+  TaskStatus.clientApproved => 'Client Approved',
+  TaskStatus.revision => 'Needs Revision',
+  TaskStatus.waitingPrinting => 'Handed to Print',
+  TaskStatus.printing => 'Printing',
+  TaskStatus.printingCompleted => 'Print Complete',
+  TaskStatus.finishing => 'Finishing',
   TaskStatus.productionCompleted => 'Production Complete',
-  TaskStatus.waitingDelivery     => 'Waiting for Delivery',
-  TaskStatus.delivery            => 'Out for Delivery',
-  TaskStatus.delivered           => 'Delivered',
+  TaskStatus.waitingDelivery => 'Waiting for Delivery',
+  TaskStatus.delivery => 'Out for Delivery',
+  TaskStatus.delivered => 'Delivered',
   TaskStatus.waitingInstallation => 'Waiting for Install',
-  TaskStatus.installing          => 'Installing',
-  TaskStatus.completed           => 'Completed',
-  TaskStatus.blocked             => 'Blocked',
-  TaskStatus.paused              => 'Paused',
+  TaskStatus.installing => 'Installing',
+  TaskStatus.completed => 'Completed',
+  TaskStatus.blocked => 'Blocked',
+  TaskStatus.paused => 'Paused',
 };
 
 class _StagePipeline extends StatelessWidget {
-  final TaskStatus            currentStatus;
+  final TaskStatus currentStatus;
   final List<DesignStageInfo> stages;
 
   const _StagePipeline({required this.currentStatus, required this.stages});
@@ -2556,212 +2888,273 @@ class _StagePipeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final curMilestoneIdx = _milestoneOf(currentStatus);
-    final intermediate    = _isIntermediate(currentStatus);
+    final intermediate = _isIntermediate(currentStatus);
 
-    final subSi       = intermediate ? _infoFor(currentStatus) : null;
+    final subSi = intermediate ? _infoFor(currentStatus) : null;
     final Color subFg = subSi?.color ?? _T.blue;
-    final Color subBg = subSi?.bg    ?? _T.blue50;
+    final Color subBg = subSi?.bg ?? _T.blue50;
 
     return Container(
       decoration: BoxDecoration(
-        border:       Border.all(color: _T.slate200),
+        border: Border.all(color: _T.slate200),
         borderRadius: BorderRadius.circular(_T.r),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(_T.r),
         child: Column(
-          children: _kPipelineMilestones.asMap().entries.expand((entry) {
-            final idx       = entry.key;
-            final milestone = entry.value;
-            final isDone    = idx < curMilestoneIdx;
-            final isCurrent = idx == curMilestoneIdx;
+          children:
+              _kPipelineMilestones.asMap().entries.expand((entry) {
+                final idx = entry.key;
+                final milestone = entry.value;
+                final isDone = idx < curMilestoneIdx;
+                final isCurrent = idx == curMilestoneIdx;
 
-            final injectSubSteps = isCurrent && intermediate;
+                final injectSubSteps = isCurrent && intermediate;
 
-            final List<TaskStatus> visibleSubSteps = injectSubSteps
-                ? milestone.subSteps.sublist(
-                    0, milestone.subSteps.indexOf(currentStatus) + 1)
-                : [];
+                final List<TaskStatus> visibleSubSteps =
+                    injectSubSteps
+                        ? milestone.subSteps.sublist(
+                          0,
+                          milestone.subSteps.indexOf(currentStatus) + 1,
+                        )
+                        : [];
 
-            final bool isLastMilestone    = idx == _kPipelineMilestones.length - 1;
-            final bool milestoneHasBorder = !injectSubSteps && !isLastMilestone;
+                final bool isLastMilestone =
+                    idx == _kPipelineMilestones.length - 1;
+                final bool milestoneHasBorder =
+                    !injectSubSteps && !isLastMilestone;
 
-            final si             = _infoFor(milestone.status);
-            final Color dotColor = si?.color ?? _T.blue;
-            final Color bgColor  = si?.bg    ?? _T.blue50;
+                final si = _infoFor(milestone.status);
+                final Color dotColor = si?.color ?? _T.blue;
+                final Color bgColor = si?.bg ?? _T.blue50;
 
-            return <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                  color: isCurrent && !injectSubSteps
-                      ? bgColor
-                      : Colors.transparent,
-                  border: milestoneHasBorder
-                      ? const Border(bottom: BorderSide(color: _T.slate100))
-                      : null,
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Row(children: [
+                return <Widget>[
                   Container(
-                    width: 22, height: 22,
                     decoration: BoxDecoration(
-                      color: isDone
-                          ? _T.blue
-                          : isCurrent && !injectSubSteps
-                              ? dotColor
-                              : _T.slate100,
-                      shape: BoxShape.circle,
-                      border: injectSubSteps && isCurrent
-                          ? Border.all(
-                              color: dotColor.withOpacity(0.4), width: 1.5)
-                          : null,
+                      color:
+                          isCurrent && !injectSubSteps
+                              ? bgColor
+                              : Colors.transparent,
+                      border:
+                          milestoneHasBorder
+                              ? const Border(
+                                bottom: BorderSide(color: _T.slate100),
+                              )
+                              : null,
                     ),
-                    child: Center(
-                      child: isDone
-                          ? const Icon(Icons.check,
-                              size: 11, color: Colors.white)
-                          : isCurrent && !injectSubSteps
-                              ? Container(
-                                  width: 6, height: 6,
-                                  decoration: const BoxDecoration(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color:
+                                isDone
+                                    ? _T.blue
+                                    : isCurrent && !injectSubSteps
+                                    ? dotColor
+                                    : _T.slate100,
+                            shape: BoxShape.circle,
+                            border:
+                                injectSubSteps && isCurrent
+                                    ? Border.all(
+                                      color: dotColor.withOpacity(0.4),
+                                      width: 1.5,
+                                    )
+                                    : null,
+                          ),
+                          child: Center(
+                            child:
+                                isDone
+                                    ? const Icon(
+                                      Icons.check,
+                                      size: 11,
                                       color: Colors.white,
-                                      shape: BoxShape.circle))
-                              : Container(
-                                  width:  injectSubSteps ? 6 : 5,
-                                  height: injectSubSteps ? 6 : 5,
-                                  decoration: BoxDecoration(
-                                    color: injectSubSteps
-                                        ? dotColor.withOpacity(0.45)
-                                        : _T.slate300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      milestone.label,
-                      style: TextStyle(
-                        fontSize:   12.5,
-                        fontWeight:
-                            isCurrent ? FontWeight.w600 : FontWeight.w500,
-                        color: isCurrent && !injectSubSteps
-                            ? dotColor
-                            : isDone || isCurrent
-                                ? _T.ink3
-                                : _T.slate400,
-                      ),
-                    ),
-                  ),
-                  if (isCurrent && !injectSubSteps)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 9, vertical: 3),
-                      decoration: BoxDecoration(
-                        color:        bgColor,
-                        border: Border.all(color: dotColor.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text('Current',
-                          style: TextStyle(
-                              fontSize:   10.5,
-                              fontWeight: FontWeight.w700,
-                              color:      dotColor)),
-                    ),
-                  if (isDone)
-                    const Text('✓ Done',
-                        style: TextStyle(
-                            fontSize:   11,
-                            fontWeight: FontWeight.w600,
-                            color:      _T.slate400)),
-                ]),
-              ),
-              ...visibleSubSteps.asMap().entries.map((subEntry) {
-                final subIdx     = subEntry.key;
-                final s          = subEntry.value;
-                final isCur      = s == currentStatus;
-                final isPast     = !isCur;
-                final isLastSub  = subIdx == visibleSubSteps.length - 1;
-                final isVeryLast = isLastSub && isLastMilestone;
-
-                final rowSi       = _infoFor(s);
-                final Color rowFg =
-                    isCur ? subFg : (rowSi?.color ?? _T.blue);
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: isCur ? subBg : Colors.transparent,
-                    border: Border(
-                      top: BorderSide(
-                          color:
-                              subIdx == 0 ? _T.slate200 : _T.slate100),
-                      bottom: isVeryLast
-                          ? BorderSide.none
-                          : isLastSub
-                              ? const BorderSide(color: _T.slate100)
-                              : BorderSide.none,
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  child: Row(children: [
-                    Container(
-                      width: 22, height: 22,
-                      decoration: BoxDecoration(
-                        color:  isPast ? _T.blue : subFg,
-                        shape:  BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: isPast
-                            ? const Icon(Icons.check,
-                                size: 11, color: Colors.white)
-                            : Container(
-                                width: 6, height: 6,
-                                decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _subLabel(s),
-                        style: TextStyle(
-                          fontSize:   12.5,
-                          fontWeight:
-                              isCur ? FontWeight.w700 : FontWeight.w500,
-                          color: isCur ? subFg : _T.ink3,
+                                    )
+                                    : isCurrent && !injectSubSteps
+                                    ? Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    )
+                                    : Container(
+                                      width: injectSubSteps ? 6 : 5,
+                                      height: injectSubSteps ? 6 : 5,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            injectSubSteps
+                                                ? dotColor.withOpacity(0.45)
+                                                : _T.slate300,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                          ),
                         ),
-                      ),
-                    ),
-                    if (isPast)
-                      const Text('✓ Done',
-                          style: TextStyle(
-                              fontSize:   11,
-                              fontWeight: FontWeight.w600,
-                              color:      _T.slate400)),
-                    if (isCur)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 3),
-                        decoration: BoxDecoration(
-                          color:        subBg,
-                          border: Border.all(color: subFg.withOpacity(0.3)),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: Text('Now',
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            milestone.label,
                             style: TextStyle(
-                                fontSize:   10.5,
+                              fontSize: 12.5,
+                              fontWeight:
+                                  isCurrent ? FontWeight.w600 : FontWeight.w500,
+                              color:
+                                  isCurrent && !injectSubSteps
+                                      ? dotColor
+                                      : isDone || isCurrent
+                                      ? _T.ink3
+                                      : _T.slate400,
+                            ),
+                          ),
+                        ),
+                        if (isCurrent && !injectSubSteps)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: bgColor,
+                              border: Border.all(
+                                color: dotColor.withOpacity(0.3),
+                              ),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              'Current',
+                              style: TextStyle(
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
-                                color:      subFg)),
+                                color: dotColor,
+                              ),
+                            ),
+                          ),
+                        if (isDone)
+                          const Text(
+                            '✓ Done',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _T.slate400,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  ...visibleSubSteps.asMap().entries.map((subEntry) {
+                    final subIdx = subEntry.key;
+                    final s = subEntry.value;
+                    final isCur = s == currentStatus;
+                    final isPast = !isCur;
+                    final isLastSub = subIdx == visibleSubSteps.length - 1;
+                    final isVeryLast = isLastSub && isLastMilestone;
+
+                    final rowSi = _infoFor(s);
+                    final Color rowFg =
+                        isCur ? subFg : (rowSi?.color ?? _T.blue);
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isCur ? subBg : Colors.transparent,
+                        border: Border(
+                          top: BorderSide(
+                            color: subIdx == 0 ? _T.slate200 : _T.slate100,
+                          ),
+                          bottom:
+                              isVeryLast
+                                  ? BorderSide.none
+                                  : isLastSub
+                                  ? const BorderSide(color: _T.slate100)
+                                  : BorderSide.none,
+                        ),
                       ),
-                  ]),
-                );
-              }),
-            ];
-          }).toList(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: isPast ? _T.blue : subFg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child:
+                                  isPast
+                                      ? const Icon(
+                                        Icons.check,
+                                        size: 11,
+                                        color: Colors.white,
+                                      )
+                                      : Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _subLabel(s),
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight:
+                                    isCur ? FontWeight.w700 : FontWeight.w500,
+                                color: isCur ? subFg : _T.ink3,
+                              ),
+                            ),
+                          ),
+                          if (isPast)
+                            const Text(
+                              '✓ Done',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _T.slate400,
+                              ),
+                            ),
+                          if (isCur)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: subBg,
+                                border: Border.all(
+                                  color: subFg.withOpacity(0.3),
+                                ),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Text(
+                                'Now',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: subFg,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
+                ];
+              }).toList(),
         ),
       ),
     );
