@@ -47,6 +47,7 @@ import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
+import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -687,11 +688,31 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOPBAR
+// TOPBAR — Redesigned
+//
+// Design language: matches the board view and filter bar system.
+//   • slate100 bottom border (lighter, less heavy than slate200)
+//   • Greeting: name in ink2, date in a ghost slate100 chip
+//   • Section views: muted category prefix + "/" + bold section name
+//   • Create Task: custom tight button — blue fill, no Material artifacts
+//   • UserMenuChip: untouched, right-anchored
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _AdminTopbar extends StatelessWidget {
   final _AdminView currentView;
   const _AdminTopbar({required this.currentView});
+
+  // ── Section metadata ───────────────────────────────────────────────────────
+  // Returns (category, label) for non-overview views.
+  // category is rendered muted, label is rendered bold.
+  ({String category, String label}) _sectionMeta() => switch (currentView) {
+    _AdminView.list => (category: 'Workspace', label: 'Tasks'),
+    _AdminView.reports => (category: 'Workspace', label: 'Reports'),
+    _AdminView.printers => (category: 'Operations', label: 'Printers'),
+    _AdminView.inventory => (category: 'Operations', label: 'Inventory'),
+    _AdminView.overview => (category: '', label: ''),
+    _ => (category: 'Management', label: currentView.name.capitalize()),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -709,72 +730,23 @@ class _AdminTopbar extends StatelessWidget {
       height: _T.topbarH,
       decoration: const BoxDecoration(
         color: _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate200)),
+        border: Border(bottom: BorderSide(color: _T.slate100)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (currentView == _AdminView.overview) ...[
-            Text(
-              '$greeting${user != null ? ", ${user.nameShort}" : ""}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: _T.slate300,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _fmtDateFull(now),
-              style: const TextStyle(fontSize: 12.5, color: _T.slate400),
-            ),
-          ] else
-            Text(
-              currentView == _AdminView.list ||
-                      currentView == _AdminView.reports
-                  ? 'Workspace'
-                  : currentView == _AdminView.printers ||
-                      currentView == _AdminView.inventory
-                  ? 'Operations'
-                  : 'Management',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
-              ),
-            ),
+          // ── Left: greeting or section breadcrumb ───────────────────────────
+          if (currentView == _AdminView.overview)
+            _GreetingSection(greeting: greeting, user: user, now: now)
+          else
+            _BreadcrumbSection(meta: _sectionMeta()),
 
           const Spacer(),
-          const SizedBox(width: 12),
 
-          FilledButton.icon(
-            onPressed: () {
-              AppRoutes.navigateTo(
-                context,
-                AppRoutes.designCreateTaskScreen,
-                arguments: CreateTaskArgs(preselectedProjectId: null),
-              );
-            },
-            style: FilledButton.styleFrom(
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
-              ),
-              iconSize: 13,
-            ),
-            label: const Text('Create Task'),
-            icon: const Icon(Icons.add),
-          ),
-          const SizedBox(width: 15),
+          // ── Right: create + user ───────────────────────────────────────────
+          _CreateTaskButton(context: context),
+          const SizedBox(width: 12),
           if (user != null)
             UserMenuChip(
               onLogout: () async {
@@ -785,6 +757,190 @@ class _AdminTopbar extends StatelessWidget {
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GREETING SECTION
+//
+// Layout:
+//   Good morning, Alex  ·  [Wed, 18 Mar 2026]
+//
+// The date sits in a ghost chip (slate100 bg, slate200 border) so it reads
+// as metadata rather than competing with the greeting text.
+// ─────────────────────────────────────────────────────────────────────────────
+class _GreetingSection extends StatelessWidget {
+  final String greeting;
+  final dynamic user; // LoginService.currentUser type
+  final DateTime now;
+
+  const _GreetingSection({
+    required this.greeting,
+    required this.user,
+    required this.now,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Greeting + name
+        Text(
+          user != null ? '$greeting, ${user.nameShort}' : greeting,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _T.ink2,
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // Separator dot
+        Container(
+          width: 3,
+          height: 3,
+          decoration: const BoxDecoration(
+            color: _T.slate300,
+            shape: BoxShape.circle,
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // Date chip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            _fmtDateFull(now),
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w400,
+              color: _T.slate500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BREADCRUMB SECTION
+//
+// Layout:
+//   Workspace  /  Tasks
+//
+// Category: slate400, w400 — recedes
+// Slash:    slate300
+// Label:    ink2, w600 — foreground
+// ─────────────────────────────────────────────────────────────────────────────
+class _BreadcrumbSection extends StatelessWidget {
+  final ({String category, String label}) meta;
+  const _BreadcrumbSection({required this.meta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (meta.category.isNotEmpty) ...[
+          Text(
+            meta.category,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: _T.slate400,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '/',
+              style: TextStyle(fontSize: 13, color: _T.slate300),
+            ),
+          ),
+        ],
+
+        Text(
+          meta.label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _T.ink2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE TASK BUTTON
+//
+// Custom button — no FilledButton/Material artifacts.
+// Matches the design language of the board's action controls:
+//   • blue fill, white text, 6px radius
+//   • Tight padding — sits at the same visual weight as the filter tabs
+//   • Subtle darkening on hover via AnimatedContainer
+// ─────────────────────────────────────────────────────────────────────────────
+class _CreateTaskButton extends StatefulWidget {
+  final BuildContext context;
+  const _CreateTaskButton({required this.context});
+
+  @override
+  State<_CreateTaskButton> createState() => _CreateTaskButtonState();
+}
+
+class _CreateTaskButtonState extends State<_CreateTaskButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap:
+            () => AppRoutes.navigateTo(
+              widget.context,
+              AppRoutes.designCreateTaskScreen,
+              arguments: CreateTaskArgs(preselectedProjectId: null),
+            ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blueHover : _T.blue,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.add_rounded, size: 14, color: Colors.white),
+              SizedBox(width: 5),
+              Text(
+                'Create Task',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
