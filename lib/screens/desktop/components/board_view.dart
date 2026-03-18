@@ -11,9 +11,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/desktop/components/task_card.dart';
@@ -142,7 +144,26 @@ class _BoardViewState extends State<BoardView> {
   // hide lanes that have zero tasks
   bool _hideEmpty = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getBool(SharedStorageOptions.hideEmptyKey.name) ?? false;
+    if (saved != _hideEmpty) {
+      setState(() => _hideEmpty = saved);
+    }
+  }
+
+  Future<void> _saveHideEmpty(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(SharedStorageOptions.hideEmptyKey.name, value);
+  }
 
   bool _groupFullyOn(int gi) =>
       _kGroups[gi].statuses.every((s) => !_hidden.contains(s));
@@ -191,7 +212,7 @@ class _BoardViewState extends State<BoardView> {
           onToggleGroup:   _toggleGroup,
           onToggleStage:   _toggleStage,
           onToggleExpand:  _toggleExpand,
-          onToggleHideEmpty: () => setState(() => _hideEmpty = !_hideEmpty),
+          onToggleHideEmpty: _toggleHideEmpty,
         ),
 
         // ── Lane scroll ──────────────────────────────────────────────────────
@@ -237,6 +258,12 @@ class _BoardViewState extends State<BoardView> {
         ),
       ],
     );
+  }
+
+  void _toggleHideEmpty() {
+    final next = !_hideEmpty;
+    setState(() => _hideEmpty = next);
+    _saveHideEmpty(next);   // fire-and-forget — no await needed in setState
   }
 }
 
