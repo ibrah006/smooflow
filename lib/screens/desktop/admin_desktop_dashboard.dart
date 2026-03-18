@@ -166,14 +166,14 @@ class _AdminDesktopDashboardScreenState
   }
 
   Future<void> _advanceTask(Task advancedTask) async {
-    final next = advancedTask.status;
-    _showSnack(
-      context,
-      next == TaskStatus.clientApproved
-          ? '✓ Task marked as Client Approved — handed off to production'
-          : 'Task moved to "${stageInfo(next).label}"',
-      next == TaskStatus.clientApproved ? _T.green : _T.blue,
-    );
+    // final next = advancedTask.status;
+    // _showSnack(
+    //   context,
+    //   next == TaskStatus.clientApproved
+    //       ? '✓ Task marked as Client Approved — handed off to production'
+    //       : 'Task moved to "${stageInfo(next).label}"',
+    //   next == TaskStatus.clientApproved ? _T.green : _T.blue,
+    // );
     setState(() {});
   }
 
