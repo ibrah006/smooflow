@@ -739,11 +739,13 @@ class _AdminTopbar extends StatelessWidget {
             ),
           ] else
             Text(
-              currentView == _AdminView.list
-                  ? 'Tasks'
-                  : currentView == _AdminView.clients
-                  ? 'Clients'
-                  : 'Team',
+              currentView == _AdminView.list ||
+                      currentView == _AdminView.reports
+                  ? 'Workspace'
+                  : currentView == _AdminView.printers ||
+                      currentView == _AdminView.inventory
+                  ? 'Operations'
+                  : 'Management',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
