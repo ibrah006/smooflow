@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
-import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
-import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -12,7 +10,7 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
-  TaskNotifier(this._repo) : super(TaskState()) {
+  TaskNotifier(this._repo, this._client) : super(TaskState()) {
     _initializeSocket();
   }
 
@@ -427,18 +425,21 @@ class TaskNotifier extends StateNotifier<TaskState> {
     state = state.updateTask(task);
   }
 
-  // ---------------------------------------------------------------------
-  // LISTENING TO WEB SCOKET UPDATES
-  // ---------------------------------------------------------------------
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WEBSOCKET FUNCTIONALITY
+  // ─────────────────────────────────────────────────────────────────────────────
 
   /// Initialize WebSocket and setup listeners
-  Future<void> _initializeSocket() async {
+  void _initializeSocket() {
+    _initialize();
+  }
 
-    _client = TaskWebSocketClient();
-
+  void _initialize() {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
-      state.connectionStatus = status;
+      if (mounted) {
+        state = state.copyWith(connectionStatus: status);
+      }
     });
 
     // Listen to task changes
@@ -446,98 +447,150 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
     // Listen to task list updates
     _client.taskList.listen((tasks) {
-      state = state.copyWith(tasks: tasks, isLoading: false);
+      if (mounted) {
+        state = state.copyWith(
+          tasks: tasks,
+          isLoading: false,
+          error: null,
+        );
+      }
     });
 
     // Listen to errors
     _client.errors.listen((error) {
-      
-      state = state.copyWith(
-        error: error,
-        isLoading: false
-      );
+      if (mounted) {
+        state = state.copyWith(
+          error: error,
+          isLoading: false,
+        );
+      }
     });
-
-    // Connect to WebSocket
-    try {
-      await _client.connect();
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to connect: $e',
-      );
-    }
   }
 
-  /// Handle task change events
+  /// Handle task change events from WebSocket
   void _handleTaskChange(TaskChangeEvent event) {
+    print('[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted');
+    
+    if (!mounted) {
+      print('[TaskNotifier] Notifier not mounted, ignoring change');
+      return;
+    }
+
+    final tasks = List<Task>.from(state.tasks);
+
     switch (event.type) {
       case TaskChangeType.created:
-        if (event.task != null && !state.tasks.any((t) => t.id == event.taskId)) {
-          state = state.insert(0, event.task!);
+        if (event.task != null && !tasks.any((t) => t.id == event.taskId)) {
+          tasks.add(event.task!);
+          state = state.copyWith(tasks: tasks);
+          print('[TaskNotifier] Task created, new count: ${tasks.length}');
         }
         break;
 
       case TaskChangeType.updated:
       case TaskChangeType.statusChanged:
-      case TaskChangeType.assigneeAdded:
-      case TaskChangeType.assigneeRemoved:
-        final index = state.tasks.indexWhere((t) => t.id == event.taskId);
-        if (index != -1 && event.task != null) {
-          state.tasks[index] = event.task!;
-        }
+        final index = tasks.indexWhere((t) => t.id == event.taskId);
+        print('[TaskNotifier] Looking for task ${event.taskId}, found at index: $index');
         
+        if (index != -1) {
+          if (event.task != null) {
+            tasks[index] = event.task!;
+            print("event task: ${event.task?.toJson()}");
+            print('[TaskNotifier] Updated task at index $index with new object');
+          } else if (event.changes != null) {
+            // Partial update
+            tasks[index] = _applyChanges(tasks[index], event.changes!);
+            print('[TaskNotifier] Applied partial changes to task at index $index');
+          }
+          state = state.copyWith(tasks: tasks);
+        } else {
+          print('[TaskNotifier] Task ${event.taskId} NOT FOUND in state (count: ${tasks.length})');
+        }
+
         // Update selected task if it's the one that changed
         if (state.selectedTask?.id == event.taskId && event.task != null) {
-          state.selectedTask = event.task;
+          state = state.copyWith(selectedTask: event.task);
         }
         break;
 
       case TaskChangeType.deleted:
-        state.tasks.removeWhere((t) => t.id == event.taskId);
+        tasks.removeWhere((t) => t.id == event.taskId);
+        state = state.copyWith(tasks: tasks);
+
+        // Clear selected task if it was deleted
         if (state.selectedTask?.id == event.taskId) {
-          state.selectedTask = null;
+          state = state.copyWith(selectedTask: null);
         }
-        // To notify about change
-        state = state;
+        break;
+
+      case TaskChangeType.assigneeAdded:
+      case TaskChangeType.assigneeRemoved:
+        final index = tasks.indexWhere((t) => t.id == event.taskId);
+        if (index != -1 && event.task != null) {
+          tasks[index] = event.task!;
+          state = state.copyWith(tasks: tasks);
+        }
         break;
     }
+  }
+
+  /// Apply partial changes to a task
+  Task _applyChanges(Task task, Map<String, dynamic> changes) {
+    return task.copyWith(
+      name: changes['name']?['new'] ?? task.name,
+      description: changes['description']?['new'] ?? task.description,
+      status: changes['status']?['new'] ?? task.status,
+      priority: changes['priority']?['new'] ?? task.priority,
+      dueDate: changes['dueDate']?['new'] != null 
+          ? DateTime.parse(changes['dueDate']['new']) 
+          : task.dueDate,
+      dateCompleted: changes['completedAt']?['new'] != null 
+          ? DateTime.parse(changes['completedAt']['new']) 
+          : task.dateCompleted,
+    );
   }
 
   /// Load all tasks
   Future<void> loadTasks({Map<String, dynamic>? filters}) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
       _client.listTasks(filters: filters);
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load tasks: $e',
-        isLoading: false
+        isLoading: false,
       );
     }
   }
 
   /// Refresh tasks
   Future<void> refreshTasks() async {
-    state = state.copyWith(
-      isLoading: true
-    );
+    state = state.copyWith(isLoading: true);
     _client.refreshTasks();
   }
 
   /// Load a specific task
   Future<void> loadTask(int taskId) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
       _client.subscribeToTask(taskId);
       _client.getTask(taskId);
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load task: $e',
-        isLoading: false
+        isLoading: false,
       );
     }
+  }
+
+  /// Subscribe to a task
+  void subscribeToTask(int taskId) {
+    _client.subscribeToTask(taskId);
+  }
+
+  /// Unsubscribe from a task
+  void unsubscribeFromTask(int taskId) {
+    _client.unsubscribeFromTask(taskId);
   }
 
   /// Select a task
@@ -550,10 +603,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   void deselectTask() {
     if (state.selectedTask != null) {
       _client.unsubscribeFromTask(state.selectedTask!.id);
-      state.selectedTask = null;
-      state = state.copyWith(
-        selectedTask: null
-      );
+      state = state.copyWith(selectedTask: null);
     }
   }
 
@@ -581,9 +631,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   /// Clear error
   void clearError() {
-    state = state.copyWith(
-      error: null
-    );
+    state = state.copyWith(error: null);
   }
 
   @override

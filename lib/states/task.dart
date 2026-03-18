@@ -84,17 +84,17 @@ class TaskState {
     ConnectionStatus? connectionStatus
   }) {
 
-    late final List<Task> ts;
-    if (tasks != null) {
-      // Adds the tasks to the existing list of tasks memory without any dusplicates
+    final List<Task> ts = tasks?? _tasks;
+    // if (tasks != null) {
+    //   // Adds the tasks to the existing list of tasks memory without any dusplicates
 
-      final temp = _tasks.toSet();
-      temp.addAll(tasks);
+    //   final temp = _tasks.toSet();
+    //   temp.addAll(tasks);
       
-      ts = temp.toList();
-    } else {
-      ts = _tasks;
-    }
+    //   ts = temp.toList();
+    // } else {
+    //   ts = _tasks;
+    // }
 
     if (newTask != null) ts.add(newTask);
 
