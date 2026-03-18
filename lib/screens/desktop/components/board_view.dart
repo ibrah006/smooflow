@@ -1,12 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BOARD VIEW
+// BOARD VIEW — Modern Corporate Redesign
 //
-// Lane visibility is controlled by a filter bar above the board.
-// Each pill in the filter bar corresponds to a stage group. Tapping a pill
-// toggles all lanes in that group on/off. A chevron on each pill expands a
-// detail chip row for fine-grained per-lane control.
-//
-// No hover, no collapse, no expand — the board is always fully rendered.
+// Design language: Linear / Asana / Notion — refined enterprise.
+// - Filter bar: pill-on-active tabs, no underlines, clean surface
+// - Lanes: shadow-elevated panels, colored top accent strip, no border
+// - Cards rendered by TaskCard (unchanged)
+// - _T color tokens untouched
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
@@ -14,8 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/core/services/login_service.dart';
-import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/desktop/components/task_card.dart';
@@ -23,7 +20,7 @@ import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
+// DESIGN TOKENS — unchanged from original
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue      = Color(0xFF2563EB);
@@ -63,9 +60,6 @@ class _T {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STAGE GROUPS
-//
-// 5 phase groups. Toggling a group pill shows/hides all its lanes at once.
-// The most common action (hide a whole phase) costs exactly 1 tap.
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageGroup {
   final String           label;
@@ -135,14 +129,11 @@ class BoardView extends StatefulWidget {
 }
 
 class _BoardViewState extends State<BoardView> {
-  // Statuses whose lanes are currently hidden. Empty = all visible (default).
   final Set<TaskStatus> _hidden = {};
+  final Set<int>        _expandedGroups = {};
+  bool                  _hideEmpty = false;
 
-  // Which group indices have their detail chip row open.
-  final Set<int> _expandedGroups = {};
-
-  // hide lanes that have zero tasks
-  bool _hideEmpty = false;
+  static const _kHideEmptyKey = 'board_view_hide_empty';
 
   @override
   void initState() {
@@ -150,19 +141,15 @@ class _BoardViewState extends State<BoardView> {
     _loadPrefs();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getBool(SharedStorageOptions.hideEmptyKey.name) ?? false;
-    if (saved != _hideEmpty) {
-      setState(() => _hideEmpty = saved);
-    }
+    final saved = prefs.getBool(_kHideEmptyKey) ?? false;
+    if (saved != _hideEmpty) setState(() => _hideEmpty = saved);
   }
 
   Future<void> _saveHideEmpty(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(SharedStorageOptions.hideEmptyKey.name, value);
+    await prefs.setBool(_kHideEmptyKey, value);
   }
 
   bool _groupFullyOn(int gi) =>
@@ -189,9 +176,14 @@ class _BoardViewState extends State<BoardView> {
           ? _expandedGroups.remove(gi)
           : _expandedGroups.add(gi));
 
+  void _toggleHideEmpty() {
+    final next = !_hideEmpty;
+    setState(() => _hideEmpty = next);
+    _saveHideEmpty(next);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Build the task-count map once so the filter bar can display it
     final Map<TaskStatus, int> taskCounts = {
       for (final si in kStages)
         si.stage: widget.tasks.where((t) => t.status == si.stage).length,
@@ -203,30 +195,28 @@ class _BoardViewState extends State<BoardView> {
 
         // ── Filter bar ───────────────────────────────────────────────────────
         _FilterBar(
-          groups:          _kGroups,
-          groupFullyOn:    _groupFullyOn,
-          groupPartial:    _groupPartial,
-          expandedGroups:  _expandedGroups,
-          hidden:          _hidden,
-          hideEmpty:       _hideEmpty,
-          onToggleGroup:   _toggleGroup,
-          onToggleStage:   _toggleStage,
-          onToggleExpand:  _toggleExpand,
+          groups:           _kGroups,
+          groupFullyOn:     _groupFullyOn,
+          groupPartial:     _groupPartial,
+          expandedGroups:   _expandedGroups,
+          hidden:           _hidden,
+          hideEmpty:        _hideEmpty,
+          onToggleGroup:    _toggleGroup,
+          onToggleStage:    _toggleStage,
+          onToggleExpand:   _toggleExpand,
           onToggleHideEmpty: _toggleHideEmpty,
         ),
 
         // ── Lane scroll ──────────────────────────────────────────────────────
         Expanded(
           child: Container(
-            // color: _T.slate50,
+            color: _T.slate50,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               children: kStages
                   .where((si) {
-                    // Stage-group visibility filter
                     if (_hidden.contains(si.stage)) return false;
-                    // Hide-empty filter
                     if (_hideEmpty) {
                       final count = taskCounts[si.stage] ?? 0;
                       if (count == 0) return false;
@@ -237,9 +227,7 @@ class _BoardViewState extends State<BoardView> {
                     final stageTasks = widget.tasks
                         .where((t) => t.status == si.stage)
                         .toList();
-
                     final isFirst = kStages.indexOf(si) == 0;
-
                     return _KanbanLane(
                       stageInfo:         si,
                       tasks:             stageTasks,
@@ -259,46 +247,22 @@ class _BoardViewState extends State<BoardView> {
       ],
     );
   }
-
-  void _toggleHideEmpty() {
-    final next = !_hideEmpty;
-    setState(() => _hideEmpty = next);
-    _saveHideEmpty(next);   // fire-and-forget — no await needed in setState
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FILTER BAR
 //
-// Corporate design principles:
-//   • White surface, slate200 bottom rule — no tinting
-//   • "STAGES" label: uppercase, tracked, muted — signals control surface
-//   • Group controls are tab-style text buttons, not coloured pills
-//   • Active state = ink text + 2 px bottom underline (tab metaphor)
-//   • Colour appears ONLY in the 3 px left rule of the detail drawer
-//   • Detail drawer: checkbox-style rows, ink/slate only — no colour fills
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// FILTER BAR
-//
-// Corporate toolbar — flat, typographic, no coloured fills anywhere.
+// Modern pill-style tab controls. Active group = filled slate100 pill.
+// No underlines. Group color appears only in the drawer's left rule.
+// Right side: "With tasks" toggle styled identically to group pills.
 //
 // Structure:
-//   ┌─────────────────────────────────────────────────────────────┐
-//   │  STAGES │ [Design ∨]  [Production ∨]  [Delivery ∨]  …      │  ← 40px
-//   ├─────────────────────────────────────────────────────────────┤
-//   │  Design │ ☑ Pending  ☑ Designing  ☐ Waiting…  Done         │  ← 36px
-//   └─────────────────────────────────────────────────────────────┘
-//
-// Active tab:   ink2 text + 2px solid bottom border in ink2.
-// Partial tab:  ink3 text + 1.5px slate400 bottom border.
-// Off tab:      slate400 text, no border. Chevron visible on hover.
-//
-// Detail drawer: white bg, 3px left rule in group colour (sole colour use).
-// Stage items: checkbox-style ☑/☐ rows. No fills, ink/slate only.
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// FILTER BAR
+//   ┌──────────────────────────────────────────────────────┬──────────────┐
+//   │  [Design ∨]  [Production ∨]  [Delivery ∨]  …        │ [With tasks] │
+//   └──────────────────────────────────────────────────────┴──────────────┘
+//   ┌ group-color left rule ───────────────────────────────────────────────┐
+//   │  ☑ Pending  ☑ Designing  ☐ Waiting Approval  ☑ …       [Done]       │
+//   └──────────────────────────────────────────────────────────────────────┘
 // ─────────────────────────────────────────────────────────────────────────────
 class _FilterBar extends StatelessWidget {
   final List<_StageGroup>        groups;
@@ -336,74 +300,55 @@ class _FilterBar extends StatelessWidget {
 
           // ── Tab row ────────────────────────────────────────────────────────
           Container(
-            height: 40,
+            height: 44,
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _T.slate200)),
+              border: Border(bottom: BorderSide(color: _T.slate100, width: 1)),
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
 
-                // "STAGES" prefix
-                Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(
-                    border: Border(right: BorderSide(color: _T.slate200)),
-                  ),
-                  child: const Text(
-                    'STAGES',
-                    style: TextStyle(
-                      fontSize:      9.5,
-                      fontWeight:    FontWeight.w700,
-                      color:         _T.slate400,
-                      letterSpacing: 0.9,
-                    ),
-                  ),
-                ),
-
-                // Group tabs — scrollable
+                // Group tabs
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: List.generate(groups.length, (gi) =>
-                        _GroupTab(
-                          group:      groups[gi],
-                          isOn:       groupFullyOn(gi),
-                          isPartial:  groupPartial(gi),
-                          isExpanded: expandedGroups.contains(gi),
-                          onTap:      () => onToggleGroup(gi),
-                          onExpand:   () => onToggleExpand(gi),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 2),
+                          child: _GroupTab(
+                            group:      groups[gi],
+                            isOn:       groupFullyOn(gi),
+                            isPartial:  groupPartial(gi),
+                            isExpanded: expandedGroups.contains(gi),
+                            onTap:      () => onToggleGroup(gi),
+                            onExpand:   () => onToggleExpand(gi),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                // ── "With tasks" toggle ──────────────────────────────────────
-                // Right-anchored. A vertical divider separates it from the tabs.
-                // When on: ink2 text + filled indicator dot.
-                // When off: slate400 text — recedes exactly like an inactive tab.
+                // Divider
                 Container(
-                  decoration: const BoxDecoration(
-                    border: Border(left: BorderSide(color: _T.slate200)),
-                  ),
-                  child: _HideEmptyToggle(
-                    isOn:  hideEmpty,
-                    onTap: onToggleHideEmpty,
-                  ),
+                  width: 1,
+                  height: 20,
+                  color: _T.slate200,
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
                 ),
 
+                // "With tasks" toggle — same pill style as group tabs
+                _HideEmptyToggle(
+                  isOn:  hideEmpty,
+                  onTap: onToggleHideEmpty,
+                ),
               ],
             ),
           ),
 
           // ── Detail drawers ─────────────────────────────────────────────────
-          // Each drawer is individually animated with AnimatedSize (height) +
-          // AnimatedOpacity (fade). They animate independently so opening one
-          // doesn't affect another.
           for (int gi = 0; gi < groups.length; gi++)
             _AnimatedDrawer(
               visible: expandedGroups.contains(gi),
@@ -422,176 +367,12 @@ class _FilterBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HIDE EMPTY TOGGLE
+// GROUP TAB — pill style
 //
-// Lives at the right end of the tab row. Styled as a tab-like control so it
-// reads as part of the same toolbar, not a foreign widget.
-//
-// States:
-//   Off → slate400 text, no indicator — blends with inactive tabs.
-//   On  → ink2 text, small filled dot to the left of the label, 2px ink2
-//         bottom border — identical active-tab language.
-//
-// Label reads "With tasks" — positive framing. The user is choosing what they
-// want to see, not what to hide.
-// ─────────────────────────────────────────────────────────────────────────────
-class _HideEmptyToggle extends StatefulWidget {
-  final bool         isOn;
-  final VoidCallback onTap;
-
-  const _HideEmptyToggle({required this.isOn, required this.onTap});
-
-  @override
-  State<_HideEmptyToggle> createState() => _HideEmptyToggleState();
-}
-
-class _HideEmptyToggleState extends State<_HideEmptyToggle> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color fg = widget.isOn
-        ? (_hovered ? _T.ink : _T.ink2)
-        : (_hovered ? _T.ink3 : _T.slate400);
-
-    return MouseRegion(
-      cursor:  SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          color: _hovered ? _T.slate50 : Colors.transparent,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            // 2px bottom border mirrors active-tab language
-            decoration: BoxDecoration(
-              
-              border: Border(
-                bottom: widget.isOn
-                    ? const BorderSide(color: _T.ink2, width: 2)
-                    : BorderSide.none,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Small filled dot — appears only when on
-                AnimatedOpacity(
-                  opacity:  widget.isOn ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 150),
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Container(
-                      width: 5, height: 5,
-                      decoration: const BoxDecoration(
-                        color: _T.ink2,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 130),
-                  style: TextStyle(
-                    fontSize:   11.5,
-                    fontWeight: widget.isOn ? FontWeight.w600 : FontWeight.w400,
-                    color:      fg,
-                    letterSpacing: 0.1,
-                  ),
-                  child: const Text('With tasks'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED DRAWER WRAPPER
-//
-// Wraps each _DetailDrawer. Uses:
-//   • AnimatedSize  — smoothly grows/shrinks the height (clipBehavior clips
-//                     content during the transition so nothing overflows).
-//   • AnimatedOpacity — fades content in (200ms) and out (120ms, faster so
-//                     the collapse feels snappy rather than sluggish).
-//
-// The asymmetric timing (faster out than in) is a standard motion principle:
-// exit transitions should be quicker so they don't block the user's next action.
-// ─────────────────────────────────────────────────────────────────────────────
-class _AnimatedDrawer extends StatefulWidget {
-  final bool    visible;
-  final Widget  child;
-
-  const _AnimatedDrawer({required this.visible, required this.child});
-
-  @override
-  State<_AnimatedDrawer> createState() => _AnimatedDrawerState();
-}
-
-class _AnimatedDrawerState extends State<_AnimatedDrawer>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double>   _fade;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync:    this,
-      duration: const Duration(milliseconds: 200), // open
-    );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    if (widget.visible) _ctrl.value = 1.0;
-  }
-
-  @override
-  void didUpdateWidget(_AnimatedDrawer old) {
-    super.didUpdateWidget(old);
-    if (widget.visible != old.visible) {
-      if (widget.visible) {
-        // Open: forward at full duration
-        _ctrl.duration = const Duration(milliseconds: 200);
-        _ctrl.forward();
-      } else {
-        // Close: reverse faster — snappy exit
-        _ctrl.duration = const Duration(milliseconds: 130);
-        _ctrl.reverse();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration:      const Duration(milliseconds: 200),
-      curve:         Curves.easeOutCubic,
-      clipBehavior:  Clip.hardEdge,
-      alignment:     Alignment.topCenter,
-      child: SizedBox(
-        // SizedBox drives AnimatedSize: visible → natural height, hidden → 0.
-        height: widget.visible || _ctrl.isAnimating ? null : 0,
-        child: FadeTransition(
-          opacity: _fade,
-          child:   widget.child,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GROUP TAB
+// Off:     transparent bg, slate500 text
+// Partial: slate100 bg, ink3 text, faint colored left-dot
+// On:      slate100 bg, ink2 text, bold
+// Chevron: always visible when on/partial, fades in on hover otherwise
 // ─────────────────────────────────────────────────────────────────────────────
 class _GroupTab extends StatefulWidget {
   final _StageGroup  group;
@@ -619,75 +400,91 @@ class _GroupTabState extends State<_GroupTab> {
 
   @override
   Widget build(BuildContext context) {
-    final bool  active     = widget.isOn || widget.isPartial;
-    final Color labelColor = active
-        ? (_hovered ? _T.ink : _T.ink2)
-        : (_hovered ? _T.ink3 : _T.slate400);
+    final bool  active = widget.isOn || widget.isPartial;
+    final Color bg     = active || _hovered ? _T.slate100 : Colors.transparent;
+    final Color fg     = active
+        ? _T.ink2
+        : (_hovered ? _T.ink3 : _T.slate500);
 
     return MouseRegion(
       cursor:  SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit:  (_) => setState(() => _hovered = false),
       child: Container(
-        color: _hovered ? _T.slate50 : Colors.transparent,
+        decoration: BoxDecoration(
+          color:        bg,
+          borderRadius: BorderRadius.circular(6),
+        ),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
+          duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: widget.isOn
-                  ? const BorderSide(color: _T.ink2, width: 2)
-                  : widget.isPartial
-                      ? BorderSide(color: _T.slate400, width: 1.5)
-                      : BorderSide.none,
-            ),
+            borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
             mainAxisSize:       MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
+        
+              // Label tap target
               GestureDetector(
                 onTap: widget.onTap,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
-                  child: AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 130),
-                    style: TextStyle(
-                      fontSize:      11.5,
-                      fontWeight:    widget.isOn
-                          ? FontWeight.w600
-                          : widget.isPartial
-                              ? FontWeight.w500
-                              : FontWeight.w400,
-                      color:         labelColor,
-                      letterSpacing: 0.1,
-                    ),
-                    child: Text(widget.group.label),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Colored dot — visible when active
+                      AnimatedOpacity(
+                        opacity:  active ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 140),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Container(
+                            width: 6, height: 6,
+                            decoration: BoxDecoration(
+                              color:  widget.group.color,
+                              shape:  BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 120),
+                        style: TextStyle(
+                          fontSize:   12,
+                          fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                          color:      fg,
+                          letterSpacing: 0.0,
+                        ),
+                        child: Text(widget.group.label),
+                      ),
+                    ],
                   ),
                 ),
               ),
-
+        
+              // Chevron — expand drawer
               AnimatedOpacity(
                 opacity:  (active || _hovered) ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 130),
+                duration: const Duration(milliseconds: 120),
                 child: GestureDetector(
                   onTap:    widget.onExpand,
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(2, 0, 12, 0),
+                    padding: const EdgeInsets.fromLTRB(0, 6, 8, 6),
                     child: AnimatedRotation(
                       turns:    widget.isExpanded ? 0.5 : 0.0,
                       duration: const Duration(milliseconds: 180),
                       child: Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        size:  13,
-                        color: active ? _T.slate500 : _T.slate300,
+                        size:  14,
+                        color: active ? _T.slate400 : _T.slate300,
                       ),
                     ),
                   ),
                 ),
               ),
-
+        
             ],
           ),
         ),
@@ -697,7 +494,140 @@ class _GroupTabState extends State<_GroupTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HIDE EMPTY TOGGLE — matches group tab pill style exactly
+// ─────────────────────────────────────────────────────────────────────────────
+class _HideEmptyToggle extends StatefulWidget {
+  final bool         isOn;
+  final VoidCallback onTap;
+  const _HideEmptyToggle({required this.isOn, required this.onTap});
+
+  @override
+  State<_HideEmptyToggle> createState() => _HideEmptyToggleState();
+}
+
+class _HideEmptyToggleState extends State<_HideEmptyToggle> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg = widget.isOn || _hovered ? _T.slate100 : Colors.transparent;
+    final Color fg = widget.isOn
+        ? _T.ink2
+        : (_hovered ? _T.ink3 : _T.slate500);
+
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color:        bg,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedOpacity(
+                  opacity:  widget.isOn ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 140),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Icon(
+                      Icons.check_rounded,
+                      size:  11,
+                      color: _T.ink3,
+                    ),
+                  ),
+                ),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  style: TextStyle(
+                    fontSize:   12,
+                    fontWeight: widget.isOn ? FontWeight.w600 : FontWeight.w400,
+                    color:      fg,
+                  ),
+                  child: const Text('With tasks'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED DRAWER WRAPPER — unchanged logic, same timing
+// ─────────────────────────────────────────────────────────────────────────────
+class _AnimatedDrawer extends StatefulWidget {
+  final bool   visible;
+  final Widget child;
+  const _AnimatedDrawer({required this.visible, required this.child});
+
+  @override
+  State<_AnimatedDrawer> createState() => _AnimatedDrawerState();
+}
+
+class _AnimatedDrawerState extends State<_AnimatedDrawer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double>   _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    if (widget.visible) _ctrl.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedDrawer old) {
+    super.didUpdateWidget(old);
+    if (widget.visible != old.visible) {
+      if (widget.visible) {
+        _ctrl.duration = const Duration(milliseconds: 200);
+        _ctrl.forward();
+      } else {
+        _ctrl.duration = const Duration(milliseconds: 130);
+        _ctrl.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration:     const Duration(milliseconds: 200),
+      curve:        Curves.easeOutCubic,
+      clipBehavior: Clip.hardEdge,
+      alignment:    Alignment.topCenter,
+      child: SizedBox(
+        height: widget.visible || _ctrl.isAnimating ? null : 0,
+        child:  FadeTransition(opacity: _fade, child: widget.child),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DETAIL DRAWER
+//
+// Redesign: no top/bottom borders. Only left rule (group color) + a very
+// subtle slate50 background separates it from the filter row above.
+// Stage items are compact chips rather than full-height rows.
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailDrawer extends StatelessWidget {
   final _StageGroup              group;
@@ -737,11 +667,10 @@ class _DetailDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _T.white,
+        color: _T.slate50,
         border: Border(
-          top:    const BorderSide(color: _T.slate200),
-          bottom: const BorderSide(color: _T.slate200),
-          left:   BorderSide(color: group.color, width: 3),
+          top:  const BorderSide(color: _T.slate100),
+          left: BorderSide(color: group.color, width: 3),
         ),
       ),
       child: Row(
@@ -751,30 +680,40 @@ class _DetailDrawer extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Row(
                 children: group.statuses.map((s) =>
-                  _StageToggleRow(
-                    label:     _label(s),
-                    isVisible: !hidden.contains(s),
-                    onTap:     () => onToggle(s),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _StageChip(
+                      label:     _label(s),
+                      isVisible: !hidden.contains(s),
+                      onTap:     () => onToggle(s),
+                    ),
                   ),
                 ).toList(),
               ),
             ),
           ),
 
+          // Done button
           GestureDetector(
             onTap: onCollapse,
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                child: Text(
+              child: Container(
+                margin: const EdgeInsets.only(right: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color:        _T.white,
+                  border:       Border.all(color: _T.slate200),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
                   'Done',
                   style: TextStyle(
-                    fontSize:   11,
-                    fontWeight: FontWeight.w600,
+                    fontSize:   11.5,
+                    fontWeight: FontWeight.w500,
                     color:      _T.slate500,
                   ),
                 ),
@@ -789,28 +728,35 @@ class _DetailDrawer extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE TOGGLE ROW
+// STAGE CHIP — compact chip inside the detail drawer
+//
+// Visible:  white bg, ink2 text, checkmark icon, slate200 border
+// Hidden:   transparent bg, slate400 text, empty-box icon, no border
 // ─────────────────────────────────────────────────────────────────────────────
-class _StageToggleRow extends StatefulWidget {
+class _StageChip extends StatefulWidget {
   final String       label;
   final bool         isVisible;
   final VoidCallback onTap;
 
-  const _StageToggleRow({
+  const _StageChip({
     required this.label,
     required this.isVisible,
     required this.onTap,
   });
 
   @override
-  State<_StageToggleRow> createState() => _StageToggleRowState();
+  State<_StageChip> createState() => _StageChipState();
 }
 
-class _StageToggleRowState extends State<_StageToggleRow> {
+class _StageChipState extends State<_StageChip> {
   bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
+    final Color bg = widget.isVisible
+        ? (_hovered ? _T.slate100 : _T.white)
+        : (_hovered ? _T.slate100 : Colors.transparent);
+
     return MouseRegion(
       cursor:  SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -818,27 +764,34 @@ class _StageToggleRowState extends State<_StageToggleRow> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          color: _hovered ? _T.slate50 : Colors.transparent,
+          decoration: BoxDecoration(
+            color:        bg,
+            border: Border.all(
+              color: widget.isVisible ? _T.slate200 : Colors.transparent,
+            ),
+            borderRadius: BorderRadius.circular(6),
+          ),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 110),
-            margin:   const EdgeInsets.only(right: 2),
-            padding:  const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
-            decoration: const BoxDecoration(),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 120),
+                  duration: const Duration(milliseconds: 110),
                   child: Icon(
                     widget.isVisible
                         ? Icons.check_box_rounded
                         : Icons.check_box_outline_blank_rounded,
                     key:   ValueKey(widget.isVisible),
-                    size:  14,
+                    size:  13,
                     color: widget.isVisible ? _T.ink3 : _T.slate300,
                   ),
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 6),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 110),
                   style: TextStyle(
@@ -858,7 +811,14 @@ class _StageToggleRowState extends State<_StageToggleRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KANBAN LANE — original, unchanged
+// KANBAN LANE
+//
+// Redesign highlights:
+//   • No border — replaced by a soft shadow for panel elevation
+//   • 2px colored top accent strip (full width, group color)
+//   • Header: cleaner spacing, count badge uses colored text on neutral bg
+//   • Empty state: ultra-minimal ghost
+//   • Add task: dashed ghost row at the bottom
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo   stageInfo;
@@ -894,173 +854,234 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
     setState(() => widget.isAddingTask = true);
   }
 
-  void onDismiss()           => setState(() => widget.isAddingTask = false);
-  void onCreated(Task task)  => setState(() => widget.isAddingTask = false);
+  void onDismiss()          => setState(() => widget.isAddingTask = false);
+  void onCreated(Task task) => setState(() => widget.isAddingTask = false);
 
   @override
   Widget build(BuildContext context) {
     final isApproved = widget.stageInfo.stage == TaskStatus.clientApproved;
 
     return Container(
-      width:  258,
-      margin: const EdgeInsets.only(right: 12),
+      width:  260,
+      margin: const EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
         color:        _T.white,
-        border:       Border.all(color: _T.slate200),
         borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        children: [
-
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _T.slate100)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 3, height: 16,
-                  decoration: BoxDecoration(
-                    color:        widget.stageInfo.color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.stageInfo.label,
-                    style: const TextStyle(
-                      fontSize:   12,
-                      fontWeight: FontWeight.w700,
-                      color:      _T.ink,
-                    ),
-                  ),
-                ),
-                if (isApproved) ...[
-                  Icon(Icons.lock_outline, size: 12, color: widget.stageInfo.color),
-                  const SizedBox(width: 4),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color:        isApproved ? widget.stageInfo.bg : _T.slate100,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    '${widget.tasks.length}',
-                    style: TextStyle(
-                      fontSize:   11,
-                      fontWeight: FontWeight.w700,
-                      color: isApproved ? widget.stageInfo.color : _T.slate500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        boxShadow: [
+          BoxShadow(
+            color:       const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius:  8,
+            offset:      const Offset(0, 1),
           ),
+          BoxShadow(
+            color:       const Color(0xFF0F172A).withOpacity(0.03),
+            blurRadius:  2,
+            offset:      const Offset(0, 0),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_T.rLg),
+        child: Column(
+          children: [
 
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                if (widget.tasks.isEmpty)
-                  _LaneEmpty()
-                else
-                  ...widget.tasks.map((t) {
-                    final proj = widget.projects
-                        .cast<Project?>()
-                        .firstWhere(
-                          (p) => p!.id == t.projectId,
-                          orElse: () => null,
-                        ) ??
-                        widget.projects.first;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: TaskCard(
-                        task:              t,
-                        project:           proj,
-                        isSelected:        widget.selectedTaskId == t.id,
-                        onTap:             () => widget.onTaskSelected(t.id),
+            // ── Colored top accent strip ─────────────────────────────────────
+            Container(
+              height: 2.5,
+              color:  widget.stageInfo.color,
+            ),
+
+            // ── Lane header ──────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 11, 14, 10),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _T.slate100)),
+              ),
+              child: Row(
+                children: [
+
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (isApproved) ...[
+                          Icon(Icons.lock_outline_rounded, size: 11, color: widget.stageInfo.color),
+                          const SizedBox(width: 5),
+                        ],
+                        Expanded(
+                          child: Text(
+                            widget.stageInfo.label,
+                            style: const TextStyle(
+                              fontSize:   11.5,
+                              fontWeight: FontWeight.w600,
+                              color:      _T.ink,
+                              letterSpacing: 0.0,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // Task count badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color:        isApproved
+                          ? widget.stageInfo.color.withOpacity(0.10)
+                          : _T.slate100,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${widget.tasks.length}',
+                      style: TextStyle(
+                        fontSize:   10.5,
+                        fontWeight: FontWeight.w700,
+                        color:      isApproved ? widget.stageInfo.color : _T.slate500,
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
+
+            // ── Task list ────────────────────────────────────────────────────
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  if (widget.tasks.isEmpty)
+                    _LaneEmpty()
+                  else
+                    ...widget.tasks.map((t) {
+                      final proj = widget.projects
+                          .cast<Project?>()
+                          .firstWhere(
+                            (p) => p!.id == t.projectId,
+                            orElse: () => null,
+                          ) ??
+                          widget.projects.first;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 7),
+                        child: TaskCard(
+                          task:              t,
+                          project:           proj,
+                          isSelected:        widget.selectedTaskId == t.id,
+                          onTap:             () => widget.onTaskSelected(t.id),
+                          selectedProjectId: widget.selectedProjectId,
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+
+            // ── Add task ─────────────────────────────────────────────────────
+            if (widget.showAddTaskBtn)
+              widget.isAddingTask == true
+                  ? Focus(
+                      focusNode: widget.addTaskFocusNode,
+                      autofocus: true,
+                      child: TaskCard.add(
+                        onCreated:         onCreated,
+                        onDismiss:         onDismiss,
+                        projects:          ref.watch(projectNotifierProvider),
                         selectedProjectId: widget.selectedProjectId,
                       ),
-                    );
-                  }),
-              ],
-            ),
-          ),
-
-          if (widget.showAddTaskBtn)
-            widget.isAddingTask == true
-                ? Focus(
-                    focusNode: widget.addTaskFocusNode,
-                    autofocus: true,
-                    child: TaskCard.add(
-                      onCreated:         onCreated,
-                      onDismiss:         onDismiss,
-                      projects:          ref.watch(projectNotifierProvider),
-                      selectedProjectId: widget.selectedProjectId,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                      child: _AddCardButton(onTap: onAddTask),
                     ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                    child: _AddCardButton(onTap: onAddTask),
-                  ),
 
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LANE EMPTY STATE
+// LANE EMPTY STATE — very minimal ghost
 // ─────────────────────────────────────────────────────────────────────────────
 class _LaneEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 24),
+    padding: EdgeInsets.symmetric(vertical: 28),
     child: Column(
       children: [
-        Icon(Icons.assignment_outlined, size: 28, color: _T.slate300),
-        SizedBox(height: 8),
-        Text('No tasks here', style: TextStyle(fontSize: 12, color: _T.slate300)),
+        Icon(Icons.inbox_outlined, size: 20, color: _T.slate300),
+        SizedBox(height: 6),
+        Text(
+          'No tasks',
+          style: TextStyle(fontSize: 11.5, color: _T.slate300, fontWeight: FontWeight.w400),
+        ),
       ],
     ),
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADD CARD BUTTON
+// ADD CARD BUTTON — ghost dashed style
 // ─────────────────────────────────────────────────────────────────────────────
-class _AddCardButton extends StatelessWidget {
+class _AddCardButton extends StatefulWidget {
   final VoidCallback onTap;
   const _AddCardButton({required this.onTap});
 
   @override
+  State<_AddCardButton> createState() => _AddCardButtonState();
+}
+
+class _AddCardButtonState extends State<_AddCardButton> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color:        Colors.transparent,
-      borderRadius: BorderRadius.circular(_T.r),
-      child: InkWell(
-        onTap:        onTap,
-        borderRadius: BorderRadius.circular(_T.r),
+    return MouseRegion(
+      cursor:  SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            border:       Border.all(color: _T.slate200, width: 1.5),
+            color:        _hovered ? _T.slate50 : Colors.transparent,
+            border: Border.all(
+              color: _hovered ? _T.slate300 : _T.slate200,
+              // A "dashed" feel through slightly thinner stroke and color
+            ),
             borderRadius: BorderRadius.circular(_T.r),
           ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, size: 13, color: _T.slate400),
-              SizedBox(width: 6),
-              Text(
-                'Add task',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: _T.slate400),
-              ),
-            ],
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding:  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_rounded,
+                  size:  13,
+                  color: _hovered ? _T.slate500 : _T.slate400,
+                ),
+                const SizedBox(width: 5),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  style: TextStyle(
+                    fontSize:   12,
+                    fontWeight: FontWeight.w500,
+                    color:      _hovered ? _T.slate500 : _T.slate400,
+                  ),
+                  child: const Text('Add task'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
