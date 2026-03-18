@@ -587,7 +587,7 @@ class _ProjectHeader extends StatelessWidget {
               ),
             ),
           ] else ...[
-            const Icon(Icons.folder_open_outlined, size: 15, color: _T.slate400),
+            const Icon(Icons.workspaces_rounded, size: 17, color: _T.slate400),
             const SizedBox(width: 8),
             const Text(
               'All Projects',
