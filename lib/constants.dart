@@ -21,3 +21,5 @@ const kOverallProgressHeroKey = "overall_progress";
 
 final GlobalKey<ScaffoldMessengerState> kRootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
+
+final kNavigatorKey = GlobalKey<NavigatorState>();

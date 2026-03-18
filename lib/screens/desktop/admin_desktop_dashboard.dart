@@ -52,37 +52,37 @@ import 'package:smooflow/screens/desktop_material_list_screen.dart';
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  static const blue      = Color(0xFF2563EB);
+  static const blue = Color(0xFF2563EB);
   static const blueHover = Color(0xFF1D4ED8);
-  static const blue100   = Color(0xFFDBEAFE);
-  static const blue50    = Color(0xFFEFF6FF);
-  static const teal      = Color(0xFF38BDF8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const teal = Color(0xFF38BDF8);
 
-  static const green     = Color(0xFF10B981);
-  static const green50   = Color(0xFFECFDF5);
-  static const amber     = Color(0xFFF59E0B);
-  static const amber50   = Color(0xFFFEF3C7);
-  static const red       = Color(0xFFEF4444);
-  static const red50     = Color(0xFFFEE2E2);
-  static const purple    = Color(0xFF8B5CF6);
-  static const purple50  = Color(0xFFF3E8FF);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
 
-  static const slate50   = Color(0xFFF8FAFC);
-  static const slate100  = Color(0xFFF1F5F9);
-  static const slate200  = Color(0xFFE2E8F0);
-  static const slate300  = Color(0xFFCBD5E1);
-  static const slate400  = Color(0xFF94A3B8);
-  static const slate500  = Color(0xFF64748B);
-  static const ink       = Color(0xFF0F172A);
-  static const ink2      = Color(0xFF1E293B);
-  static const ink3      = Color(0xFF334155);
-  static const white     = Colors.white;
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
 
   static const sidebarW = 220.0;
-  static const topbarH  = 52.0;
-  static const detailW  = 400.0;
+  static const topbarH = 52.0;
+  static const detailW = 400.0;
 
-  static const r   = 8.0;
+  static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
@@ -111,21 +111,22 @@ class AdminDesktopDashboardScreen extends ConsumerStatefulWidget {
 
 class _AdminDesktopDashboardScreenState
     extends ConsumerState<AdminDesktopDashboardScreen> {
-  _AdminView _view             = _AdminView.overview;
-  String?    _selectedProjectId;
-  int?       _selectedTaskId;
-  String     _searchQuery      = '';
+  _AdminView _view = _AdminView.overview;
+  String? _selectedProjectId;
+  int? _selectedTaskId;
+  String _searchQuery = '';
 
   final FocusNode _addTaskFocusNode = FocusNode();
-  bool _isAddingTask  = false;
+  bool _isAddingTask = false;
   bool _isInitLoading = true;
 
-  void _selectTask(int id)  => setState(() => _selectedTaskId = id);
-  void _closeDetail()       => setState(() => _selectedTaskId = null);
+  void _selectTask(int id) => setState(() => _selectedTaskId = id);
+  void _closeDetail() => setState(() => _selectedTaskId = null);
 
-  Task? get _selectedTask => _selectedTaskId == null
-      ? null
-      : _tasks.cast<Task?>().firstWhere(
+  Task? get _selectedTask =>
+      _selectedTaskId == null
+          ? null
+          : _tasks.cast<Task?>().firstWhere(
             (t) => t!.id == _selectedTaskId,
             orElse: () => null,
           );
@@ -133,23 +134,31 @@ class _AdminDesktopDashboardScreenState
   Future<void> _showSnack(BuildContext ctx, String msg, Color color) async {
     kRootScaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
-        content: Row(children: [
-          Container(
+        content: Row(
+          children: [
+            Container(
               width: 8,
               height: 8,
-              decoration:
-                  BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 10),
-          Flexible(
-              child: Text(msg,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500))),
-        ]),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: _T.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_T.rLg)),
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
         duration: const Duration(seconds: 3),
         elevation: 8,
       ),
@@ -168,12 +177,11 @@ class _AdminDesktopDashboardScreenState
     setState(() {});
   }
 
-  List<Task> get _pipelineTasks =>
-      ref.watch(taskNotifierProvider).tasks;
+  List<Task> get _pipelineTasks => ref.watch(taskNotifierProvider).tasks;
 
   List<Project> get _projects => ref.watch(projectNotifierProvider);
-  List<Member>  get _members  => ref.watch(memberNotifierProvider).members;
-  List<Task>    get _tasks    => ref.watch(taskNotifierProvider).tasks;
+  List<Member> get _members => ref.watch(memberNotifierProvider).members;
+  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks;
 
   // List<Task> get _visibleTasks => _tasks.where((t) {
   //   if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
@@ -188,12 +196,17 @@ class _AdminDesktopDashboardScreenState
   @override
   void initState() {
     super.initState();
+    AppToast.init(kNavigatorKey);
     Future.microtask(() async {
-      await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref
+          .read(projectNotifierProvider.notifier)
+          .load(projectsLastAddedLocal: null);
       await ref.read(materialNotifierProvider.notifier).fetchMaterials();
       await ref.read(materialNotifierProvider.notifier).fetchTransactions();
       await ref.read(taskNotifierProvider.notifier).loadAll();
-      await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .fetchProductionScheduleToday();
       await ref.read(memberNotifierProvider.notifier).members;
       if (mounted) setState(() => _isInitLoading = false);
     });
@@ -226,26 +239,27 @@ class _AdminDesktopDashboardScreenState
               children: [
                 // ── Sidebar ─────────────────────────────────────────────
                 _AdminSidebar(
-                  currentView:        _view,
-                  selectedProjectId:  _selectedProjectId,
-                  projects:           _projects,
-                  tasks:              _pipelineTasks,
-                  members:            _members,
-                  onViewChanged:      (v) {
-        
+                  currentView: _view,
+                  selectedProjectId: _selectedProjectId,
+                  projects: _projects,
+                  tasks: _pipelineTasks,
+                  members: _members,
+                  onViewChanged: (v) {
                     setState(() {
                       _view = v;
                     });
                     _closeDetail();
                   },
-                  onProjectSelected:  (id) => setState(() {
-                    _selectedProjectId = id;
-                    // Switch to list view when a project is selected so the
-                    // user immediately sees filtered results.
-                    if (_view == _AdminView.overview) _view = _AdminView.list;
-                  }),
+                  onProjectSelected:
+                      (id) => setState(() {
+                        _selectedProjectId = id;
+                        // Switch to list view when a project is selected so the
+                        // user immediately sees filtered results.
+                        if (_view == _AdminView.overview)
+                          _view = _AdminView.list;
+                      }),
                 ),
-        
+
                 // ── Main content ────────────────────────────────────────
                 Expanded(
                   child: Column(
@@ -255,47 +269,52 @@ class _AdminDesktopDashboardScreenState
                         child: Row(
                           children: [
                             Expanded(
-                              child: _view == _AdminView.overview
-                                  ? _AdminAnalyticsView(
-                                      tasks:    _pipelineTasks,
-                                      projects: _projects,
-                                      members:  _members,
-                                    )
-                                  : _view == _AdminView.list
+                              child:
+                                  _view == _AdminView.overview
+                                      ? _AdminAnalyticsView(
+                                        tasks: _pipelineTasks,
+                                        projects: _projects,
+                                        members: _members,
+                                      )
+                                      : _view == _AdminView.list
                                       ? TaskListView(
-                                          // tasks:             _visibleTasks,
-                                          projects:          _projects,
-                                          selectedProjectId: _selectedProjectId,
-                                          selectedTaskId:    _selectedTaskId,
-                                          onTaskSelected:    _selectTask,
-                                          isDetailOpen:      _selectedTaskId != null,
-                                          onAddTask:         _showTaskModal,
-                                          addTaskFocusNode:  _addTaskFocusNode,
-                                          isAddingTask:      _isAddingTask,
-                                        )
+                                        // tasks:             _visibleTasks,
+                                        projects: _projects,
+                                        selectedProjectId: _selectedProjectId,
+                                        selectedTaskId: _selectedTaskId,
+                                        onTaskSelected: _selectTask,
+                                        isDetailOpen: _selectedTaskId != null,
+                                        onAddTask: _showTaskModal,
+                                        addTaskFocusNode: _addTaskFocusNode,
+                                        isAddingTask: _isAddingTask,
+                                      )
                                       : _view == _AdminView.clients
-                                          ? ClientsPage()
-                                          : _view == _AdminView.team? ManageMembersPage()
-                                            : _view == _AdminView.printers? DesktopPrinterManagementScreen()
-                                              : _view == _AdminView.inventory? DesktopMaterialsManagementScreen()
-                                                : DesktopReportsScreen(),
+                                      ? ClientsPage()
+                                      : _view == _AdminView.team
+                                      ? ManageMembersPage()
+                                      : _view == _AdminView.printers
+                                      ? DesktopPrinterManagementScreen()
+                                      : _view == _AdminView.inventory
+                                      ? DesktopMaterialsManagementScreen()
+                                      : DesktopReportsScreen(),
                             ),
-        
+
                             // ── Detail panel ──────────────────────────
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 220),
                               curve: Curves.easeInOut,
                               width: _selectedTaskId != null ? _T.detailW : 0,
-                              child: _selectedTaskId != null &&
-                                      _selectedTask != null
-                                  ? DetailPanel(
-                                      task:      _selectedTask!,
-                                      projects:  _projects,
-                                      onClose:   _closeDetail,
-                                      onAdvance: () =>
-                                          _advanceTask(_selectedTask!),
-                                    )
-                                  : const SizedBox.shrink(),
+                              child:
+                                  _selectedTaskId != null &&
+                                          _selectedTask != null
+                                      ? DetailPanel(
+                                        task: _selectedTask!,
+                                        projects: _projects,
+                                        onClose: _closeDetail,
+                                        onAdvance:
+                                            () => _advanceTask(_selectedTask!),
+                                      )
+                                      : const SizedBox.shrink(),
                             ),
                           ],
                         ),
@@ -312,17 +331,19 @@ class _AdminDesktopDashboardScreenState
   }
 
   void _showTaskModal() {
-    final nextId = (_tasks.isEmpty
+    final nextId =
+        (_tasks.isEmpty
             ? 0
             : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) +
         1;
     showDialog(
       context: context,
-      builder: (_) => TaskModal(
-        projects:            _projects,
-        preselectedProjectId: _selectedProjectId,
-        nextId:              nextId,
-      ),
+      builder:
+          (_) => TaskModal(
+            projects: _projects,
+            preselectedProjectId: _selectedProjectId,
+            nextId: nextId,
+          ),
     );
     setState(() {});
   }
@@ -359,23 +380,31 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
   void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(children: [
-          Container(
+        content: Row(
+          children: [
+            Container(
               width: 8,
               height: 8,
-              decoration:
-                  BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 10),
-          Flexible(
-              child: Text(msg,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500))),
-        ]),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: _T.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_T.rLg)),
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
         duration: const Duration(seconds: 3),
         elevation: 8,
       ),
@@ -407,32 +436,44 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           Container(
             height: _T.topbarH,
             decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0x10FFFFFF)))),
+              border: Border(bottom: BorderSide(color: Color(0x10FFFFFF))),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [
-              Logo(size: 25),
-              const SizedBox(width: 9),
-              const Text('smooflow',
+            child: Row(
+              children: [
+                Logo(size: 25),
+                const SizedBox(width: 9),
+                const Text(
+                  'smooflow',
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.6,
-                      color: Colors.white)),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
                     color: _T.amber.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(4)),
-                child: const Text('ADMIN',
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'ADMIN',
                     style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
-                        color: Color(0xFFFCD34D))),
-              ),
-            ]),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: Color(0xFFFCD34D),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // ── Nav ────────────────────────────────────────────────────────
@@ -444,20 +485,22 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 _SidebarLabel('Workspace'),
                 const SizedBox(height: 4),
                 _SidebarNavItem(
-                  icon:     Icons.bar_chart_rounded,
-                  label:    'Overview',
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Overview',
                   isActive: widget.currentView == _AdminView.overview,
-                  onTap:    () => widget.onViewChanged(_AdminView.overview),
+                  onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
                 // Tasks nav item → goes straight to list view with no filter
                 _SidebarNavItem(
-                  icon:     Icons.assignment_outlined,
-                  label:    'All Tasks',
-                  isActive: widget.currentView == _AdminView.list &&
+                  icon: Icons.assignment_outlined,
+                  label: 'All Tasks',
+                  isActive:
+                      widget.currentView == _AdminView.list &&
                       widget.selectedProjectId == null,
-                  badge: widget.tasks.length > 0
-                      ? widget.tasks.length.toString()
-                      : null,
+                  badge:
+                      widget.tasks.length > 0
+                          ? widget.tasks.length.toString()
+                          : null,
                   onTap: () {
                     widget.onProjectSelected(null);
                     widget.onViewChanged(_AdminView.list);
@@ -465,10 +508,10 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 ),
                 // Reports Page
                 _SidebarNavItem(
-                  icon:     Icons.analytics_rounded,
-                  label:    'Reports',
+                  icon: Icons.analytics_rounded,
+                  label: 'Reports',
                   isActive: widget.currentView == _AdminView.reports,
-                  onTap:    () => widget.onViewChanged(_AdminView.reports),
+                  onTap: () => widget.onViewChanged(_AdminView.reports),
                 ),
               ],
             ),
@@ -484,22 +527,24 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: widget.projects.map((p) {
-                  final cnt =
-                      widget.tasks.where((t) => t.projectId == p.id).length;
-                  final isActive = widget.selectedProjectId == p.id &&
-                      widget.currentView == _AdminView.list;
-                  return _SidebarProjectRow(
-                    name:     p.name,
-                    color:    p.color,
-                    count:    cnt,
-                    isActive: isActive,
-                    onTap:    () {
-                      widget.onProjectSelected(p.id);
-                      widget.onViewChanged(_AdminView.list);
-                    },
-                  );
-                }).toList(),
+                children:
+                    widget.projects.map((p) {
+                      final cnt =
+                          widget.tasks.where((t) => t.projectId == p.id).length;
+                      final isActive =
+                          widget.selectedProjectId == p.id &&
+                          widget.currentView == _AdminView.list;
+                      return _SidebarProjectRow(
+                        name: p.name,
+                        color: p.color,
+                        count: cnt,
+                        isActive: isActive,
+                        onTap: () {
+                          widget.onProjectSelected(p.id);
+                          widget.onViewChanged(_AdminView.list);
+                        },
+                      );
+                    }).toList(),
               ),
             ),
           ),
@@ -507,54 +552,66 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
             child: InkWell(
-              onTap:        _showProjectModal,
+              onTap: _showProjectModal,
               borderRadius: BorderRadius.circular(_T.r),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.14), width: 1.5),
+                    color: Colors.white.withOpacity(0.14),
+                    width: 1.5,
+                  ),
                   borderRadius: BorderRadius.circular(_T.r),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add,
-                        size: 14,
-                        color: Colors.white.withOpacity(0.4)),
+                    Icon(
+                      Icons.add,
+                      size: 14,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
                     const SizedBox(width: 7),
-                    Text('New Project',
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.4))),
+                    Text(
+                      'New Project',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
 
-           // ── Projects ───────────────────────────────────────────────────
+          // ── Projects ───────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 20, 10, 4),
             child: _SidebarLabel('Operations'),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(children: [
-              _SidebarNavItem(
-                icon:     Icons.print_rounded,
-                label:    'Printers',
-                isActive: widget.currentView == _AdminView.printers,
-                onTap:    () => widget.onViewChanged(_AdminView.printers),
-              ),
-              _SidebarNavItem(
-                icon:     CupertinoIcons.cube_box,
-                label:    'Materials',
-                isActive: widget.currentView == _AdminView.inventory,
-                onTap:    () => widget.onViewChanged(_AdminView.inventory),
-              ),
-            ]),
+            child: Column(
+              children: [
+                _SidebarNavItem(
+                  icon: Icons.print_rounded,
+                  label: 'Printers',
+                  isActive: widget.currentView == _AdminView.printers,
+                  onTap: () => widget.onViewChanged(_AdminView.printers),
+                ),
+                _SidebarNavItem(
+                  icon: CupertinoIcons.cube_box,
+                  label: 'Materials',
+                  isActive: widget.currentView == _AdminView.inventory,
+                  onTap: () => widget.onViewChanged(_AdminView.inventory),
+                ),
+              ],
+            ),
           ),
 
           // ── Manage ─────────────────────────────────────────────────────
@@ -565,22 +622,24 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(children: [
-              _SidebarNavItem(
-                icon:     Icons.supervisor_account_sharp,
-                label:    'Clients',
-                isActive: widget.currentView == _AdminView.clients,
-                onTap:    () => widget.onViewChanged(_AdminView.clients),
-              ),
-              _SidebarNavItem(
-                icon:     Icons.people_outline_rounded,
-                label:    'Manage Team',
-                isActive: widget.currentView == _AdminView.team,
-                onTap:    () => widget.onViewChanged(_AdminView.team),
-              ),
-            ]),
+            child: Column(
+              children: [
+                _SidebarNavItem(
+                  icon: Icons.supervisor_account_sharp,
+                  label: 'Clients',
+                  isActive: widget.currentView == _AdminView.clients,
+                  onTap: () => widget.onViewChanged(_AdminView.clients),
+                ),
+                _SidebarNavItem(
+                  icon: Icons.people_outline_rounded,
+                  label: 'Manage Team',
+                  isActive: widget.currentView == _AdminView.team,
+                  onTap: () => widget.onViewChanged(_AdminView.team),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 30)
+          SizedBox(height: 30),
 
           // ── Team ───────────────────────────────────────────────────────
           // Container(
@@ -636,11 +695,12 @@ class _AdminTopbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now      = DateTime.now();
-    final hour     = now.hour;
-    final greeting = hour < 12
-        ? 'Good morning'
-        : hour < 17
+    final now = DateTime.now();
+    final hour = now.hour;
+    final greeting =
+        hour < 12
+            ? 'Good morning'
+            : hour < 17
             ? 'Good afternoon'
             : 'Good evening';
     final user = LoginService.currentUser;
@@ -648,60 +708,82 @@ class _AdminTopbar extends StatelessWidget {
     return Container(
       height: _T.topbarH,
       decoration: const BoxDecoration(
-          color:  _T.white,
-          border: Border(bottom: BorderSide(color: _T.slate200))),
+        color: _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(children: [
-        if (currentView == _AdminView.overview) ...[
-          Text('$greeting${user != null ? ", ${user.nameShort}" : ""}',
+      child: Row(
+        children: [
+          if (currentView == _AdminView.overview) ...[
+            Text(
+              '$greeting${user != null ? ", ${user.nameShort}" : ""}',
               style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3)),
-          const SizedBox(width: 8),
-          Container(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _T.ink3,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                  color: _T.slate300, shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Text(_fmtDateFull(now),
-              style: const TextStyle(fontSize: 12.5, color: _T.slate400)),
-        ] else
-          Text(
-            currentView == _AdminView.list
-                ? 'Tasks'
-                : currentView == _AdminView.clients
-                    ? 'Clients'
-                    : 'Team',
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3),
-          ),
+                color: _T.slate300,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _fmtDateFull(now),
+              style: const TextStyle(fontSize: 12.5, color: _T.slate400),
+            ),
+          ] else
+            Text(
+              currentView == _AdminView.list
+                  ? 'Tasks'
+                  : currentView == _AdminView.clients
+                  ? 'Clients'
+                  : 'Team',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _T.ink3,
+              ),
+            ),
 
-        const Spacer(),
-        const SizedBox(width: 12),
+          const Spacer(),
+          const SizedBox(width: 12),
 
-        FilledButton.icon(
-          onPressed: () {
-            AppRoutes.navigateTo(context, AppRoutes.designCreateTaskScreen,
-                arguments: CreateTaskArgs(preselectedProjectId: null));
-          },
-          style: FilledButton.styleFrom(
-            textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-            iconSize: 13,
-          ),
-          label: const Text('Create Task'),
-          icon:  const Icon(Icons.add),
-        ),
-        const SizedBox(width: 15),
-        if (user != null)
-          UserMenuChip(
-            onLogout: () async {
-              await LoginService.logout();
-              if (context.mounted) {
-                AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
-              }
+          FilledButton.icon(
+            onPressed: () {
+              AppRoutes.navigateTo(
+                context,
+                AppRoutes.designCreateTaskScreen,
+                arguments: CreateTaskArgs(preselectedProjectId: null),
+              );
             },
+            style: FilledButton.styleFrom(
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
+              iconSize: 13,
+            ),
+            label: const Text('Create Task'),
+            icon: const Icon(Icons.add),
           ),
-      ]),
+          const SizedBox(width: 15),
+          if (user != null)
+            UserMenuChip(
+              onLogout: () async {
+                await LoginService.logout();
+                if (context.mounted) {
+                  AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login);
+                }
+              },
+            ),
+        ],
+      ),
     );
   }
 }
@@ -710,9 +792,9 @@ class _AdminTopbar extends StatelessWidget {
 // ANALYTICS VIEW — unchanged from previous version
 // ─────────────────────────────────────────────────────────────────────────────
 class _AdminAnalyticsView extends StatefulWidget {
-  final List<Task>    tasks;
+  final List<Task> tasks;
   final List<Project> projects;
-  final List<Member>  members;
+  final List<Member> members;
 
   const _AdminAnalyticsView({
     required this.tasks,
@@ -727,7 +809,9 @@ class _AdminAnalyticsView extends StatefulWidget {
 class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ac = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 900));
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
 
   @override
   void initState() {
@@ -742,34 +826,44 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
   }
 
   Animation<double> _stagger(double start, double end) => CurvedAnimation(
-      parent: _ac,
-      curve: Interval(start, end, curve: Curves.easeOutCubic));
+    parent: _ac,
+    curve: Interval(start, end, curve: Curves.easeOutCubic),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final tasks    = widget.tasks;
+    final tasks = widget.tasks;
     final projects = widget.projects;
-    final members  = widget.members;
+    final members = widget.members;
 
-    final totalActive = tasks
-        .where((t) =>
-            !(t.status == TaskStatus.completed || t.status == TaskStatus.blocked))
-        .length;
+    final totalActive =
+        tasks
+            .where(
+              (t) =>
+                  !(t.status == TaskStatus.completed ||
+                      t.status == TaskStatus.blocked),
+            )
+            .length;
 
     final inReview =
         tasks.where((t) => t.status == TaskStatus.waitingApproval).length;
 
-    final overdue = tasks
-        .where((t) =>
-            t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
-        .length;
+    final overdue =
+        tasks
+            .where(
+              (t) => t.dueDate != null && t.dueDate!.isBefore(DateTime.now()),
+            )
+            .length;
 
-    final approvedToday = tasks
-        .where((t) =>
-            t.status == TaskStatus.clientApproved &&
-            t.dueDate != null &&
-            _sameDay(t.dueDate!, DateTime.now()))
-        .length;
+    final approvedToday =
+        tasks
+            .where(
+              (t) =>
+                  t.status == TaskStatus.clientApproved &&
+                  t.dueDate != null &&
+                  _sameDay(t.dueDate!, DateTime.now()),
+            )
+            .length;
 
     final printQueue =
         tasks.where((t) => t.status == TaskStatus.printing).length;
@@ -783,46 +877,65 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
             opacity: _stagger(0.0, 0.4),
             child: SlideTransition(
               position: Tween<Offset>(
-                      begin: const Offset(0, 0.04), end: Offset.zero)
-                  .animate(_stagger(0.0, 0.4)),
-              child: Row(children: [
-                _KpiCard(
-                  label: 'Active Tasks', value: '$totalActive',
-                  delta: totalActive > 0 ? '$totalActive in flight' : 'All clear',
-                  deltaPositive: null,
-                  icon: Icons.assignment_outlined,
-                  iconColor: _T.blue, iconBg: _T.blue50,
-                ),
-                const SizedBox(width: 12),
-                _KpiCard(
-                  label: 'In Review', value: '$inReview',
-                  delta: 'Awaiting approval', deltaPositive: null,
-                  icon: Icons.hourglass_top_rounded,
-                  iconColor: _T.amber, iconBg: _T.amber50,
-                ),
-                const SizedBox(width: 12),
-                _KpiCard(
-                  label: 'Overdue', value: '$overdue',
-                  delta: overdue > 0 ? 'Needs attention' : 'All on track',
-                  deltaPositive: overdue == 0,
-                  icon: Icons.warning_amber_rounded,
-                  iconColor: _T.red, iconBg: _T.red50,
-                ),
-                const SizedBox(width: 12),
-                _KpiCard(
-                  label: 'Approved Today', value: '$approvedToday',
-                  delta: 'Client sign-offs', deltaPositive: approvedToday > 0,
-                  icon: Icons.check_circle_outline_rounded,
-                  iconColor: _T.green, iconBg: _T.green50,
-                ),
-                const SizedBox(width: 12),
-                _KpiCard(
-                  label: 'Print Queue', value: '$printQueue',
-                  delta: 'Ready for production', deltaPositive: null,
-                  icon: Icons.print_outlined,
-                  iconColor: _T.purple, iconBg: _T.purple50,
-                ),
-              ]),
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(_stagger(0.0, 0.4)),
+              child: Row(
+                children: [
+                  _KpiCard(
+                    label: 'Active Tasks',
+                    value: '$totalActive',
+                    delta:
+                        totalActive > 0
+                            ? '$totalActive in flight'
+                            : 'All clear',
+                    deltaPositive: null,
+                    icon: Icons.assignment_outlined,
+                    iconColor: _T.blue,
+                    iconBg: _T.blue50,
+                  ),
+                  const SizedBox(width: 12),
+                  _KpiCard(
+                    label: 'In Review',
+                    value: '$inReview',
+                    delta: 'Awaiting approval',
+                    deltaPositive: null,
+                    icon: Icons.hourglass_top_rounded,
+                    iconColor: _T.amber,
+                    iconBg: _T.amber50,
+                  ),
+                  const SizedBox(width: 12),
+                  _KpiCard(
+                    label: 'Overdue',
+                    value: '$overdue',
+                    delta: overdue > 0 ? 'Needs attention' : 'All on track',
+                    deltaPositive: overdue == 0,
+                    icon: Icons.warning_amber_rounded,
+                    iconColor: _T.red,
+                    iconBg: _T.red50,
+                  ),
+                  const SizedBox(width: 12),
+                  _KpiCard(
+                    label: 'Approved Today',
+                    value: '$approvedToday',
+                    delta: 'Client sign-offs',
+                    deltaPositive: approvedToday > 0,
+                    icon: Icons.check_circle_outline_rounded,
+                    iconColor: _T.green,
+                    iconBg: _T.green50,
+                  ),
+                  const SizedBox(width: 12),
+                  _KpiCard(
+                    label: 'Print Queue',
+                    value: '$printQueue',
+                    delta: 'Ready for production',
+                    deltaPositive: null,
+                    icon: Icons.print_outlined,
+                    iconColor: _T.purple,
+                    iconBg: _T.purple50,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -830,27 +943,31 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
             opacity: _stagger(0.15, 0.55),
             child: SlideTransition(
               position: Tween<Offset>(
-                      begin: const Offset(0, 0.04), end: Offset.zero)
-                  .animate(_stagger(0.15, 0.55)),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(
-                  flex: 5,
-                  child: _AnalyticsCard(
-                    title: 'Stage Distribution',
-                    subtitle: 'Tasks by pipeline stage',
-                    child: _StageFunnelChart(tasks: tasks),
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(_stagger(0.15, 0.55)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: _AnalyticsCard(
+                      title: 'Stage Distribution',
+                      subtitle: 'Tasks by pipeline stage',
+                      child: _StageFunnelChart(tasks: tasks),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 4,
-                  child: _AnalyticsCard(
-                    title: 'Priority Breakdown',
-                    subtitle: 'Across all active tasks',
-                    child: _PriorityDonutChart(tasks: tasks),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 4,
+                    child: _AnalyticsCard(
+                      title: 'Priority Breakdown',
+                      subtitle: 'Across all active tasks',
+                      child: _PriorityDonutChart(tasks: tasks),
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -858,27 +975,34 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
             opacity: _stagger(0.3, 0.7),
             child: SlideTransition(
               position: Tween<Offset>(
-                      begin: const Offset(0, 0.04), end: Offset.zero)
-                  .animate(_stagger(0.3, 0.7)),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(
-                  flex: 4,
-                  child: _AnalyticsCard(
-                    title: 'Team Workload',
-                    subtitle: 'Active tasks per designer',
-                    child: _TeamWorkloadChart(members: members, tasks: tasks),
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(_stagger(0.3, 0.7)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: _AnalyticsCard(
+                      title: 'Team Workload',
+                      subtitle: 'Active tasks per designer',
+                      child: _TeamWorkloadChart(members: members, tasks: tasks),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 5,
-                  child: _AnalyticsCard(
-                    title: 'Project Health',
-                    subtitle: 'Stage breakdown & overdue risk per project',
-                    child: _ProjectHealthGrid(projects: projects, tasks: tasks),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 5,
+                    child: _AnalyticsCard(
+                      title: 'Project Health',
+                      subtitle: 'Stage breakdown & overdue risk per project',
+                      child: _ProjectHealthGrid(
+                        projects: projects,
+                        tasks: tasks,
+                      ),
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -887,13 +1011,17 @@ class _AdminAnalyticsViewState extends State<_AdminAnalyticsView>
               opacity: _stagger(0.45, 0.85),
               child: SlideTransition(
                 position: Tween<Offset>(
-                        begin: const Offset(0, 0.04), end: Offset.zero)
-                    .animate(_stagger(0.45, 0.85)),
+                  begin: const Offset(0, 0.04),
+                  end: Offset.zero,
+                ).animate(_stagger(0.45, 0.85)),
                 child: _AnalyticsCard(
                   title: 'Overdue Tasks',
                   subtitle: 'Past due date — needs action',
                   child: _OverdueTasksList(
-                      tasks: tasks, projects: projects, members: members),
+                    tasks: tasks,
+                    projects: projects,
+                    members: members,
+                  ),
                 ),
               ),
             ),
@@ -911,10 +1039,10 @@ class _KpiCard extends StatelessWidget {
   final String label;
   final String value;
   final String delta;
-  final bool?  deltaPositive;
+  final bool? deltaPositive;
   final IconData icon;
-  final Color    iconColor;
-  final Color    iconBg;
+  final Color iconColor;
+  final Color iconBg;
 
   const _KpiCard({
     required this.label,
@@ -928,9 +1056,10 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final deltaColor = deltaPositive == null
-        ? _T.slate400
-        : deltaPositive!
+    final deltaColor =
+        deltaPositive == null
+            ? _T.slate400
+            : deltaPositive!
             ? _T.green
             : _T.red;
 
@@ -938,41 +1067,67 @@ class _KpiCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-            color: _T.white,
-            border: Border.all(color: _T.slate200),
-            borderRadius: BorderRadius.circular(_T.rLg)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                  color: iconBg, borderRadius: BorderRadius.circular(_T.r)),
-              child: Icon(icon, size: 17, color: iconColor),
-            ),
-            const Spacer(),
-            Icon(
-              deltaPositive == null
-                  ? Icons.remove
-                  : deltaPositive!
+          color: _T.white,
+          border: Border.all(color: _T.slate200),
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
+                  child: Icon(icon, size: 17, color: iconColor),
+                ),
+                const Spacer(),
+                Icon(
+                  deltaPositive == null
+                      ? Icons.remove
+                      : deltaPositive!
                       ? Icons.trending_up_rounded
                       : Icons.trending_down_rounded,
-              size: 14, color: deltaColor,
+                  size: 14,
+                  color: deltaColor,
+                ),
+              ],
             ),
-          ]),
-          const SizedBox(height: 12),
-          Text(value,
+            const SizedBox(height: 12),
+            Text(
+              value,
               style: const TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.w800,
-                  color: _T.ink, letterSpacing: -1, height: 1)),
-          const SizedBox(height: 4),
-          Text(label,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: _T.ink,
+                letterSpacing: -1,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
               style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
-          const SizedBox(height: 6),
-          Text(delta,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _T.ink3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              delta,
               style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w500, color: deltaColor)),
-        ]),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: deltaColor,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -997,37 +1152,61 @@ class _AnalyticsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-          color: _T.white,
-          border: Border.all(color: _T.slate200),
-          borderRadius: BorderRadius.circular(_T.rLg)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700,
-                      color: _T.ink, letterSpacing: -0.2)),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style: const TextStyle(
-                      fontSize: 11.5, color: _T.slate400,
-                      fontWeight: FontWeight.w500)),
-            ]),
+        color: _T.white,
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  border: Border.all(color: _T.slate200),
+                  borderRadius: BorderRadius.circular(_T.r),
+                ),
+                child: const Icon(
+                  Icons.more_horiz,
+                  size: 13,
+                  color: _T.slate400,
+                ),
+              ),
+            ],
           ),
-          Container(
-            width: 24, height: 24,
-            decoration: BoxDecoration(
-                border: Border.all(color: _T.slate200),
-                borderRadius: BorderRadius.circular(_T.r)),
-            child: const Icon(Icons.more_horiz, size: 13, color: _T.slate400),
-          ),
-        ]),
-        const SizedBox(height: 16),
-        const Divider(height: 1, thickness: 1, color: _T.slate100),
-        const SizedBox(height: 16),
-        child,
-      ]),
+          const SizedBox(height: 16),
+          const Divider(height: 1, thickness: 1, color: _T.slate100),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
     );
   }
 }
@@ -1042,81 +1221,115 @@ class _StageFunnelChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final counts =
-        kStages.map((s) => tasks.where((t) => t.status == s.stage).length).toList();
+        kStages
+            .map((s) => tasks.where((t) => t.status == s.stage).length)
+            .toList();
     final total = counts.fold(0, (a, b) => a + b);
     if (total == 0) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(
-            child: Text('No tasks in pipeline',
-                style: TextStyle(fontSize: 12, color: _T.slate400))),
+          child: Text(
+            'No tasks in pipeline',
+            style: TextStyle(fontSize: 12, color: _T.slate400),
+          ),
+        ),
       );
     }
 
     return Column(
-      children: kStages.asMap().entries.map((entry) {
-        final i     = entry.key;
-        final s     = entry.value;
-        final count = counts[i];
-        final pct   = count / total;
+      children:
+          kStages.asMap().entries.map((entry) {
+            final i = entry.key;
+            final s = entry.value;
+            final count = counts[i];
+            final pct = count / total;
 
-        return count < 1
-            ? const SizedBox()
-            : Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(children: [
-                  SizedBox(
-                    width: 130,
-                    child: Text(s.label,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w500, color: _T.ink3)),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: LayoutBuilder(builder: (context, constraints) {
-                      return Stack(children: [
-                        Container(
-                            height: 26,
-                            decoration: BoxDecoration(
-                                color: _T.slate100,
-                                borderRadius: BorderRadius.circular(_T.r))),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.easeOutCubic,
-                          height: 26,
-                          width: constraints.maxWidth * pct,
-                          decoration: BoxDecoration(
-                              color: s.bg,
-                              border: Border.all(color: s.color.withOpacity(0.4)),
-                              borderRadius: BorderRadius.circular(_T.r)),
-                          child: count > 0
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text('$count',
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: s.color)),
-                                  ))
-                              : null,
+            return count < 1
+                ? const SizedBox()
+                : Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 130,
+                        child: Text(
+                          s.label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: _T.ink3,
+                          ),
                         ),
-                      ]);
-                    }),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: _T.slate100,
+                                    borderRadius: BorderRadius.circular(_T.r),
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeOutCubic,
+                                  height: 26,
+                                  width: constraints.maxWidth * pct,
+                                  decoration: BoxDecoration(
+                                    color: s.bg,
+                                    border: Border.all(
+                                      color: s.color.withOpacity(0.4),
+                                    ),
+                                    borderRadius: BorderRadius.circular(_T.r),
+                                  ),
+                                  child:
+                                      count > 0
+                                          ? Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                            ),
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                '$count',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: s.color,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          : null,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 38,
+                        child: Text(
+                          '${(pct * 100).round()}%',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: _T.slate500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 38,
-                    child: Text('${(pct * 100).round()}%',
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                            fontSize: 11.5, fontWeight: FontWeight.w600, color: _T.slate500)),
-                  ),
-                ]),
-              );
-      }).toList(),
+                );
+          }).toList(),
     );
   }
 }
@@ -1126,7 +1339,7 @@ class _StageFunnelChart extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _TeamWorkloadChart extends StatelessWidget {
   final List<Member> members;
-  final List<Task>   tasks;
+  final List<Task> tasks;
   const _TeamWorkloadChart({required this.members, required this.tasks});
 
   @override
@@ -1135,84 +1348,125 @@ class _TeamWorkloadChart extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(
-            child: Text('No team members',
-                style: TextStyle(fontSize: 12, color: _T.slate400))),
+          child: Text(
+            'No team members',
+            style: TextStyle(fontSize: 12, color: _T.slate400),
+          ),
+        ),
       );
     }
 
     const capacity = 8;
 
     return Column(
-      children: members.map((m) {
-        final active = tasks
-            .where((t) =>
-                t.assignees.contains(m.id) &&
-                t.status != TaskStatus.clientApproved &&
-                t.status != TaskStatus.printing)
-            .length;
-        final overdueCount = tasks
-            .where((t) =>
-                t.assignees.contains(m.id) &&
-                t.dueDate != null &&
-                t.dueDate!.isBefore(DateTime.now()))
-            .length;
-        final frac         = (active / capacity).clamp(0.0, 1.0);
-        final isOverloaded = frac > 0.75;
+      children:
+          members.map((m) {
+            final active =
+                tasks
+                    .where(
+                      (t) =>
+                          t.assignees.contains(m.id) &&
+                          t.status != TaskStatus.clientApproved &&
+                          t.status != TaskStatus.printing,
+                    )
+                    .length;
+            final overdueCount =
+                tasks
+                    .where(
+                      (t) =>
+                          t.assignees.contains(m.id) &&
+                          t.dueDate != null &&
+                          t.dueDate!.isBefore(DateTime.now()),
+                    )
+                    .length;
+            final frac = (active / capacity).clamp(0.0, 1.0);
+            final isOverloaded = frac > 0.75;
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(children: [
-            _AvatarWidget(initials: m.initials, color: m.color, size: 28),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Text(m.name,
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
-                  const Spacer(),
-                  Text('$active / $capacity',
-                      style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: isOverloaded ? _T.amber : _T.slate400)),
-                  if (overdueCount > 0) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                          color: _T.red50,
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text('$overdueCount overdue',
-                          style: const TextStyle(
-                              fontSize: 9.5, fontWeight: FontWeight.w700, color: _T.red)),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  _AvatarWidget(initials: m.initials, color: m.color, size: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              m.name,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink3,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$active / $capacity',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: isOverloaded ? _T.amber : _T.slate400,
+                              ),
+                            ),
+                            if (overdueCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _T.red50,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '$overdueCount overdue',
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: _T.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _T.slate100,
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeOutCubic,
+                                  height: 6,
+                                  width: constraints.maxWidth * frac,
+                                  decoration: BoxDecoration(
+                                    color: isOverloaded ? _T.amber : m.color,
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ]),
-                const SizedBox(height: 5),
-                LayoutBuilder(builder: (context, constraints) {
-                  return Stack(children: [
-                    Container(
-                        height: 6,
-                        decoration: BoxDecoration(
-                            color: _T.slate100,
-                            borderRadius: BorderRadius.circular(3))),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOutCubic,
-                      height: 6,
-                      width: constraints.maxWidth * frac,
-                      decoration: BoxDecoration(
-                          color: isOverloaded ? _T.amber : m.color,
-                          borderRadius: BorderRadius.circular(3)),
-                    ),
-                  ]);
-                }),
-              ]),
-            ),
-          ]),
-        );
-      }).toList(),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
     );
   }
 }
@@ -1222,7 +1476,7 @@ class _TeamWorkloadChart extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectHealthGrid extends StatelessWidget {
   final List<Project> projects;
-  final List<Task>    tasks;
+  final List<Task> tasks;
   const _ProjectHealthGrid({required this.projects, required this.tasks});
 
   @override
@@ -1234,101 +1488,150 @@ class _ProjectHealthGrid extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(
-            child: Text('No active projects',
-                style: TextStyle(fontSize: 12, color: _T.slate400))),
+          child: Text(
+            'No active projects',
+            style: TextStyle(fontSize: 12, color: _T.slate400),
+          ),
+        ),
       );
     }
 
-    return Column(children: [
-      const Padding(
-        padding: EdgeInsets.only(bottom: 10),
-        child: Row(children: [
-          Expanded(flex: 3, child: _ColHeader('Project')),
-          Expanded(flex: 4, child: _ColHeader('Stage breakdown')),
-          Expanded(flex: 1, child: _ColHeader('Total')),
-          Expanded(flex: 1, child: _ColHeader('⚠︎')),
-        ]),
-      ),
-      ...projectsWithTasks.map((p) {
-        final ptasks = tasks.where((t) => t.projectId == p.id).toList();
-        final total  = ptasks.length;
-        final overdueCount = ptasks
-            .where((t) =>
-                t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
-            .length;
-        final stageCounts =
-            kStages.map((s) => ptasks.where((t) => t.status == s.stage).length).toList();
-        final stageColors = kStages.map((s) => s.color).toList();
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              Expanded(flex: 3, child: _ColHeader('Project')),
+              Expanded(flex: 4, child: _ColHeader('Stage breakdown')),
+              Expanded(flex: 1, child: _ColHeader('Total')),
+              Expanded(flex: 1, child: _ColHeader('⚠︎')),
+            ],
+          ),
+        ),
+        ...projectsWithTasks.map((p) {
+          final ptasks = tasks.where((t) => t.projectId == p.id).toList();
+          final total = ptasks.length;
+          final overdueCount =
+              ptasks
+                  .where(
+                    (t) =>
+                        t.dueDate != null &&
+                        t.dueDate!.isBefore(DateTime.now()),
+                  )
+                  .length;
+          final stageCounts =
+              kStages
+                  .map((s) => ptasks.where((t) => t.status == s.stage).length)
+                  .toList();
+          final stageColors = kStages.map((s) => s.color).toList();
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
               color: _T.slate50,
               borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(color: _T.slate100)),
-          child: Row(children: [
-            Expanded(
-              flex: 3,
-              child: Row(children: [
-                Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(color: p.color, shape: BoxShape.circle)),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: Text(p.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3))),
-              ]),
+              border: Border.all(color: _T.slate100),
             ),
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
                   child: Row(
-                    children: List.generate(5, (i) {
-                      if (stageCounts[i] == 0) return const SizedBox.shrink();
-                      return Flexible(
-                          flex: stageCounts[i],
-                          child: Container(height: 8, color: stageColors[i]));
-                    }),
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: p.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          p.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                Expanded(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: Row(
+                        children: List.generate(5, (i) {
+                          if (stageCounts[i] == 0)
+                            return const SizedBox.shrink();
+                          return Flexible(
+                            flex: stageCounts[i],
+                            child: Container(height: 8, color: stageColors[i]),
+                          );
+                        }),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    '$total',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _T.ink3,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child:
+                        overdueCount > 0
+                            ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _T.red50,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Text(
+                                '$overdueCount',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.red,
+                                ),
+                              ),
+                            )
+                            : const Text(
+                              '—',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _T.slate300,
+                              ),
+                            ),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              flex: 1,
-              child: Text('$total',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3)),
-            ),
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: overdueCount > 0
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                            color: _T.red50,
-                            borderRadius: BorderRadius.circular(99)),
-                        child: Text('$overdueCount',
-                            style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: _T.red)))
-                    : const Text('—',
-                        style: TextStyle(fontSize: 12, color: _T.slate300)),
-              ),
-            ),
-          ]),
-        );
-      }),
-    ]);
+          );
+        }),
+      ],
+    );
   }
 }
 
@@ -1342,50 +1645,74 @@ class _PriorityDonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final urgent = tasks.where((t) => t.priority == TaskPriority.urgent).length;
-    final high   = tasks.where((t) => t.priority == TaskPriority.high).length;
+    final high = tasks.where((t) => t.priority == TaskPriority.high).length;
     final normal = tasks.where((t) => t.priority == TaskPriority.normal).length;
-    final total  = tasks.length;
+    final total = tasks.length;
 
     if (total == 0) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(
-            child: Text('No tasks', style: TextStyle(fontSize: 12, color: _T.slate400))),
+          child: Text(
+            'No tasks',
+            style: TextStyle(fontSize: 12, color: _T.slate400),
+          ),
+        ),
       );
     }
 
-    return Column(children: [
-      SizedBox(
-        height: 140,
-        child: CustomPaint(
-          painter: _DonutPainter(
-            values:      [urgent.toDouble(), high.toDouble(), normal.toDouble()],
-            colors:      [_T.red, _T.amber, _T.slate300],
-            strokeWidth: 20,
-          ),
-          child: Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('$total',
-                  style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w800,
-                      color: _T.ink, letterSpacing: -1, height: 1)),
-              const Text('tasks',
-                  style: TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w500, color: _T.slate400)),
-            ]),
+    return Column(
+      children: [
+        SizedBox(
+          height: 140,
+          child: CustomPaint(
+            painter: _DonutPainter(
+              values: [urgent.toDouble(), high.toDouble(), normal.toDouble()],
+              colors: [_T.red, _T.amber, _T.slate300],
+              strokeWidth: 20,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$total',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: _T.ink,
+                      letterSpacing: -1,
+                      height: 1,
+                    ),
+                  ),
+                  const Text(
+                    'tasks',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _DonutLegendItem(color: _T.red,     label: 'Urgent', count: urgent),
-          _DonutLegendItem(color: _T.amber,   label: 'High',   count: high),
-          _DonutLegendItem(color: _T.slate300, label: 'Normal', count: normal),
-        ],
-      ),
-    ]);
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _DonutLegendItem(color: _T.red, label: 'Urgent', count: urgent),
+            _DonutLegendItem(color: _T.amber, label: 'High', count: high),
+            _DonutLegendItem(
+              color: _T.slate300,
+              label: 'Normal',
+              count: normal,
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -1393,46 +1720,74 @@ class _DonutLegendItem extends StatelessWidget {
   final Color color;
   final String label;
   final int count;
-  const _DonutLegendItem({required this.color, required this.label, required this.count});
+  const _DonutLegendItem({
+    required this.color,
+    required this.label,
+    required this.count,
+  });
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-    Container(width: 10, height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-    const SizedBox(height: 4),
-    Text('$count',
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _T.ink)),
-    Text(label,
+  Widget build(BuildContext context) => Column(
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        '$count',
         style: const TextStyle(
-            fontSize: 10.5, color: _T.slate400, fontWeight: FontWeight.w500)),
-  ]);
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+          color: _T.ink,
+        ),
+      ),
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10.5,
+          color: _T.slate400,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ],
+  );
 }
 
 class _DonutPainter extends CustomPainter {
   final List<double> values;
-  final List<Color>  colors;
-  final double       strokeWidth;
-  const _DonutPainter({required this.values, required this.colors, required this.strokeWidth});
+  final List<Color> colors;
+  final double strokeWidth;
+  const _DonutPainter({
+    required this.values,
+    required this.colors,
+    required this.strokeWidth,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final total  = values.fold(0.0, (a, b) => a + b);
+    final total = values.fold(0.0, (a, b) => a + b);
     if (total == 0) return;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - strokeWidth / 2;
-    final rect   = Rect.fromCircle(center: center, radius: radius);
+    final rect = Rect.fromCircle(center: center, radius: radius);
     double startAngle = -math.pi / 2;
     const gap = 0.04;
     for (int i = 0; i < values.length; i++) {
       if (values[i] == 0) continue;
       final sweep = (values[i] / total) * 2 * math.pi - gap;
       canvas.drawArc(
-          rect, startAngle, sweep, false,
-          Paint()
-            ..color      = colors[i]
-            ..style      = PaintingStyle.stroke
-            ..strokeWidth = strokeWidth
-            ..strokeCap  = StrokeCap.round);
+        rect,
+        startAngle,
+        sweep,
+        false,
+        Paint()
+          ..color = colors[i]
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round,
+      );
       startAngle += sweep + gap;
     }
   }
@@ -1445,100 +1800,153 @@ class _DonutPainter extends CustomPainter {
 // OVERDUE TASKS LIST
 // ─────────────────────────────────────────────────────────────────────────────
 class _OverdueTasksList extends StatelessWidget {
-  final List<Task>    tasks;
+  final List<Task> tasks;
   final List<Project> projects;
-  final List<Member>  members;
-  const _OverdueTasksList(
-      {required this.tasks, required this.projects, required this.members});
+  final List<Member> members;
+  const _OverdueTasksList({
+    required this.tasks,
+    required this.projects,
+    required this.members,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final overdue = tasks
-        .where((t) => t.dueDate != null && t.dueDate!.isBefore(DateTime.now()))
-        .toList()
-      ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    final overdue =
+        tasks
+            .where(
+              (t) => t.dueDate != null && t.dueDate!.isBefore(DateTime.now()),
+            )
+            .toList()
+          ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
     if (overdue.isEmpty) return const SizedBox.shrink();
 
     return Column(
-      children: overdue.map((t) {
-        final proj = projects
-            .cast<Project?>()
-            .firstWhere((p) => p!.id == t.projectId, orElse: () => null);
-        Member? assignee;
-        try {
-          assignee = members.firstWhere((m) => t.assignees.contains(m.id));
-        } catch (_) {}
+      children:
+          overdue.map((t) {
+            final proj = projects.cast<Project?>().firstWhere(
+              (p) => p!.id == t.projectId,
+              orElse: () => null,
+            );
+            Member? assignee;
+            try {
+              assignee = members.firstWhere((m) => t.assignees.contains(m.id));
+            } catch (_) {}
 
-        final daysLate = DateTime.now().difference(t.dueDate!).inDays;
-        final si       = _stageInfo(t.status);
+            final daysLate = DateTime.now().difference(t.dueDate!).inDays;
+            final si = _stageInfo(t.status);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color:  _T.red50,
-            border: Border.all(color: _T.red.withOpacity(0.2)),
-            borderRadius: BorderRadius.circular(_T.r),
-          ),
-          child: Row(children: [
-            Container(
-              width: 3, height: 36,
-              margin: const EdgeInsets.only(right: 12),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: t.priority == TaskPriority.urgent
-                    ? _T.red
-                    : t.priority == TaskPriority.high
-                        ? _T.amber
-                        : _T.slate400,
-                borderRadius: BorderRadius.circular(2),
+                color: _T.red50,
+                border: Border.all(color: _T.red.withOpacity(0.2)),
+                borderRadius: BorderRadius.circular(_T.r),
               ),
-            ),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(t.name,
-                    style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink)),
-                const SizedBox(height: 3),
-                Row(children: [
-                  if (proj != null) ...[
-                    Container(
-                        width: 6, height: 6,
-                        decoration: BoxDecoration(
-                            color: proj.color, shape: BoxShape.circle)),
-                    const SizedBox(width: 5),
-                    Text(proj.name,
-                        style: const TextStyle(fontSize: 11, color: _T.slate500)),
-                    const SizedBox(width: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 36,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color:
+                          t.priority == TaskPriority.urgent
+                              ? _T.red
+                              : t.priority == TaskPriority.high
+                              ? _T.amber
+                              : _T.slate400,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.name,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            if (proj != null) ...[
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: proj.color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                proj.name,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: _T.slate500,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: si.bg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                si.shortLabel,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: si.color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (assignee != null) ...[
+                    _AvatarWidget(
+                      initials: assignee.initials,
+                      color: assignee.color,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
                   ],
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                        color: si.bg, borderRadius: BorderRadius.circular(4)),
-                    child: Text(si.shortLabel,
-                        style: TextStyle(
-                            fontSize: 9.5, fontWeight: FontWeight.w700, color: si.color)),
+                      color: _T.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      daysLate == 0 ? 'Due today' : '$daysLate d late',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ]),
-              ]),
-            ),
-            if (assignee != null) ...[
-              _AvatarWidget(initials: assignee.initials, color: assignee.color, size: 24),
-              const SizedBox(width: 10),
-            ],
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                  color: _T.red, borderRadius: BorderRadius.circular(6)),
-              child: Text(
-                daysLate == 0 ? 'Due today' : '$daysLate d late',
-                style: const TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                ],
               ),
-            ),
-          ]),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 }
@@ -1548,24 +1956,33 @@ class _OverdueTasksList extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _AvatarWidget extends StatelessWidget {
   final String initials;
-  final Color  color;
+  final Color color;
   final double size;
-  const _AvatarWidget(
-      {required this.initials, required this.color, required this.size});
+  const _AvatarWidget({
+    required this.initials,
+    required this.color,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-            color: color.withOpacity(0.15), shape: BoxShape.circle),
-        child: Center(
-          child: Text(initials,
-              style: TextStyle(
-                  fontSize: size * 0.38,
-                  fontWeight: FontWeight.w700,
-                  color: color)),
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.15),
+      shape: BoxShape.circle,
+    ),
+    child: Center(
+      child: Text(
+        initials,
+        style: TextStyle(
+          fontSize: size * 0.38,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _SidebarLabel extends StatelessWidget {
@@ -1573,21 +1990,24 @@ class _SidebarLabel extends StatelessWidget {
   const _SidebarLabel(this.text);
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 8, bottom: 4),
-        child: Text(text.toUpperCase(),
-            style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: Colors.white.withOpacity(0.28))),
-      );
+    padding: const EdgeInsets.only(left: 8, bottom: 4),
+    child: Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.0,
+        color: Colors.white.withOpacity(0.28),
+      ),
+    ),
+  );
 }
 
 class _SidebarNavItem extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final bool         isActive;
-  final String?      badge;
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final String? badge;
   final VoidCallback onTap;
 
   const _SidebarNavItem({
@@ -1601,41 +2021,53 @@ class _SidebarNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color:        isActive ? _T.blue.withOpacity(0.25) : Colors.transparent,
+      color: isActive ? _T.blue.withOpacity(0.25) : Colors.transparent,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap:        onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(_T.r),
-        hoverColor:   Colors.white.withOpacity(0.07),
+        hoverColor: Colors.white.withOpacity(0.07),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Row(children: [
-            Icon(icon,
+          child: Row(
+            children: [
+              Icon(
+                icon,
                 size: 14,
-                color: Colors.white.withOpacity(isActive ? 1.0 : 0.5)),
-            const SizedBox(width: 9),
-            Expanded(
-                child: Text(label,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: Colors.white
-                            .withOpacity(isActive ? 1.0 : 0.5)))),
-            if (badge != null)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                decoration: BoxDecoration(
-                    color: _T.blue,
-                    borderRadius: BorderRadius.circular(99)),
-                child: Text(badge!,
-                    style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white)),
+                color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
               ),
-          ]),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+                  ),
+                ),
+              ),
+              if (badge != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _T.blue,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -1644,9 +2076,9 @@ class _SidebarNavItem extends StatelessWidget {
 
 class _SidebarProjectRow extends StatelessWidget {
   final String name;
-  final Color  color;
-  final int    count;
-  final bool   isActive;
+  final Color color;
+  final int count;
+  final bool isActive;
   final VoidCallback onTap;
 
   const _SidebarProjectRow({
@@ -1660,35 +2092,43 @@ class _SidebarProjectRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color:        isActive ? Colors.white.withOpacity(0.1) : Colors.transparent,
+      color: isActive ? Colors.white.withOpacity(0.1) : Colors.transparent,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap:        onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(_T.r),
-        hoverColor:   Colors.white.withOpacity(0.06),
+        hoverColor: Colors.white.withOpacity(0.06),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Row(children: [
-            Container(
-                width: 8, height: 8,
-                decoration:
-                    BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 9),
-            Expanded(
-                child: Text(name,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: Colors.white
-                            .withOpacity(isActive ? 0.9 : 0.55)))),
-            Text('$count',
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: Colors.white.withOpacity(isActive ? 0.9 : 0.55),
+                  ),
+                ),
+              ),
+              Text(
+                '$count',
                 style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.25))),
-          ]),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.25),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1699,12 +2139,15 @@ class _ColHeader extends StatelessWidget {
   final String text;
   const _ColHeader(this.text);
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          color: _T.slate400));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.5,
+      color: _T.slate400,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1714,10 +2157,20 @@ bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
 String _fmtDateFull(DateTime d) {
-  const days   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
 }
