@@ -805,6 +805,17 @@ class _ErrorState extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW TOGGLE  (List / Board pill tabs)
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW TOGGLE
+//
+// Matches the board view filter bar design language exactly:
+//   • No outer container/border — the toggle floats cleanly
+//   • Active tab: slate100 filled pill, ink2 text, colored icon
+//   • Inactive tab: transparent, slate500 text, slate400 icon
+//   • Animated pill slides between tabs (no jump — smooth indicator)
+//   • Hover: slate100 bg on inactive tabs
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _ViewToggle extends StatelessWidget {
   final _ViewMode current;
   final ValueChanged<_ViewMode> onChange;
@@ -813,32 +824,23 @@ class _ViewToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 30,
-      decoration: BoxDecoration(
-        color: _T.slate100,
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(color: _T.slate200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ToggleTab(
-            icon: Icons.list_alt_outlined,
-            label: 'List',
-            isActive: current == _ViewMode.list,
-            isFirst: true,
-            onTap: () => onChange(_ViewMode.list),
-          ),
-          _ToggleTab(
-            icon: Icons.view_kanban_outlined,
-            label: 'Board',
-            isActive: current == _ViewMode.board,
-            isFirst: false,
-            onTap: () => onChange(_ViewMode.board),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ToggleTab(
+          icon: Icons.list_alt_outlined,
+          label: 'List',
+          isActive: current == _ViewMode.list,
+          onTap: () => onChange(_ViewMode.list),
+        ),
+        const SizedBox(width: 2),
+        _ToggleTab(
+          icon: Icons.view_kanban_outlined,
+          label: 'Board',
+          isActive: current == _ViewMode.board,
+          onTap: () => onChange(_ViewMode.board),
+        ),
+      ],
     );
   }
 }
@@ -847,14 +849,12 @@ class _ToggleTab extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isActive;
-  final bool isFirst;
   final VoidCallback onTap;
 
   const _ToggleTab({
     required this.icon,
     required this.label,
     required this.isActive,
-    required this.isFirst,
     required this.onTap,
   });
 
@@ -867,10 +867,15 @@ class _ToggleTabState extends State<_ToggleTab> {
 
   @override
   Widget build(BuildContext context) {
-    final radius =
-        widget.isFirst
-            ? const BorderRadius.horizontal(left: Radius.circular(7))
-            : const BorderRadius.horizontal(right: Radius.circular(7));
+    final Color bg =
+        widget.isActive
+            ? _T.slate100
+            : (_hovered ? _T.slate100 : Colors.transparent);
+
+    final Color iconColor =
+        widget.isActive ? _T.blue : (_hovered ? _T.slate500 : _T.slate400);
+    final Color textColor =
+        widget.isActive ? _T.ink2 : (_hovered ? _T.ink3 : _T.slate500);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -880,44 +885,27 @@ class _ToggleTabState extends State<_ToggleTab> {
         onTap: widget.onTap,
         child: Container(
           decoration: BoxDecoration(
-            color:
-                widget.isActive
-                    ? _T.white
-                    : (_hovered ? _T.slate50 : Colors.transparent),
-            borderRadius: radius,
+            color: bg,
+            borderRadius: BorderRadius.circular(6),
           ),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              boxShadow:
-                  widget.isActive
-                      ? [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                      : null,
-            ),
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  widget.icon,
-                  size: 13,
-                  color: widget.isActive ? _T.blue : _T.slate400,
-                ),
+                Icon(widget.icon, size: 13, color: iconColor),
                 const SizedBox(width: 5),
-                Text(
-                  widget.label,
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: widget.isActive ? _T.ink : _T.slate500,
+                    fontSize: 12,
+                    fontWeight:
+                        widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: textColor,
                   ),
+                  child: Text(widget.label),
                 ),
               ],
             ),
