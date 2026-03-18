@@ -3,7 +3,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/discussion_forms.concept.dart';
 import 'package:smooflow/components/permission_gate.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/member.dart';
@@ -201,6 +203,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   late BillingStatus _billingSelection;
   bool _billingEditMode = false;
   bool _billingSaving = false;
+
+  bool _isDiscussionOpen = false;
 
   bool get _isAccountant =>
       LoginService.currentUser?.role == 'accountant' ||
@@ -468,332 +472,362 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         color: _T.white,
         border: Border(left: BorderSide(color: _T.slate200)),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          // ── Top bar ───────────────────────────────────────────────────────
-          Container(
-            height: _T.topbarH,
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _T.slate200)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: widget.onClose,
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: _T.slate200),
-                        borderRadius: BorderRadius.circular(_T.r),
+          Column(
+            children: [
+              // ── Top bar ───────────────────────────────────────────────────────
+              Container(
+                height: _T.topbarH,
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _T.slate200)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: widget.onClose,
+                        child: Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: _T.slate200),
+                            borderRadius: BorderRadius.circular(_T.r),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 13,
+                            color: _T.slate400,
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.close,
-                        size: 13,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'TASK-${widget.task.id}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                         color: _T.slate400,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'TASK-${widget.task.id}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                    color: _T.slate400,
-                  ),
-                ),
-                const Spacer(),
-              ],
-            ),
-          ),
-
-          // ── Stage stepper ─────────────────────────────────────────────────
-          _StageStepper(currentStatus: widget.task.status),
-
-          // ── Scrollable body ───────────────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    widget.task.name,
-                    style: const TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _T.ink,
-                      letterSpacing: -0.3,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: proj.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        proj.name,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: _T.slate500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Details grid
-                  const _DetailSectionTitle('Details'),
-                  const SizedBox(height: 10),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    childAspectRatio: 2.8,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    children: [
-                      _DetailMetaCell(
-                        label: 'Current Stage',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: si.bg,
-                                borderRadius: BorderRadius.circular(99),
-                              ),
-                              child: StagePill(stageInfo: si),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _DetailMetaCell(
-                        label: 'Priority',
-                        child: PriorityPill(priority: widget.task.priority),
-                      ),
-                      if (member != null)
-                        _DetailMetaCell(
-                          label: 'Assignee',
-                          child: Row(
-                            children: [
-                              AvatarWidget(
-                                initials: member.initials,
-                                color: member.color,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  member.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: _T.ink3,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      _DetailMetaCell(
-                        label: 'Date',
-                        child: Row(
-                          children: [
-                            Text(
-                              fmtDate(d),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color:
-                                    isOverdue
-                                        ? _T.red
-                                        : isSoon
-                                        ? _T.amber
-                                        : _T.ink3,
-                              ),
-                            ),
-                            if (isOverdue) ...[
-                              const SizedBox(width: 6),
-                              const _Badge('Overdue', _T.red, _T.red50),
-                            ],
-                            if (isSoon && !isOverdue) ...[
-                              const SizedBox(width: 6),
-                              const _Badge('Due soon', _T.amber, _T.amber50),
-                            ],
-                          ],
-                        ),
-                      ),
-                      _DetailMetaCell(
-                        label: 'Due Date',
-                        child:
-                            dueDate != null
-                                ? Row(
-                                  children: [
-                                    Text(
-                                      fmtDate(dueDate),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color:
-                                            isOverdue
-                                                ? _T.red
-                                                : isSoon
-                                                ? _T.amber
-                                                : _T.ink3,
-                                      ),
-                                    ),
-                                    if (isOverdue) ...[
-                                      const SizedBox(width: 6),
-                                      const _Badge('Overdue', _T.red, _T.red50),
-                                    ],
-                                    if (isSoon && !isOverdue) ...[
-                                      const SizedBox(width: 6),
-                                      const _Badge(
-                                        'Due soon',
-                                        _T.amber,
-                                        _T.amber50,
-                                      ),
-                                    ],
-                                  ],
-                                )
-                                : const Text(
-                                  '—',
-                                  style: TextStyle(color: _T.slate400),
-                                ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // ── PRINT SPECIFICATIONS ─────────────────────────────────
-                  if (hasPrintSpecs) ...[
-                    const _DetailSectionTitle('Print Specifications'),
-                    const SizedBox(height: 10),
-                    _PrintSpecsCard(
-                      reference: widget.task.ref,
-                      size: widget.task.size,
-                      quantity: widget.task.quantity,
-                    ),
-                    const SizedBox(height: 18),
+                    const Spacer(),
                   ],
+                ),
+              ),
 
-                  // ── BILLING ───────────────────────────────────────────────
-                  const _DetailSectionTitle('Billing'),
-                  const SizedBox(height: 10),
-                  _BillingCard(
-                    savedStatus:
-                        widget.task.billingStatus ?? BillingStatus.pending,
-                    selection: _billingSelection,
-                    isAccountant: _isAccountant,
-                    isEditMode: _billingEditMode,
-                    isDirty: _billingDirty,
-                    isSaving: _billingSaving,
-                    onEdit: _enterBillingEditMode,
-                    onCancel: _cancelBillingEdit,
-                    onSelect: (s) => setState(() => _billingSelection = s),
-                    onSave: _saveBillingStatus,
-                  ),
-                  const SizedBox(height: 18),
+              // ── Stage stepper ─────────────────────────────────────────────────
+              _StageStepper(currentStatus: widget.task.status),
 
-                  // ── START PRINT JOB (production / admin only) ─────────────
-                  if (isWaitingPrinting)
-                    PermissionGate(
-                      permission: UserPermission.schedulePrintAction,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              // ── Scrollable body ───────────────────────────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        widget.task.name,
+                        style: const TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                          letterSpacing: -0.3,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
                         children: [
-                          const _DetailSectionTitle('Print Job'),
-                          const SizedBox(height: 10),
-                          _StartPrintJobCard(
-                            task: widget.task,
-                            onTap: _startPrintJobScreen,
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: proj.color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(width: 5),
+                          Text(
+                            proj.name,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: _T.slate500,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 18),
 
-                  // Description
-                  if (widget.task.description.trim().isNotEmpty) ...[
-                    const _DetailSectionTitle('Description'),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _T.slate50,
-                        border: Border.all(color: _T.slate200),
-                        borderRadius: BorderRadius.circular(_T.r),
+                      // Details grid
+                      const _DetailSectionTitle('Details'),
+                      const SizedBox(height: 10),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        childAspectRatio: 2.8,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        children: [
+                          _DetailMetaCell(
+                            label: 'Current Stage',
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: si.bg,
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                  child: StagePill(stageInfo: si),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _DetailMetaCell(
+                            label: 'Priority',
+                            child: PriorityPill(priority: widget.task.priority),
+                          ),
+                          if (member != null)
+                            _DetailMetaCell(
+                              label: 'Assignee',
+                              child: Row(
+                                children: [
+                                  AvatarWidget(
+                                    initials: member.initials,
+                                    color: member.color,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      member.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: _T.ink3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _DetailMetaCell(
+                            label: 'Date',
+                            child: Row(
+                              children: [
+                                Text(
+                                  fmtDate(d),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        isOverdue
+                                            ? _T.red
+                                            : isSoon
+                                            ? _T.amber
+                                            : _T.ink3,
+                                  ),
+                                ),
+                                if (isOverdue) ...[
+                                  const SizedBox(width: 6),
+                                  const _Badge('Overdue', _T.red, _T.red50),
+                                ],
+                                if (isSoon && !isOverdue) ...[
+                                  const SizedBox(width: 6),
+                                  const _Badge(
+                                    'Due soon',
+                                    _T.amber,
+                                    _T.amber50,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          _DetailMetaCell(
+                            label: 'Due Date',
+                            child:
+                                dueDate != null
+                                    ? Row(
+                                      children: [
+                                        Text(
+                                          fmtDate(dueDate),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                isOverdue
+                                                    ? _T.red
+                                                    : isSoon
+                                                    ? _T.amber
+                                                    : _T.ink3,
+                                          ),
+                                        ),
+                                        if (isOverdue) ...[
+                                          const SizedBox(width: 6),
+                                          const _Badge(
+                                            'Overdue',
+                                            _T.red,
+                                            _T.red50,
+                                          ),
+                                        ],
+                                        if (isSoon && !isOverdue) ...[
+                                          const SizedBox(width: 6),
+                                          const _Badge(
+                                            'Due soon',
+                                            _T.amber,
+                                            _T.amber50,
+                                          ),
+                                        ],
+                                      ],
+                                    )
+                                    : const Text(
+                                      '—',
+                                      style: TextStyle(color: _T.slate400),
+                                    ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        widget.task.description,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: _T.slate500,
-                          height: 1.65,
+                      const SizedBox(height: 18),
+
+                      // ── PRINT SPECIFICATIONS ─────────────────────────────────
+                      if (hasPrintSpecs) ...[
+                        const _DetailSectionTitle('Print Specifications'),
+                        const SizedBox(height: 10),
+                        _PrintSpecsCard(
+                          reference: widget.task.ref,
+                          size: widget.task.size,
+                          quantity: widget.task.quantity,
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                  ],
+                        const SizedBox(height: 18),
+                      ],
 
-                  // Stage pipeline
-                  const _DetailSectionTitle('Stage Pipeline'),
-                  const SizedBox(height: 8),
-                  _StagePipeline(
-                    currentStatus: widget.task.status,
-                    stages: kStages,
+                      // ── BILLING ───────────────────────────────────────────────
+                      const _DetailSectionTitle('Billing'),
+                      const SizedBox(height: 10),
+                      _BillingCard(
+                        savedStatus:
+                            widget.task.billingStatus ?? BillingStatus.pending,
+                        selection: _billingSelection,
+                        isAccountant: _isAccountant,
+                        isEditMode: _billingEditMode,
+                        isDirty: _billingDirty,
+                        isSaving: _billingSaving,
+                        onEdit: _enterBillingEditMode,
+                        onCancel: _cancelBillingEdit,
+                        onSelect: (s) => setState(() => _billingSelection = s),
+                        onSave: _saveBillingStatus,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // ── START PRINT JOB (production / admin only) ─────────────
+                      if (isWaitingPrinting)
+                        PermissionGate(
+                          permission: UserPermission.schedulePrintAction,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _DetailSectionTitle('Print Job'),
+                              const SizedBox(height: 10),
+                              _StartPrintJobCard(
+                                task: widget.task,
+                                onTap: _startPrintJobScreen,
+                              ),
+                              const SizedBox(height: 18),
+                            ],
+                          ),
+                        ),
+
+                      // Description
+                      if (widget.task.description.trim().isNotEmpty) ...[
+                        const _DetailSectionTitle('Description'),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _T.slate50,
+                            border: Border.all(color: _T.slate200),
+                            borderRadius: BorderRadius.circular(_T.r),
+                          ),
+                          child: Text(
+                            widget.task.description,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: _T.slate500,
+                              height: 1.65,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+
+                      // Stage pipeline
+                      const _DetailSectionTitle('Stage Pipeline'),
+                      const SizedBox(height: 8),
+                      _StagePipeline(
+                        currentStatus: widget.task.status,
+                        stages: kStages,
+                      ),
+                      // DEBUG
+                      // const SizedBox(height: 18),
+
+                      // DiscussionPreviewStrip(
+                      //   lastMessage:
+                      //       sampleMessages
+                      //           .last, // wire from your message provider
+                      //   unreadCount: 2,
+                      //   onOpen: () => setState(() => _isDiscussionOpen = true),
+                      // ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+
+              // ── Footer ────────────────────────────────────────────────────────
+              _DetailFooter(
+                task: widget.task,
+                next: next,
+                progressBtnEnabled: progressBtnEnabled,
+                ableToReinitialize: ableToReinitialize,
+                canStageBack: canStageBack,
+                advanceButtonKey: _advanceButtonKey,
+                stageBackButtonKey: _stageBackButtonKey,
+                isProgressing: _isProgressing,
+                onAdvanceTap: () async {
+                  if (!progressBtnEnabled) return;
+                  setState(() => _isProgressing = true);
+
+                  if (next == TaskStatus.clientApproved) {
+                    await approveDesignStage();
+                  } else {
+                    await _showMoveToNextStageDialog();
+                  }
+
+                  setState(() => _isProgressing = false);
+                },
+                onStageBackTap: _showStageBackMenu,
+              ),
+            ],
           ),
 
-          // ── Footer ────────────────────────────────────────────────────────
-          _DetailFooter(
-            task: widget.task,
-            next: next,
-            progressBtnEnabled: progressBtnEnabled,
-            ableToReinitialize: ableToReinitialize,
-            canStageBack: canStageBack,
-            advanceButtonKey: _advanceButtonKey,
-            stageBackButtonKey: _stageBackButtonKey,
-            isProgressing: _isProgressing,
-            onAdvanceTap: () async {
-              if (!progressBtnEnabled) return;
-              setState(() => _isProgressing = true);
-
-              if (next == TaskStatus.clientApproved) {
-                await approveDesignStage();
-              } else {
-                await _showMoveToNextStageDialog();
-              }
-
-              setState(() => _isProgressing = false);
-            },
-            onStageBackTap: _showStageBackMenu,
+          DiscussionSheet(
+            taskId: widget.task.id,
+            isOpen: _isDiscussionOpen,
+            onClose: () => setState(() => _isDiscussionOpen = false),
+            messages: sampleMessages,
+            onSend: (msg) {},
           ),
         ],
       ),
