@@ -35,6 +35,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
@@ -231,7 +232,7 @@ class _AdminDesktopDashboardScreenState
                   tasks:              _pipelineTasks,
                   members:            _members,
                   onViewChanged:      (v) {
-
+        
                     setState(() {
                       _view = v;
                     });
@@ -244,7 +245,7 @@ class _AdminDesktopDashboardScreenState
                     if (_view == _AdminView.overview) _view = _AdminView.list;
                   }),
                 ),
-
+        
                 // ── Main content ────────────────────────────────────────
                 Expanded(
                   child: Column(
@@ -279,7 +280,7 @@ class _AdminDesktopDashboardScreenState
                                               : _view == _AdminView.inventory? DesktopMaterialsManagementScreen()
                                                 : DesktopReportsScreen(),
                             ),
-
+        
                             // ── Detail panel ──────────────────────────
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 220),

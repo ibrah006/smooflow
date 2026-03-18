@@ -25,6 +25,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
@@ -498,21 +499,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         break;
     }
 
-    if (!mounted) return;
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(message),
-          ],
-        ),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating
-      ),
-    );
+    // if (!mounted) return;
+      ToastQueue.of(context).show(
+        message:  message,
+        icon:     icon,
+        color:    color,
+      );
   }
 }
 
