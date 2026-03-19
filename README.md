@@ -113,6 +113,24 @@ create-dmg \
   "build/macos/Build/Products/Release/smooflow.app"
 ```
 
+## Build Release & Distrubute
+
+### Windows
+
+### Build Release Setup
+```bash
+flutter build windows --release
+```
+
+```bash
+fastforge release
+```
+
+#### Sign
+```bash
+dart run auto_updater:sign_update dist/1.0.0/smooflow-1.0.0-windows-setup.exe
+```
+
 ---
 
 ## 🔒 License
