@@ -420,8 +420,9 @@ class _GroupTabState extends State<_GroupTab> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Label tap target
-              GestureDetector(
+              InkWell(
                 onTap: widget.onTap,
+                splashColor: Colors.transparent,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
                   child: Row(
