@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:window_manager/window_manager.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -14,7 +15,6 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main(List<String> args) async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-  
 
   if (!Platform.isAndroid && !Platform.isIOS) {
     await windowManager.ensureInitialized();
@@ -49,6 +49,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       scaffoldMessengerKey: kRootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
+      navigatorKey: kNavigatorKey,
       navigatorObservers: [routeObserver],
       theme: ThemeData(
         // Slate

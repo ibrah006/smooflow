@@ -5,4 +5,5 @@ enum SharedStorageOptions {
   userRole,
   uuid,
   organizationId,
+  hideEmptyKey
 }

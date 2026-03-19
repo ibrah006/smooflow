@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Task change event types
@@ -13,7 +15,7 @@ enum TaskChangeType {
   assigneeRemoved,
 }
 
-/// Task change event
+/// Task change event from WebSocket
 class TaskChangeEvent {
   final TaskChangeType type;
   final int taskId;
@@ -73,7 +75,7 @@ enum ConnectionStatus {
 
 /// Task WebSocket Client
 class TaskWebSocketClient {
-  final String authToken;
+  final String authToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
   IO.Socket? _socket;
 
   // Status streams
@@ -88,7 +90,7 @@ class TaskWebSocketClient {
   final int _maxReconnectAttempts = 5;
   final Set<int> _subscribedTasks = {};
 
-  TaskWebSocketClient({required this.authToken});
+  TaskWebSocketClient();
 
   // Getters for streams
   Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;
@@ -108,16 +110,23 @@ class TaskWebSocketClient {
     _updateStatus(ConnectionStatus.connecting);
 
     try {
+      // _socket = IO.io(
+      //   ApiClient.http.baseUrl,
+      //   IO.OptionBuilder()
+      //       .setPath('/ws/tasks')
+      //       .setTransports(['websocket', 'polling'])
+      //       .setAuth({'token': authToken})
+      //       .enableReconnection()
+      //       .setReconnectionDelay(1000)
+      //       .setReconnectionDelayMax(5000)
+      //       .setReconnectionAttempts(_maxReconnectAttempts)
+      //       .build(),
+      // );
       _socket = IO.io(
-        ApiClient.http.baseUrl,
+        '${ApiClient.http.baseUrl}/tasks',
         IO.OptionBuilder()
-            .setPath('/ws/tasks')
-            .setTransports(['websocket', 'polling'])
+            .setTransports(['websocket'])
             .setAuth({'token': authToken})
-            .enableReconnection()
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(_maxReconnectAttempts)
             .build(),
       );
 
@@ -174,12 +183,12 @@ class TaskWebSocketClient {
 
     // Task change events
     _socket!.on('task:changed', (data) {
-      try {
+      // try {
         final event = TaskChangeEvent.fromJson(data as Map<String, dynamic>);
         _taskChangeController.add(event);
-      } catch (e) {
-        print('Error parsing task:changed event: $e');
-      }
+      // } catch (e) {
+      //   print('Error parsing task:changed event: $e');
+      // }
     });
 
     _socket!.on('task:updated', (data) {

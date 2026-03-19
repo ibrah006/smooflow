@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
-import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/notifiers/task_notifier.dart';
@@ -12,13 +11,20 @@ import 'package:smooflow/providers/work_activity_log_providers.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/states/task.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EXISTING PROVIDERS (kept for backward compatibility)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TODO: MIGRATE TO USING TASK LIST PROVIDER that works well with web socket
+
 final taskRepoProvider = Provider<TaskRepo>((ref) => TaskRepo());
 
 final taskNotifierProvider = StateNotifierProvider<TaskNotifier, TaskState>((
   ref,
 ) {
   final repo = ref.watch(taskRepoProvider);
-  return TaskNotifier(repo);
+  final client = ref.watch(taskWebSocketClientProvider);
+  return TaskNotifier(repo, client);
 });
 
 /// pass in projectId as input
@@ -104,8 +110,149 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
   }
 });
 
-class TaskProvider {
+// ─────────────────────────────────────────────────────────────────────────────
+// WEBSOCKET PROVIDERS (integrated into taskNotifierProvider)
+// ─────────────────────────────────────────────────────────────────────────────
 
+/// Connection status stream provider
+final taskConnectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
+  final notifier = ref.watch(taskNotifierProvider.notifier);
+  // Create a stream from the TaskNotifier's connection status changes
+  return Stream.periodic(
+    Duration(milliseconds: 500),
+    (_) => notifier.connectionStatus,
+  );
+});
+
+/// Selected task provider
+final selectedTaskProvider = StateProvider<Task?>((ref) => null);
+
+final taskWebSocketClientProvider = Provider<TaskWebSocketClient>((ref) {
+  // Get auth token from your auth provider
+  
+  final client = TaskWebSocketClient(
+  );
+
+  client.connect();
+
+  ref.onDispose(() {
+    client.dispose();
+  });
+
+  return client;
+});
+
+final taskChangesStreamProvider = StreamProvider<TaskChangeEvent>((ref) {
+  final client = ref.watch(taskWebSocketClientProvider);
+  return client.taskChanges;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPUTED PROVIDERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Tasks by status provider
+final tasksByStatusProvider = Provider.family<List<Task>, String>((ref, status) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.status == status).toList();
+});
+
+/// Pending tasks provider
+final pendingTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.status == 'pending').toList();
+});
+
+/// In progress tasks provider
+final inProgressTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.status == 'in_progress' || t.status == 'inProgress').toList();
+});
+
+/// Delivery tasks provider (for delivery dashboard)
+final deliveryTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.status == 'delivery').toList();
+});
+
+/// Completed tasks provider
+final completedTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.status == 'completed').toList();
+});
+
+/// Overdue tasks provider
+final overdueTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  final now = DateTime.now();
+  return state.tasks.where((t) {
+    return t.dueDate != null && 
+           t.dueDate!.isBefore(now) && 
+           t.status != 'completed';
+  }).toList();
+});
+
+/// High priority tasks provider
+final highPriorityTasksProvider = Provider<List<Task>>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return state.tasks.where((t) => t.priority.index >= 3).toList();
+});
+
+/// Search tasks provider
+final searchTasksProvider = Provider.family<List<Task>, String>((ref, query) {
+  final state = ref.watch(taskNotifierProvider);
+  if (query.isEmpty) return state.tasks;
+
+  final lowerQuery = query.toLowerCase();
+  return state.tasks.where((task) {
+    return task.name.toLowerCase().contains(lowerQuery) ||
+           (task.description.toLowerCase().contains(lowerQuery));
+  }).toList();
+});
+
+/// Task statistics provider
+final taskStatsProvider = Provider<TaskStats>((ref) {
+  final state = ref.watch(taskNotifierProvider);
+  return TaskStats(
+    total: state.tasks.length,
+    pending: state.tasks.where((t) => t.status == 'pending').length,
+    inProgress: state.tasks.where((t) => t.status == 'in_progress' || t.status == 'inProgress').length,
+    delivery: state.tasks.where((t) => t.status == 'delivery').length,
+    completed: state.tasks.where((t) => t.status == 'completed').length,
+    overdue: state.tasks.where((t) {
+      return t.dueDate != null && 
+             t.dueDate!.isBefore(DateTime.now()) && 
+             t.status != 'completed';
+    }).length,
+    highPriority: state.tasks.where((t) => t.priority.index >= 3).length,
+  );
+});
+
+class TaskStats {
+  final int total;
+  final int pending;
+  final int inProgress;
+  final int delivery;
+  final int completed;
+  final int overdue;
+  final int highPriority;
+
+  const TaskStats({
+    required this.total,
+    required this.pending,
+    required this.inProgress,
+    required this.delivery,
+    required this.completed,
+    required this.overdue,
+    required this.highPriority,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXISTING TASKPROVIDER CLASS (retained for backward compatibility)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class TaskProvider {
   /// This is the main function to call when changing task state (progressing stage, assigning/unassigning printer, etc)
   static Future<void> setTaskState({
     required WidgetRef ref,
