@@ -22,9 +22,10 @@ class FlashScreen extends StatefulWidget {
 }
 
 class _FlashScreenState extends State<FlashScreen> {
-
   initialize() async {
-    await LoginService.isLoggedIn().then((IsLoggedInStatus isLoggedInStatus) async {
+    await LoginService.isLoggedIn().then((
+      IsLoggedInStatus isLoggedInStatus,
+    ) async {
       await CompanyRepo.fetchCompanies();
       // await ProjectRepo().fetchProjects();
 
@@ -46,12 +47,22 @@ class _FlashScreenState extends State<FlashScreen> {
           // orgId == null is taken care of, meaning set its value (Shard prefs key: SharedStorageOptions.organizationId.name) after re-logging in
           await LoginService.relogin();
 
-          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+          AppRoutes.navigateAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            predicate: (Route<dynamic> route) => false,
+          );
         } catch (e) {
           // Not linked to any organization
 
-          AppRoutes.navigateAndRemoveUntil(context, AppRoutes.createJoinOrg, arguments: CreateJoinOrganizationArgs(autoInviteOrganization:
-                        isLoggedInStatus.autoInviteOrganization), predicate: (Route<dynamic> route) => false);
+          AppRoutes.navigateAndRemoveUntil(
+            context,
+            AppRoutes.createJoinOrg,
+            arguments: CreateJoinOrganizationArgs(
+              autoInviteOrganization: isLoggedInStatus.autoInviteOrganization,
+            ),
+            predicate: (Route<dynamic> route) => false,
+          );
         }
         return;
       }
@@ -80,20 +91,30 @@ class _FlashScreenState extends State<FlashScreen> {
       final role = LoginService.currentUser?.role;
 
       if (
-        // Designer
-        (role == "design" && !(Platform.isWindows || Platform.isLinux))
-      ) {
+      // Designer
+      (role == "design" && !(Platform.isWindows || Platform.isLinux))) {
         // Unsupported platform for role
         await UnsupportedPlatformDialog.show(
           context: context,
-          userRole: role!,           // e.g. from LoginService.currentUser.role
-          currentPlatform: Platform.isMacOS || Platform.isWindows? SmooflowPlatform.desktop : SmooflowPlatform.mobile,
+          userRole: role!, // e.g. from LoginService.currentUser.role
+          currentPlatform:
+              Platform.isMacOS || Platform.isWindows
+                  ? SmooflowPlatform.desktop
+                  : SmooflowPlatform.mobile,
           onDismiss: () => LoginService.logout(),
         );
-        AppRoutes.navigateAndRemoveUntil(context, AppRoutes.login, predicate: (Route<dynamic> route) => false);
+        AppRoutes.navigateAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          predicate: (Route<dynamic> route) => false,
+        );
       } else {
         // navigate to home
-        AppRoutes.navigateAndRemoveUntil(context, AppRoutes.home, predicate: (Route<dynamic> route) => false);
+        AppRoutes.navigateAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          predicate: (Route<dynamic> route) => false,
+        );
       }
     });
   }
@@ -107,8 +128,10 @@ class _FlashScreenState extends State<FlashScreen> {
     });
   }
 
-  void showIpInputModal(BuildContext context,
-      {required Future<void> Function(String) onSave}) {
+  void showIpInputModal(
+    BuildContext context, {
+    required Future<void> Function(String) onSave,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -121,7 +144,6 @@ class _FlashScreenState extends State<FlashScreen> {
 
     await initialize();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +158,7 @@ class _FlashScreenState extends State<FlashScreen> {
           children: [
             SizedBox(height: 100),
             SizedBox(
-              width: screenWidth < 340? screenWidth : 340,
+              width: screenWidth < 340 ? screenWidth : 340,
               child: Stack(
                 alignment: Alignment.topRight,
                 children: [
@@ -152,22 +174,31 @@ class _FlashScreenState extends State<FlashScreen> {
                           fontSize: 40,
                           fontFamily: "Plus Jakarta Sans",
                           letterSpacing: -1.5,
-                          color: Color(0xFF0F172A)
+                          color: Color(0xFF0F172A),
                         ),
                       ),
                     ],
                   ),
                   // Transform.rotate(
-                  //   angle: pi/5,
+                  //   angle: pi / 5,
                   //   child: Container(
                   //     decoration: BoxDecoration(
                   //       color: Color(0xFFEF4444),
                   //       borderRadius: BorderRadius.circular(20),
                   //     ),
                   //     padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
-                  //     child: Text("BETA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontFamily: "Plus Jakarta Sans", letterSpacing: 0, fontSize: 13)),
+                  //     child: Text(
+                  //       "BETA",
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontWeight: FontWeight.w800,
+                  //         fontFamily: "Plus Jakarta Sans",
+                  //         letterSpacing: 0,
+                  //         fontSize: 13,
+                  //       ),
+                  //     ),
                   //   ),
-                  // )
+                  // ),
                 ],
               ),
             ),
@@ -178,7 +209,7 @@ class _FlashScreenState extends State<FlashScreen> {
                 fontFamily: "Plus Jakarta Sans",
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: Color.fromARGB(255, 90, 96, 103)
+                color: Color.fromARGB(255, 90, 96, 103),
               ),
             ),
             Lottie.asset(
