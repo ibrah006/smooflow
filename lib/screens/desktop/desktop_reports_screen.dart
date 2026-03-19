@@ -539,7 +539,11 @@ class _ReportsTopbar extends StatelessWidget {
           //   borderRadius: BorderRadius.circular(9),
           //   border:       Border.all(color: _T.blue.withOpacity(0.2)),
           // ),
-          child: const Icon(Icons.bar_chart_rounded, size: 36, color: _T.blue),
+          child: const Icon(
+            Icons.bar_chart_rounded,
+            size: 36,
+            color: _T.slate400,
+          ),
         ),
         const SizedBox(width: 12),
         Column(
