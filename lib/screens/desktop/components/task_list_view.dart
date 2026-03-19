@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -270,9 +271,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _loadPrefs();
 
     // Load tasks via WebSocket on mount
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTasks();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _loadTasks();
+    // });
   }
 
   void _loadTasks() {
@@ -286,20 +287,20 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
   }
 
-  Future<void> _loadPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-
+  void _loadPrefs() {
     // Column prefs
-    final raw = prefs.getString(_kPrefsKey);
+    final raw = LocalHttp.prefs.getString(_kPrefsKey);
     if (raw != null) {
       final list = (jsonDecode(raw) as List).cast<String>();
       if (mounted) setState(() => _visibleOptional = Set.from(list));
     } else {
-      await _saveColPrefs();
+      _saveColPrefs().then((value) {
+        //done
+      });
     }
 
     // View mode pref
-    final vm = prefs.getString(_kViewModeKey);
+    final vm = LocalHttp.prefs.getString(_kViewModeKey);
     if (vm != null && mounted) {
       setState(
         () => _viewMode = vm == 'board' ? _ViewMode.board : _ViewMode.list,
