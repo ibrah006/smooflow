@@ -118,10 +118,23 @@ create-dmg \
 ### Windows
 
 ### Build Release Setup
+
+#### Make sure `openssl` is installed
+```bash
+choco install openssl
+```
+
+Generate key files: <b>dsa_priv.pem, dsa_pub.pem</b>
+```bash
+dart run auto_updater:generate_keys
+```
+
+Build release
 ```bash
 flutter build windows --release
 ```
 
+Create updated installer
 ```bash
 fastforge release
 ```
