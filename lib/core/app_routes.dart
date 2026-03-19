@@ -175,7 +175,7 @@ class AppRoutes {
 
   // Accounts dashboard
   static const accountsDashboard = "/desktop/accounts/dashboard";
-  
+
   // Production
   static const startPrintJob = "/desktop/production/start-job";
   static const printManagementDesktop = "/desktop/production/manage";
@@ -231,7 +231,7 @@ class AppRoutes {
           routeName = AppRoutes.login;
         }
       }
-    } catch(e) {
+    } catch (e) {
       routeName = AppRoutes.login;
     }
 
@@ -256,7 +256,9 @@ class AppRoutes {
         break;
       case createJoinOrg:
         if (args is CreateJoinOrganizationArgs) {
-          screen = CreateJoinOrganizationScreen(autoInviteOrganization: args.autoInviteOrganization);
+          screen = CreateJoinOrganizationScreen(
+            autoInviteOrganization: args.autoInviteOrganization,
+          );
         }
         break;
       case createJoinOrgHelp:
@@ -278,9 +280,9 @@ class AppRoutes {
 
       case stockInEntry:
         if (args is StockEntryArgs) {
-          try{
+          try {
             screen = StockEntryScreen.stockin(material: args.material);
-          } catch(e) {
+          } catch (e) {
             screen = StockEntryScreen.stockin();
           }
         }
@@ -367,7 +369,7 @@ class AppRoutes {
         }
         break;
       case admin:
-        screen  = const AdminDashboardScreen();
+        screen = const AdminDashboardScreen();
         break;
       case addProject:
         screen = AddProjectScreen();
@@ -415,7 +417,10 @@ class AppRoutes {
         break;
       case addProjectProgressView:
         if (args is AddProjectProgressArgs) {
-          screen = ProgressLogScreen(progressLog: args.progressLog, projectId: args.projectId);
+          screen = ProgressLogScreen(
+            progressLog: args.progressLog,
+            projectId: args.projectId,
+          );
         }
         break;
       case productionReport:
@@ -433,12 +438,14 @@ class AppRoutes {
         break;
       case designProjectDetailsScreen:
         if (args is ProjectArgs) {
-          screen = ProjectDetailsScreen(projectId: args.projectId);  
+          screen = ProjectDetailsScreen(projectId: args.projectId);
         }
         break;
       case designCreateTaskScreen:
         if (args is CreateTaskArgs) {
-          screen = DesignCreateTaskScreen(initialProject: args.preselectedProjectId);
+          screen = DesignCreateTaskScreen(
+            initialProject: args.preselectedProjectId,
+          );
         }
         break;
       case printersManagement:
