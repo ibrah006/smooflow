@@ -71,6 +71,7 @@ dependencies:
   drift: ^2.28.0
   archive: ^4.0.9
   auto_updater: ^1.0.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

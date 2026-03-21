@@ -18,7 +18,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
@@ -27,7 +26,7 @@ import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/desktop/components/notification_toast.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -122,27 +121,7 @@ class _ManageMaterialsScreenState
               Navigator.of(context).pop();
               _pickCSVFile();
             },
-            onDownloadTemplate: _downloadTemplate,
           ),
-    );
-  }
-
-  Future<void> _downloadTemplate() async {
-    const content =
-        'name,measure_type,description,min_stock_level\n'
-        'Banner Vinyl,running_meter,Wide format vinyl roll,50\n'
-        'Eco Solvent Ink,liters,Printer ink cartridge,5\n';
-
-    // Flutter desktop — write to downloads folder:
-    final dir = await getDownloadsDirectory(); // path_provider
-    final file = File('${dir!.path}/materials_template.csv');
-    await file.writeAsString(content);
-
-    AppToast.show(
-      message: 'Template downloaded',
-      subtitle: 'materials_template.csv',
-      icon: Icons.download_rounded,
-      color: _T.green,
     );
   }
 
@@ -2808,15 +2787,15 @@ class _MeasureTypePicker extends StatelessWidget {
 //   • Info banner: amber → blue tint (informational, not a warning)
 //   • Dialog width: 480 → 460, tighter proportions for desktop
 //   • All border weights, radius, and spacing audited against system
+//   • Template strip: opens hosted .xlsx via url_launcher (no callback needed)
+//
+// pubspec.yaml dependency required:
+//   url_launcher: ^6.x.x
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CsvImportDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  final VoidCallback onDownloadTemplate;
-  const _CsvImportDialog({
-    required this.onConfirm,
-    required this.onDownloadTemplate,
-  });
+  const _CsvImportDialog({required this.onConfirm});
 
   static const _columns = [
     _CsvColumn(field: 'name', required: true, note: null),
@@ -3048,7 +3027,7 @@ class _CsvImportDialog extends StatelessWidget {
             // ── Template download strip ───────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: _TemplateDownloadStrip(onDownload: onDownloadTemplate),
+              child: _TemplateDownloadStrip(),
             ),
 
             // ── Info banner ───────────────────────────────────────────────
@@ -3125,9 +3104,21 @@ class _CsvImportDialog extends StatelessWidget {
 // The download button uses the ghost pattern (transparent → slate100 on hover)
 // with a green download icon to distinguish it visually from the primary CTA.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// TEMPLATE DOWNLOAD STRIP
+//
+// Opens the hosted .xlsx template in the system browser/downloader.
+// The user opens it in Excel / Sheets, fills it in, exports as CSV,
+// then imports that CSV back here.
+//
+// URL is baked in — no callback needed.
+// Requires url_launcher in pubspec.yaml.
+// ─────────────────────────────────────────────────────────────────────────────
 class _TemplateDownloadStrip extends StatefulWidget {
-  final VoidCallback onDownload;
-  const _TemplateDownloadStrip({required this.onDownload});
+  const _TemplateDownloadStrip();
+
+  static const _templateUrl =
+      'https://raw.githubusercontent.com/ibrah006/smooflow/main/Example%20Template.xlsx';
 
   @override
   State<_TemplateDownloadStrip> createState() => _TemplateDownloadStripState();
@@ -3136,6 +3127,11 @@ class _TemplateDownloadStrip extends StatefulWidget {
 class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
   bool _hovered = false;
 
+  Future<void> _launch() async {
+    final uri = Uri.parse(_TemplateDownloadStrip._templateUrl);
+    await launchUrl(uri, mode: LaunchMode.platformDefault);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -3143,15 +3139,12 @@ class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: widget.onDownload,
+        onTap: _launch,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
           decoration: BoxDecoration(
-            color:
-                _hovered
-                    ? const Color(0xFFF0FDF4) // green50-ish on hover
-                    : _T.white,
+            color: _hovered ? const Color(0xFFF0FDF4) : _T.white,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
               color: _hovered ? _T.green.withOpacity(0.4) : _T.slate200,
@@ -3192,11 +3185,11 @@ class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      'Download an example template to get started.',
+                      'Download the Excel template → fill it in → export as CSV → import here.',
                       style: TextStyle(
                         fontSize: 11,
                         color: _hovered ? _T.ink3 : _T.slate400,
-                        height: 1.3,
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -3204,7 +3197,7 @@ class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
               ),
               const SizedBox(width: 10),
 
-              // "Download" label — appears on hover, fades otherwise
+              // "Download .xlsx" label — fades in on hover
               AnimatedOpacity(
                 opacity: _hovered ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 140),
@@ -3218,7 +3211,7 @@ class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
-                    'Download',
+                    'Download .xlsx',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
