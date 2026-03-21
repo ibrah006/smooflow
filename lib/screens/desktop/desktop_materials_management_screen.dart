@@ -18,6 +18,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/core/models/material.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
@@ -26,6 +27,7 @@ import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -120,7 +122,27 @@ class _ManageMaterialsScreenState
               Navigator.of(context).pop();
               _pickCSVFile();
             },
+            onDownloadTemplate: _downloadTemplate,
           ),
+    );
+  }
+
+  Future<void> _downloadTemplate() async {
+    const content =
+        'name,measure_type,description,min_stock_level\n'
+        'Banner Vinyl,running_meter,Wide format vinyl roll,50\n'
+        'Eco Solvent Ink,liters,Printer ink cartridge,5\n';
+
+    // Flutter desktop — write to downloads folder:
+    final dir = await getDownloadsDirectory(); // path_provider
+    final file = File('${dir!.path}/materials_template.csv');
+    await file.writeAsString(content);
+
+    AppToast.show(
+      message: 'Template downloaded',
+      subtitle: 'materials_template.csv',
+      icon: Icons.download_rounded,
+      color: _T.green,
     );
   }
 
@@ -2775,283 +2797,620 @@ class _MeasureTypePicker extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CSV IMPORT DIALOG
+// CSV IMPORT DIALOG — redesigned to match design system
+//
+// Changes from previous version:
+//   • Icon badge: circle → rounded rect (matches detail panel, section cards)
+//   • Close button: Material/InkWell → AnimatedContainer hover pattern
+//   • Footer buttons: OutlinedButton/FilledButton → _GhostButton/_PrimaryButton
+//   • Column reference: table-style rows with alternating slate50/white bg
+//     replacing the dot + indent layout — easier to scan at a glance
+//   • Info banner: amber → blue tint (informational, not a warning)
+//   • Dialog width: 480 → 460, tighter proportions for desktop
+//   • All border weights, radius, and spacing audited against system
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _CsvImportDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  const _CsvImportDialog({required this.onConfirm});
+  final VoidCallback onDownloadTemplate;
+  const _CsvImportDialog({
+    required this.onConfirm,
+    required this.onDownloadTemplate,
+  });
+
+  static const _columns = [
+    _CsvColumn(field: 'name', required: true, note: null),
+    _CsvColumn(
+      field: 'measure_type',
+      required: true,
+      note: 'running_meter · item_quantity · liters · kilograms · square_meter',
+    ),
+    _CsvColumn(field: 'description', required: false, note: null),
+    _CsvColumn(
+      field: 'min_stock_level',
+      required: false,
+      note: 'Defaults to 0 if omitted',
+    ),
+  ];
+
   @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: Colors.transparent,
-    child: Container(
-      width: 480,
-      decoration: BoxDecoration(
-        color: _T.white,
-        borderRadius: BorderRadius.circular(_T.rXl),
-        border: Border.all(color: _T.slate200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _T.blue50,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _T.blue.withOpacity(0.2)),
-                  ),
-                  child: const Icon(
-                    Icons.upload_file_outlined,
-                    size: 18,
-                    color: _T.blue,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Import from CSV',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _T.ink,
-                        ),
-                      ),
-                      Text(
-                        'Bulk-create materials from a spreadsheet',
-                        style: TextStyle(fontSize: 12, color: _T.slate400),
-                      ),
-                    ],
-                  ),
-                ),
-                Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(_T.r),
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(_T.r),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: _T.slate200),
-                        borderRadius: BorderRadius.circular(_T.r),
-                      ),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: 15,
-                        color: _T.slate400,
-                      ),
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 460,
+        decoration: BoxDecoration(
+          color: _T.white,
+          borderRadius: BorderRadius.circular(_T.rXl),
+          border: Border.all(color: _T.slate200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Header ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Icon badge — rounded rect, matches section cards
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _T.blue50,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: _T.blue.withOpacity(0.2)),
+                    ),
+                    child: const Icon(
+                      Icons.upload_file_outlined,
+                      size: 15,
+                      color: _T.blue,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Divider(height: 1, color: _T.slate100),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: _T.slate50,
-                borderRadius: BorderRadius.circular(_T.rLg),
-                border: Border.all(color: _T.slate200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    child: Row(
-                      children: const [
-                        Icon(
-                          Icons.table_chart_outlined,
-                          size: 14,
-                          color: _T.slate400,
-                        ),
-                        SizedBox(width: 7),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'CSV Column Reference',
+                          'Import from CSV',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: _T.ink3,
+                            color: _T.ink,
+                            letterSpacing: -0.1,
                           ),
+                        ),
+                        Text(
+                          'Bulk-create materials from a spreadsheet',
+                          style: TextStyle(fontSize: 11.5, color: _T.slate400),
                         ),
                       ],
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Divider(height: 1, color: _T.slate200),
-                  ),
-                  ...[
-                    ('name', 'Required', true, null),
-                    (
-                      'measure type',
-                      'Required',
-                      true,
-                      'running_meter · item_quantity · liters · kilograms · square_meter',
+                  const SizedBox(width: 8),
+                  // Close button — hover pattern from design system
+                  _DialogCloseButton(onTap: () => Navigator.of(context).pop()),
+                ],
+              ),
+            ),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Divider(height: 1, color: _T.slate100),
+            ),
+
+            // ── Column reference table ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Table header
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: const [
+                        SizedBox(width: 10),
+                        Expanded(flex: 3, child: _ColHeader('COLUMN')),
+                        Expanded(flex: 2, child: _ColHeader('REQUIRED')),
+                        Expanded(flex: 4, child: _ColHeader('NOTES')),
+                      ],
                     ),
-                    ('description', 'Optional', false, null),
-                    ('min stock level', 'Optional — default 0', false, null),
-                  ].map((r) {
-                    final (field, req, isReq, note) = r;
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            margin: const EdgeInsets.only(top: 5),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isReq ? _T.red : _T.green,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                  ),
+
+                  // Table rows — alternating row background
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(_T.r),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                      child: Column(
+                        children:
+                            _columns.asMap().entries.map((entry) {
+                              final i = entry.key;
+                              final col = entry.value;
+                              final isLast = i == _columns.length - 1;
+
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: i % 2 == 0 ? _T.white : _T.slate50,
+                                  border:
+                                      isLast
+                                          ? null
+                                          : const Border(
+                                            bottom: BorderSide(
+                                              color: _T.slate100,
+                                            ),
+                                          ),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      field,
-                                      style: const TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: _T.ink3,
-                                        fontFamily: 'monospace',
+                                    // Field name — monospace, ink3
+                                    Expanded(
+                                      flex: 3,
+                                      child: Text(
+                                        col.field,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: _T.ink3,
+                                          fontFamily: 'monospace',
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      req,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isReq ? _T.red : _T.slate400,
+
+                                    // Required / Optional pill
+                                    Expanded(
+                                      flex: 2,
+                                      child: Container(
+                                        margin: const EdgeInsets.only(top: 1),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 5,
+                                              height: 5,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color:
+                                                    col.required
+                                                        ? _T.red
+                                                        : _T.green,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              col.required
+                                                  ? 'Required'
+                                                  : 'Optional',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    col.required
+                                                        ? _T.red
+                                                        : _T.green,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                    ),
+
+                                    // Notes
+                                    Expanded(
+                                      flex: 4,
+                                      child:
+                                          col.note != null
+                                              ? Text(
+                                                col.note!,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: _T.slate400,
+                                                  height: 1.4,
+                                                ),
+                                              )
+                                              : const SizedBox.shrink(),
                                     ),
                                   ],
                                 ),
-                                if (note != null) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    note,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: _T.slate400,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
+                              );
+                            }).toList(),
                       ),
-                    );
-                  }),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: _T.amber50,
-                borderRadius: BorderRadius.circular(_T.r),
-                border: Border.all(color: _T.amber.withOpacity(0.35)),
+
+            // ── Template download strip ───────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: _TemplateDownloadStrip(onDownload: onDownloadTemplate),
+            ),
+
+            // ── Info banner ───────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: _T.blue50,
+                  borderRadius: BorderRadius.circular(_T.r),
+                  border: Border.all(color: _T.blue.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.info_outline_rounded, size: 13, color: _T.blue),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Column names are case-insensitive and can be in any order.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: _T.ink3,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+
+            // ── Footer ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: Row(
-                children: const [
-                  Icon(Icons.info_outline_rounded, size: 14, color: _T.amber),
-                  SizedBox(width: 8),
+                children: [
                   Expanded(
-                    child: Text(
-                      'Column names are case-insensitive and can be in any order',
-                      style: TextStyle(fontSize: 12, color: _T.ink3),
+                    child: _DialogGhostButton(
+                      label: 'Cancel',
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: _DialogPrimaryButton(
+                      label: 'Choose File',
+                      icon: Icons.folder_open_outlined,
+                      onTap: onConfirm,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _T.slate500,
-                      side: const BorderSide(color: _T.slate200),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r),
-                      ),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: onConfirm,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _T.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r),
-                      ),
-                    ),
-                    icon: const Icon(Icons.folder_open_outlined, size: 17),
-                    label: const Text(
-                      'Choose File',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEMPLATE DOWNLOAD STRIP
+//
+// A friendly nudge card that lives between the column table and the info
+// banner. Left side: spark icon + copy. Right side: download button.
+//
+// Copy reads conversationally — "Not sure about the format?" — so it feels
+// like a helpful hint rather than a UI label.
+//
+// The download button uses the ghost pattern (transparent → slate100 on hover)
+// with a green download icon to distinguish it visually from the primary CTA.
+// ─────────────────────────────────────────────────────────────────────────────
+class _TemplateDownloadStrip extends StatefulWidget {
+  final VoidCallback onDownload;
+  const _TemplateDownloadStrip({required this.onDownload});
+
+  @override
+  State<_TemplateDownloadStrip> createState() => _TemplateDownloadStripState();
+}
+
+class _TemplateDownloadStripState extends State<_TemplateDownloadStrip> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onDownload,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          decoration: BoxDecoration(
+            color:
+                _hovered
+                    ? const Color(0xFFF0FDF4) // green50-ish on hover
+                    : _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: _hovered ? _T.green.withOpacity(0.4) : _T.slate200,
+              width: _hovered ? 1.5 : 1.0,
             ),
           ),
-        ],
+          child: Row(
+            children: [
+              // Icon badge
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _hovered ? _T.green.withOpacity(0.12) : _T.green50,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(
+                  Icons.download_rounded,
+                  size: 14,
+                  color: _hovered ? _T.green : _T.green.withOpacity(0.75),
+                ),
+              ),
+              const SizedBox(width: 11),
+
+              // Copy
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Not sure about the format?',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _T.ink3,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Download an example template to get started.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _hovered ? _T.ink3 : _T.slate400,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // "Download" label — appears on hover, fades otherwise
+              AnimatedOpacity(
+                opacity: _hovered ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 140),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _T.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Download',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _T.green,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV COLUMN MODEL
+// ─────────────────────────────────────────────────────────────────────────────
+class _CsvColumn {
+  final String field;
+  final bool required;
+  final String? note;
+  const _CsvColumn({
+    required this.field,
+    required this.required,
+    required this.note,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE COLUMN HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+class _ColHeader extends StatelessWidget {
+  final String text;
+  const _ColHeader(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 9.5,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: _T.slate400,
     ),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG CLOSE BUTTON — AnimatedContainer hover, matches system pattern
+// ─────────────────────────────────────────────────────────────────────────────
+class _DialogCloseButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _DialogCloseButton({required this.onTap});
+
+  @override
+  State<_DialogCloseButton> createState() => _DialogCloseButtonState();
+}
+
+class _DialogCloseButtonState extends State<_DialogCloseButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: _hovered ? _T.slate100 : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: Icon(
+            Icons.close_rounded,
+            size: 13,
+            color: _hovered ? _T.ink3 : _T.slate400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG PRIMARY BUTTON — matches _PrimaryButton / _CreateTaskButton
+// ─────────────────────────────────────────────────────────────────────────────
+class _DialogPrimaryButton extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _DialogPrimaryButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  State<_DialogPrimaryButton> createState() => _DialogPrimaryButtonState();
+}
+
+class _DialogPrimaryButtonState extends State<_DialogPrimaryButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blueHover : _T.blue,
+            borderRadius: BorderRadius.circular(_T.r),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, size: 14, color: Colors.white),
+              const SizedBox(width: 7),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG GHOST BUTTON — matches _GhostButton in detail_panel / create_task
+// ─────────────────────────────────────────────────────────────────────────────
+class _DialogGhostButton extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _DialogGhostButton({required this.label, required this.onTap});
+
+  @override
+  State<_DialogGhostButton> createState() => _DialogGhostButtonState();
+}
+
+class _DialogGhostButtonState extends State<_DialogGhostButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.slate100 : Colors.transparent,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: Center(
+            child: Text(
+              widget.label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _T.slate500,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
