@@ -719,32 +719,34 @@ class _ConnectionIndicator extends StatelessWidget {
         break;
     }
 
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 4),
-            Text(
-              status == ConnectionStatus.connected ? 'Live' : 'Offline',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
+    return status == ConnectionStatus.connected
+        ? SizedBox()
+        : Tooltip(
+          message: tooltip,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: color.withOpacity(0.3)),
             ),
-          ],
-        ),
-      ),
-    );
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 12, color: color),
+                const SizedBox(width: 4),
+                Text(
+                  status == ConnectionStatus.connected ? 'Live' : 'Offline',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
   }
 }
 
