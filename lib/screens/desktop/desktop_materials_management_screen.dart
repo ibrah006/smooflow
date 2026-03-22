@@ -908,7 +908,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
               Navigator.of(context).pop();
               await ref
                   .read(materialNotifierProvider.notifier)
-                  .stockIn(widget.material.id, qty);
+                  .stockIn(widget.material.id, qty, notes: note);
               widget.onUpdate();
               _snack(
                 'Batch received — ${_fmtStock(qty)} ${widget.material.unitShort} added',
@@ -1525,13 +1525,21 @@ class _BatchRowState extends State<_BatchRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BATCH DETAIL PANEL
+// BATCH DETAIL PANEL — drop-in replacement
+//
+// Changes:
+//   • Notes: extracted from the stats card into a dedicated _BatchNotesCard
+//     with an amber tint, quotes icon, and styled body text
+//   • Consumption rows: redesigned to a two-line layout with task name
+//     prominent on the first line and project + date metadata on the second
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _BatchDetailPanel extends StatelessWidget {
   final StockTransaction batch;
   final List<StockTransaction> consumptions;
   final String unit;
   final double remaining;
+
   const _BatchDetailPanel({
     super.key,
     required this.batch,
@@ -1548,6 +1556,7 @@ class _BatchDetailPanel extends StatelessWidget {
         '${dt.day.toString().padLeft(2, '0')}/'
         '${dt.month.toString().padLeft(2, '0')}/${dt.year}  '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
     final consumed = consumptions.totalQuantity;
     final usePct =
         b.quantity > 0 ? (consumed / b.quantity).clamp(0.0, 1.0) : 0.0;
@@ -1572,6 +1581,7 @@ class _BatchDetailPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // ── Section header ────────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
           decoration: const BoxDecoration(
@@ -1624,12 +1634,14 @@ class _BatchDetailPanel extends StatelessWidget {
           ),
         ),
 
+        // ── Scrollable body ───────────────────────────────────────────────
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Stats card ────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -1666,8 +1678,10 @@ class _BatchDetailPanel extends StatelessWidget {
                         value: '${_fmtStock(remaining)} $unit',
                         valueColor: statusColor,
                       ),
+
+                      // Usage progress bar
                       if (b.quantity > 0) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         Row(
                           children: [
                             Expanded(
@@ -1675,7 +1689,7 @@ class _BatchDetailPanel extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(99),
                                 child: LinearProgressIndicator(
                                   value: usePct,
-                                  minHeight: 6,
+                                  minHeight: 5,
                                   backgroundColor: _T.slate100,
                                   color: statusColor,
                                 ),
@@ -1693,20 +1707,22 @@ class _BatchDetailPanel extends StatelessWidget {
                           ],
                         ),
                       ],
-                      if (b.notes != null) ...[
-                        const Divider(height: 16, color: _T.slate100),
-                        _BatchInfoRow(
-                          icon: Icons.notes_rounded,
-                          label: 'Note',
-                          value: b.notes!,
-                        ),
-                      ],
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                // ── Notes card ────────────────────────────────────────────
+                // Shown only when a note exists. Amber-tinted surface to
+                // distinguish it from the stats card — feels like a sticky
+                // note or annotation rather than structured data.
+                if (b.notes != null && b.notes!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _BatchNotesCard(notes: b.notes!),
+                ],
 
+                const SizedBox(height: 18),
+
+                // ── Consumption history header ─────────────────────────────
                 Row(
                   children: [
                     Container(
@@ -1724,9 +1740,9 @@ class _BatchDetailPanel extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 9),
-                    Text(
-                      'Consumption History',
-                      style: const TextStyle(
+                    const Text(
+                      'History',
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: _T.ink,
@@ -1734,32 +1750,31 @@ class _BatchDetailPanel extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      '${consumptions.length} event${consumptions.length == 1 ? '' : 's'}',
-                      style: const TextStyle(fontSize: 11, color: _T.slate400),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _T.slate100,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        '${consumptions.length} event${consumptions.length == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: _T.slate500,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
 
+                // ── Consumption list ──────────────────────────────────────
                 if (consumptions.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 22,
-                      horizontal: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _T.white,
-                      borderRadius: BorderRadius.circular(_T.rLg),
-                      border: Border.all(color: _T.slate200),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'No consumption yet — batch is untouched',
-                        style: TextStyle(fontSize: 12, color: _T.slate400),
-                      ),
-                    ),
-                  )
+                  _ConsumptionEmptyState()
                 else
                   Container(
                     decoration: BoxDecoration(
@@ -1784,6 +1799,456 @@ class _BatchDetailPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BATCH NOTES CARD
+//
+// Amber-tinted surface — immediately reads as "annotation" rather than data.
+// Left accent bar (3px amber) mirrors the board lane / filter drawer motif.
+// Quote icon in the header grounds the copy visually.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BatchNotesCard extends StatelessWidget {
+  final String notes;
+  const _BatchNotesCard({required this.notes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB), // amber50 with more warmth
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.amber.withOpacity(0.25)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left accent bar
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: _T.amber.withOpacity(0.6),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(_T.rLg),
+                  bottomLeft: Radius.circular(_T.rLg),
+                ),
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 11, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 12,
+                          color: _T.amber.withOpacity(0.8),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'BATCH NOTE',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.7,
+                            color: _T.amber.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    // Note body
+                    Text(
+                      notes,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w400,
+                        color: _T.ink3,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSUMPTION EMPTY STATE
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConsumptionEmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 10),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        children: const [
+          Icon(Icons.inventory_2_outlined, size: 20, color: _T.slate300),
+          SizedBox(height: 8),
+          Text(
+            'No consumption yet',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: _T.slate400,
+            ),
+          ),
+          SizedBox(height: 3),
+          Text(
+            'This batch has not been used in any job',
+            style: TextStyle(fontSize: 11, color: _T.slate300),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSUMPTION ROW — redesigned
+//
+// Layout:
+//   ┌──────────────────────────────────────────────────────────────┐
+//   │ [red icon]  −12 rm            [project chip]  [task chip]   │
+//   │             Task name here                    dd/mm/yyyy     │
+//   └──────────────────────────────────────────────────────────────┘
+//
+// Task name is the primary identifier — shown large and bold.
+// Project is a colored dot + name chip (same pattern as task cards).
+// Date/time is muted, right-aligned.
+// Quantity is prominent in red on the leading left.
+// ─────────────────────────────────────────────────────────────────────────────
+class _ConsumptionRow extends ConsumerStatefulWidget {
+  final StockTransaction txn;
+  final String unit;
+  final bool isLast;
+
+  const _ConsumptionRow({
+    required this.txn,
+    required this.unit,
+    required this.isLast,
+  });
+
+  @override
+  ConsumerState<_ConsumptionRow> createState() => _ConsumptionRowState();
+}
+
+class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
+  Future<Task?>? _taskFuture;
+  Future<Project?>? _projectFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.txn.taskId != null) {
+      _taskFuture = ref.read(taskByIdProvider(widget.txn.taskId!));
+      _taskFuture!.then((task) {
+        if (task != null && mounted) {
+          setState(() {
+            _projectFuture = ref.read(
+              projectByIdFutureProvider(task.projectId),
+            );
+          });
+        }
+      });
+    }
+  }
+
+  String _relativeDate(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(day).inDays;
+    final time =
+        '${dt.hour.toString().padLeft(2, '0')}:'
+        '${dt.minute.toString().padLeft(2, '0')}';
+    if (diff == 0) return 'Today · $time';
+    if (diff == 1) return 'Yesterday · $time';
+    return '${dt.day.toString().padLeft(2, '0')}/'
+        '${dt.month.toString().padLeft(2, '0')}/'
+        '${dt.year} · $time';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dt = widget.txn.createdAt;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Leading icon ────────────────────────────────────────────
+              Container(
+                width: 30,
+                height: 30,
+                margin: const EdgeInsets.only(top: 1),
+                decoration: BoxDecoration(
+                  color: _T.red50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.output_rounded,
+                  size: 13,
+                  color: _T.red,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // ── Body ────────────────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Row 1: quantity (bold red) + right-aligned date
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '−${_fmtStock(widget.txn.quantity)} ${widget.unit}',
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: _T.red,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _relativeDate(dt),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: _T.slate400,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+
+                    // Row 2: task name (or loading skeleton)
+                    if (_taskFuture != null)
+                      FutureBuilder<Task?>(
+                        future: _taskFuture,
+                        builder: (_, snap) {
+                          if (!snap.hasData) {
+                            return _InlineSkeletonPair();
+                          }
+                          final task = snap.data;
+                          if (task == null) {
+                            return const Text(
+                              'Unknown task',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _T.slate300,
+                              ),
+                            );
+                          }
+                          return _TaskProjectLine(
+                            taskName: task.name,
+                            projectFuture: _projectFuture,
+                          );
+                        },
+                      )
+                    else
+                      const Text(
+                        'No task linked',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _T.slate300,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        if (!widget.isLast)
+          const Divider(
+            height: 1,
+            color: _T.slate100,
+            indent: 14,
+            endIndent: 14,
+          ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK + PROJECT LINE — stacked layout
+//
+// Task name sits on its own full-width line so it never truncates against the
+// project name. Project chip sits below as a subordinate metadata line.
+// This handles any combination of long/short names gracefully.
+//
+// Structure:
+//   Task name (full width, up to 2 lines, w600 ink3)
+//   [● Project Name]  (small chip, left-aligned, below the task name)
+// ─────────────────────────────────────────────────────────────────────────────
+class _TaskProjectLine extends StatelessWidget {
+  final String taskName;
+  final Future<Project?>? projectFuture;
+
+  const _TaskProjectLine({required this.taskName, required this.projectFuture});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Task name — full width, wraps to 2 lines if needed
+        Text(
+          taskName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: _T.ink3,
+            height: 1.35,
+          ),
+        ),
+
+        // Project chip — below the task name, left-aligned
+        if (projectFuture != null) ...[
+          const SizedBox(height: 5),
+          FutureBuilder<Project?>(
+            future: projectFuture,
+            builder: (_, snap) {
+              if (!snap.hasData) return _InlineSkeletonChip();
+              final proj = snap.data;
+              if (proj == null) return const SizedBox.shrink();
+              return _ProjectChip(project: proj);
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CHIP
+//
+// Colored dot + project name. Matches the pattern used on task cards in the
+// board view and detail panel summary rows.
+// ─────────────────────────────────────────────────────────────────────────────
+class _ProjectChip extends StatelessWidget {
+  final Project project;
+  const _ProjectChip({required this.project});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(7, 3, 8, 3),
+      decoration: BoxDecoration(
+        color: _T.slate100,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: project.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            project.name,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: _T.slate500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INLINE SKELETON WIDGETS — shown while task/project futures are loading
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Two skeleton lines: task name + project chip — stacked to match loaded state
+class _InlineSkeletonPair extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CardLoading(
+          height: 11,
+          width: 150,
+          borderRadius: BorderRadius.circular(4),
+          cardLoadingTheme: const CardLoadingTheme(
+            colorOne: _T.slate100,
+            colorTwo: _T.slate200,
+          ),
+        ),
+        const SizedBox(height: 6),
+        CardLoading(
+          height: 18,
+          width: 80,
+          borderRadius: BorderRadius.circular(6),
+          cardLoadingTheme: const CardLoadingTheme(
+            colorOne: _T.slate100,
+            colorTwo: _T.slate200,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Just the project chip skeleton
+class _InlineSkeletonChip extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CardLoading(
+      height: 18,
+      width: 70,
+      borderRadius: BorderRadius.circular(6),
+      cardLoadingTheme: const CardLoadingTheme(
+        colorOne: _T.slate100,
+        colorTwo: _T.slate200,
+      ),
     );
   }
 }
@@ -1822,160 +2287,6 @@ class _BatchInfoRow extends StatelessWidget {
       ),
     ],
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSUMPTION ROW
-// ─────────────────────────────────────────────────────────────────────────────
-class _ConsumptionRow extends ConsumerStatefulWidget {
-  final StockTransaction txn;
-  final String unit;
-  final bool isLast;
-  _ConsumptionRow({
-    required this.txn,
-    required this.unit,
-    required this.isLast,
-  });
-
-  @override
-  ConsumerState<_ConsumptionRow> createState() => _ConsumptionRowState();
-}
-
-class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
-  late final Future<Project?> projectFuture;
-  late final Future<Task?> taskFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      taskFuture = ref.watch(taskByIdProvider(widget.txn.taskId!));
-      taskFuture.asStream().listen((data) {
-        if (data != null) {
-          projectFuture = ref.watch(projectByIdFutureProvider(data.projectId));
-        } else {
-          projectFuture = Future.delayed(Duration.zero).then((value) => null);
-        }
-      });
-      setState(() {});
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dt = widget.txn.createdAt;
-    final now = DateTime.now();
-    final dateStr =
-        (dt.year == now.year && dt.month == now.month && dt.day == now.day)
-            ? 'Today ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
-            : '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
-
-    try {
-      taskFuture;
-    } catch (e) {
-      return const SizedBox();
-    }
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          child: Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: _T.red50,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: const Icon(
-                  Icons.output_rounded,
-                  size: 13,
-                  color: _T.red,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '−${_fmtStock(widget.txn.quantity)} ${widget.unit}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: _T.red,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dateStr,
-                      style: const TextStyle(fontSize: 11, color: _T.slate400),
-                    ),
-                  ],
-                ),
-              ),
-              if (widget.txn.taskId != null)
-                FutureBuilder(
-                  future: taskFuture,
-                  builder: (context, asyncSnapshot) {
-                    final task = asyncSnapshot.data;
-                    if (task == null) {
-                      return CardLoading(height: 20, width: double.infinity);
-                    }
-                    return FutureBuilder(
-                      future: projectFuture,
-                      builder: (context, asyncSnapshot) {
-                        final project = asyncSnapshot.data;
-                        if (project == null) {
-                          return CardLoading(
-                            height: 20,
-                            width: double.infinity,
-                          );
-                        }
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _T.slate100,
-                            borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: _T.slate200),
-                          ),
-                          child: Text(
-                            project.name,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: _T.slate500,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-            ],
-          ),
-        ),
-        if (!widget.isLast)
-          const Divider(
-            height: 1,
-            color: _T.slate100,
-            indent: 14,
-            endIndent: 14,
-          ),
-      ],
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
