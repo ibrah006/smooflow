@@ -734,7 +734,7 @@ class _Topbar extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         GreenActionButton(
-          label: 'Add Material',
+          label: 'Material',
           icon: Icons.add_rounded,
           onTap: onAdd,
         ),
@@ -1138,7 +1138,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                 const SizedBox(width: 8),
                 // Receive batch primary button (unchanged)
                 GreenActionButton(
-                  label: 'Receive Batch',
+                  label: 'Batch',
                   icon: Icons.add_rounded,
                   onTap: _showStockInDialog,
                 ),
