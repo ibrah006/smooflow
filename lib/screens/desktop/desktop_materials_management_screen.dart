@@ -33,6 +33,7 @@ import 'package:smooflow/screens/desktop/components/inventory_features.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/smoofield.dart';
 import 'package:smooflow/screens/desktop/components/stock_pill.dart';
+import 'package:smooflow/screens/desktop/helpers/fmt_transaction_note.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 
@@ -1052,7 +1053,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                 .where(
                   (t) =>
                       t.type == TransactionType.stockOut &&
-                      t.materialId == _selectedBatch!.materialId,
+                      t.barcode == _selectedBatch!.barcode,
                 )
                 .toList()
               ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
@@ -2159,6 +2160,11 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                             projectFuture: _projectFuture,
                           );
                         },
+                      )
+                    else if (widget.txn.notes != null)
+                      Text(
+                        fmtTransactionNote(widget.txn.notes!)!,
+                        style: TextStyle(fontSize: 12, color: _T.slate500),
                       )
                     else
                       const Text(
