@@ -780,9 +780,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         currentStatus: widget.task.status,
                         stages: kStages,
                       ),
+
                       // DEBUG
                       // const SizedBox(height: 18),
-
                       // DiscussionPreviewStrip(
                       //   lastMessage:
                       //       sampleMessages
@@ -1510,20 +1510,22 @@ class _PrintSpecsCard extends StatelessWidget {
         _SpecRow(
           icon: Icons.tag_rounded,
           label: 'Ref',
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(5),
-              border: Border.all(color: _T.slate200),
-            ),
-            child: Text(
-              reference!,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
-                fontFamily: 'monospace',
+          child: Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _T.slate100,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: _T.slate200),
+              ),
+              child: Text(
+                reference!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                  fontFamily: 'monospace',
+                ),
               ),
             ),
           ),
@@ -1656,28 +1658,33 @@ class _SpecRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: _T.slate100,
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Icon(icon, size: 14, color: _T.slate500),
-      ),
-      const SizedBox(width: 10),
-      SizedBox(
-        width: 38,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: _T.slate400,
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Icon(icon, size: 14, color: _T.slate500),
           ),
-        ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 38,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: _T.slate400,
+              ),
+            ),
+          ),
+        ],
       ),
       child,
     ],
