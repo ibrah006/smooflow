@@ -1170,12 +1170,12 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                               _selectedBatch =
                                   (_selectedBatch?.id == b.id) ? null : b,
                         ),
-                    kpi: _KpiChip(
-                      label: 'Remaining',
-                      value: '${fmtStock(totalRemaining)} ${m.unitShort}',
-                      color: stockColor,
-                      bg: stockBg.withValues(alpha: 0.5),
-                    ),
+                    // kpi: _KpiChip(
+                    //   label: 'Remaining',
+                    //   value: '${fmtStock(totalRemaining)} ${m.unitShort}',
+                    //   color: stockColor,
+                    //   bg: stockBg.withValues(alpha: 0.5),
+                    // ),
                   ),
                 ),
 
@@ -1262,7 +1262,7 @@ class _BatchInventoryPanel extends StatelessWidget {
   final String? selectedBatchId;
   final double Function(StockTransaction) remaining;
   final ValueChanged<StockTransaction> onSelect;
-  final Widget kpi;
+  final Widget? kpi;
   final String? selectedBatchBarcode;
 
   const _BatchInventoryPanel({
@@ -1272,7 +1272,7 @@ class _BatchInventoryPanel extends StatelessWidget {
     required this.selectedBatchId,
     required this.remaining,
     required this.onSelect,
-    required this.kpi,
+    this.kpi,
     required this.selectedBatchBarcode,
   });
 
