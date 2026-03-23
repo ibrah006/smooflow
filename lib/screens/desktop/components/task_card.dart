@@ -9,6 +9,7 @@ import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_priority.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -23,37 +24,39 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 // DESIGN TOKENS  (identical to your _T class in design_dashboard.dart)
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  static const blue      = Color(0xFF2563EB);
+  static const blue = Color(0xFF2563EB);
   static const blueHover = Color(0xFF1D4ED8);
-  static const blue100   = Color(0xFFDBEAFE);
-  static const blue50    = Color(0xFFEFF6FF);
-  static const teal      = Color(0xFF38BDF8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const teal = Color(0xFF38BDF8);
 
-  static const green     = Color(0xFF10B981);
-  static const green50   = Color(0xFFECFDF5);
-  static const amber     = Color(0xFFF59E0B);
-  static const amber50   = Color(0xFFFEF3C7);
-  static const red       = Color(0xFFEF4444);
-  static const red50     = Color(0xFFFEE2E2);
-  static const purple    = Color(0xFF8B5CF6);
-  static const purple50  = Color(0xFFF3E8FF);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
+  static const indigo = Color(0xFF6366F1);
+  static const indigo50 = Color(0xFFEEF2FF);
 
-  static const slate50   = Color(0xFFF8FAFC);
-  static const slate100  = Color(0xFFF1F5F9);
-  static const slate200  = Color(0xFFE2E8F0);
-  static const slate300  = Color(0xFFCBD5E1);
-  static const slate400  = Color(0xFF94A3B8);
-  static const slate500  = Color(0xFF64748B);
-  static const ink       = Color(0xFF0F172A);
-  static const ink2      = Color(0xFF1E293B);
-  static const ink3      = Color(0xFF334155);
-  static const white     = Colors.white;
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
 
   static const sidebarW = 220.0;
-  static const topbarH  = 52.0;
-  static const detailW  = 400.0;
+  static const topbarH = 52.0;
+  static const detailW = 400.0;
 
-  static const r   = 8.0;
+  static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
@@ -79,28 +82,28 @@ class TaskCard extends ConsumerStatefulWidget {
     required Project project,
     required this.isSelected,
     required this.onTap,
-    required this.selectedProjectId
-  })  : task = task,
-        project = project,
-        isAddTask = false,
-        addProjects = const [],
-        onCreated = null,
-        onDismiss = null;
+    required this.selectedProjectId,
+  }) : task = task,
+       project = project,
+       isAddTask = false,
+       addProjects = const [],
+       onCreated = null,
+       onDismiss = null;
 
   // Creation card
   const TaskCard.add({
     required List<Project> projects,
     required void Function(Task) onCreated,
     required VoidCallback onDismiss,
-    required this.selectedProjectId
-  })  : task = null,
-        project = null,
-        isSelected = false,
-        onTap = null,
-        isAddTask = true,
-        addProjects = projects,
-        onCreated = onCreated,
-        onDismiss = onDismiss;
+    required this.selectedProjectId,
+  }) : task = null,
+       project = null,
+       isSelected = false,
+       onTap = null,
+       isAddTask = true,
+       addProjects = projects,
+       onCreated = onCreated,
+       onDismiss = onDismiss;
 
   @override
   ConsumerState<TaskCard> createState() => _TaskCardState();
@@ -109,12 +112,12 @@ class TaskCard extends ConsumerStatefulWidget {
 class _TaskCardState extends ConsumerState<TaskCard>
     with SingleTickerProviderStateMixin {
   // ── creation-card state ───────────────────────────────────────────────────
-  final _nameCtrl    = TextEditingController();
-  final _nameFocus   = FocusNode();
-  late String?        _selectedProjectId;
-  TaskPriority       _selectedPriority = TaskPriority.normal;
-  bool               _showProjectPicker = false;
-  bool               _nameTouched = false;
+  final _nameCtrl = TextEditingController();
+  final _nameFocus = FocusNode();
+  late String? _selectedProjectId;
+  TaskPriority _selectedPriority = TaskPriority.normal;
+  bool _showProjectPicker = false;
+  bool _nameTouched = false;
 
   /// only for _buildCreationCard
   bool _isLoading = false;
@@ -124,8 +127,10 @@ class _TaskCardState extends ConsumerState<TaskCard>
     vsync: this,
     duration: const Duration(milliseconds: 280),
   );
-  late final Animation<double> _fadeIn =
-      CurvedAnimation(parent: _ac, curve: Curves.easeOut);
+  late final Animation<double> _fadeIn = CurvedAnimation(
+    parent: _ac,
+    curve: Curves.easeOut,
+  );
   late final Animation<Offset> _slideIn = Tween<Offset>(
     begin: const Offset(0, 0.06),
     end: Offset.zero,
@@ -138,7 +143,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
     super.initState();
     if (widget.isAddTask) {
       _selectedProjectId =
-          widget.selectedProjectId?? (widget.addProjects.isNotEmpty? widget.addProjects.first.id : null);
+          widget.selectedProjectId ??
+          (widget.addProjects.isNotEmpty ? widget.addProjects.first.id : null);
       // Auto-focus the name field after the card animates in
       _ac.forward().then((_) {
         if (mounted) _nameFocus.requestFocus();
@@ -156,16 +162,33 @@ class _TaskCardState extends ConsumerState<TaskCard>
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────
-  Color get _priorityColor => switch (widget.task?.priority ?? _selectedPriority) {
+  Color get _priorityColor => switch (widget.task?.priority ??
+      _selectedPriority) {
     TaskPriority.urgent => _T.red,
-    TaskPriority.high   => _T.amber,
+    TaskPriority.high => _T.amber,
     TaskPriority.normal => _T.slate200,
   };
 
-  Project? get _currentProject => widget.addProjects.cast<Project?>()
+  // Helper to get billing status color and icon
+  (Color, IconData) _getBillingStatusStyle(BillingStatus status) {
+    switch (status) {
+      case BillingStatus.invoiced:
+        return (_T.blue, Icons.receipt_outlined);
+      case BillingStatus.quoteGiven:
+        return (_T.amber, Icons.request_quote_outlined);
+      case BillingStatus.pending:
+        return (_T.indigo, Icons.schedule_rounded);
+      default:
+        return (_T.slate400, Icons.help_outline_rounded);
+    }
+  }
+
+  Project? get _currentProject => widget.addProjects
+      .cast<Project?>()
       .firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null);
 
-  bool get _canSubmit => _nameCtrl.text.trim().isNotEmpty && _currentProject != null;
+  bool get _canSubmit =>
+      _nameCtrl.text.trim().isNotEmpty && _currentProject != null;
 
   void _submit() async {
     if (!_canSubmit) {
@@ -178,7 +201,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final newTask = Task.create(
         name: _nameCtrl.text,
@@ -186,15 +209,19 @@ class _TaskCardState extends ConsumerState<TaskCard>
         dueDate: null,
         assignees: [],
         projectId: _selectedProjectId!,
-        priority: _selectedPriority
+        priority: _selectedPriority,
       );
 
       // await ref.read(createProjectTaskProvider(newTask));
-      await ref.watch(projectNotifierProvider.notifier).createTask(task: newTask);
+      await ref
+          .watch(projectNotifierProvider.notifier)
+          .createTask(task: newTask);
 
       ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to create task, e: ${e.toString()}")));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to create task, e: ${e.toString()}")),
+      );
     }
 
     setState(() {
@@ -213,16 +240,28 @@ class _TaskCardState extends ConsumerState<TaskCard>
 
   // ── NORMAL CARD ───────────────────────────────────────────────────────────
   Widget _buildNormalCard() {
-    final task    = widget.task!;
+    final task = widget.task!;
     final project = widget.project!;
-    final d       = task.dueDate;
-    final now     = DateTime.now();
+    final d = task.dueDate;
+    final now = DateTime.now();
     final isOverdue = d != null && d.isBefore(now);
-    final isSoon    = d != null && !isOverdue && d.difference(now).inDays <= 3;
+    final isSoon = d != null && !isOverdue && d.difference(now).inDays <= 3;
+
+    // Check if billing status exists and is not pending
+    final billingStatus = task.billingStatus;
+    final showBillingStatus =
+        billingStatus != null && billingStatus != BillingStatus.pending;
+
+    final (statusColor, statusIcon) =
+        showBillingStatus
+            ? _getBillingStatusStyle(billingStatus!)
+            : (_T.slate400, Icons.help_outline_rounded);
 
     Member? member;
     try {
-      member = ref.watch(memberNotifierProvider).members
+      member = ref
+          .watch(memberNotifierProvider)
+          .members
           .firstWhere((m) => task.assignees.contains(m.id));
     } catch (_) {
       member = null;
@@ -242,9 +281,16 @@ class _TaskCardState extends ConsumerState<TaskCard>
               width: widget.isSelected ? 1.5 : 1,
             ),
             borderRadius: BorderRadius.circular(_T.r),
-            boxShadow: widget.isSelected
-                ? [BoxShadow(color: _T.blue.withOpacity(0.12), blurRadius: 8, spreadRadius: 1)]
-                : null,
+            boxShadow:
+                widget.isSelected
+                    ? [
+                      BoxShadow(
+                        color: _T.blue.withOpacity(0.12),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                    : null,
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -268,63 +314,120 @@ class _TaskCardState extends ConsumerState<TaskCard>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(task.name,
-                            style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _T.ink,
-                                height: 1.4)),
+                        Text(
+                          task.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink,
+                            height: 1.4,
+                          ),
+                        ),
                         const SizedBox(height: 6),
-                        Row(children: [
-                          Container(
+                        Row(
+                          children: [
+                            Container(
                               width: 6,
                               height: 6,
                               decoration: BoxDecoration(
-                                  color: project.color,
-                                  shape: BoxShape.circle)),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(project.name,
+                                color: project.color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                project.name,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: _T.slate400)),
-                          ),
-                        ]),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: _T.slate400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 9),
-                        Row(children: [
-                          PriorityPill(priority: task.priority),
-                          const SizedBox(width: 6),
-                          if (member != null)
-                            AvatarWidget(
+                        Row(
+                          children: [
+                            PriorityPill(priority: task.priority),
+                            const SizedBox(width: 6),
+                            if (member != null)
+                              AvatarWidget(
                                 initials: member.initials,
                                 color: member.color,
-                                size: 20),
-                          const Spacer(),
-                          if (d != null)
-                            Row(children: [
-                              Icon(Icons.calendar_today_outlined,
-                                  size: 10,
-                                  color: isOverdue
-                                      ? _T.red
-                                      : isSoon
-                                          ? _T.amber
-                                          : _T.slate400),
-                              const SizedBox(width: 4),
-                              Text(fmtDate(d),
-                                  style: TextStyle(
+                                size: 20,
+                              ),
+                            const Spacer(),
+                            if (d != null)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 10,
+                                    color:
+                                        isOverdue
+                                            ? _T.red
+                                            : isSoon
+                                            ? _T.amber
+                                            : _T.slate400,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    fmtDate(d),
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      fontWeight: isOverdue || isSoon
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                      color: isOverdue
-                                          ? _T.red
-                                          : isSoon
+                                      fontWeight:
+                                          isOverdue || isSoon
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                      color:
+                                          isOverdue
+                                              ? _T.red
+                                              : isSoon
                                               ? _T.amber
-                                              : _T.slate400)),
-                            ]),
-                        ]),
+                                              : _T.slate400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        // ── Billing status row (only shown if not pending) ──
+                        if (showBillingStatus) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: statusColor.withOpacity(0.25),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(statusIcon, size: 11, color: statusColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  billingStatus?.displayName ?? 'Unknown',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: statusColor,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -339,7 +442,6 @@ class _TaskCardState extends ConsumerState<TaskCard>
 
   // ── CREATION CARD ─────────────────────────────────────────────────────────
   Widget _buildCreationCard() {
-
     final projects = ref.watch(projectNotifierProvider);
 
     final bool nameEmpty = _nameCtrl.text.trim().isEmpty;
@@ -347,8 +449,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
 
     late final Project? p;
     try {
-      p = projects.firstWhere((p)=> p.id == _selectedProjectId);
-    } catch(e) {
+      p = projects.firstWhere((p) => p.id == _selectedProjectId);
+    } catch (e) {
       p = null;
     }
 
@@ -366,10 +468,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
           child: Container(
             decoration: BoxDecoration(
               color: _T.white,
-              border: Border.all(
-                color: _T.blue.withOpacity(0.45),
-                width: 1.5,
-              ),
+              border: Border.all(color: _T.blue.withOpacity(0.45), width: 1.5),
               borderRadius: BorderRadius.circular(_T.rLg),
               boxShadow: [
                 BoxShadow(
@@ -395,7 +494,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                     ),
                   ),
                 ),
-                
+
                 // ── Card body ─────────────────────────────────────────
                 Expanded(
                   child: Padding(
@@ -403,10 +502,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                
                         // ── Project picker ────────────────────────────
-                
-                        if (widget.selectedProjectId == null) ... [
+                        if (widget.selectedProjectId == null) ...[
                           ProjectChipRow(
                             projects: projects,
                             selectedId: _selectedProjectId,
@@ -415,20 +512,20 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 _selectedProjectId = projectId;
                               });
                             },
-                            disabled: _isLoading
+                            disabled: _isLoading,
                           ),
                           const SizedBox(height: 18),
                         ],
-                
+
                         // ── Priority picker ───────────────────────────
                         PriorityRadioRow(
                           selected: _selectedPriority,
-                          onChanged: (p) =>
-                              setState(() => _selectedPriority = p),
-                          disabled: _isLoading
+                          onChanged:
+                              (p) => setState(() => _selectedPriority = p),
+                          disabled: _isLoading,
                         ),
                         const SizedBox(height: 10),
-    
+
                         // ── Task name input ───────────────────────────
                         TextField(
                           enabled: !_isLoading,
@@ -451,83 +548,33 @@ class _TaskCardState extends ConsumerState<TaskCard>
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
                             errorText: showError ? 'Name required' : null,
-                            errorStyle: const TextStyle(fontSize: 10.5, height: 1.2),
-                            suffixIconConstraints: _isLoading? BoxConstraints.tight(Size(20, 20)) : null,
-                            suffixIcon: _isLoading? CircularProgressIndicator(strokeWidth: 2.5) : null
+                            errorStyle: const TextStyle(
+                              fontSize: 10.5,
+                              height: 1.2,
+                            ),
+                            suffixIconConstraints:
+                                _isLoading
+                                    ? BoxConstraints.tight(Size(20, 20))
+                                    : null,
+                            suffixIcon:
+                                _isLoading
+                                    ? CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                    )
+                                    : null,
                           ),
                           onSubmitted: (_) => _submit(),
                           textInputAction: TextInputAction.done,
                         ),
-                        if (_isLoading) Text("Creating Task...", style: TextStyle(
-                          fontSize: 12,
-                          color: _T.blue,
-                          fontWeight: FontWeight.w500
-                        ))
-                
-                        // ── Actions ───────────────────────────────────
-                        // Row(
-                        //   children: [
-                        //     // Submit
-                        //     Expanded(
-                        //       child: GestureDetector(
-                        //         onTap: _submit,
-                        //         child: AnimatedContainer(
-                        //           duration: const Duration(milliseconds: 160),
-                        //           padding: const EdgeInsets.symmetric(
-                        //               vertical: 7),
-                        //           decoration: BoxDecoration(
-                        //             color: _canSubmit
-                        //                 ? _T.blue
-                        //                 : _T.slate200,
-                        //             borderRadius:
-                        //                 BorderRadius.circular(_T.r),
-                        //           ),
-                        //           child: Row(
-                        //             mainAxisAlignment:
-                        //                 MainAxisAlignment.center,
-                        //             children: [
-                        //               Icon(
-                        //                 Icons.add_rounded,
-                        //                 size: 14,
-                        //                 color: _canSubmit
-                        //                     ? Colors.white
-                        //                     : _T.slate400,
-                        //               ),
-                        //               const SizedBox(width: 5),
-                        //               Text(
-                        //                 'Add task',
-                        //                 style: TextStyle(
-                        //                   fontSize: 12.5,
-                        //                   fontWeight: FontWeight.w700,
-                        //                   color: _canSubmit
-                        //                       ? Colors.white
-                        //                       : _T.slate400,
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
-                        //     const SizedBox(width: 7),
-                        //     // Dismiss
-                        //     GestureDetector(
-                        //       onTap: _dismiss,
-                        //       child: Container(
-                        //         width: 30,
-                        //         height: 30,
-                        //         decoration: BoxDecoration(
-                        //           border:
-                        //               Border.all(color: _T.slate200),
-                        //           borderRadius:
-                        //               BorderRadius.circular(_T.r),
-                        //         ),
-                        //         child: const Icon(Icons.close_rounded,
-                        //             size: 14, color: _T.slate400),
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
+                        if (_isLoading)
+                          Text(
+                            "Creating Task...",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _T.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                       ],
                     ),
                   ),
