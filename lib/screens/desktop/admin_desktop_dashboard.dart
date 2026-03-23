@@ -44,9 +44,7 @@ import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
-import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
-import 'package:smooflow/screens/desktop_material_list_screen.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
