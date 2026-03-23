@@ -26,6 +26,7 @@ import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
 import 'package:smooflow/screens/desktop/components/field_label.dart';
 import 'package:smooflow/screens/desktop/components/inventory_features.dart';
@@ -394,6 +395,7 @@ class _ManageMaterialsScreenState
                     onFilterChanged: (f) => setState(() => _filter = f),
                     onSearchChanged: () => setState(() {}),
                     onSelect: _selectMaterial,
+                    onQuickReceive: _showQuickStockInDialog,
                   ),
                 ),
 
@@ -451,6 +453,7 @@ class _MaterialListPanel extends ConsumerWidget {
   final ValueChanged<String> onFilterChanged;
   final VoidCallback onSearchChanged;
   final ValueChanged<MaterialModel> onSelect;
+  final ValueChanged<MaterialModel> onQuickReceive;
 
   const _MaterialListPanel({
     required this.selectedId,
@@ -462,6 +465,7 @@ class _MaterialListPanel extends ConsumerWidget {
     required this.onFilterChanged,
     required this.onSearchChanged,
     required this.onSelect,
+    required this.onQuickReceive,
   });
 
   String get _q => searchCtrl.text.trim().toLowerCase();
@@ -583,6 +587,7 @@ class _MaterialListPanel extends ConsumerWidget {
                           material: m,
                           isSelected: selectedId == m.id,
                           onTap: () => onSelect(m),
+                          onQuickReceive: () => onQuickReceive(m),
                         );
                       },
                     ),
@@ -720,39 +725,17 @@ class _Topbar extends StatelessWidget {
           ],
         ),
         const Spacer(),
-        OutlinedButton.icon(
-          onPressed: onImport,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _T.slate500,
-            side: const BorderSide(color: _T.slate200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          icon: const Icon(Icons.upload_file_outlined, size: 15),
-          label: const Text('Import CSV'),
+        GhostActionButton(
+          label: 'Import CSV',
+          icon: Icons.upload_file_outlined,
+          color: _T.slate500,
+          onTap: onImport,
         ),
         const SizedBox(width: 10),
-        FilledButton.icon(
-          onPressed: onAdd,
-          style: FilledButton.styleFrom(
-            backgroundColor: _T.blue,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          icon: const Icon(Icons.add_rounded, size: 16),
-          label: const Text('Add Material'),
+        GreenActionButton(
+          label: 'Add Material',
+          icon: Icons.add_rounded,
+          onTap: onAdd,
         ),
       ],
     ),
@@ -766,10 +749,12 @@ class _MaterialListTile extends StatefulWidget {
   final MaterialModel material;
   final bool isSelected;
   final VoidCallback onTap;
+  final Function() onQuickReceive;
   const _MaterialListTile({
     required this.material,
     required this.isSelected,
     required this.onTap,
+    required this.onQuickReceive,
   });
   @override
   State<_MaterialListTile> createState() => _MaterialListTileState();
@@ -912,6 +897,33 @@ class _DetailPanel extends ConsumerStatefulWidget {
 
 class _DetailPanelState extends ConsumerState<_DetailPanel> {
   StockTransaction? _selectedBatch;
+
+  void _showWriteOffDialog() {
+    if (_selectedBatch == null) return;
+
+    // Get the parent screen's method via a callback, or duplicate the
+    // dialog call here:
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder:
+          (_) => WriteOffDialog(
+            material: widget.material,
+            onConfirm: (qty, note) async {
+              Navigator.of(context).pop();
+              await ref
+                  .read(materialNotifierProvider.notifier)
+                  .stockOut(_selectedBatch!.barcode!, qty, notes: note);
+              widget.onUpdate();
+              _snack(
+                'Write-off recorded — ${fmtStock(qty)} '
+                '${widget.material.unitShort} removed',
+                isError: false,
+              );
+            },
+          ),
+    );
+  }
 
   @override
   void initState() {
@@ -1102,24 +1114,20 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     ],
                   ),
                 ),
-                FilledButton.icon(
-                  onPressed: _showStockInDialog,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _T.green,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(_T.r),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
+                // Write-off ghost button
+                if (_selectedBatch != null)
+                  GhostActionButton(
+                    label: 'Write Off',
+                    icon: Icons.remove_circle_outline_rounded,
+                    color: _T.red,
+                    onTap: _showWriteOffDialog,
                   ),
-                  icon: const Icon(Icons.add_rounded, size: 15),
-                  label: const Text('Receive Batch'),
+                const SizedBox(width: 8),
+                // Receive batch primary button (unchanged)
+                GreenActionButton(
+                  label: 'Receive Batch',
+                  icon: Icons.add_rounded,
+                  onTap: _showStockInDialog,
                 ),
               ],
             ),
@@ -1634,6 +1642,9 @@ class _BatchDetailPanel extends StatelessWidget {
       statusLabel = 'Available';
     }
 
+    final metaCard =
+        b.notes != null ? BatchMetaCard.fromNote(b.notes!, unit) : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1766,6 +1777,8 @@ class _BatchDetailPanel extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                if (metaCard != null) ...[const SizedBox(height: 12), metaCard],
 
                 // ── Notes card ────────────────────────────────────────────
                 // Shown only when a note exists. Amber-tinted surface to
@@ -1926,7 +1939,7 @@ class _BatchNotesCard extends StatelessWidget {
 
                     // Note body
                     Text(
-                      notes,
+                      _stripBatchTag(notes),
                       style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w400,
@@ -2691,11 +2704,14 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
   bool get _typeOk => _measureType != null;
   bool get _formOk => _nameOk && _typeOk;
 
+  final _reorderCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     for (final c in [_nameCtrl, _descCtrl, _minStockCtrl])
       c.addListener(() => setState(() {}));
+    _reorderCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -2703,6 +2719,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
     _nameCtrl.dispose();
     _descCtrl.dispose();
     _minStockCtrl.dispose();
+    _reorderCtrl.dispose();
     super.dispose();
   }
 
@@ -2910,12 +2927,10 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
                     iconBg: _T.amber50,
                     title: 'Stock Thresholds',
                     subtitle: 'Optional — configure low stock alerts',
-                    child: _NumField(
-                      controller: _minStockCtrl,
-                      label: 'Minimum Stock Level',
-                      hint: 'e.g. 10',
-                      required: false,
-                      suffix:
+                    child: StockThresholdsCard(
+                      minStockCtrl: _minStockCtrl,
+                      reorderCtrl: _reorderCtrl,
+                      unit:
                           _measureType != null
                               ? _measureType!.name.replaceAll('_', ' ')
                               : null,
@@ -4416,3 +4431,7 @@ class _ValidationDialog extends StatelessWidget {
     ),
   );
 }
+
+// Helpers
+String _stripBatchTag(String note) =>
+    note.replaceAll(RegExp(r'\[BATCH:[^\]]+\]\s*'), '').trim();

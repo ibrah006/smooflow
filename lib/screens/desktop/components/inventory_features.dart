@@ -996,14 +996,14 @@ class _ExpiryDateFieldState extends State<_ExpiryDateField> {
 //   if (batch.notes != null)
 //     BatchTagChip.fromNote(batch.notes!)
 // ─────────────────────────────────────────────────────────────────────────────
-class _BatchMetaCard extends StatelessWidget {
+class BatchMetaCard extends StatelessWidget {
   final String? supplier;
   final String? po;
   final String? cost;
   final String? expiry;
   final String unitShort;
 
-  const _BatchMetaCard({
+  const BatchMetaCard({
     required this.supplier,
     required this.po,
     required this.cost,
@@ -1012,7 +1012,7 @@ class _BatchMetaCard extends StatelessWidget {
   });
 
   /// Parses a note string and returns a _BatchMetaCard if tags are present.
-  static _BatchMetaCard? fromNote(String note, String unitShort) {
+  static BatchMetaCard? fromNote(String note, String unitShort) {
     final match = RegExp(r'\[BATCH:([^\]]+)\]').firstMatch(note);
     if (match == null) return null;
     final raw = match.group(1)!;
@@ -1023,7 +1023,7 @@ class _BatchMetaCard extends StatelessWidget {
       return m2?.group(1);
     }
 
-    return _BatchMetaCard(
+    return BatchMetaCard(
       supplier: get('supplier'),
       po: get('po'),
       cost: get('cost'),
