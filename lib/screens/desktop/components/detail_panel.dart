@@ -41,6 +41,8 @@ class _T {
   static const red50 = Color(0xFFFEE2E2);
   static const purple = Color(0xFF8B5CF6);
   static const purple50 = Color(0xFFF3E8FF);
+  static const indigo = Color(0xFF6366F1);
+  static const indigo50 = Color(0xFFEEF2FF);
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -99,8 +101,8 @@ const List<_BillingMeta> _kBilling = [
     value: BillingStatus.invoiced,
     label: 'Invoiced',
     sublabel: 'Invoice raised',
-    color: _T.purple,
-    bg: _T.purple50,
+    color: _T.indigo,
+    bg: _T.indigo50,
     icon: Icons.receipt_long_outlined,
   ),
   _BillingMeta(
@@ -1595,14 +1597,14 @@ class _PrintSpecsCard extends StatelessWidget {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: _T.purple50,
+                    color: _T.indigo50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _T.purple.withOpacity(0.2)),
+                    border: Border.all(color: _T.indigo.withOpacity(0.2)),
                   ),
                   child: const Icon(
                     Icons.straighten_outlined,
                     size: 15,
-                    color: _T.purple,
+                    color: _T.indigo,
                   ),
                 ),
                 const SizedBox(width: 10),
