@@ -26,7 +26,12 @@ import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
+import 'package:smooflow/screens/desktop/components/field_label.dart';
+import 'package:smooflow/screens/desktop/components/smoofield.dart';
+import 'package:smooflow/screens/desktop/components/stock_pill.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -801,7 +806,7 @@ class _MaterialListTileState extends State<_MaterialListTile> {
                             ),
                           ),
                           Text(
-                            '${_fmtStock(m.currentStock)} ${m.unitShort}',
+                            '${fmtStock(m.currentStock)} ${m.unitShort}',
                             style: const TextStyle(
                               fontSize: 11.5,
                               color: _T.slate400,
@@ -822,7 +827,7 @@ class _MaterialListTileState extends State<_MaterialListTile> {
                 ),
                 Container(
                   padding: EdgeInsets.only(right: 12, left: 5),
-                  child: _StockPill(
+                  child: StockPill(
                     label: stockLabel,
                     color: stockColor,
                     bg: stockBg,
@@ -911,7 +916,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                   .stockIn(widget.material.id, qty, notes: note);
               widget.onUpdate();
               _snack(
-                'Batch received — ${_fmtStock(qty)} ${widget.material.unitShort} added',
+                'Batch received — ${fmtStock(qty)} ${widget.material.unitShort} added',
                 isError: false,
               );
             },
@@ -1091,7 +1096,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                         ),
                     kpi: _KpiChip(
                       label: 'Remaining',
-                      value: '${_fmtStock(totalRemaining)} ${m.unitShort}',
+                      value: '${fmtStock(totalRemaining)} ${m.unitShort}',
                       color: stockColor,
                       bg: stockBg.withValues(alpha: 0.5),
                     ),
@@ -1483,7 +1488,7 @@ class _BatchRowState extends State<_BatchRow> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '${_fmtStock(b.quantity + widget.consumed)} ${widget.unit}',
+                      '${fmtStock(b.quantity + widget.consumed)} ${widget.unit}',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -1495,7 +1500,7 @@ class _BatchRowState extends State<_BatchRow> {
                     flex: 2,
                     child: Text(
                       widget.consumed > 0
-                          ? '${_fmtStock(widget.consumed)} ${widget.unit}'
+                          ? '${fmtStock(widget.consumed)} ${widget.unit}'
                           : '—',
                       style: TextStyle(
                         fontSize: 11.5,
@@ -1629,7 +1634,7 @@ class _BatchDetailPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              _StockPill(label: statusLabel, color: statusColor, bg: statusBg),
+              StockPill(label: statusLabel, color: statusColor, bg: statusBg),
             ],
           ),
         ),
@@ -1660,7 +1665,7 @@ class _BatchDetailPanel extends StatelessWidget {
                       _BatchInfoRow(
                         icon: Icons.add_circle_outline_rounded,
                         label: 'Original Qty',
-                        value: '${_fmtStock(remaining + consumed)} $unit',
+                        value: '${fmtStock(remaining + consumed)} $unit',
                         valueColor: _T.green,
                       ),
                       const Divider(height: 16, color: _T.slate100),
@@ -1668,14 +1673,14 @@ class _BatchDetailPanel extends StatelessWidget {
                         icon: Icons.remove_circle_outline_rounded,
                         label: 'Total Consumed',
                         value:
-                            consumed > 0 ? '${_fmtStock(consumed)} $unit' : '—',
+                            consumed > 0 ? '${fmtStock(consumed)} $unit' : '—',
                         valueColor: consumed > 0 ? _T.red : _T.slate300,
                       ),
                       const Divider(height: 16, color: _T.slate100),
                       _BatchInfoRow(
                         icon: Icons.inventory_2_outlined,
                         label: 'Remaining',
-                        value: '${_fmtStock(remaining)} $unit',
+                        value: '${fmtStock(remaining)} $unit',
                         valueColor: statusColor,
                       ),
 
@@ -2029,7 +2034,7 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          '−${_fmtStock(widget.txn.quantity)} ${widget.unit}',
+                          '−${fmtStock(widget.txn.quantity)} ${widget.unit}',
                           style: const TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
@@ -2518,7 +2523,7 @@ class _StockAdjustDialogState extends State<_StockAdjustDialog> {
                         ),
                         const Spacer(),
                         Text(
-                          '${_fmtStock(m.currentStock)} ${m.unitShort}',
+                          '${fmtStock(m.currentStock)} ${m.unitShort}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -2540,7 +2545,7 @@ class _StockAdjustDialogState extends State<_StockAdjustDialog> {
                         _submitted && !_qtyOk ? 'Enter a valid quantity' : null,
                   ),
                   const SizedBox(height: 14),
-                  _SmooField(
+                  SmooField(
                     controller: _noteCtrl,
                     label: 'Note',
                     hint: 'Optional — supplier, batch ref, etc.',
@@ -2818,7 +2823,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SmooField(
+                        SmooField(
                           controller: _nameCtrl,
                           label: 'Material Name',
                           hint: 'e.g. Vinyl Roll 3.2m',
@@ -2830,7 +2835,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
                                   : null,
                         ),
                         const SizedBox(height: 16),
-                        _FieldLabel.required('Measure Type'),
+                        FieldLabel.required('Measure Type'),
                         const SizedBox(height: 9),
                         _MeasureTypePicker(
                           selected: _measureType,
@@ -2838,7 +2843,7 @@ class _CreatePanelState extends ConsumerState<_CreatePanel> {
                           onSelect: (t) => setState(() => _measureType = t),
                         ),
                         const SizedBox(height: 16),
-                        _SmooField(
+                        SmooField(
                           controller: _descCtrl,
                           label: 'Description',
                           hint: 'Optional notes about this material',
@@ -3379,7 +3384,7 @@ class _CsvImportDialog extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: _DialogGhostButton(
+                    child: DialogGhostButton(
                       label: 'Cancel',
                       onTap: () => Navigator.of(context).pop(),
                     ),
@@ -3668,56 +3673,8 @@ class _DialogPrimaryButtonState extends State<_DialogPrimaryButton> {
       ),
     );
   }
-}
+} // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DIALOG GHOST BUTTON — matches _GhostButton in detail_panel / create_task
-// ─────────────────────────────────────────────────────────────────────────────
-class _DialogGhostButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _DialogGhostButton({required this.label, required this.onTap});
-
-  @override
-  State<_DialogGhostButton> createState() => _DialogGhostButtonState();
-}
-
-class _DialogGhostButtonState extends State<_DialogGhostButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: _hovered ? _T.slate100 : Colors.transparent,
-            borderRadius: BorderRadius.circular(_T.r),
-            border: Border.all(color: _T.slate200),
-          ),
-          child: Center(
-            child: Text(
-              widget.label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: _T.slate500,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SECTION CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _SectionCard extends StatelessWidget {
@@ -3805,110 +3762,6 @@ class _SectionCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SMOO FIELD
-// ─────────────────────────────────────────────────────────────────────────────
-class _SmooField extends StatefulWidget {
-  final TextEditingController controller;
-  final String label, hint;
-  final IconData icon;
-  final bool required;
-  final String? error;
-  const _SmooField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-    required this.icon,
-    this.required = false,
-    this.error,
-  });
-  @override
-  State<_SmooField> createState() => _SmooFieldState();
-}
-
-class _SmooFieldState extends State<_SmooField> {
-  final _focus = FocusNode();
-  bool _focused = false;
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
-  }
-
-  @override
-  void dispose() {
-    _focus.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasError = widget.error != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.required)
-          _FieldLabel.required(widget.label)
-        else
-          _FieldLabel(widget.label, optional: true),
-        const SizedBox(height: 7),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            color: _focused ? _T.white : _T.slate50,
-            borderRadius: BorderRadius.circular(_T.r),
-            border: Border.all(
-              color: hasError ? _T.red : (_focused ? _T.blue : _T.slate200),
-              width: (_focused || hasError) ? 1.5 : 1,
-            ),
-          ),
-          child: TextField(
-            controller: widget.controller,
-            focusNode: _focus,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _T.ink,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: widget.hint,
-              hintStyle: const TextStyle(fontSize: 13, color: _T.slate300),
-              prefixIcon: Icon(widget.icon, size: 16, color: _T.slate400),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 13,
-                horizontal: 12,
-              ),
-            ),
-          ),
-        ),
-        if (hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.error_outline_rounded,
-                  size: 11,
-                  color: _T.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.error!,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _T.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // NUM FIELD
 // ─────────────────────────────────────────────────────────────────────────────
 class _NumField extends StatefulWidget {
@@ -3952,9 +3805,9 @@ class _NumFieldState extends State<_NumField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.required)
-          _FieldLabel.required(widget.label)
+          FieldLabel.required(widget.label)
         else
-          _FieldLabel(widget.label, optional: true),
+          FieldLabel(widget.label, optional: true),
         const SizedBox(height: 7),
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -4043,110 +3896,6 @@ class _NumFieldState extends State<_NumField> {
       ],
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FIELD LABEL
-// ─────────────────────────────────────────────────────────────────────────────
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  final bool optional, isRequired;
-  final String? optionalNote;
-  const _FieldLabel(this.text, {this.optional = false, this.optionalNote})
-    : isRequired = false;
-  const _FieldLabel.required(this.text)
-    : optional = false,
-      isRequired = true,
-      optionalNote = null;
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: _T.ink3,
-        ),
-      ),
-      if (isRequired) ...[
-        const SizedBox(width: 3),
-        const Text(
-          '*',
-          style: TextStyle(
-            color: _T.red,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-      if (optional) ...[
-        const SizedBox(width: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(
-            color: _T.slate100,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            optionalNote ?? 'Optional',
-            style: const TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w600,
-              color: _T.slate400,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-      ],
-    ],
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MISC SHARED WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
-class _StockPill extends StatelessWidget {
-  final String label;
-  final Color color, bg;
-  final bool collapsed;
-  const _StockPill({
-    required this.label,
-    required this.color,
-    required this.bg,
-    this.collapsed = false,
-  });
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(99),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        if (!collapsed) ...[
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ],
-    ),
-  );
 }
 
 class _StatChip extends StatelessWidget {
@@ -4616,9 +4365,3 @@ class _ValidationDialog extends StatelessWidget {
     ),
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtStock(double v) =>
-    v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
