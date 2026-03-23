@@ -276,14 +276,15 @@ class Invoice {
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
-class AccountsScreen extends ConsumerStatefulWidget {
-  const AccountsScreen({super.key});
+class AccountsManagementScreen extends ConsumerStatefulWidget {
+  const AccountsManagementScreen({super.key});
 
   @override
-  ConsumerState<AccountsScreen> createState() => _AccountsScreenState();
+  ConsumerState<AccountsManagementScreen> createState() =>
+      _AccountsScreenState();
 }
 
-class _AccountsScreenState extends ConsumerState<AccountsScreen>
+class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
 
@@ -1008,6 +1009,7 @@ class _AccountsListPanel extends StatelessWidget {
               indicatorColor: _T.blue,
               indicatorWeight: 2,
               indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.grey.shade200,
               tabs: [
                 Tab(
                   child: Row(

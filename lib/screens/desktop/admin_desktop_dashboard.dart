@@ -33,6 +33,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -95,7 +96,16 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW ENUM — board removed; view switching lives inside TaskListView
 // ─────────────────────────────────────────────────────────────────────────────
-enum _AdminView { overview, list, clients, team, printers, inventory, reports }
+enum _AdminView {
+  overview,
+  list,
+  clients,
+  team,
+  printers,
+  inventory,
+  reports,
+  accounts,
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT SCREEN
@@ -295,7 +305,9 @@ class _AdminDesktopDashboardScreenState
                                       ? DesktopPrinterManagementScreen()
                                       : _view == _AdminView.inventory
                                       ? DesktopMaterialsManagementScreen()
-                                      : DesktopReportsScreen(),
+                                      : _view == _AdminView.reports
+                                      ? DesktopReportsScreen()
+                                      : AccountsManagementScreen(),
                             ),
 
                             // ── Detail panel ──────────────────────────
@@ -608,6 +620,12 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   label: 'Materials',
                   isActive: widget.currentView == _AdminView.inventory,
                   onTap: () => widget.onViewChanged(_AdminView.inventory),
+                ),
+                _SidebarNavItem(
+                  icon: CupertinoIcons.cube_box,
+                  label: 'Accounts',
+                  isActive: widget.currentView == _AdminView.accounts,
+                  onTap: () => widget.onViewChanged(_AdminView.accounts),
                 ),
               ],
             ),
