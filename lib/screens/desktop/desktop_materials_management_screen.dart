@@ -168,11 +168,11 @@ class _ManageMaterialsScreenState
               Navigator.of(context).pop();
               await ref
                   .read(materialNotifierProvider.notifier)
-                  .stockIn(material.id, qty, note: note);
+                  .stockIn(material.id, qty, notes: note);
               ref.read(materialNotifierProvider.notifier).fetchMaterials();
               AppToast.show(
                 message: 'Batch received',
-                subtitle: '${_fmtStock(qty)} ${material.unitShort} added',
+                subtitle: '${fmtStock(qty)} ${material.unitShort} added',
                 icon: Icons.add_rounded,
                 color: _T.green,
               );
