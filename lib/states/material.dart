@@ -54,9 +54,15 @@ class MaterialState {
   }
 
   List<MaterialModel> byStatus({bool isLow = false, bool isCritical = false}) {
-    return !isLow && !isCritical?
-      materials
-      : materials.where((material)=> (isLow && material.isLowStock) || (isCritical && material.isCriticalStock)).toList();
+    return !isLow && !isCritical
+        ? materials
+        : materials
+            .where(
+              (material) =>
+                  (isLow && material.isLowStock) ||
+                  (isCritical && material.isCriticalStock),
+            )
+            .toList();
   }
 
   int countByStatus({bool isLow = false, bool isCritical = false}) {

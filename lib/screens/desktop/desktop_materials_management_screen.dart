@@ -1046,6 +1046,18 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
       stockLabel = 'In stock';
     }
 
+    final List<StockTransaction> consumptions =
+        _selectedBatch != null
+            ? (all
+                .where(
+                  (t) =>
+                      t.type == TransactionType.stockOut &&
+                      t.materialId == _selectedBatch!.materialId,
+                )
+                .toList()
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+            : [];
+
     return Container(
       decoration: const BoxDecoration(
         color: _T.slate50,
@@ -1146,7 +1158,10 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     unit: m.unitShort,
                     selectedBatchId: _selectedBatch?.id,
                     selectedBatchBarcode: _selectedBatch?.barcode!,
-                    remaining: (b) => _remaining(b, all),
+                    remaining:
+                        (b) => (_selectedBatch!.quantity -
+                                consumptions.totalQuantity)
+                            .clamp(0.0, double.infinity),
                     onSelect:
                         (b) => setState(
                           () =>
@@ -1172,12 +1187,11 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                           : _BatchDetailPanel(
                             key: ValueKey(_selectedBatch!.id),
                             batch: _selectedBatch!,
-                            consumptions: _consumptions(
-                              all,
-                              _selectedBatch!.barcode!,
-                            ),
+                            consumptions: consumptions,
                             unit: m.unitShort,
-                            remaining: _remaining(_selectedBatch!, all),
+                            remaining:
+                                _selectedBatch!.quantity -
+                                consumptions.totalQuantity,
                           ),
                 ),
               ],
@@ -1375,6 +1389,9 @@ class _BatchInventoryPanel extends StatelessWidget {
                       final consumed = usedQuantityInBatch(b.barcode!);
                       final isSelected = selectedBatchId == b.id;
                       final isEmpty = rem <= 0;
+
+                      print("remaining: ${rem}");
+                      print("remaining: ${consumed}");
                       return _BatchRow(
                         batch: b,
                         unit: unit,
@@ -1547,7 +1564,7 @@ class _BatchRowState extends State<_BatchRow> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '${fmtStock(b.quantity + widget.consumed)} ${widget.unit}',
+                      '${fmtStock(b.quantity)} ${widget.unit}',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
