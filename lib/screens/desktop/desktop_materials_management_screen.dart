@@ -130,6 +130,55 @@ class _ManageMaterialsScreenState
     );
   }
 
+  void _showWriteOffDialog(MaterialModel material) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder:
+          (_) => _WriteOffDialog(
+            material: material,
+            onConfirm: (qty, note) async {
+              Navigator.of(context).pop();
+              // stockOut with the encoded note — reuses existing provider method
+              await ref
+                  .read(materialNotifierProvider.notifier)
+                  .stockOut(material.id, qty, note: note);
+              ref.read(materialNotifierProvider.notifier).fetchMaterials();
+              AppToast.show(
+                message: 'Write-off recorded',
+                subtitle: '${_fmtStock(qty)} ${material.unitShort} removed',
+                icon: Icons.remove_circle_outline_rounded,
+                color: _T.red,
+              );
+            },
+          ),
+    );
+  }
+
+  void _showQuickStockInDialog(MaterialModel material) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder:
+          (_) => _StockAdjustDialog(
+            material: material,
+            onConfirm: (qty, note) async {
+              Navigator.of(context).pop();
+              await ref
+                  .read(materialNotifierProvider.notifier)
+                  .stockIn(material.id, qty, note: note);
+              ref.read(materialNotifierProvider.notifier).fetchMaterials();
+              AppToast.show(
+                message: 'Batch received',
+                subtitle: '${_fmtStock(qty)} ${material.unitShort} added',
+                icon: Icons.add_rounded,
+                color: _T.green,
+              );
+            },
+          ),
+    );
+  }
+
   Future<void> _pickCSVFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,

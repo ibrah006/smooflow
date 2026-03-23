@@ -12,14 +12,14 @@ import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 //
 // Drop these into manage_materials_screen.dart.
 //
-// 1. _WriteOffDialog          — write-off / manual adjustment with reason codes
-// 2. _StockAdjustDialog       — enhanced "Receive Batch" with supplier + PO
-// 3. _MaterialListTile        — quick "Receive" action on hover (replace existing)
-// 4. _ReorderPointField       — reusable field widget for create + edit panels
-// 5. _StockThresholdsCard     — replaces the plain NumField in _CreatePanel
+// 1. WriteOffDialog          — write-off / manual adjustment with reason codes
+// 2. StockAdjustDialog       — enhanced "Receive Batch" with supplier + PO
+// 3. MaterialListTile        — quick "Receive" action on hover (replace existing)
+// 4. ReorderPointField       — reusable field widget for create + edit panels
+// 5. StockThresholdsCard     — replaces the plain NumField in _CreatePanel
 //                               to show both minStock and reorderPoint together
-// 6. _WriteOffReasonChip      — internal chip for reason picker
-// 7. _BatchTagChip            — structured note parser/renderer for supplier+PO
+// 6. WriteOffReasonChip      — internal chip for reason picker
+// 7. BatchTagChip            — structured note parser/renderer for supplier+PO
 //
 // WIRING NOTES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,13 +28,13 @@ import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 //   "Write Off" ghost button next to "Receive Batch" in the detail topbar.
 //
 // Quick receive from list:
-//   Replace _MaterialListTile with the version below. Pass an onQuickReceive
+//   Replace MaterialListTile with the version below. Pass an onQuickReceive
 //   callback from _MaterialListPanel → _ManageMaterialsScreenState which
 //   calls _showQuickStockInDialog(material).
 //
 // Reorder point:
 //   Add a reorderPoint field to MaterialModel.create() and save it.
-//   The _StockThresholdsCard replaces the single NumField in _CreatePanel.
+//   The StockThresholdsCard replaces the single NumField in _CreatePanel.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,19 +129,19 @@ extension _WriteOffReasonX on _WriteOffReason {
   }
 }
 
-class _WriteOffDialog extends StatefulWidget {
+class WriteOffDialog extends StatefulWidget {
   final MaterialModel material;
 
   /// onConfirm receives the quantity to deduct and the encoded note string.
   final void Function(double qty, String note) onConfirm;
 
-  const _WriteOffDialog({required this.material, required this.onConfirm});
+  const WriteOffDialog({required this.material, required this.onConfirm});
 
   @override
-  State<_WriteOffDialog> createState() => _WriteOffDialogState();
+  State<WriteOffDialog> createState() => WriteOffDialogState();
 }
 
-class _WriteOffDialogState extends State<_WriteOffDialog> {
+class WriteOffDialogState extends State<WriteOffDialog> {
   final _qtyCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
 
@@ -322,7 +322,7 @@ class _WriteOffDialogState extends State<_WriteOffDialog> {
                                                 ? 0
                                                 : 8,
                                       ),
-                                      child: _WriteOffReasonChip(
+                                      child: WriteOffReasonChip(
                                         reason: r,
                                         selected: _reason == r,
                                         onTap:
@@ -344,7 +344,7 @@ class _WriteOffDialogState extends State<_WriteOffDialog> {
                                     padding: EdgeInsets.only(
                                       right: r == _WriteOffReason.other ? 0 : 8,
                                     ),
-                                    child: _WriteOffReasonChip(
+                                    child: WriteOffReasonChip(
                                       reason: r,
                                       selected: _reason == r,
                                       onTap: () => setState(() => _reason = r),
@@ -455,22 +455,22 @@ class _WriteOffDialogState extends State<_WriteOffDialog> {
 // ─────────────────────────────────────────────────────────────────────────────
 // WRITE-OFF REASON CHIP
 // ─────────────────────────────────────────────────────────────────────────────
-class _WriteOffReasonChip extends StatefulWidget {
+class WriteOffReasonChip extends StatefulWidget {
   final _WriteOffReason reason;
   final bool selected;
   final VoidCallback onTap;
 
-  const _WriteOffReasonChip({
+  const WriteOffReasonChip({
     required this.reason,
     required this.selected,
     required this.onTap,
   });
 
   @override
-  State<_WriteOffReasonChip> createState() => _WriteOffReasonChipState();
+  State<WriteOffReasonChip> createState() => WriteOffReasonChipState();
 }
 
-class _WriteOffReasonChipState extends State<_WriteOffReasonChip> {
+class WriteOffReasonChipState extends State<WriteOffReasonChip> {
   bool _hovered = false;
 
   @override
@@ -542,7 +542,7 @@ class _WriteOffReasonChipState extends State<_WriteOffReasonChip> {
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. ENHANCED STOCK-IN DIALOG
 //
-// Extends the original _StockAdjustDialog with:
+// Extends the original StockAdjustDialog with:
 //   • Supplier name field
 //   • PO / reference number field
 //   • Expiry date (optional, for inks/adhesives)
@@ -552,19 +552,19 @@ class _WriteOffReasonChipState extends State<_WriteOffReasonChip> {
 // prefix so the model doesn't change:
 //   [BATCH:supplier="Acme",po="PO-2024-001",cost=12.50,expiry="2025-06-01"] note
 //
-// A _BatchTagChip widget below this parses and renders these tags.
+// A BatchTagChip widget below this parses and renders these tags.
 // ─────────────────────────────────────────────────────────────────────────────
-class _StockAdjustDialog extends StatefulWidget {
+class StockAdjustDialog extends StatefulWidget {
   final MaterialModel material;
   final void Function(double qty, String? note) onConfirm;
 
-  const _StockAdjustDialog({required this.material, required this.onConfirm});
+  const StockAdjustDialog({required this.material, required this.onConfirm});
 
   @override
-  State<_StockAdjustDialog> createState() => _StockAdjustDialogState();
+  State<StockAdjustDialog> createState() => StockAdjustDialogState();
 }
 
-class _StockAdjustDialogState extends State<_StockAdjustDialog> {
+class StockAdjustDialogState extends State<StockAdjustDialog> {
   final _qtyCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   final _supplierCtrl = TextEditingController();
@@ -994,7 +994,7 @@ class _ExpiryDateFieldState extends State<_ExpiryDateField> {
 //
 // Usage:
 //   if (batch.notes != null)
-//     _BatchTagChip.fromNote(batch.notes!)
+//     BatchTagChip.fromNote(batch.notes!)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BatchMetaCard extends StatelessWidget {
   final String? supplier;
@@ -1227,17 +1227,17 @@ class _MetaRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. MATERIAL LIST TILE WITH QUICK-RECEIVE HOVER ACTION
 //
-// Replaces the existing _MaterialListTile.
+// Replaces the existing MaterialListTile.
 // On hover, a ghost "Receive" button appears on the right — one tap opens
 // the stock-in dialog without having to first open the detail panel.
 // ─────────────────────────────────────────────────────────────────────────────
-class _MaterialListTile extends StatefulWidget {
+class MaterialListTile extends StatefulWidget {
   final MaterialModel material;
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onQuickReceive;
 
-  const _MaterialListTile({
+  const MaterialListTile({
     required this.material,
     required this.isSelected,
     required this.onTap,
@@ -1245,10 +1245,10 @@ class _MaterialListTile extends StatefulWidget {
   });
 
   @override
-  State<_MaterialListTile> createState() => _MaterialListTileState();
+  State<MaterialListTile> createState() => MaterialListTileState();
 }
 
-class _MaterialListTileState extends State<_MaterialListTile> {
+class MaterialListTileState extends State<MaterialListTile> {
   bool _hovered = false;
 
   @override
@@ -1463,12 +1463,12 @@ class _QuickReceiveButtonState extends State<_QuickReceiveButton> {
 // edit flow. Shows both minStock and reorderPoint together with a visual
 // explanation of what each means.
 // ─────────────────────────────────────────────────────────────────────────────
-class _StockThresholdsCard extends StatelessWidget {
+class StockThresholdsCard extends StatelessWidget {
   final TextEditingController minStockCtrl;
   final TextEditingController reorderCtrl;
   final String? unit;
 
-  const _StockThresholdsCard({
+  const StockThresholdsCard({
     required this.minStockCtrl,
     required this.reorderCtrl,
     this.unit,
