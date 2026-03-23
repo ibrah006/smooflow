@@ -1160,9 +1160,10 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     selectedBatchId: _selectedBatch?.id,
                     selectedBatchBarcode: _selectedBatch?.barcode!,
                     remaining:
-                        (b) => (_selectedBatch!.quantity -
-                                consumptions.totalQuantity)
-                            .clamp(0.0, double.infinity),
+                        (b) => (b.quantity - consumptions.totalQuantity).clamp(
+                          0.0,
+                          double.infinity,
+                        ),
                     onSelect:
                         (b) => setState(
                           () =>
