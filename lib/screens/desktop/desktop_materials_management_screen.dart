@@ -1100,8 +1100,8 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Icon(Icons.layers_outlined, size: 26, color: _T.blue),
-                const SizedBox(width: 12),
+                // const Icon(Icons.layers_outlined, size: 26, color: _T.blue),
+                // const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
