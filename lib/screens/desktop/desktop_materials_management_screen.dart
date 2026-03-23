@@ -28,6 +28,8 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
 import 'package:smooflow/screens/desktop/components/field_label.dart';
+import 'package:smooflow/screens/desktop/components/inventory_features.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/smoofield.dart';
 import 'package:smooflow/screens/desktop/components/stock_pill.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -135,18 +137,18 @@ class _ManageMaterialsScreenState
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
       builder:
-          (_) => _WriteOffDialog(
+          (_) => WriteOffDialog(
             material: material,
             onConfirm: (qty, note) async {
               Navigator.of(context).pop();
               // stockOut with the encoded note — reuses existing provider method
               await ref
                   .read(materialNotifierProvider.notifier)
-                  .stockOut(material.id, qty, note: note);
+                  .stockOut(material.id, qty, notes: note);
               ref.read(materialNotifierProvider.notifier).fetchMaterials();
               AppToast.show(
                 message: 'Write-off recorded',
-                subtitle: '${_fmtStock(qty)} ${material.unitShort} removed',
+                subtitle: '${fmtStock(qty)} ${material.unitShort} removed',
                 icon: Icons.remove_circle_outline_rounded,
                 color: _T.red,
               );
