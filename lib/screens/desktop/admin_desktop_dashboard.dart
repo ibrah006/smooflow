@@ -622,7 +622,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   onTap: () => widget.onViewChanged(_AdminView.inventory),
                 ),
                 _SidebarNavItem(
-                  icon: CupertinoIcons.cube_box,
+                  icon: Icons.account_balance,
                   label: 'Accounts',
                   isActive: widget.currentView == _AdminView.accounts,
                   onTap: () => widget.onViewChanged(_AdminView.accounts),
@@ -727,6 +727,7 @@ class _AdminTopbar extends StatelessWidget {
     _AdminView.printers => (category: 'Operations', label: 'Printers'),
     _AdminView.inventory => (category: 'Operations', label: 'Inventory'),
     _AdminView.overview => (category: '', label: ''),
+    _AdminView.accounts => (category: 'Operations', label: 'Accounts'),
     _ => (category: 'Management', label: currentView.name.capitalize()),
   };
 
