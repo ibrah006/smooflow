@@ -173,11 +173,11 @@ class _TaskCardState extends ConsumerState<TaskCard>
   (Color, IconData) _getBillingStatusStyle(BillingStatus status) {
     switch (status) {
       case BillingStatus.invoiced:
-        return (_T.blue, Icons.receipt_outlined);
+        return (_T.indigo, Icons.receipt);
       case BillingStatus.quoteGiven:
-        return (_T.amber, Icons.request_quote_outlined);
+        return (_T.blue, Icons.request_quote_outlined);
       case BillingStatus.pending:
-        return (_T.indigo, Icons.schedule_rounded);
+        return (_T.amber, Icons.schedule_rounded);
       default:
         return (_T.slate400, Icons.help_outline_rounded);
     }
