@@ -20,8 +20,8 @@ void main(List<String> args) async {
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(1200, 800),
-      minimumSize: Size(1200, 800),
+      size: Size(1200, 720),
+      minimumSize: Size(1200, 720),
       title: "Smooflow",
     );
 
