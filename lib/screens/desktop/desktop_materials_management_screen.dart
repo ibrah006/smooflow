@@ -2098,7 +2098,7 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          '−${fmtStock(widget.txn.quantity)} ${widget.unit}',
+                          '${fmtStock(widget.txn.quantity)} ${widget.unit}',
                           style: const TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
