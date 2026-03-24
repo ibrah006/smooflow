@@ -161,7 +161,7 @@ class Invoice {
         q.lineItems
             .map(
               (i) => QuotationLineItem(
-                id: 'inv_${i.id}',
+                id: '${i.id}',
                 taskId: i.taskId,
                 description: i.description,
                 subTitle: i.subTitle,

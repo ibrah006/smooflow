@@ -105,7 +105,7 @@ class InvoiceLineItem {
   /// the current values as originals.
   factory InvoiceLineItem.fromQuotationItem(QuotationLineItem q) =>
       InvoiceLineItem(
-        id: 'inv_${q.id}',
+        id: '${q.id}',
         taskId: q.taskId,
         description: q.description,
         qty: q.qty,
@@ -290,6 +290,7 @@ class BillingDocumentView extends StatelessWidget {
             TableHeader(),
             // Line items
             ...lineItems.map((item) {
+              print("item id: ${item.id}");
               final index = int.parse(item.id);
               return LineItem(
                 index: index,
