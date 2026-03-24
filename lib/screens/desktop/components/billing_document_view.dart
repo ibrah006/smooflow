@@ -564,7 +564,9 @@ class _LineItemState extends State<LineItem> {
 }
 
 class TableHeader extends StatelessWidget {
-  const TableHeader({super.key});
+  final bool isEditMode;
+
+  const TableHeader({super.key, this.isEditMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -616,6 +618,8 @@ class TableHeader extends StatelessWidget {
                 child: Text("Amount"),
               ),
             ),
+            VertDivider(),
+            if (isEditMode) SizedBox(width: 29),
             VertDivider(),
           ],
         ),

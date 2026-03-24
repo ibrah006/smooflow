@@ -956,7 +956,7 @@ class _EditableTable extends StatelessWidget {
     return Column(
       children: [
         // Same TableHeader as BillingDocumentView
-        const TableHeader(),
+        const TableHeader(isEditMode: true),
 
         // Editable rows
         ...items.asMap().entries.map(
@@ -1395,6 +1395,8 @@ class _AddLineRowState extends State<_AddLineRow> {
               const SizedBox(width: 70, height: 36),
               VertDivider(height: 36),
               const SizedBox(width: 70, height: 36),
+              VertDivider(height: 36),
+              SizedBox(width: 29),
               VertDivider(height: 36),
             ],
           ),
