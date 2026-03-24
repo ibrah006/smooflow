@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
-import 'package:smooflow/screens/desktop/components/billing_editing_view.dart';
 
 const _kLeftPaddingDescriptionColumn = 22.0;
 const _kLineColumnVerticalDividerHeight = 66.0;
