@@ -322,7 +322,7 @@ class _LineItemState extends State<LineItem> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       vertical: _kLineColumnVerticalPadding,
-                    ).copyWith(left: _kLeftPaddingDescriptionColumn),
+                    ).copyWith(left: _kLeftPaddingDescriptionColumn, right: 15),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
