@@ -41,6 +41,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -127,8 +128,9 @@ extension InvoiceStatusX on InvoiceStatus {
 
 class QuotationLineItem {
   final String id;
-  final String? taskId;
+  final int? taskId;
   String description;
+  final String? subTitle;
   double qty;
   double unitPrice;
 
@@ -138,6 +140,7 @@ class QuotationLineItem {
     required this.id,
     this.taskId,
     required this.description,
+    this.subTitle,
     required this.qty,
     required this.unitPrice,
   });
@@ -187,7 +190,7 @@ class Quotation {
 
 class InvoiceLineItem {
   final String id;
-  final String? taskId;
+  final int? taskId;
   String description;
   double qty;
   double unitPrice;
@@ -328,7 +331,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
           ].join(' · ');
           return QuotationLineItem(
             id: 'q_${t.id}_${DateTime.now().millisecondsSinceEpoch}',
-            taskId: t.id.toString(),
+            taskId: t.id,
             description: desc.isNotEmpty ? desc : t.name,
             qty: (t.quantity ?? 1).toDouble(),
             unitPrice: 0,
@@ -449,7 +452,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     }
 
     return Scaffold(
-      backgroundColor: _T.slate50,
+      backgroundColor: _T.white,
       body: Column(
         children: [
           // ── Topbar ────────────────────────────────────────────────────
@@ -984,7 +987,7 @@ class _AccountsListPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: _T.white,
+        color: _T.slate50,
         border: Border(right: BorderSide(color: _T.slate200)),
       ),
       child: Column(
@@ -1459,116 +1462,20 @@ class _QuotationDetailState extends State<_QuotationDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _T.slate50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Detail topbar ──────────────────────────────────────────────
-          _DetailTopbar(
-            number: _q.number,
-            icon: Icons.receipt_long_outlined,
-            iconColor: _T.blue,
-            iconBg: _T.blue50,
-            subtitle: widget.project?.name ?? '',
-            onClose: widget.onClose,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Status picker
-                _StatusDropdown<QuotationStatus>(
-                  current: _q.status,
-                  values: QuotationStatus.values,
-                  label: (s) => s.label,
-                  color: (s) => s.color,
-                  bg: (s) => s.bg,
-                  onChanged: _setStatus,
-                ),
-                const SizedBox(width: 8),
-                // Create Invoice CTA
-                if (!widget.hasInvoice)
-                  _PrimaryBtn(
-                    label: 'Create Invoice',
-                    icon: Icons.summarize_outlined,
-                    enabled: _q.total > 0,
-                    onTap: widget.onCreateInvoice,
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _T.green50,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: _T.green.withOpacity(0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_rounded, size: 11, color: _T.green),
-                        SizedBox(width: 5),
-                        Text(
-                          'Invoice created',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: _T.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // ── Scrollable body ────────────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Document header card
-                  _DocumentHeaderCard(
-                    number: _q.number,
-                    project: widget.project,
-                    date: _q.createdAt,
-                    label: 'QUOTATION',
-                    color: _T.blue,
-                    bg: _T.blue50,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Line items table
-                  _LineItemsTable(
-                    items: _q.lineItems,
-                    editable: true,
-                    onUpdate: _updateLine,
-                    onRemove: _removeLine,
-                    onAddLine: _addBlankLine,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Notes
-                  _NotesField(
-                    value: _q.notes,
-                    onChanged: (v) {
-                      setState(() => _q.notes = v);
-                      widget.onUpdate(_q);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Footer total bar ───────────────────────────────────────────
-          _TotalFooter(total: _q.total),
-        ],
-      ),
+    return BillingDocumentView(
+      lineItems: List.generate(widget.projectTasks.length, (index) {
+        final task = widget.projectTasks[index];
+        return QuotationLineItem(
+          id: (index + 1).toString(),
+          taskId: task.id,
+          description: task.ref ?? task.name,
+          subTitle:
+              (task.size != null ? "Size: ${task.size}" : "") +
+              "${task.size != null ? " " : ""}with Installation at site",
+          qty: task.productionQuantity ?? 1,
+          unitPrice: 0,
+        );
+      }),
     );
   }
 }
