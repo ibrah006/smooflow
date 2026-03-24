@@ -2,12 +2,162 @@ import 'package:flutter/material.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 
-const _kLeftPaddingDescriptionColumn = 22.0;
-const _kLineColumnVerticalDividerHeight = 66.0;
+const kLeftPaddingDescriptionColumn = 22.0;
+const kLineColumnVerticalDividerHeight = 66.0;
 // Increase (_kLineColumnVerticalDividerHeight) by 14 for every line (> 1) for description text in line item
-const _kLineColumnVerticalDividerHeightDescriptionMultiplier = 15.0;
-const _kLineColumnVerticalPadding = 17.0;
-final _kTableDividerColor = Colors.grey.shade200;
+const kLineColumnVerticalDividerHeightDescriptionMultiplier = 15.0;
+const kLineColumnVerticalPadding = 17.0;
+final kTableDividerColor = Colors.grey.shade200;
+
+class QuotationLineItem {
+  final String id;
+  final int? taskId;
+  String description;
+  final String? subTitle;
+  double qty;
+  double unitPrice;
+
+  double get amount => qty * unitPrice;
+
+  QuotationLineItem({
+    required this.id,
+    this.taskId,
+    required this.description,
+    this.subTitle,
+    required this.qty,
+    required this.unitPrice,
+  });
+
+  QuotationLineItem copyWith({
+    String? description,
+    double? qty,
+    double? unitPrice,
+  }) => QuotationLineItem(
+    id: id,
+    taskId: taskId,
+    description: description ?? this.description,
+    qty: qty ?? this.qty,
+    unitPrice: unitPrice ?? this.unitPrice,
+  );
+
+  // Snapshot for invoice diffing
+  Map<String, dynamic> toSnapshot() => {
+    'description': description,
+    'qty': qty,
+    'unitPrice': unitPrice,
+  };
+}
+
+class Quotation {
+  final String id;
+  final String projectId;
+  List<QuotationLineItem> lineItems;
+  QuotationStatus status;
+  String notes;
+  final DateTime createdAt;
+  // incremented label, e.g. "QUO-001"
+  final String number;
+
+  double get total => lineItems.fold(0, (s, i) => s + i.amount);
+
+  Quotation({
+    required this.id,
+    required this.projectId,
+    required this.lineItems,
+    required this.status,
+    required this.notes,
+    required this.createdAt,
+    required this.number,
+  });
+}
+
+class InvoiceLineItem {
+  final String id;
+  final int? taskId;
+  String description;
+  double qty;
+  double unitPrice;
+
+  // Snapshot from quotation at time of invoice creation
+  final String originalDescription;
+  final double originalQty;
+  final double originalUnitPrice;
+
+  double get amount => qty * unitPrice;
+
+  bool get descriptionChanged => description != originalDescription;
+  bool get qtyChanged => qty != originalQty;
+  bool get unitPriceChanged => unitPrice != originalUnitPrice;
+  bool get hasAnyChange => descriptionChanged || qtyChanged || unitPriceChanged;
+
+  InvoiceLineItem({
+    required this.id,
+    this.taskId,
+    required this.description,
+    required this.qty,
+    required this.unitPrice,
+    required this.originalDescription,
+    required this.originalQty,
+    required this.originalUnitPrice,
+  });
+
+  /// Creates an InvoiceLineItem from a QuotationLineItem, snapshotting
+  /// the current values as originals.
+  factory InvoiceLineItem.fromQuotationItem(QuotationLineItem q) =>
+      InvoiceLineItem(
+        id: 'inv_${q.id}',
+        taskId: q.taskId,
+        description: q.description,
+        qty: q.qty,
+        unitPrice: q.unitPrice,
+        originalDescription: q.description,
+        originalQty: q.qty,
+        originalUnitPrice: q.unitPrice,
+      );
+}
+
+class Invoice {
+  final String id;
+  final String quotationId;
+  final String projectId;
+  List<InvoiceLineItem> lineItems;
+  InvoiceStatus status;
+  String notes;
+  DateTime? dueDate;
+  final DateTime createdAt;
+  final String number; // e.g. "INV-001"
+
+  double get total => lineItems.fold(0, (s, i) => s + i.amount);
+  double get originalTotal =>
+      lineItems.fold(0, (s, i) => s + i.originalQty * i.originalUnitPrice);
+  double get totalDelta => total - originalTotal;
+  bool get hasChanges => lineItems.any((i) => i.hasAnyChange);
+
+  Invoice({
+    required this.id,
+    required this.quotationId,
+    required this.projectId,
+    required this.lineItems,
+    required this.status,
+    required this.notes,
+    required this.dueDate,
+    required this.createdAt,
+    required this.number,
+  });
+
+  /// Creates an Invoice from a Quotation, snapshotting all line items.
+  factory Invoice.fromQuotation(Quotation q, String invoiceNumber) => Invoice(
+    id: 'inv_${DateTime.now().millisecondsSinceEpoch}',
+    quotationId: q.id,
+    projectId: q.projectId,
+    lineItems: q.lineItems.map(InvoiceLineItem.fromQuotationItem).toList(),
+    status: InvoiceStatus.draft,
+    notes: q.notes,
+    dueDate: DateTime.now().add(const Duration(days: 30)),
+    createdAt: DateTime.now(),
+    number: invoiceNumber,
+  );
+}
 
 class BillingDocumentView extends StatelessWidget {
   final List<QuotationLineItem> lineItems;
@@ -301,9 +451,7 @@ class _LineItemState extends State<LineItem> {
         decoration:
             widget.isLast
                 ? BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: _kTableDividerColor),
-                  ),
+                  border: Border(bottom: BorderSide(color: kTableDividerColor)),
                 )
                 : null,
         child: StreamBuilder(
@@ -312,8 +460,8 @@ class _LineItemState extends State<LineItem> {
             final descLines = asyncSnapshot.data ?? 1;
 
             final dividerHeight =
-                _kLineColumnVerticalDividerHeight +
-                (_kLineColumnVerticalDividerHeightDescriptionMultiplier *
+                kLineColumnVerticalDividerHeight +
+                (kLineColumnVerticalDividerHeightDescriptionMultiplier *
                     (descLines - 1));
 
             return Row(
@@ -323,7 +471,7 @@ class _LineItemState extends State<LineItem> {
                 Container(
                   width: 35,
                   padding: EdgeInsets.symmetric(
-                    vertical: _kLineColumnVerticalPadding,
+                    vertical: kLineColumnVerticalPadding,
                   ),
                   child: Center(child: Text("${widget.index}")),
                 ),
@@ -331,8 +479,8 @@ class _LineItemState extends State<LineItem> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: _kLineColumnVerticalPadding,
-                    ).copyWith(left: _kLeftPaddingDescriptionColumn, right: 15),
+                      vertical: kLineColumnVerticalPadding,
+                    ).copyWith(left: kLeftPaddingDescriptionColumn, right: 15),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -376,7 +524,7 @@ class _LineItemState extends State<LineItem> {
                   child: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(
-                      vertical: _kLineColumnVerticalPadding,
+                      vertical: kLineColumnVerticalPadding,
                     ).copyWith(right: 10),
                     child: Text(widget.quantity.toStringAsFixed(2)),
                   ),
@@ -387,7 +535,7 @@ class _LineItemState extends State<LineItem> {
                   child: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(
-                      vertical: _kLineColumnVerticalPadding,
+                      vertical: kLineColumnVerticalPadding,
                     ).copyWith(right: 10),
                     child: Text(widget.rate.toStringAsFixed(2)),
                   ),
@@ -398,7 +546,7 @@ class _LineItemState extends State<LineItem> {
                   child: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(
-                      vertical: _kLineColumnVerticalPadding,
+                      vertical: kLineColumnVerticalPadding,
                     ).copyWith(right: 10),
                     child: Text(
                       (widget.quantity * widget.rate).toStringAsFixed(2),
@@ -436,7 +584,7 @@ class TableHeader extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric().copyWith(
-                  left: _kLeftPaddingDescriptionColumn,
+                  left: kLeftPaddingDescriptionColumn,
                 ),
                 child: Text("Item & Description"),
               ),
@@ -482,10 +630,6 @@ class VertDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height ?? 27,
-      width: 1,
-      color: _kTableDividerColor,
-    );
+    return Container(height: height ?? 27, width: 1, color: kTableDividerColor);
   }
 }
