@@ -1210,6 +1210,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                   duration: const Duration(milliseconds: 120),
                   child: _RemoveRowButton(onTap: widget.onRemove),
                 ),
+                VertDivider(height: _columnHeight),
               ],
             ),
 
