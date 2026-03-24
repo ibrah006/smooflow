@@ -1,9 +1,10 @@
 // services/api/pricing_api.dart
 import 'dart:convert';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/models/pricing.dart';
 
 class PricingRepo {
-  Future<List<Pricing>> getPricing(String organizationId) async {
+  Future<List<Pricing>> getPricing() async {
     final response = await ApiClient.http.get('/pricing');
     final List<dynamic> data = json.decode(response.body);
     return data.map((json) => Pricing.fromJson(json)).toList();
@@ -35,7 +36,7 @@ class PricingRepo {
   Future<Pricing> updatePricing(Pricing pricing) async {
     final response = await ApiClient.http.put(
       '/pricing/${pricing.id}',
-      body: json.encode(pricing.toJson()),
+      body: pricing.toJson(),
     );
     return Pricing.fromJson(json.decode(response.body));
   }
@@ -51,7 +52,7 @@ class PricingRepo {
   ) async {
     final response = await ApiClient.http.put(
       '/pricing/$pricingId/client',
-      body: json.encode({'clientId': clientId, 'costs': costs.toJson()}),
+      body: {'clientId': clientId, 'costs': costs.toJson()},
     );
     return Pricing.fromJson(json.decode(response.body));
   }
@@ -69,9 +70,7 @@ class PricingRepo {
   ) async {
     final response = await ApiClient.http.put(
       '/pricing/$pricingId/client/bulk',
-      body: json.encode(
-        clientPricingMap.map((key, value) => MapEntry(key, value.toJson())),
-      ),
+      body: clientPricingMap.map((key, value) => MapEntry(key, value.toJson())),,
     );
     return Pricing.fromJson(json.decode(response.body));
   }
