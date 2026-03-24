@@ -11,8 +11,18 @@ final _kTableDividerColor = Colors.grey.shade200;
 
 class BillingDocumentView extends StatelessWidget {
   final List<QuotationLineItem> lineItems;
+  final double vatPercentage;
 
-  const BillingDocumentView({super.key, required this.lineItems});
+  const BillingDocumentView({
+    super.key,
+    required this.lineItems,
+    required this.vatPercentage,
+  });
+
+  double get subTotal =>
+      lineItems.map((item) => item.amount).reduce((a, b) => a + b);
+
+  double get total => (subTotal + (subTotal * vatPercentage));
 
   @override
   Widget build(BuildContext context) {
@@ -171,10 +181,10 @@ class BillingDocumentView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       spacing: 13,
                       children: [
-                        Text("600.00"),
-                        Text("5.00%"),
+                        Text(subTotal.toStringAsFixed(2)),
+                        Text("${vatPercentage.toStringAsFixed(2)}%"),
                         Text(
-                          "AED ${(600 + (600 * 0.05)).toStringAsFixed(2)}",
+                          "AED ${total.toStringAsFixed(2)}",
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -203,7 +213,7 @@ class BillingDocumentView extends StatelessWidget {
                     ),
                     // Billing Values
                     Text(
-                      "AED ${(600 + (600 * 0.05)).toStringAsFixed(2)}",
+                      "AED ${total.toStringAsFixed(2)}",
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ],

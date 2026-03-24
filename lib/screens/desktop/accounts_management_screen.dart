@@ -1463,6 +1463,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
   @override
   Widget build(BuildContext context) {
     return BillingDocumentView(
+      vatPercentage: 5,
       lineItems: List.generate(widget.projectTasks.length, (index) {
         final task = widget.projectTasks[index];
         return QuotationLineItem(
