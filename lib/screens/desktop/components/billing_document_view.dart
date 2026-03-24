@@ -172,7 +172,7 @@ class BillingDocumentView extends StatelessWidget {
   double get subTotal =>
       lineItems.map((item) => item.amount).reduce((a, b) => a + b);
 
-  double get total => (subTotal + (subTotal * vatPercentage));
+  double get total => (subTotal + (subTotal * vatPercentage / 100));
 
   @override
   Widget build(BuildContext context) {
