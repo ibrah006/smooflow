@@ -70,7 +70,7 @@ class PricingRepo {
   ) async {
     final response = await ApiClient.http.put(
       '/pricing/$pricingId/client/bulk',
-      body: clientPricingMap.map((key, value) => MapEntry(key, value.toJson())),,
+      body: clientPricingMap.map((key, value) => MapEntry(key, value.toJson())),
     );
     return Pricing.fromJson(json.decode(response.body));
   }
