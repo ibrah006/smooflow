@@ -28,10 +28,10 @@ class PricingRepo {
   Future<Pricing> createPricing(Pricing pricing) async {
     final response = await ApiClient.http.post(
       '/pricing',
-      body: json.encode({
+      body: {
         "description": pricing.description,
         "clientPrices": pricing.clientPrices,
-      }),
+      },
     );
 
     if (response.statusCode != 200) {
