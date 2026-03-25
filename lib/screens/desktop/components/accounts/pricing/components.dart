@@ -2167,7 +2167,7 @@ class _EmptyClientPricing extends StatelessWidget {
           GhostActionButton(
             label: 'Add Client',
             color: _T.slate500,
-            icon: Icons.cancel,
+            icon: Icons.add,
             onTap: onAdd,
           ),
         ],
