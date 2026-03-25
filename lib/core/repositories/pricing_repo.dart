@@ -34,11 +34,13 @@ class PricingRepo {
       },
     );
 
-    if (response.statusCode != 200) {
+    print("create pricing response body: ${response.body}");
+
+    if (response.statusCode != 201) {
+      print("errors from server-side: ${json.decode(response.body)['errors']}");
       throw json.decode(response.body)['message'];
     }
 
-    print("create pricing response body: ${response.body}");
     return Pricing.fromJson(json.decode(response.body));
   }
 
