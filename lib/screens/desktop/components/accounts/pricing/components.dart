@@ -1483,22 +1483,22 @@ class _GhostIconButtonState extends State<_GhostIconButton> {
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE PRICING PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-class _CreatePricingPanel extends StatefulWidget {
+class CreatePricingPanel extends StatefulWidget {
   final List<Company> companies;
   final ValueChanged<Pricing> onCreate;
   final VoidCallback onCancel;
 
-  const _CreatePricingPanel({
+  const CreatePricingPanel({
     required this.companies,
     required this.onCreate,
     required this.onCancel,
   });
 
   @override
-  State<_CreatePricingPanel> createState() => _CreatePricingPanelState();
+  State<CreatePricingPanel> createState() => _CreatePricingPanelState();
 }
 
-class _CreatePricingPanelState extends State<_CreatePricingPanel> {
+class _CreatePricingPanelState extends State<CreatePricingPanel> {
   final _descCtrl = TextEditingController();
   final _printCtrl = TextEditingController();
   final _appCtrl = TextEditingController();
