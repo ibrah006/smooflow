@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
+import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
 import 'package:smooflow/screens/desktop/components/field_label.dart';
 import 'package:smooflow/screens/desktop/components/smoofield.dart';
@@ -570,7 +571,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
           ),
           child: Row(
             children: [
-              BackButton(onPressed: widget.onClose),
+              CloseBtn(onTap: widget.onClose),
               const SizedBox(width: 14),
               Container(
                 width: 28,
@@ -1545,7 +1546,7 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
           ),
           child: Row(
             children: [
-              BackButton(onPressed: widget.onCancel),
+              CloseBtn(onTap: widget.onCancel),
               const SizedBox(width: 14),
               Container(
                 width: 28,
