@@ -21,7 +21,7 @@ import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/company_provider.dart';
-import 'package:smooflow/providers/pricing_providers.dart';
+import 'package:smooflow/providers/pricing_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/accounts/pricing/components.dart';
