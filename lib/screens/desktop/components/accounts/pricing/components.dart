@@ -295,7 +295,6 @@ class _PricingListRowState extends State<_PricingListRow> {
                     : [],
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Icon badge
               AnimatedContainer(
@@ -303,7 +302,10 @@ class _PricingListRowState extends State<_PricingListRow> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: sel ? _T.blue.withOpacity(0.12) : _T.slate100,
+                  color:
+                      sel
+                          ? _T.blue.withOpacity(0.12)
+                          : (_hovered ? _T.slate200 : _T.slate100),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -329,14 +331,15 @@ class _PricingListRowState extends State<_PricingListRow> {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
                         _CostChip(
                           label: fmtCurrency(defaultCosts.printCost),
                           suffix: 'print',
                           selected: sel,
                         ),
-                        const SizedBox(width: 6),
                         _CostChip(
                           label: fmtCurrency(defaultCosts.applicationCost),
                           suffix: 'install',
