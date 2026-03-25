@@ -96,24 +96,14 @@ class PricingNotifier extends StateNotifier<PricingState> {
       switch (event.type) {
         case PricingChangeType.created:
           state = state.copyWith(
-            pricingData: [
-              ...state.pricingData,
-              Pricing.fromJson(event as Map<String, dynamic>),
-            ],
+            pricingData: [...state.pricingData, event.pricing],
           );
           break;
         case PricingChangeType.updated:
           state = state.copyWith(
             pricingData:
                 state.pricingData
-                    .map(
-                      (p) =>
-                          p.id == event.pricing.id
-                              ? Pricing.fromJson(
-                                event.pricing as Map<String, dynamic>,
-                              )
-                              : p,
-                    )
+                    .map((p) => p.id == event.pricing.id ? event.pricing : p)
                     .toList(),
           );
           break;
