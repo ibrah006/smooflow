@@ -27,6 +27,7 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/accounts/pricing/components.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
+import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1682,7 +1683,7 @@ class _DocTopbar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Close
-          _CloseBtn(onTap: onClose),
+          CloseBtn(onTap: onClose),
           const SizedBox(width: 14),
 
           // Number + project
@@ -1861,43 +1862,6 @@ class _InvoiceCreatedChip extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _CloseBtn extends StatefulWidget {
-  final VoidCallback onTap;
-  const _CloseBtn({required this.onTap});
-
-  @override
-  State<_CloseBtn> createState() => _CloseBtnState();
-}
-
-class _CloseBtnState extends State<_CloseBtn> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    onEnter: (_) => setState(() => _hovered = true),
-    onExit: (_) => setState(() => _hovered = false),
-    child: GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: _hovered ? _T.slate100 : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: _T.slate200),
-        ),
-        child: Icon(
-          Icons.close_rounded,
-          size: 13,
-          color: _hovered ? _T.ink3 : _T.slate400,
-        ),
-      ),
     ),
   );
 }
