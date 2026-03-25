@@ -507,7 +507,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
               children: [
                 // Left panel - changes based on selected main tab
                 SizedBox(
-                  width: 300,
+                  width: 320,
                   child:
                       _mainTabController.index == 0
                           ? _AccountsListPanel(
