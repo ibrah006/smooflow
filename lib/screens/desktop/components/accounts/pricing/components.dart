@@ -1041,7 +1041,7 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                   ],
                 ),
               ),
-              if (!_isEditing)
+              if (!_isEditing) ...[
                 _GhostIconButton(
                   icon: Icons.edit_outlined,
                   onTap: () {
@@ -1050,12 +1050,13 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                     });
                   },
                 ),
-              const SizedBox(width: 4),
-              _GhostIconButton(
-                icon: Icons.delete_outline_rounded,
-                onTap: widget.onRemove,
-                color: _T.red,
-              ),
+                const SizedBox(width: 4),
+                _GhostIconButton(
+                  icon: Icons.delete_outline_rounded,
+                  onTap: widget.onRemove,
+                  color: _T.red,
+                ),
+              ],
             ],
           ),
           if (_isEditing)
