@@ -121,7 +121,6 @@ class Pricing {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
     'description': description,
     'organizationId': organizationId,
     'clientPrices': clientPrices.map(
