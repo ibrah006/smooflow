@@ -1071,6 +1071,7 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                           label: 'Save Pricing',
                           icon: Icons.save_rounded,
                           onTap: () {
+                            _isEditing = false;
                             final printCost =
                                 double.tryParse(_printCtrl.text.trim()) ?? 0;
                             final appCost =
