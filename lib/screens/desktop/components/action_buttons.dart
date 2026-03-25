@@ -113,9 +113,10 @@ class _GreenActionButtonState extends State<GreenActionButton> {
 
   @override
   Widget build(BuildContext context) => MouseRegion(
-    cursor: widget.enabled && !widget.loading
-        ? SystemMouseCursors.click
-        : SystemMouseCursors.basic,
+    cursor:
+        widget.enabled && !widget.loading
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
     onEnter: (_) {
       if (widget.enabled && !widget.loading) setState(() => _hovered = true);
     },
@@ -127,33 +128,50 @@ class _GreenActionButtonState extends State<GreenActionButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  ? (_hovered ? const Color(0xFF059669) : _T.green)
+        decoration: BoxDecoration(
+          color:
+              widget.enabled
+                  ? (widget.loading
+                      ? _T.green.withOpacity(0.7) // Loading state color
+                      : (_hovered ? const Color(0xFF059669) : _T.green))
                   : Colors.grey, // Disabled color
           borderRadius: BorderRadius.circular(_T.r),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.icon,
-              size: 14,
-              color:
-                  widget.enabled
-                      ? Colors.white
-                      : Colors.grey[400], // Disabled icon color
-            ),
-            const SizedBox(width: 5),
-            Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 12.5,
-                color:
-                    widget.enabled
-                        ? Colors.white
-                        : Colors.grey[400], // Disabled text color
-              ),
-            ),
-          ],
+          children:
+              widget.loading
+                  ? [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ]
+                  : [
+                    Icon(
+                      widget.icon,
+                      size: 14,
+                      color:
+                          widget.enabled
+                              ? Colors.white
+                              : Colors.grey[400], // Disabled icon color
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color:
+                            widget.enabled
+                                ? Colors.white
+                                : Colors.grey[400], // Disabled text color
+                      ),
+                    ),
+                  ],
         ),
       ),
     ),
