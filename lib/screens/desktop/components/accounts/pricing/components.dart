@@ -676,8 +676,8 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                             return _ClientPricingRow(
                               client: client,
                               costs: costs,
-                              onEdit: () => _editClientPricing(clientId),
                               onRemove: () => _removeClientPricing(clientId),
+                              onSave: _setClientPricing,
                             );
                           }),
                         if (availableClients.isNotEmpty)
@@ -917,15 +917,14 @@ class _PricingCardState extends State<PricingCard> {
 class _ClientPricingRow extends StatefulWidget {
   final Company client;
   final PricingCosts costs;
-  @Deprecated("No longer use this")
-  final VoidCallback onEdit;
   final VoidCallback onRemove;
+  final Function(String clientId, PricingCosts) onSave;
 
   const _ClientPricingRow({
     required this.client,
     required this.costs,
-    required this.onEdit,
     required this.onRemove,
+    required this.onSave,
   });
 
   @override
@@ -968,8 +967,6 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
       _isEditing = false;
     });
   }
-
-  void _onSave(PricingCosts pricingCosts) {}
 
   @override
   Widget build(BuildContext context) {
@@ -1097,7 +1094,8 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                                 double.tryParse(_printCtrl.text.trim()) ?? 0;
                             final appCost =
                                 double.tryParse(_appCtrl.text.trim()) ?? 0;
-                            _onSave(
+                            widget.onSave(
+                              widget.client.id,
                               PricingCosts(
                                 printCost: printCost,
                                 applicationCost: appCost,
