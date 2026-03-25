@@ -770,7 +770,8 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                               onSave: _setClientPricing,
                             );
                           }),
-                        if (availableClients.isNotEmpty)
+                        if (availableClients.isNotEmpty &&
+                            customClients.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 12),
                             child: _AddClientButton(
