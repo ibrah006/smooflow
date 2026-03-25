@@ -46,6 +46,11 @@ class PricingRepo {
       '/pricing/${pricing.id}',
       body: pricing.toJson(),
     );
+
+    if (response.statusCode != 200) {
+      throw json.decode(response.body)['message'];
+    }
+
     return Pricing.fromJson(json.decode(response.body));
   }
 
