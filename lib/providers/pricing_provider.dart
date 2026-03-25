@@ -86,8 +86,13 @@ class PricingNotifier extends StateNotifier<PricingState> {
     _initialize();
   }
 
-  void _initialize() {
+  void _initialize() async {
+    print("pricing notifier initialized");
+
     _client.pricingChanges.listen((event) {
+      print(
+        "new event detected: ${event}\ntype: ${event.type}\nchanges: ${event.changes}",
+      );
       switch (event.type) {
         case PricingChangeType.created:
           state = state.copyWith(

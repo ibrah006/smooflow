@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/local_http.dart';
+import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -11,11 +12,15 @@ class PricingChangeEvent {
   final PricingChangeType type;
   final String pricingId;
   final Map<String, dynamic>? changes;
+  final String changedBy;
+  final Pricing pricing;
 
   PricingChangeEvent({
     required this.type,
     required this.pricingId,
     this.changes,
+    required this.changedBy,
+    required this.pricing,
   });
 
   factory PricingChangeEvent.fromJson(Map<String, dynamic> json) {
@@ -36,6 +41,8 @@ class PricingChangeEvent {
       type: getType(json['type'] as String),
       pricingId: json['pricingId'] as String,
       changes: json['changes'] as Map<String, dynamic>?,
+      pricing: Pricing.fromJson(json['pricing'] as Map<String, dynamic>),
+      changedBy: json['changedBy'],
     );
   }
 }
