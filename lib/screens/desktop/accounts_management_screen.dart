@@ -16,6 +16,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/components/connection_status_banner.dart';
+import 'package:smooflow/core/api/websocket_clients/pricing_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/core/models/project.dart';
@@ -237,6 +239,10 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     _mainTabController = TabController(length: 2, vsync: this); // NEW
     _tab.addListener(() => setState(() {}));
     _mainTabController.addListener(() => setState(() {}));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(pricingStateProvider.notifier).fetchPricing();
+    });
   }
 
   @override
@@ -348,12 +354,61 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     _selectedInvoice = inv;
   });
 
+  void _showChangeNotification(BuildContext context, PricingChangeEvent event) {
+    String message;
+    IconData icon;
+    Color color;
+
+    switch (event.type) {
+      case PricingChangeType.created:
+        message = 'New member invited';
+        icon = Icons.person_add;
+        color = _T.green;
+        break;
+      case PricingChangeType.updated:
+        message = 'Member updated';
+        icon = Icons.update;
+        color = _T.blue;
+        break;
+      case PricingChangeType.deleted:
+        message = 'Member removed';
+        icon = Icons.person_remove;
+        color = _T.red;
+        break;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final projects = ref.watch(projectNotifierProvider);
     final tasks = ref.watch(taskNotifierProvider).tasks;
     final pricingList = ref.watch(pricingStateProvider).pricingData;
     final companies = ref.watch(companyListProvider).companies;
+
+    // Listen for real-time changes
+    ref.listen<AsyncValue<PricingChangeEvent>>(pricingChangesStreamProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((event) {
+        _showChangeNotification(context, event);
+      });
+    });
 
     // Determine what to show in the right panel
     final Widget detail;
@@ -495,7 +550,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 // NEW: Topbar with tabs for Documents / Price Lists
 // ─────────────────────────────────────────────────────────────────────────────
-class _AccountsTopbarWithTabs extends StatelessWidget {
+class _AccountsTopbarWithTabs extends ConsumerWidget {
   final TabController mainTabController;
   final List<Project> projects;
   final List<Task> tasks;
@@ -511,7 +566,7 @@ class _AccountsTopbarWithTabs extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -568,6 +623,7 @@ class _AccountsTopbarWithTabs extends StatelessWidget {
               ],
             ),
           ),
+          SizedBox(width: 15),
           const Spacer(),
           // Action button changes based on selected tab
           AnimatedBuilder(

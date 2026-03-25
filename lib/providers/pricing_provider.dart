@@ -102,7 +102,7 @@ class PricingNotifier extends StateNotifier<PricingState> {
   }
 
   // Fetch all pricing items for organization
-  Future<void> fetchPricing(String organizationId) async {
+  Future<void> fetchPricing() async {
     try {
       final pricing = await _api.getPricing();
       state = state.copyWith(pricingData: pricing);
