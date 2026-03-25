@@ -203,7 +203,7 @@ class AccountsManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final TabController _tab;
 
   // Add these new variables
