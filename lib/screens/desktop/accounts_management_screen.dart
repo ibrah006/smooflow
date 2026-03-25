@@ -352,7 +352,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Widget build(BuildContext context) {
     final projects = ref.watch(projectNotifierProvider);
     final tasks = ref.watch(taskNotifierProvider).tasks;
-    final pricingList = ref.watch(pricingNotifierProvider);
+    final pricingList = ref.watch(pricingStateProvider).pricingData;
     final companies = ref.watch(companyListProvider).companies;
 
     // Determine what to show in the right panel
@@ -366,7 +366,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
             companies: companies,
             onCreate: (pricing) async {
               final created = await ref
-                  .read(pricingNotifierProvider.notifier)
+                  .read(pricingStateProvider.notifier)
                   .createPricing(pricing);
               _selectPricing(created); // Select the newly created pricing
             },
@@ -378,7 +378,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
             pricing: _selectedPricing!,
             companies: companies,
             onUpdate: (updated) {
-              ref.read(pricingNotifierProvider.notifier).updatePricing(updated);
+              ref.read(pricingStateProvider.notifier).updatePricing(updated);
               _updatePricing(updated);
             },
             onClose: _closePricingDetail,
