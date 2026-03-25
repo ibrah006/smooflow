@@ -643,7 +643,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
         // Topbar — matches create task screen
         Container(
           height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 25),
           decoration: const BoxDecoration(
             color: _T.white,
             border: Border(bottom: BorderSide(color: _T.slate100)),
