@@ -93,42 +93,64 @@ class GreenActionButton extends StatefulWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final bool enabled; // Added isEnabled property
+
   const GreenActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
+    this.enabled = true, // Default value set to true
   });
+
   @override
   State<GreenActionButton> createState() => _GreenActionButtonState();
 }
 
 class _GreenActionButtonState extends State<GreenActionButton> {
   bool _hovered = false;
+
   @override
   Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    onEnter: (_) => setState(() => _hovered = true),
-    onExit: (_) => setState(() => _hovered = false),
+    cursor:
+        widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+    onEnter: (_) {
+      if (widget.enabled) setState(() => _hovered = true);
+    },
+    onExit: (_) {
+      if (widget.enabled) setState(() => _hovered = false);
+    },
     child: GestureDetector(
-      onTap: widget.onTap,
+      onTap: widget.enabled ? widget.onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: _hovered ? const Color(0xFF059669) : _T.green,
+          color:
+              widget.enabled
+                  ? (_hovered ? const Color(0xFF059669) : _T.green)
+                  : Colors.grey, // Disabled color
           borderRadius: BorderRadius.circular(_T.r),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, size: 14, color: Colors.white),
+            Icon(
+              widget.icon,
+              size: 14,
+              color:
+                  widget.enabled
+                      ? Colors.white
+                      : Colors.grey[400], // Disabled icon color
+            ),
             const SizedBox(width: 5),
             Text(
               widget.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color:
+                    widget.enabled
+                        ? Colors.white
+                        : Colors.grey[400], // Disabled text color
               ),
             ),
           ],

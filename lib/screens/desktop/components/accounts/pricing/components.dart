@@ -1479,3 +1479,301 @@ class _GhostIconButtonState extends State<_GhostIconButton> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE PRICING PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+class _CreatePricingPanel extends StatefulWidget {
+  final List<Company> companies;
+  final ValueChanged<Pricing> onCreate;
+  final VoidCallback onCancel;
+
+  const _CreatePricingPanel({
+    required this.companies,
+    required this.onCreate,
+    required this.onCancel,
+  });
+
+  @override
+  State<_CreatePricingPanel> createState() => _CreatePricingPanelState();
+}
+
+class _CreatePricingPanelState extends State<_CreatePricingPanel> {
+  final _descCtrl = TextEditingController();
+  final _printCtrl = TextEditingController();
+  final _appCtrl = TextEditingController();
+  bool _isSubmitting = false;
+  bool _descTouched = false;
+
+  bool get _isValid => _descCtrl.text.trim().isNotEmpty;
+
+  Future<void> _create() async {
+    if (!_isValid) {
+      setState(() => _descTouched = true);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    final printCost = double.tryParse(_printCtrl.text.trim()) ?? 0;
+    final appCost = double.tryParse(_appCtrl.text.trim()) ?? 0;
+
+    final pricing = Pricing.create(
+      description: _descCtrl.text.trim(),
+      organizationId: '', // Will be set by provider
+      clientPrices: {
+        'default': PricingCosts(printCost: printCost, applicationCost: appCost),
+      },
+    );
+
+    widget.onCreate(pricing);
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _printCtrl.dispose();
+    _appCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Topbar
+        Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(
+            color: _T.white,
+            border: Border(bottom: BorderSide(color: _T.slate100)),
+          ),
+          child: Row(
+            children: [
+              CloseButton(onPressed: widget.onCancel),
+              const SizedBox(width: 14),
+              const Text(
+                'New Price List',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                ),
+              ),
+              const Spacer(),
+              GreenActionButton(
+                label: _isSubmitting ? 'Creating...' : 'Create',
+                icon: Icons.add_rounded,
+                enabled: !_isSubmitting && _isValid,
+                onTap: _create,
+              ),
+            ],
+          ),
+        ),
+
+        // Body
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Description field
+                Container(
+                  decoration: BoxDecoration(
+                    color: _T.white,
+                    borderRadius: BorderRadius.circular(_T.rLg),
+                    border: Border.all(color: _T.slate200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.title_outlined,
+                              size: 16,
+                              color: _T.purple,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Price List Details',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _T.ink2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: _T.slate100),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _descCtrl,
+                              autofocus: true,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                labelText: 'Price List Name',
+                                hintText: 'e.g., Standard Vinyl Pricing',
+                                errorText:
+                                    _descTouched &&
+                                            _descCtrl.text.trim().isEmpty
+                                        ? 'Name is required'
+                                        : null,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(_T.r),
+                                  borderSide: const BorderSide(
+                                    color: _T.slate200,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(_T.r),
+                                  borderSide: const BorderSide(
+                                    color: _T.slate200,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(_T.r),
+                                  borderSide: const BorderSide(
+                                    color: _T.blue,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _T.blue50,
+                                borderRadius: BorderRadius.circular(_T.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 14,
+                                    color: _T.blue,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'You can add client-specific pricing after creating the price list.',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: _T.blue.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Default pricing card
+                Container(
+                  decoration: BoxDecoration(
+                    color: _T.white,
+                    borderRadius: BorderRadius.circular(_T.rLg),
+                    border: Border.all(color: _T.slate200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.currency_franc_rounded,
+                              size: 16,
+                              color: _T.purple,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Default Pricing',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _T.ink2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: _T.slate100),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _CostInputField(
+                              label: 'Print Cost (per sqm)',
+                              controller: _printCtrl,
+                              hint: '0.00',
+                            ),
+                            const SizedBox(height: 16),
+                            _CostInputField(
+                              label: 'Installation Cost (per sqm)',
+                              controller: _appCtrl,
+                              hint: '0.00',
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: _T.slate50,
+                                borderRadius: BorderRadius.circular(_T.r),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.tips_and_updates_outlined,
+                                    size: 12,
+                                    color: _T.slate500,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Set default pricing for all clients. You can customize per client later.',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: _T.slate500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

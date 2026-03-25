@@ -212,6 +212,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Pricing? _selectedPricing;
   Company? _selectedClientForPricing;
   bool _showPricingDetail = false;
+  bool _isCreatingPricing = false;
 
   final List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
@@ -251,6 +252,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     setState(() {
       _selectedPricing = null;
       _showPricingDetail = true;
+      _isCreatingPricing = true;
     });
   }
 
@@ -258,6 +260,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     setState(() {
       _selectedPricing = pricing;
       _showPricingDetail = true;
+      _isCreatingPricing = false;
     });
   }
 
@@ -265,6 +268,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     setState(() {
       _selectedPricing = null;
       _showPricingDetail = false;
+      _isCreatingPricing = false;
     });
   }
 
@@ -354,17 +358,33 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     final Widget detail;
     if (_mainTabController.index == 1) {
       // Pricing tab
-      if (_showPricingDetail && _selectedPricing != null) {
-        detail = PricingDetailPanel(
-          key: ValueKey(_selectedPricing!.id),
-          pricing: _selectedPricing!,
-          companies: companies,
-          onUpdate: (updated) {
-            ref.read(pricingNotifierProvider.notifier).updatePricing(updated);
-            _updatePricing(updated);
-          },
-          onClose: _closePricingDetail,
-        );
+      if (_showPricingDetail) {
+        if (_isCreatingPricing) {
+          // Show create form instead of idle pane
+          detail = CreatePricingPanel(
+            companies: companies,
+            onCreate: (pricing) async {
+              final created = await ref
+                  .read(pricingNotifierProvider.notifier)
+                  .createPricing(pricing);
+              _selectPricing(created); // Select the newly created pricing
+            },
+            onCancel: _closePricingDetail,
+          );
+        } else if (_selectedPricing != null) {
+          detail = PricingDetailPanel(
+            key: ValueKey(_selectedPricing!.id),
+            pricing: _selectedPricing!,
+            companies: companies,
+            onUpdate: (updated) {
+              ref.read(pricingNotifierProvider.notifier).updatePricing(updated);
+              _updatePricing(updated);
+            },
+            onClose: _closePricingDetail,
+          );
+        } else {
+          detail = PricingIdlePane(onCreate: _createPricing);
+        }
       } else {
         detail = PricingIdlePane(onCreate: _createPricing);
       }
