@@ -34,10 +34,7 @@ class PricingRepo {
       },
     );
 
-    print("create pricing response body: ${response.body}");
-
     if (response.statusCode != 201) {
-      print("errors from server-side: ${json.decode(response.body)['errors']}");
       throw json.decode(response.body)['message'];
     }
 
