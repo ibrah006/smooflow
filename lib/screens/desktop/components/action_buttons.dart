@@ -94,12 +94,14 @@ class GreenActionButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool enabled; // Added isEnabled property
+  final bool loading; // Added loading property
 
   const GreenActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
     this.enabled = true, // Default value set to true
+    this.loading = false, // Default value set to false
   });
 
   @override
@@ -111,22 +113,20 @@ class _GreenActionButtonState extends State<GreenActionButton> {
 
   @override
   Widget build(BuildContext context) => MouseRegion(
-    cursor:
-        widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+    cursor: widget.enabled && !widget.loading
+        ? SystemMouseCursors.click
+        : SystemMouseCursors.basic,
     onEnter: (_) {
-      if (widget.enabled) setState(() => _hovered = true);
+      if (widget.enabled && !widget.loading) setState(() => _hovered = true);
     },
     onExit: (_) {
-      if (widget.enabled) setState(() => _hovered = false);
+      if (widget.enabled && !widget.loading) setState(() => _hovered = false);
     },
     child: GestureDetector(
-      onTap: widget.enabled ? widget.onTap : null,
+      onTap: widget.enabled && !widget.loading ? widget.onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color:
-              widget.enabled
                   ? (_hovered ? const Color(0xFF059669) : _T.green)
                   : Colors.grey, // Disabled color
           borderRadius: BorderRadius.circular(_T.r),

@@ -4,6 +4,8 @@ import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
+import 'package:smooflow/screens/desktop/components/field_label.dart';
+import 'package:smooflow/screens/desktop/components/smoofield.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -558,7 +560,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Topbar
+        // Topbar — matches create task screen
         Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -568,15 +570,29 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
           ),
           child: Row(
             children: [
-              CloseButton(onPressed: widget.onClose),
+              BackButton(onPressed: widget.onClose),
               const SizedBox(width: 14),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: _T.purple50,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.price_change_outlined,
+                  size: 14,
+                  color: _T.purple,
+                ),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _descCtrl,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _T.ink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _T.ink2,
                   ),
                   decoration: const InputDecoration(
                     hintText: 'Price list name',
@@ -593,113 +609,125 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
         // Body
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Default pricing card
-                PricingCard(
-                  title: 'Default Pricing',
-                  subtitle: 'Applied when no client-specific pricing is set',
-                  costs: defaultCosts,
-                  onSave: _updateDefaultPricing,
-                ),
-
-                const SizedBox(height: 24),
-
-                // Client-specific pricing
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Client-Specific Pricing',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: _T.ink2,
-                      ),
+            padding: const EdgeInsets.fromLTRB(28, 28, 20, 40),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Price List Configuration',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: _T.ink,
+                      letterSpacing: -0.5,
                     ),
-                    if (availableClients.isNotEmpty)
-                      _AddClientPricingButton(
-                        clients: availableClients,
-                        onSelect: (clientId) => _editClientPricing(clientId),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                if (customClients.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _T.slate50,
-                      borderRadius: BorderRadius.circular(_T.rLg),
-                      border: Border.all(color: _T.slate200),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Set default pricing and client-specific rates.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _T.slate400,
+                      fontWeight: FontWeight.w400,
                     ),
-                    child: const Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.business_outlined,
-                            size: 28,
-                            color: _T.slate300,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'No client-specific pricing yet',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _T.slate400,
-                              fontWeight: FontWeight.w500,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section 1: Default Pricing ───────────────────────
+                  _SectionCard(
+                    icon: Icons.currency_franc_rounded,
+                    iconColor: _T.green,
+                    iconBg: _T.green50,
+                    title: 'Default Pricing',
+                    subtitle: 'Applied when no client-specific pricing is set',
+                    child: _PricingEditCard(
+                      costs: defaultCosts,
+                      onSave: _updateDefaultPricing,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Section 2: Client-Specific Pricing ───────────────
+                  _SectionCard(
+                    icon: Icons.business_center_rounded,
+                    iconColor: _T.purple,
+                    iconBg: _T.purple50,
+                    title: 'Client-Specific Pricing',
+                    subtitle: 'Override default rates for specific clients',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (customClients.isEmpty)
+                          _EmptyClientPricing(
+                            onAdd: () => _showClientPicker(availableClients),
+                          )
+                        else
+                          ...customClients.map((clientId) {
+                            final client = widget.companies.firstWhere(
+                              (c) => c.id == clientId,
+                              orElse: () => Company.sample(),
+                            );
+                            final costs = _pricing.getPricingForClient(
+                              clientId,
+                            );
+                            return _ClientPricingRow(
+                              client: client,
+                              costs: costs,
+                              onEdit: () => _editClientPricing(clientId),
+                              onRemove: () => _removeClientPricing(clientId),
+                            );
+                          }),
+                        if (availableClients.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: _AddClientButton(
+                              onTap: () => _showClientPicker(availableClients),
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Click the + button to add pricing for a client',
-                            style: TextStyle(fontSize: 11, color: _T.slate300),
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
-                  )
-                else
-                  ...customClients.map((clientId) {
-                    final client = widget.companies.firstWhere(
-                      (c) => c.id == clientId,
-                      orElse: () => Company.sample(),
-                    );
-                    final costs = _pricing.getPricingForClient(clientId);
-                    return _ClientPricingRow(
-                      client: client,
-                      costs: costs,
-                      onEdit: () => _editClientPricing(clientId),
-                      onRemove: () => _removeClientPricing(clientId),
-                    );
-                  }),
-
-                // Client pricing edit modal
-                if (_editingClientCosts != null && _selectedClientId != null)
-                  _ClientPricingDialog(
-                    client: widget.companies.firstWhere(
-                      (c) => c.id == _selectedClientId,
-                      orElse: () => Company.sample(),
-                    ),
-                    costs: _editingClientCosts!,
-                    onSave: (costs) {
-                      _setClientPricing(_selectedClientId!, costs);
-                    },
-                    onCancel: () {
-                      setState(() {
-                        _selectedClientId = null;
-                        _editingClientCosts = null;
-                      });
-                    },
                   ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
+
+        // Client pricing dialog overlay
+        if (_editingClientCosts != null && _selectedClientId != null)
+          _ClientPricingDialog(
+            client: widget.companies.firstWhere(
+              (c) => c.id == _selectedClientId,
+              orElse: () => Company.sample(),
+            ),
+            costs: _editingClientCosts!,
+            onSave: (costs) {
+              _setClientPricing(_selectedClientId!, costs);
+            },
+            onCancel: () {
+              setState(() {
+                _selectedClientId = null;
+                _editingClientCosts = null;
+              });
+            },
+          ),
       ],
+    );
+  }
+
+  void _showClientPicker(List<Company> clients) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder:
+          (_) => _ClientPickerDialog(
+            clients: clients,
+            onSelect: (clientId) {
+              _editClientPricing(clientId);
+            },
+          ),
     );
   }
 }
@@ -942,16 +970,24 @@ class _ClientPricingRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 12,
                   children: [
                     Text(
                       'Print: ${fmtCurrency(costs.printCost)}',
-                      style: const TextStyle(fontSize: 11, color: _T.slate500),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _T.slate500,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(width: 12),
                     Text(
                       'Install: ${fmtCurrency(costs.applicationCost)}',
-                      style: const TextStyle(fontSize: 11, color: _T.slate500),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _T.slate500,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -1395,49 +1431,6 @@ class _CostInputField extends StatelessWidget {
   }
 }
 
-class _CostDisplay extends StatelessWidget {
-  final String label;
-  final double value;
-  final String unit;
-
-  const _CostDisplay({
-    required this.label,
-    required this.value,
-    required this.unit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _T.slate50,
-        borderRadius: BorderRadius.circular(_T.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: _T.slate500)),
-          const SizedBox(height: 2),
-          Text(
-            value == 0 ? 'Not offered' : fmtCurrency(value),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: value > 0 ? _T.ink3 : _T.slate400,
-            ),
-          ),
-          if (value > 0)
-            Text(
-              unit,
-              style: const TextStyle(fontSize: 10, color: _T.slate400),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _GhostIconButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -1552,20 +1545,35 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
           ),
           child: Row(
             children: [
-              CloseButton(onPressed: widget.onCancel),
+              BackButton(onPressed: widget.onCancel),
               const SizedBox(width: 14),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: _T.purple50,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.price_change_outlined,
+                  size: 14,
+                  color: _T.purple,
+                ),
+              ),
+              const SizedBox(width: 10),
               const Text(
                 'New Price List',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _T.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink2,
                 ),
               ),
               const Spacer(),
               GreenActionButton(
                 label: _isSubmitting ? 'Creating...' : 'Create',
                 icon: Icons.add_rounded,
+                loading: _isSubmitting,
                 enabled: !_isSubmitting && _isValid,
                 onTap: _create,
               ),
@@ -1576,194 +1584,514 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
         // Body
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Description field
-                Container(
-                  decoration: BoxDecoration(
-                    color: _T.white,
-                    borderRadius: BorderRadius.circular(_T.rLg),
-                    border: Border.all(color: _T.slate200),
+            padding: const EdgeInsets.fromLTRB(28, 28, 20, 40),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'New Price List',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: _T.ink,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.title_outlined,
-                              size: 16,
-                              color: _T.purple,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Price List Details',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _T.ink2,
-                              ),
-                            ),
-                          ],
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Create a new price list for your products and services.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _T.slate400,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section 1: Basic Info ────────────────────────────
+                  _SectionCard(
+                    icon: Icons.title_outlined,
+                    iconColor: _T.blue,
+                    iconBg: _T.blue50,
+                    title: 'Basic Information',
+                    subtitle: 'Name and identification',
+                    child: SmooField(
+                      controller: _descCtrl,
+                      label: 'Price List Name',
+                      hint: 'e.g., Standard Vinyl Pricing',
+                      icon: Icons.title_outlined,
+                      required: true,
+                      error:
+                          _descTouched && !_isValid ? 'Name is required' : null,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Section 2: Default Pricing ───────────────────────
+                  _SectionCard(
+                    icon: Icons.currency_franc_rounded,
+                    iconColor: _T.green,
+                    iconBg: _T.green50,
+                    title: 'Default Pricing',
+                    subtitle: 'Base rates for all clients',
+                    child: Column(
+                      children: [
+                        _PricingInputField(
+                          controller: _printCtrl,
+                          label: 'Print Cost',
+                          hint: '0.00',
+                          unit: '/sqm',
                         ),
-                      ),
-                      const Divider(height: 1, color: _T.slate100),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _descCtrl,
-                              autofocus: true,
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: 'Price List Name',
-                                hintText: 'e.g., Standard Vinyl Pricing',
-                                errorText:
-                                    _descTouched &&
-                                            _descCtrl.text.trim().isEmpty
-                                        ? 'Name is required'
-                                        : null,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(_T.r),
-                                  borderSide: const BorderSide(
-                                    color: _T.slate200,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(_T.r),
-                                  borderSide: const BorderSide(
-                                    color: _T.slate200,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(_T.r),
-                                  borderSide: const BorderSide(
-                                    color: _T.blue,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: _T.blue50,
-                                borderRadius: BorderRadius.circular(_T.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 14,
-                                    color: _T.blue,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'You can add client-specific pricing after creating the price list.',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: _T.blue.withOpacity(0.8),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 16),
+                        _PricingInputField(
+                          controller: _appCtrl,
+                          label: 'Installation Cost',
+                          hint: '0.00',
+                          unit: '/sqm',
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _T.slate50,
+                            borderRadius: BorderRadius.circular(_T.r),
+                            border: Border.all(color: _T.slate200),
+                          ),
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.tips_and_updates_outlined,
+                                size: 12,
+                                color: _T.slate500,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'You can add client-specific pricing after creating the price list.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: _T.slate500,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING EDIT CARD — inline editing with save/cancel
+// ─────────────────────────────────────────────────────────────────────────────
+class _PricingEditCard extends StatefulWidget {
+  final PricingCosts costs;
+  final ValueChanged<PricingCosts> onSave;
+
+  const _PricingEditCard({required this.costs, required this.onSave});
+
+  @override
+  State<_PricingEditCard> createState() => _PricingEditCardState();
+}
+
+class _PricingEditCardState extends State<_PricingEditCard> {
+  late TextEditingController _printCtrl;
+  late TextEditingController _appCtrl;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _printCtrl = TextEditingController(
+      text:
+          widget.costs.printCost == 0
+              ? ''
+              : widget.costs.printCost.toStringAsFixed(2),
+    );
+    _appCtrl = TextEditingController(
+      text:
+          widget.costs.applicationCost == 0
+              ? ''
+              : widget.costs.applicationCost.toStringAsFixed(2),
+    );
+  }
+
+  @override
+  void dispose() {
+    _printCtrl.dispose();
+    _appCtrl.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final printCost = double.tryParse(_printCtrl.text.trim()) ?? 0;
+    final appCost = double.tryParse(_appCtrl.text.trim()) ?? 0;
+    widget.onSave(PricingCosts(printCost: printCost, applicationCost: appCost));
+    setState(() => _isEditing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isEditing) {
+      return Column(
+        children: [
+          _PricingInputField(
+            controller: _printCtrl,
+            label: 'Print Cost',
+            hint: '0.00',
+            unit: '/sqm',
+          ),
+          const SizedBox(height: 16),
+          _PricingInputField(
+            controller: _appCtrl,
+            label: 'Installation Cost',
+            hint: '0.00',
+            unit: '/sqm',
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: GhostActionButton(
+                  label: 'Cancel',
+                  icon: Icons.cancel,
+                  color: _T.slate500,
+                  onTap: () {
+                    setState(() => _isEditing = false);
+                    _printCtrl.text =
+                        widget.costs.printCost == 0
+                            ? ''
+                            : widget.costs.printCost.toStringAsFixed(2);
+                    _appCtrl.text =
+                        widget.costs.applicationCost == 0
+                            ? ''
+                            : widget.costs.applicationCost.toStringAsFixed(2);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: GreenActionButton(
+                  label: 'Save',
+                  icon: Icons.save_rounded,
+                  loading: false,
+                  enabled: true,
+                  onTap: _save,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        _CostDisplay(
+          label: 'Print',
+          value: widget.costs.printCost,
+          unit: '/sqm',
+        ),
+        const SizedBox(width: 16),
+        _CostDisplay(
+          label: 'Installation',
+          value: widget.costs.applicationCost,
+          unit: '/sqm',
+        ),
+        const Spacer(),
+        _GhostIconButton(
+          icon: Icons.edit_outlined,
+          onTap: () => setState(() => _isEditing = true),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING INPUT FIELD — matches _SmooField style
+// ─────────────────────────────────────────────────────────────────────────────
+class _PricingInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String unit;
+
+  const _PricingInputField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabel(label, optional: true),
+        const SizedBox(height: 7),
+        Container(
+          decoration: BoxDecoration(
+            color: _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: Text(
+                  'AED',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _T.slate500,
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Default pricing card
-                Container(
-                  decoration: BoxDecoration(
-                    color: _T.white,
-                    borderRadius: BorderRadius.circular(_T.rLg),
-                    border: Border.all(color: _T.slate200),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
                   ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _T.ink,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      color: _T.slate300,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 12,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(
+                  unit,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _T.slate500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COST DISPLAY — pill-style chip
+// ─────────────────────────────────────────────────────────────────────────────
+class _CostDisplay extends StatelessWidget {
+  final String label;
+  final double value;
+  final String unit;
+
+  const _CostDisplay({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: _T.slate500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value == 0 ? 'Not offered' : fmtCurrency(value),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: value > 0 ? _T.ink3 : _T.slate400,
+            ),
+          ),
+          if (value > 0)
+            Text(
+              unit,
+              style: const TextStyle(
+                fontSize: 10,
+                color: _T.slate400,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD CLIENT BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+class _AddClientButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AddClientButton({required this.onTap});
+
+  @override
+  State<_AddClientButton> createState() => _AddClientButtonState();
+}
+
+class _AddClientButtonState extends State<_AddClientButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blue50 : Colors.transparent,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: _hovered ? _T.blue.withOpacity(0.4) : _T.slate200,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_rounded,
+                size: 14,
+                color: _hovered ? _T.blue : _T.slate500,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Add Client',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _hovered ? _T.blue : _T.slate500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION CARD
+//
+// Shadow removed — flat border only, matching board lane cards.
+// ─────────────────────────────────────────────────────────────────────────────
+class _SectionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor, iconBg;
+  final String title, subtitle;
+  final Widget child;
+
+  const _SectionCard({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: iconColor.withOpacity(0.2)),
+                  ),
+                  child: Icon(icon, size: 14, color: iconColor),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.currency_franc_rounded,
-                              size: 16,
-                              color: _T.purple,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Default Pricing',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _T.ink2,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                          letterSpacing: -0.1,
                         ),
                       ),
-                      const Divider(height: 1, color: _T.slate100),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            _CostInputField(
-                              label: 'Print Cost (per sqm)',
-                              controller: _printCtrl,
-                              hint: '0.00',
-                            ),
-                            const SizedBox(height: 16),
-                            _CostInputField(
-                              label: 'Installation Cost (per sqm)',
-                              controller: _appCtrl,
-                              hint: '0.00',
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: _T.slate50,
-                                borderRadius: BorderRadius.circular(_T.r),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.tips_and_updates_outlined,
-                                    size: 12,
-                                    color: _T.slate500,
-                                  ),
-                                  SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'Set default pricing for all clients. You can customize per client later.',
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        color: _T.slate500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _T.slate400,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -1772,8 +2100,67 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
               ],
             ),
           ),
-        ),
-      ],
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Divider(height: 1, color: _T.slate100),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMPTY CLIENT PRICING STATE
+// ─────────────────────────────────────────────────────────────────────────────
+class _EmptyClientPricing extends StatelessWidget {
+  final VoidCallback onAdd;
+
+  const _EmptyClientPricing({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.business_outlined, size: 32, color: _T.slate300),
+          const SizedBox(height: 12),
+          const Text(
+            'No client-specific pricing',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Add custom rates for specific clients',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: _T.slate400,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GhostActionButton(
+            label: 'Add Client',
+            color: _T.slate500,
+            icon: Icons.cancel,
+            onTap: onAdd,
+          ),
+        ],
+      ),
     );
   }
 }
