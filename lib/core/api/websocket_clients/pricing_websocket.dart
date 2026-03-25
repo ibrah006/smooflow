@@ -101,15 +101,12 @@ class PricingWebSocketClient {
       (_) => _updateStatus(ConnectionStatus.disconnected),
     );
     _socket!.on('pricing:changed', (data) {
-      print("new event received, data: ${data}");
-      // try {
-      final event = PricingChangeEvent.fromJson(data as Map<String, dynamic>);
-      _pricingChangeController.add(event);
-      print("new event received: ${event}");
-      // } catch (e) {
-      //   print("event parse failed, ")
-      //   _errorController.add('Error parsing pricing:changed event: $e');
-      // }
+      try {
+        final event = PricingChangeEvent.fromJson(data as Map<String, dynamic>);
+        _pricingChangeController.add(event);
+      } catch (e) {
+        _errorController.add('Error parsing pricing:changed event: $e');
+      }
     });
     _socket!.on('error', (data) {
       final errorMsg = data['message'] ?? 'Unknown error';
