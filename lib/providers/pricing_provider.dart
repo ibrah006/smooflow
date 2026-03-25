@@ -91,14 +91,14 @@ class PricingNotifier extends StateNotifier<PricingState> {
 
     _client.pricingChanges.listen((event) {
       print(
-        "new event detected: ${event}\ntype: ${event.type}\nchanges: ${event.changes}",
+        "new event detected: ${event}\ntype: ${event.type}\nchanges: ${event.pricing}",
       );
       switch (event.type) {
         case PricingChangeType.created:
           state = state.copyWith(
             pricingData: [
               ...state.pricingData,
-              Pricing.fromJson(event.changes as Map<String, dynamic>),
+              Pricing.fromJson(event as Map<String, dynamic>),
             ],
           );
           break;
@@ -108,9 +108,9 @@ class PricingNotifier extends StateNotifier<PricingState> {
                 state.pricingData
                     .map(
                       (p) =>
-                          p.id == event.changes!["id"]
+                          p.id == event.pricing.id
                               ? Pricing.fromJson(
-                                event.changes as Map<String, dynamic>,
+                                event.pricing as Map<String, dynamic>,
                               )
                               : p,
                     )
@@ -121,7 +121,7 @@ class PricingNotifier extends StateNotifier<PricingState> {
           state = state.copyWith(
             pricingData:
                 state.pricingData
-                    .where((p) => p.id == event.changes!["id"])
+                    .where((p) => p.id == event.pricing.id)
                     .toList(),
           );
       }
