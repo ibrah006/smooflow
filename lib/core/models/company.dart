@@ -5,7 +5,6 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:uuid/uuid.dart';
 
 import 'user.dart';
-import 'project.dart';
 
 class Company {
   final String id;
@@ -25,7 +24,7 @@ class Company {
   Color? _color;
 
   Color get color {
-    return _color?? Colors.grey;
+    return _color ?? Colors.grey;
   }
 
   set color(Color? value) {
@@ -40,7 +39,7 @@ class Company {
 
     String result = "";
 
-    while(splitted.isNotEmpty && result.length < 4) {
+    while (splitted.isNotEmpty && result.length < 4) {
       result += splitted[0][0].toUpperCase();
       splitted.removeAt(0);
     }
@@ -60,8 +59,9 @@ class Company {
     required this.industry,
     required this.phone,
     required this.contactName,
-    required Color? color
-  }) : _color = color, _isSample = false;
+    required Color? color,
+  }) : _color = color,
+       _isSample = false;
 
   Company.update(
     Company original, {
@@ -75,10 +75,10 @@ class Company {
     required this.phone,
     required this.contactName,
     required Color? color,
-  })  : id = original.id,
-        _color = color,
-        _isSample = original._isSample,
-        createdByUserId = original.createdByUserId;
+  }) : id = original.id,
+       _color = color,
+       _isSample = original._isSample,
+       createdByUserId = original.createdByUserId;
 
   Company.create({
     required this.name,
@@ -87,18 +87,21 @@ class Company {
     this.industry,
     this.phone,
     this.contactName,
-    Color? color})
-    : _color = color??
-    // Get random color
-     [Color(0xFF2563EB),
-      Color(0xFF8B5CF6),
-      Color(0xFF10B981),
-      Color(0xFFF59E0B)][Random().nextInt(4)],
-      id = Uuid().v1(),
-      isActive = true,
-      createdByUserId = LoginService.currentUser!.id,
-      // projects = [],
-      _isSample = false;
+    Color? color,
+  }) : _color =
+           color ??
+           // Get random color
+           [
+             Color(0xFF2563EB),
+             Color(0xFF8B5CF6),
+             Color(0xFF10B981),
+             Color(0xFFF59E0B),
+           ][Random().nextInt(4)],
+       id = Uuid().v1(),
+       isActive = true,
+       createdByUserId = LoginService.currentUser!.id,
+       // projects = [],
+       _isSample = false;
 
   // Sample constructor
   Company.sample()
@@ -131,7 +134,7 @@ class Company {
       phone: json['phone'],
       industry: json['industry'],
       contactName: json["contactName"],
-      color: _hexToColor(json['color'])
+      color: _hexToColor(json['color']),
     );
   }
 
@@ -147,7 +150,7 @@ class Company {
       'phone': phone,
       'industry': industry,
       'contactName': contactName,
-      'color': _colorToHex(color)
+      'color': _colorToHex(color),
     };
   }
 }
@@ -165,7 +168,7 @@ Color? _hexToColor(String? hex) {
     if (hex.length == 6 || hex.length == 7) buffer.write('ff');
     buffer.write(hex.replaceFirst('#', ''));
     return Color(int.parse(buffer.toString(), radix: 16));
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 }
