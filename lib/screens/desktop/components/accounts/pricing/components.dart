@@ -491,7 +491,7 @@ class _EmptyPricingList extends StatelessWidget {
         const SizedBox(height: 16),
         GhostActionButton(
           label: 'Create Price List',
-          icon: Icons.cancel,
+          icon: Icons.add,
           color: _T.slate500,
           onTap: onCreate,
         ),
@@ -543,7 +543,7 @@ class PricingIdlePane extends StatelessWidget {
           const SizedBox(height: 16),
           GhostActionButton(
             label: 'Create Price List',
-            icon: Icons.cancel,
+            icon: Icons.add,
             color: _T.slate500,
             onTap: onCreate,
           ),
