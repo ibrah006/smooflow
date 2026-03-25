@@ -361,17 +361,17 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     switch (event.type) {
       case PricingChangeType.created:
-        message = 'New member invited';
-        icon = Icons.person_add;
+        message = 'New Pricing Added';
+        icon = Icons.price_change_outlined;
         color = _T.green;
         break;
       case PricingChangeType.updated:
-        message = 'Member updated';
+        message = 'Pricing - ${event.pricing.description} updated';
         icon = Icons.update;
         color = _T.blue;
         break;
       case PricingChangeType.deleted:
-        message = 'Member removed';
+        message = 'Pricing ${event.pricing.description} removed';
         icon = Icons.person_remove;
         color = _T.red;
         break;
