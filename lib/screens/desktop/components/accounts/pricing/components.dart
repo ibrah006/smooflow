@@ -294,98 +294,103 @@ class _PricingListRowState extends State<_PricingListRow> {
                     ]
                     : [],
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon badge
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color:
-                      sel
-                          ? _T.blue.withOpacity(0.12)
-                          : (_hovered ? _T.slate200 : _T.slate100),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.price_change_outlined,
-                  size: 14,
-                  color: sel ? _T.blue : _T.slate400,
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: sel ? _T.blue : _T.ink,
-                        height: 1.2,
-                      ),
+              Row(
+                children: [
+                  // Icon badge
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color:
+                          sel
+                              ? _T.blue.withOpacity(0.12)
+                              : (_hovered ? _T.slate200 : _T.slate100),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 5),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
+                    child: Icon(
+                      Icons.price_change_outlined,
+                      size: 14,
+                      color: sel ? _T.blue : _T.slate400,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _CostChip(
-                          label: fmtCurrency(defaultCosts.printCost),
-                          suffix: 'print',
-                          selected: sel,
+                        Text(
+                          p.description,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: sel ? _T.blue : _T.ink,
+                            height: 1.2,
+                          ),
                         ),
-                        _CostChip(
-                          label: fmtCurrency(defaultCosts.applicationCost),
-                          suffix: 'install',
-                          selected: sel,
+                        const SizedBox(height: 5),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _CostChip(
+                              label: fmtCurrency(defaultCosts.printCost),
+                              suffix: 'print',
+                              selected: sel,
+                            ),
+                            _CostChip(
+                              label: fmtCurrency(defaultCosts.applicationCost),
+                              suffix: 'install',
+                              selected: sel,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    if (customClientCount > 0) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: _T.indigo,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: _T.indigo,
-                            ),
-                          ),
-                        ],
+                  ),
+
+                  // Trailing
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: sel || _hovered ? 1.0 : 0.0,
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: sel ? _T.blue : _T.slate400,
+                    ),
+                  ),
+                ],
+              ),
+              if (customClientCount > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: _T.indigo,
+                        shape: BoxShape.circle,
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: _T.indigo,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-
-              // Trailing
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 150),
-                opacity: sel || _hovered ? 1.0 : 0.0,
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: sel ? _T.blue : _T.slate400,
-                ),
-              ),
+              ],
             ],
           ),
         ),
