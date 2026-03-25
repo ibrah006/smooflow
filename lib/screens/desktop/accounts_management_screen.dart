@@ -16,11 +16,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/company.dart';
+import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/providers/company_provider.dart';
+import 'package:smooflow/providers/pricing_providers.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/accounts/pricing/components.dart';
+import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
+import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -199,6 +206,13 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
 
+  // Add these new variables
+  late final TabController
+  _mainTabController; // For switching between docs and pricing
+  Pricing? _selectedPricing;
+  Company? _selectedClientForPricing;
+  bool _showPricingDetail = false;
+
   final List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
 
@@ -218,13 +232,46 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _mainTabController = TabController(length: 2, vsync: this); // NEW
     _tab.addListener(() => setState(() {}));
+    _mainTabController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _tab.dispose();
+    _mainTabController.dispose();
     super.dispose();
+  }
+
+  // ... existing methods ...
+
+  // NEW: Methods for pricing management
+  void _createPricing() {
+    setState(() {
+      _selectedPricing = null;
+      _showPricingDetail = true;
+    });
+  }
+
+  void _selectPricing(Pricing pricing) {
+    setState(() {
+      _selectedPricing = pricing;
+      _showPricingDetail = true;
+    });
+  }
+
+  void _closePricingDetail() {
+    setState(() {
+      _selectedPricing = null;
+      _showPricingDetail = false;
+    });
+  }
+
+  void _updatePricing(Pricing pricing) {
+    setState(() {
+      _selectedPricing = pricing;
+    });
   }
 
   void _createQuotation(Project project, List<Task> tasks) {
@@ -300,88 +347,221 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Widget build(BuildContext context) {
     final projects = ref.watch(projectNotifierProvider);
     final tasks = ref.watch(taskNotifierProvider).tasks;
+    final pricingList = ref.watch(pricingNotifierProvider);
+    final companies = ref.watch(companyListProvider).companies;
 
+    // Determine what to show in the right panel
     final Widget detail;
-    if (_showingInvoice && _selectedInvoice != null) {
-      final proj = projects.cast<Project?>().firstWhere(
-        (p) => p?.id == _selectedInvoice!.projectId,
-        orElse: () => null,
-      );
-      detail = _InvoiceDetail(
-        key: ValueKey(_selectedInvoice!.id),
-        invoice: _selectedInvoice!,
-        project: proj,
-        onUpdate: _updateInvoice,
-        onClose:
-            () => setState(() {
-              _selectedInvoice = null;
-              _showingInvoice = false;
-            }),
-      );
-    } else if (!_showingInvoice && _selectedQuotation != null) {
-      final proj = projects.cast<Project?>().firstWhere(
-        (p) => p?.id == _selectedQuotation!.projectId,
-        orElse: () => null,
-      );
-      final quotTasks =
-          tasks
-              .where((t) => t.projectId == _selectedQuotation!.projectId)
-              .toList();
-      detail = _QuotationDetail(
-        key: ValueKey(_selectedQuotation!.id),
-        quotation: _selectedQuotation!,
-        project: proj,
-        projectTasks: quotTasks,
-        hasInvoice: _invoices.any(
-          (i) => i.quotationId == _selectedQuotation!.id,
-        ),
-        onUpdate: _updateQuotation,
-        onCreateInvoice: () => _createInvoiceFromQuotation(_selectedQuotation!),
-        onClose: () => setState(() => _selectedQuotation = null),
-      );
+    if (_mainTabController.index == 1) {
+      // Pricing tab
+      if (_showPricingDetail && _selectedPricing != null) {
+        detail = PricingDetailPanel(
+          key: ValueKey(_selectedPricing!.id),
+          pricing: _selectedPricing!,
+          companies: companies,
+          onUpdate: (updated) {
+            ref.read(pricingNotifierProvider.notifier).updatePricing(updated);
+            _updatePricing(updated);
+          },
+          onClose: _closePricingDetail,
+        );
+      } else {
+        detail = PricingIdlePane(onCreate: _createPricing);
+      }
     } else {
-      detail = const _AccountsIdlePane();
+      // Documents tab (existing logic)
+      if (_showingInvoice && _selectedInvoice != null) {
+        final proj = projects.cast<Project?>().firstWhere(
+          (p) => p?.id == _selectedInvoice!.projectId,
+          orElse: () => null,
+        );
+        detail = _InvoiceDetail(
+          key: ValueKey(_selectedInvoice!.id),
+          invoice: _selectedInvoice!,
+          project: proj,
+          onUpdate: _updateInvoice,
+          onClose:
+              () => setState(() {
+                _selectedInvoice = null;
+                _showingInvoice = false;
+              }),
+        );
+      } else if (!_showingInvoice && _selectedQuotation != null) {
+        final proj = projects.cast<Project?>().firstWhere(
+          (p) => p?.id == _selectedQuotation!.projectId,
+          orElse: () => null,
+        );
+        final quotTasks =
+            tasks
+                .where((t) => t.projectId == _selectedQuotation!.projectId)
+                .toList();
+        detail = _QuotationDetail(
+          key: ValueKey(_selectedQuotation!.id),
+          quotation: _selectedQuotation!,
+          project: proj,
+          projectTasks: quotTasks,
+          hasInvoice: _invoices.any(
+            (i) => i.quotationId == _selectedQuotation!.id,
+          ),
+          onUpdate: _updateQuotation,
+          onCreateInvoice:
+              () => _createInvoiceFromQuotation(_selectedQuotation!),
+          onClose: () => setState(() => _selectedQuotation = null),
+        );
+      } else {
+        detail = const _AccountsIdlePane();
+      }
     }
 
     return Scaffold(
       backgroundColor: _T.white,
       body: Column(
         children: [
-          _AccountsTopbar(
+          // Updated topbar with tab switcher
+          _AccountsTopbarWithTabs(
+            mainTabController: _mainTabController,
             projects: projects,
             tasks: tasks,
             onNewQuotation: _createQuotation,
+            onNewPricing: _createPricing,
           ),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Left panel - changes based on selected main tab
                 SizedBox(
                   width: 300,
-                  child: _AccountsListPanel(
-                    tabController: _tab,
-                    quotations: _quotations,
-                    invoices: _invoices,
-                    projects: projects,
-                    selectedQuotId: _selectedQuotation?.id,
-                    selectedInvoiceId: _selectedInvoice?.id,
-                    onSelectQuotation:
-                        (q) => setState(() {
-                          _selectedQuotation = q;
-                          _selectedInvoice = null;
-                          _showingInvoice = false;
-                        }),
-                    onSelectInvoice:
-                        (inv) => setState(() {
-                          _selectedInvoice = inv;
-                          _selectedQuotation = null;
-                          _showingInvoice = true;
-                        }),
-                  ),
+                  child:
+                      _mainTabController.index == 0
+                          ? _AccountsListPanel(
+                            tabController: _tab,
+                            quotations: _quotations,
+                            invoices: _invoices,
+                            projects: projects,
+                            selectedQuotId: _selectedQuotation?.id,
+                            selectedInvoiceId: _selectedInvoice?.id,
+                            onSelectQuotation:
+                                (q) => setState(() {
+                                  _selectedQuotation = q;
+                                  _selectedInvoice = null;
+                                  _showingInvoice = false;
+                                }),
+                            onSelectInvoice:
+                                (inv) => setState(() {
+                                  _selectedInvoice = inv;
+                                  _selectedQuotation = null;
+                                  _showingInvoice = true;
+                                }),
+                          )
+                          : PricingListPanel(
+                            pricingList: pricingList,
+                            selectedId: _selectedPricing?.id,
+                            onSelect: _selectPricing,
+                            onCreate: _createPricing,
+                          ),
                 ),
                 Expanded(child: detail),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW: Topbar with tabs for Documents / Price Lists
+// ─────────────────────────────────────────────────────────────────────────────
+class _AccountsTopbarWithTabs extends StatelessWidget {
+  final TabController mainTabController;
+  final List<Project> projects;
+  final List<Task> tasks;
+  final void Function(Project, List<Task>) onNewQuotation;
+  final VoidCallback onNewPricing;
+
+  const _AccountsTopbarWithTabs({
+    required this.mainTabController,
+    required this.projects,
+    required this.tasks,
+    required this.onNewQuotation,
+    required this.onNewPricing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate100)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: _T.blue50,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              size: 14,
+              color: _T.blue,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'Accounts',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _T.ink2,
+            ),
+          ),
+          const SizedBox(width: 20),
+          // Tab selector
+          Container(
+            height: 32,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MainTabButton(
+                  label: 'Documents',
+                  index: 0,
+                  controller: mainTabController,
+                ),
+                MainTabButton(
+                  label: 'Price Lists',
+                  index: 1,
+                  controller: mainTabController,
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          // Action button changes based on selected tab
+          AnimatedBuilder(
+            animation: mainTabController,
+            builder: (context, _) {
+              if (mainTabController.index == 0) {
+                return _NewQuotationButton(
+                  projects: projects,
+                  tasks: tasks,
+                  onCreate: onNewQuotation,
+                );
+              } else {
+                return NewPricingButton(onTap: onNewPricing);
+              }
+            },
           ),
         ],
       ),
@@ -800,12 +980,12 @@ class _BillingEditViewState extends State<BillingEditView> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      'Date: ${_fmtDate(widget.docDate)}',
+                      'Date: ${fmtDate(widget.docDate)}',
                       style: const TextStyle(fontSize: 12.5),
                     ),
                     if (widget.dueDate != null)
                       Text(
-                        'Due: ${_fmtDate(widget.dueDate!)}',
+                        'Due: ${fmtDate(widget.dueDate!)}',
                         style: const TextStyle(
                           fontSize: 12.5,
                           color: _T.amber,
@@ -2206,10 +2386,16 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
               child: Row(
                 children: [
                   Expanded(
-                    child: _GhostBtn(
+                    child: GhostActionButton(
                       label: 'Cancel',
+                      icon: Icons.cancel,
+                      color: _T.slate500,
                       onTap: () => Navigator.of(context).pop(),
                     ),
+                    // GhostBtn(
+                    //   label: 'Cancel',
+                    //   onTap: () => Navigator.of(context).pop(),
+                    // ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -2568,7 +2754,7 @@ class _QuotationListRowState extends State<_QuotationListRow> {
                     Row(
                       children: [
                         Text(
-                          _fmtCurrency(q.total),
+                          fmtCurrency(q.total),
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -2577,7 +2763,7 @@ class _QuotationListRowState extends State<_QuotationListRow> {
                         ),
                         const Spacer(),
                         Text(
-                          _fmtDate(q.createdAt),
+                          fmtDate(q.createdAt),
                           style: const TextStyle(
                             fontSize: 10.5,
                             color: _T.slate400,
@@ -2712,7 +2898,7 @@ class _InvoiceListRowState extends State<_InvoiceListRow> {
                     Row(
                       children: [
                         Text(
-                          _fmtCurrency(inv.total),
+                          fmtCurrency(inv.total),
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -2721,7 +2907,7 @@ class _InvoiceListRowState extends State<_InvoiceListRow> {
                         ),
                         const Spacer(),
                         Text(
-                          _fmtDate(inv.createdAt),
+                          fmtDate(inv.createdAt),
                           style: const TextStyle(
                             fontSize: 10.5,
                             color: _T.slate400,
@@ -2875,16 +3061,16 @@ class _AccountsIdlePane extends StatelessWidget {
   );
 }
 
-class _GhostBtn extends StatefulWidget {
+class GhostBtn extends StatefulWidget {
   final String label;
   final VoidCallback? onTap;
-  const _GhostBtn({required this.label, this.onTap});
+  const GhostBtn({required this.label, this.onTap});
 
   @override
-  State<_GhostBtn> createState() => _GhostBtnState();
+  State<GhostBtn> createState() => _GhostBtnState();
 }
 
-class _GhostBtnState extends State<_GhostBtn> {
+class _GhostBtnState extends State<GhostBtn> {
   bool _hovered = false;
 
   @override
@@ -2953,30 +3139,3 @@ class _DialogCloseButtonState extends State<_DialogCloseButton> {
     ),
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtCurrency(double v) {
-  if (v == 0) return 'AED 0.00';
-  return 'AED ${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
-}
-
-String _fmtDate(DateTime d) =>
-    '${d.day.toString().padLeft(2, '0')} '
-    '${_kMonths[d.month - 1]} ${d.year}';
-
-const _kMonths = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];

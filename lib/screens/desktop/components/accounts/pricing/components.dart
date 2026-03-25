@@ -1,0 +1,1481 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:smooflow/core/models/company.dart';
+import 'package:smooflow/core/models/pricing.dart';
+import 'package:smooflow/screens/desktop/components/action_buttons.dart';
+import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
+import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ─────────────────────────────────────────────────────────────────────────────
+class _T {
+  static const blue = Color(0xFF2563EB);
+  static const blueHover = Color(0xFF1D4ED8);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
+  static const r = 8.0;
+  static const rLg = 12.0;
+  static const rXl = 16.0;
+}
+
+class MainTabButton extends StatelessWidget {
+  final String label;
+  final int index;
+  final TabController controller;
+
+  const MainTabButton({
+    required this.label,
+    required this.index,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = controller.index == index;
+    return GestureDetector(
+      onTap: () => controller.animateTo(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isSelected ? _T.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                  : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? _T.ink2 : _T.slate500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class NewPricingButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const NewPricingButton({required this.onTap});
+
+  @override
+  State<NewPricingButton> createState() => _NewPricingButtonState();
+}
+
+class _NewPricingButtonState extends State<NewPricingButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    onEnter: (_) => setState(() => _hovered = true),
+    onExit: (_) => setState(() => _hovered = false),
+    child: GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: _hovered ? _T.blueHover : _T.blue,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, size: 14, color: Colors.white),
+            SizedBox(width: 5),
+            Text(
+              'New Price List',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING LIST PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+class PricingListPanel extends StatelessWidget {
+  final List<Pricing> pricingList;
+  final String? selectedId;
+  final ValueChanged<Pricing> onSelect;
+  final VoidCallback onCreate;
+
+  const PricingListPanel({
+    required this.pricingList,
+    required this.selectedId,
+    required this.onSelect,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: _T.slate50,
+        border: Border(right: BorderSide(color: _T.slate200)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _T.slate100)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.price_change_outlined,
+                  size: 16,
+                  color: _T.purple,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Price Lists',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _T.ink2,
+                  ),
+                ),
+                const Spacer(),
+                if (pricingList.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _T.slate200,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${pricingList.length}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _T.slate500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // List
+          Expanded(
+            child:
+                pricingList.isEmpty
+                    ? _EmptyPricingList(onCreate: onCreate)
+                    : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: pricingList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 4),
+                      itemBuilder: (_, i) {
+                        final p = pricingList[i];
+                        return _PricingListRow(
+                          pricing: p,
+                          selected: selectedId == p.id,
+                          onTap: () => onSelect(p),
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PricingListRow extends StatefulWidget {
+  final Pricing pricing;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PricingListRow({
+    required this.pricing,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  State<_PricingListRow> createState() => _PricingListRowState();
+}
+
+class _PricingListRowState extends State<_PricingListRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.pricing;
+    final sel = widget.selected;
+    final defaultCosts = p.getPricingForClient('default');
+    final customClientCount = p.clientsWithCustomPricing.length;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                sel
+                    ? _T.blue50
+                    : _hovered
+                    ? _T.slate50
+                    : _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: sel ? _T.blue.withOpacity(0.35) : _T.slate200,
+              width: sel ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: sel ? _T.blue.withOpacity(0.10) : _T.slate100,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(
+                  Icons.price_change_outlined,
+                  size: 13,
+                  color: sel ? _T.blue : _T.slate500,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.description,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: sel ? _T.blue : _T.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Default: ${fmtCurrency(defaultCosts.printCost)} print',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: _T.slate500,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${fmtCurrency(defaultCosts.applicationCost)} install',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: _T.slate500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (customClientCount > 0) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _T.purple50,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                            color: _T.purple,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (sel)
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: _T.blue,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyPricingList extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const _EmptyPricingList({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.price_change_outlined,
+            size: 20,
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'No price lists yet',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Click "New Price List" to create one',
+          style: TextStyle(fontSize: 11.5, color: _T.slate300),
+        ),
+        const SizedBox(height: 16),
+        GhostActionButton(
+          label: 'Create Price List',
+          icon: Icons.cancel,
+          color: _T.slate500,
+          onTap: onCreate,
+        ),
+      ],
+    ),
+  );
+}
+
+class PricingIdlePane extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const PricingIdlePane({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: _T.slate50,
+    child: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _T.slate200),
+            ),
+            child: const Icon(
+              Icons.price_change_outlined,
+              size: 24,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Select a price list',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'or click "New Price List" to create one',
+            style: TextStyle(fontSize: 12, color: _T.slate300),
+          ),
+          const SizedBox(height: 16),
+          GhostActionButton(
+            label: 'Create Price List',
+            icon: Icons.cancel,
+            color: _T.slate500,
+            onTap: onCreate,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING DETAIL PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+class PricingDetailPanel extends StatefulWidget {
+  final Pricing pricing;
+  final List<Company> companies;
+  final ValueChanged<Pricing> onUpdate;
+  final VoidCallback onClose;
+
+  const PricingDetailPanel({
+    super.key,
+    required this.pricing,
+    required this.companies,
+    required this.onUpdate,
+    required this.onClose,
+  });
+
+  @override
+  State<PricingDetailPanel> createState() => _PricingDetailPanelState();
+}
+
+class _PricingDetailPanelState extends State<PricingDetailPanel> {
+  late Pricing _pricing;
+  late TextEditingController _descCtrl;
+  String? _selectedClientId;
+  PricingCosts? _editingClientCosts;
+
+  @override
+  void initState() {
+    super.initState();
+    _pricing = widget.pricing;
+    _descCtrl = TextEditingController(text: _pricing.description);
+    _descCtrl.addListener(_onDescriptionChanged);
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.removeListener(_onDescriptionChanged);
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onDescriptionChanged() {
+    if (_descCtrl.text != _pricing.description) {
+      final updated = Pricing(
+        id: _pricing.id,
+        description: _descCtrl.text,
+        organizationId: _pricing.organizationId,
+        organization: _pricing.organization,
+        clientPrices: _pricing.clientPrices,
+        createdAt: _pricing.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      _pricing = updated;
+      widget.onUpdate(updated);
+    }
+  }
+
+  void _updateDefaultPricing(PricingCosts costs) {
+    final updated = _pricing.copyWithDefaultPricing(costs);
+    _pricing = updated;
+    widget.onUpdate(updated);
+  }
+
+  void _setClientPricing(String clientId, PricingCosts costs) {
+    final updated = _pricing.copyWithClientPricing(clientId, costs);
+    _pricing = updated;
+    widget.onUpdate(updated);
+    setState(() {
+      _selectedClientId = null;
+      _editingClientCosts = null;
+    });
+  }
+
+  void _removeClientPricing(String clientId) {
+    final updated = _pricing.removeClientPricing(clientId);
+    _pricing = updated;
+    widget.onUpdate(updated);
+  }
+
+  void _editClientPricing(String clientId) {
+    final costs = _pricing.getPricingForClient(clientId);
+    setState(() {
+      _selectedClientId = clientId;
+      _editingClientCosts = costs;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final defaultCosts = _pricing.getPricingForClient('default');
+    final customClients = _pricing.clientsWithCustomPricing;
+    final availableClients =
+        widget.companies.where((c) => !customClients.contains(c.id)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Topbar
+        Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(
+            color: _T.white,
+            border: Border(bottom: BorderSide(color: _T.slate100)),
+          ),
+          child: Row(
+            children: [
+              CloseButton(onPressed: widget.onClose),
+              const SizedBox(width: 14),
+              Expanded(
+                child: TextField(
+                  controller: _descCtrl,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Price list name',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Body
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Default pricing card
+                PricingCard(
+                  title: 'Default Pricing',
+                  subtitle: 'Applied when no client-specific pricing is set',
+                  costs: defaultCosts,
+                  onSave: _updateDefaultPricing,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Client-specific pricing
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Client-Specific Pricing',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink2,
+                      ),
+                    ),
+                    if (availableClients.isNotEmpty)
+                      _AddClientPricingButton(
+                        clients: availableClients,
+                        onSelect: (clientId) => _editClientPricing(clientId),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                if (customClients.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: _T.slate50,
+                      borderRadius: BorderRadius.circular(_T.rLg),
+                      border: Border.all(color: _T.slate200),
+                    ),
+                    child: const Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.business_outlined,
+                            size: 28,
+                            color: _T.slate300,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'No client-specific pricing yet',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _T.slate400,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Click the + button to add pricing for a client',
+                            style: TextStyle(fontSize: 11, color: _T.slate300),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...customClients.map((clientId) {
+                    final client = widget.companies.firstWhere(
+                      (c) => c.id == clientId,
+                      orElse: () => Company.sample(),
+                    );
+                    final costs = _pricing.getPricingForClient(clientId);
+                    return _ClientPricingRow(
+                      client: client,
+                      costs: costs,
+                      onEdit: () => _editClientPricing(clientId),
+                      onRemove: () => _removeClientPricing(clientId),
+                    );
+                  }),
+
+                // Client pricing edit modal
+                if (_editingClientCosts != null && _selectedClientId != null)
+                  _ClientPricingDialog(
+                    client: widget.companies.firstWhere(
+                      (c) => c.id == _selectedClientId,
+                      orElse: () => Company.sample(),
+                    ),
+                    costs: _editingClientCosts!,
+                    onSave: (costs) {
+                      _setClientPricing(_selectedClientId!, costs);
+                    },
+                    onCancel: () {
+                      setState(() {
+                        _selectedClientId = null;
+                        _editingClientCosts = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class PricingCard extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final PricingCosts costs;
+  final ValueChanged<PricingCosts> onSave;
+
+  const PricingCard({
+    required this.title,
+    required this.subtitle,
+    required this.costs,
+    required this.onSave,
+  });
+
+  @override
+  State<PricingCard> createState() => _PricingCardState();
+}
+
+class _PricingCardState extends State<PricingCard> {
+  late TextEditingController _printCtrl;
+  late TextEditingController _appCtrl;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _printCtrl = TextEditingController(
+      text:
+          widget.costs.printCost == 0
+              ? ''
+              : widget.costs.printCost.toStringAsFixed(2),
+    );
+    _appCtrl = TextEditingController(
+      text:
+          widget.costs.applicationCost == 0
+              ? ''
+              : widget.costs.applicationCost.toStringAsFixed(2),
+    );
+  }
+
+  @override
+  void dispose() {
+    _printCtrl.dispose();
+    _appCtrl.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final printCost = double.tryParse(_printCtrl.text.trim()) ?? 0;
+    final appCost = double.tryParse(_appCtrl.text.trim()) ?? 0;
+    widget.onSave(PricingCosts(printCost: printCost, applicationCost: appCost));
+    setState(() => _isEditing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.currency_franc_rounded,
+                  size: 16,
+                  color: _T.purple,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.title,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink2,
+                        ),
+                      ),
+                      Text(
+                        widget.subtitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!_isEditing)
+                  _GhostIconButton(
+                    icon: Icons.edit_outlined,
+                    onTap: () => setState(() => _isEditing = true),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: _T.slate100),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child:
+                _isEditing
+                    ? Column(
+                      children: [
+                        _CostInputField(
+                          label: 'Print Cost (per sqm)',
+                          controller: _printCtrl,
+                          hint: '0.00',
+                        ),
+                        const SizedBox(height: 12),
+                        _CostInputField(
+                          label: 'Installation Cost (per sqm)',
+                          controller: _appCtrl,
+                          hint: '0.00',
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GhostActionButton(
+                                label: 'Cancel',
+                                icon: Icons.cancel,
+                                color: _T.slate500,
+                                onTap: () {
+                                  setState(() => _isEditing = false);
+                                  _printCtrl.text =
+                                      widget.costs.printCost == 0
+                                          ? ''
+                                          : widget.costs.printCost
+                                              .toStringAsFixed(2);
+                                  _appCtrl.text =
+                                      widget.costs.applicationCost == 0
+                                          ? ''
+                                          : widget.costs.applicationCost
+                                              .toStringAsFixed(2);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 2,
+                              child: GreenActionButton(
+                                label: 'Save',
+                                icon: Icons.save_rounded,
+                                // enabled: true,
+                                onTap: _save,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                    : Row(
+                      children: [
+                        _CostDisplay(
+                          label: 'Print',
+                          value: widget.costs.printCost,
+                          unit: '/sqm',
+                        ),
+                        const SizedBox(width: 16),
+                        _CostDisplay(
+                          label: 'Installation',
+                          value: widget.costs.applicationCost,
+                          unit: '/sqm',
+                        ),
+                      ],
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClientPricingRow extends StatelessWidget {
+  final Company client;
+  final PricingCosts costs;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  const _ClientPricingRow({
+    required this.client,
+    required this.costs,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: client.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                client.initials,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: client.color,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  client.name,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _T.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      'Print: ${fmtCurrency(costs.printCost)}',
+                      style: const TextStyle(fontSize: 11, color: _T.slate500),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Install: ${fmtCurrency(costs.applicationCost)}',
+                      style: const TextStyle(fontSize: 11, color: _T.slate500),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _GhostIconButton(icon: Icons.edit_outlined, onTap: onEdit),
+          const SizedBox(width: 4),
+          _GhostIconButton(
+            icon: Icons.delete_outline_rounded,
+            onTap: onRemove,
+            color: _T.red,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddClientPricingButton extends StatefulWidget {
+  final List<Company> clients;
+  final ValueChanged<String> onSelect;
+
+  const _AddClientPricingButton({
+    required this.clients,
+    required this.onSelect,
+  });
+
+  @override
+  State<_AddClientPricingButton> createState() =>
+      _AddClientPricingButtonState();
+}
+
+class _AddClientPricingButtonState extends State<_AddClientPricingButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: () => _showClientPicker(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blue50 : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: _hovered ? _T.blue.withOpacity(0.4) : _T.slate200,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_rounded,
+                size: 12,
+                color: _hovered ? _T.blue : _T.slate500,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Add Client',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: _hovered ? _T.blue : _T.slate500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showClientPicker() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder:
+          (_) => _ClientPickerDialog(
+            clients: widget.clients,
+            onSelect: widget.onSelect,
+          ),
+    );
+  }
+}
+
+class _ClientPickerDialog extends StatelessWidget {
+  final List<Company> clients;
+  final ValueChanged<String> onSelect;
+
+  const _ClientPickerDialog({required this.clients, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 380,
+        decoration: BoxDecoration(
+          color: _T.white,
+          borderRadius: BorderRadius.circular(_T.rXl),
+          border: Border.all(color: _T.slate200),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _T.blue50,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(
+                      Icons.business_center_rounded,
+                      size: 15,
+                      color: _T.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Select Client',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink,
+                      ),
+                    ),
+                  ),
+                  DialogCloseButton(onTap: () => Navigator.of(context).pop()),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Divider(height: 1, color: _T.slate100),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 300),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: clients.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                itemBuilder: (_, i) {
+                  final c = clients[i];
+                  return _ClientPickerRow(
+                    client: c,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onSelect(c.id);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClientPickerRow extends StatefulWidget {
+  final Company client;
+  final VoidCallback onTap;
+
+  const _ClientPickerRow({required this.client, required this.onTap});
+
+  @override
+  State<_ClientPickerRow> createState() => _ClientPickerRowState();
+}
+
+class _ClientPickerRowState extends State<_ClientPickerRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    onEnter: (_) => setState(() => _hovered = true),
+    onExit: (_) => setState(() => _hovered = false),
+    child: GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: _hovered ? _T.slate50 : _T.white,
+          borderRadius: BorderRadius.circular(_T.r),
+          border: Border.all(color: _T.slate200),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: widget.client.color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.client.name,
+                style: const TextStyle(fontSize: 13, color: _T.ink3),
+              ),
+            ),
+            if (_hovered)
+              const Icon(Icons.chevron_right_rounded, size: 14, color: _T.blue),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _ClientPricingDialog extends StatefulWidget {
+  final Company client;
+  final PricingCosts costs;
+  final ValueChanged<PricingCosts> onSave;
+  final VoidCallback onCancel;
+
+  const _ClientPricingDialog({
+    required this.client,
+    required this.costs,
+    required this.onSave,
+    required this.onCancel,
+  });
+
+  @override
+  State<_ClientPricingDialog> createState() => _ClientPricingDialogState();
+}
+
+class _ClientPricingDialogState extends State<_ClientPricingDialog> {
+  late TextEditingController _printCtrl;
+  late TextEditingController _appCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _printCtrl = TextEditingController(
+      text:
+          widget.costs.printCost == 0
+              ? ''
+              : widget.costs.printCost.toStringAsFixed(2),
+    );
+    _appCtrl = TextEditingController(
+      text:
+          widget.costs.applicationCost == 0
+              ? ''
+              : widget.costs.applicationCost.toStringAsFixed(2),
+    );
+  }
+
+  @override
+  void dispose() {
+    _printCtrl.dispose();
+    _appCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 420,
+        decoration: BoxDecoration(
+          color: _T.white,
+          borderRadius: BorderRadius.circular(_T.rXl),
+          border: Border.all(color: _T.slate200),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: widget.client.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.client.initials,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: widget.client.color,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.client.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink,
+                      ),
+                    ),
+                  ),
+                  DialogCloseButton(onTap: widget.onCancel),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Divider(height: 1, color: _T.slate100),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _CostInputField(
+                    label: 'Print Cost (per sqm)',
+                    controller: _printCtrl,
+                    hint: '0.00',
+                  ),
+                  const SizedBox(height: 16),
+                  _CostInputField(
+                    label: 'Installation Cost (per sqm)',
+                    controller: _appCtrl,
+                    hint: '0.00',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GhostActionButton(
+                          label: 'Cancel',
+                          icon: Icons.cancel,
+                          color: _T.slate500,
+                          onTap: widget.onCancel,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: GreenActionButton(
+                          label: 'Save Pricing',
+                          icon: Icons.save_rounded,
+                          onTap: () {
+                            final printCost =
+                                double.tryParse(_printCtrl.text.trim()) ?? 0;
+                            final appCost =
+                                double.tryParse(_appCtrl.text.trim()) ?? 0;
+                            widget.onSave(
+                              PricingCosts(
+                                printCost: printCost,
+                                applicationCost: appCost,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CostInputField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+
+  const _CostInputField({
+    required this.label,
+    required this.controller,
+    required this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: _T.ink3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixText: 'AED ',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+              borderSide: const BorderSide(color: _T.slate200),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+              borderSide: const BorderSide(color: _T.slate200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+              borderSide: const BorderSide(color: _T.blue, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CostDisplay extends StatelessWidget {
+  final String label;
+  final double value;
+  final String unit;
+
+  const _CostDisplay({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: _T.slate500)),
+          const SizedBox(height: 2),
+          Text(
+            value == 0 ? 'Not offered' : fmtCurrency(value),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: value > 0 ? _T.ink3 : _T.slate400,
+            ),
+          ),
+          if (value > 0)
+            Text(
+              unit,
+              style: const TextStyle(fontSize: 10, color: _T.slate400),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GhostIconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _GhostIconButton({required this.icon, required this.onTap, this.color});
+
+  @override
+  State<_GhostIconButton> createState() => _GhostIconButtonState();
+}
+
+class _GhostIconButtonState extends State<_GhostIconButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.color ?? _T.slate500;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: _hovered ? color.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            widget.icon,
+            size: 14,
+            color: _hovered ? color : _T.slate400,
+          ),
+        ),
+      ),
+    );
+  }
+}
