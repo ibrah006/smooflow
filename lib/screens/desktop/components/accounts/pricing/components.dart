@@ -30,6 +30,8 @@ class _T {
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
   static const slate500 = Color(0xFF64748B);
+  static const slate700 = Color(0xFF334155);
+  static const slate900 = Color(0xFF0F172A);
   static const ink = Color(0xFF0F172A);
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
@@ -259,8 +261,8 @@ class _PricingListRowState extends State<_PricingListRow> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.all(12),
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color:
                 sel
@@ -270,27 +272,49 @@ class _PricingListRowState extends State<_PricingListRow> {
                     : _T.white,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
-              color: sel ? _T.blue.withOpacity(0.35) : _T.slate200,
-              width: sel ? 1.5 : 1,
+              color: sel ? _T.blue.withOpacity(0.3) : _T.slate200,
+              width: 1,
             ),
+            boxShadow:
+                sel
+                    ? [
+                      BoxShadow(
+                        color: _T.blue.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : _hovered
+                    ? [
+                      BoxShadow(
+                        color: _T.slate900.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                    : [],
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 28,
-                height: 28,
+              // Icon badge
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: sel ? _T.blue.withOpacity(0.10) : _T.slate100,
-                  borderRadius: BorderRadius.circular(7),
+                  color: sel ? _T.blue.withOpacity(0.12) : _T.slate100,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.price_change_outlined,
-                  size: 13,
-                  color: sel ? _T.blue : _T.slate500,
+                  size: 14,
+                  color: sel ? _T.blue : _T.slate400,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
+
+              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,63 +322,115 @@ class _PricingListRowState extends State<_PricingListRow> {
                     Text(
                       p.description,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: sel ? _T.blue : _T.ink,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Row(
                       children: [
-                        Text(
-                          'Default: ${fmtCurrency(defaultCosts.printCost)} print',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: _T.slate500,
-                          ),
+                        _CostChip(
+                          label: fmtCurrency(defaultCosts.printCost),
+                          suffix: 'print',
+                          selected: sel,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          '${fmtCurrency(defaultCosts.applicationCost)} install',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: _T.slate500,
-                          ),
+                        _CostChip(
+                          label: fmtCurrency(defaultCosts.applicationCost),
+                          suffix: 'install',
+                          selected: sel,
                         ),
                       ],
                     ),
                     if (customClientCount > 0) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _T.indigo50,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w500,
-                            color: _T.indigo,
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: _T.indigo,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: _T.indigo,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
                 ),
               ),
-              if (sel)
-                const Icon(
+
+              // Trailing
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 150),
+                opacity: sel || _hovered ? 1.0 : 0.0,
+                child: Icon(
                   Icons.chevron_right_rounded,
                   size: 16,
-                  color: _T.blue,
+                  color: sel ? _T.blue : _T.slate400,
                 ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small inline cost pill used in the pricing row.
+class _CostChip extends StatelessWidget {
+  final String label;
+  final String suffix;
+  final bool selected;
+
+  const _CostChip({
+    required this.label,
+    required this.suffix,
+    required this.selected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: selected ? _T.blue.withOpacity(0.08) : _T.slate100,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: selected ? _T.blue : _T.slate700,
+              ),
+            ),
+            TextSpan(
+              text: ' $suffix',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: selected ? _T.blue.withOpacity(0.7) : _T.slate400,
+              ),
+            ),
+          ],
         ),
       ),
     );
