@@ -30,6 +30,7 @@ class PricingRepo {
       '/pricing',
       body: json.encode(pricing.toJson()),
     );
+    print("create pricing response body: ${response.body}");
     return Pricing.fromJson(json.decode(response.body));
   }
 
