@@ -22,8 +22,8 @@ class _T {
   static const amber50 = Color(0xFFFEF3C7);
   static const red = Color(0xFFEF4444);
   static const red50 = Color(0xFFFEE2E2);
-  static const purple = Color(0xFF8B5CF6);
-  static const purple50 = Color(0xFFF3E8FF);
+  static const indigo = Color(0xFF6366F1);
+  static const indigo50 = Color(0xFFEEF2FF);
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -167,7 +167,7 @@ class PricingListPanel extends StatelessWidget {
                 const Icon(
                   Icons.price_change_outlined,
                   size: 16,
-                  color: _T.purple,
+                  color: _T.indigo,
                 ),
                 const SizedBox(width: 8),
                 const Text(
@@ -331,7 +331,7 @@ class _PricingListRowState extends State<_PricingListRow> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: _T.purple50,
+                          color: _T.indigo50,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -339,7 +339,7 @@ class _PricingListRowState extends State<_PricingListRow> {
                           style: const TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w500,
-                            color: _T.purple,
+                            color: _T.indigo,
                           ),
                         ),
                       ),
@@ -577,13 +577,13 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: _T.purple50,
+                  color: _T.indigo50,
                   borderRadius: BorderRadius.circular(7),
                 ),
                 child: const Icon(
                   Icons.price_change_outlined,
                   size: 14,
-                  color: _T.purple,
+                  color: _T.indigo,
                 ),
               ),
               const SizedBox(width: 10),
@@ -653,8 +653,8 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                   // ── Section 2: Client-Specific Pricing ───────────────
                   _SectionCard(
                     icon: Icons.business_center_rounded,
-                    iconColor: _T.purple,
-                    iconBg: _T.purple50,
+                    iconColor: _T.indigo,
+                    iconBg: _T.indigo50,
                     title: 'Client-Specific Pricing',
                     subtitle: 'Override default rates for specific clients',
                     child: Column(
@@ -804,7 +804,7 @@ class _PricingCardState extends State<PricingCard> {
                 const Icon(
                   Icons.currency_franc_rounded,
                   size: 16,
-                  color: _T.purple,
+                  color: _T.indigo,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -914,9 +914,10 @@ class _PricingCardState extends State<PricingCard> {
   }
 }
 
-class _ClientPricingRow extends StatelessWidget {
+class _ClientPricingRow extends StatefulWidget {
   final Company client;
   final PricingCosts costs;
+  @Deprecated("No longer use this")
   final VoidCallback onEdit;
   final VoidCallback onRemove;
 
@@ -928,6 +929,49 @@ class _ClientPricingRow extends StatelessWidget {
   });
 
   @override
+  State<_ClientPricingRow> createState() => _ClientPricingRowState();
+}
+
+class _ClientPricingRowState extends State<_ClientPricingRow> {
+  late TextEditingController _printCtrl;
+
+  late TextEditingController _appCtrl;
+
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _printCtrl = TextEditingController(
+      text:
+          widget.costs.printCost == 0
+              ? ''
+              : widget.costs.printCost.toStringAsFixed(2),
+    );
+    _appCtrl = TextEditingController(
+      text:
+          widget.costs.applicationCost == 0
+              ? ''
+              : widget.costs.applicationCost.toStringAsFixed(2),
+    );
+  }
+
+  @override
+  void dispose() {
+    _printCtrl.dispose();
+    _appCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onCancel() {
+    setState(() {
+      _isEditing = false;
+    });
+  }
+
+  void _onSave(PricingCosts pricingCosts) {}
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -937,71 +981,135 @@ class _ClientPricingRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(_T.r),
         border: Border.all(color: _T.slate200),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: client.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                client.initials,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: client.color,
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: widget.client.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  client.name,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: _T.ink,
+                child: Center(
+                  child: Text(
+                    widget.client.initials,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: widget.client.color,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 12,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Print: ${fmtCurrency(costs.printCost)}',
+                      widget.client.name,
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: _T.slate500,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _T.ink,
                       ),
                     ),
-                    Text(
-                      'Install: ${fmtCurrency(costs.applicationCost)}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: _T.slate500,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 12,
+                      children: [
+                        Text(
+                          'Print: ${fmtCurrency(widget.costs.printCost)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: _T.slate500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'Install: ${fmtCurrency(widget.costs.applicationCost)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: _T.slate500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+              if (!_isEditing)
+                _GhostIconButton(
+                  icon: Icons.edit_outlined,
+                  onTap: () {
+                    setState(() {
+                      _isEditing = true;
+                    });
+                  },
+                ),
+              const SizedBox(width: 4),
+              _GhostIconButton(
+                icon: Icons.delete_outline_rounded,
+                onTap: widget.onRemove,
+                color: _T.red,
+              ),
+            ],
+          ),
+          if (_isEditing)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _CostInputField(
+                    label: 'Print Cost (per sqm)',
+                    controller: _printCtrl,
+                    hint: '0.00',
+                  ),
+                  const SizedBox(height: 16),
+                  _CostInputField(
+                    label: 'Installation Cost (per sqm)',
+                    controller: _appCtrl,
+                    hint: '0.00',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GhostActionButton(
+                          label: 'Cancel',
+                          icon: Icons.cancel,
+                          color: _T.slate500,
+                          onTap: _onCancel,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: GreenActionButton(
+                          label: 'Save Pricing',
+                          icon: Icons.save_rounded,
+                          onTap: () {
+                            final printCost =
+                                double.tryParse(_printCtrl.text.trim()) ?? 0;
+                            final appCost =
+                                double.tryParse(_appCtrl.text.trim()) ?? 0;
+                            _onSave(
+                              PricingCosts(
+                                printCost: printCost,
+                                applicationCost: appCost,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          _GhostIconButton(icon: Icons.edit_outlined, onTap: onEdit),
-          const SizedBox(width: 4),
-          _GhostIconButton(
-            icon: Icons.delete_outline_rounded,
-            onTap: onRemove,
-            color: _T.red,
-          ),
         ],
       ),
     );
@@ -1552,13 +1660,13 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: _T.purple50,
+                  color: _T.indigo50,
                   borderRadius: BorderRadius.circular(7),
                 ),
                 child: const Icon(
                   Icons.price_change_outlined,
                   size: 14,
-                  color: _T.purple,
+                  color: _T.indigo,
                 ),
               ),
               const SizedBox(width: 10),
