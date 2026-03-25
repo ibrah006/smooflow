@@ -88,8 +88,38 @@ class PricingNotifier extends StateNotifier<PricingState> {
 
   void _initialize() {
     _client.pricingChanges.listen((event) {
-      // Handle pricing changes
-      // ...existing code...
+      switch (event.type) {
+        case PricingChangeType.created:
+          state = state.copyWith(
+            pricingData: [
+              ...state.pricingData,
+              Pricing.fromJson(event.changes as Map<String, dynamic>),
+            ],
+          );
+          break;
+        case PricingChangeType.updated:
+          state = state.copyWith(
+            pricingData:
+                state.pricingData
+                    .map(
+                      (p) =>
+                          p.id == event.changes!["id"]
+                              ? Pricing.fromJson(
+                                event.changes as Map<String, dynamic>,
+                              )
+                              : p,
+                    )
+                    .toList(),
+          );
+          break;
+        case PricingChangeType.deleted:
+          state = state.copyWith(
+            pricingData:
+                state.pricingData
+                    .where((p) => p.id == event.changes!["id"])
+                    .toList(),
+          );
+      }
     });
 
     _client.errors.listen((error) {
