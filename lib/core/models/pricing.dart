@@ -70,6 +70,14 @@ class Pricing {
     );
   }
 
+  // To ensure toSet gives no duplicates
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Pricing && runtimeType == other.runtimeType && id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+
   // Helper to get pricing for a specific client
   PricingCosts getPricingForClient(String clientId) {
     // Return client-specific pricing if exists, otherwise default
