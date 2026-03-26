@@ -1088,6 +1088,10 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "double.tryParse(_printCtrl.text.trim()) ${(double.tryParse(_printCtrl.text.trim()) ?? 0) != 0}",
+    );
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -1183,12 +1187,22 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                     label: 'Print Cost (per sqm)',
                     controller: _printCtrl,
                     hint: '0.00',
+                    onChanged: (value) {
+                      if (widget.isAdding) {
+                        setState(() {});
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
                   _CostInputField(
                     label: 'Installation Cost (per sqm)',
                     controller: _appCtrl,
                     hint: '0.00',
+                    onChanged: (value) {
+                      if (widget.isAdding) {
+                        setState(() {});
+                      }
+                    },
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -1210,8 +1224,11 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                           // disable when empty/zero-pricing for new clients to avoid accident saving before inputting
                           enabled:
                               !widget.isAdding ||
-                              (double.tryParse(_printCtrl.text.trim()) == 0 &&
-                                  double.tryParse(_appCtrl.text.trim()) == 0),
+                              ((double.tryParse(_printCtrl.text.trim()) ?? 0) !=
+                                      0 ||
+                                  (double.tryParse(_appCtrl.text.trim()) ??
+                                          0) !=
+                                      0.00),
                           onTap: _onSave,
                         ),
                       ),
@@ -1438,11 +1455,13 @@ class _CostInputField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final String hint;
+  final Function(String?)? onChanged;
 
   const _CostInputField({
     required this.label,
     required this.controller,
     required this.hint,
+    this.onChanged,
   });
 
   @override
@@ -1466,6 +1485,7 @@ class _CostInputField extends StatelessWidget {
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
           ],
           style: const TextStyle(fontSize: 13),
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             prefixText: 'AED ',
