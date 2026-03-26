@@ -767,10 +767,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                               (c) => c.id == _selectedClientId,
                               orElse: () => Company.sample(),
                             ),
-                            costs: PricingCosts(
-                              printCost: 0,
-                              applicationCost: 0,
-                            ),
+                            costs: PricingCosts.zero(),
                             onRemove:
                                 () => _removeClientPricing(_selectedClientId!),
                             onSave: _setClientPricing,
