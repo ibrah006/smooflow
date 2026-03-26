@@ -1075,15 +1075,18 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
     widget.onCancel();
   }
 
-  void _onSave() {
+  void _onSave() async {
     _isEditing = false;
     final printCost = double.tryParse(_printCtrl.text.trim()) ?? 0;
     final appCost = double.tryParse(_appCtrl.text.trim()) ?? 0;
 
-    widget.onSave(
+    await widget.onSave(
       widget.client.id,
       PricingCosts(printCost: printCost, applicationCost: appCost),
     );
+
+    _printCtrl.clear();
+    _appCtrl.clear();
 
     if (widget.isAdding) {
       widget.onCancel();
