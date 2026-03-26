@@ -413,10 +413,14 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
           detail = CreatePricingPanel(
             companies: companies,
             onCreate: (pricing) async {
-              final created = await ref
-                  .read(pricingStateProvider.notifier)
-                  .createPricing(pricing);
-              _selectPricing(created); // Select the newly created pricing
+              try {
+                final created = await ref
+                    .read(pricingStateProvider.notifier)
+                    .createPricing(pricing);
+                _selectPricing(created); // Select the newly created pricing
+              } catch (e) {
+                rethrow;
+              }
             },
             onCancel: _closePricingDetail,
           );

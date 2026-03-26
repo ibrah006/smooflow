@@ -6,6 +6,7 @@ import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
 import 'package:smooflow/screens/desktop/components/field_label.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/smoofield.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
@@ -1501,7 +1502,7 @@ class _GhostIconButtonState extends State<_GhostIconButton> {
 // ─────────────────────────────────────────────────────────────────────────────
 class CreatePricingPanel extends StatefulWidget {
   final List<Company> companies;
-  final ValueChanged<Pricing> onCreate;
+  final Function(Pricing) onCreate;
   final VoidCallback onCancel;
 
   const CreatePricingPanel({
@@ -1542,7 +1543,19 @@ class _CreatePricingPanelState extends State<CreatePricingPanel> {
       },
     );
 
-    widget.onCreate(pricing);
+    try {
+      await widget.onCreate(pricing);
+    } catch (e) {
+      print("catch block executed: $e");
+      AppToast.show(
+        message: e.toString(),
+        icon: Icons.error_outline,
+        color: _T.red,
+      );
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override

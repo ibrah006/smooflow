@@ -35,6 +35,7 @@ class PricingRepo {
     );
 
     if (response.statusCode != 201) {
+      print("error: ${response.body}");
       throw json.decode(response.body)['message'];
     }
 
