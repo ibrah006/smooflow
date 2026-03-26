@@ -289,21 +289,29 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   void _createQuotation(Project project, List<Task> tasks) {
     int idx = 1;
     final lineItems =
-        tasks
-            .map(
-              (t) => QuotationLineItem(
-                id: (idx++).toString(),
-                taskId: t.id,
-                description: t.ref ?? t.name,
-                subTitle: [
-                  if (t.size != null) 'Size: ${t.size}',
-                  'with Installation at site',
-                ].join(' '),
-                qty: (t.productionQuantity ?? t.quantity ?? 1).toDouble(),
-                unitPrice: 0,
-              ),
-            )
-            .toList();
+        tasks.map((t) {
+          final unitPrice =
+              t.ref != null
+                  ? ref
+                      .watch(pricingStateProvider)
+                      .getPricing(
+                        description: t.ref!,
+                        clientId: project.client.id,
+                      )
+                  : PricingCosts.zero();
+
+          return QuotationLineItem(
+            id: (idx++).toString(),
+            taskId: t.id,
+            description: t.ref ?? t.name,
+            subTitle: [
+              if (t.size != null) 'Size: ${t.size}',
+              'with Installation at site',
+            ].join(' '),
+            qty: (t.productionQuantity ?? t.quantity ?? 1).toDouble(),
+            unitPrice: unitPrice.applicationCost,
+          );
+        }).toList();
 
     if (lineItems.isEmpty) {
       lineItems.add(

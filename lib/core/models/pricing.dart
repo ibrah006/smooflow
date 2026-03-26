@@ -56,6 +56,10 @@ class Pricing {
     required this.updatedAt,
   });
 
+  PricingCosts? get defaultPricing {
+    return clientPrices["default"];
+  }
+
   factory Pricing.create({
     required String description,
     required String organizationId,

@@ -22,4 +22,27 @@ class PricingState {
       error: error ?? this.error,
     );
   }
+
+  PricingCosts getPricing({required String description, String? clientId}) {
+    try {
+      final pricing = pricingData.firstWhere(
+        (pricing) =>
+            pricing.description.toLowerCase() ==
+            description.toLowerCase().trim().toLowerCase(),
+      );
+
+      final customPricing =
+          clientId != null
+              ? pricing.clientPrices[clientId]
+              : pricing.defaultPricing ?? PricingCosts.zero();
+
+      return (customPricing != null &&
+              customPricing.applicationCost == 0 &&
+              customPricing.printCost == 0)
+          ? customPricing
+          : PricingCosts.zero();
+    } catch (e) {
+      return PricingCosts.zero();
+    }
+  }
 }
