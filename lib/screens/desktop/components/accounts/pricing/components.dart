@@ -1209,9 +1209,8 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                           icon: Icons.save_rounded,
                           // disable when empty/zero-pricing for new clients to avoid accident saving before inputting
                           enabled:
-                              !(widget.isAdding &&
-                                  double.tryParse(_printCtrl.text.trim()) ==
-                                      0 &&
+                              !widget.isAdding ||
+                              (double.tryParse(_printCtrl.text.trim()) == 0 &&
                                   double.tryParse(_appCtrl.text.trim()) == 0),
                           onTap: _onSave,
                         ),

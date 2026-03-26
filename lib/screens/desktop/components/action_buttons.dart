@@ -134,7 +134,7 @@ class _GreenActionButtonState extends State<GreenActionButton> {
                   ? (widget.loading
                       ? _T.green.withOpacity(0.7) // Loading state color
                       : (_hovered ? const Color(0xFF059669) : _T.green))
-                  : Colors.grey, // Disabled color
+                  : Colors.grey.shade200, // Disabled color
           borderRadius: BorderRadius.circular(_T.r),
         ),
         child: Row(
