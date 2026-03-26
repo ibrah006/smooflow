@@ -32,15 +32,10 @@ class PricingState {
       );
 
       final customPricing =
-          clientId != null
-              ? pricing.clientPrices[clientId]
-              : pricing.defaultPricing ?? PricingCosts.zero();
+          (pricing.clientPrices[clientId] ?? pricing.defaultPricing) ??
+          PricingCosts.zero();
 
-      return (customPricing != null &&
-              customPricing.applicationCost == 0 &&
-              customPricing.printCost == 0)
-          ? customPricing
-          : PricingCosts.zero();
+      return customPricing;
     } catch (e) {
       return PricingCosts.zero();
     }
