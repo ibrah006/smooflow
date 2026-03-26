@@ -1039,7 +1039,7 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
 
   late TextEditingController _appCtrl;
 
-  bool _isEditing = false;
+  late bool _isEditing;
 
   @override
   void initState() {
@@ -1084,6 +1084,10 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
       widget.client.id,
       PricingCosts(printCost: printCost, applicationCost: appCost),
     );
+
+    if (widget.isAdding) {
+      widget.onCancel();
+    }
   }
 
   @override
@@ -1091,6 +1095,10 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
     print(
       "double.tryParse(_printCtrl.text.trim()) ${(double.tryParse(_printCtrl.text.trim()) ?? 0) != 0}",
     );
+
+    if (widget.isAdding && !_isEditing) {
+      _isEditing = true;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
