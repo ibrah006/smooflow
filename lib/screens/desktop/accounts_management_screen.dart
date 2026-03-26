@@ -1090,7 +1090,7 @@ class _BillingEditViewState extends State<BillingEditView> {
 
                 // Editable company card — right-aligned to mirror read-only layout
                 SizedBox(
-                  width: 230,
+                  width: 275,
                   child: _FormCard(
                     label: 'Company Info',
                     icon: Icons.business_outlined,
@@ -1134,68 +1134,64 @@ class _BillingEditViewState extends State<BillingEditView> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             // ── Editable client + doc meta cards ──────────────────────
-            Row(
+            Column(
+              spacing: 15,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Bill To card
-                Expanded(
-                  child: _FormCard(
-                    label: 'Bill To',
-                    icon: Icons.person_outline_rounded,
-                    children: [
-                      _FormField(
-                        label: 'Client name',
-                        controller: _clientNameCtrl,
-                        onChanged: widget.onClientNameChanged,
-                      ),
-                      const SizedBox(height: 10),
-                      _FormField(
-                        label: 'Address',
-                        controller: _clientAddressCtrl,
-                        onChanged: widget.onClientAddressChanged,
-                        maxLines: 3,
-                      ),
-                    ],
-                  ),
+                _FormCard(
+                  label: 'Bill To',
+                  icon: Icons.person_outline_rounded,
+                  children: [
+                    _FormField(
+                      label: 'Client name',
+                      controller: _clientNameCtrl,
+                      onChanged: widget.onClientNameChanged,
+                    ),
+                    const SizedBox(height: 10),
+                    _FormField(
+                      label: 'Address',
+                      controller: _clientAddressCtrl,
+                      onChanged: widget.onClientAddressChanged,
+                      maxLines: 3,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
                 // Document info card
-                Expanded(
-                  child: _FormCard(
-                    label: 'Document Info',
-                    icon: Icons.receipt_long_outlined,
-                    children: [
-                      _FormField(
-                        label:
-                            '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
-                        controller: _docNumberCtrl,
-                        onChanged: widget.onDocNumberChanged,
-                      ),
-                      const SizedBox(height: 10),
-                      _DatePickerField(
-                        label: 'Date',
-                        value: _docDate,
-                        onTap: () => _pickDate(isDue: false),
-                      ),
-                      const SizedBox(height: 10),
-                      _DatePickerField(
-                        label: 'Due date',
-                        value: _dueDate,
-                        placeholder: 'Not set',
-                        accentColor: _dueDate != null ? _T.amber : null,
-                        onTap: () => _pickDate(isDue: true),
-                      ),
-                      const SizedBox(height: 10),
-                      _StaticField(label: 'Terms', value: 'Due on Receipt'),
-                    ],
-                  ),
+                _FormCard(
+                  label: 'Document Info',
+                  icon: Icons.receipt_long_outlined,
+                  children: [
+                    _FormField(
+                      label:
+                          '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
+                      controller: _docNumberCtrl,
+                      onChanged: widget.onDocNumberChanged,
+                    ),
+                    const SizedBox(height: 10),
+                    _DatePickerField(
+                      label: 'Date',
+                      value: _docDate,
+                      onTap: () => _pickDate(isDue: false),
+                    ),
+                    const SizedBox(height: 10),
+                    _DatePickerField(
+                      label: 'Due date',
+                      value: _dueDate,
+                      placeholder: 'Not set',
+                      accentColor: _dueDate != null ? _T.amber : null,
+                      onTap: () => _pickDate(isDue: true),
+                    ),
+                    const SizedBox(height: 10),
+                    _StaticField(label: 'Terms', value: 'Due on Receipt'),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             // ── Editable table ─────────────────────────────────────────
             _EditableTable(
