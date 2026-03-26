@@ -30,6 +30,7 @@ import 'package:smooflow/screens/desktop/components/accounts/pricing/components.
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -366,7 +367,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
         color = _T.green;
         break;
       case PricingChangeType.updated:
-        message = 'Pricing - ${event.pricing.description} updated';
+        message = 'Pricing updated';
         icon = Icons.update;
         color = _T.blue;
         break;
@@ -377,19 +378,11 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
         break;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(message),
-          ],
-        ),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
+    AppToast.show(
+      message: message,
+      icon: icon,
+      color: color,
+      subtitle: event.pricing.description,
     );
   }
 

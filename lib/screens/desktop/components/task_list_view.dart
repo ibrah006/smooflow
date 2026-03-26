@@ -568,7 +568,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     AppToast.show(
       message: message,
       icon: icon,
-      color: _T.amber,
+      color: color,
       subtitle: event.task!.name,
     );
   }
