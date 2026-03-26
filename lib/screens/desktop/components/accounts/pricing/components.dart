@@ -298,94 +298,90 @@ class _PricingListRowState extends State<_PricingListRow> {
           child: Row(
             children: [
               Expanded(
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        // Icon badge
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color:
-                                sel
-                                    ? _T.blue.withOpacity(0.12)
-                                    : (_hovered ? _T.slate200 : _T.slate100),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.price_change_outlined,
-                            size: 14,
-                            color: sel ? _T.blue : _T.slate400,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
+                    // Icon badge
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color:
+                            sel
+                                ? _T.blue.withOpacity(0.12)
+                                : (_hovered ? _T.slate200 : _T.slate100),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.price_change_outlined,
+                        size: 14,
+                        color: sel ? _T.blue : _T.slate400,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
 
-                        // Content
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    // Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: sel ? _T.blue : _T.ink,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
                             children: [
-                              Text(
-                                p.description,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: sel ? _T.blue : _T.ink,
-                                  height: 1.2,
-                                ),
+                              _CostChip(
+                                label: fmtCurrency(defaultCosts.printCost),
+                                suffix: 'print',
+                                selected: sel,
                               ),
-                              const SizedBox(height: 5),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  _CostChip(
-                                    label: fmtCurrency(defaultCosts.printCost),
-                                    suffix: 'print',
-                                    selected: sel,
-                                  ),
-                                  _CostChip(
-                                    label: fmtCurrency(
-                                      defaultCosts.applicationCost,
-                                    ),
-                                    suffix: 'install',
-                                    selected: sel,
-                                  ),
-                                ],
+                              _CostChip(
+                                label: fmtCurrency(
+                                  defaultCosts.applicationCost,
+                                ),
+                                suffix: 'install',
+                                selected: sel,
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    if (customClientCount > 0) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: _T.indigo,
-                              shape: BoxShape.circle,
+                          if (customClientCount > 0) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: _T.indigo,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: _T.indigo,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '$customClientCount client${customClientCount == 1 ? '' : 's'} with custom pricing',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: _T.indigo,
-                            ),
-                          ),
+                          ],
                         ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
