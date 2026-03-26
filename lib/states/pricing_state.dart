@@ -26,9 +26,9 @@ class PricingState {
   PricingCosts getPricing({required String description, String? clientId}) {
     try {
       final pricing = pricingData.firstWhere(
-        (pricing) =>
-            pricing.description.toLowerCase() ==
-            description.toLowerCase().trim().toLowerCase(),
+        (pricing) => description.toLowerCase().trim().toLowerCase().contains(
+          pricing.description.toLowerCase(),
+        ),
       );
 
       final customPricing =
