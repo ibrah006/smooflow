@@ -135,7 +135,7 @@ class PricingNotifier extends StateNotifier<PricingState> {
   Future<Pricing> createPricing(Pricing pricing) async {
     try {
       final created = await _api.createPricing(pricing);
-      state = state.copyWith(pricingData: [...state.pricingData, created]);
+      // state = state.copyWith(pricingData: [...state.pricingData, created]);
       return created;
     } catch (e) {
       rethrow;
@@ -146,12 +146,12 @@ class PricingNotifier extends StateNotifier<PricingState> {
   Future<Pricing> updatePricing(Pricing pricing) async {
     try {
       final updated = await _api.updatePricing(pricing);
-      state = state.copyWith(
-        pricingData:
-            state.pricingData
-                .map((p) => p.id == updated.id ? updated : p)
-                .toList(),
-      );
+      // state = state.copyWith(
+      //   pricingData:
+      //       state.pricingData
+      //           .map((p) => p.id == updated.id ? updated : p)
+      //           .toList(),
+      // );
       return updated;
     } catch (e) {
       rethrow;
@@ -162,9 +162,9 @@ class PricingNotifier extends StateNotifier<PricingState> {
   Future<void> deletePricing(String id) async {
     try {
       await _api.deletePricing(id);
-      state = state.copyWith(
-        pricingData: state.pricingData.where((p) => p.id != id).toList(),
-      );
+      // state = state.copyWith(
+      //   pricingData: state.pricingData.where((p) => p.id != id).toList(),
+      // );
     } catch (e) {
       rethrow;
     }
@@ -178,12 +178,12 @@ class PricingNotifier extends StateNotifier<PricingState> {
   ) async {
     try {
       final updated = await _api.setClientPricing(pricingId, clientId, costs);
-      state = state.copyWith(
-        pricingData:
-            state.pricingData
-                .map((p) => p.id == updated.id ? updated : p)
-                .toList(),
-      );
+      // state = state.copyWith(
+      //   pricingData:
+      //       state.pricingData
+      //           .map((p) => p.id == updated.id ? updated : p)
+      //           .toList(),
+      // );
       return updated;
     } catch (e) {
       rethrow;
@@ -194,12 +194,12 @@ class PricingNotifier extends StateNotifier<PricingState> {
   Future<Pricing> removeClientPricing(String pricingId, String clientId) async {
     try {
       final updated = await _api.removeClientPricing(pricingId, clientId);
-      state = state.copyWith(
-        pricingData:
-            state.pricingData
-                .map((p) => p.id == updated.id ? updated : p)
-                .toList(),
-      );
+      // state = state.copyWith(
+      //   pricingData:
+      //       state.pricingData
+      //           .map((p) => p.id == updated.id ? updated : p)
+      //           .toList(),
+      // );
       return updated;
     } catch (e) {
       rethrow;
@@ -216,12 +216,12 @@ class PricingNotifier extends StateNotifier<PricingState> {
         pricingId,
         clientPricingMap,
       );
-      state = state.copyWith(
-        pricingData:
-            state.pricingData
-                .map((p) => p.id == updated.id ? updated : p)
-                .toList(),
-      );
+      // state = state.copyWith(
+      //   pricingData:
+      //       state.pricingData
+      //           .map((p) => p.id == updated.id ? updated : p)
+      //           .toList(),
+      // );
       return updated;
     } catch (e) {
       rethrow;
