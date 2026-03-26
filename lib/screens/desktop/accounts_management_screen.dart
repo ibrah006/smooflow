@@ -290,7 +290,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     int idx = 1;
     final lineItems =
         tasks.map((t) {
-          final unitPrice =
+          final pricingCosts =
               t.ref != null
                   ? ref
                       .watch(pricingStateProvider)
@@ -299,6 +299,15 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
                         clientId: project.client.id,
                       )
                   : PricingCosts.zero();
+
+          final areaSplit = t.size != null ? t.size!.split('×') : ['0', '0 cm'];
+          final area =
+              ((double.tryParse(areaSplit[0]) ?? 0) *
+                  (double.tryParse(areaSplit[1].split(' ')[0]) ?? 0)) /
+              // Convert sq. cm to sq. m
+              10000;
+
+          final unitPrice = area * (pricingCosts.applicationCost);
 
           return QuotationLineItem(
             id: (idx++).toString(),
@@ -309,7 +318,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
               'with Installation at site',
             ].join(' '),
             qty: (t.productionQuantity ?? t.quantity ?? 1).toDouble(),
-            unitPrice: unitPrice.applicationCost,
+            unitPrice: unitPrice,
           );
         }).toList();
 
