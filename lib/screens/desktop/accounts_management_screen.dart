@@ -1090,7 +1090,7 @@ class _BillingEditViewState extends State<BillingEditView> {
 
                 // Editable company card — right-aligned to mirror read-only layout
                 SizedBox(
-                  width: 275,
+                  width: 285,
                   child: _FormCard(
                     label: 'Company Info',
                     icon: Icons.business_outlined,
