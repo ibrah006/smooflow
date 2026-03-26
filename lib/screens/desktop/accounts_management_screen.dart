@@ -755,6 +755,16 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     docNumber: _q.number,
                     docDate: _q.createdAt,
                     onChanged: _onItemsChanged,
+                    clientName: "Scott, Melba R.",
+                    clientAddress: """2468 Blackwell Street
+Fairbanks
+99701
+UAE""",
+                    onClientAddressChanged: (c) {},
+                    onClientNameChanged: (value) {},
+                    onDocDateChanged: (value) {},
+                    onDocNumberChanged: (value) {},
+                    onDueDateChanged: (value) {},
                   )
                   : BillingDocumentView(
                     lineItems: _q.lineItems,
@@ -839,6 +849,16 @@ class _InvoiceDetailState extends State<_InvoiceDetail> {
                     docDate: _inv.createdAt,
                     dueDate: _inv.dueDate,
                     onChanged: _onItemsChanged,
+                    clientName: "Scott, Melba R.",
+                    clientAddress: """2468 Blackwell Street
+                      Fairbanks
+                      99701
+                      UAE""",
+                    onClientAddressChanged: (c) {},
+                    onClientNameChanged: (value) {},
+                    onDocDateChanged: (value) {},
+                    onDocNumberChanged: (value) {},
+                    onDueDateChanged: (value) {},
                   )
                   : BillingDocumentView(
                     lineItems: _inv.lineItems,
@@ -863,6 +883,9 @@ class _InvoiceDetailState extends State<_InvoiceDetail> {
 // are rendered identically to BillingDocumentView, except totals update
 // live as values change.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING EDIT VIEW
+// ─────────────────────────────────────────────────────────────────────────────
 class BillingEditView extends StatefulWidget {
   final List<QuotationLineItem> lineItems;
   final double vatPercentage;
@@ -872,6 +895,17 @@ class BillingEditView extends StatefulWidget {
   final DateTime? dueDate;
   final ValueChanged<List<QuotationLineItem>> onChanged;
 
+  // Client fields
+  final String clientName;
+  final String clientAddress;
+  final ValueChanged<String> onClientNameChanged;
+  final ValueChanged<String> onClientAddressChanged;
+
+  // Doc meta fields
+  final ValueChanged<String> onDocNumberChanged;
+  final ValueChanged<DateTime> onDocDateChanged;
+  final ValueChanged<DateTime?>? onDueDateChanged;
+
   const BillingEditView({
     super.key,
     required this.lineItems,
@@ -880,7 +914,14 @@ class BillingEditView extends StatefulWidget {
     required this.docNumber,
     required this.docDate,
     required this.onChanged,
+    required this.clientName,
+    required this.clientAddress,
+    required this.onClientNameChanged,
+    required this.onClientAddressChanged,
+    required this.onDocNumberChanged,
+    required this.onDocDateChanged,
     this.dueDate,
+    this.onDueDateChanged,
   });
 
   @override
@@ -890,20 +931,45 @@ class BillingEditView extends StatefulWidget {
 class _BillingEditViewState extends State<BillingEditView> {
   late List<QuotationLineItem> _items;
 
+  // Client controllers
+  late final TextEditingController _clientNameCtrl;
+  late final TextEditingController _clientAddressCtrl;
+
+  // Doc meta controllers
+  late final TextEditingController _docNumberCtrl;
+  late DateTime _docDate;
+  late DateTime? _dueDate;
+
   @override
   void initState() {
     super.initState();
     _items = List.from(widget.lineItems);
+    _clientNameCtrl = TextEditingController(text: widget.clientName);
+    _clientAddressCtrl = TextEditingController(text: widget.clientAddress);
+    _docNumberCtrl = TextEditingController(text: widget.docNumber);
+    _docDate = widget.docDate;
+    _dueDate = widget.dueDate;
   }
 
   @override
   void didUpdateWidget(BillingEditView old) {
     super.didUpdateWidget(old);
-    // Only sync from outside if the identity of the list changed
-    // (e.g. new document selected), not on every keystroke
     if (old.docNumber != widget.docNumber) {
       _items = List.from(widget.lineItems);
+      _clientNameCtrl.text = widget.clientName;
+      _clientAddressCtrl.text = widget.clientAddress;
+      _docNumberCtrl.text = widget.docNumber;
+      _docDate = widget.docDate;
+      _dueDate = widget.dueDate;
     }
+  }
+
+  @override
+  void dispose() {
+    _clientNameCtrl.dispose();
+    _clientAddressCtrl.dispose();
+    _docNumberCtrl.dispose();
+    super.dispose();
   }
 
   void _updateItem(int index, QuotationLineItem updated) {
@@ -926,6 +992,25 @@ class _BillingEditViewState extends State<BillingEditView> {
     widget.onChanged(List.from(_items));
   }
 
+  Future<void> _pickDate({required bool isDue}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isDue ? (_dueDate ?? _docDate) : _docDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2040),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isDue) {
+        _dueDate = picked;
+        widget.onDueDateChanged?.call(picked);
+      } else {
+        _docDate = picked;
+        widget.onDocDateChanged(picked);
+      }
+    });
+  }
+
   double get _subTotal => _items.fold(0, (s, i) => s + i.amount);
   double get _total => _subTotal + (_subTotal * widget.vatPercentage / 100);
 
@@ -937,11 +1022,10 @@ class _BillingEditViewState extends State<BillingEditView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // ── Header — identical to BillingDocumentView ─────────────
+            // ── Header ────────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logo zone (static — same as BillingDocumentView)
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: Colors.grey.shade200),
@@ -982,112 +1066,75 @@ class _BillingEditViewState extends State<BillingEditView> {
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 22),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.docType,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Edit mode indicator chip
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _T.blue50,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: _T.blue.withOpacity(0.3)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.edit_outlined, size: 10, color: _T.blue),
-                            SizedBox(width: 4),
-                            Text(
-                              'Editing',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: _T.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    widget.docType,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
-            // ── Client + doc info ──────────────────────────────────────
+            // ── Editable client + doc meta cards ──────────────────────
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Quote to', style: const TextStyle(fontSize: 11.5)),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Scott, Melba R.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                // Bill To card
+                Expanded(
+                  child: _FormCard(
+                    label: 'Bill To',
+                    icon: Icons.person_outline_rounded,
+                    children: [
+                      _FormField(
+                        label: 'Client name',
+                        controller: _clientNameCtrl,
+                        onChanged: widget.onClientNameChanged,
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    const Text(
-                      '2468 Blackwell Street\nFairbanks\n99701\nUAE',
-                      style: TextStyle(fontSize: 11.5),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      _FormField(
+                        label: 'Address',
+                        controller: _clientAddressCtrl,
+                        onChanged: widget.onClientAddressChanged,
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'}#:',
-                          style: const TextStyle(fontSize: 12.5),
-                        ),
-                        Text(
-                          ' ${widget.docNumber}',
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'Date: ${fmtDate(widget.docDate)}',
-                      style: const TextStyle(fontSize: 12.5),
-                    ),
-                    if (widget.dueDate != null)
-                      Text(
-                        'Due: ${fmtDate(widget.dueDate!)}',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: _T.amber,
-                          fontWeight: FontWeight.w600,
-                        ),
+                const SizedBox(width: 14),
+                // Document info card
+                Expanded(
+                  child: _FormCard(
+                    label: 'Document Info',
+                    icon: Icons.receipt_long_outlined,
+                    children: [
+                      _FormField(
+                        label:
+                            '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
+                        controller: _docNumberCtrl,
+                        onChanged: widget.onDocNumberChanged,
+                        keyboardType: TextInputType.text,
                       ),
-                    const Text(
-                      'Terms: Due on Receipt',
-                      style: TextStyle(fontSize: 12.5),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      _DatePickerField(
+                        label: 'Date',
+                        value: _docDate,
+                        onTap: () => _pickDate(isDue: false),
+                      ),
+                      const SizedBox(height: 10),
+                      _DatePickerField(
+                        label: 'Due date',
+                        value: _dueDate,
+                        placeholder: 'Not set',
+                        accentColor: _dueDate != null ? _T.amber : null,
+                        onTap: () => _pickDate(isDue: true),
+                      ),
+                      const SizedBox(height: 10),
+                      _StaticField(label: 'Terms', value: 'Due on Receipt'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1101,12 +1148,12 @@ class _BillingEditViewState extends State<BillingEditView> {
               onAdd: _addLine,
             ),
 
-            // ── Totals — live, matches BillingDocumentView layout ──────
+            // ── Totals ─────────────────────────────────────────────────
             DefaultTextStyle(
               style: const TextStyle(fontSize: 10.8, color: Colors.black),
               child: Container(
                 width: 250,
-                decoration: BoxDecoration(color: const Color(0xFFf5f3f4)),
+                decoration: const BoxDecoration(color: Color(0xFFf5f3f4)),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 14,
@@ -1148,12 +1195,11 @@ class _BillingEditViewState extends State<BillingEditView> {
               ),
             ),
 
-            // Balance due
             DefaultTextStyle(
               style: const TextStyle(fontSize: 10.8, color: Colors.black),
               child: Container(
                 width: 250,
-                decoration: BoxDecoration(color: const Color(0xFFe3f2eb)),
+                decoration: const BoxDecoration(color: Color(0xFFe3f2eb)),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                   vertical: 14,
@@ -1179,7 +1225,6 @@ class _BillingEditViewState extends State<BillingEditView> {
             ),
             const SizedBox(height: 5),
 
-            // Terms
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -1197,6 +1242,238 @@ class _BillingEditViewState extends State<BillingEditView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FORM CARD — wrapper with label + icon header
+// ─────────────────────────────────────────────────────────────────────────────
+class _FormCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _FormCard({
+    required this.label,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: _T.slate400),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: _T.slate400,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FORM FIELD — labelled text input
+// ─────────────────────────────────────────────────────────────────────────────
+class _FormField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final int maxLines;
+  final TextInputType keyboardType;
+
+  const _FormField({
+    required this.label,
+    required this.controller,
+    required this.onChanged,
+    this.maxLines = 1,
+    this.keyboardType = TextInputType.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: _T.slate500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontSize: 12, color: _T.ink),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: _T.slate200),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: _T.slate200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(
+                color: _T.blue.withOpacity(0.6),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATE PICKER FIELD — tappable date row that opens a date picker
+// ─────────────────────────────────────────────────────────────────────────────
+class _DatePickerField extends StatelessWidget {
+  final String label;
+  final DateTime? value;
+  final String placeholder;
+  final Color? accentColor;
+  final VoidCallback onTap;
+
+  const _DatePickerField({
+    required this.label,
+    required this.onTap,
+    this.value,
+    this.placeholder = 'Select date',
+    this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accentColor ?? (value != null ? _T.ink : _T.slate400);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: _T.slate500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: _T.slate200),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 11,
+                  color: accentColor ?? _T.slate400,
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    value != null ? fmtDate(value!) : placeholder,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight:
+                          accentColor != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                Icon(Icons.unfold_more_rounded, size: 13, color: _T.slate300),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATIC FIELD — read-only labelled value (e.g. Terms)
+// ─────────────────────────────────────────────────────────────────────────────
+class _StaticField extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StaticField({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: _T.slate500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12, color: _T.slate500),
+          ),
+        ),
+      ],
     );
   }
 }
