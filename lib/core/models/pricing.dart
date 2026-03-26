@@ -7,6 +7,8 @@ class PricingCosts {
 
   const PricingCosts({required this.printCost, required this.applicationCost});
 
+  factory PricingCosts.zero() => PricingCosts(printCost: 0, applicationCost: 0);
+
   // Convenience factory for different service types
   factory PricingCosts.onlyPrint(double cost) =>
       PricingCosts(printCost: cost, applicationCost: 0);

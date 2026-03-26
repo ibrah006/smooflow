@@ -642,6 +642,15 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
     });
   }
 
+  void _onCancelEditing() {
+    if (_selectedClientId != null) {
+      setState(() {
+        _selectedClientId = null;
+        _editingClientCosts = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultCosts = _pricing.getPricingForClient('default');
@@ -751,6 +760,22 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (_selectedClientId != null)
+                          _ClientPricingRow(
+                            isAdding: true,
+                            client: widget.companies.firstWhere(
+                              (c) => c.id == _selectedClientId,
+                              orElse: () => Company.sample(),
+                            ),
+                            costs: PricingCosts(
+                              printCost: 0,
+                              applicationCost: 0,
+                            ),
+                            onRemove:
+                                () => _removeClientPricing(_selectedClientId!),
+                            onSave: _setClientPricing,
+                            onCancel: _onCancelEditing,
+                          ),
                         if (customClients.isEmpty)
                           _EmptyClientPricing(
                             onAdd: () => _showClientPicker(availableClients),
@@ -769,6 +794,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                               costs: costs,
                               onRemove: () => _removeClientPricing(clientId),
                               onSave: _setClientPricing,
+                              onCancel: _onCancelEditing,
                             );
                           }),
                         if (availableClients.isNotEmpty &&
@@ -992,12 +1018,16 @@ class _ClientPricingRow extends StatefulWidget {
   final PricingCosts costs;
   final VoidCallback onRemove;
   final Function(String clientId, PricingCosts) onSave;
+  final Function onCancel;
+  final bool isAdding;
 
   const _ClientPricingRow({
     required this.client,
     required this.costs,
     required this.onRemove,
     required this.onSave,
+    required this.onCancel,
+    this.isAdding = false,
   });
 
   @override
@@ -1026,6 +1056,8 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
               ? ''
               : widget.costs.applicationCost.toStringAsFixed(2),
     );
+
+    _isEditing = widget.isAdding;
   }
 
   @override
@@ -1039,6 +1071,19 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
     setState(() {
       _isEditing = false;
     });
+
+    widget.onCancel();
+  }
+
+  void _onSave() {
+    _isEditing = false;
+    final printCost = double.tryParse(_printCtrl.text.trim()) ?? 0;
+    final appCost = double.tryParse(_appCtrl.text.trim()) ?? 0;
+
+    widget.onSave(
+      widget.client.id,
+      PricingCosts(printCost: printCost, applicationCost: appCost),
+    );
   }
 
   @override
@@ -1162,20 +1207,13 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
                         child: GreenActionButton(
                           label: 'Save Pricing',
                           icon: Icons.save_rounded,
-                          onTap: () {
-                            _isEditing = false;
-                            final printCost =
-                                double.tryParse(_printCtrl.text.trim()) ?? 0;
-                            final appCost =
-                                double.tryParse(_appCtrl.text.trim()) ?? 0;
-                            widget.onSave(
-                              widget.client.id,
-                              PricingCosts(
-                                printCost: printCost,
-                                applicationCost: appCost,
-                              ),
-                            );
-                          },
+                          // disable when empty/zero-pricing for new clients to avoid accident saving before inputting
+                          enabled:
+                              !(widget.isAdding &&
+                                  double.tryParse(_printCtrl.text.trim()) ==
+                                      0 &&
+                                  double.tryParse(_appCtrl.text.trim()) == 0),
+                          onTap: _onSave,
                         ),
                       ),
                     ],
