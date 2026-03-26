@@ -1685,8 +1685,8 @@ class _RemoveRowButtonState extends State<_RemoveRowButton> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
-          width: 24,
-          height: 24,
+          width: 23,
+          height: 23,
           margin: const EdgeInsets.only(left: 6),
           decoration: BoxDecoration(
             color: _hovered ? _T.red50 : Colors.transparent,
