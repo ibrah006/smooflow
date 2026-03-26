@@ -765,6 +765,15 @@ UAE""",
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
+                    companyName: "Building No: 2872, Al Kharj Rd",
+                    companyAddress: """6858 Al Dilaa Dist
+Riyadh: 14315
+Riyadh, Kingdom of Saudi Arabia""",
+                    termsAndConditions:
+                        "Fill payment is due upon receipt of the invoice.",
+                    onCompanyAddressChanged: (value) {},
+                    onCompanyNameChanged: (value) {},
+                    onTermsChanged: (value) {},
                   )
                   : BillingDocumentView(
                     lineItems: _q.lineItems,
@@ -859,6 +868,15 @@ class _InvoiceDetailState extends State<_InvoiceDetail> {
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
+                    companyName: "Building No: 2872, Al Kharj Rd",
+                    companyAddress: """6858 Al Dilaa Dist
+Riyadh: 14315
+Riyadh, Kingdom of Saudi Arabia""",
+                    termsAndConditions:
+                        "Fill payment is due upon receipt of the invoice.",
+                    onCompanyAddressChanged: (value) {},
+                    onCompanyNameChanged: (value) {},
+                    onTermsChanged: (value) {},
                   )
                   : BillingDocumentView(
                     lineItems: _inv.lineItems,
@@ -895,6 +913,12 @@ class BillingEditView extends StatefulWidget {
   final DateTime? dueDate;
   final ValueChanged<List<QuotationLineItem>> onChanged;
 
+  // Issuing company fields
+  final String companyName;
+  final String companyAddress;
+  final ValueChanged<String> onCompanyNameChanged;
+  final ValueChanged<String> onCompanyAddressChanged;
+
   // Client fields
   final String clientName;
   final String clientAddress;
@@ -906,6 +930,10 @@ class BillingEditView extends StatefulWidget {
   final ValueChanged<DateTime> onDocDateChanged;
   final ValueChanged<DateTime?>? onDueDateChanged;
 
+  // Terms & Conditions
+  final String termsAndConditions;
+  final ValueChanged<String> onTermsChanged;
+
   const BillingEditView({
     super.key,
     required this.lineItems,
@@ -914,12 +942,18 @@ class BillingEditView extends StatefulWidget {
     required this.docNumber,
     required this.docDate,
     required this.onChanged,
+    required this.companyName,
+    required this.companyAddress,
+    required this.onCompanyNameChanged,
+    required this.onCompanyAddressChanged,
     required this.clientName,
     required this.clientAddress,
     required this.onClientNameChanged,
     required this.onClientAddressChanged,
     required this.onDocNumberChanged,
     required this.onDocDateChanged,
+    required this.termsAndConditions,
+    required this.onTermsChanged,
     this.dueDate,
     this.onDueDateChanged,
   });
@@ -931,24 +965,34 @@ class BillingEditView extends StatefulWidget {
 class _BillingEditViewState extends State<BillingEditView> {
   late List<QuotationLineItem> _items;
 
+  // Company controllers
+  late final TextEditingController _companyNameCtrl;
+  late final TextEditingController _companyAddressCtrl;
+
   // Client controllers
   late final TextEditingController _clientNameCtrl;
   late final TextEditingController _clientAddressCtrl;
 
-  // Doc meta controllers
+  // Doc meta
   late final TextEditingController _docNumberCtrl;
   late DateTime _docDate;
   late DateTime? _dueDate;
+
+  // Terms
+  late final TextEditingController _termsCtrl;
 
   @override
   void initState() {
     super.initState();
     _items = List.from(widget.lineItems);
+    _companyNameCtrl = TextEditingController(text: widget.companyName);
+    _companyAddressCtrl = TextEditingController(text: widget.companyAddress);
     _clientNameCtrl = TextEditingController(text: widget.clientName);
     _clientAddressCtrl = TextEditingController(text: widget.clientAddress);
     _docNumberCtrl = TextEditingController(text: widget.docNumber);
     _docDate = widget.docDate;
     _dueDate = widget.dueDate;
+    _termsCtrl = TextEditingController(text: widget.termsAndConditions);
   }
 
   @override
@@ -956,19 +1000,25 @@ class _BillingEditViewState extends State<BillingEditView> {
     super.didUpdateWidget(old);
     if (old.docNumber != widget.docNumber) {
       _items = List.from(widget.lineItems);
+      _companyNameCtrl.text = widget.companyName;
+      _companyAddressCtrl.text = widget.companyAddress;
       _clientNameCtrl.text = widget.clientName;
       _clientAddressCtrl.text = widget.clientAddress;
       _docNumberCtrl.text = widget.docNumber;
       _docDate = widget.docDate;
       _dueDate = widget.dueDate;
+      _termsCtrl.text = widget.termsAndConditions;
     }
   }
 
   @override
   void dispose() {
+    _companyNameCtrl.dispose();
+    _companyAddressCtrl.dispose();
     _clientNameCtrl.dispose();
     _clientAddressCtrl.dispose();
     _docNumberCtrl.dispose();
+    _termsCtrl.dispose();
     super.dispose();
   }
 
@@ -1022,10 +1072,12 @@ class _BillingEditViewState extends State<BillingEditView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // ── Header ────────────────────────────────────────────────
+            // ── Header — logo + editable company info ─────────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Logo zone (static)
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: Colors.grey.shade200),
@@ -1035,24 +1087,30 @@ class _BillingEditViewState extends State<BillingEditView> {
                     color: Colors.grey.shade400,
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: const [
-                    Text(
-                      'Building No : 2872, Al Kharj Rd',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
+
+                // Editable company card — right-aligned to mirror read-only layout
+                SizedBox(
+                  width: 230,
+                  child: _FormCard(
+                    label: 'Company Info',
+                    icon: Icons.business_outlined,
+                    children: [
+                      _FormField(
+                        label: 'Company name',
+                        controller: _companyNameCtrl,
+                        onChanged: widget.onCompanyNameChanged,
+                        textAlign: TextAlign.right,
                       ),
-                    ),
-                    SizedBox(height: 5),
-                    Text('6858 Al Dilaa Dist', style: TextStyle(fontSize: 13)),
-                    Text('Riyadh : 14315', style: TextStyle(fontSize: 13)),
-                    Text(
-                      'Riyadh, Kingdom of Saudi Arabia',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      _FormField(
+                        label: 'Address',
+                        controller: _companyAddressCtrl,
+                        onChanged: widget.onCompanyAddressChanged,
+                        maxLines: 4,
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1115,7 +1173,6 @@ class _BillingEditViewState extends State<BillingEditView> {
                             '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
                         controller: _docNumberCtrl,
                         onChanged: widget.onDocNumberChanged,
-                        keyboardType: TextInputType.text,
                       ),
                       const SizedBox(height: 10),
                       _DatePickerField(
@@ -1223,20 +1280,22 @@ class _BillingEditViewState extends State<BillingEditView> {
                 ),
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 20),
 
-            const Align(
+            // ── Editable Terms & Conditions ────────────────────────────
+            Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                'Terms & Conditions',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-            ),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Full payment is due upon receipt of the invoice.',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+              child: _FormCard(
+                label: 'Terms & Conditions',
+                icon: Icons.gavel_outlined,
+                children: [
+                  _FormField(
+                    label: '',
+                    controller: _termsCtrl,
+                    onChanged: widget.onTermsChanged,
+                    maxLines: 3,
+                  ),
+                ],
               ),
             ),
           ],
@@ -1304,6 +1363,7 @@ class _FormField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final int maxLines;
   final TextInputType keyboardType;
+  final TextAlign textAlign;
 
   const _FormField({
     required this.label,
@@ -1311,6 +1371,7 @@ class _FormField extends StatelessWidget {
     required this.onChanged,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
+    this.textAlign = TextAlign.left,
   });
 
   @override
@@ -1318,20 +1379,23 @@ class _FormField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: _T.slate500,
+        if (label.isNotEmpty) ...[
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: _T.slate500,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
+          const SizedBox(height: 4),
+        ],
         TextField(
           controller: controller,
           onChanged: onChanged,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          textAlign: textAlign,
           style: const TextStyle(fontSize: 12, color: _T.ink),
           decoration: InputDecoration(
             isDense: true,
@@ -1438,7 +1502,7 @@ class _DatePickerField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATIC FIELD — read-only labelled value (e.g. Terms)
+// STATIC FIELD — read-only labelled value (e.g. Payment Terms in doc info)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StaticField extends StatelessWidget {
   final String label;
