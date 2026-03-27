@@ -1093,10 +1093,6 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "double.tryParse(_printCtrl.text.trim()) ${(double.tryParse(_printCtrl.text.trim()) ?? 0) != 0}",
-    );
-
     if (widget.isAdding && !_isEditing) {
       _isEditing = true;
     }
