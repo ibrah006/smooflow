@@ -756,6 +756,7 @@ class _PricingDetailPanelState extends State<PricingDetailPanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Add mode
                         if (_selectedClientId != null)
                           _ClientPricingRow(
                             isAdding: true,
