@@ -1040,19 +1040,15 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
     super.initState();
     _printCtrl = TextEditingController(
       text:
-          widget.isAdding
+          (widget.costs.printCost == 0
               ? ''
-              : (widget.costs.printCost == 0
-                  ? ''
-                  : widget.costs.printCost.toStringAsFixed(2)),
+              : widget.costs.printCost.toStringAsFixed(2)),
     );
     _appCtrl = TextEditingController(
       text:
-          widget.isAdding
+          (widget.costs.applicationCost == 0
               ? ''
-              : (widget.costs.applicationCost == 0
-                  ? ''
-                  : widget.costs.applicationCost.toStringAsFixed(2)),
+              : widget.costs.applicationCost.toStringAsFixed(2)),
     );
 
     _isEditing = widget.isAdding;
