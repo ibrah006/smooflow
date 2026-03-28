@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-/// A professional image picker with hover effects and a fixed 256×180 size.
-/// Tapping the area opens the file picker. The empty state shows a dashed border
-/// and a clear message. On hover over an image, a dark overlay appears with an
-/// "Edit" label, and a subtle border highlights the area.
+/// A professional image picker with hover effects.
+/// Default size is 270×180. Tapping opens the file picker.
+/// Empty state shows a dashed border and a message.
+/// On hover over an empty state, the border and background subtly change.
+/// When an image is present, hover shows a dark overlay with an "Edit" badge.
 class CompanyLogoPicker extends StatefulWidget {
   const CompanyLogoPicker({
     super.key,
@@ -96,27 +97,15 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
           height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border:
-                hasImage && _isHovering
-                    ? Border.all(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    )
-                    : null,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: _getBorder(hasImage, context),
+            boxShadow: _getBoxShadow(),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Background / image
+                // Image or placeholder
                 if (hasImage)
                   Image.file(
                     _imageFile!,
@@ -128,7 +117,7 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
                 else
                   _buildPlaceholder(context),
 
-                // Dark overlay on hover (only when image exists)
+                // Dark overlay on hover when image exists
                 if (hasImage && _isHovering)
                   FadeTransition(
                     opacity: _overlayOpacity,
@@ -164,15 +153,49 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
     );
   }
 
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-          style: BorderStyle.solid,
+  Border? _getBorder(bool hasImage, BuildContext context) {
+    if (hasImage) {
+      // Image present: show border only on hover
+      if (_isHovering) {
+        return Border.all(color: Theme.of(context).primaryColor, width: 2);
+      }
+      return null;
+    } else {
+      // Empty state: always have a border; change color on hover
+      return Border.all(
+        color:
+            _isHovering ? Theme.of(context).primaryColor : Colors.grey.shade300,
+        width: _isHovering ? 2 : 1,
+      );
+    }
+  }
+
+  List<BoxShadow>? _getBoxShadow() {
+    // Add a subtle shadow on hover for empty state, otherwise keep light shadow
+    if (!(_imageFile?.existsSync() ?? true) && _isHovering) {
+      return [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
         ),
+      ];
+    }
+    return [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ];
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    // Empty state background: changes slightly on hover
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: _isHovering ? Colors.grey.shade100 : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -181,7 +204,10 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
           Icon(
             Icons.cloud_upload_outlined,
             size: 32,
-            color: Colors.grey.shade500,
+            color:
+                _isHovering
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey.shade500,
           ),
           const SizedBox(height: 8),
           Padding(
@@ -191,7 +217,8 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey.shade600,
+                color:
+                    _isHovering ? Colors.grey.shade700 : Colors.grey.shade600,
                 height: 1.3,
               ),
             ),
