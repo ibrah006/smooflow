@@ -860,9 +860,9 @@ class _InvoiceDetailState extends State<_InvoiceDetail> {
                     onChanged: _onItemsChanged,
                     clientName: "Scott, Melba R.",
                     clientAddress: """2468 Blackwell Street
-                      Fairbanks
-                      99701
-                      UAE""",
+Fairbanks
+99701
+UAE""",
                     onClientAddressChanged: (c) {},
                     onClientNameChanged: (value) {},
                     onDocDateChanged: (value) {},
