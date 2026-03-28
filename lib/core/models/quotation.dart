@@ -16,6 +16,8 @@ class Quotation {
   String fromCompanyAddress;
   String termsConditions;
 
+  DateTime updatedAt;
+
   double get total => lineItems.fold(0, (s, i) => s + i.amount);
 
   Quotation({
@@ -32,5 +34,42 @@ class Quotation {
     required this.fromCompanyName,
     required this.fromCompanyAddress,
     required this.termsConditions,
+    required this.updatedAt,
   });
+
+  Map<String, dynamic> toJson() => {
+    'projectId': projectId,
+    'number': number,
+    'status': status.name,
+    'notes': notes,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'clientName': clientName,
+    'clientAddress': clientAddress,
+    'fromCompanyName': fromCompanyName,
+    'fromCompanyAddress': fromCompanyAddress,
+    'termsConditions': termsConditions,
+    'vatPercentage': vatPercentage,
+    'lineItems': lineItems.map((i) => i.toJson()).toList(),
+  };
+
+  factory Quotation.fromJson(Map<String, dynamic> json) => Quotation(
+    id: json['id'],
+    projectId: json['projectId'],
+    number: json['number'],
+    status: QuotationStatus.values.firstWhere((e) => e.name == json['status']),
+    notes: json['notes'],
+    createdAt: DateTime.parse(json['createdAt']),
+    updatedAt: DateTime.parse(json['updatedAt']),
+    clientName: json['clientName'],
+    clientAddress: json['clientAddress'],
+    fromCompanyName: json['fromCompanyName'],
+    fromCompanyAddress: json['fromCompanyAddress'],
+    termsConditions: json['termsConditions'],
+    vatPercentage: (json['vatPercentage'] as num).toDouble(),
+    lineItems:
+        (json['lineItems'] as List)
+            .map((i) => QuotationLineItem.fromJson(i))
+            .toList(),
+  );
 }

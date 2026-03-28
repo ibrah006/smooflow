@@ -35,4 +35,22 @@ class QuotationLineItem {
     'qty': qty,
     'unitPrice': unitPrice,
   };
+
+  Map<String, dynamic> toJson() => {
+    'taskId': taskId,
+    'description': description,
+    'subTitle': subTitle,
+    'qty': qty,
+    'unitPrice': unitPrice,
+  };
+
+  factory QuotationLineItem.fromJson(Map<String, dynamic> json) =>
+      QuotationLineItem(
+        id: json['id'],
+        taskId: json['taskId'],
+        description: json['description'],
+        subTitle: json['subTitle'],
+        qty: (json['qty'] as num).toDouble(),
+        unitPrice: (json['unitPrice'] as num).toDouble(),
+      );
 }
