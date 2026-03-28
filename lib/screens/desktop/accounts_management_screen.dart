@@ -123,8 +123,9 @@ class Quotation {
   final String number;
   double vatPercentage;
   String clientName;
-  String companyName;
-  String companyAddress;
+  String clientAddress;
+  String fromCompanyName;
+  String fromCompanyAddress;
   String termsConditions;
 
   double get total => lineItems.fold(0, (s, i) => s + i.amount);
@@ -139,8 +140,9 @@ class Quotation {
     required this.number,
     this.vatPercentage = 5.0,
     required this.clientName,
-    required this.companyName,
-    required this.companyAddress,
+    required this.clientAddress,
+    required this.fromCompanyName,
+    required this.fromCompanyAddress,
     required this.termsConditions,
   });
 }
@@ -351,8 +353,9 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
       createdAt: DateTime.now(),
       number: _nextQuotationNumber,
       clientName: clientCompany.contactName ?? '',
-      companyName: clientCompany.name,
-      companyAddress: "2345 Sample Dist\nCity: 12345\nState, Country",
+      clientAddress: "2345 Sample Dist\nCity: 12345\nState, Country",
+      fromCompanyName: "Company, Build No. 3456, Sample Rd",
+      fromCompanyAddress: "2345 Sample Dist\nCity: 12345\nState, Country",
       termsConditions: "Full payment is due upon receipt of the invoice.",
     );
 
@@ -774,14 +777,14 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     docDate: _q.createdAt,
                     onChanged: _onItemsChanged,
                     clientName: _q.clientName,
-                    clientAddress: _q.companyAddress,
+                    clientAddress: _q.fromCompanyAddress,
                     onClientAddressChanged: (c) {},
                     onClientNameChanged: (value) {},
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
-                    fromCompanyName: _q.companyName,
-                    fromCompanyAddress: _q.companyAddress,
+                    fromCompanyName: _q.fromCompanyName,
+                    fromCompanyAddress: _q.fromCompanyAddress,
                     termsAndConditions:
                         "Fill payment is due upon receipt of the invoice.",
                     onCompanyAddressChanged: (value) {},
