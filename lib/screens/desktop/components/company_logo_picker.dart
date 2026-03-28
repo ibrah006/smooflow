@@ -11,9 +11,9 @@ class CompanyLogoPicker extends StatefulWidget {
     super.key,
     this.onImageSelected,
     this.initialImageFile,
-    this.width = 256,
+    this.width = 270,
     this.height = 180,
-    this.hintText = 'Tap to attach company logo\n(256×180 recommended)',
+    this.hintText = 'Tap to attach company logo\n(270×180 recommended)',
   });
 
   final void Function(File? file)? onImageSelected;
