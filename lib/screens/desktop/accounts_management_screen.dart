@@ -32,6 +32,7 @@ import 'package:smooflow/screens/desktop/components/accounts/pricing/components.
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
+import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
@@ -1097,15 +1098,7 @@ class _BillingEditViewState extends State<BillingEditView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Logo zone (static)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.grey.shade200),
-                  child: Icon(
-                    Icons.image,
-                    size: 45,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
+                CompanyLogoPicker(),
 
                 // Editable company card — right-aligned to mirror read-only layout
                 SizedBox(
