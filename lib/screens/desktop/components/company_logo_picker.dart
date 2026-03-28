@@ -87,6 +87,7 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
     final bool hasImage = _imageFile != null;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => _updateHover(true),
       onExit: (_) => _updateHover(false),
       child: GestureDetector(
