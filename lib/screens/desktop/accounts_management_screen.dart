@@ -780,10 +780,8 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
-                    fromCompanyName: "Building No: 2872, Al Kharj Rd",
-                    fromCompanyAddress: """6858 Al Dilaa Dist
-Riyadh: 14315
-Riyadh, Kingdom of Saudi Arabia""",
+                    fromCompanyName: _q.companyName,
+                    fromCompanyAddress: _q.companyAddress,
                     termsAndConditions:
                         "Fill payment is due upon receipt of the invoice.",
                     onCompanyAddressChanged: (value) {},
