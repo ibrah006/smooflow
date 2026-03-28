@@ -1035,9 +1035,7 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
 
   late bool _isEditing;
 
-  @override
-  void initState() {
-    super.initState();
+  void initialize() {
     _printCtrl = TextEditingController(
       text:
           (widget.costs.printCost == 0
@@ -1052,6 +1050,21 @@ class _ClientPricingRowState extends State<_ClientPricingRow> {
     );
 
     _isEditing = widget.isAdding;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    initialize();
+  }
+
+  @override
+  void didUpdateWidget(_ClientPricingRow old) {
+    super.didUpdateWidget(old);
+    if (old.client.id != widget.client.id) {
+      initialize();
+    }
   }
 
   @override
