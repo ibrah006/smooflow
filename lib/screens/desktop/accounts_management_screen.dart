@@ -122,6 +122,10 @@ class Quotation {
   final DateTime createdAt;
   final String number;
   double vatPercentage;
+  String clientName;
+  String companyName;
+  String companyAddress;
+  String termsConditions;
 
   double get total => lineItems.fold(0, (s, i) => s + i.amount);
 
@@ -134,6 +138,10 @@ class Quotation {
     required this.createdAt,
     required this.number,
     this.vatPercentage = 5.0,
+    required this.clientName,
+    required this.companyName,
+    required this.companyAddress,
+    required this.termsConditions,
   });
 }
 
@@ -328,6 +336,12 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
       );
     }
 
+    // Not using project.client here because it might not be the most up to date client details
+    final clientCompany = ref
+        .read(companyListProvider)
+        .companies
+        .firstWhere((company) => company.id == project.client.id);
+
     final q = Quotation(
       id: 'q_${DateTime.now().millisecondsSinceEpoch}',
       projectId: project.id,
@@ -336,6 +350,10 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
       notes: '',
       createdAt: DateTime.now(),
       number: _nextQuotationNumber,
+      clientName: clientCompany.contactName ?? '',
+      companyName: clientCompany.name,
+      companyAddress: "2345 Sample Dist\nCity: 12345\nState, Country",
+      termsConditions: "Full payment is due upon receipt of the invoice.",
     );
 
     setState(() {
@@ -755,18 +773,15 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     docNumber: _q.number,
                     docDate: _q.createdAt,
                     onChanged: _onItemsChanged,
-                    clientName: "Scott, Melba R.",
-                    clientAddress: """2468 Blackwell Street
-Fairbanks
-99701
-UAE""",
+                    clientName: _q.clientName,
+                    clientAddress: _q.companyAddress,
                     onClientAddressChanged: (c) {},
                     onClientNameChanged: (value) {},
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
-                    companyName: "Building No: 2872, Al Kharj Rd",
-                    companyAddress: """6858 Al Dilaa Dist
+                    fromCompanyName: "Building No: 2872, Al Kharj Rd",
+                    fromCompanyAddress: """6858 Al Dilaa Dist
 Riyadh: 14315
 Riyadh, Kingdom of Saudi Arabia""",
                     termsAndConditions:
@@ -868,8 +883,8 @@ UAE""",
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},
-                    companyName: "Building No: 2872, Al Kharj Rd",
-                    companyAddress: """6858 Al Dilaa Dist
+                    fromCompanyName: "Building No: 2872, Al Kharj Rd",
+                    fromCompanyAddress: """6858 Al Dilaa Dist
 Riyadh: 14315
 Riyadh, Kingdom of Saudi Arabia""",
                     termsAndConditions:
@@ -914,8 +929,8 @@ class BillingEditView extends StatefulWidget {
   final ValueChanged<List<QuotationLineItem>> onChanged;
 
   // Issuing company fields
-  final String companyName;
-  final String companyAddress;
+  final String fromCompanyName;
+  final String fromCompanyAddress;
   final ValueChanged<String> onCompanyNameChanged;
   final ValueChanged<String> onCompanyAddressChanged;
 
@@ -942,8 +957,8 @@ class BillingEditView extends StatefulWidget {
     required this.docNumber,
     required this.docDate,
     required this.onChanged,
-    required this.companyName,
-    required this.companyAddress,
+    required this.fromCompanyName,
+    required this.fromCompanyAddress,
     required this.onCompanyNameChanged,
     required this.onCompanyAddressChanged,
     required this.clientName,
@@ -985,8 +1000,10 @@ class _BillingEditViewState extends State<BillingEditView> {
   void initState() {
     super.initState();
     _items = List.from(widget.lineItems);
-    _companyNameCtrl = TextEditingController(text: widget.companyName);
-    _companyAddressCtrl = TextEditingController(text: widget.companyAddress);
+    _companyNameCtrl = TextEditingController(text: widget.fromCompanyName);
+    _companyAddressCtrl = TextEditingController(
+      text: widget.fromCompanyAddress,
+    );
     _clientNameCtrl = TextEditingController(text: widget.clientName);
     _clientAddressCtrl = TextEditingController(text: widget.clientAddress);
     _docNumberCtrl = TextEditingController(text: widget.docNumber);
@@ -1000,8 +1017,8 @@ class _BillingEditViewState extends State<BillingEditView> {
     super.didUpdateWidget(old);
     if (old.docNumber != widget.docNumber) {
       _items = List.from(widget.lineItems);
-      _companyNameCtrl.text = widget.companyName;
-      _companyAddressCtrl.text = widget.companyAddress;
+      _companyNameCtrl.text = widget.fromCompanyName;
+      _companyAddressCtrl.text = widget.fromCompanyAddress;
       _clientNameCtrl.text = widget.clientName;
       _clientAddressCtrl.text = widget.clientAddress;
       _docNumberCtrl.text = widget.docNumber;
