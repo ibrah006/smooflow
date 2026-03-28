@@ -790,7 +790,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     fromCompanyName: _q.fromCompanyName,
                     fromCompanyAddress: _q.fromCompanyAddress,
                     termsAndConditions:
-                        "Fill payment is due upon receipt of the invoice.",
+                        "Full payment is due upon receipt of the invoice.",
                     onCompanyAddressChanged: (value) {},
                     onCompanyNameChanged: (value) {},
                     onTermsChanged: (value) {},
@@ -893,7 +893,7 @@ UAE""",
 Riyadh: 14315
 Riyadh, Kingdom of Saudi Arabia""",
                     termsAndConditions:
-                        "Fill payment is due upon receipt of the invoice.",
+                        "Full payment is due upon receipt of the invoice.",
                     onCompanyAddressChanged: (value) {},
                     onCompanyNameChanged: (value) {},
                     onTermsChanged: (value) {},
