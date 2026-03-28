@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 
@@ -8,45 +9,6 @@ const kLineColumnVerticalDividerHeight = 66.0;
 const kLineColumnVerticalDividerHeightDescriptionMultiplier = 15.0;
 const kLineColumnVerticalPadding = 17.0;
 final kTableDividerColor = Colors.grey.shade200;
-
-class QuotationLineItem {
-  final String id;
-  final int? taskId;
-  String description;
-  final String? subTitle;
-  double qty;
-  double unitPrice;
-
-  double get amount => qty * unitPrice;
-
-  QuotationLineItem({
-    required this.id,
-    this.taskId,
-    required this.description,
-    this.subTitle,
-    required this.qty,
-    required this.unitPrice,
-  });
-
-  QuotationLineItem copyWith({
-    String? description,
-    double? qty,
-    double? unitPrice,
-  }) => QuotationLineItem(
-    id: id,
-    taskId: taskId,
-    description: description ?? this.description,
-    qty: qty ?? this.qty,
-    unitPrice: unitPrice ?? this.unitPrice,
-  );
-
-  // Snapshot for invoice diffing
-  Map<String, dynamic> toSnapshot() => {
-    'description': description,
-    'qty': qty,
-    'unitPrice': unitPrice,
-  };
-}
 
 class Quotation {
   final String id;

@@ -23,6 +23,8 @@ import 'package:smooflow/core/api/websocket_clients/pricing_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/core/models/quotation.dart';
+import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/company_provider.dart';
 import 'package:smooflow/providers/pricing_provider.dart';
@@ -30,7 +32,14 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/accounts/pricing/components.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
-import 'package:smooflow/screens/desktop/components/billing_document_view.dart';
+import 'package:smooflow/screens/desktop/components/billing_document_view.dart'
+    show
+        BillingDocumentView,
+        TableHeader,
+        VertDivider,
+        kLeftPaddingDescriptionColumn,
+        kTableDividerColor,
+        kLineColumnVerticalDividerHeight;
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
@@ -115,40 +124,6 @@ extension InvoiceStatusX on InvoiceStatus {
     InvoiceStatus.paid => _T.green50,
     InvoiceStatus.overdue => _T.red50,
   };
-}
-
-class Quotation {
-  final String id;
-  final String projectId;
-  List<QuotationLineItem> lineItems;
-  QuotationStatus status;
-  String notes;
-  final DateTime createdAt;
-  final String number;
-  double vatPercentage;
-  String clientName;
-  String clientAddress;
-  String fromCompanyName;
-  String fromCompanyAddress;
-  String termsConditions;
-
-  double get total => lineItems.fold(0, (s, i) => s + i.amount);
-
-  Quotation({
-    required this.id,
-    required this.projectId,
-    required this.lineItems,
-    required this.status,
-    required this.notes,
-    required this.createdAt,
-    required this.number,
-    this.vatPercentage = 5.0,
-    required this.clientName,
-    required this.clientAddress,
-    required this.fromCompanyName,
-    required this.fromCompanyAddress,
-    required this.termsConditions,
-  });
 }
 
 class Invoice {
