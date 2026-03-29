@@ -239,7 +239,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pricingStateProvider.notifier).fetchPricing();
       ref.read(quotationListProvider.notifier).fetchQuotations().then((value) {
-        _quotationCounter = value.length;
+        _quotationCounter = value.length + 1;
       });
     });
   }
@@ -1106,8 +1106,6 @@ class _BillingEditViewState extends State<BillingEditView> {
 
   Future<void> _pickDate({required bool isDue}) async {
     final picked = await showMacOSDatePickerDialog(context);
-
-    print("picked: ${picked}");
 
     if (picked == null) return;
     setState(() {
