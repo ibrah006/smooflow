@@ -14,7 +14,7 @@ class CompanyLogoPicker extends StatefulWidget {
     this.initialImageFile,
     this.width = 270,
     this.height = 180,
-    this.hintText = 'Tap to attach company logo\n(270×180 recommended)',
+    this.hintText = 'Tap to attach company logo\n(3:2 ratio recommended)',
   });
 
   final void Function(File? file)? onImageSelected;
@@ -220,6 +220,22 @@ class _CompanyLogoPickerState extends State<CompanyLogoPicker>
                 fontSize: 11,
                 color:
                     _isHovering ? Colors.grey.shade700 : Colors.grey.shade600,
+                height: 1.3,
+              ),
+            ),
+          ),
+          SizedBox(height: 3),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              "PNG, JPG",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color:
+                    _isHovering
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey.shade600,
                 height: 1.3,
               ),
             ),
