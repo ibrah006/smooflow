@@ -69,7 +69,13 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
           state = [...state];
           break;
         case QuotationChangeType.updated:
-          state = {event.quotation, ...state}.toList();
+          state =
+              state.map((q) {
+                if (q.id == event.quotation.id) {
+                  return event.quotation;
+                }
+                return q;
+              }).toList();
           break;
         case QuotationChangeType.deleted:
           state = state.where((p) => p.id == event.quotation.id).toList();
