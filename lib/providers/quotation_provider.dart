@@ -119,7 +119,21 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
 
     state =
         {
-          state.firstWhere((q) => q.id == id).update(isLoading: true),
+          state
+              .firstWhere((q) => q.id == id)
+              .update(
+                isLoading: true,
+                number: number,
+                status: status,
+                notes: notes,
+                clientName: clientName,
+                clientAddress: clientAddress,
+                fromCompanyName: fromCompanyName,
+                fromCompanyAddress: fromCompanyAddress,
+                termsConditions: termsConditions,
+                vatPercentage: vatPercentage,
+                lineItems: lineItems,
+              ),
           ...state,
         }.toList();
 
