@@ -841,7 +841,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
                     docDate: _q.createdAt,
                     onChanged: _onItemsChanged,
                     clientName: _q.clientName,
-                    clientAddress: _q.fromCompanyAddress,
+                    clientAddress: _q.clientAddress,
                     onClientNameChanged: _onClientNameChanged,
                     onClientAddressChanged: _onClientAddressChanged,
                     onDocDateChanged: (value) {},
