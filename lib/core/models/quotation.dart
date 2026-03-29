@@ -3,7 +3,7 @@ import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 import 'package:uuid/uuid.dart';
 
 class Quotation {
-  late String _id, tempId;
+  late final String _id, tempId;
 
   String get id {
     try {
@@ -12,6 +12,10 @@ class Quotation {
       // _id not initialized yet
       return tempId;
     }
+  }
+
+  initializeId(String id) {
+    _id = id;
   }
 
   final String projectId;

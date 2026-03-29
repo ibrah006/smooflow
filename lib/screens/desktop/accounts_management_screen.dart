@@ -208,6 +208,8 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   bool _showPricingDetail = false;
   bool _isCreatingPricing = false;
 
+  bool _isCreatingQuoteLoading = false;
+
   List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
 
@@ -277,7 +279,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     });
   }
 
-  void _createQuotation(Project project, List<Task> tasks) {
+  void _createQuotation(Project project, List<Task> tasks) async {
     int idx = 1;
     final lineItems =
         tasks.map((t) {
@@ -345,7 +347,16 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
       _selectedQuotation = q;
       _selectedInvoice = null;
       _showingInvoice = false;
+      _isCreatingQuoteLoading = true;
       _tab.animateTo(0);
+    });
+
+    q.initializeId(
+      (await ref.watch(quotationListProvider.notifier).createQuotation(q)).id,
+    );
+
+    setState(() {
+      _isCreatingQuoteLoading = false;
     });
   }
 
