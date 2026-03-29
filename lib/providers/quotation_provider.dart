@@ -67,9 +67,11 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     });
   }
 
-  Future<void> fetchQuotations() async {
+  Future<List<Quotation>> fetchQuotations() async {
     final quotations = await _api.getQuotations();
     state = quotations;
+
+    return state;
   }
 
   Future<Quotation> createQuotation(Quotation data) async {

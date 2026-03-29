@@ -220,7 +220,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Invoice? _selectedInvoice;
   bool _showingInvoice = false;
 
-  int _quotationCounter = 1;
+  int _quotationCounter = 0;
   int _invoiceCounter = 1;
 
   String get _nextQuotationNumber =>
@@ -238,7 +238,9 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pricingStateProvider.notifier).fetchPricing();
-      ref.read(quotationListProvider.notifier).fetchQuotations();
+      ref.read(quotationListProvider.notifier).fetchQuotations().then((value) {
+        _quotationCounter = value.length;
+      });
     });
   }
 
