@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:smooflow/core/models/quotation.dart';
 import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
@@ -179,7 +180,7 @@ class BillingDocumentView extends StatelessWidget {
                     Text("Quote to", style: TextStyle(fontSize: 11.5)),
                     SizedBox(height: 6),
                     Text(
-                      "Scott, Melba R.",
+                      quotation.clientName,
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -187,7 +188,7 @@ class BillingDocumentView extends StatelessWidget {
                     ),
                     SizedBox(height: 3),
                     Text(
-                      "2468 Blackwell Street\nFairbanks\n99701\nUAE",
+                      quotation.clientAddress,
                       style: TextStyle(fontSize: 11.5),
                     ),
                   ],
@@ -200,7 +201,7 @@ class BillingDocumentView extends StatelessWidget {
                       children: [
                         Text("Quote#:", style: TextStyle(fontSize: 12.55)),
                         Text(
-                          " 3501",
+                          " ${quotation.number}",
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
@@ -209,7 +210,10 @@ class BillingDocumentView extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 5),
-                    Text("Date: 24 Mar 2026", style: TextStyle(fontSize: 12.5)),
+                    Text(
+                      "Date: ${DateFormat('d MMM yyyy').format(quotation.createdAt)}",
+                      style: TextStyle(fontSize: 12.5),
+                    ),
                     Text(
                       "Terms: Due on Receipt",
                       style: TextStyle(fontSize: 12.5),
@@ -317,7 +321,7 @@ class BillingDocumentView extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                "Full payment is due upon receipt of the invoice.",
+                quotation.termsConditions,
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
               ),
             ),
