@@ -64,7 +64,7 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
           if (quotationIndex != -1) state.removeAt(quotationIndex);
 
           state.insert(0, event.quotation);
-          state = state;
+          state = [...state];
           break;
         case QuotationChangeType.updated:
           state = {...state, event.quotation}.toList();
