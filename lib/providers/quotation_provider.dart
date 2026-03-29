@@ -49,16 +49,21 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
   }
 
   void _initialize() {
-    _client.on('quotation:created', (data) {
-      final newQuotation = Quotation.fromJson(data);
-      state = [newQuotation, ...state];
+    _client.quotationChanges.listen((event) {
+      switch (event.type) {
+        case QuotationChangeType.created:
+          state = {...state, event.quotation}.toList();
+          break;
+        case QuotationChangeType.updated:
+          state = {...state, event.quotation}.toList();
+          break;
+        case QuotationChangeType.deleted:
+          state = state.where((p) => p.id == event.quotation.id).toList();
+      }
     });
-    _client.on('quotation:updated', (data) {
-      final updated = Quotation.fromJson(data);
-      state = state.map((q) => q.id == updated.id ? updated : q).toList();
-    });
-    _client.on('quotation:deleted', (data) {
-      state = state.where((q) => q.id != data['id']).toList();
+
+    _client.errors.listen((error) {
+      // state = state.copyWith(error: error, isLoading: false);
     });
   }
 
