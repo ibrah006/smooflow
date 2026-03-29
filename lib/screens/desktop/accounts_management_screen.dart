@@ -536,6 +536,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
             tasks
                 .where((t) => t.projectId == _selectedQuotation!.projectId)
                 .toList();
+
         detail = _QuotationDetail(
           key: ValueKey(_selectedQuotation?.id),
           quotation: _selectedQuotation!,
@@ -774,6 +775,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientAddress: newValue);
+      _q.update(isLoading: false);
     }
   }
 
@@ -782,6 +784,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientName: newValue);
+      _q.update(isLoading: false);
     }
   }
 
@@ -790,6 +793,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyName: newValue);
+      _q.update(isLoading: false);
     }
   }
 
@@ -798,6 +802,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyAddress: newValue);
+      _q.update(isLoading: false);
     }
   }
 
