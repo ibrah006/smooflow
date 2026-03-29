@@ -52,6 +52,17 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     _client.quotationChanges.listen((event) {
       switch (event.type) {
         case QuotationChangeType.created:
+          // If already exists in local memory
+          // Best practice is to remove it because calling quotation.id
+          // will return temporary id for quotations that were just created
+          // until the quotation is initialized in server,
+          // after which the actual quotation id is returned
+          final quotationIndex = state.indexWhere(
+            (q) => q.number == event.quotation.number,
+          );
+
+          if (quotationIndex != -1) state.removeAt(quotationIndex);
+
           state = {...state, event.quotation}.toList();
           break;
         case QuotationChangeType.updated:
