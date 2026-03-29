@@ -119,7 +119,7 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
 
     if (number != null) payload['number'] = number;
     if (status != null)
-      payload['status'] = status.toString(); // or whatever API expects
+      payload['status'] = status.name; // or whatever API expects
     if (notes != null) payload['notes'] = notes;
     if (clientName != null) payload['clientName'] = clientName;
     if (clientAddress != null) payload['clientAddress'] = clientAddress;
