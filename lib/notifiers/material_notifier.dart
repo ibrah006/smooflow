@@ -51,7 +51,6 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   Future<List<MaterialModel>> createMaterials(
     List<MaterialModel> materials,
   ) async {
-
     if (materials.length == 1) {
       return [await createMaterial(materials.first)];
     } else if (materials.isEmpty) {
@@ -71,7 +70,7 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     try {
       final newMaterials = await _repo.createMaterials(materials);
       // Converting from set, because set will ensure there are no duplicates
-      final updatedList = {...state.materials, ...newMaterials}.toList();
+      final updatedList = {...newMaterials, ...state.materials}.toList();
       // Assuming db does not return duplicates
       state = state.copyWith(materials: updatedList, isLoading: false);
 
@@ -126,7 +125,11 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   }) async {
     state = state.copyWith(isLoading: true);
     try {
-      final transaction = await _repo.stockIn(materialId, quantity, notes: notes);
+      final transaction = await _repo.stockIn(
+        materialId,
+        quantity,
+        notes: notes,
+      );
       state = state.copyWith(isLoading: false, transaction: transaction);
 
       try {
@@ -212,13 +215,20 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
     TransactionType? type,
     // If local (ram) transactions for this specific query is empty, then look for this in database
     bool checkIsLocalEmpty = false,
-    bool updateState = true
+    bool updateState = true,
   }) async {
     if (updateState) state = state.copyWith(isLoading: true);
 
     List<StockTransaction> transactions = [];
     if (checkIsLocalEmpty) {
-      transactions = state.transactions.where((transaction)=> transaction.materialId == materialId && (type!=null && type == transaction.type || type==null)).toList();
+      transactions =
+          state.transactions
+              .where(
+                (transaction) =>
+                    transaction.materialId == materialId &&
+                    (type != null && type == transaction.type || type == null),
+              )
+              .toList();
     }
 
     if (transactions.isEmpty) {
@@ -226,11 +236,13 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
         transactions = await _repo.getMaterialTransactions(
           materialId,
           limit: limit,
-          type: type
+          type: type,
         );
-        if (updateState) state = state.copyWith(transactions: transactions, isLoading: false);
+        if (updateState)
+          state = state.copyWith(transactions: transactions, isLoading: false);
       } catch (e) {
-        if (updateState) state = state.copyWith(isLoading: false, errorMessage: e.toString());
+        if (updateState)
+          state = state.copyWith(isLoading: false, errorMessage: e.toString());
       }
     }
 
@@ -354,30 +366,31 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   /// because it sounds like we're about to commit a stock out transaction that's already in memory
   /// but realistically we're just about to load it into memory
   /// and updating its source batch's stock availability
-  void commitStockOutTransaction({required StockTransaction stockOutTransaction}) {
-    final updatedMaterial = state.materials.firstWhere((material)=> material.id == stockOutTransaction.materialId);
+  void commitStockOutTransaction({
+    required StockTransaction stockOutTransaction,
+  }) {
+    final updatedMaterial = state.materials.firstWhere(
+      (material) => material.id == stockOutTransaction.materialId,
+    );
 
     updatedMaterial.currentStock -= stockOutTransaction.quantity;
 
-    state.transactions = state.transactions.map((transaction) {
-      if (
-        transaction.barcode
-          // Same as source batch
-          == stockOutTransaction.barcode
-          && transaction.type == TransactionType.stockIn) {
+    state.transactions =
+        state.transactions.map((transaction) {
+          if (transaction.barcode
+                  // Same as source batch
+                  ==
+                  stockOutTransaction.barcode &&
+              transaction.type == TransactionType.stockIn) {
+            // If source batch found, update its stock level/availablility
+            transaction.quantity -= stockOutTransaction.quantity;
+          }
 
-        // If source batch found, update its stock level/availablility
-        transaction.quantity -= stockOutTransaction.quantity;
-      }
-
-      return transaction;
-    }).toList();
+          return transaction;
+        }).toList();
 
     // Add new Stock out transaction to memory
-    state.copyWith(
-      transaction: stockOutTransaction,
-      material: updatedMaterial
-    );
+    state.copyWith(transaction: stockOutTransaction, material: updatedMaterial);
   }
 }
 

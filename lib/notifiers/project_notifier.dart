@@ -36,15 +36,18 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   late final OrganizationRepo _orgRepo;
 
-   /// Default empty state containers
-  ProjectReportDetails _projectReportDetailsThisWeek =
-      ProjectReportDetails(period: Period.thisWeek);
+  /// Default empty state containers
+  ProjectReportDetails _projectReportDetailsThisWeek = ProjectReportDetails(
+    period: Period.thisWeek,
+  );
 
-  ProjectReportDetails _projectReportDetailsThisMonth =
-      ProjectReportDetails(period: Period.thisMonth);
+  ProjectReportDetails _projectReportDetailsThisMonth = ProjectReportDetails(
+    period: Period.thisMonth,
+  );
 
-  ProjectReportDetails _projectReportDetailsThisYear =
-      ProjectReportDetails(period: Period.thisYear);
+  ProjectReportDetails _projectReportDetailsThisYear = ProjectReportDetails(
+    period: Period.thisYear,
+  );
 
   // load projects
   Future<void> load({
@@ -75,7 +78,9 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     return project;
   }
 
-  @Deprecated("When there are too many projects to be loaded into the memory, this method won't be efficient. As we may or may not have all the active projects in memory. Use [activeProjectsLengthValue] instead")
+  @Deprecated(
+    "When there are too many projects to be loaded into the memory, this method won't be efficient. As we may or may not have all the active projects in memory. Use [activeProjectsLengthValue] instead",
+  )
   int get activeProjectsLength {
     return state
         .where(
@@ -96,7 +101,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     // Add to active projects if start date is >= now
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    if (newProject.estimatedProductionStart?.isAfter(today)?? true) {
+    if (newProject.estimatedProductionStart?.isAfter(today) ?? true) {
       // If not start date, then by default, it is an active project
       activeProjects = [...activeProjects, newProject];
     }
@@ -208,7 +213,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
       projectsOverallStatus.pendingLength = result['pendingLength'] as int;
       projectsOverallStatus.finishedLength = result['finishedLength'] as int;
 
-      state = {...state, ...activeProjects}.toList();
+      state = {...activeProjects, ...state}.toList();
     } catch (e) {
       // ignore errors for now; caller can handle
       print("Error fetching projects overall status: $e");
@@ -232,7 +237,6 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   /// Fetch report for a given period & update notifier
   Future<void> fetchReport(Period period) async {
-
     try {
       final report = await _repo.fetchProductionReport(period);
 

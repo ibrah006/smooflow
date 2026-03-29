@@ -91,12 +91,12 @@ class PricingNotifier extends StateNotifier<PricingState> {
       switch (event.type) {
         case PricingChangeType.created:
           state = state.copyWith(
-            pricingData: {...state.pricingData, event.pricing}.toList(),
+            pricingData: {event.pricing, ...state.pricingData}.toList(),
           );
           break;
         case PricingChangeType.updated:
           state = state.copyWith(
-            pricingData: {...state.pricingData, event.pricing}.toList(),
+            pricingData: {event.pricing, ...state.pricingData}.toList(),
             // state.pricingData
             //     .map((p) => p.id == event.pricing.id ? event.pricing : p)
             //     .toList(),

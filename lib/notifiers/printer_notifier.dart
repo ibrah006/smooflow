@@ -17,9 +17,9 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     state = state.copyWith(loading: true, error: null);
 
     // try {
-      final result = await _repo.getPrinters();
-      await fetchActivePrinters();
-      state = state.copyWith(printers: result, loading: false);
+    final result = await _repo.getPrinters();
+    await fetchActivePrinters();
+    state = state.copyWith(printers: result, loading: false);
     // } catch (e) {
     //   print("error occurred: $e");
     //   state = state.copyWith(loading: false, error: e.toString());
@@ -33,7 +33,11 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     state = state.copyWith(loading: true, error: null);
     try {
       final result = await _repo.getActivePrinters();
-      state = state.copyWith(activePrinters: result["activePrinters"], totalPrintersCount: result["totalPrintersCount"], loading: false);
+      state = state.copyWith(
+        activePrinters: result["activePrinters"],
+        totalPrintersCount: result["totalPrintersCount"],
+        loading: false,
+      );
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }
@@ -50,18 +54,20 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
     double? printSpeed,
   }) async {
     // try {
-      final printer = await _repo.createPrinter(
-        name: name,
-        nickname: nickname,
-        location: location,
-        maxWidth: maxWidth,
-        printSpeed: printSpeed,
-      );
+    final printer = await _repo.createPrinter(
+      name: name,
+      nickname: nickname,
+      location: location,
+      maxWidth: maxWidth,
+      printSpeed: printSpeed,
+    );
 
-      state = state.copyWith(
-        printers: [...state.printers, printer],
-        totalPrintersCount: state.totalPrintersCount + 1,
-        activePrinters: printer.isActive? [...state.activePrinters, printer] : null);
+    state = state.copyWith(
+      printers: [...state.printers, printer],
+      totalPrintersCount: state.totalPrintersCount + 1,
+      activePrinters:
+          printer.isActive ? [...state.activePrinters, printer] : null,
+    );
     // } catch (e) {
     //   print("error occurred while creating printer: $e");
     //   state = state.copyWith(error: e.toString());
@@ -91,13 +97,14 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
         printSpeed: printSpeed,
       );
 
-      final list = [...state.printers].map((e){
-        if (e.id == id) {
-          return updated;
-        } else {
-          return e;
-        }
-      }).toList();
+      final list =
+          [...state.printers].map((e) {
+            if (e.id == id) {
+              return updated;
+            } else {
+              return e;
+            }
+          }).toList();
 
       state = state.copyWith(printers: list);
     } catch (e) {
@@ -122,32 +129,34 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   }
 
   /// Fetch production report for a given period
-  Future<void> fetchReport(
-    ReportPeriod period,
-  ) async {    
+  Future<void> fetchReport(ReportPeriod period) async {
     // try {
     //   state = state.copyWith(loading: true);
     // } catch(e) {}
-  
+
     try {
       final reportResponse = await _repo.getProductionReport(period);
 
       if (!reportResponse.success) {
-        state = state.copyWith(error: "Failed to Production Report", loading: false);
+        state = state.copyWith(
+          error: "Failed to Production Report",
+          loading: false,
+        );
       }
-      
+
       state = state.copyWith(
-        report: {...state.report, period: reportResponse.data}
+        report: {period: reportResponse.data, ...state.report},
       );
-    
-    } catch(e) {
+    } catch (e) {
       state = state.copyWith(error: e.toString(), loading: false);
       rethrow;
     }
   }
 
   /// Lazy loading (only reload if empty)
-  Future<ProductionReportDetails> ensureReportLoaded(ReportPeriod period) async {
+  Future<ProductionReportDetails> ensureReportLoaded(
+    ReportPeriod period,
+  ) async {
     final report = state.report[period];
 
     if (report == null) {
@@ -159,23 +168,21 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
 
   // Only use this in the task provider file along with TaskNotifier.assignPrinter
   void assignTask({required String printerId, required int taskId}) {
-    state.silentSetPrinters = state.printers.map(
-      (printer) {
-        if (printer.id == printerId) printer.assignJob(jobId: taskId);
-        return printer;
-      }
-    ).toList();
+    state.silentSetPrinters =
+        state.printers.map((printer) {
+          if (printer.id == printerId) printer.assignJob(jobId: taskId);
+          return printer;
+        }).toList();
   }
 
   // Only use this in the task provider file along with TaskNotifier.unassignPrinter
   void unassignTask({required int taskId}) {
     state.copyWith(
-      printers: state.printers.map(
-        (printer) {
-          if (printer.currentJobId == taskId) printer.unassignJob();
-          return printer;
-        }
-      ).toList()
+      printers:
+          state.printers.map((printer) {
+            if (printer.currentJobId == taskId) printer.unassignJob();
+            return printer;
+          }).toList(),
     );
   }
 }
