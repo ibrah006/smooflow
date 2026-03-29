@@ -633,10 +633,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
           // ── Manage ─────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
             child: _SidebarLabel('Manage'),
           ),
-          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
@@ -656,7 +655,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               ],
             ),
           ),
-          SizedBox(height: 30),
+          SizedBox(height: 10),
 
           // ── Team ───────────────────────────────────────────────────────
           // Container(
