@@ -38,6 +38,8 @@ class Quotation {
 
   bool _isLoading;
 
+  bool get isLoading => _isLoading;
+
   Quotation({
     required String id,
     required this.projectId,
@@ -73,6 +75,10 @@ class Quotation {
   }) : updatedAt = DateTime.now(),
        tempId = Uuid().v1(),
        _isLoading = true;
+
+  Quotation update({required bool isLoading}) {
+    return this.._isLoading = isLoading;
+  }
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
