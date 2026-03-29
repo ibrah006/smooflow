@@ -208,7 +208,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   bool _showPricingDetail = false;
   bool _isCreatingPricing = false;
 
-  bool _isCreatingQuoteLoading = false;
+  bool _isCreatingQuoteLoading = true;
 
   List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
@@ -511,6 +511,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
           onCreateInvoice:
               () => _createInvoiceFromQuotation(_selectedQuotation!),
           onClose: () => setState(() => _selectedQuotation = null),
+          isCreatingQuoteLoading: _isCreatingQuoteLoading
         );
       } else {
         detail = const _AccountsIdlePane();
@@ -685,6 +686,7 @@ class _QuotationDetail extends StatefulWidget {
   final ValueChanged<Quotation> onUpdate;
   final VoidCallback onCreateInvoice;
   final VoidCallback onClose;
+  final bool isCreatingQuoteLoading;
 
   const _QuotationDetail({
     super.key,
@@ -695,6 +697,7 @@ class _QuotationDetail extends StatefulWidget {
     required this.onUpdate,
     required this.onCreateInvoice,
     required this.onClose,
+    required this.isCreatingQuoteLoading
   });
 
   @override
@@ -736,6 +739,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (widget.isCreatingQuoteLoading) , 
               _StatusDropdown<QuotationStatus>(
                 current: _q.status,
                 values: QuotationStatus.values,
