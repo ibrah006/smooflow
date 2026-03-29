@@ -32,9 +32,6 @@ class QuotationRepo {
   ) async {
     final response = await ApiClient.http.put('/quotation/$id', body: data);
 
-    print("update $id quotation requested, data: $data");
-    print("quotation update response: ${response.body}");
-
     if (response.statusCode != 200) {
       throw json.decode(response.body)['message'];
     }
