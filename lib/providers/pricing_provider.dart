@@ -4,7 +4,7 @@ import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/pricing.dart';
 import 'package:smooflow/core/repositories/pricing_repo.dart';
 import 'package:smooflow/core/api/websocket_clients/pricing_websocket.dart';
-import 'package:smooflow/states/pricing_state.dart';
+import 'package:smooflow/states/pricing.dart';
 
 // final pricingNotifierProvider =
 //     StateNotifierProvider<PricingNotifier, List<Pricing>>((ref) {
