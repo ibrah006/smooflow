@@ -801,6 +801,14 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     }
   }
 
+  void _onTermsChanged(String newValue) async {
+    if (_q.termsConditions != newValue) {
+      await ref
+          .watch(quotationNotifierProvider.notifier)
+          .updateQuotation(_q.id, termsConditions: newValue);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -869,7 +877,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
                         "Full payment is due upon receipt of the invoice.",
                     onCompanyNameChanged: _onFromCompanyNameChanged,
                     onCompanyAddressChanged: _onFromCompanyAddressChanged,
-                    onTermsChanged: (value) {},
+                    onTermsChanged: _onTermsChanged,
                   )
                   : BillingDocumentView(quotation: _q),
         ),
