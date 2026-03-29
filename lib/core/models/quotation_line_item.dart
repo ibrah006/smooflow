@@ -50,7 +50,7 @@ class QuotationLineItem {
         taskId: json['taskId'],
         description: json['description'],
         subTitle: json['subTitle'],
-        qty: (json['qty'] as num).toDouble(),
-        unitPrice: (json['unitPrice'] as num).toDouble(),
+        qty: double.tryParse(json['qty']) ?? 0,
+        unitPrice: double.tryParse(json['unitPrice']) ?? 0,
       );
 }

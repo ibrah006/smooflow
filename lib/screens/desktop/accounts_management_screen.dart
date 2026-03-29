@@ -220,7 +220,8 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Invoice? _selectedInvoice;
   bool _showingInvoice = false;
 
-  int _quotationCounter = 0;
+  int get _quotationCounter => _quotations.length;
+
   int _invoiceCounter = 1;
 
   String get _nextQuotationNumber =>
@@ -238,9 +239,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pricingStateProvider.notifier).fetchPricing();
-      ref.read(quotationListProvider.notifier).fetchQuotations().then((value) {
-        _quotationCounter = value.length + 1;
-      });
+      ref.read(quotationListProvider.notifier).fetchQuotations();
     });
   }
 
@@ -348,7 +347,6 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     setState(() {
       _quotations.insert(0, q);
-      _quotationCounter++;
       _selectedQuotation = q;
       _selectedInvoice = null;
       _showingInvoice = false;
@@ -365,6 +363,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
         _isCreatingQuoteError = false;
       });
     } catch (e) {
+      print("error caught when creating quote: ${e}");
       setState(() {
         _isCreatingQuoteLoading = false;
         _isCreatingQuoteError = true;
