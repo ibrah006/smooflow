@@ -24,7 +24,10 @@ class Quotation {
   QuotationStatus status;
   String notes;
   final DateTime createdAt;
-  final String number;
+  String _number;
+
+  String get number => _number;
+
   double vatPercentage;
   String clientName;
   String clientAddress;
@@ -47,7 +50,7 @@ class Quotation {
     required this.status,
     required this.notes,
     required this.createdAt,
-    required this.number,
+    required String number,
     this.vatPercentage = 5.0,
     required this.clientName,
     required this.clientAddress,
@@ -56,7 +59,8 @@ class Quotation {
     required this.termsConditions,
     required this.updatedAt,
     bool isLoading = false,
-  }) : _id = id,
+  }) : _number = number,
+       _id = id,
        _isLoading = isLoading;
 
   Quotation.create({
@@ -65,19 +69,43 @@ class Quotation {
     required this.status,
     required this.notes,
     required this.createdAt,
-    required this.number,
+    required String number,
     this.vatPercentage = 5.0,
     required this.clientName,
     required this.clientAddress,
     required this.fromCompanyName,
     required this.fromCompanyAddress,
     required this.termsConditions,
-  }) : updatedAt = DateTime.now(),
+  }) : _number = number,
+       updatedAt = DateTime.now(),
        tempId = Uuid().v1(),
        _isLoading = true;
 
-  Quotation update({required bool isLoading}) {
-    return this.._isLoading = isLoading;
+  Quotation update({
+    required bool isLoading,
+    String? number,
+    QuotationStatus? status,
+    String? notes,
+    String? clientName,
+    String? clientAddress,
+    String? fromCompanyName,
+    String? fromCompanyAddress,
+    String? termsConditions,
+    double? vatPercentage,
+    List<QuotationLineItem>? lineItems,
+  }) {
+    return this
+      .._isLoading = isLoading
+      .._number = number ?? _number
+      ..status = status ?? this.status
+      ..notes = notes ?? this.notes
+      ..clientName = clientName ?? this.clientName
+      ..clientAddress = clientAddress ?? this.clientAddress
+      ..fromCompanyName = fromCompanyName ?? this.fromCompanyName
+      ..fromCompanyAddress = fromCompanyAddress ?? this.fromCompanyAddress
+      ..termsConditions = termsConditions ?? this.termsConditions
+      ..vatPercentage = vatPercentage ?? this.vatPercentage
+      ..lineItems = lineItems ?? this.lineItems;
   }
 
   Map<String, dynamic> toJson() => {

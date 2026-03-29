@@ -718,7 +718,7 @@ class _AccountsTopbarWithTabs extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // QUOTATION DETAIL
 // ─────────────────────────────────────────────────────────────────────────────
-class _QuotationDetail extends StatefulWidget {
+class _QuotationDetail extends ConsumerStatefulWidget {
   final Quotation quotation;
   final Project? project;
   final List<Task> projectTasks;
@@ -745,10 +745,10 @@ class _QuotationDetail extends StatefulWidget {
   });
 
   @override
-  State<_QuotationDetail> createState() => _QuotationDetailState();
+  ConsumerState<_QuotationDetail> createState() => _QuotationDetailState();
 }
 
-class _QuotationDetailState extends State<_QuotationDetail> {
+class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   late Quotation _q;
   _DocMode _mode = _DocMode.edit;
 
@@ -766,6 +766,22 @@ class _QuotationDetailState extends State<_QuotationDetail> {
   void _setStatus(QuotationStatus s) {
     setState(() => _q.status = s);
     widget.onUpdate(_q);
+  }
+
+  void _onClientAddressChanged(String newValue) async {
+    if (_q.clientAddress != newValue) {
+      await ref
+          .watch(quotationNotifierProvider.notifier)
+          .updateQuotation(_q.id, clientAddress: newValue);
+    }
+  }
+
+  void _onClientNameChanged(String newValue) async {
+    if (_q.clientName != newValue) {
+      await ref
+          .watch(quotationNotifierProvider.notifier)
+          .updateQuotation(_q.id, clientName: newValue);
+    }
   }
 
   @override
@@ -825,8 +841,8 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                     onChanged: _onItemsChanged,
                     clientName: _q.clientName,
                     clientAddress: _q.fromCompanyAddress,
-                    onClientAddressChanged: (c) {},
-                    onClientNameChanged: (value) {},
+                    onClientNameChanged: _onClientNameChanged,
+                    onClientAddressChanged: _onClientAddressChanged,
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
                     onDueDateChanged: (value) {},

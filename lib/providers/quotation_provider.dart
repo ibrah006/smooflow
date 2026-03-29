@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/quotation_websocket.dart';
 import 'package:smooflow/core/models/quotation.dart';
+import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/core/repositories/quotation_repo.dart';
+import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 
 // final quotationApiProvider = Provider((ref) => QuotationRepo());
 
@@ -93,9 +95,47 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     return created;
   }
 
-  Future<Quotation> updateQuotation(String id, Quotation data) async {
-    final updated = await _api.updateQuotation(id, data.toJson());
+  Future<Quotation> updateQuotation(
+    String id, {
+    String? number,
+    QuotationStatus? status,
+    String? notes,
+    String? clientName,
+    String? clientAddress,
+    String? fromCompanyName,
+    String? fromCompanyAddress,
+    String? termsConditions,
+    double? vatPercentage,
+    List<QuotationLineItem>? lineItems,
+  }) async {
+    // Build the payload dynamically
+    final Map<String, dynamic> payload = {};
+
+    state =
+        {
+          state.firstWhere((q) => q.id == id).update(isLoading: true),
+          ...state,
+        }.toList();
+
+    if (number != null) payload['number'] = number;
+    if (status != null)
+      payload['status'] = status.toString(); // or whatever API expects
+    if (notes != null) payload['notes'] = notes;
+    if (clientName != null) payload['clientName'] = clientName;
+    if (clientAddress != null) payload['clientAddress'] = clientAddress;
+    if (fromCompanyName != null) payload['fromCompanyName'] = fromCompanyName;
+    if (fromCompanyAddress != null)
+      payload['fromCompanyAddress'] = fromCompanyAddress;
+    if (termsConditions != null) payload['termsConditions'] = termsConditions;
+    if (vatPercentage != null) payload['vatPercentage'] = vatPercentage;
+    if (lineItems != null)
+      payload['lineItems'] = lineItems.map((e) => e.toJson()).toList();
+
+    final updated = await _api.updateQuotation(id, payload);
+
+    // Update local state if needed
     // state = state.map((q) => q.id == id ? updated : q).toList();
+
     return updated;
   }
 
