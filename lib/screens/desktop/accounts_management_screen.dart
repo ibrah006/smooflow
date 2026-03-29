@@ -754,7 +754,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
                   ? BillingEditView(
                     lineItems: _q.lineItems,
                     vatPercentage: _q.vatPercentage,
-                    docType: 'QUOTATION',
+                    docType: 'QUOTE',
                     docNumber: _q.number,
                     docDate: _q.createdAt,
                     onChanged: _onItemsChanged,
