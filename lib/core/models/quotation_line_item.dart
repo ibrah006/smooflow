@@ -3,7 +3,24 @@ class QuotationLineItem {
   final int? taskId;
   String description;
   final String? subTitle;
-  String? size;
+  String? _size;
+
+  String? get size {
+    final String? s;
+    if (subTitle?.contains("Size") ?? false) {
+      final subTitleSplit = subTitle?.split("Size: ");
+
+      s = subTitleSplit![1].split("cm")[0];
+    } else {
+      s = null;
+    }
+    return _size ?? s;
+  }
+
+  set size(String? value) {
+    _size = value;
+  }
+
   double qty;
   double unitPrice;
 
@@ -16,8 +33,8 @@ class QuotationLineItem {
     this.subTitle,
     required this.qty,
     required this.unitPrice,
-    this.size,
-  });
+    String? size,
+  }) : _size = size;
 
   QuotationLineItem copyWith({
     String? description,
