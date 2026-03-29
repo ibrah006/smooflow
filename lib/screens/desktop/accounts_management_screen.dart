@@ -45,6 +45,7 @@ import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
+import 'package:smooflow/screens/desktop/components/quote_creation_error_banner.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,6 +208,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   Company? _selectedClientForPricing;
   bool _showPricingDetail = false;
   bool _isCreatingPricing = false;
+  bool _isCreatingQuoteError = false;
 
   bool _isCreatingQuoteLoading = true;
 
@@ -351,13 +353,43 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
       _tab.animateTo(0);
     });
 
-    q.initializeId(
-      (await ref.watch(quotationListProvider.notifier).createQuotation(q)).id,
-    );
+    try {
+      q.initializeId(
+        (await ref.watch(quotationListProvider.notifier).createQuotation(q)).id,
+      );
+      setState(() {
+        _isCreatingQuoteLoading = false;
+        _isCreatingQuoteError = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isCreatingQuoteLoading = false;
+        _isCreatingQuoteError = true;
+      });
+    }
+  }
 
+  Future<void> _retryCreateQuotation() async {
+    if (_selectedQuotation == null) return;
     setState(() {
-      _isCreatingQuoteLoading = false;
+      _isCreatingQuoteLoading = true;
+      _isCreatingQuoteError = false;
     });
+    try {
+      _selectedQuotation!.initializeId(
+        (await ref
+            .read(quotationListProvider.notifier)
+            .createQuotation(_selectedQuotation!)).id,
+      );
+      setState(() {
+        _isCreatingQuoteLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isCreatingQuoteLoading = false;
+        _isCreatingQuoteError = true;
+      });
+    }
   }
 
   void _createInvoiceFromQuotation(Quotation q) {
@@ -511,7 +543,9 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
           onCreateInvoice:
               () => _createInvoiceFromQuotation(_selectedQuotation!),
           onClose: () => setState(() => _selectedQuotation = null),
-          isCreatingQuoteLoading: _isCreatingQuoteLoading
+          isCreatingQuoteLoading: _isCreatingQuoteLoading,
+          isCreatingQuoteFailed: _isCreatingQuoteError, // NEW
+          onRetryCreate: _retryCreateQuotation,
         );
       } else {
         detail = const _AccountsIdlePane();
@@ -687,6 +721,8 @@ class _QuotationDetail extends StatefulWidget {
   final VoidCallback onCreateInvoice;
   final VoidCallback onClose;
   final bool isCreatingQuoteLoading;
+  final bool isCreatingQuoteFailed;
+  final Function() onRetryCreate;
 
   const _QuotationDetail({
     super.key,
@@ -697,7 +733,9 @@ class _QuotationDetail extends StatefulWidget {
     required this.onUpdate,
     required this.onCreateInvoice,
     required this.onClose,
-    required this.isCreatingQuoteLoading
+    required this.isCreatingQuoteLoading,
+    required this.isCreatingQuoteFailed,
+    required this.onRetryCreate,
   });
 
   @override
@@ -739,7 +777,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.isCreatingQuoteLoading) , 
+              // if (widget.isCreatingQuoteLoading) ,
               _StatusDropdown<QuotationStatus>(
                 current: _q.status,
                 values: QuotationStatus.values,
@@ -761,6 +799,8 @@ class _QuotationDetailState extends State<_QuotationDetail> {
             ],
           ),
         ),
+        if (widget.isCreatingQuoteFailed)
+          QuoteCreationErrorBanner(onRetry: widget.onRetryCreate),
 
         // ── Body ───────────────────────────────────────────────────────
         Expanded(
