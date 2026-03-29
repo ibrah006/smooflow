@@ -27,7 +27,7 @@ class PricingState {
     try {
       final pricing = pricingData.firstWhere(
         (pricing) => description.toLowerCase().trim().toLowerCase().contains(
-          pricing.description.toLowerCase(),
+          pricing.description.toLowerCase().trim(),
         ),
       );
 

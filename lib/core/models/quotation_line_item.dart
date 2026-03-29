@@ -3,6 +3,7 @@ class QuotationLineItem {
   final int? taskId;
   String description;
   final String? subTitle;
+  String? size;
   double qty;
   double unitPrice;
 

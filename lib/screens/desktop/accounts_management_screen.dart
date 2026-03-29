@@ -286,15 +286,16 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     int idx = 1;
     final lineItems =
         tasks.map((t) {
-          final pricingCosts =
-              t.ref != null
-                  ? ref
-                      .watch(pricingStateProvider)
-                      .getPricing(
-                        description: t.ref!,
-                        clientId: project.client.id,
-                      )
-                  : PricingCosts.zero();
+          final pricingCosts = ref
+              .watch(pricingStateProvider)
+              .getPricing(
+                description: t.ref ?? t.name,
+                clientId: project.client.id,
+              );
+
+          print(
+            "pricingCosts: print cost: , app cost: ${pricingCosts.applicationCost}",
+          );
 
           final areaSplit = t.size != null ? t.size!.split('×') : ['0', '0 cm'];
           final area =
