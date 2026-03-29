@@ -125,8 +125,6 @@ class Quotation {
   };
 
   factory Quotation.fromJson(Map<String, dynamic> json) {
-    print("json['vatPercentage']: ${json['vatPercentage']}");
-
     return Quotation(
       id: json['id'],
       projectId: json['projectId'],

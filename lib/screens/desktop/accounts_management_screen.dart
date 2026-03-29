@@ -769,6 +769,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onClientAddressChanged(String newValue) async {
+    // print("clientAddress: ${_q.clientAddress}\nnew updated: ${newValue}");
     if (_q.clientAddress != newValue) {
       await ref
           .watch(quotationNotifierProvider.notifier)
@@ -1228,7 +1229,10 @@ class _BillingEditViewState extends State<BillingEditView> {
                       label: 'Address',
                       controller: _clientAddressCtrl,
                       onChanged: (value) {},
-                      onSubmitted: widget.onClientAddressChanged,
+                      onSubmitted: (value) {
+                        print("widget.clientAddress: ${widget.clientAddress}");
+                        widget.onClientAddressChanged(value);
+                      },
                       maxLines: 3,
                     ),
                   ],
