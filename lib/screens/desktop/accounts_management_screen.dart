@@ -43,6 +43,7 @@ import 'package:smooflow/screens/desktop/components/billing_document_view.dart'
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
+import 'package:smooflow/screens/desktop/components/no_size_warning.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/quote_creation_error_banner.dart';
 import 'package:smooflow/screens/desktop/components/syncing_indicator.dart';
@@ -316,6 +317,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
             ].join(' '),
             qty: (t.productionQuantity ?? t.quantity ?? 1).toDouble(),
             unitPrice: unitPrice,
+            size: t.size,
           );
         }).toList();
 
@@ -1792,6 +1794,11 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                             color: Colors.grey.shade500,
                           ),
                         ),
+                        // ── Size warning ──────────────────────────────────────────
+                        if (widget.item.size == null) ...[
+                          const SizedBox(height: 5),
+                          const NoSizeWarning(),
+                        ],
                       ],
                     ),
                   ),

@@ -16,6 +16,7 @@ class QuotationLineItem {
     this.subTitle,
     required this.qty,
     required this.unitPrice,
+    this.size,
   });
 
   QuotationLineItem copyWith({
