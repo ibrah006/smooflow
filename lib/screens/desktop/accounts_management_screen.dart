@@ -926,7 +926,7 @@ class _InvoiceDetailState extends State<_InvoiceDetail> {
 Fairbanks
 99701
 UAE""",
-                    onClientAddressChanged: (c) {},
+                    onClientAddressChanged: (value) {},
                     onClientNameChanged: (value) {},
                     onDocDateChanged: (value) {},
                     onDocNumberChanged: (value) {},
