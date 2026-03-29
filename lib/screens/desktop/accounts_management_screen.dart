@@ -780,7 +780,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.isCreatingQuoteLoading)
+              if (widget.isCreatingQuoteLoading || widget.quotation.isLoading)
                 Padding(
                   padding: const EdgeInsets.only(right: 10),
                   child: SyncingIndicator(),
