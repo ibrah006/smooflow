@@ -530,7 +530,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
           // ── Projects ───────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 4),
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 5),
             child: _SidebarLabel('Projects'),
           ),
           Expanded(
