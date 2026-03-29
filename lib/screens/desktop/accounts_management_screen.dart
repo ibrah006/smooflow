@@ -323,8 +323,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
         .companies
         .firstWhere((company) => company.id == project.client.id);
 
-    final q = Quotation(
-      id: 'q_${DateTime.now().millisecondsSinceEpoch}',
+    final q = Quotation.create(
       projectId: project.id,
       lineItems: lineItems,
       status: QuotationStatus.draft,

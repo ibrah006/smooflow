@@ -75,7 +75,7 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
   Future<Quotation> createQuotation(Map<String, dynamic> data) async {
     final created = await _api.createQuotation(data);
     // WebSocket will add it, but we can optimistically update
-    state = [created, ...state];
+    // state = [created, ...state];
     return created;
   }
 
@@ -84,13 +84,13 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     Map<String, dynamic> data,
   ) async {
     final updated = await _api.updateQuotation(id, data);
-    state = state.map((q) => q.id == id ? updated : q).toList();
+    // state = state.map((q) => q.id == id ? updated : q).toList();
     return updated;
   }
 
   Future<void> deleteQuotation(String id) async {
     await _api.deleteQuotation(id);
     // WebSocket will remove it, but we can optimistically update
-    state = state.where((q) => q.id != id).toList();
+    // state = state.where((q) => q.id != id).toList();
   }
 }

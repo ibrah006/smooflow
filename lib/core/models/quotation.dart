@@ -2,7 +2,7 @@ import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 
 class Quotation {
-  final String id;
+  late final String id;
   final String projectId;
   List<QuotationLineItem> lineItems;
   QuotationStatus status;
@@ -36,6 +36,21 @@ class Quotation {
     required this.termsConditions,
     required this.updatedAt,
   });
+
+  Quotation.create({
+    required this.projectId,
+    required this.lineItems,
+    required this.status,
+    required this.notes,
+    required this.createdAt,
+    required this.number,
+    this.vatPercentage = 5.0,
+    required this.clientName,
+    required this.clientAddress,
+    required this.fromCompanyName,
+    required this.fromCompanyAddress,
+    required this.termsConditions,
+  }) : updatedAt = DateTime.now();
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
