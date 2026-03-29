@@ -1151,14 +1151,16 @@ class _BillingEditViewState extends State<BillingEditView> {
                       _FormField(
                         label: 'Company name',
                         controller: _companyNameCtrl,
-                        onChanged: widget.onCompanyNameChanged,
+                        onChanged: (value) {},
                         textAlign: TextAlign.right,
+                        onSubmitted: widget.onCompanyNameChanged,
                       ),
                       const SizedBox(height: 10),
                       _FormField(
                         label: 'Address',
                         controller: _companyAddressCtrl,
-                        onChanged: widget.onCompanyAddressChanged,
+                        onChanged: (value) {},
+                        onSubmitted: widget.onCompanyAddressChanged,
                         maxLines: 4,
                         textAlign: TextAlign.right,
                       ),
@@ -1202,13 +1204,15 @@ class _BillingEditViewState extends State<BillingEditView> {
                     _FormField(
                       label: 'Client name',
                       controller: _clientNameCtrl,
-                      onChanged: widget.onClientNameChanged,
+                      onChanged: (value) {},
+                      onSubmitted: widget.onClientNameChanged,
                     ),
                     const SizedBox(height: 10),
                     _FormField(
                       label: 'Address',
                       controller: _clientAddressCtrl,
-                      onChanged: widget.onClientAddressChanged,
+                      onChanged: (value) {},
+                      onSubmitted: widget.onClientAddressChanged,
                       maxLines: 3,
                     ),
                   ],
@@ -1222,7 +1226,8 @@ class _BillingEditViewState extends State<BillingEditView> {
                       label:
                           '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
                       controller: _docNumberCtrl,
-                      onChanged: widget.onDocNumberChanged,
+                      onChanged: (value) {},
+                      onSubmitted: widget.onDocNumberChanged,
                     ),
                     const SizedBox(height: 10),
                     _DatePickerField(
@@ -1341,7 +1346,8 @@ class _BillingEditViewState extends State<BillingEditView> {
                   _FormField(
                     label: '',
                     controller: _termsCtrl,
-                    onChanged: widget.onTermsChanged,
+                    onChanged: (value) {},
+                    onSubmitted: widget.onTermsChanged,
                     maxLines: 3,
                   ),
                 ],
@@ -1409,10 +1415,12 @@ class _FormCard extends StatelessWidget {
 class _FormField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
+  @Deprecated("To be completely replaced by onSubmitted")
   final ValueChanged<String> onChanged;
   final int maxLines;
   final TextInputType keyboardType;
   final TextAlign textAlign;
+  final Function(String value) onSubmitted;
 
   const _FormField({
     required this.label,
@@ -1421,6 +1429,7 @@ class _FormField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
     this.textAlign = TextAlign.left,
+    required this.onSubmitted,
   });
 
   @override
@@ -1446,6 +1455,11 @@ class _FormField extends StatelessWidget {
           keyboardType: keyboardType,
           textAlign: textAlign,
           style: const TextStyle(fontSize: 12, color: _T.ink),
+          onSubmitted: onSubmitted,
+          onTapOutside: (event) {
+            onSubmitted(controller.text);
+            FocusScope.of(context).unfocus();
+          },
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
