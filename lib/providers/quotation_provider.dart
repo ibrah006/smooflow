@@ -73,9 +73,6 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
           state =
               state.map((q) {
                 if (q.id == event.quotation.id) {
-                  print(
-                    "event.quotation.isLoading [quotation_provider]: ${event.quotation.isLoading}",
-                  );
                   return event.quotation;
                 }
                 return q;
