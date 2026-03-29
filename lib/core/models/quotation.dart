@@ -1,8 +1,19 @@
 import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
+import 'package:uuid/uuid.dart';
 
 class Quotation {
-  late final String id;
+  late String _id, tempId;
+
+  String get id {
+    try {
+      return _id;
+    } catch (e) {
+      // _id not initialized yet
+      return tempId;
+    }
+  }
+
   final String projectId;
   List<QuotationLineItem> lineItems;
   QuotationStatus status;
@@ -21,7 +32,7 @@ class Quotation {
   double get total => lineItems.fold(0, (s, i) => s + i.amount);
 
   Quotation({
-    required this.id,
+    required String id,
     required this.projectId,
     required this.lineItems,
     required this.status,
@@ -35,7 +46,7 @@ class Quotation {
     required this.fromCompanyAddress,
     required this.termsConditions,
     required this.updatedAt,
-  });
+  }) : _id = id;
 
   Quotation.create({
     required this.projectId,
@@ -50,7 +61,8 @@ class Quotation {
     required this.fromCompanyName,
     required this.fromCompanyAddress,
     required this.termsConditions,
-  }) : updatedAt = DateTime.now();
+  }) : updatedAt = DateTime.now(),
+       tempId = Uuid().v1();
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,

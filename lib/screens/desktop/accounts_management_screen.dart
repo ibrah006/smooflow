@@ -488,13 +488,14 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
                 .where((t) => t.projectId == _selectedQuotation!.projectId)
                 .toList();
         detail = _QuotationDetail(
-          key: ValueKey(_selectedQuotation!.id),
+          key: ValueKey(_selectedQuotation?.id),
           quotation: _selectedQuotation!,
           project: proj,
           projectTasks: quotTasks,
-          hasInvoice: _invoices.any(
-            (i) => i.quotationId == _selectedQuotation!.id,
-          ),
+          hasInvoice: false,
+          // _invoices.any(
+          //   (i) => i.quotationId == _selectedQuotation!.id,
+          // ),
           onUpdate: _updateQuotation,
           onCreateInvoice:
               () => _createInvoiceFromQuotation(_selectedQuotation!),
