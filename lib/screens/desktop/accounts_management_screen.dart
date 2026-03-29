@@ -760,6 +760,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onItemsChanged(List<QuotationLineItem> items) {
+    print("[items changed]");
     setState(() => _q.lineItems = items);
     widget.onUpdate(_q);
   }
@@ -772,6 +773,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   void _onClientAddressChanged(String newValue) async {
     // print("clientAddress: ${_q.clientAddress}\nnew updated: ${newValue}");
     if (_q.clientAddress != newValue) {
+      _q.update(isLoading: true, clientAddress: newValue);
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientAddress: newValue);
@@ -781,6 +783,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
 
   void _onClientNameChanged(String newValue) async {
     if (_q.clientName != newValue) {
+      _q.update(isLoading: true, clientName: newValue);
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientName: newValue);
@@ -790,6 +793,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
 
   void _onFromCompanyNameChanged(String newValue) async {
     if (_q.fromCompanyName != newValue) {
+      _q.update(isLoading: true, fromCompanyName: newValue);
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyName: newValue);
@@ -799,6 +803,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
 
   void _onFromCompanyAddressChanged(String newValue) async {
     if (_q.fromCompanyAddress != newValue) {
+      _q.update(isLoading: true, fromCompanyAddress: newValue);
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyAddress: newValue);
@@ -808,9 +813,11 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
 
   void _onTermsChanged(String newValue) async {
     if (_q.termsConditions != newValue) {
+      _q.update(isLoading: true, termsConditions: newValue);
       await ref
           .watch(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, termsConditions: newValue);
+      _q.update(isLoading: false);
     }
   }
 
@@ -1758,9 +1765,26 @@ class _EditableLineItemState extends State<_EditableLineItem> {
       text: i.unitPrice == 0 ? '' : i.unitPrice.toStringAsFixed(2),
     );
 
-    for (final c in [_descCtrl, _subTitleCtrl, _qtyCtrl, _rateCtrl]) {
-      c.addListener(_onChanged);
-    }
+    // for (final c in [_descCtrl, _subTitleCtrl, _qtyCtrl, _rateCtrl]) {
+    //   c.addListener(_onChanged);
+    // }
+  }
+
+  void _onDescriptionChanged(String newValue) {
+    if (widget.item.description != newValue) _onChanged();
+  }
+
+  void _onSubTitleChanged(String newValue) {
+    if (widget.item.subTitle != newValue) _onChanged();
+  }
+
+  void _onQuantityChanged(String newValue) {
+    if (widget.item.qty != (double.tryParse(newValue) ?? 0)) _onChanged();
+  }
+
+  // on item amount/rate changed
+  void _onAmountChanged(String newValue) {
+    if (widget.item.amount != (double.tryParse(newValue) ?? 0)) _onChanged();
   }
 
   void _onChanged() {
@@ -1779,7 +1803,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
   @override
   void dispose() {
     for (final c in [_descCtrl, _subTitleCtrl, _qtyCtrl, _rateCtrl]) {
-      c.removeListener(_onChanged);
+      // c.removeListener(_onChanged);
       c.dispose();
     }
     super.dispose();
@@ -1840,6 +1864,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                         _EditCell(
                           controller: _descCtrl,
                           hint: 'Item description',
+                          onSubmitted: _onDescriptionChanged,
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w400,
@@ -1850,6 +1875,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                         // Sub-title field (smaller, grey)
                         _EditCell(
                           controller: _subTitleCtrl,
+                          onSubmitted: _onSubTitleChanged,
                           hint: 'Sub-title or notes (optional)',
                           style: TextStyle(
                             fontSize: 11.5,
@@ -1876,6 +1902,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: _EditCell(
                         controller: _qtyCtrl,
+                        onSubmitted: _onQuantityChanged,
                         hint: '0',
                         numeric: true,
                         textAlign: TextAlign.right,
@@ -1898,6 +1925,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: _EditCell(
                         controller: _rateCtrl,
+                        onSubmitted: _onAmountChanged,
                         hint: '0.00',
                         numeric: true,
                         textAlign: TextAlign.right,
@@ -1975,6 +2003,7 @@ class _EditCell extends StatefulWidget {
   final TextStyle style;
   final bool numeric;
   final TextAlign textAlign;
+  final Function(String value) onSubmitted;
 
   const _EditCell({
     required this.controller,
@@ -1982,6 +2011,7 @@ class _EditCell extends StatefulWidget {
     required this.style,
     this.numeric = false,
     this.textAlign = TextAlign.left,
+    required this.onSubmitted,
   });
 
   @override
@@ -2030,6 +2060,11 @@ class _EditCellState extends State<_EditCell> {
         controller: widget.controller,
         focusNode: _focus,
         textAlign: widget.textAlign,
+        onSubmitted: widget.onSubmitted,
+        onTapOutside: (event) {
+          widget.onSubmitted(widget.controller.text);
+          FocusScope.of(context).unfocus();
+        },
         keyboardType:
             widget.numeric
                 ? const TextInputType.numberWithOptions(decimal: true)
