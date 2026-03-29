@@ -84,23 +84,29 @@ class Quotation {
     'lineItems': lineItems.map((i) => i.toJson()).toList(),
   };
 
-  factory Quotation.fromJson(Map<String, dynamic> json) => Quotation(
-    id: json['id'],
-    projectId: json['projectId'],
-    number: json['number'],
-    status: QuotationStatus.values.firstWhere((e) => e.name == json['status']),
-    notes: json['notes'],
-    createdAt: DateTime.parse(json['createdAt']),
-    updatedAt: DateTime.parse(json['updatedAt']),
-    clientName: json['clientName'],
-    clientAddress: json['clientAddress'],
-    fromCompanyName: json['fromCompanyName'],
-    fromCompanyAddress: json['fromCompanyAddress'],
-    termsConditions: json['termsConditions'],
-    vatPercentage: (json['vatPercentage'] as num).toDouble(),
-    lineItems:
-        (json['lineItems'] as List)
-            .map((i) => QuotationLineItem.fromJson(i))
-            .toList(),
-  );
+  factory Quotation.fromJson(Map<String, dynamic> json) {
+    print("json['vatPercentage']: ${json['vatPercentage']}");
+
+    return Quotation(
+      id: json['id'],
+      projectId: json['projectId'],
+      number: json['number'],
+      status: QuotationStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+      ),
+      notes: json['notes'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      clientName: json['clientName'],
+      clientAddress: json['clientAddress'],
+      fromCompanyName: json['fromCompanyName'],
+      fromCompanyAddress: json['fromCompanyAddress'],
+      termsConditions: json['termsConditions'],
+      vatPercentage: double.tryParse(json['vatPercentage']) ?? 0,
+      lineItems:
+          (json['lineItems'] as List)
+              .map((i) => QuotationLineItem.fromJson(i))
+              .toList(),
+    );
+  }
 }
