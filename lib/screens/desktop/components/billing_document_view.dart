@@ -251,16 +251,15 @@ class BillingDocumentView extends StatelessWidget {
             // Table
             TableHeader(),
             // Line items
-            ...lineItems.map((item) {
-              print("item id: ${item.id}");
-              final index = int.parse(item.id);
+            ...List.generate(lineItems.length, (index) {
+              final item = lineItems[index];
               return LineItem(
                 index: index,
                 description: item.description,
                 subTitle: item.subTitle,
                 quantity: item.qty,
                 rate: item.unitPrice,
-                isLast: index == lineItems.length,
+                isLast: index == lineItems.length - 1,
               );
             }),
 
