@@ -72,18 +72,15 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     state = quotations;
   }
 
-  Future<Quotation> createQuotation(Map<String, dynamic> data) async {
-    final created = await _api.createQuotation(data);
+  Future<Quotation> createQuotation(Quotation data) async {
+    final created = await _api.createQuotation(data.toJson());
     // WebSocket will add it, but we can optimistically update
     // state = [created, ...state];
     return created;
   }
 
-  Future<Quotation> updateQuotation(
-    String id,
-    Map<String, dynamic> data,
-  ) async {
-    final updated = await _api.updateQuotation(id, data);
+  Future<Quotation> updateQuotation(String id, Quotation data) async {
+    final updated = await _api.updateQuotation(id, data.toJson());
     // state = state.map((q) => q.id == id ? updated : q).toList();
     return updated;
   }
