@@ -16,6 +16,7 @@ class Quotation {
 
   initializeId(String id) {
     _id = id;
+    _isLoading = false;
   }
 
   final String projectId;
@@ -35,6 +36,8 @@ class Quotation {
 
   double get total => lineItems.fold(0, (s, i) => s + i.amount);
 
+  bool _isLoading;
+
   Quotation({
     required String id,
     required this.projectId,
@@ -50,7 +53,8 @@ class Quotation {
     required this.fromCompanyAddress,
     required this.termsConditions,
     required this.updatedAt,
-  }) : _id = id;
+  }) : _id = id,
+       _isLoading = false;
 
   Quotation.create({
     required this.projectId,
@@ -66,7 +70,8 @@ class Quotation {
     required this.fromCompanyAddress,
     required this.termsConditions,
   }) : updatedAt = DateTime.now(),
-       tempId = Uuid().v1();
+       tempId = Uuid().v1(),
+       _isLoading = true;
 
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
