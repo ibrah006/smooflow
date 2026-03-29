@@ -53,8 +53,9 @@ class Quotation {
     required this.fromCompanyAddress,
     required this.termsConditions,
     required this.updatedAt,
+    bool isLoading = false,
   }) : _id = id,
-       _isLoading = false;
+       _isLoading = isLoading;
 
   Quotation.create({
     required this.projectId,
