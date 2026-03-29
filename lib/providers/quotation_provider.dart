@@ -52,7 +52,7 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     _client.quotationChanges.listen((event) {
       switch (event.type) {
         case QuotationChangeType.created:
-          // If already exists in local memory
+          // If already exists in local memory (if this create was initiated in the same device)
           // Best practice is to remove it because calling quotation.id
           // will return temporary id for quotations that were just created
           // until the quotation is initialized in server,
