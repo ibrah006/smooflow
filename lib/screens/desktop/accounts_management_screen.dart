@@ -873,8 +873,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
                     onDueDateChanged: (value) {},
                     fromCompanyName: _q.fromCompanyName,
                     fromCompanyAddress: _q.fromCompanyAddress,
-                    termsAndConditions:
-                        "Full payment is due upon receipt of the invoice.",
+                    termsAndConditions: _q.termsConditions,
                     onCompanyNameChanged: _onFromCompanyNameChanged,
                     onCompanyAddressChanged: _onFromCompanyAddressChanged,
                     onTermsChanged: _onTermsChanged,
