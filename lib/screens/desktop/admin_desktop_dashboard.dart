@@ -561,7 +561,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
             child: InkWell(
               onTap: _showProjectModal,
               borderRadius: BorderRadius.circular(_T.r),
