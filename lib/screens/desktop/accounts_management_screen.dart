@@ -1242,12 +1242,17 @@ class _BillingEditViewState extends State<BillingEditView> {
                   label: 'Document Info',
                   icon: Icons.receipt_long_outlined,
                   children: [
-                    _FormField(
+                    // _FormField(
+                    //   label:
+                    //       '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
+                    //   controller: _docNumberCtrl,
+                    //   onChanged: (value) {},
+                    //   onSubmitted: widget.onDocNumberChanged,
+                    // ),
+                    _StaticField(
                       label:
                           '${widget.docType == 'INVOICE' ? 'Invoice' : 'Quote'} #',
-                      controller: _docNumberCtrl,
-                      onChanged: (value) {},
-                      onSubmitted: widget.onDocNumberChanged,
+                      value: _docNumberCtrl.text,
                     ),
                     const SizedBox(height: 10),
                     _DatePickerField(
