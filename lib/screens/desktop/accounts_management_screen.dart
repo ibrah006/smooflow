@@ -211,7 +211,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   bool _isCreatingPricing = false;
   bool _isCreatingQuoteError = false;
 
-  bool _isCreatingQuoteLoading = true;
+  bool _isCreatingQuoteLoading = false;
 
   List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
