@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/quotation.dart';
 import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
@@ -9,29 +10,6 @@ const kLineColumnVerticalDividerHeight = 66.0;
 const kLineColumnVerticalDividerHeightDescriptionMultiplier = 15.0;
 const kLineColumnVerticalPadding = 17.0;
 final kTableDividerColor = Colors.grey.shade200;
-
-class Quotation {
-  final String id;
-  final String projectId;
-  List<QuotationLineItem> lineItems;
-  QuotationStatus status;
-  String notes;
-  final DateTime createdAt;
-  // incremented label, e.g. "QUO-001"
-  final String number;
-
-  double get total => lineItems.fold(0, (s, i) => s + i.amount);
-
-  Quotation({
-    required this.id,
-    required this.projectId,
-    required this.lineItems,
-    required this.status,
-    required this.notes,
-    required this.createdAt,
-    required this.number,
-  });
-}
 
 class InvoiceLineItem {
   final String id;
