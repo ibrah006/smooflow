@@ -34,7 +34,7 @@ final quotationChangesStreamProvider = StreamProvider<QuotationChangeEvent>((
   return client.quotationChanges;
 });
 
-final quotationListProvider =
+final quotationNotifierProvider =
     StateNotifierProvider<QuotationNotifier, List<Quotation>>((ref) {
       return QuotationNotifier(ref.read(quotationWebSocketClientProvider));
     });

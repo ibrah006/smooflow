@@ -238,7 +238,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pricingStateProvider.notifier).fetchPricing();
-      ref.read(quotationListProvider.notifier).fetchQuotations();
+      ref.read(quotationNotifierProvider.notifier).fetchQuotations();
     });
   }
 
@@ -355,7 +355,9 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     try {
       q.initializeId(
-        (await ref.watch(quotationListProvider.notifier).createQuotation(q)).id,
+        (await ref
+            .watch(quotationNotifierProvider.notifier)
+            .createQuotation(q)).id,
       );
       setState(() {
         _isCreatingQuoteLoading = false;
@@ -379,7 +381,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     try {
       _selectedQuotation!.initializeId(
         (await ref
-            .read(quotationListProvider.notifier)
+            .read(quotationNotifierProvider.notifier)
             .createQuotation(_selectedQuotation!)).id,
       );
       setState(() {
@@ -454,7 +456,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     final tasks = ref.watch(taskNotifierProvider).tasks;
     final pricingList = ref.watch(pricingStateProvider).pricingData;
     final companies = ref.watch(companyListProvider).companies;
-    _quotations = ref.watch(quotationListProvider);
+    _quotations = ref.watch(quotationNotifierProvider);
 
     // Listen for real-time changes
     ref.listen<AsyncValue<PricingChangeEvent>>(pricingChangesStreamProvider, (
