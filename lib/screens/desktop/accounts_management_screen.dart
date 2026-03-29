@@ -29,6 +29,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/providers/company_provider.dart';
 import 'package:smooflow/providers/pricing_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/quotation_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/accounts/pricing/components.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
@@ -207,7 +208,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
   bool _showPricingDetail = false;
   bool _isCreatingPricing = false;
 
-  final List<Quotation> _quotations = [];
+  List<Quotation> _quotations = [];
   final List<Invoice> _invoices = [];
 
   Quotation? _selectedQuotation;
@@ -232,6 +233,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pricingStateProvider.notifier).fetchPricing();
+      ref.read(quotationListProvider.notifier).fetchQuotations();
     });
   }
 
@@ -408,6 +410,7 @@ class _AccountsScreenState extends ConsumerState<AccountsManagementScreen>
     final tasks = ref.watch(taskNotifierProvider).tasks;
     final pricingList = ref.watch(pricingStateProvider).pricingData;
     final companies = ref.watch(companyListProvider).companies;
+    _quotations = ref.watch(quotationListProvider);
 
     // Listen for real-time changes
     ref.listen<AsyncValue<PricingChangeEvent>>(pricingChangesStreamProvider, (
