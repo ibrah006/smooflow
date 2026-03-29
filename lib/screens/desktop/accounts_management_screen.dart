@@ -46,6 +46,7 @@ import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/quote_creation_error_banner.dart';
+import 'package:smooflow/screens/desktop/components/syncing_indicator.dart';
 import 'package:smooflow/screens/desktop/helpers/accounts_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -780,7 +781,7 @@ class _QuotationDetailState extends State<_QuotationDetail> {
               if (widget.isCreatingQuoteLoading)
                 Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: _SyncingIndicator(),
+                  child: SyncingIndicator(),
                 ),
               _StatusDropdown<QuotationStatus>(
                 current: _q.status,
