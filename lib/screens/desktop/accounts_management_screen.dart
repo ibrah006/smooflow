@@ -18,7 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macos_ui/macos_ui.dart';
-import 'package:smooflow/components/connection_status_banner.dart';
 import 'package:smooflow/core/api/websocket_clients/pricing_websocket.dart';
 import 'package:smooflow/core/models/company.dart';
 import 'package:smooflow/core/models/pricing.dart';
