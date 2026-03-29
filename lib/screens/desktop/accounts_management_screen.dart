@@ -871,10 +871,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
                     onCompanyAddressChanged: _onFromCompanyAddressChanged,
                     onTermsChanged: (value) {},
                   )
-                  : BillingDocumentView(
-                    lineItems: _q.lineItems,
-                    vatPercentage: _q.vatPercentage,
-                  ),
+                  : BillingDocumentView(quotation: _q),
         ),
       ],
     );
@@ -974,10 +971,8 @@ Riyadh, Kingdom of Saudi Arabia""",
                     onCompanyNameChanged: (value) {},
                     onTermsChanged: (value) {},
                   )
-                  : BillingDocumentView(
-                    lineItems: _inv.lineItems,
-                    vatPercentage: _inv.vatPercentage,
-                  ),
+                  // TODO, FIX THIS
+                  : SizedBox(), //BillingDocumentView(quotation: _inv),
         ),
       ],
     );

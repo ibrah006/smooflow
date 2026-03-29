@@ -100,19 +100,14 @@ class Invoice {
 }
 
 class BillingDocumentView extends StatelessWidget {
-  final List<QuotationLineItem> lineItems;
-  final double vatPercentage;
+  final Quotation quotation; // ← single param
 
-  const BillingDocumentView({
-    super.key,
-    required this.lineItems,
-    required this.vatPercentage,
-  });
+  const BillingDocumentView({super.key, required this.quotation});
 
   double get subTotal =>
-      lineItems.map((item) => item.amount).reduce((a, b) => a + b);
+      quotation.lineItems.map((item) => item.amount).reduce((a, b) => a + b);
 
-  double get total => (subTotal + (subTotal * vatPercentage / 100));
+  double get total => subTotal + (subTotal * quotation.vatPercentage / 100);
 
   @override
   Widget build(BuildContext context) {
@@ -138,19 +133,18 @@ class BillingDocumentView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "Building No : 2872, Al Kharj Rd",
+                      quotation.fromCompanyName,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13.5,
                       ),
                     ),
                     SizedBox(height: 5),
-                    Text("6858 Al Dilaa Dist", style: TextStyle(fontSize: 13)),
-                    Text("Riyadh : 14315", style: TextStyle(fontSize: 13)),
-                    Text(
-                      "Riyadh, Kingdom of Saudi Arabia",
-                      style: TextStyle(fontSize: 13),
-                    ),
+                    ...quotation.fromCompanyAddress
+                        .split('\n')
+                        .map(
+                          (line) => Text(line, style: TextStyle(fontSize: 13)),
+                        ),
                   ],
                 ),
               ],
@@ -229,15 +223,15 @@ class BillingDocumentView extends StatelessWidget {
             // Table
             TableHeader(),
             // Line items
-            ...List.generate(lineItems.length, (index) {
-              final item = lineItems[index];
+            ...List.generate(quotation.lineItems.length, (index) {
+              final item = quotation.lineItems[index];
               return LineItem(
                 index: index,
                 description: item.description,
                 subTitle: item.subTitle,
                 quantity: item.qty,
                 rate: item.unitPrice,
-                isLast: index == lineItems.length - 1,
+                isLast: index == quotation.lineItems.length - 1,
               );
             }),
 
@@ -272,7 +266,7 @@ class BillingDocumentView extends StatelessWidget {
                       spacing: 13,
                       children: [
                         Text(subTotal.toStringAsFixed(2)),
-                        Text("${vatPercentage.toStringAsFixed(2)}%"),
+                        Text("${quotation.vatPercentage.toStringAsFixed(2)}%"),
                         Text(
                           "AED ${total.toStringAsFixed(2)}",
                           style: TextStyle(fontWeight: FontWeight.w600),
