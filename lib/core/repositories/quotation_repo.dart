@@ -42,4 +42,20 @@ class QuotationRepo {
   Future<void> deleteQuotation(String id) async {
     await ApiClient.http.delete('/quotation/$id');
   }
+
+  Future<Quotation> updateQuotationLineItem(
+    String lineItemId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await ApiClient.http.put(
+      '/quotation/lineItems/$lineItemId',
+      body: data,
+    );
+
+    if (response.statusCode != 200) {
+      throw json.decode(response.body)['message'];
+    }
+
+    return Quotation.fromJson(json.decode(response.body));
+  }
 }
