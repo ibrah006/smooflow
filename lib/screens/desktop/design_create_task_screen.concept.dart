@@ -138,6 +138,8 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
   bool get _priorityOk => _priority != null;
   bool get _formOk => _nameOk && _projectOk && _priorityOk;
 
+  DateTime? date;
+
   @override
   void initState() {
     super.initState();
@@ -166,6 +168,18 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
     super.dispose();
   }
 
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: date ?? now,
+      firstDate: now,
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked == null) return;
+    setState(() => date = picked);
+  }
+
   Future<void> _submit() async {
     setState(() => _submitted = true);
     if (!_formOk) return;
@@ -190,6 +204,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
         ref: reference.isEmpty ? null : reference,
         size: '$w×$h cm',
         quantity: qty,
+        date: date,
       );
 
       await ref
@@ -301,6 +316,14 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                                       (p) => setState(() => _priority = p),
                                   showError: _submitted && !_priorityOk,
                                 ),
+                                const SizedBox(height: 16),
+                                _FieldLabel('Due Date', optional: true),
+                                const SizedBox(height: 7),
+                                _DateField(
+                                  value: date,
+                                  onPick: _pickDate,
+                                  onClear: () => setState(() => date = null),
+                                ),
                               ],
                             ),
                           ),
@@ -353,6 +376,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                   canSave: _formOk || !_submitted,
                   onCancel: () => Navigator.of(context).pop(),
                   onSave: _submit,
+                  date: date,
                 ),
               ],
             ),
@@ -951,6 +975,7 @@ class _SummaryPanel extends StatelessWidget {
   final TaskPriority? priority;
   final bool saving, canSave;
   final VoidCallback onCancel, onSave;
+  final DateTime? date;
 
   const _SummaryPanel({
     required this.name,
@@ -964,6 +989,7 @@ class _SummaryPanel extends StatelessWidget {
     required this.canSave,
     required this.onCancel,
     required this.onSave,
+    required this.date,
   });
 
   bool get _hasSize {
@@ -1091,6 +1117,23 @@ class _SummaryPanel extends StatelessWidget {
                     child:
                         priority != null
                             ? _PriorityBadge(priority!)
+                            : const _Placeholder(),
+                  ),
+
+                  const SizedBox(height: 12),
+                  _SummaryRow(
+                    icon: Icons.event_outlined,
+                    label: 'Date',
+                    child:
+                        date != null
+                            ? Text(
+                              _DateField.format(date!),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                              ),
+                            )
                             : const _Placeholder(),
                   ),
 
@@ -1774,4 +1817,112 @@ class _FieldLabel extends StatelessWidget {
       ],
     ],
   );
+}
+
+class _DateField extends StatefulWidget {
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  const _DateField({
+    required this.value,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  /// Shared formatter used by both the field and the summary row.
+  static String format(DateTime d) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
+  }
+
+  @override
+  State<_DateField> createState() => _DateFieldState();
+}
+
+class _DateFieldState extends State<_DateField> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = widget.value != null;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onPick,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            // Mirrors _SmooField: slate50 at rest, white when active/filled
+            color: filled || _hovered ? _T.white : _T.slate50,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: filled ? _T.blue.withOpacity(0.45) : _T.slate200,
+              width: filled ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.event_outlined,
+                size: 15,
+                color: filled ? _T.blue : _T.slate400,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  filled ? _DateField.format(widget.value!) : 'Pick a date',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: filled ? FontWeight.w500 : FontWeight.w400,
+                    color: filled ? _T.ink : _T.slate300,
+                  ),
+                ),
+              ),
+              // Clear button — only when a date is selected
+              if (filled)
+                GestureDetector(
+                  // Stop tap bubbling to the outer onPick handler
+                  onTap: () {
+                    widget.onClear();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 14,
+                      color: _T.slate400,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: _T.slate300,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

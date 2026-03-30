@@ -442,7 +442,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       member = null;
     }
 
-    final d = widget.task.createdAt;
+    final d = widget.task.date ?? widget.task.createdAt;
     final dueDate = widget.task.dueDate;
     final now = DateTime.now();
     final isOverdue = dueDate != null && dueDate.isBefore(now);
