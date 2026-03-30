@@ -94,6 +94,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   final User currentUser = LoginService.currentUser!;
 
+  bool _isUploading = true;
+
   @override
   void initState() {
     super.initState();
@@ -291,6 +293,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           orgLoading: _orgLoading,
           orgError: _orgError,
           onRetry: _loadOrg,
+          isUploading: _isUploading,
           onRemoveLogo:
               () => setState(() {
                 _logoBytes = null;
@@ -547,7 +550,7 @@ class _OrganizationSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 4 — QUOTATIONS & INVOICES
 // ─────────────────────────────────────────────────────────────────────────────
-class _QuotationsSection extends StatelessWidget {
+class _QuotationsSection extends StatefulWidget {
   final TextEditingController companyNameCtrl;
   final TextEditingController companyAddressCtrl;
   final Uint8List? logoBytes;
@@ -557,6 +560,7 @@ class _QuotationsSection extends StatelessWidget {
   final bool orgLoading;
   final String? orgError;
   final VoidCallback onRetry;
+  final bool isUploading;
 
   const _QuotationsSection({
     required this.companyNameCtrl,
@@ -565,11 +569,18 @@ class _QuotationsSection extends StatelessWidget {
     required this.onRemoveLogo,
     required this.orgLoading,
     required this.onRetry,
+    required this.isUploading,
     this.logoBytes,
     this.logoFileName,
     this.orgError,
   });
 
+  @override
+  State<_QuotationsSection> createState() => _QuotationsSectionState();
+}
+
+class _QuotationsSectionState extends State<_QuotationsSection> {
+  bool _hovering = false;
   @override
   Widget build(BuildContext context) {
     return _SectionScaffold(
@@ -577,7 +588,7 @@ class _QuotationsSection extends StatelessWidget {
       subtitle: 'Company details printed on every document you issue.',
       icon: Icons.receipt_long_outlined,
       // Save button only once org data is available to save
-      action: orgLoading ? null : _SaveButton(onTap: () {}),
+      action: widget.orgLoading ? null : _SaveButton(onTap: () {}),
       children: [
         _SettingsGroup(
           label: 'Company Branding',
@@ -615,8 +626,11 @@ class _QuotationsSection extends StatelessWidget {
                         ),
                         clipBehavior: Clip.antiAlias,
                         child:
-                            logoBytes != null
-                                ? Image.memory(logoBytes!, fit: BoxFit.contain)
+                            widget.logoBytes != null
+                                ? Image.memory(
+                                  widget.logoBytes!,
+                                  fit: BoxFit.contain,
+                                )
                                 : Icon(
                                   Icons.image_outlined,
                                   size: 26,
@@ -627,45 +641,95 @@ class _QuotationsSection extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          GestureDetector(
-                            onTap: onPickLogo,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _T.white,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: _T.slate200),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.upload_outlined,
-                                    size: 13,
-                                    color: _T.slate600,
+                          MouseRegion(
+                            cursor:
+                                widget.isUploading
+                                    ? SystemMouseCursors.basic
+                                    : SystemMouseCursors.click,
+                            onEnter: (_) => setState(() => _hovering = true),
+                            onExit: (_) => setState(() => _hovering = false),
+                            child: GestureDetector(
+                              onTap:
+                                  widget.isUploading ? null : widget.onPickLogo,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOut,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      widget.isUploading
+                                          ? _T.white
+                                          : (_hovering ? _T.slate50 : _T.white),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color:
+                                        _hovering ? _T.slate300 : _T.slate200,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    logoBytes != null
-                                        ? 'Replace logo'
-                                        : 'Upload logo',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: _T.slate700,
+                                  boxShadow:
+                                      _hovering
+                                          ? [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.05,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ]
+                                          : [],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (widget.isUploading) ...[
+                                      SizedBox(
+                                        height: 15,
+                                        width: 15,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: _T.slate300,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                    ] else
+                                      Icon(
+                                        Icons.upload_outlined,
+                                        size: 13,
+                                        color:
+                                            _hovering
+                                                ? _T.slate800
+                                                : _T.slate600,
+                                      ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      widget.isUploading
+                                          ? 'Uploading'
+                                          : (widget.logoBytes != null
+                                              ? 'Replace logo'
+                                              : 'Upload logo'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color:
+                                            widget.isUploading
+                                                ? _T.slate300
+                                                : (_hovering
+                                                    ? _T.slate900
+                                                    : _T.slate700),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          if (logoBytes != null) ...[
+                          if (widget.logoBytes != null) ...[
                             const SizedBox(height: 8),
                             GestureDetector(
-                              onTap: onRemoveLogo,
+                              onTap: widget.onRemoveLogo,
                               child: Text(
                                 'Remove',
                                 style: TextStyle(
@@ -677,10 +741,10 @@ class _QuotationsSection extends StatelessWidget {
                               ),
                             ),
                           ],
-                          if (logoFileName != null) ...[
+                          if (widget.logoFileName != null) ...[
                             const SizedBox(height: 6),
                             Text(
-                              logoFileName!,
+                              widget.logoFileName!,
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 color: _T.slate400,
@@ -697,16 +761,16 @@ class _QuotationsSection extends StatelessWidget {
             Divider(height: 1, thickness: 1, color: _T.slate100),
 
             // ── Company name + address — skeleton until org loads ─────
-            if (orgLoading) ...[
+            if (widget.orgLoading) ...[
               const _SkeletonRow(valueWidth: 180),
               const _SkeletonRow(valueWidth: double.infinity, divider: false),
-            ] else if (orgError != null) ...[
-              _OrgErrorState(onRetry: onRetry),
+            ] else if (widget.orgError != null) ...[
+              _OrgErrorState(onRetry: widget.onRetry),
             ] else ...[
               _SettingsRow(
                 label: 'Company name',
                 child: _InlineField(
-                  controller: companyNameCtrl,
+                  controller: widget.companyNameCtrl,
                   placeholder: 'Acme Corporation',
                 ),
               ),
@@ -715,7 +779,7 @@ class _QuotationsSection extends StatelessWidget {
                 hint: 'Printed in document header',
                 divider: false,
                 child: _InlineField(
-                  controller: companyAddressCtrl,
+                  controller: widget.companyAddressCtrl,
                   maxLines: 4,
                   placeholder: 'Street\nCity\nPostcode\nCountry',
                 ),
