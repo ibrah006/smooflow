@@ -34,7 +34,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
         final todayStart = DateTime(today.year, today.month, today.day);
         final tomorrowStart = todayStart.add(Duration(days: 1));
 
-        if (startDate.isAfter(todayStart) && startDate.isBefore(tomorrowStart)) {
+        if (startDate.isAfter(todayStart) &&
+            startDate.isBefore(tomorrowStart)) {
           return true;
         }
       }
@@ -47,9 +48,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   List<Task> byStatus({required TaskStatus? status}) {
-    return status==null?
-      state.tasks
-      : state.tasks.where((task)=> status == task.status).toList();
+    return status == null
+        ? state.tasks
+        : state.tasks.where((task) => status == task.status).toList();
   }
 
   int countByStatus({required TaskStatus? status}) {
@@ -58,7 +59,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   List<Task> getTasks({required List<int> taskIds, TaskStatus? taskStatus}) {
     return state.tasks.where((task) {
-      return taskIds.contains(task.id) && (taskStatus == null || task.status == taskStatus);
+      return taskIds.contains(task.id) &&
+          (taskStatus == null || task.status == taskStatus);
     }).toList();
   }
 
@@ -204,9 +206,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       state.tasks.removeWhere((task) => tasksIds.contains(task.id));
 
       // Add the updated tasks to memory (state)
-      state = state.copyWith(
-        tasks: updatedProjectTasks
-      );
+      state = state.copyWith(tasks: updatedProjectTasks);
 
       return TasksResponse(
         tasks: updatedProjectTasks,
@@ -215,7 +215,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
       );
     } else {
       return TasksResponse(
-        tasks: state.tasks.where((task) => task.projectId == projectId).toList(),
+        tasks:
+            state.tasks.where((task) => task.projectId == projectId).toList(),
         isUpdatedFromDatabase: false,
         tasksLastModifiedAt: projectTasksLastModifiedServer,
       );
@@ -243,15 +244,21 @@ class TaskNotifier extends StateNotifier<TaskState> {
     return _activeTask;
   }
 
-  TaskStatus get getTaskStartStatus  {
+  TaskStatus get getTaskStartStatus {
     final currentUser = LoginService.currentUser;
     switch (currentUser?.role) {
-      case 'production': return TaskStatus.printing;
-      case 'design': return TaskStatus.designing;
-      case 'finishing': return TaskStatus.finishing;
-      case 'application': return TaskStatus.installing;
-      case 'admin': return TaskStatus.printing;
-      default: throw "Your role doesn't have priveleges to start Task";
+      case 'production':
+        return TaskStatus.printing;
+      case 'design':
+        return TaskStatus.designing;
+      case 'finishing':
+        return TaskStatus.finishing;
+      case 'application':
+        return TaskStatus.installing;
+      case 'admin':
+        return TaskStatus.printing;
+      default:
+        throw "Your role doesn't have priveleges to start Task";
     }
   }
 
@@ -262,16 +269,17 @@ class TaskNotifier extends StateNotifier<TaskState> {
     // Update local state
 
     state.copyWith(
-      tasks: state.tasks.map((t) {
-          if (t.id == taskId) {
-            // Update task state - add work activity log and update status
-            t.workActivityLogs.add(workActivityLog.id);
-            t.activityLogLastModified = DateTime.now();
-            t.status = getTaskStartStatus;
-            _activeTask = t;
-          }
-          return t;
-        }).toList()
+      tasks:
+          state.tasks.map((t) {
+            if (t.id == taskId) {
+              // Update task state - add work activity log and update status
+              t.workActivityLogs.add(workActivityLog.id);
+              t.activityLogLastModified = DateTime.now();
+              t.status = getTaskStartStatus;
+              _activeTask = t;
+            }
+            return t;
+          }).toList(),
     );
 
     if (_activeTask == null)
@@ -281,7 +289,10 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   /// End currently active task
-  Future<void> endActiveTask({TaskStatus? status, bool isCompleted = false}) async {
+  Future<void> endActiveTask({
+    TaskStatus? status,
+    bool isCompleted = false,
+  }) async {
     await _repo.endTask(status: status, isCompleted: isCompleted);
 
     if (_activeTask != null) {
@@ -293,7 +304,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
         tasks: [
           for (final t in state.tasks)
             if (t.id == _activeTask!.id) _activeTask! else t,
-        ] 
+        ],
       );
     }
 
@@ -301,13 +312,19 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   /// Fetch today's production team's schedules
-  Future<void> fetchProductionScheduleToday({TaskStatus? status, bool isCompleted = false}) async {
+  Future<void> fetchProductionScheduleToday({
+    TaskStatus? status,
+    bool isCompleted = false,
+  }) async {
     final tasksToday = await _repo.getProductionScheduleToday();
 
-    final tasksTodayIds = tasksToday.map((task)=> task.id);
+    final tasksTodayIds = tasksToday.map((task) => task.id);
 
     state.copyWith(
-      tasks: state.tasks.where((task)=> !tasksTodayIds.contains(task.id)).toList()
+      tasks:
+          state.tasks
+              .where((task) => !tasksTodayIds.contains(task.id))
+              .toList(),
     );
 
     // Update Tasks
@@ -316,36 +333,47 @@ class TaskNotifier extends StateNotifier<TaskState> {
     // );
   }
 
-  Future<void> _assignPrinter({required int taskId, required String printerId}) async {
+  Future<void> _assignPrinter({
+    required int taskId,
+    required String printerId,
+  }) async {
     await _repo.assignPrinter(taskId, printerId);
 
     state = state.copyWith(
-      tasks: state.tasks.map((task) {
-        if (task.id == taskId) {
-          task.printerId = printerId;
-          task.status = TaskStatus.printing;
-        }
-        return task;
-      }).toList()
+      tasks:
+          state.tasks.map((task) {
+            if (task.id == taskId) {
+              task.printerId = printerId;
+              task.status = TaskStatus.printing;
+            }
+            return task;
+          }).toList(),
     );
   }
 
-  Future<void> _unassignPrinter({required int taskId, required TaskStatus status}) async {
+  Future<void> _unassignPrinter({
+    required int taskId,
+    required TaskStatus status,
+  }) async {
     await _repo.unassignPrinter(taskId, status);
 
     state = state.copyWith(
-      tasks: state.tasks.map((task) {
-        if (task.id == taskId) {
-          task.printerId = null;
-          task.status = status;
-        }
-        return task;
-      }).toList()
+      tasks:
+          state.tasks.map((task) {
+            if (task.id == taskId) {
+              task.printerId = null;
+              task.status = status;
+            }
+            return task;
+          }).toList(),
     );
   }
 
-  Future<void> progressStage({required int taskId, required TaskStatus newStatus, String? printerId}) async {
-
+  Future<void> progressStage({
+    required int taskId,
+    required TaskStatus newStatus,
+    String? printerId,
+  }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
     }
@@ -353,10 +381,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     await _repo.progressStage(taskId, newStatus);
 
     if (newStatus == TaskStatus.printing) {
-      await _assignPrinter(
-        taskId: taskId,
-        printerId: printerId!,
-      );
+      await _assignPrinter(taskId: taskId, printerId: printerId!);
 
       print("$taskId to printing status and assigned printer $printerId");
     } else {
@@ -364,15 +389,19 @@ class TaskNotifier extends StateNotifier<TaskState> {
         final task = state.taskById(taskId);
         if (task!.printerId != null && printerId == null) {
           await _unassignPrinter(taskId: taskId, status: newStatus);
-          print("Progressed task $taskId to $newStatus status and unassigned printer");
+          print(
+            "Progressed task $taskId to $newStatus status and unassigned printer",
+          );
         }
-      } catch(e) {}
+      } catch (e) {}
     }
 
     try {
-      state.tasks.firstWhere((task)=> task.id == taskId).status = newStatus;
-    } catch(e) {
-      print("Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state");
+      state.tasks.firstWhere((task) => task.id == taskId).status = newStatus;
+    } catch (e) {
+      print(
+        "Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state",
+      );
       await getTaskById(taskId, forceReload: true);
     }
   }
@@ -385,7 +414,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     String progressStage = 'production',
     int runs = 1,
     required int productionQuantity,
-    required String barcode
+    required String barcode,
   }) async {
     final stockOutTransaction = await _repo.schedulePrint(
       taskId: taskId,
@@ -394,35 +423,46 @@ class TaskNotifier extends StateNotifier<TaskState> {
       progressStage: progressStage,
       runs: runs,
       productionQuantity: productionQuantity,
-      barcode: barcode
+      barcode: barcode,
     );
 
     state = state.copyWith(
-      tasks: state.tasks.map((task) {
-        if (task.id == taskId) {
-          task.printerId = printerId;
-          task.status = TaskStatus.printing;
-          task.materialId = materialId;
-          task.actualProductionStartTime = DateTime.now();
-          task.runs = runs;
-          task.productionQuantity = productionQuantity.toDouble();
-          // task.stockTransactionBarcode = barcode;
-          task.stockTransactionIds.add(stockOutTransaction!.id);
-        }
-        return task;
-      }).toList()
+      tasks:
+          state.tasks.map((task) {
+            if (task.id == taskId) {
+              task.printerId = printerId;
+              task.status = TaskStatus.printing;
+              task.materialId = materialId;
+              task.actualProductionStartTime = DateTime.now();
+              task.runs = runs;
+              task.productionQuantity = productionQuantity.toDouble();
+              // task.stockTransactionBarcode = barcode;
+              task.stockTransactionIds.add(stockOutTransaction!.id);
+            }
+            return task;
+          }).toList(),
     );
 
     return stockOutTransaction;
   }
 
   // IF any of the fields to be updated is to be reset to a null value, just pass in empty string or default value like (empty string or 0)
-  Future<void> update(
-    {required Task task, required BillingStatus? billingStatus, required String? ref, required int? quantity, required String? size}
-  ) async {
-    await _repo.update(task: task, billingStatus: billingStatus, ref: ref, quantity: quantity, size: size);
+  Future<void> update({
+    required Task task,
+    required BillingStatus? billingStatus,
+    required String? ref,
+    required int? quantity,
+    required String? size,
+  }) async {
+    await _repo.update(
+      task: task,
+      billingStatus: billingStatus,
+      ref: ref,
+      quantity: quantity,
+      size: size,
+    );
 
-    state = state.updateTask(task);
+    // state = state.updateTask(task);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -448,29 +488,24 @@ class TaskNotifier extends StateNotifier<TaskState> {
     // Listen to task list updates
     _client.taskList.listen((tasks) {
       if (mounted) {
-        state = state.copyWith(
-          tasks: tasks,
-          isLoading: false,
-          error: null,
-        );
+        state = state.copyWith(tasks: tasks, isLoading: false, error: null);
       }
     });
 
     // Listen to errors
     _client.errors.listen((error) {
       if (mounted) {
-        state = state.copyWith(
-          error: error,
-          isLoading: false,
-        );
+        state = state.copyWith(error: error, isLoading: false);
       }
     });
   }
 
   /// Handle task change events from WebSocket
   void _handleTaskChange(TaskChangeEvent event) {
-    print('[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted');
-    
+    print(
+      '[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted',
+    );
+
     if (!mounted) {
       print('[TaskNotifier] Notifier not mounted, ignoring change');
       return;
@@ -490,21 +525,29 @@ class TaskNotifier extends StateNotifier<TaskState> {
       case TaskChangeType.updated:
       case TaskChangeType.statusChanged:
         final index = tasks.indexWhere((t) => t.id == event.taskId);
-        print('[TaskNotifier] Looking for task ${event.taskId}, found at index: $index');
-        
+        print(
+          '[TaskNotifier] Looking for task ${event.taskId}, found at index: $index',
+        );
+
         if (index != -1) {
           if (event.task != null) {
             tasks[index] = event.task!;
             print("event task: ${event.task?.toJson()}");
-            print('[TaskNotifier] Updated task at index $index with new object');
+            print(
+              '[TaskNotifier] Updated task at index $index with new object',
+            );
           } else if (event.changes != null) {
             // Partial update
             tasks[index] = _applyChanges(tasks[index], event.changes!);
-            print('[TaskNotifier] Applied partial changes to task at index $index');
+            print(
+              '[TaskNotifier] Applied partial changes to task at index $index',
+            );
           }
           state = state.copyWith(tasks: tasks);
         } else {
-          print('[TaskNotifier] Task ${event.taskId} NOT FOUND in state (count: ${tasks.length})');
+          print(
+            '[TaskNotifier] Task ${event.taskId} NOT FOUND in state (count: ${tasks.length})',
+          );
         }
 
         // Update selected task if it's the one that changed
@@ -541,12 +584,14 @@ class TaskNotifier extends StateNotifier<TaskState> {
       description: changes['description']?['new'] ?? task.description,
       status: changes['status']?['new'] ?? task.status,
       priority: changes['priority']?['new'] ?? task.priority,
-      dueDate: changes['dueDate']?['new'] != null 
-          ? DateTime.parse(changes['dueDate']['new']) 
-          : task.dueDate,
-      dateCompleted: changes['completedAt']?['new'] != null 
-          ? DateTime.parse(changes['completedAt']['new']) 
-          : task.dateCompleted,
+      dueDate:
+          changes['dueDate']?['new'] != null
+              ? DateTime.parse(changes['dueDate']['new'])
+              : task.dueDate,
+      dateCompleted:
+          changes['completedAt']?['new'] != null
+              ? DateTime.parse(changes['completedAt']['new'])
+              : task.dateCompleted,
     );
   }
 
@@ -623,9 +668,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
   List<Task> getOverdueTasks() {
     final now = DateTime.now();
     return state.tasks.where((task) {
-      return task.dueDate != null && 
-             task.dueDate!.isBefore(now) && 
-             task.status != 'completed';
+      return task.dueDate != null &&
+          task.dueDate!.isBefore(now) &&
+          task.status != 'completed';
     }).toList();
   }
 
