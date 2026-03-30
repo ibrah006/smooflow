@@ -18,7 +18,7 @@ class Organization {
   final bool isDomainOwner;
   final String? privateDomain;
   String? companyAddress;
-  String profileUrl;
+  String? profileUrl;
 
   Organization({
     required this.id,

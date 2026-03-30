@@ -22,6 +22,7 @@ import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/organization_provider.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -91,7 +92,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   // ── Quotations / Invoice branding ─────────────────────────────────────────
   late final TextEditingController _companyNameCtrl;
   late final TextEditingController _companyAddressCtrl;
-  Uint8List? _logoBytes;
+  // Uint8List? _logoBytes;
   String? _logoFileName;
 
   final User currentUser = LoginService.currentUser!;
@@ -130,7 +131,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               .getCurrentOrganization;
       if (!mounted) return;
       setState(() {
-        _org = org;
         _orgLoading = false;
         _companyNameCtrl.text = org.name;
         _companyAddressCtrl.text = org.companyAddress ?? '';
@@ -175,7 +175,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         fileName: fileName,
       );
 
-      _logoBytes = bytes;
+      // _logoBytes = bytes;
 
       // Update local organization data
       setState(() {
@@ -196,6 +196,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    _org = ref.watch(organizationNotifierProvider).organization;
+
     return Scaffold(
       backgroundColor: _T.white,
       body: Row(
@@ -292,18 +294,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         return _QuotationsSection(
           companyNameCtrl: _companyNameCtrl,
           companyAddressCtrl: _companyAddressCtrl,
-          logoBytes: _logoBytes,
           logoFileName: _logoFileName,
           onPickLogo: _pickLogo,
           orgLoading: _orgLoading,
           orgError: _orgError,
           onRetry: _loadOrg,
           isUploading: _isUploading,
-          onRemoveLogo:
-              () => setState(() {
-                _logoBytes = null;
-                _logoFileName = null;
-              }),
+          profileUrl: _org?.profileUrl,
+          onRemoveLogo: () {
+            AppToast.show(
+              message: "To be implemented",
+              icon: Icons.info,
+              color: _T.amber,
+            );
+            // setState(() {
+            //   // _logoFileName = null;
+            // });
+          },
         );
     }
   }
@@ -555,10 +562,10 @@ class _OrganizationSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 4 — QUOTATIONS & INVOICES
 // ─────────────────────────────────────────────────────────────────────────────
-class _QuotationsSection extends StatefulWidget {
+class _QuotationsSection extends ConsumerStatefulWidget {
   final TextEditingController companyNameCtrl;
   final TextEditingController companyAddressCtrl;
-  final Uint8List? logoBytes;
+  // final Uint8List? logoBytes;
   final String? logoFileName;
   final VoidCallback onPickLogo;
   final VoidCallback onRemoveLogo;
@@ -566,6 +573,7 @@ class _QuotationsSection extends StatefulWidget {
   final String? orgError;
   final VoidCallback onRetry;
   final bool isUploading;
+  final String? profileUrl;
 
   const _QuotationsSection({
     required this.companyNameCtrl,
@@ -575,19 +583,22 @@ class _QuotationsSection extends StatefulWidget {
     required this.orgLoading,
     required this.onRetry,
     required this.isUploading,
-    this.logoBytes,
+    // this.logoBytes,
     this.logoFileName,
     this.orgError,
+    required this.profileUrl,
   });
 
   @override
-  State<_QuotationsSection> createState() => _QuotationsSectionState();
+  ConsumerState<_QuotationsSection> createState() => _QuotationsSectionState();
 }
 
-class _QuotationsSectionState extends State<_QuotationsSection> {
+class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
   bool _hovering = false;
   @override
   Widget build(BuildContext context) {
+    final hasLogo = widget.profileUrl != null;
+
     return _SectionScaffold(
       title: 'Quotations & Invoices',
       subtitle: 'Company details printed on every document you issue.',
@@ -631,9 +642,9 @@ class _QuotationsSectionState extends State<_QuotationsSection> {
                         ),
                         clipBehavior: Clip.antiAlias,
                         child:
-                            widget.logoBytes != null
-                                ? Image.memory(
-                                  widget.logoBytes!,
+                            hasLogo
+                                ? Image.network(
+                                  widget.profileUrl!,
                                   fit: BoxFit.contain,
                                 )
                                 : Icon(
@@ -712,7 +723,7 @@ class _QuotationsSectionState extends State<_QuotationsSection> {
                                     Text(
                                       widget.isUploading
                                           ? 'Uploading'
-                                          : (widget.logoBytes != null
+                                          : (hasLogo
                                               ? 'Replace logo'
                                               : 'Upload logo'),
                                       style: TextStyle(
@@ -731,7 +742,7 @@ class _QuotationsSectionState extends State<_QuotationsSection> {
                               ),
                             ),
                           ),
-                          if (widget.logoBytes != null) ...[
+                          if (hasLogo) ...[
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: widget.onRemoveLogo,
