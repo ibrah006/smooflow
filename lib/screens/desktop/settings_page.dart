@@ -14,6 +14,7 @@
 
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -173,6 +174,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await orgService.updateProfileImage(imageBytes: bytes, fileName: fileName);
 
     // _logoBytes = bytes;
+
+    if (_org?.profileUrl != null)
+      await CachedNetworkImage.evictFromCache(_org!.profileUrl!);
 
     // Update local organization data
     setState(() {
@@ -640,8 +644,9 @@ class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
                         clipBehavior: Clip.antiAlias,
                         child:
                             hasLogo
-                                ? Image.network(
-                                  widget.profileUrl!,
+                                ? CachedNetworkImage(
+                                  imageUrl: widget.profileUrl!,
+                                  cacheKey: widget.profileUrl,
                                   fit: BoxFit.contain,
                                 )
                                 : Icon(
