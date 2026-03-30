@@ -18,6 +18,7 @@ class Organization {
   final bool isDomainOwner;
   final String? privateDomain;
   String? companyAddress;
+  String profileUrl;
 
   Organization({
     required this.id,
@@ -31,6 +32,7 @@ class Organization {
     required this.updatedAt,
     required this.isDomainOwner,
     required this.privateDomain,
+    required this.profileUrl,
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class Organization {
       updatedAt: DateTime.parse(json['updatedAt']),
       isDomainOwner: json['isDomainOwner'],
       privateDomain: json['privateDomain'],
+      profileUrl: json['profileUrl'],
     );
   }
 
@@ -75,6 +78,7 @@ class Organization {
       'companies': companies,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'profileUrl': profileUrl,
       // isDomainOwner and privateDomain don't need to be passed in here as they are only updated from server as of now
     };
   }
