@@ -1134,11 +1134,11 @@ class _BillingEditViewState extends ConsumerState<BillingEditView> {
     super.dispose();
   }
 
-  void _updateItem(int index, QuotationLineItem updated) {
+  void _updateItem(int index, QuotationLineItem updated) async {
     setState(() => _items[index] = updated);
     widget.onChanged(List.from(_items));
 
-    ref.watch(quotationNotifierProvider.notifier).updateLineItem(updated);
+    await ref.watch(quotationNotifierProvider.notifier).updateLineItem(updated);
   }
 
   void _addLine() {
