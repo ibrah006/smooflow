@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:googleapis/admin/directory_v1.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/endpoints.dart';
+import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/organization.dart';
 
 class OrganizationRepo {
@@ -120,6 +123,34 @@ class OrganizationRepo {
     );
 
     return response.statusCode == 200;
+  }
+
+  // Update organization profile image
+  Future<Map<String, dynamic>> updateProfileImage({
+    required String organizationId,
+    required File imageFile,
+  }) async {
+    final dio = Dio();
+    dio.options.headers['Authorization'] =
+        (await LocalHttp.getHeaders())["Authorization"];
+
+    final formData = FormData.fromMap({
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: imageFile.path.split('/').last,
+      ),
+    });
+
+    final response = await dio.put(
+      '${ApiClient.http.baseUrl}/organizations/$organizationId/profile-image',
+      data: formData,
+    );
+
+    if (response.statusCode == 200) {
+      return response.data['organization'];
+    } else {
+      throw Exception('Failed to update profile image');
+    }
   }
 }
 

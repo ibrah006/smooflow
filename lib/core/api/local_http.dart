@@ -68,4 +68,14 @@ class LocalHttp {
       body: jsonEncode(body),
     );
   }
+
+  Future<http.MultipartRequest> multipartRequest(
+    String endpoint, {
+    Map? body,
+  }) async {
+    final headers = await getHeaders();
+
+    return await http.MultipartRequest('PUT', Uri.parse('$baseUrl$endpoint'))
+      ..headers['Authorization'] = headers["Authorization"]!;
+  }
 }
