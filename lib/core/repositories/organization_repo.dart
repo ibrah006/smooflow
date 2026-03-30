@@ -127,7 +127,6 @@ class OrganizationRepo {
   }
 
   Future<Map<String, dynamic>> updateProfileImage({
-    required String organizationId,
     required Uint8List imageBytes,
     required String fileName,
   }) async {
@@ -140,7 +139,7 @@ class OrganizationRepo {
 
     // Make the PUT request
     final response = await dio.put(
-      '${ApiClient.http.baseUrl}/organizations/$organizationId/profile-image',
+      '${ApiClient.http.baseUrl}/organizations/profile-image',
       data: formData,
       options: Options(
         headers: await LocalHttp.getHeaders(),

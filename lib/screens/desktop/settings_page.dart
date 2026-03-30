@@ -167,7 +167,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       final orgService = ref.read(organizationNotifierProvider.notifier);
 
       await orgService.updateProfileImage(
-        organizationId: _organization.id,
         imageBytes: bytes,
         fileName: fileName,
       );

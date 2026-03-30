@@ -90,12 +90,10 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
   }
 
   Future<void> updateProfileImage({
-    required String organizationId,
     required Uint8List imageBytes,
     required String fileName,
   }) async {
     final updatedOrg = await repo.updateProfileImage(
-      organizationId: organizationId,
       imageBytes: imageBytes,
       fileName: fileName,
     );
