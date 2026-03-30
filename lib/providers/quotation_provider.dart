@@ -102,14 +102,13 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
     return created;
   }
 
-  Future<Quotation> updateLineItem(
-    String lineItemId,
-    QuotationLineItem updatedLineItem,
-  ) async {
-    final Map<String, dynamic> payload = {"updateLineItem": updatedLineItem};
+  Future<Quotation> updateLineItem(QuotationLineItem updatedLineItem) async {
+    final Map<String, dynamic> payload = {
+      "updateLineItem": updatedLineItem.toJson(),
+    };
 
     final updatedQuotation = await _api.updateQuotationLineItem(
-      lineItemId,
+      updatedLineItem.id,
       payload,
     );
 

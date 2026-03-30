@@ -1014,7 +1014,7 @@ Riyadh, Kingdom of Saudi Arabia""",
 // ─────────────────────────────────────────────────────────────────────────────
 // BILLING EDIT VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class BillingEditView extends StatefulWidget {
+class BillingEditView extends ConsumerStatefulWidget {
   final List<QuotationLineItem> lineItems;
   final double vatPercentage;
   final String docType;
@@ -1069,10 +1069,10 @@ class BillingEditView extends StatefulWidget {
   });
 
   @override
-  State<BillingEditView> createState() => _BillingEditViewState();
+  ConsumerState<BillingEditView> createState() => _BillingEditViewState();
 }
 
-class _BillingEditViewState extends State<BillingEditView> {
+class _BillingEditViewState extends ConsumerState<BillingEditView> {
   late List<QuotationLineItem> _items;
 
   // Company controllers
@@ -1137,6 +1137,10 @@ class _BillingEditViewState extends State<BillingEditView> {
   void _updateItem(int index, QuotationLineItem updated) {
     setState(() => _items[index] = updated);
     widget.onChanged(List.from(_items));
+
+    ref
+        .watch(quotationNotifierProvider.notifier)
+        .updateLineItem(updated.id, updated);
   }
 
   void _addLine() {
