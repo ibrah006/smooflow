@@ -105,7 +105,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       text: parts.length > 1 ? parts.sublist(1).join(' ') : '',
     );
     _emailCtrl = TextEditingController(text: currentUser.email);
-    _phoneCtrl = TextEditingController(text: '${currentUser.phone ?? 'N/a'}');
+    _phoneCtrl = TextEditingController(text: '${currentUser.phone ?? ''}');
 
     // Company fields start empty — populated once org loads
     _companyNameCtrl = TextEditingController();
