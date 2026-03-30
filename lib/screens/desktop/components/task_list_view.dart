@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// task_list_view.dart
+// task_list_view.dahiddrt
 //
 // Complete task list view with real-time WebSocket updates.
 // This version uses ONLY the WebSocket approach for real-time synchronization.
@@ -1884,7 +1884,7 @@ class _TaskRowState extends State<_TaskRow> {
     final m = widget.assignee;
     final now = DateTime.now();
     final s = stageInfo(t.status);
-    final d = t.createdAt;
+    final d = t.date ?? t.createdAt;
 
     final dateFormatted = fmtDate(d);
     final dateParts = dateFormatted.split(' ');
