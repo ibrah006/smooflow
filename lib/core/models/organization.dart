@@ -8,7 +8,9 @@ class Organization {
   final String? description;
   final String createdById;
   final List<String> users;
+  @Deprecated("This is to be completely removed in upcoming commits")
   final List<String> projects;
+  @Deprecated("This is to be completely removed in upcoming commits")
   final List<String> companies;
   final DateTime createdAt;
   final DateTime updatedAt;
