@@ -52,7 +52,7 @@ Effortlessly manage your workflow with flexible task visualization:
 - **Board View** for intuitive drag-and-drop progress tracking  
 
 <p align="center">
-  <img src="screenshots/tasks_table.png" alt="Tasks Table View" width="90%" />
+  <img src="screenshots/desktop/tasks_table.png" alt="Tasks Table View" width="90%" />
 </p>
 
 <p align="center">
@@ -68,11 +68,11 @@ Gain complete control over your inventory with deep tracking capabilities:
 - Drill down to **task-level usage**
 
 <p align="center">
-  <img src="screenshots/materials_overview.png" alt="Materials Overview" width="90%" />
+  <img src="screenshots/desktop/materials_overview.png" alt="Materials Overview" width="90%" />
 </p>
 
 <p align="center">
-  <img src="screenshots/materials_consumption.png" alt="Material Consumption" width="90%" />
+  <img src="screenshots/desktop/materials_consumption.png" alt="Material Consumption" width="90%" />
 </p>
 
 ---
@@ -83,11 +83,11 @@ Handle financial and documentation workflows with ease:
 - Maintain and update **Price Lists**
 
 <p align="center">
-  <img src="screenshots/documents.png" alt="Documents - Quotations" width="90%" />
+  <img src="screenshots/desktop/documents.png" alt="Documents - Quotations" width="90%" />
 </p>
 
 <p align="center">
-  <img src="screenshots/price_lists.png" alt="Price Lists" width="90%" />
+  <img src="screenshots/desktop/price_lists.png" alt="Price Lists" width="90%" />
 </p>
 
 ---
