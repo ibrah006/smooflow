@@ -170,7 +170,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         organizationId: _organization.id,
         imageBytes: bytes,
         fileName: fileName,
-        token: token,
       );
 
       // Update local organization data
