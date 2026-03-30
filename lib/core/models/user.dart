@@ -15,6 +15,8 @@ class User {
   // Set once, the user joins/creates an organization
   late final String organizationId;
 
+  String? avatarUrl;
+
   User({
     required String? userId,
     required this.name,
@@ -57,7 +59,7 @@ class User {
 
     String result = "";
 
-    while(splitted.isNotEmpty && result.length < 4) {
+    while (splitted.isNotEmpty && result.length < 4) {
       result += splitted[0][0].toUpperCase();
       splitted.removeAt(0);
     }
@@ -67,7 +69,7 @@ class User {
 
   String get nameShort {
     final n = name.split(" ");
-    return n.length > 1? "${n[0]} ${n[1][0]}." : name;
+    return n.length > 1 ? "${n[0]} ${n[1][0]}." : name;
   }
 
   User.register({required this.name, required this.role, required this.email})
@@ -107,7 +109,7 @@ class User {
   static String? getIdFromJson(userJson) {
     try {
       return userJson["id"];
-    }catch(e) {
+    } catch (e) {
       return null;
     }
   }
