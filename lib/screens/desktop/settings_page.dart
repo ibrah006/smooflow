@@ -858,8 +858,7 @@ class _NavItemState extends State<_NavItem> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: () => widget.onTap(widget.section),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+        child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
@@ -871,30 +870,34 @@ class _NavItemState extends State<_NavItem> {
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
-            children: [
-              Icon(widget.icon, size: 15, color: sel ? _T.blue : _T.slate500),
-              const SizedBox(width: 10),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                  color: sel ? _T.blue : _T.slate700,
-                ),
-              ),
-              if (sel) ...[
-                const Spacer(),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: _T.blue,
-                    shape: BoxShape.circle,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            child: Row(
+              children: [
+                Icon(widget.icon, size: 15, color: sel ? _T.blue : _T.slate500),
+                const SizedBox(width: 10),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                    color: sel ? _T.blue : _T.slate700,
                   ),
                 ),
+                if (sel) ...[
+                  const Spacer(),
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _T.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
