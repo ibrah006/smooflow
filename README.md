@@ -56,7 +56,7 @@ Effortlessly manage your workflow with flexible task visualization:
 </p>
 
 <p align="center">
-  <img src="screenshots/tasks_board.png" alt="Tasks Board View" width="90%" />
+  <img src="screenshots/desktop/tasks_board.png" alt="Tasks Board View" width="90%" />
 </p>
 
 ---
