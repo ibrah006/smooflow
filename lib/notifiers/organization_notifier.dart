@@ -98,7 +98,7 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
       fileName: fileName,
     );
 
-    state.copyWith(
+    state = state.copyWith(
       // Updated organization
       organization: Organization.fromJson(updatedOrg),
     );

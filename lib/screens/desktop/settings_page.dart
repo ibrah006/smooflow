@@ -167,31 +167,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     setState(() => _isUploading = true);
 
-    try {
-      final orgService = ref.read(organizationNotifierProvider.notifier);
+    // try {
+    final orgService = ref.read(organizationNotifierProvider.notifier);
 
-      await orgService.updateProfileImage(
-        imageBytes: bytes,
-        fileName: fileName,
-      );
+    await orgService.updateProfileImage(imageBytes: bytes, fileName: fileName);
 
-      // _logoBytes = bytes;
+    // _logoBytes = bytes;
 
-      // Update local organization data
-      setState(() {
-        _isUploading = false;
-      });
+    // Update local organization data
+    setState(() {
+      _isUploading = false;
+    });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile image updated')));
-    } catch (e) {
-      setState(() => _isUploading = false);
-      print("error: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Profile image updated')));
+    // } catch (e) {
+    //   setState(() => _isUploading = false);
+    //   print("error: $e");
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    // }
   }
 
   @override
