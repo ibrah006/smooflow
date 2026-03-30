@@ -166,7 +166,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     try {
       final orgService = ref.read(organizationNotifierProvider.notifier);
 
-      final updatedOrg = await orgService.updateProfileImage(
+      await orgService.updateProfileImage(
         organizationId: _organization.id,
         imageBytes: bytes,
         fileName: fileName,
@@ -174,7 +174,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
       // Update local organization data
       setState(() {
-        _organization = Organization.fromJson(updatedOrg);
         _isUploading = false;
       });
 

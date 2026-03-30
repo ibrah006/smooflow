@@ -94,10 +94,15 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
     required Uint8List imageBytes,
     required String fileName,
   }) async {
-    await repo.updateProfileImage(
+    final updatedOrg = await repo.updateProfileImage(
       organizationId: organizationId,
       imageBytes: imageBytes,
       fileName: fileName,
+    );
+
+    state.copyWith(
+      // Updated organization
+      organization: Organization.fromJson(updatedOrg),
     );
   }
 }
