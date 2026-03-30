@@ -17,8 +17,11 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/models/user.dart';
+import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -54,24 +57,20 @@ class _T {
 
 enum _Section { profile, organization, notifications, quotations }
 
-class SettingsPage extends StatefulWidget {
-  final Organization currentOrg;
-  final User currentUser;
-  final bool isAdmin;
-
-  const SettingsPage({
-    super.key,
-    required this.currentOrg,
-    required this.currentUser,
-    required this.isAdmin,
-  });
+class SettingsPage extends ConsumerStatefulWidget {
+  const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   _Section _active = _Section.profile;
+
+  // ── Org async state ───────────────────────────────────────────────────────
+  Organization? _org;
+  bool _orgLoading = true;
+  String? _orgError;
 
   // ── Profile controllers ───────────────────────────────────────────────────
   late final TextEditingController _firstNameCtrl;
@@ -93,25 +92,52 @@ class _SettingsPageState extends State<SettingsPage> {
   Uint8List? _logoBytes;
   String? _logoFileName;
 
+  final User currentUser = LoginService.currentUser!;
+
   @override
   void initState() {
     super.initState();
-    _firstNameCtrl = TextEditingController(text: widget.currentUser.name);
-    final nameSplit = widget.currentUser.name.split(' ');
-    if (nameSplit.length > 1) {
-      nameSplit.removeAt(0);
-      _lastNameCtrl = TextEditingController(text: nameSplit.join(' '));
+
+    // Profile — split full name into first / last
+    final parts = currentUser.name.trim().split(' ');
+    _firstNameCtrl = TextEditingController(text: parts.first);
+    _lastNameCtrl = TextEditingController(
+      text: parts.length > 1 ? parts.sublist(1).join(' ') : '',
+    );
+    _emailCtrl = TextEditingController(text: currentUser.email);
+    _phoneCtrl = TextEditingController(text: '${currentUser.phone ?? 'N/a'}');
+
+    // Company fields start empty — populated once org loads
+    _companyNameCtrl = TextEditingController();
+    _companyAddressCtrl = TextEditingController();
+
+    _loadOrg();
+  }
+
+  Future<void> _loadOrg() async {
+    setState(() {
+      _orgLoading = true;
+      _orgError = null;
+    });
+    try {
+      final org =
+          await ref
+              .read(organizationNotifierProvider.notifier)
+              .getCurrentOrganization;
+      if (!mounted) return;
+      setState(() {
+        _org = org;
+        _orgLoading = false;
+        _companyNameCtrl.text = org.name;
+        _companyAddressCtrl.text = org.companyAddress ?? '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _orgError = e.toString();
+        _orgLoading = false;
+      });
     }
-    _emailCtrl = TextEditingController(text: widget.currentUser.email);
-    _phoneCtrl = TextEditingController(
-      text: '${widget.currentUser.phone ?? 'N/a'}',
-    );
-    _companyNameCtrl = TextEditingController(text: widget.currentOrg.name);
-    _companyAddressCtrl = TextEditingController(
-      // Sample company address for now
-      text:
-          "2345 Sample Dist\nCity: 12345\nState, Country", //widget.currentOrg.companyAddress,
-    );
   }
 
   @override
@@ -144,16 +170,11 @@ class _SettingsPageState extends State<SettingsPage> {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Left nav rail ────────────────────────────────────────────
           _SettingsNav(
             active: _active,
             onSelect: (s) => setState(() => _active = s),
           ),
-
-          // ── Vertical divider ─────────────────────────────────────────
           VerticalDivider(width: 1, thickness: 1, color: _T.slate200),
-
-          // ── Content area ─────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 36),
@@ -193,13 +214,16 @@ class _SettingsPageState extends State<SettingsPage> {
           lastNameCtrl: _lastNameCtrl,
           emailCtrl: _emailCtrl,
           phoneCtrl: _phoneCtrl,
-          user: widget.currentUser,
+          user: currentUser,
         );
       case _Section.organization:
         return _OrganizationSection(
-          org: widget.currentOrg,
-          isAdmin: widget.isAdmin,
-          userRole: widget.currentUser.role,
+          org: _org,
+          isAdmin: currentUser.isAdmin,
+          userRole: currentUser.role,
+          loading: _orgLoading,
+          error: _orgError,
+          onRetry: _loadOrg,
         );
       case _Section.notifications:
         return _NotificationsSection(
@@ -240,6 +264,9 @@ class _SettingsPageState extends State<SettingsPage> {
           logoBytes: _logoBytes,
           logoFileName: _logoFileName,
           onPickLogo: _pickLogo,
+          orgLoading: _orgLoading,
+          orgError: _orgError,
+          onRetry: _loadOrg,
           onRemoveLogo:
               () => setState(() {
                 _logoBytes = null;
@@ -247,6 +274,433 @@ class _SettingsPageState extends State<SettingsPage> {
               }),
         );
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKELETON PRIMITIVES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Animated shimmer bar. Width can be fixed or double.infinity for full-width.
+class _Skeleton extends StatefulWidget {
+  final double width;
+  final double height;
+  final double radius;
+
+  const _Skeleton({required this.width, this.height = 13, this.radius = 5});
+
+  @override
+  State<_Skeleton> createState() => _SkeletonState();
+}
+
+class _SkeletonState extends State<_Skeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(
+      begin: 0.35,
+      end: 0.9,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder:
+          (_, __) => Opacity(
+            opacity: _anim.value,
+            child: Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(
+                color: _T.slate200,
+                borderRadius: BorderRadius.circular(widget.radius),
+              ),
+            ),
+          ),
+    );
+  }
+}
+
+/// A _SettingsRow-shaped skeleton — preserves the row chrome while loading.
+class _SkeletonRow extends StatelessWidget {
+  final double valueWidth;
+  final bool divider;
+
+  const _SkeletonRow({this.valueWidth = 140, this.divider = true});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              _Skeleton(width: 88, height: 12),
+              const SizedBox(width: 16),
+              _Skeleton(width: valueWidth, height: 12),
+            ],
+          ),
+        ),
+        if (divider) Divider(height: 1, thickness: 1, color: _T.slate100),
+      ],
+    );
+  }
+}
+
+/// Inline error + retry shown inside a group card.
+class _OrgErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _OrgErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, size: 14, color: _T.slate400),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Could not load organization data.',
+              style: TextStyle(fontSize: 12, color: _T.slate500),
+            ),
+          ),
+          GestureDetector(
+            onTap: onRetry,
+            child: Text(
+              'Retry',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _T.blue,
+                decoration: TextDecoration.underline,
+                decorationColor: _T.blue.withOpacity(0.4),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 2 — ORGANIZATION
+// ─────────────────────────────────────────────────────────────────────────────
+class _OrganizationSection extends StatelessWidget {
+  final Organization? org;
+  final bool isAdmin;
+  final String userRole;
+  final bool loading;
+  final String? error;
+  final VoidCallback onRetry;
+
+  const _OrganizationSection({
+    required this.org,
+    required this.isAdmin,
+    required this.userRole,
+    required this.loading,
+    required this.onRetry,
+    this.error,
+  });
+
+  Color _roleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return _T.blue;
+      case 'manager':
+        return _T.indigo;
+      default:
+        return _T.slate500;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScaffold(
+      title: 'Organization',
+      subtitle: 'Your workspace and role within the team.',
+      icon: Icons.business_outlined,
+      children: [
+        _SettingsGroup(
+          label: 'Workspace',
+          children: [
+            if (loading) ...[
+              const _SkeletonRow(valueWidth: 160),
+              const _SkeletonRow(valueWidth: 72),
+              const _SkeletonRow(valueWidth: 130, divider: false),
+            ] else if (error != null) ...[
+              _OrgErrorState(onRetry: onRetry),
+            ] else ...[
+              _SettingsRow(
+                label: 'Organization name',
+                child: Text(
+                  org!.name,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: _T.ink,
+                  ),
+                ),
+              ),
+              _SettingsRow(
+                label: 'Your role',
+                divider: isAdmin && org!.privateDomain != null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _roleColor(userRole).withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    userRole,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _roleColor(userRole),
+                    ),
+                  ),
+                ),
+              ),
+              if (isAdmin && org!.privateDomain != null)
+                _SettingsRow(
+                  label: 'Private domain',
+                  hint: 'Enforced login domain for your org',
+                  divider: false,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: _T.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        org!.privateDomain!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: _T.ink,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 4 — QUOTATIONS & INVOICES
+// ─────────────────────────────────────────────────────────────────────────────
+class _QuotationsSection extends StatelessWidget {
+  final TextEditingController companyNameCtrl;
+  final TextEditingController companyAddressCtrl;
+  final Uint8List? logoBytes;
+  final String? logoFileName;
+  final VoidCallback onPickLogo;
+  final VoidCallback onRemoveLogo;
+  final bool orgLoading;
+  final String? orgError;
+  final VoidCallback onRetry;
+
+  const _QuotationsSection({
+    required this.companyNameCtrl,
+    required this.companyAddressCtrl,
+    required this.onPickLogo,
+    required this.onRemoveLogo,
+    required this.orgLoading,
+    required this.onRetry,
+    this.logoBytes,
+    this.logoFileName,
+    this.orgError,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionScaffold(
+      title: 'Quotations & Invoices',
+      subtitle: 'Company details printed on every document you issue.',
+      icon: Icons.receipt_long_outlined,
+      // Save button only once org data is available to save
+      action: orgLoading ? null : _SaveButton(onTap: () {}),
+      children: [
+        _SettingsGroup(
+          label: 'Company Branding',
+          description: 'Shown in the header of all generated documents.',
+          children: [
+            // ── Logo — always available, independent of org load ──────
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Company logo',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: _T.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'Used in quotation and invoice templates. PNG or JPG, max 2 MB.',
+                    style: TextStyle(fontSize: 10.5, color: _T.slate400),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: _T.slate100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _T.slate200),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child:
+                            logoBytes != null
+                                ? Image.memory(logoBytes!, fit: BoxFit.contain)
+                                : Icon(
+                                  Icons.image_outlined,
+                                  size: 26,
+                                  color: _T.slate300,
+                                ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: onPickLogo,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _T.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: _T.slate200),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.upload_outlined,
+                                    size: 13,
+                                    color: _T.slate600,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    logoBytes != null
+                                        ? 'Replace logo'
+                                        : 'Upload logo',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: _T.slate700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (logoBytes != null) ...[
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: onRemoveLogo,
+                              child: Text(
+                                'Remove',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _T.slate400,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: _T.slate300,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (logoFileName != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              logoFileName!,
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: _T.slate400,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, thickness: 1, color: _T.slate100),
+
+            // ── Company name + address — skeleton until org loads ─────
+            if (orgLoading) ...[
+              const _SkeletonRow(valueWidth: 180),
+              const _SkeletonRow(valueWidth: double.infinity, divider: false),
+            ] else if (orgError != null) ...[
+              _OrgErrorState(onRetry: onRetry),
+            ] else ...[
+              _SettingsRow(
+                label: 'Company name',
+                child: _InlineField(
+                  controller: companyNameCtrl,
+                  placeholder: 'Acme Corporation',
+                ),
+              ),
+              _SettingsRow(
+                label: 'Company address',
+                hint: 'Printed in document header',
+                divider: false,
+                child: _InlineField(
+                  controller: companyAddressCtrl,
+                  maxLines: 4,
+                  placeholder: 'Street\nCity\nPostcode\nCountry',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -925,107 +1379,6 @@ class _ProfileSection extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — ORGANIZATION
-// ─────────────────────────────────────────────────────────────────────────────
-class _OrganizationSection extends StatelessWidget {
-  final Organization org;
-  final bool isAdmin;
-  final String userRole;
-
-  const _OrganizationSection({
-    required this.org,
-    required this.isAdmin,
-    required this.userRole,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionScaffold(
-      title: 'Organization',
-      subtitle: 'Your workspace and role within the team.',
-      icon: Icons.business_outlined,
-      children: [
-        _SettingsGroup(
-          label: 'Workspace',
-          children: [
-            _SettingsRow(
-              label: 'Organization name',
-              divider: org.privateDomain != null && isAdmin,
-              child: Text(
-                org.name,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: _T.ink,
-                ),
-              ),
-            ),
-            _SettingsRow(
-              label: 'Your role',
-              divider: isAdmin && org.privateDomain != null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _roleColor(userRole).withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  userRole,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _roleColor(userRole),
-                  ),
-                ),
-              ),
-            ),
-            if (isAdmin && org.privateDomain != null)
-              _SettingsRow(
-                label: 'Private domain',
-                hint: 'Enforced login domain for your org',
-                divider: false,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: _T.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      org.privateDomain!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: _T.ink,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Color _roleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return _T.blue;
-      case 'manager':
-        return _T.indigo;
-      default:
-        return _T.slate500;
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — NOTIFICATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 class _NotificationsSection extends StatelessWidget {
@@ -1144,176 +1497,6 @@ class _DefaultOffBadge extends StatelessWidget {
           color: _T.slate400,
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — QUOTATIONS & INVOICES
-// ─────────────────────────────────────────────────────────────────────────────
-class _QuotationsSection extends StatelessWidget {
-  final TextEditingController companyNameCtrl;
-  final TextEditingController companyAddressCtrl;
-  final Uint8List? logoBytes;
-  final String? logoFileName;
-  final VoidCallback onPickLogo;
-  final VoidCallback onRemoveLogo;
-
-  const _QuotationsSection({
-    required this.companyNameCtrl,
-    required this.companyAddressCtrl,
-    required this.onPickLogo,
-    required this.onRemoveLogo,
-    this.logoBytes,
-    this.logoFileName,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionScaffold(
-      title: 'Quotations & Invoices',
-      subtitle: 'Company details printed on every document you issue.',
-      icon: Icons.receipt_long_outlined,
-      action: _SaveButton(onTap: () {}),
-      children: [
-        _SettingsGroup(
-          label: 'Company Branding',
-          description: 'Shown in the header of all generated documents.',
-          children: [
-            // Logo upload row — full-width treatment
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Company logo',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _T.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Used in quotation and invoice templates. PNG or JPG, max 2 MB.',
-                    style: TextStyle(fontSize: 10.5, color: _T.slate400),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      // Preview box
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: _T.slate100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _T.slate200),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child:
-                            logoBytes != null
-                                ? Image.memory(logoBytes!, fit: BoxFit.contain)
-                                : Icon(
-                                  Icons.image_outlined,
-                                  size: 26,
-                                  color: _T.slate300,
-                                ),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GestureDetector(
-                            onTap: onPickLogo,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _T.white,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: _T.slate200),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.upload_outlined,
-                                    size: 13,
-                                    color: _T.slate600,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    logoBytes != null
-                                        ? 'Replace logo'
-                                        : 'Upload logo',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: _T.slate700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (logoBytes != null) ...[
-                            const SizedBox(height: 8),
-                            GestureDetector(
-                              onTap: onRemoveLogo,
-                              child: Text(
-                                'Remove',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: _T.slate400,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: _T.slate300,
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (logoFileName != null) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              logoFileName!,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: _T.slate400,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, thickness: 1, color: _T.slate100),
-
-            _SettingsRow(
-              label: 'Company name',
-              child: _InlineField(
-                controller: companyNameCtrl,
-                placeholder: 'Acme Corporation',
-              ),
-            ),
-            _SettingsRow(
-              label: 'Company address',
-              hint: 'Printed in document header',
-              divider: false,
-              child: _InlineField(
-                controller: companyAddressCtrl,
-                maxLines: 4,
-                placeholder: 'Street\nCity\nPostcode\nCountry',
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

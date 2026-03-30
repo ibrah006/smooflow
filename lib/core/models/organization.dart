@@ -15,6 +15,7 @@ class Organization {
   // if the organization owns a custom domain
   final bool isDomainOwner;
   final String? privateDomain;
+  String? companyAddress;
 
   Organization({
     required this.id,

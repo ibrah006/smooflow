@@ -46,6 +46,7 @@ import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dar
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
+import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ enum _AdminView {
   inventory,
   reports,
   accounts,
+  settings,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -307,7 +309,9 @@ class _AdminDesktopDashboardScreenState
                                       ? DesktopMaterialsManagementScreen()
                                       : _view == _AdminView.reports
                                       ? DesktopReportsScreen()
-                                      : AccountsManagementScreen(),
+                                      : _view == _AdminView.accounts
+                                      ? AccountsManagementScreen()
+                                      : SettingsPage(),
                             ),
 
                             // ── Detail panel ──────────────────────────
@@ -651,6 +655,12 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   label: 'Manage Team',
                   isActive: widget.currentView == _AdminView.team,
                   onTap: () => widget.onViewChanged(_AdminView.team),
+                ),
+                _SidebarNavItem(
+                  icon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isActive: widget.currentView == _AdminView.settings,
+                  onTap: () => widget.onViewChanged(_AdminView.settings),
                 ),
               ],
             ),
