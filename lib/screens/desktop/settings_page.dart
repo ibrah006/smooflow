@@ -781,7 +781,7 @@ class _SettingsNav extends StatelessWidget {
             children: [
               _NavItem(
                 icon: Icons.receipt_long_outlined,
-                label: 'Quotations & Invoices',
+                label: 'Quotes & Invoices',
                 section: _Section.quotations,
                 active: active,
                 onTap: onSelect,
