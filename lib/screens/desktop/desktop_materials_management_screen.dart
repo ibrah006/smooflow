@@ -2162,7 +2162,8 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                           );
                         },
                       )
-                    else if (widget.txn.notes != null)
+                    else if (widget.txn.notes != null &&
+                        widget.txn.notes!.isNotEmpty)
                       Text(
                         fmtTransactionNote(widget.txn.notes!)!,
                         style: TextStyle(fontSize: 12, color: _T.slate500),
