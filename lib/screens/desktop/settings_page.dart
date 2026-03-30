@@ -175,6 +175,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         fileName: fileName,
       );
 
+      _logoBytes = bytes;
+
       // Update local organization data
       setState(() {
         _isUploading = false;
