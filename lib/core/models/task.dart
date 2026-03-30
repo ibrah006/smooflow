@@ -23,7 +23,9 @@ class Task {
   int? _runs;
   double? _productionQuantity;
   late final TaskPriority _priority;
-  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
+  @Deprecated(
+    "TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds",
+  )
   String? _stockTransactionBarcode;
   List<String> _stockTransactionIds;
 
@@ -48,6 +50,8 @@ class Task {
   DateTime? assigneeLastAdded;
 
   late final DateTime _createdAt;
+
+  final DateTime? date;
 
   String? _ref, _size;
   int? _quantity;
@@ -84,7 +88,8 @@ class Task {
     required String? size,
     required int? quantity,
     required BillingStatus billingStatus,
-    required List<String> stockTransactionIds
+    required List<String> stockTransactionIds,
+    required this.date,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -130,7 +135,8 @@ class Task {
     // required String stockTransactionBarcode,
     String? ref,
     String? size,
-    int? quantity
+    int? quantity,
+    DateTime? date,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -147,14 +153,16 @@ class Task {
        _quantity = quantity,
        _createdAt = DateTime.now(),
        _billingStatus = BillingStatus.pending,
-       _stockTransactionIds = [];
+       _stockTransactionIds = [],
+       this.date = date ?? DateTime.now();
 
   // To ensure toSet gives no duplicates
   @override
   bool operator ==(Object other) {
-      return identical(this, other) ||
+    return identical(this, other) ||
         other is Task && runtimeType == other.runtimeType && id == other.id;
   }
+
   @override
   int get hashCode {
     return id.hashCode;
@@ -170,7 +178,8 @@ class Task {
   String get description => _description;
   DateTime? get dueDate => _dueDate;
   TaskStatus get status => _status;
-  String get statusName => "${_status.name[0].toUpperCase()}${_status.name.substring(1)}";
+  String get statusName =>
+      "${_status.name[0].toUpperCase()}${_status.name.substring(1)}";
   // ids of assigned users
   List<String> get assignees => _assignees;
   String get projectId => _projectId;
@@ -184,14 +193,16 @@ class Task {
   DateTime? get actualProductionStartTime => _actualProductionStartTime;
   DateTime? get actualProductionEndTime => _actualProductionEndTime;
   int? get runs => _runs;
-  double? get productionQuantity=> _productionQuantity;
-  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
-  String? get stockTransactionBarcode=> _stockTransactionBarcode;
-  List<String> get stockTransactionIds=> _stockTransactionIds;
-  DateTime get createdAt=> _createdAt;
-  String? get ref=> _ref;
-  String? get size=> _size;
-  int? get quantity=> _quantity;
+  double? get productionQuantity => _productionQuantity;
+  @Deprecated(
+    "TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds",
+  )
+  String? get stockTransactionBarcode => _stockTransactionBarcode;
+  List<String> get stockTransactionIds => _stockTransactionIds;
+  DateTime get createdAt => _createdAt;
+  String? get ref => _ref;
+  String? get size => _size;
+  int? get quantity => _quantity;
 
   TaskPriority get priority => _priority;
 
@@ -202,9 +213,13 @@ class Task {
     assigneeLastAdded = DateTime.now();
   }
 
-  bool get isDeprecated=> printerId != null && status != TaskStatus.printing;
+  bool get isDeprecated => printerId != null && status != TaskStatus.printing;
 
-  bool get isInProgress => status == TaskStatus.designing || status == TaskStatus.printing || status == TaskStatus.finishing || status == TaskStatus.installing;
+  bool get isInProgress =>
+      status == TaskStatus.designing ||
+      status == TaskStatus.printing ||
+      status == TaskStatus.finishing ||
+      status == TaskStatus.installing;
 
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
@@ -237,7 +252,7 @@ class Task {
   set materialId(String? materialId) {
     _materialId = materialId;
   }
-  
+
   set actualProductionStartTime(DateTime? productionStartTime) {
     _productionStartTime = productionStartTime;
   }
@@ -250,7 +265,9 @@ class Task {
     _productionQuantity = productionQuantity;
   }
 
-  @Deprecated("TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds")
+  @Deprecated(
+    "TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds",
+  )
   set stockTransactionBarcode(String? stockTransactionBarcode) {
     _stockTransactionBarcode = stockTransactionBarcode;
   }
@@ -272,12 +289,15 @@ class Task {
   }
 
   factory Task.fromJson(Map<String, dynamic> json) {
-
-    final prodQuantity = json["stockTransaction"]?["quantity"]?? json["productionQuantity"];
+    final prodQuantity =
+        json["stockTransaction"]?["quantity"] ?? json["productionQuantity"];
     return Task(
       id: json['id'],
       name: json['name'],
-      progressLogIds: (json["progressLogs"] as List).map((log) => log["id"].toString()).toList(),
+      progressLogIds:
+          (json["progressLogs"] as List)
+              .map((log) => log["id"].toString())
+              .toList(),
       description: json['description'],
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       updatedAt:
@@ -312,24 +332,36 @@ class Task {
       productionDuration: json['productionDuration'],
       printerId: json["printerId"],
       materialId: json["materialId"],
-      productionStartTime: json["productionStartTime"] != null
-          ? DateTime.parse(json["productionStartTime"])
-          : null,
+      productionStartTime:
+          json["productionStartTime"] != null
+              ? DateTime.parse(json["productionStartTime"])
+              : null,
       runs: json["runs"] ?? 1,
-      productionQuantity: prodQuantity!=null? double.parse(prodQuantity) : null,
+      productionQuantity:
+          prodQuantity != null ? double.parse(prodQuantity) : null,
       priority: TaskPriority.values.elementAt(json["priority"] - 1),
       stockTransactionBarcode: json["stockTransaction"]?["barcode"],
-      actualProductionStartTime: json['actualProductionStartTime'] != null
+      actualProductionStartTime:
+          json['actualProductionStartTime'] != null
               ? DateTime.parse(json['actualProductionStartTime'])
               : null,
-      actualProductionEndTime: json['actualProductionEndTime'] != null
+      actualProductionEndTime:
+          json['actualProductionEndTime'] != null
               ? DateTime.parse(json['actualProductionEndTime'])
               : null,
       ref: json["ref"],
       size: json["size"],
       quantity: json["quantity"],
-      billingStatus: json["billingStatus"] == null? BillingStatus.pending : BillingStatus.values.byName(json["billingStatus"]),
-      stockTransactionIds: (json["stockTransactions"] as List?)?.map((e)=> e['id'] as String).toList()?? []
+      billingStatus:
+          json["billingStatus"] == null
+              ? BillingStatus.pending
+              : BillingStatus.values.byName(json["billingStatus"]),
+      stockTransactionIds:
+          (json["stockTransactions"] as List?)
+              ?.map((e) => e['id'] as String)
+              .toList() ??
+          [],
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
     );
   }
 
@@ -348,7 +380,8 @@ class Task {
       _size = original._size,
       _quantity = original._quantity,
       _billingStatus = original._billingStatus,
-      _stockTransactionIds = original._stockTransactionIds {
+      _stockTransactionIds = original._stockTransactionIds,
+      date = original.date {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -371,14 +404,19 @@ class Task {
   @Deprecated(
     "This constructor is deprecated and will be removed in future versions",
   )
-  Task.empty() : progressLogIds = [], workActivityLogs = [], _billingStatus = BillingStatus.pending, _stockTransactionIds = [];
+  Task.empty()
+    : progressLogIds = [],
+      workActivityLogs = [],
+      _billingStatus = BillingStatus.pending,
+      _stockTransactionIds = [],
+      date = null;
 
   /// Creates a copy of this Task with specified fields replaced.
   /// Returns a new Task instance with updated values while preserving unchanged ones.
-  /// 
+  ///
   /// This is the recommended way to create modified Task instances, especially useful
   /// for state management and immutable data patterns (e.g., with Riverpod).
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// final updatedTask = task.copyWith(
@@ -417,7 +455,7 @@ class Task {
     DateTime? updatedAt,
     DateTime? activityLogLastModified,
     DateTime? assigneeLastAdded,
-    List<int>? workActivityLogs
+    List<int>? workActivityLogs,
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -435,9 +473,12 @@ class Task {
       runs: runs ?? _runs ?? 1,
       productionQuantity: productionQuantity ?? _productionQuantity,
       priority: priority ?? _priority,
-      stockTransactionBarcode: stockTransactionBarcode ?? _stockTransactionBarcode,
-      actualProductionStartTime: actualProductionStartTime ?? _actualProductionStartTime,
-      actualProductionEndTime: actualProductionEndTime ?? _actualProductionEndTime,
+      stockTransactionBarcode:
+          stockTransactionBarcode ?? _stockTransactionBarcode,
+      actualProductionStartTime:
+          actualProductionStartTime ?? _actualProductionStartTime,
+      actualProductionEndTime:
+          actualProductionEndTime ?? _actualProductionEndTime,
       createdAt: _createdAt,
       ref: ref ?? _ref,
       size: size ?? _size,
@@ -447,18 +488,20 @@ class Task {
       progressLogIds: progressLogIds ?? this.progressLogIds,
       estimatedMaterials: [],
       usedMaterials: [],
-      workActivityLogs: workActivityLogs?? this.workActivityLogs,
+      workActivityLogs: workActivityLogs ?? this.workActivityLogs,
       updatedAt: updatedAt ?? this.updatedAt,
+      date: date ?? this.date,
     );
-    
+
     // Set color and icon via setters (not constructor parameters)
     newTask.color = color ?? _color;
     newTask.icon = icon ?? _icon;
-    
+
     // Preserve other timestamp fields
-    newTask.activityLogLastModified = activityLogLastModified ?? this.activityLogLastModified;
+    newTask.activityLogLastModified =
+        activityLogLastModified ?? this.activityLogLastModified;
     newTask.assigneeLastAdded = assigneeLastAdded ?? this.assigneeLastAdded;
-    
+
     return newTask;
   }
 
@@ -470,7 +513,7 @@ class Task {
     return {
       ...toJson(),
       // Inital stage of a Task locked to PRODUCTION
-      "progressStage": "design"
+      "progressStage": "design",
     };
   }
 
@@ -495,7 +538,8 @@ class Task {
       'ref': _ref,
       'size': _size,
       'quantity': _quantity,
-      "billingStatus": billingStatus.name
+      "billingStatus": billingStatus.name,
+      "date": date,
     };
     try {
       return {'id': id, ...json};
