@@ -185,6 +185,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ).showSnackBar(const SnackBar(content: Text('Profile image updated')));
     } catch (e) {
       setState(() => _isUploading = false);
+      print("error: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
