@@ -230,7 +230,7 @@ class BillingDocumentView extends StatelessWidget {
             ...List.generate(quotation.lineItems.length, (index) {
               final item = quotation.lineItems[index];
               return LineItem(
-                index: index,
+                index: index + 1,
                 description: item.description,
                 subTitle: item.subTitle,
                 quantity: item.qty,
