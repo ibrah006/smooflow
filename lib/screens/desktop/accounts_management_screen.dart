@@ -1138,9 +1138,7 @@ class _BillingEditViewState extends ConsumerState<BillingEditView> {
     setState(() => _items[index] = updated);
     widget.onChanged(List.from(_items));
 
-    ref
-        .watch(quotationNotifierProvider.notifier)
-        .updateLineItem(updated.id, updated);
+    ref.watch(quotationNotifierProvider.notifier).updateLineItem(updated);
   }
 
   void _addLine() {
