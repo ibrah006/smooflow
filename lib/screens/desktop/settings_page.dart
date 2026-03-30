@@ -46,6 +46,8 @@ class _T {
   static const slate500 = Color(0xFF64748B);
   static const slate600 = Color(0xFF475569);
   static const slate700 = Color(0xFF334155);
+  static const slate800 = Color(0xFF1E293B);
+  static const slate900 = Color(0xFF0F172A);
   static const ink = Color(0xFF0F172A);
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
@@ -94,7 +96,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   final User currentUser = LoginService.currentUser!;
 
-  bool _isUploading = true;
+  bool _isUploading = false;
 
   @override
   void initState() {
