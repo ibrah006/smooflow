@@ -107,9 +107,17 @@ class QuotationNotifier extends StateNotifier<List<Quotation>> {
       "updateLineItem": {...updatedLineItem.toJson(), "id": updatedLineItem.id},
     };
 
+    print("[quotation notifier] updated line item payload: ${payload}");
+
     final updatedQuotation = await _api.updateQuotationLineItem(
       updatedLineItem.id,
       payload,
+    );
+
+    print("[quotation notifier] updated line item payload (after): ${payload}");
+
+    print(
+      "[quotation notifier] updated quotation: ${updatedQuotation.toJson()}",
     );
 
     return updatedQuotation;

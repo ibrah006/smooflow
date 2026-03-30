@@ -1138,6 +1138,8 @@ class _BillingEditViewState extends ConsumerState<BillingEditView> {
     setState(() => _items[index] = updated);
     widget.onChanged(List.from(_items));
 
+    print("[accounts mng screen] updated line item: ${updated.toJson()}");
+
     await ref.watch(quotationNotifierProvider.notifier).updateLineItem(updated);
   }
 
