@@ -172,9 +172,9 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: date ?? now,
-      firstDate: now,
-      lastDate: DateTime(now.year + 5),
+      initialDate: now, // must be between firstDate and lastDate
+      firstDate: DateTime(1900), // oldest selectable date
+      lastDate: now, // today or earlier
     );
     if (picked == null) return;
     setState(() => date = picked);
@@ -223,6 +223,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
+        print("error caught: $e");
         AppToast.show(
           message: 'Failed to create task',
           subtitle: 'Please try again',

@@ -539,7 +539,7 @@ class Task {
       'size': _size,
       'quantity': _quantity,
       "billingStatus": billingStatus.name,
-      "date": date,
+      "date": date?.toIso8601String(),
     };
     try {
       return {'id': id, ...json};
