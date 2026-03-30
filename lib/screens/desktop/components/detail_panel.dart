@@ -201,8 +201,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   bool _isProgressing = false;
 
-  bool _isSavingPrintSpecs = false;
-
   // ── Billing state ─────────────────────────────────────────────────────────
   late BillingStatus _billingSelection;
   bool _billingEditMode = false;
@@ -233,118 +231,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     if (old.task.id != widget.task.id) {
       _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
       _billingEditMode = false;
-    }
-  }
-
-  // Edit print specifications
-  Future<void> _editPrintSpecs() async {
-    final TextEditingController refController = TextEditingController(
-      text: widget.task.ref ?? '',
-    );
-    final TextEditingController sizeController = TextEditingController(
-      text: widget.task.size ?? '',
-    );
-    final TextEditingController qtyController = TextEditingController(
-      text: widget.task.quantity?.toString() ?? '',
-    );
-
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.rLg),
-            ),
-            title: const Text('Edit Print Specifications'),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: refController,
-                    decoration: const InputDecoration(
-                      labelText: 'Reference',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) => null, // optional validation
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: sizeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Size (e.g., 1200×800 mm)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: qtyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantity',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return null;
-                      if (int.tryParse(v) == null) return 'Must be a number';
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.of(ctx).pop(true);
-                  }
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          ),
-    );
-
-    if (result != true) return;
-
-    final newRef =
-        refController.text.trim().isEmpty ? null : refController.text.trim();
-    final newSize =
-        sizeController.text.trim().isEmpty ? null : sizeController.text.trim();
-    final newQty =
-        qtyController.text.trim().isEmpty
-            ? null
-            : int.tryParse(qtyController.text.trim());
-
-    setState(() => _isSavingPrintSpecs = true);
-    try {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            ref: newRef,
-            size: newSize,
-            quantity: newQty,
-            billingStatus: null,
-          );
-      // Force rebuild to show updated values
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Print specifications updated')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSavingPrintSpecs = false);
     }
   }
 
@@ -826,8 +712,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           reference: widget.task.ref,
                           size: widget.task.size,
                           quantity: widget.task.quantity,
-                          isSaving: _isSavingPrintSpecs,
-                          onEdit: _editPrintSpecs,
                         ),
                         const SizedBox(height: 18),
                       ],
@@ -1555,15 +1439,11 @@ class _PrintSpecsCard extends StatelessWidget {
   final String? reference;
   final String? size;
   final int? quantity;
-  final VoidCallback? onEdit; // added
-  final bool isSaving; // added for loading state
 
   const _PrintSpecsCard({
     required this.reference,
     required this.size,
     required this.quantity,
-    this.onEdit,
-    this.isSaving = false,
   });
 
   Widget _sizeWidget(String size) {
@@ -1709,7 +1589,6 @@ class _PrintSpecsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
@@ -1746,16 +1625,6 @@ class _PrintSpecsCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (onEdit != null) ...[
-                  if (isSaving)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    _EditButton(onTap: onEdit!),
-                ],
               ],
             ),
           ),

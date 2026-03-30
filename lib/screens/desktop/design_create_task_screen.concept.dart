@@ -318,7 +318,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                                   showError: _submitted && !_priorityOk,
                                 ),
                                 const SizedBox(height: 16),
-                                _FieldLabel('Due Date', optional: true),
+                                _FieldLabel('Date', optional: true),
                                 const SizedBox(height: 7),
                                 _DateField(
                                   value: date,
