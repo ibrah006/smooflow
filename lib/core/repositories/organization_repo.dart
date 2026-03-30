@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:googleapis/admin/directory_v1.dart';
 import 'package:smooflow/core/api/api_client.dart';
@@ -125,31 +126,39 @@ class OrganizationRepo {
     return response.statusCode == 200;
   }
 
-  // Update organization profile image
   Future<Map<String, dynamic>> updateProfileImage({
     required String organizationId,
-    required File imageFile,
+    required Uint8List imageBytes,
+    required String fileName,
   }) async {
-    final dio = Dio();
-    dio.options.headers['Authorization'] =
-        (await LocalHttp.getHeaders())["Authorization"];
-
+    // Create FormData
     final formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(
-        imageFile.path,
-        filename: imageFile.path.split('/').last,
-      ),
+      'image': MultipartFile.fromBytes(imageBytes, filename: fileName),
     });
 
+    final Dio dio = Dio();
+
+    // Make the PUT request
     final response = await dio.put(
       '${ApiClient.http.baseUrl}/organizations/$organizationId/profile-image',
       data: formData,
+      options: Options(
+        headers: await LocalHttp.getHeaders(),
+        // Optional: increase timeout for file upload
+        sendTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
     );
 
+    // Handle response
     if (response.statusCode == 200) {
-      return response.data['organization'];
+      return response.data['organization'] as Map<String, dynamic>;
     } else {
-      throw Exception('Failed to update profile image');
+      throw DioError(
+        requestOptions: response.requestOptions,
+        response: response,
+        error: 'Failed to update profile image: ${response.statusCode}',
+      );
     }
   }
 }

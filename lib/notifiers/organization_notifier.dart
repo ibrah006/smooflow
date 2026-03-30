@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/organization.dart';
 import 'package:smooflow/core/repositories/organization_repo.dart';
@@ -84,5 +87,17 @@ class OrganizationNotifier extends StateNotifier<OrganizationState> {
 
   void reset() {
     state = OrganizationState();
+  }
+
+  Future<void> updateProfileImage({
+    required String organizationId,
+    required Uint8List imageBytes,
+    required String fileName,
+  }) async {
+    await repo.updateProfileImage(
+      organizationId: organizationId,
+      imageBytes: imageBytes,
+      fileName: fileName,
+    );
   }
 }

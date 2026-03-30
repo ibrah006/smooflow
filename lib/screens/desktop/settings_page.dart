@@ -157,10 +157,37 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
-    setState(() {
-      _logoBytes = result.files.first.bytes;
-      _logoFileName = result.files.first.name;
-    });
+
+    final bytes = result.files.first.bytes!;
+    final fileName = result.files.first.name;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final orgService = ref.read(organizationNotifierProvider.notifier);
+
+      final updatedOrg = await orgService.updateProfileImage(
+        organizationId: _organization.id,
+        imageBytes: bytes,
+        fileName: fileName,
+        token: token,
+      );
+
+      // Update local organization data
+      setState(() {
+        _organization = Organization.fromJson(updatedOrg);
+        _isUploading = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile image updated')));
+    } catch (e) {
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   @override
