@@ -44,50 +44,65 @@ The app focuses on **project management, team collaboration, and production moni
 
 ---
 
-## Screenshots
+## 🚀 Features & Functionality
 
-### Admin Views
-<table>
-  <tr>
-    <td><img src="assets/screenshots/admin_dashboard.png" width="250"/></td>
-    <td><img src="assets/screenshots/admin_dashboard_2.png" width="250"/></td>
-    <td><img src="assets/screenshots/admin_projects.png" width="250"/></td>
-    <td><img src="assets/screenshots/admin_teams.png" width="250"/></td>
-  </tr>
-</table>
+### 🗂️ Task Management (Table & Board Views)
+Effortlessly manage your workflow with flexible task visualization:
+- **Table View** for structured, data-rich management  
+- **Board View** for intuitive drag-and-drop progress tracking  
 
-### Reports
-<table>
-  <tr>
-    <td><img src="assets/screenshots/production_report_screen.gif" alt="Description" width="400"/></td>
-    <td><img src="assets/screenshots/project_report_screen.gif" alt="Description" width="400"/></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="screenshots/tasks_table.png" alt="Tasks Table View" width="90%" />
+</p>
 
-### Project
-<img src="assets/screenshots/project_details.png" alt="Description" width="250"/>
+<p align="center">
+  <img src="screenshots/tasks_board.png" alt="Tasks Board View" width="90%" />
+</p>
 
-### Schedule Print Job
-<img src="assets/screenshots/schedule_job_1.png" alt="Description" width="250"/>
-<img src="assets/screenshots/schedule_job_2.png" alt="Description" width="250"/>
-<img src="assets/screenshots/schedule_job_3.png" alt="Description" width="250"/>
-<img src="assets/screenshots/schedule_job_4.png" alt="Description" width="250"/>
+---
 
-### Print Job
-<img src="assets/screenshots/print_job_details.png" alt="Description" width="250"/>
+### 📦 Material & Stock Management
+Gain complete control over your inventory with deep tracking capabilities:
+- Manage **materials and their batches**
+- Track **material consumption across projects**
+- Drill down to **task-level usage**
 
-<!-- <img src="assets/screenshots/dashboard.png" alt="Description" width="250"/> -->
-### Material & Stock Management
-<img src="assets/screenshots/material_stock.png" alt="Description" width="250"/>
-<img src="assets/screenshots/material_transactions.png" alt="Description" width="250"/>
-<img src="assets/screenshots/stock_in_info.png" alt="Description" width="250"/>
-<!-- <img src="assets/screenshots/project_info.png" alt="Description" width="250"/>
-<img src="assets/screenshots/task_info.png" alt="Description" width="250"/>
-<img src="assets/screenshots/timline.png" alt="Description" width="250"/>
-<img src="assets/screenshots/timeline_stage_info.png" alt="Description" width="250"/> -->
+<p align="center">
+  <img src="screenshots/materials_overview.png" alt="Materials Overview" width="90%" />
+</p>
 
-### Login And Auth
-<img src="assets/screenshots/login.png" alt="Description" width="250"/>
+<p align="center">
+  <img src="screenshots/materials_consumption.png" alt="Material Consumption" width="90%" />
+</p>
+
+---
+
+### 💰 Accounts & Documents
+Handle financial and documentation workflows with ease:
+- Manage **Quotations and Documents**
+- Maintain and update **Price Lists**
+
+<p align="center">
+  <img src="screenshots/documents.png" alt="Documents - Quotations" width="90%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/price_lists.png" alt="Price Lists" width="90%" />
+</p>
+
+---
+
+### ⚡ Smart Quotation Generation
+Create detailed quotations in seconds — automatically.
+
+- Select a **project** and generate a complete quotation instantly  
+- Item descriptions are **auto-derived from task details**  
+- Rates are applied from **price lists**  
+- Fully customizable when needed  
+
+**No manual entry. No repetition. Just fast, accurate quotations.**
+
+
 
 ## Create Installers
 
