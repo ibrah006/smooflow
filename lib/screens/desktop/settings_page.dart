@@ -76,6 +76,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _orgLoading = true;
   String? _orgError;
 
+  int _imageVersion = 0;
+
   // ── Profile controllers ───────────────────────────────────────────────────
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
@@ -175,17 +177,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     // _logoBytes = bytes;
 
-    if (_org?.profileUrl != null)
-      await CachedNetworkImage.evictFromCache(_org!.profileUrl!);
+    await CachedNetworkImage.evictFromCache(
+      '${ref.read(organizationNotifierProvider).organization!.profileUrl}?v=$_imageVersion',
+    );
 
     // Update local organization data
     setState(() {
       _isUploading = false;
+      _imageVersion++;
     });
 
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Profile image updated')));
+
     // } catch (e) {
     //   setState(() => _isUploading = false);
     //   print("error: $e");
@@ -302,6 +307,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           onRetry: _loadOrg,
           isUploading: _isUploading,
           profileUrl: _org?.profileUrl,
+          imageVersion: _imageVersion,
           onRemoveLogo: () {
             AppToast.show(
               message: "To be implemented",
@@ -575,6 +581,7 @@ class _QuotationsSection extends ConsumerStatefulWidget {
   final VoidCallback onRetry;
   final bool isUploading;
   final String? profileUrl;
+  final int imageVersion;
 
   const _QuotationsSection({
     required this.companyNameCtrl,
@@ -585,6 +592,7 @@ class _QuotationsSection extends ConsumerStatefulWidget {
     required this.onRetry,
     required this.isUploading,
     // this.logoBytes,
+    required this.imageVersion,
     this.logoFileName,
     this.orgError,
     required this.profileUrl,
@@ -645,7 +653,8 @@ class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
                         child:
                             hasLogo
                                 ? CachedNetworkImage(
-                                  imageUrl: widget.profileUrl!,
+                                  imageUrl:
+                                      "${widget.profileUrl!}?v=${widget.imageVersion}",
                                   cacheKey: widget.profileUrl,
                                   fit: BoxFit.contain,
                                 )
