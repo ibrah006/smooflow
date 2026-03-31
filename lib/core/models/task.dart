@@ -339,7 +339,7 @@ class Task {
       runs: json["runs"] ?? 1,
       productionQuantity:
           prodQuantity != null ? double.parse(prodQuantity) : null,
-      priority: TaskPriority.values.elementAt(json["priority"]),
+      priority: TaskPriority.values.elementAt(json["priority"] - 1),
       stockTransactionBarcode: json["stockTransaction"]?["barcode"],
       actualProductionStartTime:
           json['actualProductionStartTime'] != null
