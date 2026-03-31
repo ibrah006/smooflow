@@ -29,6 +29,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -221,6 +222,8 @@ class _AdminDesktopDashboardScreenState
       await ref.read(memberNotifierProvider.notifier).members;
       if (mounted) setState(() => _isInitLoading = false);
     });
+
+    checkForUpdate(context);
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
