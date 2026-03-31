@@ -762,7 +762,7 @@ class _ErrorState extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: _T.red,
+              color: _T.red50,
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(Icons.error_outline, size: 24, color: _T.red),
