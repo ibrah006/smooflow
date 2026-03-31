@@ -40,8 +40,8 @@ Future<void> startUpdate({
     );
 
     // capture output (optional)
-    process.stdout.transform(utf8.decoder).listen(print);
-    process.stderr.transform(utf8.decoder).listen(print);
+    // process.stdout.transform(utf8.decoder).listen(print);
+    // process.stderr.transform(utf8.decoder).listen(print);
 
     print('Process started with PID: ${process.pid}');
     exit(0);
