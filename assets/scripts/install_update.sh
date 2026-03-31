@@ -1,7 +1,8 @@
 #!/bin/bas
 
 APP_NAME="smooflow.app"
-SRC="/Users/ibrahimmn/Desktop/Code/flutter/smooflow/dist/$1/$APP_NAME"
+UPDATE_DOWNLOADED_DIR=$2
+SRC="$UPDATE_DOWNLOADED_DIR/$APP_NAME"
 DST="/Applications/$APP_NAME"
 
 echo "New Version: $1"

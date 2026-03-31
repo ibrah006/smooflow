@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path_provider/path_provider.dart';
@@ -93,8 +96,8 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
 
     print("about to get temp directory");
 
-    final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/update.zip';
+    final tempDir = await getTemporaryDirectory();
+    final filePath = '${tempDir.path}/smooflow-macos-release-update.zip';
 
     print("about to start download");
 
@@ -109,11 +112,45 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       },
     );
 
+    final extractPath = '${tempDir.path}/update_extracted';
+
+    // Create folder if not exists
+    await Directory(extractPath).create(recursive: true);
+
     print('Download complete: $filePath');
+
+    // unzip update
+    await unzipFile(filePath, extractPath);
+
+    await startUpdate(updateDestinationDir: extractPath);
 
     setState(() {
       isDownloading = false;
     });
+  }
+
+  Future<void> unzipFile(String zipPath, String destinationPath) async {
+    try {
+      final process = await Process.start('/usr/bin/unzip', [
+        '-o', // overwrite existing files
+        zipPath,
+        '-d',
+        destinationPath,
+      ]);
+
+      process.stdout.transform(utf8.decoder).listen(print);
+      process.stderr.transform(utf8.decoder).listen(print);
+
+      final exitCode = await process.exitCode;
+
+      if (exitCode != 0) {
+        throw Exception('Unzip failed with code $exitCode');
+      }
+
+      print('Unzipped successfully to $destinationPath');
+    } catch (e) {
+      print('Unzip error: $e');
+    }
   }
 
   @override

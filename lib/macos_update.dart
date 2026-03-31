@@ -9,7 +9,7 @@ import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
 
-Future<void> _startUpdate() async {
+Future<void> startUpdate({required String updateDestinationDir}) async {
   // 1. Load script from assets
   final scriptContent = await rootBundle.loadString(
     'assets/scripts/install_update.sh',
@@ -27,7 +27,11 @@ Future<void> _startUpdate() async {
   try {
     final process = await Process.start(
       'bash',
-      [scriptFile.path, '1.0.3'],
+      [
+        scriptFile.path, '1.0.3',
+        // Update downloaded directory path
+        updateDestinationDir,
+      ],
       mode: ProcessStartMode.detachedWithStdio, // safer for macOS GUI apps
       environment: {'PATH': '/usr/bin:/bin:/usr/sbin:/sbin'},
     );
