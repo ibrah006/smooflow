@@ -469,52 +469,45 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       )
                       : tasks.isEmpty
                       ? _EmptyState()
-                      : RefreshIndicator(
-                        onRefresh: () async {
-                          await ref
-                              .read(taskNotifierProvider.notifier)
-                              .refreshTasks();
-                        },
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: _kRowHPad,
-                            vertical: 8,
-                          ),
-                          itemCount: reversedTasks.length,
-                          separatorBuilder:
-                              (_, __) => const Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: _T.slate100,
-                              ),
-                          itemBuilder: (_, i) {
-                            final t = reversedTasks[i];
-                            final p =
-                                widget.projects.cast<Project?>().firstWhere(
-                                  (pr) => pr!.id == t.projectId.toString(),
-                                  orElse: () => null,
-                                ) ??
-                                widget.projects.firstOrNull;
-
-                            Member? m;
-                            try {
-                              m = members.firstWhere(
-                                (mem) => t.assignees.contains(mem.id),
-                              );
-                            } catch (_) {
-                              m = null;
-                            }
-
-                            return _TaskRow(
-                              task: t,
-                              project: p,
-                              assignee: m,
-                              effectiveVisible: effective,
-                              isSelected: widget.selectedTaskId == t.id,
-                              onTap: () => widget.onTaskSelected(t.id),
-                            );
-                          },
+                      : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: _kRowHPad,
+                          vertical: 8,
                         ),
+                        itemCount: reversedTasks.length,
+                        separatorBuilder:
+                            (_, __) => const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: _T.slate100,
+                            ),
+                        itemBuilder: (_, i) {
+                          final t = reversedTasks[i];
+                          final p =
+                              widget.projects.cast<Project?>().firstWhere(
+                                (pr) => pr!.id == t.projectId.toString(),
+                                orElse: () => null,
+                              ) ??
+                              widget.projects.firstOrNull;
+
+                          Member? m;
+                          try {
+                            m = members.firstWhere(
+                              (mem) => t.assignees.contains(mem.id),
+                            );
+                          } catch (_) {
+                            m = null;
+                          }
+
+                          return _TaskRow(
+                            task: t,
+                            project: p,
+                            assignee: m,
+                            effectiveVisible: effective,
+                            isSelected: widget.selectedTaskId == t.id,
+                            onTap: () => widget.onTaskSelected(t.id),
+                          );
+                        },
                       ),
             ),
           ],
