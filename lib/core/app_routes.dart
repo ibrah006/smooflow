@@ -203,7 +203,7 @@ class AppRoutes {
           } else if (role == 'production' || role == 'production-head') {
             routeName = AppRoutes.desktopMaterials;
           } else if (role == "design") {
-            routeName = AppRoutes.designDashboard;
+            routeName = AppRoutes.adminDesktopDashboardScreen;
           } else {
             routeName = AppRoutes.viewerHomeDesktop;
           }
