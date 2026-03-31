@@ -100,7 +100,7 @@ const _kPriorities = [
   ),
 ];
 
-_PriMeta _priMeta(TaskPriority p) =>
+_PriMeta priMeta(TaskPriority p) =>
     _kPriorities.firstWhere((m) => m.value == p);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1520,7 +1520,7 @@ class _PriorityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final m = _priMeta(priority);
+    final m = priMeta(priority);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

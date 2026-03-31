@@ -151,18 +151,18 @@ class TaskRepo {
   }
 
   Future<List<Task>> getProductionScheduleToday() async {
-
-    final response = await ApiClient.http.get(
-      '/tasks/production/today',
-    );
+    final response = await ApiClient.http.get('/tasks/production/today');
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to fetch production schedule for today: ${response.body}');
+      throw Exception(
+        'Failed to fetch production schedule for today: ${response.body}',
+      );
     }
 
-    final todayTasks = ((jsonDecode(response.body) as Map)["tasks"] as List).map((task) {
-      return Task.fromJson(task);
-    }).toList();
+    final todayTasks =
+        ((jsonDecode(response.body) as Map)["tasks"] as List).map((task) {
+          return Task.fromJson(task);
+        }).toList();
 
     return todayTasks;
   }
@@ -170,13 +170,13 @@ class TaskRepo {
   Future<void> assignPrinter(int taskId, String printerId) async {
     final response = await ApiClient.http.put(
       '/tasks/$taskId/assign-printer',
-      body: {
-        "printerId": printerId
-      }
+      body: {"printerId": printerId},
     );
 
     if (response.statusCode != 200) {
-      debugPrint("Error when assigning printer to task, statusCode: ${response.statusCode}");
+      debugPrint(
+        "Error when assigning printer to task, statusCode: ${response.statusCode}",
+      );
       // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
       throw jsonDecode(response.body)["message"];
     }
@@ -184,16 +184,26 @@ class TaskRepo {
     // Successfully assigned priner to task and started print job
   }
 
+  Future<void> delete(int taskId) async {
+    final response = await ApiClient.http.delete('/projects/tasks/$taskId/');
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete task');
+    }
+
+    // Successfully deleted task
+  }
+
   Future<void> unassignPrinter(int taskId, TaskStatus status) async {
     final response = await ApiClient.http.put(
       '/tasks/$taskId/unassign-printer',
-      body: {
-        "status": status.name
-      }
+      body: {"status": status.name},
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to unassign printer to print job\nstatus code: ${response.statusCode}\nbody: ${response.body}');
+      throw Exception(
+        'Failed to unassign printer to print job\nstatus code: ${response.statusCode}\nbody: ${response.body}',
+      );
     }
 
     // Successfully unasssigned priner to task and ended print job
@@ -202,9 +212,7 @@ class TaskRepo {
   Future<void> progressStage(int taskId, TaskStatus newStatus) async {
     final response = await ApiClient.http.put(
       '/tasks/$taskId/progress-stage',
-      body: {
-        "newStatus": newStatus.name
-      }
+      body: {"newStatus": newStatus.name},
     );
 
     if (response.statusCode != 200) {
@@ -222,7 +230,7 @@ class TaskRepo {
     required String progressStage,
     required int runs,
     required int productionQuantity,
-    required String barcode
+    required String barcode,
   }) async {
     final response = await ApiClient.http.post(
       '/tasks/$taskId/schedule-job',
@@ -233,27 +241,38 @@ class TaskRepo {
         "runs": runs,
         "productionQuantity": productionQuantity,
         "barcode": barcode,
-      }
+      },
     );
 
     if (response.statusCode != 200) {
-      debugPrint("Error when assigning printer to task, endpoint: schedule-print, statusCode: ${response.statusCode}\nbody: ${response.body}");
+      debugPrint(
+        "Error when assigning printer to task, endpoint: schedule-print, statusCode: ${response.statusCode}\nbody: ${response.body}",
+      );
       // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
       throw jsonDecode(response.body)["message"];
     }
 
-    final Map<String, dynamic>? rawStockOutTransaction = (jsonDecode(response.body) as Map)["stockOutTransaction"];
+    final Map<String, dynamic>? rawStockOutTransaction =
+        (jsonDecode(response.body) as Map)["stockOutTransaction"];
 
-    return rawStockOutTransaction!=null?
-      StockTransaction.fromJson(rawStockOutTransaction)
-      : null;
+    return rawStockOutTransaction != null
+        ? StockTransaction.fromJson(rawStockOutTransaction)
+        : null;
 
     // Successfully scheduled print job
   }
 
-  Future<void> update({required Task task, required BillingStatus? billingStatus, required String? ref, required int? quantity, required String? size}) async {
-
-    if (billingStatus == task.billingStatus && ref == task.ref && quantity == task.quantity && size == task.size) {
+  Future<void> update({
+    required Task task,
+    required BillingStatus? billingStatus,
+    required String? ref,
+    required int? quantity,
+    required String? size,
+  }) async {
+    if (billingStatus == task.billingStatus &&
+        ref == task.ref &&
+        quantity == task.quantity &&
+        size == task.size) {
       // Abort update
       // Nothing to update
       return;
@@ -266,7 +285,7 @@ class TaskRepo {
         "ref": ref,
         "quantity": quantity,
         "size": size,
-      }
+      },
     );
 
     if (response.statusCode != 200) {

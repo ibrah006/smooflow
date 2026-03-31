@@ -608,6 +608,21 @@ class TaskNotifier extends StateNotifier<TaskState> {
     }
   }
 
+  Future<void> delete(int id) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repo.delete(id);
+
+      state.tasks.removeWhere((task) => task.id == id);
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to delete task: $e',
+        isLoading: false,
+      );
+    }
+  }
+
   /// Refresh tasks
   Future<void> refreshTasks() async {
     state = state.copyWith(isLoading: true);

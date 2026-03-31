@@ -18,6 +18,7 @@ import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
@@ -420,6 +421,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     );
   }
 
+  // ── Delete Task ──────────────────────────────────────────────────────
+
+  Future<void> _onDeleteTask() async {
+    // Delete handled
+    // Close detail panel
+    widget.onClose();
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -517,6 +526,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
                     ),
                     const Spacer(),
+                    DeleteButton(task: widget.task, onDelete: _onDeleteTask),
                   ],
                 ),
               ),
