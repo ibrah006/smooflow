@@ -18,6 +18,8 @@ void main(List<String> args) async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
 
+  startUpdate();
+
   if (!Platform.isAndroid && !Platform.isIOS) {
     await windowManager.ensureInitialized();
 

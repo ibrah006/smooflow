@@ -147,6 +147,9 @@ flutter:
     
     # Fonts
     - assets/fonts/Roboto-Regular.ttf
+
+    # Macos install script
+    - assets/scripts/install_update.sh
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

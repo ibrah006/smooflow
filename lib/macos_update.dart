@@ -1,20 +1,33 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:macos_ui/macos_ui.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
 
 Future<void> startUpdate() async {
-  final scriptPath =
-      '';
+  // 1. Load script from assets
+  final scriptContent = await rootBundle.loadString(
+    'assets/scripts/install_update.sh',
+  );
+
+  // 2. Write to temp file
+  final tempDir = await getTemporaryDirectory();
+  final scriptFile = File('${tempDir.path}/install_update.sh');
+
+  await scriptFile.writeAsString(scriptContent);
+
+  // 3. Make executable (macOS/Linux)
+  await Process.run('chmod', ['+x', scriptFile.path]);
 
   try {
     final process = await Process.start(
       'bash',
-      [scriptPath, '1.0.2'],
+      [scriptFile.path, '1.0.3'],
       mode: ProcessStartMode.detachedWithStdio, // safer for macOS GUI apps
       environment: {'PATH': '/usr/bin:/bin:/usr/sbin:/sbin'},
     );
