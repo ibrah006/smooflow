@@ -419,8 +419,9 @@ class _DownloadUpdateDialogContentState
         ),
         primaryButton: PushButton(
           controlSize: ControlSize.large,
-          child: Text('Cancel'),
-          secondary: true,
+          child: Text(downloadComplete ? 'Relaunch app' : 'Cancel'),
+          // Secondary button if download is not complete 'Cancel'
+          secondary: !downloadComplete,
           onPressed:
               downloadComplete
                   ? () async {
