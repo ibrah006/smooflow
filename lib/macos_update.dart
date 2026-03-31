@@ -85,7 +85,8 @@ Future<void> checkForUpdate(BuildContext context) async {
     print("current version: ${currentVersion}");
 
     // 5. Compare versions
-    if (_isNewerVersion(currentVersion, shortVersion)) {
+    // _isNewerVersion(currentVersion, shortVersion)
+    if (true) {
       print('Update available! Download at $url');
 
       showMacosSheet(

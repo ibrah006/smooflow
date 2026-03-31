@@ -73,6 +73,10 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       ),
     );
 
+    Future.delayed(Duration(seconds: 3)).then((value) async {
+      await startDownload();
+    });
+
     _animationController.forward();
   }
 
@@ -80,10 +84,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   void dispose() {
     _animationController.dispose();
     super.dispose();
-
-    Future.delayed(Duration(seconds: 3)).then((value) {
-      startDownload();
-    });
   }
 
   Future<void> startDownload() async {
@@ -91,15 +91,21 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       isDownloading = true;
     });
 
+    print("about to get temp directory");
+
     final dir = await getTemporaryDirectory();
     final filePath = '${dir.path}/update.zip';
+
+    print("about to start download");
 
     await downloadFile(
       url: widget.url,
       savePath: filePath,
       onProgress: (progress) {
         print('Progress: ${(progress * 100).toStringAsFixed(0)}%');
-        downloadProgress = progress;
+        setState(() {
+          downloadProgress = progress;
+        });
       },
     );
 
@@ -161,7 +167,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                           ),
                           if (isDownloading) ...[
                             ProgressBar(
-                              value: downloadProgress, // 0.0 → 1.0
+                              value: downloadProgress * 100, // 0.0 → 1.0
                             ),
                             Text(
                               '${(downloadProgress * 100).toStringAsFixed(0)}%',
