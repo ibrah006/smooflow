@@ -46,9 +46,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  double downloadProgress = 0.0;
-  bool isDownloading = false;
-
   @override
   void initState() {
     super.initState();
@@ -74,10 +71,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       ),
     );
 
-    // Future.delayed(Duration(seconds: 3)).then((value) async {
-    //   await startDownload();
-    // });
-
     _animationController.forward();
   }
 
@@ -85,69 +78,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-
-  Future<void> startDownload() async {
-    setState(() {
-      isDownloading = true;
-    });
-
-    print("about to get temp directory");
-
-    final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/smooflow-macos-release-update.zip';
-
-    print("about to start download");
-
-    await downloadFile(
-      url: widget.url,
-      savePath: filePath,
-      onProgress: (progress) {
-        setState(() {
-          downloadProgress = progress;
-        });
-      },
-    );
-
-    final extractPath = '${tempDir.path}/update_extracted';
-
-    // Create folder if not exists
-    await Directory(extractPath).create(recursive: true);
-
-    print('Download complete: $filePath');
-
-    // unzip update
-    await unzipFile(filePath, extractPath);
-
-    await startUpdate(updateDestinationDir: extractPath);
-
-    setState(() {
-      isDownloading = false;
-    });
-  }
-
-  Future<void> unzipFile(String zipPath, String destinationPath) async {
-    try {
-      final process = await Process.start('/usr/bin/unzip', [
-        '-o', // overwrite existing files
-        zipPath,
-        '-d',
-        destinationPath,
-      ]);
-
-      process.stdout.transform(utf8.decoder).listen(print);
-      process.stderr.transform(utf8.decoder).listen(print);
-
-      final exitCode = await process.exitCode;
-
-      if (exitCode != 0) {
-        throw Exception('Unzip failed with code $exitCode');
-      }
-
-      print('Unzipped successfully to $destinationPath');
-    } catch (e) {
-      print('Unzip error: $e');
-    }
   }
 
   @override
@@ -199,15 +129,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                               ),
                             ),
                           ),
-                          if (isDownloading) ...[
-                            ProgressBar(
-                              value: downloadProgress * 100, // 0.0 → 1.0
-                            ),
-                            Text(
-                              '${(downloadProgress * 100).toStringAsFixed(0)}%',
-                              style: MacosTheme.of(context).typography.caption1,
-                            ),
-                          ],
                           // Version info subtitle
                           FadeTransition(
                             opacity: _fadeAnimation,
@@ -357,27 +278,122 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   showDownloadDialog() {
     showMacosAlertDialog(
       context: context,
-      builder:
-          (_) => MacosTheme(
-            data: MacosThemeData.light(),
-            child: MacosAlertDialog(
-              appIcon: FlutterLogo(size: 64),
-              title: Text(
-                'Alert Dialog with Primary Action',
-                style: MacosTheme.of(context).typography.headline,
-              ),
-              message: Text(
-                'This is an alert dialog with a primary action and no secondary action',
-                textAlign: TextAlign.center,
-                style: MacosTypography.of(context).headline,
-              ),
-              primaryButton: PushButton(
-                controlSize: ControlSize.large,
-                child: Text('Primary'),
-                onPressed: () {},
-              ),
+      builder: (_) {
+        return _DownloadUpdateDialogContent(url: widget.url);
+      },
+    );
+  }
+}
+
+class _DownloadUpdateDialogContent extends StatefulWidget {
+  final String url;
+  const _DownloadUpdateDialogContent({super.key, required this.url});
+
+  @override
+  State<_DownloadUpdateDialogContent> createState() =>
+      _DownloadUpdateDialogContentState();
+}
+
+class _DownloadUpdateDialogContentState
+    extends State<_DownloadUpdateDialogContent> {
+  double downloadProgress = 0.0;
+
+  Future<void> unzipFile(String zipPath, String destinationPath) async {
+    try {
+      final process = await Process.start('/usr/bin/unzip', [
+        '-o', // overwrite existing files
+        zipPath,
+        '-d',
+        destinationPath,
+      ]);
+
+      process.stdout.transform(utf8.decoder).listen(print);
+      process.stderr.transform(utf8.decoder).listen(print);
+
+      final exitCode = await process.exitCode;
+
+      if (exitCode != 0) {
+        throw Exception('Unzip failed with code $exitCode');
+      }
+
+      print('Unzipped successfully to $destinationPath');
+    } catch (e) {
+      print('Unzip error: $e');
+    }
+  }
+
+  Future<void> startDownload() async {
+    print("about to get temp directory");
+
+    final tempDir = await getTemporaryDirectory();
+    final filePath = '${tempDir.path}/smooflow-macos-release-update.zip';
+
+    print("about to start download");
+
+    await downloadFile(
+      url: widget.url,
+      savePath: filePath,
+      onProgress: (progress) {
+        setState(() {
+          downloadProgress = progress;
+        });
+      },
+    );
+
+    final extractPath = '${tempDir.path}/update_extracted';
+
+    // Create folder if not exists
+    await Directory(extractPath).create(recursive: true);
+
+    print('Download complete: $filePath');
+
+    // unzip update
+    await unzipFile(filePath, extractPath);
+
+    await startUpdate(updateDestinationDir: extractPath);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(Duration(seconds: 1)).then((value) async {
+      await startDownload();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MacosTheme(
+      data: MacosThemeData.light(),
+      child: MacosAlertDialog(
+        appIcon: Logo(size: 40),
+        title: Text(
+          'Downloading Update',
+          style: MacosTheme.of(context).typography.headline,
+        ),
+        message: Column(
+          children: [
+            Text(
+              'Please do not exit the app while the update is being downloaded.',
+              textAlign: TextAlign.center,
+              style: MacosTypography.of(context).headline,
             ),
-          ),
+            ProgressBar(
+              value: downloadProgress * 100, // 0.0 → 1.0
+            ),
+            Text(
+              '${(downloadProgress * 100).toStringAsFixed(0)}%',
+              style: MacosTheme.of(context).typography.caption1,
+            ),
+          ],
+        ),
+        primaryButton: PushButton(
+          controlSize: ControlSize.large,
+          child: Text('Primary'),
+          onPressed: () {},
+        ),
+      ),
     );
   }
 }
