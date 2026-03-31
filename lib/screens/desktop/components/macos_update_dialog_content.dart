@@ -6,6 +6,7 @@ import 'package:macos_ui/macos_ui.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/macos_update.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 class ReleaseNote {
   final IconData icon;
@@ -275,13 +276,23 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
     );
   }
 
-  showDownloadDialog() {
-    showMacosAlertDialog(
-      context: context,
-      builder: (_) {
-        return _DownloadUpdateDialogContent(url: widget.url);
-      },
-    );
+  void showDownloadDialog() async {
+    final errorMessage =
+        (await showMacosAlertDialog(
+              context: context,
+              builder: (_) {
+                return _DownloadUpdateDialogContent(url: widget.url);
+              },
+            ))
+            as String?;
+
+    if (errorMessage != null) {
+      AppToast.show(
+        message: errorMessage,
+        icon: Icons.info_outline,
+        color: Colors.amber,
+      );
+    }
   }
 }
 
@@ -299,6 +310,8 @@ class _DownloadUpdateDialogContentState
   double downloadProgress = 0.0;
 
   bool downloadComplete = false;
+
+  String? extractedDirectoryPath;
 
   Future<void> unzipFile(String zipPath, String destinationPath) async {
     try {
@@ -354,15 +367,12 @@ class _DownloadUpdateDialogContentState
 
     setState(() {
       downloadComplete = true;
+      extractedDirectoryPath = extractPath;
     });
   }
 
-  // void startUpdate() async {
-  //   await startUpdate(updateDestinationDir: extractPath);
-  // }
-
   void onCancel() async {
-    Navigator.of(context).pop();
+    Navigator.of(context).pop("Update cancelled by user");
   }
 
   @override
@@ -411,7 +421,20 @@ class _DownloadUpdateDialogContentState
           controlSize: ControlSize.large,
           child: Text('Cancel'),
           secondary: true,
-          onPressed: onCancel,
+          onPressed:
+              downloadComplete
+                  ? () async {
+                    try {
+                      await startUpdate(
+                        updateDestinationDir: extractedDirectoryPath!,
+                      );
+                    } catch (e) {
+                      Navigator.of(
+                        context,
+                      ).pop("Error installing update, error code: 1003");
+                    }
+                  }
+                  : onCancel,
         ),
       ),
     );
