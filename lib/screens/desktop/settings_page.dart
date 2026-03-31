@@ -613,7 +613,7 @@ class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
       subtitle: 'Company details printed on every document you issue.',
       icon: Icons.receipt_long_outlined,
       // Save button only once org data is available to save
-      action: widget.orgLoading ? null : _SaveButton(onTap: () {}),
+      // action: widget.orgLoading ? null : _SaveButton(onTap: () {}),
       children: [
         _SettingsGroup(
           label: 'Company Branding',
