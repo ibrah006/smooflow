@@ -99,7 +99,6 @@ Future<void> checkForUpdate(BuildContext context) async {
             (_) => UpdateVersionDialogContent(
               currentVersion: currentVersion,
               newVersion: shortVersion,
-              onDownloadUpdate: () {},
               url: url,
               onDismiss: () {
                 Navigator.of(context).pop();

@@ -23,7 +23,6 @@ class UpdateVersionDialogContent extends StatefulWidget {
   final String currentVersion;
   final String newVersion;
   final List<ReleaseNote> releaseNotes;
-  final VoidCallback onDownloadUpdate;
   final VoidCallback onDismiss;
   final String url;
 
@@ -32,7 +31,6 @@ class UpdateVersionDialogContent extends StatefulWidget {
     this.currentVersion = '1.0.0',
     this.newVersion = '1.1.0',
     this.releaseNotes = const [],
-    required this.onDownloadUpdate,
     required this.onDismiss,
     required this.url,
   }) : super(key: key);
@@ -76,9 +74,9 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       ),
     );
 
-    Future.delayed(Duration(seconds: 3)).then((value) async {
-      await startDownload();
-    });
+    // Future.delayed(Duration(seconds: 3)).then((value) async {
+    //   await startDownload();
+    // });
 
     _animationController.forward();
   }
@@ -289,7 +287,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                           // Download Update Button
                           Expanded(
                             child: PushButton(
-                              onPressed: widget.onDownloadUpdate,
+                              onPressed: showDownloadDialog,
                               controlSize: ControlSize.large,
                               child: Text(
                                 'Download Update',
@@ -353,6 +351,33 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
           ),
         ),
       ],
+    );
+  }
+
+  showDownloadDialog() {
+    showMacosAlertDialog(
+      context: context,
+      builder:
+          (_) => MacosTheme(
+            data: MacosThemeData.light(),
+            child: MacosAlertDialog(
+              appIcon: FlutterLogo(size: 64),
+              title: Text(
+                'Alert Dialog with Primary Action',
+                style: MacosTheme.of(context).typography.headline,
+              ),
+              message: Text(
+                'This is an alert dialog with a primary action and no secondary action',
+                textAlign: TextAlign.center,
+                style: MacosTypography.of(context).headline,
+              ),
+              primaryButton: PushButton(
+                controlSize: ControlSize.large,
+                child: Text('Primary'),
+                onPressed: () {},
+              ),
+            ),
+          ),
     );
   }
 }
