@@ -400,14 +400,16 @@ class _DownloadUpdateDialogContentState
       child: MacosAlertDialog(
         appIcon: Logo(size: 40),
         title: Text(
-          'Downloading Update',
+          downloadComplete ? 'Update Complete' : 'Downloading Update',
           style: MacosTheme.of(context).typography.headline,
         ),
         message: Column(
           spacing: 15,
           children: [
             Text(
-              'Please do not exit the app while the update is being downloaded.',
+              downloadComplete
+                  ? 'Please click relaunch to apply new update and launch Smooflow.'
+                  : 'Please do not exit the app while the update is being downloaded.',
               textAlign: TextAlign.center,
               style: MacosTypography.of(
                 context,
