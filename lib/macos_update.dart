@@ -71,7 +71,7 @@ Future<void> checkForUpdate(BuildContext context) async {
     print("current version: ${currentVersion}");
 
     // 5. Compare versions
-    if (currentVersion != shortVersion) {
+    if (isNewerVersion(currentVersion, shortVersion)) {
       print('Update available! Download at $url');
 
       showMacosSheet(
@@ -85,7 +85,22 @@ Future<void> checkForUpdate(BuildContext context) async {
                 Navigator.of(context).pop();
               },
               releaseNotes: [
-                ReleaseNote(icon: icon, title: title, description: description),
+                ReleaseNote(
+                  icon: Icons.bug_report_outlined,
+                  title: "Minor bug fixes",
+                  description:
+                      "Fixed label 'Due date' -> 'Date' in task details.",
+                ),
+                ReleaseNote(
+                  icon: Icons.list_outlined,
+                  title: "Update Task Print Specs",
+                  description: "You can now update task print specifications.",
+                ),
+                ReleaseNote(
+                  icon: Icons.delete_sweep_outlined,
+                  title: "Delete Task",
+                  description: "Tasks can be deleted when needed to be.",
+                ),
               ],
             ),
       );
@@ -95,4 +110,20 @@ Future<void> checkForUpdate(BuildContext context) async {
   } catch (e) {
     print('Error checking update: $e');
   }
+}
+
+bool isNewerVersion(String currentVersion, String latestVersion) {
+  final currentParts = currentVersion.split('.').map(int.parse).toList();
+  final latestParts = latestVersion.split('.').map(int.parse).toList();
+
+  // Ensure both have 3 parts (x.x.x)
+  while (currentParts.length < 3) currentParts.add(0);
+  while (latestParts.length < 3) latestParts.add(0);
+
+  for (int i = 0; i < 3; i++) {
+    if (latestParts[i] > currentParts[i]) return true;
+    if (latestParts[i] < currentParts[i]) return false;
+  }
+
+  return false; // equal
 }
