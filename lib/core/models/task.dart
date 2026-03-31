@@ -361,7 +361,7 @@ class Task {
               ?.map((e) => e['id'] as String)
               .toList() ??
           [],
-      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      date: json['created'] != null ? DateTime.parse(json['created']) : null,
     );
   }
 
@@ -539,7 +539,7 @@ class Task {
       'size': _size,
       'quantity': _quantity,
       "billingStatus": billingStatus.name,
-      "date": date?.toIso8601String(),
+      "created": date?.toIso8601String(),
     };
     try {
       return {'id': id, ...json};
