@@ -298,6 +298,8 @@ class _DownloadUpdateDialogContentState
     extends State<_DownloadUpdateDialogContent> {
   double downloadProgress = 0.0;
 
+  bool downloadComplete = false;
+
   Future<void> unzipFile(String zipPath, String destinationPath) async {
     try {
       final process = await Process.start('/usr/bin/unzip', [
@@ -350,7 +352,17 @@ class _DownloadUpdateDialogContentState
     // unzip update
     await unzipFile(filePath, extractPath);
 
-    await startUpdate(updateDestinationDir: extractPath);
+    setState(() {
+      downloadComplete = true;
+    });
+  }
+
+  // void startUpdate() async {
+  //   await startUpdate(updateDestinationDir: extractPath);
+  // }
+
+  void onCancel() async {
+    Navigator.of(context).pop();
   }
 
   @override
@@ -358,7 +370,7 @@ class _DownloadUpdateDialogContentState
     super.initState();
 
     Future.delayed(Duration(seconds: 1)).then((value) async {
-      await startDownload();
+      // await startDownload();
     });
   }
 
@@ -373,25 +385,33 @@ class _DownloadUpdateDialogContentState
           style: MacosTheme.of(context).typography.headline,
         ),
         message: Column(
+          spacing: 15,
           children: [
             Text(
               'Please do not exit the app while the update is being downloaded.',
               textAlign: TextAlign.center,
-              style: MacosTypography.of(context).headline,
+              style: MacosTypography.of(
+                context,
+              ).body.copyWith(fontWeight: FontWeight.w500),
             ),
-            ProgressBar(
-              value: downloadProgress * 100, // 0.0 → 1.0
+            SizedBox(
+              width: double.infinity,
+              child: ProgressBar(
+                height: 7,
+                value: downloadProgress * 100, // 0.0 → 1.0
+              ),
             ),
             Text(
               '${(downloadProgress * 100).toStringAsFixed(0)}%',
-              style: MacosTheme.of(context).typography.caption1,
+              style: MacosTheme.of(context).typography.body,
             ),
           ],
         ),
         primaryButton: PushButton(
           controlSize: ControlSize.large,
-          child: Text('Primary'),
-          onPressed: () {},
+          child: Text('Cancel'),
+          secondary: true,
+          onPressed: onCancel,
         ),
       ),
     );
