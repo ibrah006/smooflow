@@ -375,6 +375,15 @@ class _DownloadUpdateDialogContentState
     Navigator.of(context).pop("Update cancelled by user");
   }
 
+  // replaces with latest downloaded update
+  void onRelaunch() async {
+    try {
+      await startUpdate(updateDestinationDir: extractedDirectoryPath!);
+    } catch (e) {
+      Navigator.of(context).pop("Error installing update, error code: 1003");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -422,20 +431,7 @@ class _DownloadUpdateDialogContentState
           child: Text(downloadComplete ? 'Relaunch app' : 'Cancel'),
           // Secondary button if download is not complete 'Cancel'
           secondary: !downloadComplete,
-          onPressed:
-              downloadComplete
-                  ? () async {
-                    try {
-                      await startUpdate(
-                        updateDestinationDir: extractedDirectoryPath!,
-                      );
-                    } catch (e) {
-                      Navigator.of(
-                        context,
-                      ).pop("Error installing update, error code: 1003");
-                    }
-                  }
-                  : onCancel,
+          onPressed: downloadComplete ? onRelaunch : onCancel,
         ),
       ),
     );
