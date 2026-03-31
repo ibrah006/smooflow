@@ -105,7 +105,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
       url: widget.url,
       savePath: filePath,
       onProgress: (progress) {
-        print('Progress: ${(progress * 100).toStringAsFixed(0)}%');
         setState(() {
           downloadProgress = progress;
         });
