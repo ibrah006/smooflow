@@ -141,3 +141,5 @@ dsa_priv.pem
 dsa_pub.pem
 
 install_update.log
+
+lib/macos_update.dart

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:macos_ui/macos_ui.dart';
+import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -76,31 +77,16 @@ Future<void> checkForUpdate(BuildContext context) async {
       showMacosSheet(
         context: context,
         builder:
-            (_) => MacosTheme(
-              data: MacosThemeData.light(),
-              child: MacosSheet(
-                child: Material(
-                  child: Column(
-                    children: [
-                      FlutterLogo(size: 64),
-                      Text(
-                        'Alert Dialog with Primary Action',
-                        style: MacosTheme.of(context).typography.headline,
-                      ),
-                      Text(
-                        'This is an alert dialog with a primary action and no secondary action',
-                        textAlign: TextAlign.center,
-                        style: MacosTypography.of(context).headline,
-                      ),
-                      PushButton(
-                        controlSize: ControlSize.large,
-                        child: Text('Primary'),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            (_) => UpdateVersionDialogContent(
+              currentVersion: currentVersion,
+              newVersion: shortVersion,
+              onDownloadUpdate: () {},
+              onDismiss: () {
+                Navigator.of(context).pop();
+              },
+              releaseNotes: [
+                ReleaseNote(icon: icon, title: title, description: description),
+              ],
             ),
       );
     } else {
