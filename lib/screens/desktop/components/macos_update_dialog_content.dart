@@ -389,7 +389,7 @@ class _DownloadUpdateDialogContentState
     super.initState();
 
     Future.delayed(Duration(seconds: 1)).then((value) async {
-      // await startDownload();
+      await startDownload();
     });
   }
 
