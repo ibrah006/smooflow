@@ -107,7 +107,7 @@ Future<void> checkForUpdate(BuildContext context) async {
                   icon: Icons.bug_report_outlined,
                   title: "Minor bug fixes",
                   description:
-                      "Fixed label 'Due date' -> 'Date' in task details.",
+                      "Fixed buggy custom date for task.\nFixed label 'Due date' -> 'Date' in task details",
                 ),
                 ReleaseNote(
                   icon: Icons.list_outlined,
