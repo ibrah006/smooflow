@@ -9,6 +9,7 @@ import 'package:smooflow/components/active_work_activity_log_card.dart';
 import 'package:smooflow/components/overview_card.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/components/custom_button.dart';
+import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/main.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/core/app_routes.dart';
@@ -30,13 +31,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   void initState() {
     super.initState();
 
+    checkForUpdate(context);
+
     Future.microtask(() {
       if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
         Navigator.pop(context);
-        Navigator.pushNamed(
-          context,
-          AppRoutes.designDashboard,
-        );
+        Navigator.pushNamed(context, AppRoutes.designDashboard);
       }
 
       ref
@@ -99,10 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
               child: IconButton(
                 icon: const Icon(Icons.person_outline),
                 onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.profileSettings,
-                  );
+                  Navigator.pushNamed(context, AppRoutes.profileSettings);
                 },
               ),
             ),

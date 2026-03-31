@@ -8,7 +8,8 @@ import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
 
 Future<void> startUpdate() async {
-  final scriptPath = '';
+  final scriptPath =
+      '';
 
   try {
     final process = await Process.start(
