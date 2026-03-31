@@ -154,6 +154,11 @@ Create updated installer
 fastforge release
 ```
 
+### New:
+```bash
+fastforge release --name prod --jobs windows-exe
+```
+
 #### Sign
 ```bash
 dart run auto_updater:sign_update dist/1.0.0/smooflow-1.0.0-windows-setup.exe

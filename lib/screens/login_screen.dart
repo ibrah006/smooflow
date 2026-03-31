@@ -10,6 +10,7 @@ import 'package:smooflow/enums/login_status.dart';
 import 'package:smooflow/core/models/user.dart';
 import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/core/repositories/project_repo.dart';
+import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/screens/create_join_organization_screen.dart';
 import 'package:smooflow/screens/home_screen.dart';
 import 'package:smooflow/core/services/login_service.dart';
@@ -55,6 +56,13 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    checkForUpdate(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
@@ -68,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: Color(0xFFf7f9fb),
       body: LayoutBuilder(
         builder: (context, constraints) {
-
           final content = Center(
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: paddingValue),
@@ -234,7 +241,10 @@ class _LoginScreenState extends State<LoginScreen>
                         width: 250.0,
                         height: 20,
                         child: DefaultTextStyle(
-                          style: const TextStyle(fontSize: 14, color: colorPrimary),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: colorPrimary,
+                          ),
                           child: Center(
                             child: AnimatedTextKit(
                               totalRepeatCount: 2,
@@ -250,7 +260,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                                 ...List.generate(
                                   16,
-                                  (index) => FadeAnimatedText('Logging you in...'),
+                                  (index) =>
+                                      FadeAnimatedText('Logging you in...'),
                                 ),
                               ],
                               onTap: () {
@@ -272,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen>
                           child: Text(isSignIn ? "Log in" : "Sign up"),
                         ),
                       ),
-          
+
                     // Forgot password
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -302,11 +313,15 @@ class _LoginScreenState extends State<LoginScreen>
             children: [
               LoginBackground(),
               SizedBox(
-                width: constraints.maxWidth > 745? MediaQuery.of(context).size.width/2 : null,
-                child: content),
+                width:
+                    constraints.maxWidth > 745
+                        ? MediaQuery.of(context).size.width / 2
+                        : null,
+                child: content,
+              ),
             ],
           );
-        }
+        },
       ),
     );
   }

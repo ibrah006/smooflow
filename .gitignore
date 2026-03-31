@@ -139,3 +139,5 @@ assets/credentials.json
 
 dsa_priv.pem
 dsa_pub.pem
+
+install_update.log

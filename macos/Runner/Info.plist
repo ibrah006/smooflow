@@ -47,5 +47,9 @@
 		<string>https</string>
 		<string>http</string>
 	</array>
+	<key>SUPublicEDKey</key>
+    <string>r42sqt4uKLf4DAiOGXD9vLmgXVPRJFfOJNkvhNfy0oo=</string>
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
 </dict>
 </plist>

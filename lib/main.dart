@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/app_routes.dart';
-import 'package:smooflow/screens/desktop/components/notification_toast.dart';
+import 'package:smooflow/macos_update.dart';
 import 'package:window_manager/window_manager.dart';
 
+// /Users/ibrahimmn/Desktop/Code/flutter/smooflow/macos/updates/install_update.sh
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main(List<String> args) async {
@@ -32,7 +34,10 @@ void main(List<String> args) async {
 
     // Setup Auto updater
     if (Platform.isWindows) {
-      String feedURL = dotenv.env['API_URL']! + '/updates/appcast.xml';
+      String feedURL = ApiClient.http.baseUrl + '/updates/appcast.xml';
+
+      print("feed url: ${feedURL}");
+
       await autoUpdater.setFeedURL(feedURL);
       await autoUpdater.checkForUpdates();
       await autoUpdater.setScheduledCheckInterval(3600);
