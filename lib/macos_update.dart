@@ -9,7 +9,7 @@ import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
 
-Future<void> startUpdate() async {
+Future<void> _startUpdate() async {
   // 1. Load script from assets
   final scriptContent = await rootBundle.loadString(
     'assets/scripts/install_update.sh',
@@ -85,7 +85,7 @@ Future<void> checkForUpdate(BuildContext context) async {
     print("current version: ${currentVersion}");
 
     // 5. Compare versions
-    if (isNewerVersion(currentVersion, shortVersion)) {
+    if (_isNewerVersion(currentVersion, shortVersion)) {
       print('Update available! Download at $url');
 
       showMacosSheet(
@@ -95,6 +95,7 @@ Future<void> checkForUpdate(BuildContext context) async {
               currentVersion: currentVersion,
               newVersion: shortVersion,
               onDownloadUpdate: () {},
+              url: url,
               onDismiss: () {
                 Navigator.of(context).pop();
               },
@@ -126,7 +127,34 @@ Future<void> checkForUpdate(BuildContext context) async {
   }
 }
 
-bool isNewerVersion(String currentVersion, String latestVersion) {
+Future<void> downloadFile({
+  required String url,
+  required String savePath,
+  required Function(double progress) onProgress,
+}) async {
+  final request = http.Request('GET', Uri.parse(url));
+  final response = await http.Client().send(request);
+
+  final totalBytes = response.contentLength ?? 0;
+  int receivedBytes = 0;
+
+  final file = File(savePath);
+  final sink = file.openWrite();
+
+  await for (final chunk in response.stream) {
+    receivedBytes += chunk.length;
+    sink.add(chunk);
+
+    if (totalBytes != 0) {
+      final progress = receivedBytes / totalBytes;
+      onProgress(progress); // 👈 update UI
+    }
+  }
+
+  await sink.close();
+}
+
+bool _isNewerVersion(String currentVersion, String latestVersion) {
   final currentParts = currentVersion.split('.').map(int.parse).toList();
   final latestParts = latestVersion.split('.').map(int.parse).toList();
 

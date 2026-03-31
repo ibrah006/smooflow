@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/components/logo.dart';
+import 'package:smooflow/macos_update.dart';
 
 class ReleaseNote {
   final IconData icon;
@@ -20,6 +22,7 @@ class UpdateVersionDialogContent extends StatefulWidget {
   final List<ReleaseNote> releaseNotes;
   final VoidCallback onDownloadUpdate;
   final VoidCallback onDismiss;
+  final String url;
 
   const UpdateVersionDialogContent({
     Key? key,
@@ -28,6 +31,7 @@ class UpdateVersionDialogContent extends StatefulWidget {
     this.releaseNotes = const [],
     required this.onDownloadUpdate,
     required this.onDismiss,
+    required this.url,
   }) : super(key: key);
 
   @override
@@ -40,6 +44,9 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  double downloadProgress = 0.0;
+  bool isDownloading = false;
 
   @override
   void initState() {
@@ -73,6 +80,34 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+
+    Future.delayed(Duration(seconds: 3)).then((value) {
+      startDownload();
+    });
+  }
+
+  Future<void> startDownload() async {
+    setState(() {
+      isDownloading = true;
+    });
+
+    final dir = await getTemporaryDirectory();
+    final filePath = '${dir.path}/update.zip';
+
+    await downloadFile(
+      url: widget.url,
+      savePath: filePath,
+      onProgress: (progress) {
+        print('Progress: ${(progress * 100).toStringAsFixed(0)}%');
+        downloadProgress = progress;
+      },
+    );
+
+    print('Download complete: $filePath');
+
+    setState(() {
+      isDownloading = false;
+    });
   }
 
   @override
@@ -124,6 +159,15 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                               ),
                             ),
                           ),
+                          if (isDownloading) ...[
+                            ProgressBar(
+                              value: downloadProgress, // 0.0 → 1.0
+                            ),
+                            Text(
+                              '${(downloadProgress * 100).toStringAsFixed(0)}%',
+                              style: MacosTheme.of(context).typography.caption1,
+                            ),
+                          ],
                           // Version info subtitle
                           FadeTransition(
                             opacity: _fadeAnimation,
