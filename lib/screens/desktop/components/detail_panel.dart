@@ -3388,7 +3388,10 @@ Size getSize(String? taskSize) {
   final right = parts.length > 1 ? parts[1].trim() : '';
   final rightNum = right.split(' ').first;
 
-  return Size(double.parse(parts[0].trim()), double.parse(rightNum));
+  return Size(
+    double.tryParse(parts[0].trim()) ?? 0,
+    double.tryParse(rightNum) ?? 0,
+  );
 }
 
 String getUnit(String taskSize) {
