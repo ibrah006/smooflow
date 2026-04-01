@@ -480,7 +480,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  Future<void> _onTaskSizeWChange(double newValue) async {
+  Future<void> _onTaskSizeChange(
+    double newValue, {
+    required bool updateWidth,
+  }) async {
     final taskSize =
         ref
             .read(taskNotifierProvider)
@@ -488,18 +491,20 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .firstWhere((t) => t.id == widget.task.id)
             .size;
 
-    // if (taskRef != newValue.trim()) {
-    //   await ref
-    //       .read(taskNotifierProvider.notifier)
-    //       .update(
-    //         task: widget.task,
-    //         name: null,
-    //         billingStatus: null,
-    //         ref: null,
-    //         quantity: null,
-    //         size: null,
-    //       );
-    // }
+    final s = getSize(taskSize);
+
+    if (s.width != newValue) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: null,
+            billingStatus: null,
+            ref: null,
+            quantity: null,
+            size: '${newValue}×${s.height} cm',
+          );
+    }
   }
 
   Future<void> _onTaskQuantityChange(double newValue) async {
@@ -3361,7 +3366,9 @@ class _StagePipeline extends StatelessWidget {
   }
 }
 
-Size getSize(String taskSize) {
+Size getSize(String? taskSize) {
+  if (taskSize == null) return Size(0, 0);
+
   final parts = taskSize.split('×');
   final right = parts.length > 1 ? parts[1].trim() : '';
   final rightNum = right.split(' ').first;
