@@ -455,6 +455,21 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required String? size,
     required String? name,
   }) async {
+    if (name != null) {
+      final canUpdateName = state.canUpdateName(taskId: task.id, newName: name);
+
+      if (!canUpdateName) name = null;
+    }
+
+    if (billingStatus == null &&
+        ref == null &&
+        quantity == null &&
+        size == null &&
+        name == null) {
+      // Nothing to update
+      return;
+    }
+
     await _repo.update(
       task: task,
       billingStatus: billingStatus,
