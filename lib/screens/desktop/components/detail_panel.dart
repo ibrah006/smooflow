@@ -957,7 +957,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             const SizedBox(height: 8),
                             _StagePipeline(
                               currentStatus: widget.task.status,
-                              stages: kStages,
                               onStageTap: (status) {
                                 _onAdvanceTask(true, newStage: status);
                               },
@@ -3117,16 +3116,11 @@ String _subLabel(TaskStatus s) => switch (s) {
 // ─────────────────────────────────────────────────────────────────────────────
 class _StagePipeline extends StatelessWidget {
   final TaskStatus currentStatus;
-  final List<DesignStageInfo> stages;
   final ValueChanged<TaskStatus>? onStageTap;
 
-  const _StagePipeline({
-    required this.currentStatus,
-    required this.stages,
-    this.onStageTap,
-  });
+  const _StagePipeline({required this.currentStatus, this.onStageTap});
 
-  DesignStageInfo? _infoFor(TaskStatus s) => stages
+  DesignStageInfo? _infoFor(TaskStatus s) => kStages
       .cast<DesignStageInfo?>()
       .firstWhere((si) => si!.stage == s, orElse: () => null);
 
