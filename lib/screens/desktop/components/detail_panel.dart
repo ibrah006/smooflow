@@ -440,6 +440,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .firstWhere((t) => t.id == widget.task.id)
             .name;
 
+    print("taskName: ${taskName}, newValue: ${newValue.trim()}");
     if (taskName != newValue.trim()) {
       print("Task name change event to be called");
       return;

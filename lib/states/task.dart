@@ -4,11 +4,13 @@ import 'package:smooflow/change_events/task_change_event.dart';
 class TaskNameChangeEventUnderway {
   final int taskId;
   final String newName, oldName;
+  final int localEventId;
 
   TaskNameChangeEventUnderway({
     required this.taskId,
     required this.oldName,
     required this.newName,
+    required this.localEventId,
   });
 }
 
@@ -66,6 +68,29 @@ class TaskState {
        _connectionStatus = connectionStatus;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway = [];
+
+  /// @returns the local event id
+  int newNameChangeEvent({
+    required int taskId,
+    required String oldName,
+    required String newName,
+  }) {
+    final event = TaskNameChangeEventUnderway(
+      taskId: taskId,
+      oldName: oldName,
+      newName: newName,
+      localEventId: _taskNameChangeEventsUnderway.length + 1,
+    );
+    _taskNameChangeEventsUnderway.add(event);
+
+    return event.localEventId;
+  }
+
+  void removeTaskNameChangeEvent(int localEventId) {
+    _taskNameChangeEventsUnderway.removeWhere(
+      (event) => event.localEventId == localEventId,
+    );
+  }
 
   bool canUpdateName({required int taskId, required String newName}) {
     try {

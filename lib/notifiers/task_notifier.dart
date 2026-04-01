@@ -455,10 +455,20 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required String? size,
     required String? name,
   }) async {
+    int? localTaskNameChangeEventId;
     if (name != null) {
       final canUpdateName = state.canUpdateName(taskId: task.id, newName: name);
 
-      if (!canUpdateName) name = null;
+      if (canUpdateName) {
+        // Add to the list of name change events underway to prevent other updates with the same name until this one is resolved
+        localTaskNameChangeEventId = state.newNameChangeEvent(
+          taskId: task.id,
+          newName: name,
+          oldName: task.name,
+        );
+      } else {
+        name = null;
+      }
     }
 
     if (billingStatus == null &&
@@ -478,6 +488,10 @@ class TaskNotifier extends StateNotifier<TaskState> {
       size: size,
       name: name,
     );
+
+    if (localTaskNameChangeEventId != null) {
+      state.removeTaskNameChangeEvent(localTaskNameChangeEventId);
+    }
 
     // state = state.updateTask(task);
   }
