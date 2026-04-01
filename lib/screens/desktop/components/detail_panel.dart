@@ -480,7 +480,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  Future<void> _onTaskSizeWChange(String newValue) async {
+  Future<void> _onTaskSizeWChange(double newValue) async {
     final taskRef =
         ref
             .read(taskNotifierProvider)
@@ -488,18 +488,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .firstWhere((t) => t.id == widget.task.id)
             .size;
 
-    if (taskRef != newValue.trim()) {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            name: null,
-            billingStatus: null,
-            ref: newValue,
-            quantity: null,
-            size: null,
-          );
-    }
+    // if (taskRef != newValue.trim()) {
+    //   await ref
+    //       .read(taskNotifierProvider.notifier)
+    //       .update(
+    //         task: widget.task,
+    //         name: null,
+    //         billingStatus: null,
+    //         ref: null,
+    //         quantity: null,
+    //         size: null,
+    //       );
+    // }
   }
 
   Future<void> _onTaskQuantityChange(double newValue) async {
