@@ -1525,12 +1525,15 @@ class _PrintSpecsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Text(
-          parts[0].trim(),
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: _T.ink,
+        Expanded(
+          child: GhostTextField(
+            initialText: parts[0].trim(),
+            onSubmitted: (newValue) {},
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: _T.ink,
+            ),
           ),
         ),
         const Padding(
@@ -1580,17 +1583,15 @@ class _PrintSpecsCard extends StatelessWidget {
         _SpecRow(
           icon: Icons.tag_rounded,
           label: 'Ref',
-          child: Expanded(
-            child: GhostTextField(
-              onSubmitted: (newValue) {},
-              mode: GhostFieldMode.label,
-              initialText: reference!,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
-                fontFamily: 'monospace',
-              ),
+          child: GhostTextField(
+            onSubmitted: (newValue) {},
+            mode: GhostFieldMode.label,
+            initialText: reference!,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _T.ink3,
+              fontFamily: 'monospace',
             ),
           ),
         ),
