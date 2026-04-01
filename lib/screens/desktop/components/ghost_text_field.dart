@@ -103,7 +103,7 @@ class _GhostTextFieldState extends State<GhostTextField> {
   Color get _fill {
     if (_focused) return _T.white;
     if (_hovered) return _T.slate100;
-    return Colors.transparent;
+    return Colors.white;
   }
 
   Border get _border {
@@ -114,7 +114,7 @@ class _GhostTextFieldState extends State<GhostTextField> {
       // Dashed border signals "editable" without feeling like a form field
       return Border.all(color: _T.slate200, width: 1);
     }
-    return Border.all(color: Colors.transparent, width: 1);
+    return Border.all(color: Colors.white, width: 1);
   }
 
   List<BoxShadow> get _shadow {
@@ -141,34 +141,40 @@ class _GhostTextFieldState extends State<GhostTextField> {
       cursor: SystemMouseCursors.text,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          color: _fill,
-          borderRadius: BorderRadius.circular(_T.r),
-          border: _border,
-          boxShadow: _shadow,
-        ),
-        child: TextField(
-          controller: widget.controller,
-          focusNode: _focus,
-          maxLines: widget.maxLines,
-          keyboardType: widget.keyboardType,
-          onChanged: widget.onChanged,
-          onEditingComplete: widget.onEditingComplete,
-          style: widget.style,
-          cursorColor: _T.blue,
-          cursorWidth: 1.5,
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            hintStyle: widget.style.copyWith(color: _T.slate300),
-            // No border at all — the AnimatedContainer owns the visual border
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: vPad),
+      child: Container(
+        decoration: BoxDecoration(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: _fill,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: _border,
+            boxShadow: _shadow,
+          ),
+          child: TextField(
+            controller: widget.controller,
+            focusNode: _focus,
+            maxLines: widget.maxLines,
+            keyboardType: widget.keyboardType,
+            onChanged: widget.onChanged,
+            onEditingComplete: widget.onEditingComplete,
+            style: widget.style,
+            cursorColor: _T.blue,
+            cursorWidth: 1.5,
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              hintStyle: widget.style.copyWith(color: _T.slate300),
+              // No border at all — the AnimatedContainer owns the visual border
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: vPad,
+              ),
+            ),
           ),
         ),
       ),
