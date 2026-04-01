@@ -1,68 +1,50 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// _GhostField
-//
-// Three visual states:
-//   idle    — renders like plain text, no border, no fill
-//   hover   — slate100 fill + dashed slate200 border (1px), cursor changes
-//   focused — white fill + solid slate300 border (1px), slight inset shadow
-//
-// Usage:
-//   _GhostField(
-//     controller: _nameCtrl,
-//     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _T.ink),
-//     hint: 'Untitled task',
-//     maxLines: 1,
-//   )
-// ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS  (unchanged)
+// GhostTextField
+//
+// Three modes via the [mode] parameter:
+//
+//   GhostFieldMode.singleLine   — one line, scrolls horizontally.
+//                                 Enter = submit. Good for task titles.
+//
+//   GhostFieldMode.label        — wraps visually when content is too wide,
+//                                 but the user CANNOT insert manual line breaks
+//                                 (Enter = submit, newlines stripped from paste).
+//                                 Good for long-ish labels inside constrained
+//                                 parent widgets (client name, project heading…).
+//
+//   GhostFieldMode.multiline    — wraps AND allows manual newlines.
+//                                 Enter = new line. Good for descriptions.
 // ─────────────────────────────────────────────────────────────────────────────
-class _T {
-  static const blue = Color(0xFF2563EB);
-  static const blueHover = Color(0xFF1D4ED8);
-  static const blue100 = Color(0xFFDBEAFE);
-  static const blue50 = Color(0xFFEFF6FF);
-  static const teal = Color(0xFF38BDF8);
-  static const green = Color(0xFF10B981);
-  static const green50 = Color(0xFFECFDF5);
-  static const amber = Color(0xFFF59E0B);
-  static const amber50 = Color(0xFFFEF3C7);
-  static const red = Color(0xFFEF4444);
-  static const red50 = Color(0xFFFEE2E2);
-  static const purple = Color(0xFF8B5CF6);
-  static const purple50 = Color(0xFFF3E8FF);
-  static const indigo = Color(0xFF6366F1);
-  static const indigo50 = Color(0xFFEEF2FF);
-  static const slate50 = Color(0xFFF8FAFC);
-  static const slate100 = Color(0xFFF1F5F9);
-  static const slate200 = Color(0xFFE2E8F0);
-  static const slate300 = Color(0xFFCBD5E1);
-  static const slate400 = Color(0xFF94A3B8);
-  static const slate500 = Color(0xFF64748B);
-  static const ink = Color(0xFF0F172A);
-  static const ink2 = Color(0xFF1E293B);
-  static const ink3 = Color(0xFF334155);
-  static const white = Colors.white;
-  static const sidebarW = 220.0;
-  static const topbarH = 52.0;
-  static const detailW = 400.0;
-  static const r = 8.0;
-  static const rLg = 12.0;
-  static const rXl = 16.0;
+
+enum GhostFieldMode { singleLine, label, multiline }
+
+// Strips \n and \r from any typed or pasted input.
+class _NoNewlineFormatter extends TextInputFormatter {
+  const _NoNewlineFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final cleaned = newValue.text.replaceAll(RegExp(r'[\n\r]'), '');
+    if (cleaned == newValue.text) return newValue;
+    return newValue.copyWith(
+      text: cleaned,
+      selection: TextSelection.collapsed(offset: cleaned.length),
+    );
+  }
 }
 
 class GhostTextField extends StatefulWidget {
   final String initialText;
   final TextStyle style;
   final String? hint;
-
-  /// false (default) — field grows vertically when content wraps.
-  /// true            — single line, scrolls horizontally (e.g. task titles).
-  final bool singleLine;
-
-  final TextInputType keyboardType;
+  final GhostFieldMode mode;
+  final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final Function(String newValue) onSubmitted;
@@ -73,11 +55,12 @@ class GhostTextField extends StatefulWidget {
     required this.style,
     required this.onSubmitted,
     this.hint,
-    this.singleLine = true,
-    this.keyboardType = TextInputType.text,
+    this.mode = GhostFieldMode.label,
+    this.keyboardType,
     this.onChanged,
     this.onEditingComplete,
   });
+
   @override
   State<GhostTextField> createState() => _GhostTextFieldState();
 }
@@ -102,6 +85,8 @@ class _GhostTextFieldState extends State<GhostTextField> {
     super.dispose();
   }
 
+  // ── Visual state ────────────────────────────────────────────────────────────
+
   Color get _fill {
     if (_focused) return _T.white;
     if (_hovered) return _T.slate100;
@@ -125,6 +110,46 @@ class _GhostTextFieldState extends State<GhostTextField> {
           ]
           : const [];
 
+  // ── Mode-derived TextField properties ──────────────────────────────────────
+
+  int? get _maxLines {
+    switch (widget.mode) {
+      case GhostFieldMode.singleLine:
+        return 1; // fixed one line, horizontal scroll
+      case GhostFieldMode.label:
+      case GhostFieldMode.multiline:
+        return null; // uncapped — grows with content
+    }
+  }
+
+  int get _minLines => 1;
+
+  TextInputType get _keyboardType {
+    if (widget.keyboardType != null) return widget.keyboardType!;
+    // multiline mode needs the multiline keyboard so the IME shows a return key
+    return widget.mode == GhostFieldMode.multiline
+        ? TextInputType.multiline
+        : TextInputType.text;
+  }
+
+  TextInputAction get _inputAction {
+    switch (widget.mode) {
+      case GhostFieldMode.singleLine:
+      case GhostFieldMode.label:
+        return TextInputAction.done; // Enter submits — no line break
+      case GhostFieldMode.multiline:
+        return TextInputAction.newline;
+    }
+  }
+
+  List<TextInputFormatter> get _formatters {
+    // label mode: silently strip any \n the user tries to type or paste
+    if (widget.mode == GhostFieldMode.label) {
+      return const [_NoNewlineFormatter()];
+    }
+    return const [];
+  }
+
   @override
   Widget build(BuildContext context) {
     final fontSize = widget.style.fontSize ?? 14;
@@ -146,24 +171,11 @@ class _GhostTextFieldState extends State<GhostTextField> {
         child: TextField(
           controller: _controller,
           focusNode: _focus,
-          // ── The core of the auto-expand behaviour ──────────────────────────
-          // minLines: 1      — never collapses below one line
-          // maxLines: null   — no upper cap; grows with content
-          // Both apply equally in focused and unfocused states, so height is
-          // always driven by content — no jump between view and edit mode.
-          // singleLine overrides this for title-style fields.
-          minLines: 1,
-          maxLines: widget.singleLine ? 1 : null,
-          keyboardType:
-              widget.singleLine
-                  ? TextInputType.text
-                  : (widget.keyboardType == TextInputType.text
-                      ? TextInputType.multiline
-                      : widget.keyboardType),
-          textInputAction:
-              widget.singleLine
-                  ? TextInputAction.done
-                  : TextInputAction.newline,
+          minLines: _minLines,
+          maxLines: _maxLines,
+          keyboardType: _keyboardType,
+          textInputAction: _inputAction,
+          inputFormatters: _formatters,
           onSubmitted: widget.onSubmitted,
           onTapUpOutside: (_) => widget.onSubmitted(_controller.text),
           onChanged: widget.onChanged,
@@ -184,4 +196,15 @@ class _GhostTextFieldState extends State<GhostTextField> {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ─────────────────────────────────────────────────────────────────────────────
+class _T {
+  static const blue = Color(0xFF2563EB);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const white = Colors.white;
 }
