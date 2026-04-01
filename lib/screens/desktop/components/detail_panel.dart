@@ -20,6 +20,7 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
@@ -501,6 +502,38 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
+  Future<void> _onTaskQuantityChange(double newValue) async {
+    final taskQuantity =
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .quantity;
+
+    bool hasDecimal = newValue % 1 != 0;
+    if (hasDecimal) {
+      AppToast.show(
+        message: "Ignored Decimal in Size",
+        subtitle:
+            "Quantity must be a whole number. Rounded down to ${newValue.floor()}",
+        icon: Icons.info_outline,
+        color: _T.amber,
+      );
+    }
+    if (taskQuantity != newValue.floor()) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: null,
+            billingStatus: null,
+            ref: null,
+            quantity: newValue.floor(),
+            size: null,
+          );
+    }
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -818,6 +851,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 reference: widget.task.ref,
                                 size: widget.task.size,
                                 quantity: widget.task.quantity,
+                                onTaskRefChange: _onTaskRefChange,
+                                onTaskQuantityChange: _onTaskQuantityChange,
                               ),
                               const SizedBox(height: 18),
                             ],
@@ -1551,11 +1586,15 @@ class _PrintSpecsCard extends StatelessWidget {
   final String? reference;
   final String? size;
   final int? quantity;
+  final Function(String newValue) onTaskRefChange;
+  final Function(double newValue) onTaskQuantityChange;
 
   const _PrintSpecsCard({
     required this.reference,
     required this.size,
     required this.quantity,
+    required this.onTaskRefChange,
+    required this.onTaskQuantityChange,
   });
 
   Widget _sizeWidget(String size) {
@@ -1636,7 +1675,7 @@ class _PrintSpecsCard extends StatelessWidget {
           icon: Icons.tag_rounded,
           label: 'Ref',
           child: GhostTextField(
-            onSubmitted: (newValue) {},
+            onSubmitted: onTaskRefChange,
             mode: GhostFieldMode.label,
             initialText: reference!,
             style: const TextStyle(
@@ -1674,7 +1713,9 @@ class _PrintSpecsCard extends StatelessWidget {
             children: [
               GhostTextField(
                 initialText: '$quantity',
-                onSubmitted: (newValue) {},
+                onSubmitted:
+                    (newValue) =>
+                        onTaskQuantityChange(double.tryParse(newValue) ?? 0),
                 mode: GhostFieldMode.inline,
                 inlineMinWidth: 30,
                 style: const TextStyle(
