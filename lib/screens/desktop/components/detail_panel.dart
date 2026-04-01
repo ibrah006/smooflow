@@ -493,7 +493,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     final s = getSize(taskSize);
 
-    if ((updateWidth && s.width != newValue) ||
+    if (
+    // if width is the requested update and new width is detected
+    (updateWidth && s.width != newValue) ||
+        // if height is the requested update and new height is detected
         (!updateWidth && s.height != newValue)) {
       await ref
           .read(taskNotifierProvider.notifier)
@@ -860,6 +863,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 quantity: widget.task.quantity,
                                 onTaskRefChange: _onTaskRefChange,
                                 onTaskQuantityChange: _onTaskQuantityChange,
+                                onTaskSizeChange: _onTaskSizeChange,
                               ),
                               const SizedBox(height: 18),
                             ],
@@ -1595,6 +1599,7 @@ class _PrintSpecsCard extends StatelessWidget {
   final int? quantity;
   final Function(String newValue) onTaskRefChange;
   final Function(double newValue) onTaskQuantityChange;
+  final Function(double newValue, {required bool updateWidth}) onTaskSizeChange;
 
   const _PrintSpecsCard({
     required this.reference,
@@ -1602,6 +1607,7 @@ class _PrintSpecsCard extends StatelessWidget {
     required this.quantity,
     required this.onTaskRefChange,
     required this.onTaskQuantityChange,
+    required this.onTaskSizeChange,
   });
 
   Widget _sizeWidget(String size) {
@@ -1614,7 +1620,9 @@ class _PrintSpecsCard extends StatelessWidget {
       children: [
         GhostTextField(
           initialText: s.width.toString(),
-          onSubmitted: (newValue) {},
+          onSubmitted: (newValue) {
+            onTaskSizeChange(double.tryParse(newValue) ?? 0, updateWidth: true);
+          },
           mode: GhostFieldMode.inline,
           isDecimalOnlyField: true,
           style: const TextStyle(
@@ -1633,7 +1641,12 @@ class _PrintSpecsCard extends StatelessWidget {
         ),
         GhostTextField(
           initialText: s.height.toString(),
-          onSubmitted: (newValue) {},
+          onSubmitted: (newValue) {
+            onTaskSizeChange(
+              double.tryParse(newValue) ?? 0,
+              updateWidth: false,
+            );
+          },
           mode: GhostFieldMode.inline,
           isDecimalOnlyField: true,
           style: const TextStyle(
