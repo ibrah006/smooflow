@@ -55,7 +55,7 @@ class GhostTextField extends StatefulWidget {
     required this.style,
     required this.onSubmitted,
     this.hint,
-    this.mode = GhostFieldMode.label,
+    this.mode = GhostFieldMode.singleLine,
     this.keyboardType,
     this.onChanged,
     this.onEditingComplete,

@@ -1583,7 +1583,7 @@ class _PrintSpecsCard extends StatelessWidget {
           child: Expanded(
             child: GhostTextField(
               onSubmitted: (newValue) {},
-              singleLine: false,
+              mode: GhostFieldMode.label,
               initialText: reference!,
               style: const TextStyle(
                 fontSize: 12,
