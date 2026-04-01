@@ -548,9 +548,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           horizontal: 10,
                         ).add(EdgeInsetsGeometry.only(top: 18)),
                         child: GhostTextField(
-                          controller: TextEditingController(
-                            text: widget.task.name,
-                          ),
+                          initialText: widget.task.name,
+                          onSubmitted: (newValue) {},
                           style: TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
                             fontSize: 16,

@@ -54,7 +54,7 @@ class _T {
 }
 
 class GhostTextField extends StatefulWidget {
-  final TextEditingController controller;
+  final String initialText;
 
   /// The text style used for both the rendered value and the input.
   /// Pass the exact same style you would use on a plain [Text] widget.
@@ -66,14 +66,17 @@ class GhostTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
 
+  final Function(String newValue) onSubmitted;
+
   const GhostTextField({
-    required this.controller,
+    required this.initialText,
     required this.style,
     this.hint,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
     this.onChanged,
     this.onEditingComplete,
+    required this.onSubmitted,
   });
 
   @override
@@ -85,17 +88,22 @@ class _GhostTextFieldState extends State<GhostTextField> {
   bool _hovered = false;
   bool _focused = false;
 
+  final _controller = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _focus.addListener(() {
       setState(() => _focused = _focus.hasFocus);
     });
+
+    _controller.text = widget.initialText;
   }
 
   @override
   void dispose() {
     _focus.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -153,7 +161,9 @@ class _GhostTextFieldState extends State<GhostTextField> {
             boxShadow: _shadow,
           ),
           child: TextField(
-            controller: widget.controller,
+            onSubmitted: (newValue) => widget.onSubmitted(newValue),
+            onTapUpOutside: (event) => widget.onSubmitted(_controller.text),
+            controller: _controller,
             focusNode: _focus,
             maxLines: widget.maxLines,
             keyboardType: widget.keyboardType,
