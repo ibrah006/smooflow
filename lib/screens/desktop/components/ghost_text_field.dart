@@ -49,6 +49,7 @@ class GhostTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final Function(String newValue) onSubmitted;
+  final bool isDecimalOnlyField;
 
   /// [inline] mode only — minimum field width when empty or very short.
   /// Defaults to 50.0.
@@ -68,8 +69,9 @@ class GhostTextField extends StatefulWidget {
     this.keyboardType,
     this.onChanged,
     this.onEditingComplete,
-    this.inlineMinWidth = 50.0,
-    this.inlineMaxWidth = 500.0,
+    this.inlineMinWidth = 20.0,
+    this.inlineMaxWidth = 80.0,
+    this.isDecimalOnlyField = false,
   });
 
   @override
@@ -101,13 +103,13 @@ class _GhostTextFieldState extends State<GhostTextField> {
   Color get _fill {
     if (_focused) return _T.white;
     if (_hovered) return _T.slate100;
-    return Colors.transparent;
+    return Colors.white;
   }
 
   Border get _border {
     if (_focused) return Border.all(color: _T.slate300);
     if (_hovered) return Border.all(color: _T.slate200);
-    return Border.all(color: Colors.transparent);
+    return Border.all(color: Colors.white);
   }
 
   List<BoxShadow> get _shadow =>
@@ -142,11 +144,21 @@ class _GhostTextFieldState extends State<GhostTextField> {
     _ => TextInputAction.done,
   };
 
-  List<TextInputFormatter> get _formatters =>
-      (widget.mode == GhostFieldMode.label ||
-              widget.mode == GhostFieldMode.inline)
-          ? const [_NoNewlineFormatter()]
-          : const [];
+  List<TextInputFormatter> get _formatters {
+    final List<TextInputFormatter> fs = [
+      if (widget.isDecimalOnlyField)
+        FilteringTextInputFormatter.allow(
+          RegExp(r'^\d*\.?\d{0,}$'), // only digits and optional single dot
+        ),
+    ];
+
+    if (widget.mode == GhostFieldMode.label ||
+        widget.mode == GhostFieldMode.inline) {
+      fs.add(_NoNewlineFormatter());
+    }
+
+    return fs;
+  }
 
   // ── Build ───────────────────────────────────────────────────────────────────
 

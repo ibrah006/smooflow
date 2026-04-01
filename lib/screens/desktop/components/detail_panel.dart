@@ -1525,15 +1525,14 @@ class _PrintSpecsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Expanded(
-          child: GhostTextField(
-            initialText: parts[0].trim(),
-            onSubmitted: (newValue) {},
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: _T.ink,
-            ),
+        GhostTextField(
+          initialText: parts[0].trim(),
+          onSubmitted: (newValue) {},
+          mode: GhostFieldMode.inline,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: _T.ink,
           ),
         ),
         const Padding(
