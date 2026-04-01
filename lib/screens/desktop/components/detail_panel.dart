@@ -318,9 +318,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   /// DO NOT use this function to progress task to printing stage
-  Future<void> _showMoveToNextStageDialog() async {
+  Future<void> _progressTaskStage({TaskStatus? newTaskStage}) async {
     late final TaskStatus nextStage;
-    if (widget.task.status == TaskStatus.paused ||
+
+    if (newTaskStage != null) {
+      nextStage = newTaskStage;
+    } else if (widget.task.status == TaskStatus.paused ||
         widget.task.status == TaskStatus.blocked) {
       nextStage = TaskStatus.pending;
     } else if (widget.task.status == TaskStatus.completed) {
@@ -548,18 +551,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  Future<void> _onAdvanceTask(
-    bool canAdvance, {
-    required TaskStatus newStage,
-  }) async {
+  Future<void> _onAdvanceTask(bool canAdvance, {TaskStatus? newStage}) async {
     if (!canAdvance) return;
+
+    print("new stage: $newStage");
 
     setState(() => _isProgressing = true);
 
     if (newStage == TaskStatus.clientApproved) {
       await approveDesignStage();
     } else {
-      await _showMoveToNextStageDialog();
+      await _progressTaskStage(newTaskStage: newStage);
     }
 
     setState(() => _isProgressing = false);
@@ -990,7 +992,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 stageBackButtonKey: _stageBackButtonKey,
                 isProgressing: _isProgressing,
                 onAdvanceTap: () {
-                  _onAdvanceTask(progressBtnEnabled, newStage: next!);
+                  _onAdvanceTask(progressBtnEnabled);
                 },
                 onStageBackTap: _showStageBackMenu,
               ),
@@ -3052,7 +3054,7 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
     TaskStatus.clientApproved,
     TaskStatus.revision,
   ]),
-  _PipelineMilestone('Production', TaskStatus.printing, [
+  _PipelineMilestone('Production', TaskStatus.waitingPrinting, [
     TaskStatus.waitingPrinting,
     TaskStatus.printing,
     TaskStatus.printingCompleted,
@@ -3289,7 +3291,7 @@ class _MilestoneRowState extends State<_MilestoneRow> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: widget.clickable ? widget.onTap : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 130),
           curve: Curves.easeOut,
