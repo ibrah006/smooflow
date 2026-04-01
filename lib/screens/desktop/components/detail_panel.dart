@@ -1598,18 +1598,15 @@ class _PrintSpecsCard extends StatelessWidget {
   });
 
   Widget _sizeWidget(String size) {
-    final parts = size.split('×');
-    final right = parts.length > 1 ? parts[1].trim() : '';
-    final rightNum = right.split(' ').first;
-    final rightUnit = right.split(' ').length > 1 ? right.split(' ')[1] : '';
-
+    final s = getSize(size);
+    final rightUnit = getUnit(size);
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         GhostTextField(
-          initialText: parts[0].trim(),
+          initialText: s.width.toString(),
           onSubmitted: (newValue) {},
           mode: GhostFieldMode.inline,
           isDecimalOnlyField: true,
@@ -1628,7 +1625,7 @@ class _PrintSpecsCard extends StatelessWidget {
           ),
         ),
         GhostTextField(
-          initialText: rightNum,
+          initialText: s.height.toString(),
           onSubmitted: (newValue) {},
           mode: GhostFieldMode.inline,
           isDecimalOnlyField: true,
@@ -3362,4 +3359,20 @@ class _StagePipeline extends StatelessWidget {
       ),
     );
   }
+}
+
+Size getSize(String taskSize) {
+  final parts = taskSize.split('×');
+  final right = parts.length > 1 ? parts[1].trim() : '';
+  final rightNum = right.split(' ').first;
+
+  return Size(double.parse(parts[0].trim()), double.parse(rightNum));
+}
+
+String getUnit(String taskSize) {
+  final parts = taskSize.split('×');
+  final right = parts.length > 1 ? parts[1].trim() : '';
+  final rightUnit = right.split(' ').length > 1 ? right.split(' ')[1] : '';
+
+  return rightUnit;
 }
