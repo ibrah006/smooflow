@@ -555,6 +555,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         icon = Icons.person_remove;
         color = _T.slate400;
         break;
+      case TaskChangeType.nameUpdated:
+        return;
     }
 
     // Show notification
