@@ -1581,21 +1581,15 @@ class _PrintSpecsCard extends StatelessWidget {
           icon: Icons.tag_rounded,
           label: 'Ref',
           child: Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _T.slate100,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: _T.slate200),
-              ),
-              child: Text(
-                reference!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _T.ink3,
-                  fontFamily: 'monospace',
-                ),
+            child: GhostTextField(
+              onSubmitted: (newValue) {},
+              singleLine: false,
+              initialText: reference!,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _T.ink3,
+                fontFamily: 'monospace',
               ),
             ),
           ),
@@ -1756,7 +1750,9 @@ class _SpecRow extends StatelessWidget {
           ),
         ],
       ),
-      child,
+      Expanded(
+        child: Padding(padding: const EdgeInsets.only(top: 3), child: child),
+      ),
     ],
   );
 }

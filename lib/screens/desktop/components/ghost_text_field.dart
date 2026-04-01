@@ -55,136 +55,130 @@ class _T {
 
 class GhostTextField extends StatefulWidget {
   final String initialText;
-
-  /// The text style used for both the rendered value and the input.
-  /// Pass the exact same style you would use on a plain [Text] widget.
   final TextStyle style;
-
   final String? hint;
-  final int maxLines;
+
+  /// false (default) — field grows vertically when content wraps.
+  /// true            — single line, scrolls horizontally (e.g. task titles).
+  final bool singleLine;
+
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
-
   final Function(String newValue) onSubmitted;
 
   const GhostTextField({
+    super.key,
     required this.initialText,
     required this.style,
+    required this.onSubmitted,
     this.hint,
-    this.maxLines = 1,
+    this.singleLine = true,
     this.keyboardType = TextInputType.text,
     this.onChanged,
     this.onEditingComplete,
-    required this.onSubmitted,
   });
-
   @override
   State<GhostTextField> createState() => _GhostTextFieldState();
 }
 
 class _GhostTextFieldState extends State<GhostTextField> {
+  late final TextEditingController _controller;
   final _focus = FocusNode();
   bool _hovered = false;
   bool _focused = false;
 
-  final _controller = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    _focus.addListener(() {
-      setState(() => _focused = _focus.hasFocus);
-    });
-
-    _controller.text = widget.initialText;
+    _controller = TextEditingController(text: widget.initialText);
+    _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
   }
 
   @override
   void dispose() {
-    _focus.dispose();
     _controller.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
-  // Resolved colors for each layer
   Color get _fill {
     if (_focused) return _T.white;
     if (_hovered) return _T.slate100;
-    return Colors.white;
+    return Colors.transparent;
   }
 
   Border get _border {
-    if (_focused) {
-      return Border.all(color: _T.slate300, width: 1);
-    }
-    if (_hovered) {
-      // Dashed border signals "editable" without feeling like a form field
-      return Border.all(color: _T.slate200, width: 1);
-    }
-    return Border.all(color: Colors.white, width: 1);
+    if (_focused) return Border.all(color: _T.slate300);
+    if (_hovered) return Border.all(color: _T.slate200);
+    return Border.all(color: Colors.transparent);
   }
 
-  List<BoxShadow> get _shadow {
-    if (_focused) {
-      return [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 4,
-          offset: const Offset(0, 1),
-        ),
-      ];
-    }
-    return const [];
-  }
+  List<BoxShadow> get _shadow =>
+      _focused
+          ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ]
+          : const [];
 
   @override
   Widget build(BuildContext context) {
-    // Derive padding from the style's font size so it scales correctly
     final fontSize = widget.style.fontSize ?? 14;
     final vPad = (fontSize * 0.35).clamp(4.0, 10.0);
-    final hPad = (fontSize * 0.45).clamp(6.0, 12.0);
 
     return MouseRegion(
       cursor: SystemMouseCursors.text,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Container(
-        decoration: BoxDecoration(),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
-          decoration: BoxDecoration(
-            color: _fill,
-            borderRadius: BorderRadius.circular(6),
-            border: _border,
-            boxShadow: _shadow,
-          ),
-          child: TextField(
-            onSubmitted: (newValue) => widget.onSubmitted(newValue),
-            onTapUpOutside: (event) => widget.onSubmitted(_controller.text),
-            controller: _controller,
-            focusNode: _focus,
-            maxLines: widget.maxLines,
-            keyboardType: widget.keyboardType,
-            onChanged: widget.onChanged,
-            onEditingComplete: widget.onEditingComplete,
-            style: widget.style,
-            cursorColor: _T.blue,
-            cursorWidth: 1.5,
-            decoration: InputDecoration(
-              hintText: widget.hint,
-              hintStyle: widget.style.copyWith(color: _T.slate300),
-              // No border at all — the AnimatedContainer owns the visual border
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: vPad,
-              ),
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: _fill,
+          borderRadius: BorderRadius.circular(6),
+          border: _border,
+          boxShadow: _shadow,
+        ),
+        child: TextField(
+          controller: _controller,
+          focusNode: _focus,
+          // ── The core of the auto-expand behaviour ──────────────────────────
+          // minLines: 1      — never collapses below one line
+          // maxLines: null   — no upper cap; grows with content
+          // Both apply equally in focused and unfocused states, so height is
+          // always driven by content — no jump between view and edit mode.
+          // singleLine overrides this for title-style fields.
+          minLines: 1,
+          maxLines: widget.singleLine ? 1 : null,
+          keyboardType:
+              widget.singleLine
+                  ? TextInputType.text
+                  : (widget.keyboardType == TextInputType.text
+                      ? TextInputType.multiline
+                      : widget.keyboardType),
+          textInputAction:
+              widget.singleLine
+                  ? TextInputAction.done
+                  : TextInputAction.newline,
+          onSubmitted: widget.onSubmitted,
+          onTapUpOutside: (_) => widget.onSubmitted(_controller.text),
+          onChanged: widget.onChanged,
+          onEditingComplete: widget.onEditingComplete,
+          style: widget.style,
+          cursorColor: _T.blue,
+          cursorWidth: 1.5,
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            hintStyle: widget.style.copyWith(color: _T.slate300),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: vPad),
           ),
         ),
       ),
