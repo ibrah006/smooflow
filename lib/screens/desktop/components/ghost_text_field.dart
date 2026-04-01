@@ -90,13 +90,13 @@ class _GhostTextFieldState extends State<GhostTextField> {
   Color get _fill {
     if (_focused) return _T.white;
     if (_hovered) return _T.slate100;
-    return Colors.transparent;
+    return Colors.white;
   }
 
   Border get _border {
     if (_focused) return Border.all(color: _T.slate300);
     if (_hovered) return Border.all(color: _T.slate200);
-    return Border.all(color: Colors.transparent);
+    return Border.all(color: Colors.white);
   }
 
   List<BoxShadow> get _shadow =>
