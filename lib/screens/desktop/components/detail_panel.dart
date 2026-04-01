@@ -443,7 +443,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     print("taskName: ${taskName}, newValue: ${newValue.trim()}");
     if (taskName != newValue.trim()) {
       print("Task name change event to be called");
-      return;
 
       await ref
           .read(taskNotifierProvider.notifier)
