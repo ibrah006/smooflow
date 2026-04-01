@@ -479,6 +479,28 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
+  Future<void> _onTaskSizeWChange(String newValue) async {
+    final taskRef =
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .size;
+
+    if (taskRef != newValue.trim()) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: null,
+            billingStatus: null,
+            ref: newValue,
+            quantity: null,
+            size: null,
+          );
+    }
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -1661,7 +1683,6 @@ class _PrintSpecsCard extends StatelessWidget {
                   color: _T.ink,
                 ),
               ),
-              const SizedBox(width: 5),
               const Text(
                 'pcs',
                 style: TextStyle(
