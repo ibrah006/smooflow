@@ -576,6 +576,13 @@ class TaskNotifier extends StateNotifier<TaskState> {
           state = state.copyWith(tasks: tasks);
         }
         break;
+      case TaskChangeType.nameUpdated:
+        final index = tasks.indexWhere((t) => t.id == event.taskId);
+        if (index != -1 && event.task != null) {
+          tasks[index] = event.task!;
+          state = state.copyWith(tasks: tasks);
+        }
+        break;
     }
   }
 

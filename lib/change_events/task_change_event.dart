@@ -13,6 +13,7 @@ enum TaskChangeType {
   statusChanged,
   assigneeAdded,
   assigneeRemoved,
+  nameUpdated,
 }
 
 /// Task change event from WebSocket
@@ -48,6 +49,8 @@ class TaskChangeEvent {
           return TaskChangeType.assigneeAdded;
         case 'assignee_removed':
           return TaskChangeType.assigneeRemoved;
+        case 'name_updated':
+          return TaskChangeType.nameUpdated;
         default:
           return TaskChangeType.updated;
       }
@@ -75,11 +78,13 @@ enum ConnectionStatus {
 
 /// Task WebSocket Client
 class TaskWebSocketClient {
-  final String authToken = LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
+  final String authToken =
+      LocalHttp.prefs.get(SharedStorageOptions.jwtToken.name) as String;
   IO.Socket? _socket;
 
   // Status streams
-  final _connectionStatusController = StreamController<ConnectionStatus>.broadcast();
+  final _connectionStatusController =
+      StreamController<ConnectionStatus>.broadcast();
   final _taskChangeController = StreamController<TaskChangeEvent>.broadcast();
   final _taskListController = StreamController<List<Task>>.broadcast();
   final _errorController = StreamController<String>.broadcast();
@@ -93,7 +98,8 @@ class TaskWebSocketClient {
   TaskWebSocketClient();
 
   // Getters for streams
-  Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;
+  Stream<ConnectionStatus> get connectionStatus =>
+      _connectionStatusController.stream;
   Stream<TaskChangeEvent> get taskChanges => _taskChangeController.stream;
   Stream<List<Task>> get taskList => _taskListController.stream;
   Stream<String> get errors => _errorController.stream;
@@ -124,10 +130,9 @@ class TaskWebSocketClient {
       // );
       _socket = IO.io(
         '${ApiClient.http.baseUrl}/tasks',
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .setAuth({'token': authToken})
-            .build(),
+        IO.OptionBuilder().setTransports(['websocket']).setAuth({
+          'token': authToken,
+        }).build(),
       );
 
       _setupEventHandlers();
@@ -159,10 +164,12 @@ class TaskWebSocketClient {
     _socket!.on('connect_error', (error) {
       print('WebSocket connection error: $error');
       _reconnectAttempts++;
-      
+
       if (_reconnectAttempts >= _maxReconnectAttempts) {
         _updateStatus(ConnectionStatus.error);
-        _errorController.add('Failed to connect after $_maxReconnectAttempts attempts');
+        _errorController.add(
+          'Failed to connect after $_maxReconnectAttempts attempts',
+        );
       } else {
         _updateStatus(ConnectionStatus.reconnecting);
       }
@@ -184,8 +191,8 @@ class TaskWebSocketClient {
     // Task change events
     _socket!.on('task:changed', (data) {
       // try {
-        final event = TaskChangeEvent.fromJson(data as Map<String, dynamic>);
-        _taskChangeController.add(event);
+      final event = TaskChangeEvent.fromJson(data as Map<String, dynamic>);
+      _taskChangeController.add(event);
       // } catch (e) {
       //   print('Error parsing task:changed event: $e');
       // }
@@ -205,9 +212,10 @@ class TaskWebSocketClient {
       try {
         final response = data as Map<String, dynamic>;
         final tasksJson = response['tasks'] as List;
-        final tasks = tasksJson
-            .map((json) => Task.fromJson(json as Map<String, dynamic>))
-            .toList();
+        final tasks =
+            tasksJson
+                .map((json) => Task.fromJson(json as Map<String, dynamic>))
+                .toList();
         _taskListController.add(tasks);
       } catch (e) {
         print('Error parsing tasks:list: $e');
