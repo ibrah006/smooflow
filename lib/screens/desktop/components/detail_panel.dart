@@ -1738,7 +1738,7 @@ class _SpecRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           SizedBox(
-            width: 38,
+            width: 35,
             child: Text(
               label,
               style: const TextStyle(
@@ -1751,7 +1751,7 @@ class _SpecRow extends StatelessWidget {
         ],
       ),
       Expanded(
-        child: Padding(padding: const EdgeInsets.only(top: 3), child: child),
+        child: Padding(padding: const EdgeInsets.only(top: 4), child: child),
       ),
     ],
   );
