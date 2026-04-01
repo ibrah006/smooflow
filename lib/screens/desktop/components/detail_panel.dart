@@ -493,7 +493,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     final s = getSize(taskSize);
 
-    if (s.width != newValue) {
+    if ((updateWidth && s.width != newValue) ||
+        (!updateWidth && s.height != newValue)) {
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
@@ -502,7 +503,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             billingStatus: null,
             ref: null,
             quantity: null,
-            size: '${newValue}×${s.height} cm',
+            size:
+                '${updateWidth ? newValue : s.width}×${updateWidth ? s.height : newValue} cm',
           );
     }
   }
