@@ -148,7 +148,7 @@ class _GhostTextFieldState extends State<GhostTextField> {
           curve: Curves.easeOut,
           decoration: BoxDecoration(
             color: _fill,
-            borderRadius: BorderRadius.circular(_T.r),
+            borderRadius: BorderRadius.circular(6),
             border: _border,
             boxShadow: _shadow,
           ),
