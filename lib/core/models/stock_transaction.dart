@@ -44,6 +44,14 @@ class StockTransaction {
   final int? taskId;
   late bool _committed;
 
+  double? _consumed;
+
+  double? get consumed => _consumed;
+
+  // set consumed(double value) {
+  //   _consumed = value;
+  // }
+
   StockTransaction({
     required this.id,
     required this.materialId,
@@ -56,8 +64,11 @@ class StockTransaction {
     this.notes,
     this.projectId,
     this.taskId,
-    required bool committed
-  }) : _quantity = quantity, _committed = committed;
+    required bool committed,
+    required double? consumed,
+  }) : _quantity = quantity,
+       _committed = committed,
+       _consumed = consumed;
 
   set quantity(double quantity) {
     _quantity = quantity;
@@ -87,7 +98,11 @@ class StockTransaction {
       createdById: json['createdById'],
       createdAt: DateTime.parse(json['createdAt']),
       taskId: json['taskId'],
-      committed: json['committed']
+      committed: json['committed'],
+      consumed:
+          json['consumed'] != null
+              ? double.tryParse(json['consumed'].toString())
+              : null,
     );
   }
 
@@ -104,14 +119,15 @@ class StockTransaction {
       'projectId': projectId,
       'createdById': createdById,
       'createdAt': createdAt.toIso8601String(),
-      'taskId': taskId
+      'taskId': taskId,
     };
   }
 
-  bool get committed=> _committed;
+  bool get committed => _committed;
 
   set committed(bool committed) {
-    if (type==TransactionType.stockIn) throw "Unsupported action. Cannot commit a stock in transcation.";
+    if (type == TransactionType.stockIn)
+      throw "Unsupported action. Cannot commit a stock in transcation.";
     _committed = committed;
   }
 
@@ -128,7 +144,8 @@ class StockTransaction {
     String? createdById,
     DateTime? createdAt,
     MaterialModel? material,
-    int? taskId
+    int? taskId,
+    double? consumed,
   }) {
     return StockTransaction(
       id: id ?? this.id,
@@ -143,6 +160,7 @@ class StockTransaction {
       createdAt: createdAt ?? this.createdAt,
       taskId: taskId,
       committed: committed,
+      consumed: consumed ?? _consumed,
     );
   }
 }
