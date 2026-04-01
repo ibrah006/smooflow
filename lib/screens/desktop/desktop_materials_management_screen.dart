@@ -1392,8 +1392,6 @@ class _BatchInventoryPanel extends StatelessWidget {
                       final isSelected = selectedBatchId == b.id;
                       final isEmpty = rem <= 0;
 
-                      print("remaining: ${rem}");
-                      print("remaining: ${consumed}");
                       return _BatchRow(
                         batch: b,
                         unit: unit,
