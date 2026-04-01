@@ -268,6 +268,7 @@ class TaskRepo {
     required String? ref,
     required int? quantity,
     required String? size,
+    required String? name,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
@@ -285,6 +286,7 @@ class TaskRepo {
         "ref": ref,
         "quantity": quantity,
         "size": size,
+        ...name != null ? {"name": name} : {},
       },
     );
 

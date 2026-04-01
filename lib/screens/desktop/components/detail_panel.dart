@@ -256,6 +256,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             ref: null,
             quantity: null,
             size: null,
+            name: null,
           );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
@@ -430,6 +431,29 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onClose();
   }
 
+  // On Update Task title
+  Future<void> _onTaskNameChange(String newValue) async {
+    final taskName =
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .name;
+
+    if (taskName != newValue.trim()) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: newValue,
+            billingStatus: null,
+            ref: null,
+            quantity: null,
+            size: null,
+          );
+    }
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -549,7 +573,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         ).add(EdgeInsetsGeometry.only(top: 18)),
                         child: GhostTextField(
                           initialText: widget.task.name,
-                          onSubmitted: (newValue) {},
+                          onSubmitted: _onTaskNameChange,
                           style: TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
                             fontSize: 16,
