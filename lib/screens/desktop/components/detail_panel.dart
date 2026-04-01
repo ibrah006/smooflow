@@ -1529,31 +1529,40 @@ class _PrintSpecsCard extends StatelessWidget {
           initialText: parts[0].trim(),
           onSubmitted: (newValue) {},
           mode: GhostFieldMode.inline,
+          isDecimalOnlyField: true,
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: _T.ink,
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5),
-          child: Text(
-            '×',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w300,
-              color: _T.slate300,
-            ),
           ),
         ),
         Text(
-          rightNum,
+          '×',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w300,
+            color: _T.slate300,
+          ),
+        ),
+        GhostTextField(
+          initialText: rightNum,
+          onSubmitted: (newValue) {},
+          mode: GhostFieldMode.inline,
+          isDecimalOnlyField: true,
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: _T.ink,
           ),
         ),
+        // Text(
+        //   rightNum,
+        //   style: const TextStyle(
+        //     fontSize: 15,
+        //     fontWeight: FontWeight.w700,
+        //     color: _T.ink,
+        //   ),
+        // ),
         if (rightUnit.isNotEmpty) ...[
           const SizedBox(width: 5),
           Text(
