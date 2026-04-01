@@ -194,7 +194,10 @@ class _GhostTextFieldState extends State<GhostTextField> {
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: vPad),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 6,
+          vertical: vPad,
+        ).copyWith(right: 5),
       ),
     );
 
