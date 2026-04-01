@@ -481,7 +481,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   Future<void> _onTaskSizeWChange(double newValue) async {
-    final taskRef =
+    final taskSize =
         ref
             .read(taskNotifierProvider)
             .tasks
