@@ -1632,6 +1632,7 @@ class _PrintSpecsCard extends StatelessWidget {
                 initialText: '$quantity',
                 onSubmitted: (newValue) {},
                 mode: GhostFieldMode.inline,
+                inlineMinWidth: 30,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -1762,7 +1763,7 @@ class _SpecRow extends StatelessWidget {
         ],
       ),
       Expanded(
-        child: Padding(padding: const EdgeInsets.only(top: 4), child: child),
+        child: Padding(padding: const EdgeInsets.only(top: 1), child: child),
       ),
     ],
   );
