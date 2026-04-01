@@ -440,7 +440,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .firstWhere((t) => t.id == widget.task.id)
             .name;
 
-    print("taskName: ${taskName}, newValue: ${newValue.trim()}");
     if (taskName != newValue.trim()) {
       print("Task name change event to be called");
 
@@ -451,6 +450,29 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             name: newValue,
             billingStatus: null,
             ref: null,
+            quantity: null,
+            size: null,
+          );
+    }
+  }
+
+  // ── On Print Specs change ─────────────────────────────────────────────────────────────────
+  Future<void> _onTaskRefChange(String newValue) async {
+    final taskRef =
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .ref;
+
+    if (taskRef != newValue.trim()) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: null,
+            billingStatus: null,
+            ref: newValue,
             quantity: null,
             size: null,
           );
