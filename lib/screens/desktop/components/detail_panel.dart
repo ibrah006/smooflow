@@ -3054,12 +3054,12 @@ const List<_PipelineMilestone> _kPipelineMilestones = [
     TaskStatus.clientApproved,
     TaskStatus.revision,
   ]),
-  _PipelineMilestone('Production', TaskStatus.waitingPrinting, [
+  _PipelineMilestone('Production Dept.', TaskStatus.waitingPrinting, [
     TaskStatus.waitingPrinting,
     TaskStatus.printing,
     TaskStatus.printingCompleted,
   ]),
-  _PipelineMilestone('Finishing Dept', TaskStatus.finishing, [
+  _PipelineMilestone('Finishing Dept.', TaskStatus.finishing, [
     TaskStatus.finishing,
     TaskStatus.productionCompleted,
   ]),
