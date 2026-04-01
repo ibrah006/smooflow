@@ -53,7 +53,7 @@ class _T {
   static const rXl = 16.0;
 }
 
-class GhostField extends StatefulWidget {
+class GhostTextField extends StatefulWidget {
   final TextEditingController controller;
 
   /// The text style used for both the rendered value and the input.
@@ -66,7 +66,7 @@ class GhostField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
 
-  const GhostField({
+  const GhostTextField({
     required this.controller,
     required this.style,
     this.hint,
@@ -77,10 +77,10 @@ class GhostField extends StatefulWidget {
   });
 
   @override
-  State<GhostField> createState() => _GhostFieldState();
+  State<GhostTextField> createState() => _GhostTextFieldState();
 }
 
-class _GhostFieldState extends State<GhostField> {
+class _GhostTextFieldState extends State<GhostTextField> {
   final _focus = FocusNode();
   bool _hovered = false;
   bool _focused = false;
@@ -168,10 +168,7 @@ class _GhostFieldState extends State<GhostField> {
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: hPad,
-              vertical: vPad,
-            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: vPad),
           ),
         ),
       ),

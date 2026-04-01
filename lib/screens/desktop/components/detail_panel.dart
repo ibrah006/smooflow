@@ -19,6 +19,7 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
+import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
@@ -537,52 +538,71 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               // ── Scrollable body ───────────────────────────────────────────────
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(18),
+                  physics: ClampingScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Title
-                      Text(
-                        widget.task.name,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _T.ink,
-                          letterSpacing: -0.3,
-                          height: 1.35,
+                      Padding(
+                        padding: EdgeInsetsGeometry.symmetric(
+                          horizontal: 10,
+                        ).add(EdgeInsetsGeometry.only(top: 18)),
+                        child: GhostTextField(
+                          controller: TextEditingController(
+                            text: widget.task.name,
+                          ),
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _T.ink,
+                            letterSpacing: -0.3,
+                            height: 1.35,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: proj.color,
-                              shape: BoxShape.circle,
+                      // Text(
+                      //   widget.task.name,
+                      //   style: const
+                      // ),
+                      const SizedBox(height: 2),
+                      // Project Name label
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: proj.color,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            proj.name,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: _T.slate500,
+                            const SizedBox(width: 5),
+                            Text(
+                              proj.name,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: _T.slate500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 18),
 
                       // Details grid
-                      const _DetailSectionTitle('Details'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: const _DetailSectionTitle('Details'),
+                      ),
                       const SizedBox(height: 10),
                       GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.symmetric(horizontal: 18),
                         crossAxisCount: 2,
                         childAspectRatio: 2.8,
                         crossAxisSpacing: 10,
@@ -712,85 +732,96 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
 
-                      // ── PRINT SPECIFICATIONS ─────────────────────────────────
-                      if (hasPrintSpecs) ...[
-                        const _DetailSectionTitle('Print Specifications'),
-                        const SizedBox(height: 10),
-                        _PrintSpecsCard(
-                          reference: widget.task.ref,
-                          size: widget.task.size,
-                          quantity: widget.task.quantity,
-                        ),
-                        const SizedBox(height: 18),
-                      ],
-
-                      // ── BILLING ───────────────────────────────────────────────
-                      const _DetailSectionTitle('Billing'),
-                      const SizedBox(height: 10),
-                      _BillingCard(
-                        savedStatus:
-                            widget.task.billingStatus ?? BillingStatus.pending,
-                        selection: _billingSelection,
-                        isAccountant: _isAccountant,
-                        isEditMode: _billingEditMode,
-                        isDirty: _billingDirty,
-                        isSaving: _billingSaving,
-                        onEdit: _enterBillingEditMode,
-                        onCancel: _cancelBillingEdit,
-                        onSelect: (s) => setState(() => _billingSelection = s),
-                        onSave: _saveBillingStatus,
-                      ),
-                      const SizedBox(height: 18),
-
-                      // ── START PRINT JOB (production / admin only) ─────────────
-                      if (isWaitingPrinting)
-                        PermissionGate(
-                          permission: UserPermission.schedulePrintAction,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _DetailSectionTitle('Print Job'),
+                      // Rest of task details
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 18),
+                            // ── PRINT SPECIFICATIONS ─────────────────────────────────
+                            if (hasPrintSpecs) ...[
+                              const _DetailSectionTitle('Print Specifications'),
                               const SizedBox(height: 10),
-                              _StartPrintJobCard(
-                                task: widget.task,
-                                onTap: _startPrintJobScreen,
+                              _PrintSpecsCard(
+                                reference: widget.task.ref,
+                                size: widget.task.size,
+                                quantity: widget.task.quantity,
                               ),
                               const SizedBox(height: 18),
                             ],
-                          ),
-                        ),
 
-                      // Description
-                      if (widget.task.description.trim().isNotEmpty) ...[
-                        const _DetailSectionTitle('Description'),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: _T.slate50,
-                            border: Border.all(color: _T.slate200),
-                            borderRadius: BorderRadius.circular(_T.r),
-                          ),
-                          child: Text(
-                            widget.task.description,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: _T.slate500,
-                              height: 1.65,
+                            // ── BILLING ───────────────────────────────────────────────
+                            const _DetailSectionTitle('Billing'),
+                            const SizedBox(height: 10),
+                            _BillingCard(
+                              savedStatus:
+                                  widget.task.billingStatus ??
+                                  BillingStatus.pending,
+                              selection: _billingSelection,
+                              isAccountant: _isAccountant,
+                              isEditMode: _billingEditMode,
+                              isDirty: _billingDirty,
+                              isSaving: _billingSaving,
+                              onEdit: _enterBillingEditMode,
+                              onCancel: _cancelBillingEdit,
+                              onSelect:
+                                  (s) => setState(() => _billingSelection = s),
+                              onSave: _saveBillingStatus,
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                      ],
+                            const SizedBox(height: 18),
 
-                      // Stage pipeline
-                      const _DetailSectionTitle('Stage Pipeline'),
-                      const SizedBox(height: 8),
-                      _StagePipeline(
-                        currentStatus: widget.task.status,
-                        stages: kStages,
+                            // ── START PRINT JOB (production / admin only) ─────────────
+                            if (isWaitingPrinting)
+                              PermissionGate(
+                                permission: UserPermission.schedulePrintAction,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _DetailSectionTitle('Print Job'),
+                                    const SizedBox(height: 10),
+                                    _StartPrintJobCard(
+                                      task: widget.task,
+                                      onTap: _startPrintJobScreen,
+                                    ),
+                                    const SizedBox(height: 18),
+                                  ],
+                                ),
+                              ),
+
+                            // Description
+                            if (widget.task.description.trim().isNotEmpty) ...[
+                              const _DetailSectionTitle('Description'),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: _T.slate50,
+                                  border: Border.all(color: _T.slate200),
+                                  borderRadius: BorderRadius.circular(_T.r),
+                                ),
+                                child: Text(
+                                  widget.task.description,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: _T.slate500,
+                                    height: 1.65,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                            ],
+
+                            // Stage pipeline
+                            const _DetailSectionTitle('Stage Pipeline'),
+                            const SizedBox(height: 8),
+                            _StagePipeline(
+                              currentStatus: widget.task.status,
+                              stages: kStages,
+                            ),
+                          ],
+                        ),
                       ),
 
                       // DEBUG
@@ -802,6 +833,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       //   unreadCount: 2,
                       //   onOpen: () => setState(() => _isDiscussionOpen = true),
                       // ),
+                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
