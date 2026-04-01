@@ -145,12 +145,13 @@ class _GhostTextFieldState extends State<GhostTextField> {
   };
 
   List<TextInputFormatter> get _formatters {
-    final List<TextInputFormatter> fs = [
-      if (widget.isDecimalOnlyField)
-        FilteringTextInputFormatter.allow(
-          RegExp(r'^\d*\.?\d{0,}$'), // only digits and optional single dot
-        ),
-    ];
+    final List<TextInputFormatter> fs = [];
+
+    if (widget.isDecimalOnlyField) {
+      fs.add(
+        DecimalInputFormatter(decimalRange: 2),
+      ); // optional: limit 2 decimal places
+    }
 
     if (widget.mode == GhostFieldMode.label ||
         widget.mode == GhostFieldMode.inline) {
@@ -278,4 +279,36 @@ class _T {
   static const slate200 = Color(0xFFE2E8F0);
   static const slate300 = Color(0xFFCBD5E1);
   static const white = Colors.white;
+}
+
+class DecimalInputFormatter extends TextInputFormatter {
+  final int? decimalRange;
+
+  DecimalInputFormatter({this.decimalRange});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    // Allow empty string
+    if (text.isEmpty) return newValue;
+
+    // Only digits and at most one dot
+    final regex = RegExp(r'^\d*\.?\d*$');
+    if (!regex.hasMatch(text)) {
+      // Invalid input → keep old value
+      return oldValue;
+    }
+
+    // Enforce decimal places limit if specified
+    if (decimalRange != null && text.contains('.')) {
+      final parts = text.split('.');
+      if (parts[1].length > decimalRange!) return oldValue;
+    }
+
+    return newValue;
+  }
 }

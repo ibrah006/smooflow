@@ -1628,8 +1628,10 @@ class _PrintSpecsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                '$quantity',
+              GhostTextField(
+                initialText: '$quantity',
+                onSubmitted: (newValue) {},
+                mode: GhostFieldMode.inline,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
