@@ -153,7 +153,11 @@ const List<TaskStatus> _kStatusOrder = [
 List<TaskStatus> _previousStatuses(TaskStatus current) {
   final idx = _kStatusOrder.indexOf(current);
   if (idx <= 0) return [];
-  return _kStatusOrder.sublist(0, idx).reversed.toList();
+  return _kStatusOrder
+      .sublist(0, idx)
+      .reversed
+      .where((s) => s != TaskStatus.printing)
+      .toList();
 }
 
 String _statusLabel(TaskStatus s) => switch (s) {
@@ -542,6 +546,23 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
           );
     }
+  }
+
+  Future<void> _onAdvanceTask(
+    bool canAdvance, {
+    required TaskStatus newStage,
+  }) async {
+    if (!canAdvance) return;
+
+    setState(() => _isProgressing = true);
+
+    if (newStage == TaskStatus.clientApproved) {
+      await approveDesignStage();
+    } else {
+      await _showMoveToNextStageDialog();
+    }
+
+    setState(() => _isProgressing = false);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -935,6 +956,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             _StagePipeline(
                               currentStatus: widget.task.status,
                               stages: kStages,
+                              onStageTap: (status) {
+                                _onAdvanceTask(true, newStage: status);
+                              },
                             ),
                           ],
                         ),
@@ -965,17 +989,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 advanceButtonKey: _advanceButtonKey,
                 stageBackButtonKey: _stageBackButtonKey,
                 isProgressing: _isProgressing,
-                onAdvanceTap: () async {
-                  if (!progressBtnEnabled) return;
-                  setState(() => _isProgressing = true);
-
-                  if (next == TaskStatus.clientApproved) {
-                    await approveDesignStage();
-                  } else {
-                    await _showMoveToNextStageDialog();
-                  }
-
-                  setState(() => _isProgressing = false);
+                onAdvanceTap: () {
+                  _onAdvanceTask(progressBtnEnabled, newStage: next!);
                 },
                 onStageBackTap: _showStageBackMenu,
               ),
@@ -3020,7 +3035,7 @@ class _StageStepper extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE PIPELINE  (unchanged)
+// STAGE PIPELINE
 // ─────────────────────────────────────────────────────────────────────────────
 class _PipelineMilestone {
   final String label;
@@ -3095,11 +3110,19 @@ String _subLabel(TaskStatus s) => switch (s) {
   TaskStatus.paused => 'Paused',
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// _StagePipeline
+// ─────────────────────────────────────────────────────────────────────────────
 class _StagePipeline extends StatelessWidget {
   final TaskStatus currentStatus;
   final List<DesignStageInfo> stages;
+  final ValueChanged<TaskStatus>? onStageTap;
 
-  const _StagePipeline({required this.currentStatus, required this.stages});
+  const _StagePipeline({
+    required this.currentStatus,
+    required this.stages,
+    this.onStageTap,
+  });
 
   DesignStageInfo? _infoFor(TaskStatus s) => stages
       .cast<DesignStageInfo?>()
@@ -3129,15 +3152,18 @@ class _StagePipeline extends StatelessWidget {
                 final isDone = idx < curMilestoneIdx;
                 final isCurrent = idx == curMilestoneIdx;
 
+                // Show ALL sub-steps when this is the active milestone.
+                // Past sub-steps get a check, the current one gets the "Now"
+                // chip, future sub-steps are shown dimmed so the user can see
+                // what's still ahead inside this stage.
                 final injectSubSteps = isCurrent && intermediate;
-
                 final List<TaskStatus> visibleSubSteps =
+                    injectSubSteps ? milestone.subSteps : [];
+
+                final int currentSubIdx =
                     injectSubSteps
-                        ? milestone.subSteps.sublist(
-                          0,
-                          milestone.subSteps.indexOf(currentStatus) + 1,
-                        )
-                        : [];
+                        ? milestone.subSteps.indexOf(currentStatus)
+                        : -1;
 
                 final bool isLastMilestone =
                     idx == _kPipelineMilestones.length - 1;
@@ -3148,234 +3174,535 @@ class _StagePipeline extends StatelessWidget {
                 final Color dotColor = si?.color ?? _T.blue;
                 final Color bgColor = si?.bg ?? _T.blue50;
 
+                final bool milestoneClickable = idx > curMilestoneIdx;
+
                 return <Widget>[
-                  Container(
-                    decoration: BoxDecoration(
-                      color:
-                          isCurrent && !injectSubSteps
-                              ? bgColor
-                              : Colors.transparent,
-                      border:
-                          milestoneHasBorder
-                              ? const Border(
-                                bottom: BorderSide(color: _T.slate100),
-                              )
-                              : null,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color:
-                                isDone
-                                    ? _T.blue
-                                    : isCurrent && !injectSubSteps
-                                    ? dotColor
-                                    : _T.slate100,
-                            shape: BoxShape.circle,
-                            border:
-                                injectSubSteps && isCurrent
-                                    ? Border.all(
-                                      color: dotColor.withOpacity(0.4),
-                                      width: 1.5,
-                                    )
-                                    : null,
-                          ),
-                          child: Center(
-                            child:
-                                isDone
-                                    ? const Icon(
-                                      Icons.check,
-                                      size: 11,
-                                      color: Colors.white,
-                                    )
-                                    : isCurrent && !injectSubSteps
-                                    ? Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    )
-                                    : Container(
-                                      width: injectSubSteps ? 6 : 5,
-                                      height: injectSubSteps ? 6 : 5,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            injectSubSteps
-                                                ? dotColor.withOpacity(0.45)
-                                                : _T.slate300,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            milestone.label,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight:
-                                  isCurrent ? FontWeight.w600 : FontWeight.w500,
-                              color:
-                                  isCurrent && !injectSubSteps
-                                      ? dotColor
-                                      : isDone || isCurrent
-                                      ? _T.ink3
-                                      : _T.slate400,
-                            ),
-                          ),
-                        ),
-                        if (isCurrent && !injectSubSteps)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: bgColor,
-                              border: Border.all(
-                                color: dotColor.withOpacity(0.3),
-                              ),
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            child: Text(
-                              'Current',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: dotColor,
-                              ),
-                            ),
-                          ),
-                        if (isDone)
-                          const Text(
-                            '✓ Done',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _T.slate400,
-                            ),
-                          ),
-                      ],
-                    ),
+                  _MilestoneRow(
+                    milestone: milestone,
+                    isDone: isDone,
+                    isCurrent: isCurrent,
+                    injectSubSteps: injectSubSteps,
+                    isLastMilestone: isLastMilestone,
+                    milestoneHasBorder: milestoneHasBorder,
+                    dotColor: dotColor,
+                    bgColor: bgColor,
+                    clickable: milestoneClickable,
+                    onTap:
+                        milestoneClickable
+                            ? () => onStageTap?.call(milestone.status)
+                            : null,
                   ),
+                  // All sub-steps: past, current, and upcoming within this stage.
                   ...visibleSubSteps.asMap().entries.map((subEntry) {
                     final subIdx = subEntry.key;
                     final s = subEntry.value;
-                    final isCur = s == currentStatus;
-                    final isPast = !isCur;
-                    final isLastSub = subIdx == visibleSubSteps.length - 1;
-                    final isVeryLast = isLastSub && isLastMilestone;
+
+                    final isCur = subIdx == currentSubIdx;
+                    final isPast = subIdx < currentSubIdx;
+                    final isUpcoming = subIdx > currentSubIdx;
+
+                    final bool isLastSub = subIdx == visibleSubSteps.length - 1;
+                    final bool isVeryLast = isLastSub && isLastMilestone;
 
                     final rowSi = _infoFor(s);
                     final Color rowFg =
-                        isCur ? subFg : (rowSi?.color ?? _T.blue);
+                        isCur
+                            ? subFg
+                            : isPast
+                            ? (rowSi?.color ?? _T.blue)
+                            : _T.slate400;
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: isCur ? subBg : Colors.transparent,
-                        border: Border(
-                          top: BorderSide(
-                            color: subIdx == 0 ? _T.slate200 : _T.slate100,
-                          ),
-                          bottom:
-                              isVeryLast
-                                  ? BorderSide.none
-                                  : isLastSub
-                                  ? const BorderSide(color: _T.slate100)
-                                  : BorderSide.none,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: isPast ? _T.blue : subFg,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child:
-                                  isPast
-                                      ? const Icon(
-                                        Icons.check,
-                                        size: 11,
-                                        color: Colors.white,
-                                      )
-                                      : Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _subLabel(s),
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight:
-                                    isCur ? FontWeight.w700 : FontWeight.w500,
-                                color: isCur ? subFg : _T.ink3,
-                              ),
-                            ),
-                          ),
-                          if (isPast)
-                            const Text(
-                              '✓ Done',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _T.slate400,
-                              ),
-                            ),
-                          if (isCur)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: subBg,
-                                border: Border.all(
-                                  color: subFg.withOpacity(0.3),
-                                ),
-                                borderRadius: BorderRadius.circular(99),
-                              ),
-                              child: Text(
-                                'Now',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: subFg,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                    return _SubStepRow(
+                      status: s,
+                      label: _subLabel(s),
+                      isCurrent: isCur,
+                      isPast: isPast,
+                      isUpcoming: isUpcoming,
+                      isVeryLast: isVeryLast,
+                      isLastSub: isLastSub,
+                      subIdx: subIdx,
+                      subFg: subFg,
+                      subBg: subBg,
+                      rowFg: rowFg,
+                      clickable: false,
+                      onTap: null,
                     );
                   }),
                 ];
               }).toList(),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MILESTONE ROW  (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+class _MilestoneRow extends StatefulWidget {
+  final _PipelineMilestone milestone;
+  final bool isDone;
+  final bool isCurrent;
+  final bool injectSubSteps;
+  final bool isLastMilestone;
+  final bool milestoneHasBorder;
+  final Color dotColor;
+  final Color bgColor;
+  final bool clickable;
+  final VoidCallback? onTap;
+
+  const _MilestoneRow({
+    required this.milestone,
+    required this.isDone,
+    required this.isCurrent,
+    required this.injectSubSteps,
+    required this.isLastMilestone,
+    required this.milestoneHasBorder,
+    required this.dotColor,
+    required this.bgColor,
+    required this.clickable,
+    required this.onTap,
+  });
+
+  @override
+  State<_MilestoneRow> createState() => _MilestoneRowState();
+}
+
+class _MilestoneRowState extends State<_MilestoneRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final showHover = widget.clickable && _hovered;
+
+    Color rowBg;
+    if (widget.isCurrent && !widget.injectSubSteps) {
+      rowBg = showHover ? widget.bgColor.withOpacity(0.85) : widget.bgColor;
+    } else if (showHover) {
+      rowBg = _T.slate50;
+    } else {
+      rowBg = Theme.of(context).canvasColor;
+    }
+
+    return MouseRegion(
+      cursor: widget.clickable ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: rowBg,
+            border:
+                widget.milestoneHasBorder
+                    ? const Border(bottom: BorderSide(color: _T.slate100))
+                    : null,
+          ),
+          child: Transform.scale(
+            scale: showHover ? 1.012 : 1.0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 130),
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color:
+                          widget.isDone
+                              ? _T.blue
+                              : widget.isCurrent && !widget.injectSubSteps
+                              ? widget.dotColor
+                              : showHover
+                              ? _T.slate200
+                              : _T.slate100,
+                      shape: BoxShape.circle,
+                      border:
+                          widget.injectSubSteps && widget.isCurrent
+                              ? Border.all(
+                                color: widget.dotColor.withOpacity(0.4),
+                                width: 1.5,
+                              )
+                              : null,
+                    ),
+                    child: Center(
+                      child:
+                          widget.isDone
+                              ? const Icon(
+                                Icons.check,
+                                size: 11,
+                                color: Colors.white,
+                              )
+                              : widget.isCurrent && !widget.injectSubSteps
+                              ? Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                              : Container(
+                                width: widget.injectSubSteps ? 6 : 5,
+                                height: widget.injectSubSteps ? 6 : 5,
+                                decoration: BoxDecoration(
+                                  color:
+                                      widget.injectSubSteps
+                                          ? widget.dotColor.withOpacity(0.45)
+                                          : showHover
+                                          ? _T.slate400
+                                          : _T.slate300,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.milestone.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            widget.isCurrent
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                        color:
+                            widget.isCurrent && !widget.injectSubSteps
+                                ? widget.dotColor
+                                : widget.isDone || widget.isCurrent
+                                ? _T.ink3
+                                : showHover
+                                ? _T.ink3
+                                : _T.slate400,
+                      ),
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    transitionBuilder:
+                        (child, anim) => FadeTransition(
+                          opacity: anim,
+                          child: SlideTransition(
+                            position: Tween(
+                              begin: const Offset(0.15, 0),
+                              end: Offset.zero,
+                            ).animate(anim),
+                            child: child,
+                          ),
+                        ),
+                    child:
+                        showHover
+                            ? _MoveToChip(
+                              key: const ValueKey('move'),
+                              label: widget.milestone.label,
+                              color: widget.dotColor,
+                              bg: widget.bgColor,
+                            )
+                            : widget.isCurrent && !widget.injectSubSteps
+                            ? _CurrentChip(
+                              key: const ValueKey('current'),
+                              color: widget.dotColor,
+                              bg: widget.bgColor,
+                            )
+                            : widget.isDone
+                            ? const _DoneLabel(key: ValueKey('done'))
+                            : const SizedBox.shrink(key: ValueKey('none')),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-STEP ROW  — now supports three states: past · current · upcoming
+// ─────────────────────────────────────────────────────────────────────────────
+class _SubStepRow extends StatefulWidget {
+  final TaskStatus status;
+  final String label;
+  final bool isCurrent;
+  final bool isPast;
+  final bool isUpcoming; // ← new: steps after currentStatus in this milestone
+  final bool isVeryLast;
+  final bool isLastSub;
+  final int subIdx;
+  final Color subFg;
+  final Color subBg;
+  final Color rowFg;
+  final bool clickable;
+  final VoidCallback? onTap;
+
+  const _SubStepRow({
+    required this.status,
+    required this.label,
+    required this.isCurrent,
+    required this.isPast,
+    required this.isUpcoming,
+    required this.isVeryLast,
+    required this.isLastSub,
+    required this.subIdx,
+    required this.subFg,
+    required this.subBg,
+    required this.rowFg,
+    required this.clickable,
+    required this.onTap,
+  });
+
+  @override
+  State<_SubStepRow> createState() => _SubStepRowState();
+}
+
+class _SubStepRowState extends State<_SubStepRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final showHover = widget.clickable && _hovered;
+
+    return MouseRegion(
+      cursor: widget.clickable ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color:
+                widget.isCurrent
+                    ? widget.subBg
+                    : showHover
+                    ? _T.slate50
+                    : Colors.transparent,
+            border: Border(
+              top: BorderSide(
+                color: widget.subIdx == 0 ? _T.slate200 : _T.slate100,
+              ),
+              bottom:
+                  widget.isVeryLast
+                      ? BorderSide.none
+                      : widget.isLastSub
+                      ? const BorderSide(color: _T.slate100)
+                      : BorderSide.none,
+            ),
+          ),
+          child: Transform.scale(
+            scale: showHover ? 1.012 : 1.0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  // Status dot
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color:
+                          widget.isPast
+                              ? _T.blue
+                              : widget.isCurrent
+                              ? widget.subFg
+                              : _T.slate100, // upcoming: empty/grey circle
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child:
+                          widget.isPast
+                              ? const Icon(
+                                Icons.check,
+                                size: 11,
+                                color: Colors.white,
+                              )
+                              : widget.isCurrent
+                              ? Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                              : Container(
+                                // upcoming: tiny muted dot
+                                width: 5,
+                                height: 5,
+                                decoration: const BoxDecoration(
+                                  color: _T.slate300,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Label
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            widget.isCurrent
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                        // Upcoming steps are visually muted
+                        color:
+                            widget.isCurrent
+                                ? widget.subFg
+                                : widget.isPast
+                                ? _T.ink3
+                                : _T.slate400,
+                      ),
+                    ),
+                  ),
+
+                  // Right chip / label
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    transitionBuilder:
+                        (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
+                    child:
+                        widget.isPast
+                            ? const _DoneLabel(key: ValueKey('done'))
+                            : widget.isCurrent
+                            ? _NowChip(
+                              key: const ValueKey('now'),
+                              color: widget.subFg,
+                              bg: widget.subBg,
+                            )
+                            : const SizedBox.shrink(
+                              key: ValueKey('none'),
+                            ), // upcoming: no chip
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHIP / LABEL ATOMS  (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MoveToChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color bg;
+
+  const _MoveToChip({
+    super.key,
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: color.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.arrow_forward_rounded, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            'Move to $label',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentChip extends StatelessWidget {
+  final Color color;
+  final Color bg;
+
+  const _CurrentChip({super.key, required this.color, required this.bg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        'Current',
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _NowChip extends StatelessWidget {
+  final Color color;
+  final Color bg;
+
+  const _NowChip({super.key, required this.color, required this.bg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        'Now',
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _DoneLabel extends StatelessWidget {
+  const _DoneLabel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      '✓ Done',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: _T.slate400,
       ),
     );
   }
