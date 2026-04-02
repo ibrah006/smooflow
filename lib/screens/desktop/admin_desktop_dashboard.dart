@@ -210,16 +210,23 @@ class _AdminDesktopDashboardScreenState
     super.initState();
     AppToast.init(kNavigatorKey);
     Future.microtask(() async {
-      await ref
-          .read(projectNotifierProvider.notifier)
-          .load(projectsLastAddedLocal: null);
-      // await ref.read(materialNotifierProvider.notifier).fetchMaterials();
-      // await ref.read(materialNotifierProvider.notifier).fetchTransactions();
-      await ref.read(taskNotifierProvider.notifier).loadAll();
+      await Future.wait([
+        ref
+            .read(projectNotifierProvider.notifier)
+            .load(projectsLastAddedLocal: null),
+        ref.read(taskNotifierProvider.notifier).loadAll(),
+        ref.read(memberNotifierProvider.notifier).members,
+      ]);
       // await ref
-      //     .read(taskNotifierProvider.notifier)
-      //     .fetchProductionScheduleToday();
-      await ref.read(memberNotifierProvider.notifier).members;
+      //     .read(projectNotifierProvider.notifier)
+      //     .load(projectsLastAddedLocal: null);
+      // // await ref.read(materialNotifierProvider.notifier).fetchMaterials();
+      // // await ref.read(materialNotifierProvider.notifier).fetchTransactions();
+      // await ref.read(taskNotifierProvider.notifier).loadAll();
+      // // await ref
+      // //     .read(taskNotifierProvider.notifier)
+      // //     .fetchProductionScheduleToday();
+      // await ref.read(memberNotifierProvider.notifier).members;
       if (mounted) setState(() => _isInitLoading = false);
     });
 
