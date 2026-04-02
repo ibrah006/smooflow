@@ -1878,7 +1878,7 @@ class _TaskRowState extends State<_TaskRow> {
   static const _completeBg = Color(0xFFF0FDF4); // green-50
   static const _completeBorder = Color(0xFFBBF7D0); // green-200
   static const _completeText = Color(0xFF166534); // green-900 — readable
-  static const _completeMuted = Color(0xFF4ADE80); // green-400
+  static const _completeMuted = Color.fromARGB(255, 31, 220, 129); // green-400
 
   @override
   Widget build(BuildContext context) {
@@ -1920,7 +1920,7 @@ class _TaskRowState extends State<_TaskRow> {
           // in a long list without relying on color alone.
           border:
               isCompleted
-                  ? Border(left: BorderSide(color: _completeMuted, width: 3))
+                  ? Border(left: BorderSide(color: _completeMuted, width: 2.75))
                   : null,
         ),
         child: Material(
