@@ -413,8 +413,9 @@ class _SkeletonRow extends StatelessWidget {
 /// Inline error + retry shown inside a group card.
 class _OrgErrorState extends StatelessWidget {
   final VoidCallback onRetry;
+  final bool showRetry;
 
-  const _OrgErrorState({required this.onRetry});
+  const _OrgErrorState({required this.onRetry, this.showRetry = true});
 
   @override
   Widget build(BuildContext context) {
@@ -430,19 +431,20 @@ class _OrgErrorState extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: _T.slate500),
             ),
           ),
-          GestureDetector(
-            onTap: onRetry,
-            child: Text(
-              'Retry',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.blue,
-                decoration: TextDecoration.underline,
-                decorationColor: _T.blue.withOpacity(0.4),
+          if (showRetry)
+            GestureDetector(
+              onTap: onRetry,
+              child: Text(
+                'Retry',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _T.blue,
+                  decoration: TextDecoration.underline,
+                  decorationColor: _T.blue.withOpacity(0.4),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -792,7 +794,7 @@ class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
               const _SkeletonRow(valueWidth: 180),
               const _SkeletonRow(valueWidth: double.infinity, divider: false),
             ] else if (widget.orgError != null) ...[
-              _OrgErrorState(onRetry: widget.onRetry),
+              _OrgErrorState(onRetry: widget.onRetry, showRetry: false),
             ] else ...[
               _SettingsRow(
                 label: 'Company name',
