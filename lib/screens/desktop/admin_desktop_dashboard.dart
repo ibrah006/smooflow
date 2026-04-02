@@ -217,17 +217,22 @@ class _AdminDesktopDashboardScreenState
         ref.read(taskNotifierProvider.notifier).loadAll(),
         ref.read(memberNotifierProvider.notifier).members,
       ]);
+      await ref
+          .read(projectNotifierProvider.notifier)
+          .load(projectsLastAddedLocal: null);
+
+      await ref.read(taskNotifierProvider.notifier).loadAll();
       // await ref
-      //     .read(projectNotifierProvider.notifier)
-      //     .load(projectsLastAddedLocal: null);
-      // // await ref.read(materialNotifierProvider.notifier).fetchMaterials();
-      // // await ref.read(materialNotifierProvider.notifier).fetchTransactions();
-      // await ref.read(taskNotifierProvider.notifier).loadAll();
-      // // await ref
-      // //     .read(taskNotifierProvider.notifier)
-      // //     .fetchProductionScheduleToday();
+      //     .read(taskNotifierProvider.notifier)
+      //     .fetchProductionScheduleToday();
       // await ref.read(memberNotifierProvider.notifier).members;
+
       if (mounted) setState(() => _isInitLoading = false);
+
+      await Future.wait([
+        ref.read(materialNotifierProvider.notifier).fetchMaterials(),
+        ref.read(materialNotifierProvider.notifier).fetchTransactions(),
+      ]);
     });
 
     checkForUpdate(context);
