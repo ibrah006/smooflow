@@ -23,6 +23,7 @@ import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
@@ -1872,6 +1873,13 @@ class _TaskRow extends StatefulWidget {
 class _TaskRowState extends State<_TaskRow> {
   bool _hovered = false;
 
+  // Completion tokens — a distinct light green palette so the row reads
+  // "done" at a glance without being loud.
+  static const _completeBg = Color(0xFFF0FDF4); // green-50
+  static const _completeBorder = Color(0xFFBBF7D0); // green-200
+  static const _completeText = Color(0xFF166534); // green-900 — readable
+  static const _completeMuted = Color(0xFF4ADE80); // green-400
+
   @override
   Widget build(BuildContext context) {
     final t = widget.task;
@@ -1881,6 +1889,8 @@ class _TaskRowState extends State<_TaskRow> {
     final s = stageInfo(t.status);
     final d = t.date ?? t.createdAt;
 
+    final isCompleted = t.status == TaskStatus.completed;
+
     final dateFormatted = fmtDate(d);
     final dateParts = dateFormatted.split(' ');
     final dateDisplay =
@@ -1888,29 +1898,75 @@ class _TaskRowState extends State<_TaskRow> {
             ? dateParts.take(dateParts.length - 1).join(' ')
             : dateFormatted;
 
+    // Completed rows are non-interactive — no hover, no tap
+    final Color rowColor =
+        isCompleted
+            ? _completeBg
+            : widget.isSelected
+            ? _T.blue50
+            : _hovered
+            ? _T.slate50
+            : _T.white;
+
     return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Material(
-        color:
-            widget.isSelected ? _T.blue50 : (_hovered ? _T.slate50 : _T.white),
-        borderRadius: BorderRadius.circular(_T.r),
-        child: InkWell(
-          onTap: widget.onTap,
+      cursor: isCompleted ? SystemMouseCursors.basic : MouseCursor.defer,
+      onEnter: (_) {
+        if (!isCompleted) setState(() => _hovered = true);
+      },
+      onExit: (_) {
+        if (!isCompleted) setState(() => _hovered = false);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        decoration: BoxDecoration(
+          color: rowColor,
           borderRadius: BorderRadius.circular(_T.r),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: _AnimatedColRow(
-              effectiveVisible: widget.effectiveVisible,
-              pinnedTrailingCol: _kBillingCol,
-              builder:
-                  (col, opacity) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
-                    child: Opacity(
-                      opacity: opacity,
-                      child: _cellFor(col, t, p, m, s, dateDisplay),
+          // Subtle green left-edge accent — makes completed rows scannable
+          // in a long list without relying on color alone.
+          border:
+              isCompleted
+                  ? Border(left: BorderSide(color: _completeMuted, width: 3))
+                  : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(_T.r),
+          child: InkWell(
+            onTap: isCompleted ? null : widget.onTap,
+            borderRadius: BorderRadius.circular(_T.r),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 11,
+                bottom: 11,
+                // Compensate for the 3px border so cells stay aligned with
+                // non-completed rows.
+                left: isCompleted ? 0 : 3,
+              ),
+              child: _AnimatedColRow(
+                effectiveVisible: widget.effectiveVisible,
+                pinnedTrailingCol: _kBillingCol,
+                builder:
+                    (col, opacity) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _kCellHPad,
+                      ),
+                      child: Opacity(
+                        opacity:
+                            isCompleted
+                                ? (opacity * 0.6) // globally dim all cells
+                                : opacity,
+                        child: _cellFor(
+                          col,
+                          t,
+                          p,
+                          m,
+                          s,
+                          dateDisplay,
+                          isCompleted: isCompleted,
+                        ),
+                      ),
                     ),
-                  ),
+              ),
             ),
           ),
         ),
@@ -1924,16 +1980,52 @@ class _TaskRowState extends State<_TaskRow> {
     Project? p,
     Member? m,
     dynamic s,
-    String date,
-  ) {
+    String date, {
+    required bool isCompleted,
+  }) {
+    // Shared text style overrides for completed rows
+    TextStyle completedBody(TextStyle base) =>
+        isCompleted
+            ? base.copyWith(
+              color: _completeText.withOpacity(0.55),
+              decoration: col.id == 'task' ? TextDecoration.lineThrough : null,
+              decorationColor: _completeMuted.withOpacity(0.7),
+              decorationThickness: 1.5,
+            )
+            : base;
+
     return switch (col.id) {
-      'task' => Text(
-        t.name,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: _T.ink,
-        ),
+      'task' => Row(
+        children: [
+          // if (isCompleted) ...[
+          //   Container(
+          //     width: 16,
+          //     height: 16,
+          //     margin: const EdgeInsets.only(right: 7),
+          //     decoration: const BoxDecoration(
+          //       color: _completeMuted,
+          //       shape: BoxShape.circle,
+          //     ),
+          //     child: const Icon(
+          //       Icons.check_rounded,
+          //       size: 10,
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // ],
+          Expanded(
+            child: Text(
+              t.name,
+              style: completedBody(
+                const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
 
       'project' =>
@@ -1944,7 +2036,8 @@ class _TaskRowState extends State<_TaskRow> {
                   width: 7,
                   height: 7,
                   decoration: BoxDecoration(
-                    color: p.color,
+                    color:
+                        isCompleted ? _completeMuted.withOpacity(0.5) : p.color,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1953,7 +2046,9 @@ class _TaskRowState extends State<_TaskRow> {
                   child: Text(
                     p.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5, color: _T.slate500),
+                    style: completedBody(
+                      const TextStyle(fontSize: 12.5, color: _T.slate500),
+                    ),
                   ),
                 ),
               ],
@@ -1965,11 +2060,13 @@ class _TaskRowState extends State<_TaskRow> {
             ? Text(
               t.ref!,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
-                fontFamily: 'monospace',
+              style: completedBody(
+                const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                  fontFamily: 'monospace',
+                ),
               ),
             )
             : const Text(
@@ -1977,18 +2074,29 @@ class _TaskRowState extends State<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'stage' => StagePill(stageInfo: s),
+      // Stage pill: in completed rows show a dedicated "Completed" pill
+      // rather than whatever the stage pill renders — cleaner and unambiguous.
+      'stage' => isCompleted ? _CompletedStagePill() : StagePill(stageInfo: s),
+
       'date' => Text(
         date,
-        style: const TextStyle(fontSize: 12.5, color: _T.slate500),
+        style: completedBody(
+          const TextStyle(fontSize: 12.5, color: _T.slate500),
+        ),
       ),
-      'priority' => PriorityPill(priority: t.priority),
+
+      'priority' =>
+        isCompleted
+            ? Opacity(opacity: 0.45, child: PriorityPill(priority: t.priority))
+            : PriorityPill(priority: t.priority),
 
       'size' =>
         t.size != null && !t.size!.contains("null")
             ? RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 12.5, color: _T.ink3),
+                style: completedBody(
+                  const TextStyle(fontSize: 12.5, color: _T.ink3),
+                ),
                 children: [
                   TextSpan(text: t.size!.split(' ')[0]),
                   TextSpan(
@@ -1996,7 +2104,13 @@ class _TaskRowState extends State<_TaskRow> {
                         t.size!.split(' ').length > 1
                             ? t.size!.split(' ')[1]
                             : '',
-                    style: const TextStyle(fontSize: 11, color: _T.slate400),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color:
+                          isCompleted
+                              ? _completeText.withOpacity(0.35)
+                              : _T.slate400,
+                    ),
                   ),
                 ],
               ),
@@ -2010,10 +2124,12 @@ class _TaskRowState extends State<_TaskRow> {
         t.quantity != null
             ? Text(
               '${t.quantity}',
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: _T.ink3,
+              style: completedBody(
+                const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                ),
               ),
             )
             : const Text(
@@ -2025,13 +2141,22 @@ class _TaskRowState extends State<_TaskRow> {
         m != null
             ? Row(
               children: [
-                AvatarWidget(initials: m.initials, color: m.color, size: 22),
+                Opacity(
+                  opacity: isCompleted ? 0.5 : 1.0,
+                  child: AvatarWidget(
+                    initials: m.initials,
+                    color: m.color,
+                    size: 22,
+                  ),
+                ),
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     m.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5, color: _T.slate500),
+                    style: completedBody(
+                      const TextStyle(fontSize: 12.5, color: _T.slate500),
+                    ),
                   ),
                 ),
               ],
@@ -2041,7 +2166,10 @@ class _TaskRowState extends State<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => _BillingStatusCell(status: t.billingStatus),
+      'billing' => _BillingStatusCell(
+        status: t.billingStatus,
+        dimmed: isCompleted,
+      ),
 
       _ => const SizedBox.shrink(),
     };
@@ -2049,11 +2177,58 @@ class _TaskRowState extends State<_TaskRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING STATUS CELL
+// COMPLETED STAGE PILL
+// Replaces StagePill in the stage column for completed rows.
+// ─────────────────────────────────────────────────────────────────────────────
+class _CompletedStagePill extends StatelessWidget {
+  const _CompletedStagePill();
+
+  static const _fg = Color(0xFF166534);
+  static const _bg = Color(0xFFDCFCE7); // green-100
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: _fg.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: Color(0xFF4ADE80),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          const Text(
+            'Completed',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: _fg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING STATUS CELL — updated with dimmed param
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingStatusCell extends StatelessWidget {
   final BillingStatus? status;
-  const _BillingStatusCell({required this.status});
+  final bool dimmed;
+
+  const _BillingStatusCell({required this.status, this.dimmed = false});
 
   @override
   Widget build(BuildContext context) {
@@ -2072,12 +2247,15 @@ class _BillingStatusCell extends StatelessWidget {
       BillingStatus.quoteGiven => ('Quote', _T.slate400, _T.slate100),
     };
 
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
+    return Opacity(
+      opacity: dimmed ? 0.5 : 1.0,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.black,
+        ),
       ),
     );
   }
