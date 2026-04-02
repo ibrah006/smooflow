@@ -227,12 +227,12 @@ class _AdminDesktopDashboardScreenState
       //     .fetchProductionScheduleToday();
       // await ref.read(memberNotifierProvider.notifier).members;
 
-      if (mounted) setState(() => _isInitLoading = false);
-
-      await Future.wait([
+      Future.wait([
         ref.read(materialNotifierProvider.notifier).fetchMaterials(),
         ref.read(materialNotifierProvider.notifier).fetchTransactions(),
       ]);
+
+      if (mounted) setState(() => _isInitLoading = false);
     });
 
     checkForUpdate(context);
