@@ -1983,7 +1983,7 @@ class _TaskRowState extends State<_TaskRow> {
         isCompleted
             ? base.copyWith(
               color: _completeText.withOpacity(0.55),
-              decoration: col.id == 'task' ? TextDecoration.lineThrough : null,
+              // decoration: col.id == 'task' ? TextDecoration.lineThrough : null,
               decorationColor: _completeMuted.withOpacity(0.7),
               decorationThickness: 1.5,
             )
