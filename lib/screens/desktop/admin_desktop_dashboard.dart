@@ -238,6 +238,7 @@ class _AdminDesktopDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    ;
     return GestureDetector(
       onTap: () {
         _addTaskFocusNode.unfocus();
@@ -278,7 +279,10 @@ class _AdminDesktopDashboardScreenState
                 Expanded(
                   child: Column(
                     children: [
-                      _AdminTopbar(currentView: _view),
+                      _AdminTopbar(
+                        currentView: _view,
+                        selectedProjectId: _selectedProjectId,
+                      ),
                       Expanded(
                         child: Row(
                           children: [
@@ -728,7 +732,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
 class _AdminTopbar extends StatelessWidget {
   final _AdminView currentView;
-  const _AdminTopbar({required this.currentView});
+  final String? selectedProjectId;
+  const _AdminTopbar({required this.currentView, this.selectedProjectId});
 
   // ── Section metadata ───────────────────────────────────────────────────────
   // Returns (category, label) for non-overview views.
@@ -774,7 +779,10 @@ class _AdminTopbar extends StatelessWidget {
           const Spacer(),
 
           // ── Right: create + user ───────────────────────────────────────────
-          _CreateTaskButton(context: context),
+          _CreateTaskButton(
+            context: context,
+            selectedProjectId: selectedProjectId,
+          ),
           const SizedBox(width: 12),
           if (user != null)
             UserMenuChip(
@@ -924,7 +932,8 @@ class _BreadcrumbSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _CreateTaskButton extends StatefulWidget {
   final BuildContext context;
-  const _CreateTaskButton({required this.context});
+  final String? selectedProjectId;
+  const _CreateTaskButton({required this.context, this.selectedProjectId});
 
   @override
   State<_CreateTaskButton> createState() => _CreateTaskButtonState();
@@ -944,7 +953,9 @@ class _CreateTaskButtonState extends State<_CreateTaskButton> {
             () => AppRoutes.navigateTo(
               widget.context,
               AppRoutes.designCreateTaskScreen,
-              arguments: CreateTaskArgs(preselectedProjectId: null),
+              arguments: CreateTaskArgs(
+                preselectedProjectId: widget.selectedProjectId,
+              ),
             ),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),

@@ -148,6 +148,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
           widget.initialProject != null
               ? ref.watch(projectByIdProvider(widget.initialProject!))
               : null;
+      setState(() {});
     });
     for (final c in [_nameCtrl, _refCtrl, _wCtrl, _hCtrl, _qtyCtrl]) {
       c.addListener(_onFieldChange);
