@@ -325,7 +325,7 @@ class _DialogBody extends ConsumerWidget {
                       ),
                       if (task.ref != null || projectName != null) ...[
                         const SizedBox(height: 3),
-                        Row(
+                        Wrap(
                           children: [
                             if (projectName != null)
                               _MetaChip(
@@ -551,15 +551,21 @@ class _MetaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 10, color: _T.slate400),
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Icon(icon, size: 10, color: _T.slate400),
+        ),
         const SizedBox(width: 3),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10.5,
-            color: _T.slate400,
-            fontWeight: FontWeight.w400,
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: _T.slate400,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ),
       ],
