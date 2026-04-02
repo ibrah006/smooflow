@@ -161,7 +161,7 @@ fastforge release
 
 ### New:
 ```bash
-fastforge release --name prod --jobs windows-exe
+fastforge release --name prod --jobs windows-release
 ```
 
 #### Sign
