@@ -1992,22 +1992,22 @@ class _TaskRowState extends State<_TaskRow> {
     return switch (col.id) {
       'task' => Row(
         children: [
-          if (isCompleted) ...[
-            Container(
-              width: 16,
-              height: 16,
-              margin: const EdgeInsets.only(right: 7),
-              decoration: const BoxDecoration(
-                color: _completeMuted,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                size: 10,
-                color: Colors.white,
-              ),
-            ),
-          ],
+          // if (isCompleted) ...[
+          //   Container(
+          //     width: 16,
+          //     height: 16,
+          //     margin: const EdgeInsets.only(right: 7),
+          //     decoration: const BoxDecoration(
+          //       color: _completeMuted,
+          //       shape: BoxShape.circle,
+          //     ),
+          //     child: const Icon(
+          //       Icons.check_rounded,
+          //       size: 10,
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // ],
           Expanded(
             child: Text(
               t.name,
