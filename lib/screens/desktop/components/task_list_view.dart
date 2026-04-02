@@ -1901,7 +1901,7 @@ class _TaskRowState extends State<_TaskRow> {
     // Completed rows are non-interactive — no hover, no tap
     final Color rowColor =
         isCompleted
-            ? _completeBg
+            ? (_hovered ? const Color(0xFFDCFCE7) : _completeBg)
             : widget.isSelected
             ? _T.blue50
             : _hovered
@@ -1909,13 +1909,8 @@ class _TaskRowState extends State<_TaskRow> {
             : _T.white;
 
     return MouseRegion(
-      cursor: isCompleted ? SystemMouseCursors.basic : MouseCursor.defer,
-      onEnter: (_) {
-        if (!isCompleted) setState(() => _hovered = true);
-      },
-      onExit: (_) {
-        if (!isCompleted) setState(() => _hovered = false);
-      },
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
@@ -1932,7 +1927,7 @@ class _TaskRowState extends State<_TaskRow> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(_T.r),
           child: InkWell(
-            onTap: isCompleted ? null : widget.onTap,
+            onTap: widget.onTap,
             borderRadius: BorderRadius.circular(_T.r),
             child: Padding(
               padding: EdgeInsets.only(
@@ -1997,22 +1992,22 @@ class _TaskRowState extends State<_TaskRow> {
     return switch (col.id) {
       'task' => Row(
         children: [
-          // if (isCompleted) ...[
-          //   Container(
-          //     width: 16,
-          //     height: 16,
-          //     margin: const EdgeInsets.only(right: 7),
-          //     decoration: const BoxDecoration(
-          //       color: _completeMuted,
-          //       shape: BoxShape.circle,
-          //     ),
-          //     child: const Icon(
-          //       Icons.check_rounded,
-          //       size: 10,
-          //       color: Colors.white,
-          //     ),
-          //   ),
-          // ],
+          if (isCompleted) ...[
+            Container(
+              width: 16,
+              height: 16,
+              margin: const EdgeInsets.only(right: 7),
+              decoration: const BoxDecoration(
+                color: _completeMuted,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 10,
+                color: Colors.white,
+              ),
+            ),
+          ],
           Expanded(
             child: Text(
               t.name,
