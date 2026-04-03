@@ -605,10 +605,6 @@ class _QuotationsSectionState extends ConsumerState<_QuotationsSection> {
   Widget build(BuildContext context) {
     final hasLogo = widget.profileUrl != null;
 
-    print(
-      "profile url: ${widget.profileUrl}, imageVersion: ${widget.imageVersion}",
-    );
-
     return _SectionScaffold(
       title: 'Quotations & Invoices',
       subtitle: 'Company details printed on every document you issue.',
