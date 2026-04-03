@@ -50,6 +50,7 @@ class GhostTextField extends StatefulWidget {
   final VoidCallback? onEditingComplete;
   final Function(String newValue) onSubmitted;
   final bool isDecimalOnlyField;
+  final double? hPadding;
 
   /// [inline] mode only — minimum field width when empty or very short.
   /// Defaults to 50.0.
@@ -72,6 +73,7 @@ class GhostTextField extends StatefulWidget {
     this.inlineMinWidth = 20.0,
     this.inlineMaxWidth = 80.0,
     this.isDecimalOnlyField = false,
+    this.hPadding,
   });
 
   @override
@@ -167,6 +169,7 @@ class _GhostTextFieldState extends State<GhostTextField> {
   Widget build(BuildContext context) {
     final fontSize = widget.style.fontSize ?? 14;
     final vPad = (fontSize * 0.35).clamp(4.0, 10.0);
+    final hPad = widget.hPadding ?? 6;
 
     final field = TextField(
       controller: _controller,
@@ -195,7 +198,7 @@ class _GhostTextFieldState extends State<GhostTextField> {
         focusedBorder: InputBorder.none,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(
-          horizontal: 6,
+          horizontal: hPad,
           vertical: vPad,
         ).copyWith(right: 5),
       ),

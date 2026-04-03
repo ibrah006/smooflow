@@ -42,6 +42,7 @@ import 'package:smooflow/screens/desktop/components/billing_document_view.dart'
         kLineColumnVerticalDividerHeight;
 import 'package:smooflow/screens/desktop/components/close_btn.dart';
 import 'package:smooflow/screens/desktop/components/company_logo_picker.dart';
+import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/macos_date_picker_dialog.dart';
 import 'package:smooflow/screens/desktop/components/no_size_warning.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -2060,35 +2061,42 @@ class _EditCellState extends State<_EditCell> {
                 ]
                 : null,
       ),
-      child: TextField(
-        controller: widget.controller,
-        focusNode: _focus,
-        textAlign: widget.textAlign,
-        onSubmitted: widget.onSubmitted,
-        onTapOutside: (event) {
-          widget.onSubmitted(widget.controller.text);
-          FocusScope.of(context).unfocus();
-        },
-        keyboardType:
-            widget.numeric
-                ? const TextInputType.numberWithOptions(decimal: true)
-                : TextInputType.text,
-        inputFormatters:
-            widget.numeric
-                ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
-                : null,
+      child: GhostTextField(
+        initialText: widget.controller.text,
         style: widget.style,
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          hintStyle: widget.style.copyWith(color: Colors.grey.shade400),
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 5,
-            vertical: 4,
-          ),
-        ),
+        mode: GhostFieldMode.label,
+        onSubmitted: widget.onSubmitted,
+        hPadding: 2,
       ),
+      // TextField(
+      //   controller: widget.controller,
+      //   focusNode: _focus,
+      //   textAlign: widget.textAlign,
+      //   onSubmitted: widget.onSubmitted,
+      //   onTapOutside: (event) {
+      //     widget.onSubmitted(widget.controller.text);
+      //     FocusScope.of(context).unfocus();
+      //   },
+      //   keyboardType:
+      //       widget.numeric
+      //           ? const TextInputType.numberWithOptions(decimal: true)
+      //           : TextInputType.text,
+      //   inputFormatters:
+      //       widget.numeric
+      //           ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
+      //           : null,
+      //   style: widget.style,
+      //   decoration: InputDecoration(
+      //     hintText: widget.hint,
+      //     hintStyle: widget.style.copyWith(color: Colors.grey.shade400),
+      //     border: InputBorder.none,
+      //     isDense: true,
+      //     contentPadding: const EdgeInsets.symmetric(
+      //       horizontal: 5,
+      //       vertical: 4,
+      //     ),
+      //   ),
+      // ),
     );
   }
 }
