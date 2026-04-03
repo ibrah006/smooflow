@@ -1915,7 +1915,7 @@ class _TaskRowState extends State<_TaskRow> {
         duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
           color: rowColor,
-          borderRadius: BorderRadius.circular(isCompleted ? 1 : _T.r),
+          borderRadius: BorderRadius.circular(isCompleted ? 3 : _T.r),
           // Subtle green left-edge accent — makes completed rows scannable
           // in a long list without relying on color alone.
           border:
