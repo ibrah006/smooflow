@@ -14,7 +14,6 @@
 
 import 'dart:typed_data';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -176,10 +175,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await orgService.updateProfileImage(imageBytes: bytes, fileName: fileName);
 
     // _logoBytes = bytes;
-
-    await CachedNetworkImage.evictFromCache(
-      '${ref.read(organizationNotifierProvider).organization!.profileUrl}?v=$_imageVersion',
-    );
 
     // Update local organization data
     setState(() {
