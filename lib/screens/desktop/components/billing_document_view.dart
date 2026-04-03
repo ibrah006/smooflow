@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:googleapis/cloudresourcemanager/v3.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:smooflow/core/models/quotation.dart';
 import 'package:smooflow/core/models/quotation_line_item.dart';
 import 'package:smooflow/notifiers/stream/event_notifier.dart';
+import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 
 const kLeftPaddingDescriptionColumn = 22.0;
@@ -100,7 +103,7 @@ class Invoice {
   );
 }
 
-class BillingDocumentView extends StatelessWidget {
+class BillingDocumentView extends ConsumerWidget {
   final Quotation quotation; // ← single param
 
   const BillingDocumentView({super.key, required this.quotation});
@@ -111,7 +114,9 @@ class BillingDocumentView extends StatelessWidget {
   double get total => subTotal + (subTotal * quotation.vatPercentage / 100);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+    final organization = ref.watch(organizationNotifierProvider).organization;
+
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 55, horizontal: 35),
@@ -121,15 +126,22 @@ class BillingDocumentView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.grey.shade200),
-                  child: Icon(
-                    Icons.image,
-                    size: 45,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
+                organization?.profileUrl != null
+                    ? Image.network(
+                      organization!.profileUrl!,
+                      height: 60,
+                      width: 90,
+                      fit: BoxFit.fitHeight,
+                    )
+                    : Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: Colors.grey.shade200),
+                      child: Icon(
+                        Icons.image,
+                        size: 80,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
