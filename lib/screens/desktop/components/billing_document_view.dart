@@ -119,6 +119,7 @@ class BillingDocumentView extends ConsumerWidget {
 
     return SingleChildScrollView(
       child: Container(
+        width: 400,
         padding: EdgeInsets.symmetric(vertical: 55, horizontal: 35),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,

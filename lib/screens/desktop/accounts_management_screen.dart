@@ -1857,7 +1857,7 @@ class _EditableLineItemState extends State<_EditableLineItem> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      kLeftPaddingDescriptionColumn,
+                      kLeftPaddingDescriptionColumn - 5,
                       10,
                       15,
                       10,
