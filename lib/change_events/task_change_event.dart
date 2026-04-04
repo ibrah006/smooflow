@@ -209,18 +209,18 @@ class TaskWebSocketClient {
 
     // Task list response
     _socket!.on('tasks:list', (data) {
-      // try {
-      final response = data as Map<String, dynamic>;
-      final tasksJson = response['tasks'] as List;
-      final tasks =
-          tasksJson
-              .map((json) => Task.fromJson(json as Map<String, dynamic>))
-              .toList();
-      _taskListController.add(tasks);
-      // } catch (e) {
-      //   print('Error parsing tasks:list: $e');
-      //   _errorController.add('Failed to parse task list: $e');
-      // }
+      try {
+        final response = data as Map<String, dynamic>;
+        final tasksJson = response['tasks'] as List;
+        final tasks =
+            tasksJson
+                .map((json) => Task.fromJson(json as Map<String, dynamic>))
+                .toList();
+        _taskListController.add(tasks);
+      } catch (e) {
+        print('Error parsing tasks:list: $e');
+        _errorController.add('Failed to parse task list: $e');
+      }
     });
 
     // Single task data
