@@ -314,111 +314,106 @@ class _AdminDesktopDashboardScreenState
         _addTaskFocusNode.unfocus();
         setState(() => _isAddingTask = false);
       },
-      child: LoadingOverlay(
-        isLoading: _isInitLoading,
-        child: Scaffold(
-          body: Focus(
-            autofocus: true,
-            onKeyEvent: _handleKey,
-            child: Row(
-              children: [
-                // ── Sidebar ─────────────────────────────────────────────
-                _AdminSidebar(
-                  currentView: _view,
-                  selectedProjectId: _selectedProjectId,
-                  projects: _projects,
-                  tasks: _pipelineTasks,
-                  members: _members,
-                  isLoading: _isInitLoading,
-                  onViewChanged: (v) {
-                    setState(() {
-                      _view = v;
-                    });
-                    _closeDetail();
-                  },
-                  onProjectSelected:
-                      (id) => setState(() {
-                        _selectedProjectId = id;
-                        // Switch to list view when a project is selected so the
-                        // user immediately sees filtered results.
-                        if (_view == _AdminView.overview)
-                          _view = _AdminView.list;
-                      }),
-                ),
+      child: Scaffold(
+        body: Focus(
+          autofocus: true,
+          onKeyEvent: _handleKey,
+          child: Row(
+            children: [
+              // ── Sidebar ─────────────────────────────────────────────
+              _AdminSidebar(
+                currentView: _view,
+                selectedProjectId: _selectedProjectId,
+                projects: _projects,
+                tasks: _pipelineTasks,
+                members: _members,
+                isLoading: _isInitLoading,
+                onViewChanged: (v) {
+                  setState(() {
+                    _view = v;
+                  });
+                  _closeDetail();
+                },
+                onProjectSelected:
+                    (id) => setState(() {
+                      _selectedProjectId = id;
+                      // Switch to list view when a project is selected so the
+                      // user immediately sees filtered results.
+                      if (_view == _AdminView.overview) _view = _AdminView.list;
+                    }),
+              ),
 
-                // ── Main content ────────────────────────────────────────
-                Expanded(
-                  child: Column(
-                    children: [
-                      _AdminTopbar(
-                        currentView: _view,
-                        selectedProjectId: _selectedProjectId,
-                      ),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child:
-                                  _view == _AdminView.overview
-                                      ? (_isInitLoading // ← skeleton branch
-                                          ? const OverviewSkeleton()
-                                          : _AdminAnalyticsView(
-                                            tasks: _pipelineTasks,
-                                            projects: _projects,
-                                            members: _members,
-                                          ))
-                                      : _view == _AdminView.list
-                                      ? TaskListView(
-                                        // tasks:             _visibleTasks,
-                                        projects: _projects,
-                                        selectedProjectId: _selectedProjectId,
-                                        selectedTaskId: _selectedTaskId,
-                                        onTaskSelected: _selectTask,
-                                        isDetailOpen: _selectedTaskId != null,
-                                        onAddTask: _showTaskModal,
-                                        addTaskFocusNode: _addTaskFocusNode,
-                                        isAddingTask: _isAddingTask,
-                                      )
-                                      : _view == _AdminView.clients
-                                      ? ClientsPage()
-                                      : _view == _AdminView.team
-                                      ? ManageMembersPage()
-                                      : _view == _AdminView.printers
-                                      ? DesktopPrinterManagementScreen()
-                                      : _view == _AdminView.inventory
-                                      ? DesktopMaterialsManagementScreen()
-                                      : _view == _AdminView.reports
-                                      ? DesktopReportsScreen()
-                                      : _view == _AdminView.accounts
-                                      ? AccountsManagementScreen()
-                                      : SettingsPage(),
-                            ),
+              // ── Main content ────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  children: [
+                    _AdminTopbar(
+                      currentView: _view,
+                      selectedProjectId: _selectedProjectId,
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child:
+                                _view == _AdminView.overview
+                                    ? (_isInitLoading // ← skeleton branch
+                                        ? const OverviewSkeleton()
+                                        : _AdminAnalyticsView(
+                                          tasks: _pipelineTasks,
+                                          projects: _projects,
+                                          members: _members,
+                                        ))
+                                    : _view == _AdminView.list
+                                    ? TaskListView(
+                                      // tasks:             _visibleTasks,
+                                      projects: _projects,
+                                      selectedProjectId: _selectedProjectId,
+                                      selectedTaskId: _selectedTaskId,
+                                      onTaskSelected: _selectTask,
+                                      isDetailOpen: _selectedTaskId != null,
+                                      onAddTask: _showTaskModal,
+                                      addTaskFocusNode: _addTaskFocusNode,
+                                      isAddingTask: _isAddingTask,
+                                    )
+                                    : _view == _AdminView.clients
+                                    ? ClientsPage()
+                                    : _view == _AdminView.team
+                                    ? ManageMembersPage()
+                                    : _view == _AdminView.printers
+                                    ? DesktopPrinterManagementScreen()
+                                    : _view == _AdminView.inventory
+                                    ? DesktopMaterialsManagementScreen()
+                                    : _view == _AdminView.reports
+                                    ? DesktopReportsScreen()
+                                    : _view == _AdminView.accounts
+                                    ? AccountsManagementScreen()
+                                    : SettingsPage(),
+                          ),
 
-                            // ── Detail panel ──────────────────────────
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeInOut,
-                              width: _selectedTaskId != null ? _T.detailW : 0,
-                              child:
-                                  _selectedTaskId != null &&
-                                          _selectedTask != null
-                                      ? DetailPanel(
-                                        task: _selectedTask!,
-                                        projects: _projects,
-                                        onClose: _closeDetail,
-                                        onAdvance:
-                                            () => _advanceTask(_selectedTask!),
-                                      )
-                                      : const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
+                          // ── Detail panel ──────────────────────────
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOut,
+                            width: _selectedTaskId != null ? _T.detailW : 0,
+                            child:
+                                _selectedTaskId != null && _selectedTask != null
+                                    ? DetailPanel(
+                                      task: _selectedTask!,
+                                      projects: _projects,
+                                      onClose: _closeDetail,
+                                      onAdvance:
+                                          () => _advanceTask(_selectedTask!),
+                                    )
+                                    : const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
