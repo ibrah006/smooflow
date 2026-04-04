@@ -401,24 +401,29 @@ class _MaterialReportsScreenState extends ConsumerState<DesktopReportsScreen> {
   }
 
   Future<void> _recompute() async {
-    final mats = ref.read(materialNotifierProvider).materials;
-    final txns = ref.read(materialNotifierProvider).transactions;
-    final projs = ref.read(projectNotifierProvider);
-    final tasks = ref.read(taskNotifierProvider).tasks;
-    final data = _computeReports(
-      allMaterials: mats,
-      allTransactions: txns,
-      allProjects: projs,
-      allTasks: tasks,
-      period: _period,
-      filterMaterialId: _filterMaterialId,
-      filterProjectId: _filterProjectId,
-    );
-    if (mounted)
-      setState(() {
-        _data = data;
-        _loading = false;
-      });
+    try {
+      final mats = ref.read(materialNotifierProvider).materials;
+      final txns = ref.read(materialNotifierProvider).transactions;
+      final projs = ref.read(projectNotifierProvider);
+      final tasks = ref.read(taskNotifierProvider).tasks;
+      final data = _computeReports(
+        allMaterials: mats,
+        allTransactions: txns,
+        allProjects: projs,
+        allTasks: tasks,
+        period: _period,
+        filterMaterialId: _filterMaterialId,
+        filterProjectId: _filterProjectId,
+      );
+      if (mounted)
+        setState(() {
+          _data = data;
+          _loading = false;
+        });
+    } catch (e) {
+      // sometimes this part is getting called when the widget component is disposed which results in this error:
+      // Bad state: Cannot use "ref" after the widget was disposed.
+    }
   }
 
   // Assign consistent colour to each material across all charts
