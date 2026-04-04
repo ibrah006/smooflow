@@ -37,6 +37,7 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
+import 'package:smooflow/screens/desktop/components/dashboard_skeleton.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/project_modal.dart';
@@ -328,6 +329,7 @@ class _AdminDesktopDashboardScreenState
                   projects: _projects,
                   tasks: _pipelineTasks,
                   members: _members,
+                  isLoading: _isInitLoading,
                   onViewChanged: (v) {
                     setState(() {
                       _view = v;
@@ -358,11 +360,13 @@ class _AdminDesktopDashboardScreenState
                             Expanded(
                               child:
                                   _view == _AdminView.overview
-                                      ? _AdminAnalyticsView(
-                                        tasks: _pipelineTasks,
-                                        projects: _projects,
-                                        members: _members,
-                                      )
+                                      ? (_isInitLoading // ← skeleton branch
+                                          ? const OverviewSkeleton()
+                                          : _AdminAnalyticsView(
+                                            tasks: _pipelineTasks,
+                                            projects: _projects,
+                                            members: _members,
+                                          ))
                                       : _view == _AdminView.list
                                       ? TaskListView(
                                         // tasks:             _visibleTasks,
@@ -452,6 +456,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final List<Member> members;
   final ValueChanged<_AdminView> onViewChanged;
   final ValueChanged<String?> onProjectSelected;
+  final bool isLoading;
 
   const _AdminSidebar({
     required this.currentView,
@@ -461,6 +466,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.members,
     required this.onViewChanged,
     required this.onProjectSelected,
+    required this.isLoading,
   });
 
   @override
@@ -616,27 +622,32 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children:
-                    widget.projects.map((p) {
-                      final cnt =
-                          widget.tasks.where((t) => t.projectId == p.id).length;
-                      final isActive =
-                          widget.selectedProjectId == p.id &&
-                          widget.currentView == _AdminView.list;
-                      return _SidebarProjectRow(
-                        name: p.name,
-                        color: p.color,
-                        count: cnt,
-                        isActive: isActive,
-                        onTap: () {
-                          widget.onProjectSelected(p.id);
-                          widget.onViewChanged(_AdminView.list);
-                        },
-                      );
-                    }).toList(),
-              ),
+              child:
+                  widget.isLoading
+                      ? const SidebarProjectsSkeleton()
+                      : ListView(
+                        padding: EdgeInsets.zero,
+                        children:
+                            widget.projects.map((p) {
+                              final cnt =
+                                  widget.tasks
+                                      .where((t) => t.projectId == p.id)
+                                      .length;
+                              final isActive =
+                                  widget.selectedProjectId == p.id &&
+                                  widget.currentView == _AdminView.list;
+                              return _SidebarProjectRow(
+                                name: p.name,
+                                color: p.color,
+                                count: cnt,
+                                isActive: isActive,
+                                onTap: () {
+                                  widget.onProjectSelected(p.id);
+                                  widget.onViewChanged(_AdminView.list);
+                                },
+                              );
+                            }).toList(),
+                      ),
             ),
           ),
 
