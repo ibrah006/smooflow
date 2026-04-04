@@ -13,6 +13,8 @@
 //                passed the current line-item state.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -668,6 +670,26 @@ class _AccountsTopbarWithTabs extends ConsumerWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _T.ink2,
+            ),
+          ),
+          Transform.rotate(
+            angle: pi / 5,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+              child: Text(
+                "BETA",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: "Plus Jakarta Sans",
+                  letterSpacing: 0,
+                  fontSize: 7,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 20),

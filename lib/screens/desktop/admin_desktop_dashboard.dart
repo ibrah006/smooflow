@@ -647,6 +647,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 _SidebarNavItem(
                   icon: Icons.account_balance,
                   label: 'Accounts',
+                  showBeta: true,
                   isActive: widget.currentView == _AdminView.accounts,
                   onTap: () => widget.onViewChanged(_AdminView.accounts),
                 ),
@@ -2219,12 +2220,14 @@ class _SidebarNavItem extends StatelessWidget {
   final bool isActive;
   final String? badge;
   final VoidCallback onTap;
+  final bool showBeta;
 
   const _SidebarNavItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.showBeta = false,
     this.badge,
   });
 
@@ -2248,13 +2251,41 @@ class _SidebarNavItem extends StatelessWidget {
               ),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+                      ),
+                    ),
+                    if (showBeta)
+                      Container(
+                        margin: EdgeInsets.only(left: 5),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 2,
+                          horizontal: 5,
+                        ),
+                        child: Text(
+                          "BETA",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: "Plus Jakarta Sans",
+                            letterSpacing: 0,
+                            fontSize: 7,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               if (badge != null)
