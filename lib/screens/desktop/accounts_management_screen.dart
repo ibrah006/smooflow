@@ -783,6 +783,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onItemsChanged(List<QuotationLineItem> items) {
+    print("[items changed]");
     setState(() => _q.lineItems = items);
     widget.onUpdate(_q);
   }
@@ -797,7 +798,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     if (_q.clientAddress != newValue) {
       _q.update(isLoading: true, clientAddress: newValue);
       await ref
-          .watch(quotationNotifierProvider.notifier)
+          .read(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientAddress: newValue);
       _q.update(isLoading: false);
     }
@@ -807,7 +808,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     if (_q.clientName != newValue) {
       _q.update(isLoading: true, clientName: newValue);
       await ref
-          .watch(quotationNotifierProvider.notifier)
+          .read(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, clientName: newValue);
       _q.update(isLoading: false);
     }
@@ -817,7 +818,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     if (_q.fromCompanyName != newValue) {
       _q.update(isLoading: true, fromCompanyName: newValue);
       await ref
-          .watch(quotationNotifierProvider.notifier)
+          .read(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyName: newValue);
       _q.update(isLoading: false);
     }
@@ -827,7 +828,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     if (_q.fromCompanyAddress != newValue) {
       _q.update(isLoading: true, fromCompanyAddress: newValue);
       await ref
-          .watch(quotationNotifierProvider.notifier)
+          .read(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, fromCompanyAddress: newValue);
       _q.update(isLoading: false);
     }
@@ -837,7 +838,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
     if (_q.termsConditions != newValue) {
       _q.update(isLoading: true, termsConditions: newValue);
       await ref
-          .watch(quotationNotifierProvider.notifier)
+          .read(quotationNotifierProvider.notifier)
           .updateQuotation(_q.id, termsConditions: newValue);
       _q.update(isLoading: false);
     }
