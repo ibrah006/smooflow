@@ -776,6 +776,9 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   late Quotation _q;
   _DocMode _mode = _DocMode.edit;
 
+  Quotation get quotationDetails =>
+      ref.read(quotationNotifierProvider).firstWhere((q) => q.id == _q.id);
+
   @override
   void initState() {
     super.initState();
@@ -795,7 +798,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
 
   void _onClientAddressChanged(String newValue) async {
     // print("clientAddress: ${_q.clientAddress}\nnew updated: ${newValue}");
-    if (_q.clientAddress != newValue) {
+    if (quotationDetails.clientAddress != newValue) {
       _q.update(isLoading: true, clientAddress: newValue);
       await ref
           .read(quotationNotifierProvider.notifier)
@@ -805,7 +808,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onClientNameChanged(String newValue) async {
-    if (_q.clientName != newValue) {
+    if (quotationDetails.clientName != newValue) {
       _q.update(isLoading: true, clientName: newValue);
       await ref
           .read(quotationNotifierProvider.notifier)
@@ -815,7 +818,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onFromCompanyNameChanged(String newValue) async {
-    if (_q.fromCompanyName != newValue) {
+    if (quotationDetails.fromCompanyName != newValue) {
       _q.update(isLoading: true, fromCompanyName: newValue);
       await ref
           .read(quotationNotifierProvider.notifier)
@@ -825,7 +828,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onFromCompanyAddressChanged(String newValue) async {
-    if (_q.fromCompanyAddress != newValue) {
+    if (quotationDetails.fromCompanyAddress != newValue) {
       _q.update(isLoading: true, fromCompanyAddress: newValue);
       await ref
           .read(quotationNotifierProvider.notifier)
@@ -835,7 +838,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onTermsChanged(String newValue) async {
-    if (_q.termsConditions != newValue) {
+    if (quotationDetails.termsConditions != newValue) {
       _q.update(isLoading: true, termsConditions: newValue);
       await ref
           .read(quotationNotifierProvider.notifier)
