@@ -289,6 +289,12 @@ class Task {
   }
 
   factory Task.fromJson(Map<String, dynamic> json) {
+    late final TaskPriority priority;
+    try {
+      priority = TaskPriority.values.elementAt(json["priority"] - 1);
+    } catch (e) {
+      priority = TaskPriority.normal;
+    }
     final prodQuantity =
         json["stockTransaction"]?["quantity"] ?? json["productionQuantity"];
     return Task(
@@ -339,7 +345,7 @@ class Task {
       runs: json["runs"] ?? 1,
       productionQuantity:
           prodQuantity != null ? double.parse(prodQuantity) : null,
-      priority: TaskPriority.values.elementAt(json["priority"] - 1),
+      priority: priority,
       stockTransactionBarcode: json["stockTransaction"]?["barcode"],
       actualProductionStartTime:
           json['actualProductionStartTime'] != null
