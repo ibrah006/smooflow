@@ -890,6 +890,7 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
                     onCompanyNameChanged: _onFromCompanyNameChanged,
                     onCompanyAddressChanged: _onFromCompanyAddressChanged,
                     onTermsChanged: _onTermsChanged,
+                    quoteId: _q.id,
                   )
                   : BillingDocumentView(quotation: _q),
         ),
@@ -990,6 +991,7 @@ Riyadh, Kingdom of Saudi Arabia""",
                     onCompanyAddressChanged: (value) {},
                     onCompanyNameChanged: (value) {},
                     onTermsChanged: (value) {},
+                    quoteId: _inv.quotationId,
                   )
                   // TODO, FIX THIS
                   : SizedBox(), //BillingDocumentView(quotation: _inv),
@@ -1044,6 +1046,7 @@ class BillingEditView extends ConsumerStatefulWidget {
   // Terms & Conditions
   final String termsAndConditions;
   final ValueChanged<String> onTermsChanged;
+  final String quoteId;
 
   const BillingEditView({
     super.key,
@@ -1065,6 +1068,7 @@ class BillingEditView extends ConsumerStatefulWidget {
     required this.onDocDateChanged,
     required this.termsAndConditions,
     required this.onTermsChanged,
+    required this.quoteId,
     this.dueDate,
     this.onDueDateChanged,
   });
@@ -1317,6 +1321,7 @@ class _BillingEditViewState extends ConsumerState<BillingEditView> {
               onUpdate: _updateItem,
               onRemove: _removeLine,
               onAdd: _addLine,
+              quoteId: widget.quoteId,
             ),
 
             // ── Totals ─────────────────────────────────────────────────
@@ -1678,12 +1683,14 @@ class _EditableTable extends StatelessWidget {
   final void Function(int, QuotationLineItem) onUpdate;
   final ValueChanged<int> onRemove;
   final VoidCallback onAdd;
+  final String quoteId;
 
   const _EditableTable({
     required this.items,
     required this.onUpdate,
     required this.onRemove,
     required this.onAdd,
+    required this.quoteId,
   });
 
   @override
@@ -1702,6 +1709,7 @@ class _EditableTable extends StatelessWidget {
             isLast: e.key == items.length - 1,
             onUpdate: (updated) => onUpdate(e.key, updated),
             onRemove: () => onRemove(e.key),
+            quoteId: quoteId,
           ),
         ),
 
@@ -1726,12 +1734,13 @@ class _EditableTable extends StatelessWidget {
 //
 // Amount is always computed (qty × rate) — never directly editable.
 // ─────────────────────────────────────────────────────────────────────────────
-class _EditableLineItem extends StatefulWidget {
+class _EditableLineItem extends ConsumerStatefulWidget {
   final int index;
   final QuotationLineItem item;
   final bool isLast;
   final ValueChanged<QuotationLineItem> onUpdate;
   final VoidCallback onRemove;
+  final String quoteId;
 
   const _EditableLineItem({
     super.key,
@@ -1740,19 +1749,26 @@ class _EditableLineItem extends StatefulWidget {
     required this.isLast,
     required this.onUpdate,
     required this.onRemove,
+    required this.quoteId,
   });
 
   @override
-  State<_EditableLineItem> createState() => _EditableLineItemState();
+  ConsumerState<_EditableLineItem> createState() => _EditableLineItemState();
 }
 
-class _EditableLineItemState extends State<_EditableLineItem> {
+class _EditableLineItemState extends ConsumerState<_EditableLineItem> {
   late final TextEditingController _descCtrl;
   late final TextEditingController _subTitleCtrl;
   late final TextEditingController _qtyCtrl;
   late final TextEditingController _rateCtrl;
 
   bool _rowHovered = false;
+
+  QuotationLineItem get _lineItem => ref
+      .read(quotationNotifierProvider)
+      .firstWhere((q) => q.id == widget.quoteId)
+      .lineItems
+      .firstWhere((li) => li.id == widget.item.id);
 
   @override
   void initState() {
@@ -1776,20 +1792,25 @@ class _EditableLineItemState extends State<_EditableLineItem> {
   }
 
   void _onDescriptionChanged(String newValue) {
-    if (widget.item.description != newValue) _onChanged();
+    // old/existing value
+    final oldValue = _lineItem.description;
+    if (oldValue != newValue) _onChanged();
   }
 
   void _onSubTitleChanged(String newValue) {
-    if (widget.item.subTitle != newValue) _onChanged();
+    final oldValue = _lineItem.subTitle;
+    if (oldValue != newValue) _onChanged();
   }
 
   void _onQuantityChanged(String newValue) {
-    if (widget.item.qty != (double.tryParse(newValue) ?? 0)) _onChanged();
+    final oldValue = _lineItem.qty;
+    if (oldValue != (double.tryParse(newValue) ?? 0)) _onChanged();
   }
 
   // on item amount/rate changed
   void _onAmountChanged(String newValue) {
-    if (widget.item.amount != (double.tryParse(newValue) ?? 0)) _onChanged();
+    final oldValue = _lineItem.amount;
+    if (oldValue != (double.tryParse(newValue) ?? 0)) _onChanged();
   }
 
   void _onChanged() {

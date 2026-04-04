@@ -143,7 +143,10 @@ class Quotation {
       vatPercentage: double.tryParse(json['vatPercentage']) ?? 0,
       lineItems:
           (json['lineItems'] as List)
-              .map((i) => QuotationLineItem.fromJson(i))
+              .map(
+                (i) =>
+                    QuotationLineItem.fromJson({...i, 'quoteId': json['id']}),
+              )
               .toList(),
     );
   }

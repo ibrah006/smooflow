@@ -4,6 +4,7 @@ class QuotationLineItem {
   String description;
   final String? subTitle;
   String? _size;
+  // late final String quoteId;
 
   String? get size {
     final String? s;
@@ -34,18 +35,21 @@ class QuotationLineItem {
     required this.qty,
     required this.unitPrice,
     String? size,
+    // required this.quoteId,
   }) : _size = size;
 
   QuotationLineItem copyWith({
     String? description,
     double? qty,
     double? unitPrice,
+    // String? quoteId,
   }) => QuotationLineItem(
     id: id,
     taskId: taskId,
     description: description ?? this.description,
     qty: qty ?? this.qty,
     unitPrice: unitPrice ?? this.unitPrice,
+    // quoteId: quoteId ?? this.quoteId,
   );
 
   // Snapshot for invoice diffing
@@ -71,5 +75,6 @@ class QuotationLineItem {
         subTitle: json['subTitle'],
         qty: double.tryParse(json['qty']) ?? 0,
         unitPrice: double.tryParse(json['unitPrice']) ?? 0,
+        // quoteId: json['quoteId'],
       );
 }
