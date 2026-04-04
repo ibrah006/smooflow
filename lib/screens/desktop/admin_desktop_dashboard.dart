@@ -217,11 +217,7 @@ class _AdminDesktopDashboardScreenState
         ref.read(taskNotifierProvider.notifier).loadAll(),
         ref.read(memberNotifierProvider.notifier).members,
       ]);
-      await ref
-          .read(projectNotifierProvider.notifier)
-          .load(projectsLastAddedLocal: null);
 
-      await ref.read(taskNotifierProvider.notifier).loadAll();
       // await ref
       //     .read(taskNotifierProvider.notifier)
       //     .fetchProductionScheduleToday();
