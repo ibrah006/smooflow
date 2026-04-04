@@ -120,69 +120,77 @@ class _DiscussionPreviewStripState extends State<DiscussionPreviewStrip> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section label row
-        Row(
-          children: [
-            const Text(
-              'DISCUSSION',
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: _T.slate400,
-              ),
-            ),
-            if (widget.unreadCount > 0) ...[
-              const SizedBox(width: 7),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: _T.blue,
-                  borderRadius: BorderRadius.circular(99),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section label row
+          Row(
+            children: [
+              const Text(
+                'DISCUSSION',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: _T.slate400,
                 ),
-                child: Text(
-                  '${widget.unreadCount}',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+              ),
+              if (widget.unreadCount > 0) ...[
+                const SizedBox(width: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _T.blue,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '${widget.unreadCount}',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
-        ),
-        const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 8),
 
-        // Card
-        MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
-          child: GestureDetector(
-            onTap: widget.onOpen,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              decoration: BoxDecoration(
-                color: _hovered ? _T.slate50 : _T.white,
-                borderRadius: BorderRadius.circular(_T.rLg),
-                border: Border.all(color: _hovered ? _T.slate300 : _T.slate200),
+          // Card
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              onTap: widget.onOpen,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                decoration: BoxDecoration(
+                  color: _hovered ? _T.slate50 : _T.white,
+                  borderRadius: BorderRadius.circular(_T.rLg),
+                  border: Border.all(
+                    color: _hovered ? _T.slate300 : _T.slate200,
+                  ),
+                ),
+                child:
+                    widget.lastMessage == null
+                        ? _EmptyDiscussionPreview(hovered: _hovered)
+                        : _LastMessagePreview(
+                          lastMessage: widget.lastMessage!,
+                          unreadCount: widget.unreadCount,
+                          hovered: _hovered,
+                        ),
               ),
-              child:
-                  widget.lastMessage == null
-                      ? _EmptyDiscussionPreview(hovered: _hovered)
-                      : _LastMessagePreview(
-                        lastMessage: widget.lastMessage!,
-                        unreadCount: widget.unreadCount,
-                        hovered: _hovered,
-                      ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
