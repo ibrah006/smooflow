@@ -228,18 +228,17 @@ class _AdminDesktopDashboardScreenState
             }
           })(),
 
-          (() async {
-            try {
-              await ref.read(taskNotifierProvider.notifier).loadAll();
-            } catch (e, s) {
-              await AppLogger.logError(
-                message: "Failed to load tasks",
-                error: e,
-                stackTrace: s,
-              );
-            }
-          })(),
-
+          // (() async {
+          //   try {
+          //     await ref.read(taskNotifierProvider.notifier).loadAll();
+          //   } catch (e, s) {
+          //     await AppLogger.logError(
+          //       message: "Failed to load tasks",
+          //       error: e,
+          //       stackTrace: s,
+          //     );
+          //   }
+          // })(),
           (() async {
             try {
               await ref.read(memberNotifierProvider.notifier).members;
