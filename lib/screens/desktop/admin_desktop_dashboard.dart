@@ -21,6 +21,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/api/api_logger.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/create_task_args.dart';
 import 'package:smooflow/core/models/member.dart';
@@ -210,25 +211,85 @@ class _AdminDesktopDashboardScreenState
     super.initState();
     AppToast.init(kNavigatorKey);
     Future.microtask(() async {
-      await Future.wait([
-        ref
-            .read(projectNotifierProvider.notifier)
-            .load(projectsLastAddedLocal: null),
-        ref.read(taskNotifierProvider.notifier).loadAll(),
-        ref.read(memberNotifierProvider.notifier).members,
-      ]);
+      try {
+        await Future.wait([
+          (() async {
+            try {
+              await ref
+                  .read(projectNotifierProvider.notifier)
+                  .load(projectsLastAddedLocal: null);
+            } catch (e, s) {
+              await AppLogger.logError(
+                message: "Failed to load projects",
+                error: e,
+                stackTrace: s,
+              );
+            }
+          })(),
 
-      // await ref
-      //     .read(taskNotifierProvider.notifier)
-      //     .fetchProductionScheduleToday();
-      // await ref.read(memberNotifierProvider.notifier).members;
+          (() async {
+            try {
+              await ref.read(taskNotifierProvider.notifier).loadAll();
+            } catch (e, s) {
+              await AppLogger.logError(
+                message: "Failed to load tasks",
+                error: e,
+                stackTrace: s,
+              );
+            }
+          })(),
 
-      Future.wait([
-        ref.read(materialNotifierProvider.notifier).fetchMaterials(),
-        ref.read(materialNotifierProvider.notifier).fetchTransactions(),
-      ]);
+          (() async {
+            try {
+              await ref.read(memberNotifierProvider.notifier).members;
+            } catch (e, s) {
+              await AppLogger.logError(
+                message: "Failed to load members",
+                error: e,
+                stackTrace: s,
+              );
+            }
+          })(),
+        ]);
 
-      if (mounted) setState(() => _isInitLoading = false);
+        Future.wait([
+          (() async {
+            try {
+              await ref
+                  .read(materialNotifierProvider.notifier)
+                  .fetchMaterials();
+            } catch (e, s) {
+              await AppLogger.logError(
+                message: "Failed to fetch materials",
+                error: e,
+                stackTrace: s,
+              );
+            }
+          })(),
+
+          (() async {
+            try {
+              await ref
+                  .read(materialNotifierProvider.notifier)
+                  .fetchTransactions();
+            } catch (e, s) {
+              await AppLogger.logError(
+                message: "Failed to fetch transactions",
+                error: e,
+                stackTrace: s,
+              );
+            }
+          })(),
+        ]);
+
+        if (mounted) setState(() => _isInitLoading = false);
+      } catch (e, s) {
+        await AppLogger.logError(
+          message: "Unexpected init failure",
+          error: e,
+          stackTrace: s,
+        );
+      }
     });
 
     checkForUpdate(context);
