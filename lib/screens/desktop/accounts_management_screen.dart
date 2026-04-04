@@ -783,7 +783,6 @@ class _QuotationDetailState extends ConsumerState<_QuotationDetail> {
   }
 
   void _onItemsChanged(List<QuotationLineItem> items) {
-    print("[items changed]");
     setState(() => _q.lineItems = items);
     widget.onUpdate(_q);
   }
