@@ -331,7 +331,7 @@ class _TagChipState extends State<_TagChip> {
                 bottom: 4,
               ),
               decoration: BoxDecoration(
-                color: _hovered ? c.bg : c.bg.withOpacity(0.75),
+                color: _hovered ? c.bg : c.bg.withOpacity(0.25),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: _hovered ? c.border.withOpacity(0.5) : c.border,
