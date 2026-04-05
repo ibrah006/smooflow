@@ -728,39 +728,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      ColorTagsRow(
-                        tags: [
-                          ColorTag(
-                            id: '1',
-                            label: 'Branding',
-                            color: TagColor.violet,
-                          ),
-                          ColorTag(
-                            id: '2',
-                            label: 'Large Format Print',
-                            color: TagColor.sky,
-                          ),
-                          ColorTag(
-                            id: '3',
-                            label: 'Booth Build',
-                            color: TagColor.amber,
-                          ),
-                          ColorTag(
-                            id: '4',
-                            label: 'On-site Installation',
-                            color: TagColor.teal,
-                          ),
-                          ColorTag(
-                            id: '5',
-                            label: 'Logistics',
-                            color: TagColor.slate,
-                          ),
-                        ],
-                        onChanged: (updated) {
-                          // setState(() => _tags = updated)
-                        },
-                      ),
+                      // Color tags area
                       const SizedBox(height: 18),
 
                       // Details grid
