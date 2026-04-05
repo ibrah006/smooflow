@@ -18,6 +18,7 @@ import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/color_tags.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -726,6 +727,39 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             ),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 14),
+                      ColorTagsRow(
+                        tags: [
+                          ColorTag(
+                            id: '1',
+                            label: 'Branding',
+                            color: TagColor.violet,
+                          ),
+                          ColorTag(
+                            id: '2',
+                            label: 'Large Format Print',
+                            color: TagColor.sky,
+                          ),
+                          ColorTag(
+                            id: '3',
+                            label: 'Booth Build',
+                            color: TagColor.amber,
+                          ),
+                          ColorTag(
+                            id: '4',
+                            label: 'On-site Installation',
+                            color: TagColor.teal,
+                          ),
+                          ColorTag(
+                            id: '5',
+                            label: 'Logistics',
+                            color: TagColor.slate,
+                          ),
+                        ],
+                        onChanged: (updated) {
+                          // setState(() => _tags = updated)
+                        },
                       ),
                       const SizedBox(height: 18),
 

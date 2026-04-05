@@ -59,46 +59,46 @@ class _T {
   static const rXl = 16.0;
 }
 
-class _ColorTag {
+class ColorTag {
   final String id;
   final String label;
-  final _TagColor color;
+  final TagColor color;
 
-  const _ColorTag({required this.id, required this.label, required this.color});
+  const ColorTag({required this.id, required this.label, required this.color});
 
-  _ColorTag copyWith({String? label, _TagColor? color}) =>
-      _ColorTag(id: id, label: label ?? this.label, color: color ?? this.color);
+  ColorTag copyWith({String? label, TagColor? color}) =>
+      ColorTag(id: id, label: label ?? this.label, color: color ?? this.color);
 }
 
 // Curated palette — saturated enough to read on white, restrained enough
 // not to clash with the panel's blue/green/amber system colours.
-enum _TagColor { rose, orange, amber, lime, teal, sky, violet, pink, slate }
+enum TagColor { rose, orange, amber, lime, teal, sky, violet, pink, slate }
 
-extension _TagColorX on _TagColor {
+extension _TagColorX on TagColor {
   Color get fg =>
       const {
-        _TagColor.rose: Color(0xFFE11D48),
-        _TagColor.orange: Color(0xFFEA580C),
-        _TagColor.amber: Color(0xFFD97706),
-        _TagColor.lime: Color(0xFF65A30D),
-        _TagColor.teal: Color(0xFF0D9488),
-        _TagColor.sky: Color(0xFF0284C7),
-        _TagColor.violet: Color(0xFF7C3AED),
-        _TagColor.pink: Color(0xFFDB2777),
-        _TagColor.slate: Color(0xFF475569),
+        TagColor.rose: Color(0xFFE11D48),
+        TagColor.orange: Color(0xFFEA580C),
+        TagColor.amber: Color(0xFFD97706),
+        TagColor.lime: Color(0xFF65A30D),
+        TagColor.teal: Color(0xFF0D9488),
+        TagColor.sky: Color(0xFF0284C7),
+        TagColor.violet: Color(0xFF7C3AED),
+        TagColor.pink: Color(0xFFDB2777),
+        TagColor.slate: Color(0xFF475569),
       }[this]!;
 
   Color get bg =>
       const {
-        _TagColor.rose: Color(0xFFFFF1F2),
-        _TagColor.orange: Color(0xFFFFF7ED),
-        _TagColor.amber: Color(0xFFFEF3C7),
-        _TagColor.lime: Color(0xFFF7FEE7),
-        _TagColor.teal: Color(0xFFF0FDFA),
-        _TagColor.sky: Color(0xFFEFF6FF),
-        _TagColor.violet: Color(0xFFF5F3FF),
-        _TagColor.pink: Color(0xFFFDF2F8),
-        _TagColor.slate: Color(0xFFF1F5F9),
+        TagColor.rose: Color(0xFFFFF1F2),
+        TagColor.orange: Color(0xFFFFF7ED),
+        TagColor.amber: Color(0xFFFEF3C7),
+        TagColor.lime: Color(0xFFF7FEE7),
+        TagColor.teal: Color(0xFFF0FDFA),
+        TagColor.sky: Color(0xFFEFF6FF),
+        TagColor.violet: Color(0xFFF5F3FF),
+        TagColor.pink: Color(0xFFFDF2F8),
+        TagColor.slate: Color(0xFFF1F5F9),
       }[this]!;
 
   Color get border => fg.withOpacity(0.25);
@@ -111,17 +111,17 @@ extension _TagColorX on _TagColor {
 // ─────────────────────────────────────────────────────────────────────────────
 // _ColorTagsRow  — the main composable widget
 // ─────────────────────────────────────────────────────────────────────────────
-class _ColorTagsRow extends StatefulWidget {
-  final List<_ColorTag> tags;
-  final ValueChanged<List<_ColorTag>> onChanged;
+class ColorTagsRow extends StatefulWidget {
+  final List<ColorTag> tags;
+  final ValueChanged<List<ColorTag>> onChanged;
 
-  const _ColorTagsRow({super.key, required this.tags, required this.onChanged});
+  const ColorTagsRow({super.key, required this.tags, required this.onChanged});
 
   @override
-  State<_ColorTagsRow> createState() => _ColorTagsRowState();
+  State<ColorTagsRow> createState() => _ColorTagsRowState();
 }
 
-class _ColorTagsRowState extends State<_ColorTagsRow> {
+class _ColorTagsRowState extends State<ColorTagsRow> {
   // Which tag is in rename mode
   String? _editingId;
   final _editCtrl = TextEditingController();
@@ -134,7 +134,7 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
   bool _addingNew = false;
   final _addCtrl = TextEditingController();
   final _addFocus = FocusNode();
-  _TagColor _pendingColor = _TagColor.sky;
+  TagColor _pendingColor = TagColor.sky;
 
   @override
   void dispose() {
@@ -147,7 +147,7 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  void _startEdit(_ColorTag tag) {
+  void _startEdit(ColorTag tag) {
     setState(() {
       _editingId = tag.id;
       _pickerOpenId = null;
@@ -184,7 +184,7 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
     });
   }
 
-  void _changeColor(String tagId, _TagColor color) {
+  void _changeColor(String tagId, TagColor color) {
     final updated =
         widget.tags.map((t) {
           return t.id == tagId ? t.copyWith(color: color) : t;
@@ -196,7 +196,7 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
   void _startAdding() {
     setState(() {
       _addingNew = true;
-      _pendingColor = _TagColor.sky;
+      _pendingColor = TagColor.sky;
       _addCtrl.clear();
     });
     WidgetsBinding.instance.addPostFrameCallback(
@@ -207,7 +207,7 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
   void _commitAdd() {
     final label = _addCtrl.text.trim();
     if (label.isNotEmpty) {
-      final newTag = _ColorTag(
+      final newTag = ColorTag(
         id: '${DateTime.now().millisecondsSinceEpoch}',
         label: label,
         color: _pendingColor,
@@ -285,11 +285,11 @@ class _ColorTagsRowState extends State<_ColorTagsRow> {
 // _TagChip  — display state of a tag
 // ─────────────────────────────────────────────────────────────────────────────
 class _TagChip extends StatefulWidget {
-  final _ColorTag tag;
+  final ColorTag tag;
   final bool isPickerOpen;
   final VoidCallback onTap;
   final VoidCallback onColorDotTap;
-  final ValueChanged<_TagColor> onColorPick;
+  final ValueChanged<TagColor> onColorPick;
   final VoidCallback onDelete;
 
   const _TagChip({
@@ -414,7 +414,7 @@ class _TagChipState extends State<_TagChip> {
 // _TagEditChip  — rename mode: text field with same visual footprint as tag
 // ─────────────────────────────────────────────────────────────────────────────
 class _TagEditChip extends StatelessWidget {
-  final _ColorTag tag;
+  final ColorTag tag;
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onSubmit;
@@ -481,8 +481,8 @@ class _TagEditChip extends StatelessWidget {
 class _NewTagChip extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
-  final _TagColor selectedColor;
-  final ValueChanged<_TagColor> onColorPick;
+  final TagColor selectedColor;
+  final ValueChanged<TagColor> onColorPick;
   final VoidCallback onSubmit;
   final VoidCallback onCancel;
 
@@ -570,8 +570,8 @@ class _NewTagChip extends StatelessWidget {
 // A compact horizontal swatch row that appears beneath a tag.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ColorPickerPopover extends StatelessWidget {
-  final _TagColor current;
-  final ValueChanged<_TagColor> onPick;
+  final TagColor current;
+  final ValueChanged<TagColor> onPick;
 
   const _ColorPickerPopover({required this.current, required this.onPick});
 
@@ -595,7 +595,7 @@ class _ColorPickerPopover extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children:
-            _TagColor.values.map((c) {
+            TagColor.values.map((c) {
               final selected = c == current;
               return GestureDetector(
                 onTap: () => onPick(c),
