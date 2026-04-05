@@ -554,6 +554,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.updated:
+        break;
       case TaskChangeType.statusChanged:
         final index = tasks.indexWhere((t) => t.id == event.taskId);
         print(
@@ -598,6 +599,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.assigneeAdded:
+        break;
       case TaskChangeType.assigneeRemoved:
         final index = tasks.indexWhere((t) => t.id == event.taskId);
         if (index != -1 && event.task != null) {

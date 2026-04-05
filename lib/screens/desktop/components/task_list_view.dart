@@ -66,6 +66,8 @@ const double _kRowHPad = 16.0;
 const double _kCellHPad = 4.0;
 const _kColAnimDuration = Duration(milliseconds: 260);
 
+const kNotificationDuration = const Duration(seconds: 3);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW MODE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -243,6 +245,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   /// this is purely derived from widget.isDetailOpen.
   static const _kDetailCols = {'date', 'task'};
 
+  int? lastNotifiedTaskId;
+  DateTime? lastNotificationTime;
+
   Set<String> get _effectiveVisible {
     final base =
         widget.isDetailOpen
@@ -374,7 +379,15 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       next,
     ) {
       next.whenData((event) {
-        _showTaskChangeNotification(context, event);
+        if (event.taskId != lastNotifiedTaskId ||
+            (lastNotificationTime
+                    ?.add(kNotificationDuration)
+                    .isBefore(DateTime.now()) ??
+                false)) {
+          _showTaskChangeNotification(context, event);
+          lastNotifiedTaskId = event.taskId;
+          lastNotificationTime = DateTime.now();
+        }
       });
     });
 
@@ -560,12 +573,15 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         return;
     }
 
+    print("[TASK_LIST_VIEW] task: ${event.task?.id}, type: ${event.type}");
+
     // Show notification
     AppToast.show(
       message: message,
       icon: icon,
       color: color,
       subtitle: event.task!.name,
+      duration: kNotificationDuration,
     );
   }
 }
