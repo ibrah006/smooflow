@@ -58,6 +58,8 @@ class Task {
 
   BillingStatus _billingStatus;
 
+  int messagesCount;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -90,6 +92,7 @@ class Task {
     required BillingStatus billingStatus,
     required List<String> stockTransactionIds,
     required this.date,
+    required this.messagesCount,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -137,6 +140,7 @@ class Task {
     String? size,
     int? quantity,
     DateTime? date,
+    int messageCount = 0,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -154,7 +158,8 @@ class Task {
        _createdAt = DateTime.now(),
        _billingStatus = BillingStatus.pending,
        _stockTransactionIds = [],
-       this.date = date ?? DateTime.now();
+       this.date = date ?? DateTime.now(),
+       this.messagesCount = messageCount;
 
   // To ensure toSet gives no duplicates
   @override
@@ -368,6 +373,7 @@ class Task {
               .toList() ??
           [],
       date: json['created'] != null ? DateTime.parse(json['created']) : null,
+      messagesCount: json['messagesCount'] ?? 0,
     );
   }
 
@@ -387,7 +393,8 @@ class Task {
       _quantity = original._quantity,
       _billingStatus = original._billingStatus,
       _stockTransactionIds = original._stockTransactionIds,
-      date = original.date {
+      date = original.date,
+      messagesCount = original.messagesCount {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -415,7 +422,8 @@ class Task {
       workActivityLogs = [],
       _billingStatus = BillingStatus.pending,
       _stockTransactionIds = [],
-      date = null;
+      date = null,
+      messagesCount = 0;
 
   /// Creates a copy of this Task with specified fields replaced.
   /// Returns a new Task instance with updated values while preserving unchanged ones.
@@ -462,6 +470,7 @@ class Task {
     DateTime? activityLogLastModified,
     DateTime? assigneeLastAdded,
     List<int>? workActivityLogs,
+    int? messagesCount,
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -497,6 +506,7 @@ class Task {
       workActivityLogs: workActivityLogs ?? this.workActivityLogs,
       updatedAt: updatedAt ?? this.updatedAt,
       date: date ?? this.date,
+      messagesCount: messagesCount ?? this.messagesCount,
     );
 
     // Set color and icon via setters (not constructor parameters)
@@ -574,6 +584,7 @@ class Task {
     _productionQuantity = newTask._productionQuantity;
     _priority = newTask._priority;
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
+    messagesCount = newTask.messagesCount;
   }
 
   /// if [status] is null, it will use the Task's current status to determine the component properties
