@@ -964,14 +964,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       // DEBUG
-                      // const SizedBox(height: 18),
-                      // DiscussionPreviewStrip(
-                      //   lastMessage:
-                      //       sampleMessages
-                      //           .last, // wire from your message provider
-                      //   unreadCount: 2,
-                      //   onOpen: () => setState(() => _isDiscussionOpen = true),
-                      // ),
+                      const SizedBox(height: 18),
+                      DiscussionPreviewStrip(
+                        lastMessage:
+                            sampleMessages
+                                .last, // wire from your message provider
+                        unreadCount: 2,
+                        onOpen: () => setState(() => _isDiscussionOpen = true),
+                      ),
                       const SizedBox(height: 18),
                     ],
                   ),
