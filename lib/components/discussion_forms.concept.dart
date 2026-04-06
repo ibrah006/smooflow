@@ -36,6 +36,7 @@
 //     ),
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/providers/message_provider.dart';
@@ -97,9 +98,6 @@ class DiscussionMessage {
 // When there are no messages yet, shows an empty-state prompt instead.
 // ─────────────────────────────────────────────────────────────────────────────
 class DiscussionPreviewStrip extends ConsumerStatefulWidget {
-  /// The most recent message, or null if no messages yet.
-  final DiscussionMessage? lastMessage;
-
   final int taskId;
 
   /// Number of unread messages. 0 hides the badge.
@@ -110,7 +108,6 @@ class DiscussionPreviewStrip extends ConsumerStatefulWidget {
 
   const DiscussionPreviewStrip({
     super.key,
-    required this.lastMessage,
     required this.unreadCount,
     required this.onOpen,
     required this.taskId,
@@ -157,6 +154,11 @@ class _DiscussionPreviewStripState
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(messageNotifierProvider).isLoading;
+
+    final lastMessage =
+        ref.watch(messagesByTaskProvider(widget.taskId)).lastOrNull;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18.0),
       child: Column(
@@ -174,7 +176,14 @@ class _DiscussionPreviewStripState
                   color: _T.slate400,
                 ),
               ),
-              if (widget.unreadCount > 0) ...[
+              if (isLoading)
+                CardLoading(
+                  height: 14,
+                  width: 25,
+                  margin: EdgeInsets.only(left: 7),
+                  borderRadius: BorderRadius.circular(20),
+                )
+              else if (widget.unreadCount > 0) ...[
                 const SizedBox(width: 7),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -216,12 +225,12 @@ class _DiscussionPreviewStripState
                   ),
                 ),
                 child:
-                    ref.watch(messageNotifierProvider).isLoading
+                    isLoading
                         ? const _DiscussionLoadingPreview()
-                        : widget.lastMessage == null
+                        : lastMessage == null
                         ? _EmptyDiscussionPreview(hovered: _hovered)
                         : _LastMessagePreview(
-                          lastMessage: widget.lastMessage!,
+                          lastMessage: lastMessage!,
                           unreadCount: widget.unreadCount,
                           hovered: _hovered,
                         ),
