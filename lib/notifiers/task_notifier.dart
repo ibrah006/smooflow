@@ -554,6 +554,15 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.updated:
+        state = state.copyWith(
+          tasks:
+              tasks.map((t) {
+                if (t.id == event.taskId && event.task != null) {
+                  return event.task!;
+                }
+                return t;
+              }).toList(),
+        );
         break;
       case TaskChangeType.statusChanged:
         final index = tasks.indexWhere((t) => t.id == event.taskId);
