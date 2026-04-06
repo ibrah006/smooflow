@@ -2,6 +2,7 @@ import 'dart:io';
 
 // import 'package:auto_updater/auto_updater.dart';
 import 'package:auto_updater/auto_updater.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,7 +35,10 @@ void main(List<String> args) async {
 
     // Setup Auto updater
     if (Platform.isWindows) {
-      String feedURL = ApiClient.http.baseUrl + '/updates/appcast.xml';
+      String feedURL =
+          kDebugMode
+              ? ApiClient.http.baseUrl
+              : (dotenv.env['API_URL']!) + '/updates/appcast.xml';
 
       print("feed url: ${feedURL}");
 
