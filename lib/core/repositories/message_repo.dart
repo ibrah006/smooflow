@@ -8,7 +8,7 @@ import '../models/message.dart';
 
 class MessageRepo {
   /// GET /messages/:id
-  static Future<Message?> getById(int id) async {
+  Future<Message?> getById(int id) async {
     final res = await ApiClient.http.get('/messages/$id');
 
     if (res.statusCode != 200) return null;
@@ -17,7 +17,7 @@ class MessageRepo {
   }
 
   /// GET /messages/task/:taskId
-  static Future<List<Message>> getByTaskId(int taskId) async {
+  Future<List<Message>> getByTaskId(int taskId) async {
     final res = await ApiClient.http.get('/messages/task/$taskId');
 
     if (res.statusCode != 200) return [];
@@ -28,7 +28,7 @@ class MessageRepo {
   }
 
   /// GET /messages
-  static Future<List<Message>> getAll() async {
+  Future<List<Message>> getAll() async {
     final res = await ApiClient.http.get('/messages');
 
     if (res.statusCode != 200) return [];
@@ -39,7 +39,7 @@ class MessageRepo {
   }
 
   /// GET /messages/recent
-  static Future<List<Message>> getRecent({
+  Future<List<Message>> getRecent({
     bool userOnly = false,
     int? taskId,
     int limit = 20,
@@ -66,7 +66,7 @@ class MessageRepo {
   }
 
   /// POST /messages
-  static Future<Message?> create({
+  Future<Message?> create({
     required String message,
     required int taskId,
     DateTime? date,
