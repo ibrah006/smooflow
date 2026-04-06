@@ -88,7 +88,6 @@ class MessageRepo {
   /// Will get messages that were created after the message id with [afterMessageId]
   Future<List<Message>> getMessagesAfter({
     required int afterMessageId,
-    int limit = 15,
     int? taskId,
   }) async {
     final res = await ApiClient.http.get(

@@ -226,6 +226,13 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
+  Future<List<Message>> getMessagesAfter({
+    required int afterMessageId,
+    int? taskId,
+  }) async {
+    _repo.getMessagesAfter(afterMessageId: afterMessageId, )
+  }
+
   /// Subscribe to a message
   void subscribeToMessage(int messageId) {
     _client.subscribeToMessage(messageId);
