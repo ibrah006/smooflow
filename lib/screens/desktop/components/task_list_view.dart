@@ -571,6 +571,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         break;
       case TaskChangeType.nameUpdated:
         return;
+      case TaskChangeType.newMessage:
+        return;
     }
 
     print("[TASK_LIST_VIEW] task: ${event.task?.id}, type: ${event.type}");
