@@ -34,7 +34,7 @@ void main(List<String> args) async {
 
     // Setup Auto updater
     if (Platform.isWindows) {
-      String feedURL = ApiClient.http.baseUrl + '/updates/appcast.xml';
+      String feedURL = dotenv.env['API_URL']! + '/updates/appcast.xml';
 
       print("feed url: ${feedURL}");
 
