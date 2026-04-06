@@ -1,5 +1,9 @@
 // models/message.dart
 
+import 'dart:ui';
+
+import 'package:smooflow/extensions/color_hex.dart';
+
 class Message {
   final int id;
   final String message;
@@ -11,6 +15,8 @@ class Message {
   final Map<String, dynamic>? user;
   final Map<String, dynamic>? task;
 
+  final Color? color;
+
   Message({
     required this.id,
     required this.message,
@@ -19,6 +25,7 @@ class Message {
     required this.taskId,
     this.user,
     this.task,
+    required this.color,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -30,6 +37,10 @@ class Message {
       taskId: json['task']?['id'] ?? json['taskId'],
       user: json['user'],
       task: json['task'],
+      color:
+          json['user']['color'] != null
+              ? json['user']['color'].toString().toColor()
+              : null,
     );
   }
 
