@@ -238,7 +238,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         taskId: taskId,
       );
 
-      final updatedList = mergeSortedMessages(state.messages, newMessages);
+      final updatedList = _mergeSortedMessages(state.messages, newMessages);
 
       // Step 4: Update state
       state = state.copyWith(messages: updatedList, isLoading: false);
@@ -274,7 +274,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  List<Message> mergeSortedMessages(
+  List<Message> _mergeSortedMessages(
     List<Message> existing,
     List<Message> incoming,
   ) {
