@@ -111,7 +111,7 @@ Future<void> checkForUpdate(BuildContext context) async {
                   icon: Icons.bug_report_outlined,
                   title: "Minor bug fixes",
                   description:
-                      "Fixed some bugs related to udpating task print specs",
+                      "Fixed some bugs related to updating task print specs",
                 ),
                 ReleaseNote(
                   icon: Icons.notification_important_sharp,
