@@ -607,12 +607,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
 
-    // Print-specs visibility
-    final hasRef = widget.task.ref?.isNotEmpty == true;
-    final hasSize = widget.task.size != null;
-    final hasQty = widget.task.quantity != null;
-    final hasPrintSpecs = hasRef || hasSize || hasQty;
-
     // Print job CTA visibility
     final isWaitingPrinting = widget.task.status == TaskStatus.waitingPrinting;
 
@@ -879,19 +873,19 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           children: [
                             const SizedBox(height: 18),
                             // ── PRINT SPECIFICATIONS ─────────────────────────────────
-                            if (hasPrintSpecs) ...[
-                              const _DetailSectionTitle('Print Specifications'),
-                              const SizedBox(height: 10),
-                              _PrintSpecsCard(
-                                reference: widget.task.ref,
-                                size: widget.task.size,
-                                quantity: widget.task.quantity,
-                                onTaskRefChange: _onTaskRefChange,
-                                onTaskQuantityChange: _onTaskQuantityChange,
-                                onTaskSizeChange: _onTaskSizeChange,
-                              ),
-                              const SizedBox(height: 18),
-                            ],
+                            // if (hasPrintSpecs) ...[
+                            const _DetailSectionTitle('Print Specifications'),
+                            const SizedBox(height: 10),
+                            _PrintSpecsCard(
+                              reference: widget.task.ref,
+                              size: widget.task.size,
+                              quantity: widget.task.quantity,
+                              onTaskRefChange: _onTaskRefChange,
+                              onTaskQuantityChange: _onTaskQuantityChange,
+                              onTaskSizeChange: _onTaskSizeChange,
+                            ),
+                            const SizedBox(height: 18),
+                            // ],
 
                             // ── BILLING ───────────────────────────────────────────────
                             const _DetailSectionTitle('Billing'),
@@ -1628,9 +1622,9 @@ class _PrintSpecsCard extends StatelessWidget {
     required this.onTaskSizeChange,
   });
 
-  Widget _sizeWidget(String size) {
+  Widget _sizeWidget(String? size) {
     final s = getSize(size);
-    final rightUnit = getUnit(size);
+    final rightUnit = size != null ? getUnit(size) : 'cm';
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -1702,77 +1696,6 @@ class _PrintSpecsCard extends StatelessWidget {
     final hasSize = size != null;
     final hasQty = quantity != null;
 
-    final rows = <Widget>[];
-
-    if (hasRef) {
-      rows.add(
-        _SpecRow(
-          icon: Icons.tag_rounded,
-          label: 'Ref',
-          child: GhostTextField(
-            onSubmitted: onTaskRefChange,
-            mode: GhostFieldMode.label,
-            initialText: reference!,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: _T.ink3,
-              fontFamily: 'monospace',
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (hasSize) {
-      if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
-      rows.add(
-        _SpecRow(
-          icon: Icons.crop_free_rounded,
-          label: 'Size',
-          child: _sizeWidget(size!),
-        ),
-      );
-    }
-
-    if (hasQty) {
-      if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
-      rows.add(
-        _SpecRow(
-          icon: Icons.inventory_2_outlined,
-          label: 'Qty',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              GhostTextField(
-                initialText: '$quantity',
-                onSubmitted:
-                    (newValue) =>
-                        onTaskQuantityChange(double.tryParse(newValue) ?? 0),
-                mode: GhostFieldMode.inline,
-                inlineMinWidth: 30,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _T.ink,
-                ),
-              ),
-              const Text(
-                'pcs',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: _T.slate400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Container(
       decoration: BoxDecoration(
         color: _T.white,
@@ -1829,7 +1752,63 @@ class _PrintSpecsCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: rows,
+              children: [
+                _SpecRow(
+                  icon: Icons.tag_rounded,
+                  label: 'Ref',
+                  child: GhostTextField(
+                    onSubmitted: onTaskRefChange,
+                    mode: GhostFieldMode.label,
+                    initialText: reference ?? '',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _T.ink3,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _SpecRow(
+                  icon: Icons.crop_free_rounded,
+                  label: 'Size',
+                  child: _sizeWidget(size),
+                ),
+                const SizedBox(height: 12),
+                _SpecRow(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Qty',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      GhostTextField(
+                        initialText: '${quantity ?? 0}',
+                        onSubmitted:
+                            (newValue) => onTaskQuantityChange(
+                              double.tryParse(newValue) ?? 0,
+                            ),
+                        mode: GhostFieldMode.inline,
+                        inlineMinWidth: 30,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                        ),
+                      ),
+                      const Text(
+                        'pcs',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
