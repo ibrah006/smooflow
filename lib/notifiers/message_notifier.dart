@@ -274,6 +274,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
+  // This function assumes that the existing is already sorted by ID
   List<Message> _mergeSortedMessages(
     List<Message> existing,
     List<Message> incoming,
