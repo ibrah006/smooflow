@@ -1,7 +1,7 @@
 // notifier/message_notifier.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/states/message.dart';
 
