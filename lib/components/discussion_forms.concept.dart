@@ -521,10 +521,9 @@ class _OpenChevron extends StatelessWidget {
 //     ],
 //   )
 // ─────────────────────────────────────────────────────────────────────────────
-class DiscussionSheet extends StatefulWidget {
+class DiscussionSheet extends ConsumerStatefulWidget {
   final int taskId;
   final bool isOpen;
-  final List<Message> messages;
   final VoidCallback onClose;
   final ValueChanged<String> onSend;
 
@@ -532,16 +531,15 @@ class DiscussionSheet extends StatefulWidget {
     super.key,
     required this.taskId,
     required this.isOpen,
-    required this.messages,
     required this.onClose,
     required this.onSend,
   });
 
   @override
-  State<DiscussionSheet> createState() => _DiscussionSheetState();
+  ConsumerState<DiscussionSheet> createState() => _DiscussionSheetState();
 }
 
-class _DiscussionSheetState extends State<DiscussionSheet>
+class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<Offset> _slide;
@@ -579,8 +577,11 @@ class _DiscussionSheetState extends State<DiscussionSheet>
         _ctrl.reverse();
       }
     }
+
+    final messages = ref.read(messagesByTaskProvider(widget.taskId));
+
     // Scroll to bottom when new messages arrive while open
-    if (widget.messages.length != old.messages.length && widget.isOpen) {
+    if (messages.length != messages.length && widget.isOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }
   }
@@ -629,7 +630,7 @@ class _DiscussionSheetState extends State<DiscussionSheet>
             alignment: Alignment.bottomCenter,
             child: _SheetSurface(
               taskId: widget.taskId,
-              messages: widget.messages,
+              messages: ref.watch(messagesByTaskProvider(widget.taskId)),
               scroll: _scroll,
               compose: _compose,
               sending: _sending,

@@ -1010,7 +1010,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             taskId: widget.task.id,
             isOpen: _isDiscussionOpen,
             onClose: () => setState(() => _isDiscussionOpen = false),
-            messages: sampleMessages,
             onSend: (msg) {},
           ),
         ],
