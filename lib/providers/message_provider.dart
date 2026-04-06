@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/notifiers/message_notifier.dart';
@@ -9,7 +10,8 @@ final messageRepoProvider = Provider<MessageRepo>((ref) => MessageRepo());
 final messageNotifierProvider =
     StateNotifierProvider<MessageNotifier, MessageState>((ref) {
       final repo = ref.read(messageRepoProvider);
-      return MessageNotifier(repo);
+      final client = ref.read(messageWebSocketClientProvider);
+      return MessageNotifier(repo, client);
     });
 
 final messageConnectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {

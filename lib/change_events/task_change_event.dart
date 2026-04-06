@@ -162,7 +162,7 @@ class TaskWebSocketClient {
 
     // Connection error
     _socket!.on('connect_error', (error) {
-      print('WebSocket connection error: $error');
+      print('Task WebSocket connection error: $error');
       _reconnectAttempts++;
 
       if (_reconnectAttempts >= _maxReconnectAttempts) {
