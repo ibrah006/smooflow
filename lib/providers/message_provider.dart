@@ -21,10 +21,7 @@ final messageConnectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
   );
 });
 
-/// Selected task provider
-final selectedTaskProvider = StateProvider<Message?>((ref) => null);
-
-final taskWebSocketClientProvider = Provider<MessageWebSocketClient>((ref) {
+final messageWebSocketClientProvider = Provider<MessageWebSocketClient>((ref) {
   // Get auth token from your auth provider
 
   final client = MessageWebSocketClient();
@@ -38,7 +35,7 @@ final taskWebSocketClientProvider = Provider<MessageWebSocketClient>((ref) {
   return client;
 });
 
-final taskChangesStreamProvider = StreamProvider<MessageChangeEvent>((ref) {
-  final client = ref.watch(taskWebSocketClientProvider);
+final messageChangesStreamProvider = StreamProvider<MessageChangeEvent>((ref) {
+  final client = ref.watch(messageWebSocketClientProvider);
   return client.taskChanges;
 });
