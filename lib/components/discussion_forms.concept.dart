@@ -216,7 +216,9 @@ class _DiscussionPreviewStripState
                   ),
                 ),
                 child:
-                    widget.lastMessage == null
+                    ref.watch(messageNotifierProvider).isLoading
+                        ? const _DiscussionLoadingPreview()
+                        : widget.lastMessage == null
                         ? _EmptyDiscussionPreview(hovered: _hovered)
                         : _LastMessagePreview(
                           lastMessage: widget.lastMessage!,
@@ -228,6 +230,101 @@ class _DiscussionPreviewStripState
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DiscussionLoadingPreview extends StatefulWidget {
+  const _DiscussionLoadingPreview();
+
+  @override
+  State<_DiscussionLoadingPreview> createState() =>
+      _DiscussionLoadingPreviewState();
+}
+
+class _DiscussionLoadingPreviewState extends State<_DiscussionLoadingPreview>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _shimmer;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+    _shimmer = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _shimmer,
+      builder: (_, __) {
+        final t = (_shimmer.value * 2 - 1).abs(); // 0→1→0 ping-pong
+        final shimmerColor = Color.lerp(_T.slate100, _T.slate200, t)!;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar placeholder
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: shimmerColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Author name bar
+                    Container(
+                      height: 10,
+                      width: 90,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Message line 1
+                    Container(
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Message line 2 (shorter)
+                    Container(
+                      height: 9,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
