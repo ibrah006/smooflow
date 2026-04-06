@@ -19,7 +19,6 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
-import 'package:smooflow/screens/desktop/components/color_tags.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
