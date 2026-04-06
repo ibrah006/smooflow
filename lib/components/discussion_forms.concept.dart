@@ -117,10 +117,12 @@ class DiscussionPreviewStrip extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<DiscussionPreviewStrip> createState() => _DiscussionPreviewStripState();
+  ConsumerState<DiscussionPreviewStrip> createState() =>
+      _DiscussionPreviewStripState();
 }
 
-class _DiscussionPreviewStripState extends ConsumerState<DiscussionPreviewStrip> {
+class _DiscussionPreviewStripState
+    extends ConsumerState<DiscussionPreviewStrip> {
   bool _hovered = false;
 
   @override
@@ -129,7 +131,11 @@ class _DiscussionPreviewStripState extends ConsumerState<DiscussionPreviewStrip>
 
     Future.microtask(() {
       final task = ref.read(taskByIdProviderSimple(widget.taskId));
-      ref.read(messageNotifierProvider.notifier)
+      final messages = ref.read(messagesByTaskProvider(widget.taskId));
+
+      if (messages.last.id != task!.lastMessageId) {
+        // Need to fetch the recent messages to update the preview
+      }
     });
   }
 
