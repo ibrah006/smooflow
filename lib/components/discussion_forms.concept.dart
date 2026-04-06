@@ -40,6 +40,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
@@ -64,29 +65,6 @@ class _T {
   static const topbarH = 52.0;
   static const r = 8.0;
   static const rLg = 12.0;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MESSAGE MODEL  — replace with your real model once the provider is wired
-// ─────────────────────────────────────────────────────────────────────────────
-class DiscussionMessage {
-  final String id;
-  final String authorName;
-  final String authorInitials;
-  final Color authorColor;
-  final String body;
-  final DateTime sentAt;
-  final bool isOwn;
-
-  const DiscussionMessage({
-    required this.id,
-    required this.authorName,
-    required this.authorInitials,
-    required this.authorColor,
-    required this.body,
-    required this.sentAt,
-    required this.isOwn,
-  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -546,7 +524,7 @@ class _OpenChevron extends StatelessWidget {
 class DiscussionSheet extends StatefulWidget {
   final int taskId;
   final bool isOpen;
-  final List<DiscussionMessage> messages;
+  final List<Message> messages;
   final VoidCallback onClose;
   final ValueChanged<String> onSend;
 
@@ -670,7 +648,7 @@ class _DiscussionSheetState extends State<DiscussionSheet>
 // ─────────────────────────────────────────────────────────────────────────────
 class _SheetSurface extends StatelessWidget {
   final int taskId;
-  final List<DiscussionMessage> messages;
+  final List<Message> messages;
   final ScrollController scroll;
   final TextEditingController compose;
   final bool sending;
@@ -858,7 +836,7 @@ class _CloseButtonState extends State<_CloseButton> {
 // Empty state shown when no messages exist yet.
 // ─────────────────────────────────────────────────────────────────────────────
 class _MessageList extends StatelessWidget {
-  final List<DiscussionMessage> messages;
+  final List<Message> messages;
   final ScrollController scroll;
 
   const _MessageList({required this.messages, required this.scroll});
@@ -893,7 +871,7 @@ class _MessageList extends StatelessWidget {
           message: msg,
           grouped: grouped,
           isLast: isLast,
-          fmtTime: _fmtTime(msg.sentAt),
+          fmtTime: _fmtTime(msg.date),
         );
       },
     );
@@ -944,7 +922,7 @@ class _EmptyMessageList extends StatelessWidget {
 // MESSAGE ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _MessageRow extends StatefulWidget {
-  final DiscussionMessage message;
+  final Message message;
   final bool grouped;
   final bool isLast;
   final String fmtTime;
@@ -1005,7 +983,7 @@ class _MessageRowState extends State<_MessageRow> {
                         )
                         : AvatarWidget(
                           initials: msg.authorInitials,
-                          color: msg.authorColor,
+                          color: msg.authorColor ?? _T.ink3,
                           size: 30,
                         ),
               ),
@@ -1024,7 +1002,9 @@ class _MessageRowState extends State<_MessageRow> {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              msg.isOwn ? 'You' : msg.authorName,
+                              msg.userId == LoginService.currentUser!.id
+                                  ? 'You'
+                                  : msg.authorName,
                               style: const TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -1043,7 +1023,7 @@ class _MessageRowState extends State<_MessageRow> {
                         ),
                       ),
                     Text(
-                      msg.body,
+                      msg.message,
                       style: const TextStyle(
                         fontSize: 13,
                         color: _T.ink3,
