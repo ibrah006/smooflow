@@ -1692,10 +1692,6 @@ class _PrintSpecsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasRef = reference?.isNotEmpty == true;
-    final hasSize = size != null;
-    final hasQty = quantity != null;
-
     return Container(
       decoration: BoxDecoration(
         color: _T.white,
