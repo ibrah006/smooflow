@@ -472,7 +472,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .read(taskNotifierProvider)
             .tasks
             .firstWhere((t) => t.id == widget.task.id)
-            .ref;
+            .ref ??
+        '';
 
     if (taskRef != newValue.trim()) {
       await ref
@@ -526,7 +527,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .read(taskNotifierProvider)
             .tasks
             .firstWhere((t) => t.id == widget.task.id)
-            .quantity;
+            .quantity ??
+        0;
 
     bool hasDecimal = newValue % 1 != 0;
     if (hasDecimal) {
