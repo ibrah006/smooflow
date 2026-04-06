@@ -97,16 +97,34 @@ final setTaskStateProvider = Provider.family<Future<void>, TaskStateParams>((
   // Assign/Unassign printer to task
   if (taskStateParams.printerId != null) {
     print("about to start print job\nassigning printer");
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskStateParams.id, newStatus: taskStateParams.newTaskStatus, printerId: taskStateParams.printerId!);
-    ref.watch(printerNotifierProvider.notifier).assignTask(printerId: taskStateParams.printerId!, taskId: taskStateParams.id);
+    await ref
+        .watch(taskNotifierProvider.notifier)
+        .progressStage(
+          taskId: taskStateParams.id,
+          newStatus: taskStateParams.newTaskStatus,
+          printerId: taskStateParams.printerId!,
+        );
+    ref
+        .watch(printerNotifierProvider.notifier)
+        .assignTask(
+          printerId: taskStateParams.printerId!,
+          taskId: taskStateParams.id,
+        );
 
     // Commit stock out transaction
-    if (taskStateParams.stockTransactionBarcode!=null){
+    if (taskStateParams.stockTransactionBarcode != null) {
       // ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(transactionBarcode: taskStateParams.stockTransactionBarcode!);
     }
   } else {
-    await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskStateParams.id, newStatus: taskStateParams.newTaskStatus);
-    ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskStateParams.id);
+    await ref
+        .watch(taskNotifierProvider.notifier)
+        .progressStage(
+          taskId: taskStateParams.id,
+          newStatus: taskStateParams.newTaskStatus,
+        );
+    ref
+        .watch(printerNotifierProvider.notifier)
+        .unassignTask(taskId: taskStateParams.id);
   }
 });
 
@@ -129,9 +147,8 @@ final selectedTaskProvider = StateProvider<Task?>((ref) => null);
 
 final taskWebSocketClientProvider = Provider<TaskWebSocketClient>((ref) {
   // Get auth token from your auth provider
-  
-  final client = TaskWebSocketClient(
-  );
+
+  final client = TaskWebSocketClient();
 
   client.connect();
 
@@ -152,7 +169,10 @@ final taskChangesStreamProvider = StreamProvider<TaskChangeEvent>((ref) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Tasks by status provider
-final tasksByStatusProvider = Provider.family<List<Task>, String>((ref, status) {
+final tasksByStatusProvider = Provider.family<List<Task>, String>((
+  ref,
+  status,
+) {
   final state = ref.watch(taskNotifierProvider);
   return state.tasks.where((t) => t.status == status).toList();
 });
@@ -166,7 +186,9 @@ final pendingTasksProvider = Provider<List<Task>>((ref) {
 /// In progress tasks provider
 final inProgressTasksProvider = Provider<List<Task>>((ref) {
   final state = ref.watch(taskNotifierProvider);
-  return state.tasks.where((t) => t.status == 'in_progress' || t.status == 'inProgress').toList();
+  return state.tasks
+      .where((t) => t.status == 'in_progress' || t.status == 'inProgress')
+      .toList();
 });
 
 /// Delivery tasks provider (for delivery dashboard)
@@ -186,9 +208,9 @@ final overdueTasksProvider = Provider<List<Task>>((ref) {
   final state = ref.watch(taskNotifierProvider);
   final now = DateTime.now();
   return state.tasks.where((t) {
-    return t.dueDate != null && 
-           t.dueDate!.isBefore(now) && 
-           t.status != 'completed';
+    return t.dueDate != null &&
+        t.dueDate!.isBefore(now) &&
+        t.status != 'completed';
   }).toList();
 });
 
@@ -206,7 +228,7 @@ final searchTasksProvider = Provider.family<List<Task>, String>((ref, query) {
   final lowerQuery = query.toLowerCase();
   return state.tasks.where((task) {
     return task.name.toLowerCase().contains(lowerQuery) ||
-           (task.description.toLowerCase().contains(lowerQuery));
+        (task.description.toLowerCase().contains(lowerQuery));
   }).toList();
 });
 
@@ -216,14 +238,18 @@ final taskStatsProvider = Provider<TaskStats>((ref) {
   return TaskStats(
     total: state.tasks.length,
     pending: state.tasks.where((t) => t.status == 'pending').length,
-    inProgress: state.tasks.where((t) => t.status == 'in_progress' || t.status == 'inProgress').length,
+    inProgress:
+        state.tasks
+            .where((t) => t.status == 'in_progress' || t.status == 'inProgress')
+            .length,
     delivery: state.tasks.where((t) => t.status == 'delivery').length,
     completed: state.tasks.where((t) => t.status == 'completed').length,
-    overdue: state.tasks.where((t) {
-      return t.dueDate != null && 
-             t.dueDate!.isBefore(DateTime.now()) && 
-             t.status != 'completed';
-    }).length,
+    overdue:
+        state.tasks.where((t) {
+          return t.dueDate != null &&
+              t.dueDate!.isBefore(DateTime.now()) &&
+              t.status != 'completed';
+        }).length,
     highPriority: state.tasks.where((t) => t.priority.index >= 3).length,
   );
 });
@@ -258,50 +284,70 @@ class TaskProvider {
     required WidgetRef ref,
     required int taskId,
     required TaskStatus newStatus,
+
     /// Pass null when unnassigning printer from task or when progressing task stage without needing to assign a printer (e.g. progressing to completed status)
     String? printerId,
     String? stockTransactionBarcode,
     String? materialId,
-    int? stockOutQuantity
+    int? stockOutQuantity,
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
     }
-    if (printerId != null && (materialId == null || stockTransactionBarcode == null || stockOutQuantity == null)) {
+    if (printerId != null &&
+        (materialId == null ||
+            stockTransactionBarcode == null ||
+            stockOutQuantity == null)) {
       throw "Material ID and stock transaction barcode & stock out id must be provided when assigning printer to task for printing";
     }
 
     late final StockTransaction? stockOutTransaction;
 
     if (printerId != null) {
-      stockOutTransaction = await ref.watch(taskNotifierProvider.notifier).schedulePrint(
-        taskId: taskId,
-        printerId: printerId,
-        materialId: materialId!, // This value is not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
-        productionQuantity: stockOutQuantity!, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
-        barcode: stockTransactionBarcode!
-      );
+      stockOutTransaction = await ref
+          .watch(taskNotifierProvider.notifier)
+          .schedulePrint(
+            taskId: taskId,
+            printerId: printerId,
+            materialId:
+                materialId!, // This value is not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+            productionQuantity:
+                stockOutQuantity!, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+            barcode: stockTransactionBarcode!,
+          );
     } else {
-      await ref.watch(taskNotifierProvider.notifier).progressStage(taskId: taskId, newStatus: newStatus, printerId: printerId);
+      await ref
+          .watch(taskNotifierProvider.notifier)
+          .progressStage(
+            taskId: taskId,
+            newStatus: newStatus,
+            printerId: printerId,
+          );
     }
 
     if (printerId != null) {
-      ref.watch(printerNotifierProvider.notifier).assignTask(printerId: printerId, taskId: taskId);
+      ref
+          .watch(printerNotifierProvider.notifier)
+          .assignTask(printerId: printerId, taskId: taskId);
     } else {
       ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskId);
     }
 
     // Commit stock out transaction
     if (stockTransactionBarcode != null) {
-      print("committing stock out transaction, barcode: ${stockTransactionBarcode}");
+      print(
+        "committing stock out transaction, barcode: ${stockTransactionBarcode}",
+      );
 
       try {
         // stockTransactionBarcode != null implies that stockOutTransaction != null,
         // we will still catch for error anyways.
-        ref.watch(materialNotifierProvider.notifier).commitStockOutTransaction(
-          stockOutTransaction: stockOutTransaction!
-        );
-      } catch(e) {
+        ref
+            .watch(materialNotifierProvider.notifier)
+            .commitStockOutTransaction(
+              stockOutTransaction: stockOutTransaction!,
+            );
+      } catch (e) {
         print("actual error: $e");
         throw "Commit stock out transaction requested but server did not return updated stock out transaction";
       }
@@ -311,10 +357,16 @@ class TaskProvider {
 
 class TaskStateParams {
   final int id;
+
   /// Pass in null to unassign printer from task
   final String? printerId;
   final String? stockTransactionBarcode;
   final TaskStatus newTaskStatus;
 
-  const TaskStateParams({required this.id, required this.printerId, required this.stockTransactionBarcode, required this.newTaskStatus});
+  const TaskStateParams({
+    required this.id,
+    required this.printerId,
+    required this.stockTransactionBarcode,
+    required this.newTaskStatus,
+  });
 }
