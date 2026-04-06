@@ -37,6 +37,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/providers/message_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,9 +96,11 @@ class DiscussionMessage {
 //
 // When there are no messages yet, shows an empty-state prompt instead.
 // ─────────────────────────────────────────────────────────────────────────────
-class DiscussionPreviewStrip extends StatefulWidget {
+class DiscussionPreviewStrip extends ConsumerStatefulWidget {
   /// The most recent message, or null if no messages yet.
   final DiscussionMessage? lastMessage;
+
+  final int taskId;
 
   /// Number of unread messages. 0 hides the badge.
   final int unreadCount;
@@ -108,14 +113,25 @@ class DiscussionPreviewStrip extends StatefulWidget {
     required this.lastMessage,
     required this.unreadCount,
     required this.onOpen,
+    required this.taskId,
   });
 
   @override
-  State<DiscussionPreviewStrip> createState() => _DiscussionPreviewStripState();
+  ConsumerState<DiscussionPreviewStrip> createState() => _DiscussionPreviewStripState();
 }
 
-class _DiscussionPreviewStripState extends State<DiscussionPreviewStrip> {
+class _DiscussionPreviewStripState extends ConsumerState<DiscussionPreviewStrip> {
   bool _hovered = false;
+
+  @override
+  initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final task = ref.read(taskByIdProviderSimple(widget.taskId));
+      ref.read(messageNotifierProvider.notifier)
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
+import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/notifiers/message_notifier.dart';
 import 'package:smooflow/states/message.dart';
@@ -13,6 +14,15 @@ final messageNotifierProvider =
       final client = ref.read(messageWebSocketClientProvider);
       return MessageNotifier(repo, client);
     });
+
+final messagesByTaskProvider = Provider.family<List<Message>, int>((
+  ref,
+  taskId,
+) {
+  final state = ref.watch(messageNotifierProvider);
+
+  return state.messages.where((msg) => msg.taskId == taskId).toList();
+});
 
 final messageConnectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
   final notifier = ref.watch(messageNotifierProvider.notifier);

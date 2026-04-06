@@ -982,6 +982,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           unreadCount: 2,
                           onOpen:
                               () => setState(() => _isDiscussionOpen = true),
+                          taskId: widget.task.id,
                         ),
                       ],
                       const SizedBox(height: 18),
