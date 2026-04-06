@@ -105,22 +105,13 @@ Future<void> checkForUpdate(BuildContext context) async {
               onDismiss: () {
                 Navigator.of(context).pop();
               },
+              // Release Notes
               releaseNotes: [
                 ReleaseNote(
                   icon: Icons.bug_report_outlined,
                   title: "Minor bug fixes",
                   description:
-                      "Fixed buggy custom date for task.\nFixed label 'Due date' -> 'Date' in task details",
-                ),
-                ReleaseNote(
-                  icon: Icons.list_outlined,
-                  title: "Update Task Print Specs",
-                  description: "You can now update task print specifications.",
-                ),
-                ReleaseNote(
-                  icon: Icons.delete_sweep_outlined,
-                  title: "Delete Task",
-                  description: "Tasks can be deleted when needed to be.",
+                      "Fixed some bugs related to udpating task print specs",
                 ),
               ],
             ),
