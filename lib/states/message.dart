@@ -1,17 +1,23 @@
 // state/message_state.dart
 
 import 'package:googleapis/chat/v1.dart';
+import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 
 class MessageState {
   final List<Message> messages;
   final bool isLoading;
   final String? error;
 
-  const MessageState({
+  ConnectionStatus _connectionStatus;
+
+  ConnectionStatus get connectionStatus => _connectionStatus;
+
+  MessageState({
     this.messages = const [],
     this.isLoading = false,
     this.error,
-  });
+    ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
+  }) : _connectionStatus = connectionStatus;
 
   MessageState copyWith({
     List<Message>? messages,
@@ -22,6 +28,7 @@ class MessageState {
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      connectionStatus: connectionStatus,
     );
   }
 }

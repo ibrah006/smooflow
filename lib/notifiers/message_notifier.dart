@@ -1,13 +1,16 @@
 // notifier/message_notifier.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/states/message.dart';
 
 class MessageNotifier extends StateNotifier<MessageState> {
   final MessageRepo repo;
 
-  MessageNotifier(this.repo) : super(const MessageState());
+  MessageNotifier(this.repo) : super(MessageState());
+
+  ConnectionStatus get connectionStatus => state.connectionStatus;
 
   /// Helper to extract readable error
   String _parseError(dynamic e) {
