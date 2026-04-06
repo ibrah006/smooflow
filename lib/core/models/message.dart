@@ -3,6 +3,7 @@
 import 'dart:ui';
 
 import 'package:smooflow/extensions/color_hex.dart';
+import 'package:smooflow/extensions/username_essentials.dart';
 
 class Message {
   final int id;
@@ -15,7 +16,11 @@ class Message {
   final Map<String, dynamic>? user;
   final Map<String, dynamic>? task;
 
-  final Color? color;
+  final Color? authorColor;
+
+  final String authorName;
+
+  String get authorInitials => authorName.initials;
 
   Message({
     required this.id,
@@ -25,7 +30,8 @@ class Message {
     required this.taskId,
     this.user,
     this.task,
-    required this.color,
+    required this.authorColor,
+    required this.authorName,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -37,10 +43,11 @@ class Message {
       taskId: json['task']?['id'] ?? json['taskId'],
       user: json['user'],
       task: json['task'],
-      color:
+      authorColor:
           json['user']['color'] != null
               ? json['user']['color'].toString().toColor()
               : null,
+      authorName: json['user']['name'] ?? 'Unknown User',
     );
   }
 

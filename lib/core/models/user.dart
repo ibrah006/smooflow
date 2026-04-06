@@ -2,6 +2,7 @@
 // import 'package:workflow/core/enums/shared_storage_options.dart';
 
 import 'package:flutter/cupertino.dart';
+import 'package:smooflow/extensions/username_essentials.dart';
 
 class User {
   late final String id;
@@ -55,16 +56,7 @@ class User {
   // Display Name
   String get displayName => name[0].toUpperCase() + name.substring(1);
   String get initials {
-    final splitted = name.split(" ");
-
-    String result = "";
-
-    while (splitted.isNotEmpty && result.length < 4) {
-      result += splitted[0][0].toUpperCase();
-      splitted.removeAt(0);
-    }
-
-    return result;
+    return name.initials;
   }
 
   String get nameShort {

@@ -39,6 +39,7 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
@@ -392,7 +393,7 @@ class _EmptyDiscussionPreview extends StatelessWidget {
 
 // Last message preview inside the card
 class _LastMessagePreview extends StatelessWidget {
-  final DiscussionMessage lastMessage;
+  final Message lastMessage;
   final int unreadCount;
   final bool hovered;
 
@@ -420,7 +421,7 @@ class _LastMessagePreview extends StatelessWidget {
           // Avatar
           AvatarWidget(
             initials: lastMessage.authorInitials,
-            color: lastMessage.authorColor,
+            color: lastMessage.authorColor ?? _T.ink3,
             size: 30,
           ),
           const SizedBox(width: 10),
@@ -442,7 +443,7 @@ class _LastMessagePreview extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _relativeTime(lastMessage.sentAt),
+                      _relativeTime(lastMessage.date),
                       style: const TextStyle(
                         fontSize: 10.5,
                         color: _T.slate400,
@@ -452,7 +453,7 @@ class _LastMessagePreview extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  lastMessage.body,
+                  lastMessage.message,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
