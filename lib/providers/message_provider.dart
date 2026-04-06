@@ -14,7 +14,7 @@ final messageNotifierProvider =
 
 final messageConnectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
   final notifier = ref.watch(messageNotifierProvider.notifier);
-  // Create a stream from the TaskNotifier's connection status changes
+  // Create a stream from the MessageNotifier's connection status changes
   return Stream.periodic(
     Duration(milliseconds: 500),
     (_) => notifier.connectionStatus,
@@ -37,5 +37,5 @@ final messageWebSocketClientProvider = Provider<MessageWebSocketClient>((ref) {
 
 final messageChangesStreamProvider = StreamProvider<MessageChangeEvent>((ref) {
   final client = ref.watch(messageWebSocketClientProvider);
-  return client.taskChanges;
+  return client.messageChanges;
 });
