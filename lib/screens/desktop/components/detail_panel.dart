@@ -976,9 +976,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       if (kDebugMode) ...[
                         const SizedBox(height: 18),
                         DiscussionPreviewStrip(
-                          lastMessage:
-                              sampleMessages
-                                  .last, // wire from your message provider
                           unreadCount: 2,
                           onOpen:
                               () => setState(() => _isDiscussionOpen = true),
