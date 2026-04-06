@@ -59,6 +59,8 @@ class Task {
   BillingStatus _billingStatus;
 
   int messagesCount;
+  int? lastMessageId;
+  int? firstMessageId;
 
   // Constructor to initialize values
   Task({
@@ -93,6 +95,8 @@ class Task {
     required List<String> stockTransactionIds,
     required this.date,
     required this.messagesCount,
+    required this.lastMessageId,
+    required this.firstMessageId,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -374,6 +378,8 @@ class Task {
           [],
       date: json['created'] != null ? DateTime.parse(json['created']) : null,
       messagesCount: json['messagesCount'] ?? 0,
+      lastMessageId: json['lastMessageId'],
+      firstMessageId: json['firstMessageId'],
     );
   }
 
@@ -394,7 +400,9 @@ class Task {
       _billingStatus = original._billingStatus,
       _stockTransactionIds = original._stockTransactionIds,
       date = original.date,
-      messagesCount = original.messagesCount {
+      messagesCount = original.messagesCount,
+      lastMessageId = original.lastMessageId,
+      firstMessageId = original.firstMessageId {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -471,6 +479,8 @@ class Task {
     DateTime? assigneeLastAdded,
     List<int>? workActivityLogs,
     int? messagesCount,
+    int? lastMessageId,
+    int? firstMessageId,
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -507,6 +517,8 @@ class Task {
       updatedAt: updatedAt ?? this.updatedAt,
       date: date ?? this.date,
       messagesCount: messagesCount ?? this.messagesCount,
+      lastMessageId: lastMessageId ?? this.lastMessageId,
+      firstMessageId: firstMessageId ?? this.firstMessageId,
     );
 
     // Set color and icon via setters (not constructor parameters)
@@ -585,6 +597,8 @@ class Task {
     _priority = newTask._priority;
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
     messagesCount = newTask.messagesCount;
+    lastMessageId = newTask.lastMessageId;
+    firstMessageId = newTask.firstMessageId;
   }
 
   /// if [status] is null, it will use the Task's current status to determine the component properties
