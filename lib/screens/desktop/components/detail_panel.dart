@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/components/discussion_forms.concept.dart';
@@ -972,15 +973,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       // DEBUG
-                      // const SizedBox(height: 18),
-                      // DiscussionPreviewStrip(
-                      //   lastMessage:
-                      //       sampleMessages
-                      //           .last, // wire from your message provider
-                      //   unreadCount: 2,
-                      //   onOpen: () => setState(() => _isDiscussionOpen = true),
-                      // ),
-                      // const SizedBox(height: 18),
+                      if (kDebugMode) ...[
+                        const SizedBox(height: 18),
+                        DiscussionPreviewStrip(
+                          lastMessage:
+                              sampleMessages
+                                  .last, // wire from your message provider
+                          unreadCount: 2,
+                          onOpen:
+                              () => setState(() => _isDiscussionOpen = true),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
