@@ -113,6 +113,12 @@ Future<void> checkForUpdate(BuildContext context) async {
                   description:
                       "Fixed some bugs related to udpating task print specs",
                 ),
+                ReleaseNote(
+                  icon: Icons.notification_important_sharp,
+                  title: "Task Notifications",
+                  description:
+                      "Fixed in-app notifications spamming when task updated",
+                ),
               ],
             ),
       );
