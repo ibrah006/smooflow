@@ -84,4 +84,19 @@ class MessageRepo {
 
     return Message.fromJson(jsonDecode(res.body));
   }
+
+  /// Will get messages that were created after the message id with [afterMessageId]
+  Future<List<Message>> getMessagesAfter({
+    required int afterMessageId,
+    int limit = 15,
+    int? taskId,
+  }) async {
+    final res = await ApiClient.http.get(
+      '/messages?afterId=$afterMessageId${taskId != null ? '&taskId=$taskId' : ''}',
+    );
+
+    if (res.statusCode != 200) return [];
+
+    return (res.body as List).map((e) => Message.fromJson(e)).toList();
+  }
 }
