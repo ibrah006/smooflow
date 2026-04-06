@@ -125,17 +125,33 @@ class _DiscussionPreviewStripState
     extends ConsumerState<DiscussionPreviewStrip> {
   bool _hovered = false;
 
+  // Is loading
+  bool _isLoading = false;
+
   @override
   initState() {
     super.initState();
 
-    Future.microtask(() {
+    Future.microtask(() async {
+      setState(() {
+        _isLoading = true;
+      });
+
       final task = ref.read(taskByIdProviderSimple(widget.taskId));
       final messages = ref.read(messagesByTaskProvider(widget.taskId));
 
+      final lastMessageId = messages.last.id;
       if (messages.last.id != task!.lastMessageId) {
         // Need to fetch the recent messages to update the preview
+        await ref
+            .read(messageNotifierProvider.notifier)
+            .getMessagesAfter(afterMessageId: lastMessageId, taskId: task.id);
       }
+
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+        });
     });
   }
 

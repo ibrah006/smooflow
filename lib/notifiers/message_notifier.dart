@@ -226,11 +226,28 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  Future<List<Message>> getMessagesAfter({
+  Future<void> getMessagesAfter({
     required int afterMessageId,
     int? taskId,
   }) async {
-    _repo.getMessagesAfter(afterMessageId: afterMessageId, )
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final newMessages = await _repo.getMessagesAfter(
+        afterMessageId: afterMessageId,
+        taskId: taskId,
+      );
+
+      final updatedList = mergeSortedMessages(state.messages, newMessages);
+
+      // Step 4: Update state
+      state = state.copyWith(messages: updatedList, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to latest messages',
+        isLoading: false,
+      );
+    }
   }
 
   /// Subscribe to a message
@@ -255,5 +272,44 @@ class MessageNotifier extends StateNotifier<MessageState> {
       _client.unsubscribeFromMessage(state.selectedMessage!.id);
       state = state.copyWith(selectedMessage: null);
     }
+  }
+
+  List<Message> mergeSortedMessages(
+    List<Message> existing,
+    List<Message> incoming,
+  ) {
+    final result = <Message>[];
+
+    int i = 0;
+    int j = 0;
+
+    while (i < existing.length && j < incoming.length) {
+      final a = existing[i];
+      final b = incoming[j];
+
+      if (a.id == b.id) {
+        // Replace old with new
+        result.add(b);
+        i++;
+        j++;
+      } else if (a.id < b.id) {
+        result.add(a);
+        i++;
+      } else {
+        result.add(b);
+        j++;
+      }
+    }
+
+    // Remaining items
+    while (i < existing.length) {
+      result.add(existing[i++]);
+    }
+
+    while (j < incoming.length) {
+      result.add(incoming[j++]);
+    }
+
+    return result;
   }
 }
