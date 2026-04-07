@@ -54,7 +54,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
           taskId: task.id,
         );
       } else {
-        // No messages for this task, fetch all messages for the task
+        // No messages for this task, fetch recent messages for the task
         await getRecent(taskId: task.id);
       }
     }
