@@ -7,10 +7,10 @@ import 'package:smooflow/extensions/color_hex.dart';
 import 'package:smooflow/extensions/username_essentials.dart';
 
 class Message {
-  final int id;
+  late final int id;
   final String message;
   final DateTime date;
-  final int userId;
+  final String userId;
   final int taskId;
 
   final Color? authorColor;
@@ -29,14 +29,11 @@ class Message {
     required this.authorName,
   });
 
-  Message.create({
-    required this.message,
-    required this.userId,
-    required this.taskId,
-  }) : id = 0,
-       authorColor = LoginService.currentUser!.color,
-       authorName = LoginService.currentUser!.name,
-       date = DateTime.now();
+  Message.create({required this.message, required this.taskId})
+    : userId = LoginService.currentUser!.id,
+      authorColor = LoginService.currentUser!.color,
+      authorName = LoginService.currentUser!.name,
+      date = DateTime.now();
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
