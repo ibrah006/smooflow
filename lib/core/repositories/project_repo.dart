@@ -26,7 +26,7 @@ class ProjectRepo {
   }
 
   Future<Project?> projectById(String id) async {
-    final response = await ApiClient.http.get(ApiEndpoints.projects+"/$id");
+    final response = await ApiClient.http.get(ApiEndpoints.projects + "/$id");
     final body = jsonDecode(response.body);
 
     if (response.statusCode != 200) {
@@ -38,7 +38,6 @@ class ProjectRepo {
 
   Future<Map<int, String>> getRecentProjects() async {
     final response = await ApiClient.http.get(ApiEndpoints.getRecentProjects);
-    print("recent projects: ${jsonDecode(response.body)}");
 
     if (response.statusCode != 200) {
       throw "Failed to fetch projects: ${response.body}";
@@ -168,22 +167,25 @@ class ProjectRepo {
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
 
-    final activeProjects = (body['activeProjects'] as List)
-        .map((e) => Project.fromJson(e))
-        .toList();
+    final activeProjects =
+        (body['activeProjects'] as List)
+            .map((e) => Project.fromJson(e))
+            .toList();
 
     final activeLength = (body['activeLength'] as num).toInt();
     final pendingLength = (body['pendingLength'] as num).toInt();
     final finishedLength = (body['finishedLength'] as num).toInt();
 
-    return {'activeProjects': activeProjects, 'activeLength': activeLength, 'pendingLength': pendingLength, 'finishedLength': finishedLength};
+    return {
+      'activeProjects': activeProjects,
+      'activeLength': activeLength,
+      'pendingLength': pendingLength,
+      'finishedLength': finishedLength,
+    };
   }
 
   /// Fetch production report for a given period
-  Future<ProjectReportDetails> fetchProductionReport(
-    Period period,
-  ) async {
-
+  Future<ProjectReportDetails> fetchProductionReport(Period period) async {
     final res = await ApiClient.http.get(
       '/reports/projects?for=${period.name}',
     );

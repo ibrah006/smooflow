@@ -299,6 +299,11 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) {
     late final TaskPriority priority;
+
+    print(
+      "new fields for task messagesCount: ${json["messagesCount"]}, lastMessageId: ${json["lastMessageId"]}, firstMessageId: ${json["firstMessageId"]}, unreadCount: ${json["unreadCount"]}",
+    );
+
     try {
       priority = TaskPriority.values.elementAt(json["priority"] - 1);
     } catch (e) {
