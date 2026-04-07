@@ -581,7 +581,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   @override
   Widget build(BuildContext context) {
-    print("messages count: ${widget.task.messagesCount}");
+    print("unread messages count: ${widget.task.unreadCount}");
 
     final si = stageInfo(widget.task.status);
     final proj =
