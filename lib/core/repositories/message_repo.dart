@@ -66,7 +66,7 @@ class MessageRepo {
   }
 
   /// POST /messages
-  Future<Message?> create({
+  Future<Message> create({
     required String message,
     required int taskId,
     DateTime? date,

@@ -112,8 +112,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final message =
-          (await _repo.create(message: text, taskId: taskId, date: date))!;
+      final message = await _repo.create(
+        message: text,
+        taskId: taskId,
+        date: date,
+      );
 
       state = state.copyWith(isLoading: false);
 
