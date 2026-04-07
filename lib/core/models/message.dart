@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/extensions/color_hex.dart';
 import 'package:smooflow/extensions/username_essentials.dart';
 

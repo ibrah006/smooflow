@@ -2,6 +2,7 @@
 // import 'package:workflow/core/enums/shared_storage_options.dart';
 
 import 'package:flutter/cupertino.dart';
+import 'package:smooflow/extensions/color_hex.dart';
 import 'package:smooflow/extensions/username_essentials.dart';
 
 class User {
@@ -18,6 +19,8 @@ class User {
 
   String? avatarUrl;
 
+  Color? color;
+
   User({
     required String? userId,
     required this.name,
@@ -27,6 +30,7 @@ class User {
     this.departmentId,
     required this.createdAt,
     required String? userOrganizationId,
+    required Color? color,
   }) {
     if (userId != null) {
       id = userId;
@@ -95,6 +99,7 @@ class User {
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       userOrganizationId: userOrganizationId,
+      color: json['color'] != null ? json['color'].toString().toColor() : null,
     );
   }
 

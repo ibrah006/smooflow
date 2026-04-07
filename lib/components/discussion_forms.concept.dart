@@ -549,6 +549,10 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   final ScrollController _scroll = ScrollController();
   bool _sending = false;
 
+  void onSend() {
+    // widget.onSend(message);
+  }
+
   @override
   void initState() {
     super.initState();
