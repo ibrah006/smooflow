@@ -214,10 +214,10 @@ class _TaskCardState extends ConsumerState<TaskCard>
 
       // await ref.read(createProjectTaskProvider(newTask));
       await ref
-          .watch(projectNotifierProvider.notifier)
+          .read(projectNotifierProvider.notifier)
           .createTask(task: newTask);
 
-      ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
+      ref.read(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to create task, e: ${e.toString()}")),
