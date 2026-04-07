@@ -236,7 +236,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     Future.microtask(() {
       ref
           .read(messageNotifierProvider.notifier)
-          .getMessagesByTask(widget.task.id);
+          .getMessagesByTask(ref, widget.task.id);
     });
   }
 

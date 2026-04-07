@@ -5,6 +5,7 @@ import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
 
 class MessageNotifier extends StateNotifier<MessageState> {
@@ -39,11 +40,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }
 
   /// GET /messages/task/:taskId
-  Future<void> getMessagesByTask(int messageId) async {
+  Future<void> getMessagesByTask(WidgetRef ref, int taskId) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      await _repo.getByTaskId(messageId);
+      await _repo.getByTaskId(taskId);
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
