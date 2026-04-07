@@ -13,10 +13,6 @@ class Message {
   final int userId;
   final int taskId;
 
-  // Optional nested data (if returned)
-  final Map<String, dynamic>? user;
-  final Map<String, dynamic>? task;
-
   final Color? authorColor;
 
   final String authorName;
@@ -29,11 +25,18 @@ class Message {
     required this.date,
     required this.userId,
     required this.taskId,
-    this.user,
-    this.task,
     required this.authorColor,
     required this.authorName,
   });
+
+  Message.create({
+    required this.message,
+    required this.userId,
+    required this.taskId,
+  }) : id = 0,
+       authorColor = LoginService.currentUser!.color,
+       authorName = LoginService.currentUser!.name,
+       date = DateTime.now();
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
@@ -42,8 +45,6 @@ class Message {
       date: DateTime.parse(json['date']),
       userId: json['user']?['id'] ?? json['userId'],
       taskId: json['task']?['id'] ?? json['taskId'],
-      user: json['user'],
-      task: json['task'],
       authorColor:
           json['user']['color'] != null
               ? json['user']['color'].toString().toColor()
