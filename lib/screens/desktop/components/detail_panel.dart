@@ -976,7 +976,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       if (kDebugMode) ...[
                         const SizedBox(height: 18),
                         DiscussionPreviewStrip(
-                          unreadCount: 0,
+                          unreadCount: widget.task.unreadCount,
                           onOpen:
                               () => setState(() => _isDiscussionOpen = true),
                           taskId: widget.task.id,

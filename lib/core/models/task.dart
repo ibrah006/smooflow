@@ -58,9 +58,10 @@ class Task {
 
   BillingStatus _billingStatus;
 
-  int messagesCount;
+  // int messagesCount;
   int? lastMessageId;
   int? firstMessageId;
+  int unreadCount;
 
   // Constructor to initialize values
   Task({
@@ -94,7 +95,7 @@ class Task {
     required BillingStatus billingStatus,
     required List<String> stockTransactionIds,
     required this.date,
-    required this.messagesCount,
+    required this.unreadCount,
     required this.lastMessageId,
     required this.firstMessageId,
   }) : _id = id,
@@ -145,6 +146,7 @@ class Task {
     int? quantity,
     DateTime? date,
     int messageCount = 0,
+    int unreadCount = 0,
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -163,7 +165,7 @@ class Task {
        _billingStatus = BillingStatus.pending,
        _stockTransactionIds = [],
        this.date = date ?? DateTime.now(),
-       this.messagesCount = messageCount;
+       this.unreadCount = unreadCount;
 
   // To ensure toSet gives no duplicates
   @override
@@ -382,9 +384,9 @@ class Task {
               .toList() ??
           [],
       date: json['created'] != null ? DateTime.parse(json['created']) : null,
-      messagesCount: json['messagesCount'] ?? 0,
       lastMessageId: json['lastMessageId'],
       firstMessageId: json['firstMessageId'],
+      unreadCount: json['unreadCount'] ?? 0,
     );
   }
 
@@ -405,7 +407,7 @@ class Task {
       _billingStatus = original._billingStatus,
       _stockTransactionIds = original._stockTransactionIds,
       date = original.date,
-      messagesCount = original.messagesCount,
+      unreadCount = original.unreadCount,
       lastMessageId = original.lastMessageId,
       firstMessageId = original.firstMessageId {
     updatedAt = original.updatedAt;
@@ -436,7 +438,7 @@ class Task {
       _billingStatus = BillingStatus.pending,
       _stockTransactionIds = [],
       date = null,
-      messagesCount = 0;
+      unreadCount = 0;
 
   /// Creates a copy of this Task with specified fields replaced.
   /// Returns a new Task instance with updated values while preserving unchanged ones.
@@ -483,7 +485,7 @@ class Task {
     DateTime? activityLogLastModified,
     DateTime? assigneeLastAdded,
     List<int>? workActivityLogs,
-    int? messagesCount,
+    int? unreadCount,
     int? lastMessageId,
     int? firstMessageId,
   }) {
@@ -521,7 +523,7 @@ class Task {
       workActivityLogs: workActivityLogs ?? this.workActivityLogs,
       updatedAt: updatedAt ?? this.updatedAt,
       date: date ?? this.date,
-      messagesCount: messagesCount ?? this.messagesCount,
+      unreadCount: unreadCount ?? this.unreadCount,
       lastMessageId: lastMessageId ?? this.lastMessageId,
       firstMessageId: firstMessageId ?? this.firstMessageId,
     );
@@ -601,7 +603,7 @@ class Task {
     _productionQuantity = newTask._productionQuantity;
     _priority = newTask._priority;
     _stockTransactionBarcode = newTask._stockTransactionBarcode;
-    messagesCount = newTask.messagesCount;
+    unreadCount = newTask.unreadCount;
     lastMessageId = newTask.lastMessageId;
     firstMessageId = newTask.firstMessageId;
   }
