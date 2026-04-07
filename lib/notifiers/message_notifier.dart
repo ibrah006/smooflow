@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/models/message.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
@@ -39,13 +40,32 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  /// GET /messages/task/:taskId
-  Future<void> getMessagesByTask(WidgetRef ref, int taskId) async {
+  /// GET
+  Future<void> getMessagesByTask(WidgetRef ref, Task task) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      await _repo.getByTaskId(taskId);
-      state = state.copyWith(isLoading: false);
+      state.messages.firstWhere((m) => m.id == task.lastMessageId);
+    } catch (e) {
+      if (task.lastMessageId != null) {
+        // Last message is not in memory, fetch messages after the local last message id
+        await getMessagesAfter(
+          afterMessageId: task.lastMessageId!,
+          taskId: task.id,
+        );
+      } else {
+        // No messages for this task, fetch all messages for the task
+        await getRecent(taskId: task.id);
+      }
+    }
+  }
+
+  Future<void> getRecent({int? taskId}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final messages = await _repo.getRecent(taskId: taskId);
+
+      state = state.copyWith(messages: messages, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }
@@ -56,8 +76,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      await _repo.getAll();
-      state = state.copyWith(isLoading: false);
+      final messages = await _repo.getAll();
+      state = state.copyWith(isLoading: false, messages: messages);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }
@@ -239,7 +259,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         taskId: taskId,
       );
 
-      final updatedList = _mergeSortedMessages(state.messages, newMessages);
+      late final updatedList = _mergeMessages(state.messages, newMessages);
 
       // Step 4: Update state
       state = state.copyWith(messages: updatedList, isLoading: false);
@@ -274,44 +294,97 @@ class MessageNotifier extends StateNotifier<MessageState> {
       state = state.copyWith(selectedMessage: null);
     }
   }
+}
 
-  // This function assumes that the existing is already sorted by ID
-  List<Message> _mergeSortedMessages(
-    List<Message> existing,
-    List<Message> incoming,
-  ) {
-    final result = <Message>[];
+// This function assumes that the existing is already sorted by ID
+List<Message> _mergeSortedMessages(
+  List<Message> existing,
+  List<Message> incoming,
+) {
+  final result = <Message>[];
 
-    int i = 0;
-    int j = 0;
+  int i = 0;
+  int j = 0;
 
-    while (i < existing.length && j < incoming.length) {
-      final a = existing[i];
-      final b = incoming[j];
+  while (i < existing.length && j < incoming.length) {
+    final a = existing[i];
+    final b = incoming[j];
 
-      if (a.id == b.id) {
-        // Replace old with new
-        result.add(b);
-        i++;
-        j++;
-      } else if (a.id < b.id) {
-        result.add(a);
-        i++;
-      } else {
-        result.add(b);
-        j++;
-      }
+    if (a.id == b.id) {
+      // Replace old with new
+      result.add(b);
+      i++;
+      j++;
+    } else if (a.id < b.id) {
+      result.add(a);
+      i++;
+    } else {
+      result.add(b);
+      j++;
     }
-
-    // Remaining items
-    while (i < existing.length) {
-      result.add(existing[i++]);
-    }
-
-    while (j < incoming.length) {
-      result.add(incoming[j++]);
-    }
-
-    return result;
   }
+
+  // Remaining items
+  while (i < existing.length) {
+    result.add(existing[i++]);
+  }
+
+  while (j < incoming.length) {
+    result.add(incoming[j++]);
+  }
+
+  return result;
+}
+
+/// Merges two sorted lists of messages into a single sorted list.
+///
+/// Both [existing] and [incoming] must already be sorted by `id` in ascending order.
+///
+/// This function:
+/// - Preserves overall sorted order (by `id`)
+/// - Inserts incoming messages at the correct positions
+/// - Handles gaps in IDs (they do not need to be continuous)
+/// - Avoids duplicates by resolving equal IDs
+///
+/// Duplicate handling:
+/// - If a message with the same `id` exists in both lists,
+///   the incoming message (`b`) replaces the existing one (`a`).
+///   (You can change this behavior if needed.)
+///
+/// Time complexity: O(n + m)
+/// Space complexity: O(n + m)
+List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
+  int i = 0;
+  int j = 0;
+
+  final result = <Message>[];
+
+  while (i < existing.length && j < incoming.length) {
+    final a = existing[i];
+    final b = incoming[j];
+
+    if (a.id == b.id) {
+      // replace any duplicate with incoming newer version
+      result.add(b);
+      i++;
+      j++;
+    } else if (a.id < b.id) {
+      result.add(a);
+      i++;
+    } else {
+      result.add(b);
+      j++;
+    }
+  }
+
+  // Remaining items
+  while (i < existing.length) {
+    result.add(existing[i++]);
+  }
+
+  while (j < incoming.length) {
+    result.add(incoming[j++]);
+  }
+
+  return result;
 }
