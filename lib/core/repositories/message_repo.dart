@@ -80,7 +80,7 @@ class MessageRepo {
       },
     );
 
-    if (res.statusCode != 201) return null;
+    if (res.statusCode != 201) throw Exception(jsonDecode(res.body)["message"]);
 
     return Message.fromJson(jsonDecode(res.body));
   }

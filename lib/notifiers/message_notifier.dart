@@ -104,19 +104,24 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }
 
   /// POST /messages
-  Future<void> createMessage({
-    required String message,
+  Future<Message?> createMessage({
+    required String text,
     required int taskId,
     DateTime? date,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      await _repo.create(message: message, taskId: taskId, date: date);
+      final message =
+          (await _repo.create(message: text, taskId: taskId, date: date))!;
 
       state = state.copyWith(isLoading: false);
+
+      return message;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
+
+      return null;
     }
   }
 

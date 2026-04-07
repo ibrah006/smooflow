@@ -608,9 +608,19 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     final text = _compose.text.trim();
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
+
+    final message = await ref
+        .watch(messageNotifierProvider.notifier)
+        .createMessage(text: text, taskId: widget.taskId);
+
+    if (message == null) {
+      // Failed to send message
+      return;
+    }
+
     _compose.clear();
     widget.onSend(text);
-    await Future.delayed(const Duration(milliseconds: 100));
+
     if (mounted) setState(() => _sending = false);
   }
 
