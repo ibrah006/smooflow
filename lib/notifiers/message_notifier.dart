@@ -74,6 +74,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
 
       state = state.copyWith(messages: messages, isLoading: false);
     } catch (e) {
+      print("[get recent msgs] error: ${e}");
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }
   }

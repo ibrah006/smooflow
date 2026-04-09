@@ -109,25 +109,25 @@ class _DiscussionPreviewStripState
     super.initState();
 
     Future.microtask(() async {
-      // setState(() {
-      //   _isLoading = true;
-      // });
-
-      // final task = ref.read(taskByIdProviderSimple(widget.taskId));
-      // final messages = ref.read(messagesByTaskProvider(widget.taskId));
-
-      // final lastMessageId = messages.lastOrNull?.id;
-      // if (lastMessageId != task!.lastMessageId) {
-      //   // Need to fetch the recent messages to update the preview
-      //   await ref
-      //       .read(messageNotifierProvider.notifier)
-      //       .getMessagesAfter(afterMessageId: lastMessageId, taskId: task.id);
-      // }
-
-      // if (mounted)
       //   setState(() {
-      //     _isLoading = false;
+      //     _isLoading = true;
       //   });
+
+      //   final task = ref.read(taskByIdProviderSimple(widget.taskId));
+      //   final messages = ref.read(messagesByTaskProvider(widget.taskId));
+
+      //   final lastMessageId = messages.lastOrNull?.id;
+      //   if (lastMessageId != task!.lastMessageId) {
+      //     // Need to fetch the recent messages to update the preview
+      //     await ref
+      //         .read(messageNotifierProvider.notifier)
+      //         .getMessagesAfter(afterMessageId: lastMessageId, taskId: task.id);
+      //   }
+
+      //   if (mounted)
+      //     setState(() {
+      //       _isLoading = false;
+      //     });
     });
   }
 

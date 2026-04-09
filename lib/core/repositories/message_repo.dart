@@ -44,6 +44,8 @@ class MessageRepo {
     int? taskId,
     int limit = 20,
   }) async {
+    print("[REPO endpoint] get recent messages for task ${taskId}");
+
     final queryParams = <String, String>{};
 
     if (userOnly) queryParams['userOnly'] = 'true';
@@ -54,15 +56,20 @@ class MessageRepo {
         .map((e) => '${e.key}=${e.value}')
         .join('&');
 
-    final res = await ApiClient.http.get(
-      '/messages/recent${queryString.isNotEmpty ? '?$queryString' : ''}',
+    final endpoint =
+        '/messages/recent${queryString.isNotEmpty ? '?$queryString' : ''}';
+
+    print(
+      "[REPO endpoint] get recent messages, endpoint: ${ApiClient.http.baseUrl}${endpoint}",
     );
 
-    if (res.statusCode != 200) return [];
+    final res = await ApiClient.http.get(endpoint);
 
-    return (jsonDecode(res.body) as List)
-        .map((e) => Message.fromJson(e))
-        .toList();
+    final body = jsonDecode(res.body);
+
+    if (res.statusCode != 200) throw body['message'];
+
+    return (body as List).map((e) => Message.fromJson(e)).toList();
   }
 
   /// POST /messages
