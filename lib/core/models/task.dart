@@ -307,7 +307,9 @@ class Task {
     // );
 
     if (json['lastMessageId'] != null) {
-      print("unread messages count: ${json["unreadCount"]}");
+      print(
+        "unread messages count for task ${json["id"]}: ${json["unreadCount"]}",
+      );
     }
 
     try {

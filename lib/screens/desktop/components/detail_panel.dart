@@ -246,6 +246,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     if (old.task.id != widget.task.id) {
       _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
       _billingEditMode = false;
+
+      if (old.task.id != widget.task.id) {
+        Future.microtask(() {
+          ref
+              .read(messageNotifierProvider.notifier)
+              .getMessagesByTask(ref, widget.task);
+        });
+      }
     }
   }
 
@@ -581,8 +589,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   @override
   Widget build(BuildContext context) {
-    print("unread messages count: ${widget.task.unreadCount}");
-
     final si = stageInfo(widget.task.status);
     final proj =
         widget.projects.cast<Project?>().firstWhere(
