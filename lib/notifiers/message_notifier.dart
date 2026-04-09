@@ -362,7 +362,7 @@ List<Message> _mergeSortedMessages(
 
 /// Merges two sorted lists of messages into a single sorted list.
 ///
-/// Both [existing] and [incoming] must already be sorted by `id` in ascending order.
+/// Both [existing] and [incoming] must already be sorted by `id` in descending order.
 ///
 /// This function:
 /// - Preserves overall sorted order (by `id`)
@@ -388,11 +388,13 @@ List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
     final b = incoming[j];
 
     if (a.id == b.id) {
-      // replace any duplicate with incoming newer version
+      // ✅ Replace duplicate with incoming
       result.add(b);
       i++;
       j++;
-    } else if (a.id < b.id) {
+    }
+    // 🔥 DESC: bigger id comes first
+    else if (a.id > b.id) {
       result.add(a);
       i++;
     } else {

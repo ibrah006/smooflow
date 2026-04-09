@@ -598,7 +598,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   void _scrollToBottom() {
     if (_scroll.hasClients) {
       _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
+        0,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
@@ -957,95 +957,100 @@ class _MessageRowState extends State<_MessageRow> {
   Widget build(BuildContext context) {
     final msg = widget.message;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Container(
-        color: _hovered ? _T.slate50 : Colors.transparent,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 80),
-          padding: EdgeInsets.fromLTRB(
-            16,
-            widget.grouped ? 2 : 10,
-            16,
-            widget.isLast ? 4 : 0,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Avatar column — either avatar or spacer for grouped messages
-              SizedBox(
-                width: 30,
-                child:
-                    widget.grouped
-                        ? Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: AnimatedOpacity(
-                            opacity: _hovered ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 100),
-                            child: Text(
-                              widget.fmtTime,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: _T.slate300,
+    return InkWell(
+      onTap: () {
+        print("tapped message details, ${msg.toJson()}");
+      },
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Container(
+          color: _hovered ? _T.slate50 : Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 80),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              widget.grouped ? 2 : 10,
+              16,
+              widget.isLast ? 4 : 0,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar column — either avatar or spacer for grouped messages
+                SizedBox(
+                  width: 30,
+                  child:
+                      widget.grouped
+                          ? Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: AnimatedOpacity(
+                              opacity: _hovered ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 100),
+                              child: Text(
+                                widget.fmtTime,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: _T.slate300,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
+                          )
+                          : AvatarWidget(
+                            initials: msg.authorInitials,
+                            color: msg.authorColor ?? _T.ink3,
+                            size: 30,
                           ),
-                        )
-                        : AvatarWidget(
-                          initials: msg.authorInitials,
-                          color: msg.authorColor ?? _T.ink3,
-                          size: 30,
-                        ),
-              ),
-              const SizedBox(width: 10),
-
-              // Message content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!widget.grouped)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              msg.userId == LoginService.currentUser!.id
-                                  ? 'You'
-                                  : msg.authorName,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: _T.ink2,
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            Text(
-                              widget.fmtTime,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: _T.slate400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    Text(
-                      msg.message,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: _T.ink3,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+
+                // Message content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!widget.grouped)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                msg.userId == LoginService.currentUser!.id
+                                    ? 'You'
+                                    : msg.authorName,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.ink2,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                widget.fmtTime,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: _T.slate400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Text(
+                        msg.message,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _T.ink3,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
