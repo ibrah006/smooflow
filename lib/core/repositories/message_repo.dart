@@ -44,8 +44,6 @@ class MessageRepo {
     int? taskId,
     int limit = 20,
   }) async {
-    print("[REPO endpoint] get recent messages for task ${taskId}");
-
     final queryParams = <String, String>{};
 
     if (userOnly) queryParams['userOnly'] = 'true';
@@ -58,10 +56,6 @@ class MessageRepo {
 
     final endpoint =
         '/messages/recent${queryString.isNotEmpty ? '?$queryString' : ''}';
-
-    print(
-      "[REPO endpoint] get recent messages, endpoint: ${ApiClient.http.baseUrl}${endpoint}",
-    );
 
     final res = await ApiClient.http.get(endpoint);
 
