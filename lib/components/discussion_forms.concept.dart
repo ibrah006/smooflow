@@ -853,8 +853,8 @@ class _MessageList extends StatelessWidget {
   const _MessageList({required this.messages, required this.scroll});
 
   bool _isSameAuthorAsPrevious(int i) {
-    if (i == 0) return false;
-    return messages[i].authorName == messages[i - 1].authorName;
+    if (i == messages.length - 1) return false;
+    return messages[i].authorName == messages[i + 1].authorName;
   }
 
   String _fmtTime(DateTime t) {
@@ -877,7 +877,7 @@ class _MessageList extends StatelessWidget {
       itemBuilder: (_, i) {
         final msg = messages[i];
         final grouped = _isSameAuthorAsPrevious(i);
-        final isLast = i == messages.length - 1;
+        final isLast = i == 0;
 
         return _MessageRow(
           message: msg,
@@ -959,7 +959,9 @@ class _MessageRowState extends State<_MessageRow> {
 
     return InkWell(
       onTap: () {
-        print("tapped message details, ${msg.toJson()}");
+        print(
+          "tapped message user, ${{"user": msg.authorName, "userId": msg.userId}}",
+        );
       },
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
