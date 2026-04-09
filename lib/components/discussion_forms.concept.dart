@@ -139,6 +139,10 @@ class _DiscussionPreviewStripState
     final lastMessage =
         ref.watch(messagesByTaskProvider(widget.taskId)).firstOrNull;
 
+    print(
+      "messages state error: ${ref.watch(messageNotifierProvider).isLoading}",
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18.0),
       child: Column(
