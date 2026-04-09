@@ -815,8 +815,7 @@ class _CloseButtonState extends State<_CloseButton> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onClose,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+        child: Container(
           width: 28,
           height: 28,
           decoration: BoxDecoration(
