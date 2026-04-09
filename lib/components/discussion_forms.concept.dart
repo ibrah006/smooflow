@@ -135,8 +135,9 @@ class _DiscussionPreviewStripState
   Widget build(BuildContext context) {
     final isLoading = ref.watch(messageNotifierProvider).isLoading;
 
+    // First message in the state's list is the last one because that is the order as returned from the server
     final lastMessage =
-        ref.watch(messagesByTaskProvider(widget.taskId)).lastOrNull;
+        ref.watch(messagesByTaskProvider(widget.taskId)).firstOrNull;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18.0),
