@@ -116,8 +116,8 @@ class _DiscussionPreviewStripState
       final task = ref.read(taskByIdProviderSimple(widget.taskId));
       final messages = ref.read(messagesByTaskProvider(widget.taskId));
 
-      final lastMessageId = messages.last.id;
-      if (messages.last.id != task!.lastMessageId) {
+      final lastMessageId = messages.lastOrNull?.id;
+      if (lastMessageId != task!.lastMessageId) {
         // Need to fetch the recent messages to update the preview
         await ref
             .read(messageNotifierProvider.notifier)
