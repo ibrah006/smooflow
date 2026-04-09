@@ -209,7 +209,7 @@ class _DiscussionPreviewStripState
                         : lastMessage == null
                         ? _EmptyDiscussionPreview(hovered: _hovered)
                         : _LastMessagePreview(
-                          lastMessage: lastMessage!,
+                          lastMessage: lastMessage,
                           unreadCount: widget.unreadCount,
                           hovered: _hovered,
                         ),
