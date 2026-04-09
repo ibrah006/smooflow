@@ -192,7 +192,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       case MessageChangeType.created:
         if (event.message != null &&
             !messages.any((t) => t.id == event.messageId)) {
-          messages.add(event.message!);
+          messages.insert(0, event.message!);
           state = state.copyWith(messages: messages);
           print(
             '[MessageNotifier] message created, new count: ${messages.length}',
