@@ -70,12 +70,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   Future<void> getRecent({int? taskId}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final messages = await _repo.getRecent(taskId: taskId);
+      final recentMessages = await _repo.getRecent(taskId: taskId);
 
-      state = state.copyWith(
-        messages: [...state.messages, ...messages],
-        isLoading: false,
-      );
+      final newMessages = _mergeMessages(state.messages, recentMessages);
+
+      state = state.copyWith(messages: newMessages, isLoading: false);
     } catch (e) {
       print("[get recent msgs] error: ${e}");
       state = state.copyWith(isLoading: false, error: _parseError(e));
