@@ -72,7 +72,10 @@ class MessageNotifier extends StateNotifier<MessageState> {
     try {
       final messages = await _repo.getRecent(taskId: taskId);
 
-      state = state.copyWith(messages: messages, isLoading: false);
+      state = state.copyWith(
+        messages: [...state.messages, ...messages],
+        isLoading: false,
+      );
     } catch (e) {
       print("[get recent msgs] error: ${e}");
       state = state.copyWith(isLoading: false, error: _parseError(e));
@@ -100,9 +103,15 @@ class MessageNotifier extends StateNotifier<MessageState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      await _repo.getRecent(userOnly: userOnly, taskId: taskId, limit: limit);
+      final recentMessages = await _repo.getRecent(
+        userOnly: userOnly,
+        taskId: taskId,
+        limit: limit,
+      );
 
-      state = state.copyWith(isLoading: false);
+      final newMessages = _mergeMessages(state.messages, recentMessages);
+
+      state = state.copyWith(messages: newMessages, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }

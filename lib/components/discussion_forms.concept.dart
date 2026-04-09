@@ -870,6 +870,7 @@ class _MessageList extends StatelessWidget {
 
     return ListView.builder(
       controller: scroll,
+      reverse: true,
       padding: const EdgeInsets.symmetric(vertical: 12),
       itemCount: messages.length,
       itemBuilder: (_, i) {
