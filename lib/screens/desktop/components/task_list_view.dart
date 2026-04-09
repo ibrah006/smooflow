@@ -2028,7 +2028,7 @@ class _TaskRowState extends State<_TaskRow> {
           // ],
           Expanded(
             child: Text(
-              "${t.id} ${t.name}",
+              "${t.name}",
               style: completedBody(
                 const TextStyle(
                   fontSize: 13,
