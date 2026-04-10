@@ -91,29 +91,6 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  /// GET /messages/recent
-  Future<void> getRecentMessages({
-    bool userOnly = false,
-    int? taskId,
-    int limit = 20,
-  }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      final recentMessages = await _repo.getRecent(
-        userOnly: userOnly,
-        taskId: taskId,
-        limit: limit,
-      );
-
-      final newMessages = _mergeMessages(state.messages, recentMessages);
-
-      state = state.copyWith(messages: newMessages, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: _parseError(e));
-    }
-  }
-
   /// POST /messages
   Future<Message?> createMessage({
     required String text,
