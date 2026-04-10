@@ -177,7 +177,7 @@ const _kCols = [
     icon: Icons.inventory_2_outlined,
     mandatory: false,
     defaultOn: false,
-    flex: 2,
+    flex: 1,
   ),
 ];
 
