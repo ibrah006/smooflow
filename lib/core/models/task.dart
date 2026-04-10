@@ -58,7 +58,7 @@ class Task {
 
   BillingStatus _billingStatus;
 
-  // int messagesCount;
+  int messageCount;
   int? lastMessageId;
   int? firstMessageId;
   int unreadCount;
@@ -98,6 +98,7 @@ class Task {
     required this.unreadCount,
     required this.lastMessageId,
     required this.firstMessageId,
+    required this.messageCount,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -145,7 +146,7 @@ class Task {
     String? size,
     int? quantity,
     DateTime? date,
-    int messageCount = 0,
+    int messagesCount = 0,
     int unreadCount = 0,
   }) : _name = name,
        _description = description,
@@ -165,7 +166,8 @@ class Task {
        _billingStatus = BillingStatus.pending,
        _stockTransactionIds = [],
        this.date = date ?? DateTime.now(),
-       this.unreadCount = unreadCount;
+       this.unreadCount = unreadCount,
+       this.messageCount = messagesCount;
 
   // To ensure toSet gives no duplicates
   @override
@@ -302,9 +304,9 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) {
     late final TaskPriority priority;
 
-    // print(
-    //   "new fields for task messagesCount: ${json["messagesCount"]}, lastMessageId: ${json["lastMessageId"]}, firstMessageId: ${json["firstMessageId"]}, unreadCount: ${json["unreadCount"]}",
-    // );
+    print(
+      "new fields for task messagesCount: ${json["messageCount"]}, lastMessageId: ${json["lastMessageId"]}, firstMessageId: ${json["firstMessageId"]}, unreadCount: ${json["unreadCount"]}",
+    );
 
     if (json['lastMessageId'] != null) {
       print(
@@ -393,6 +395,7 @@ class Task {
       lastMessageId: json['lastMessageId'],
       firstMessageId: json['firstMessageId'],
       unreadCount: json['unreadCount'] ?? 0,
+      messageCount: json['messageCount'] ?? 0,
     );
   }
 
@@ -415,7 +418,8 @@ class Task {
       date = original.date,
       unreadCount = original.unreadCount,
       lastMessageId = original.lastMessageId,
-      firstMessageId = original.firstMessageId {
+      firstMessageId = original.firstMessageId,
+      messageCount = original.messageCount {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -444,7 +448,8 @@ class Task {
       _billingStatus = BillingStatus.pending,
       _stockTransactionIds = [],
       date = null,
-      unreadCount = 0;
+      unreadCount = 0,
+      messageCount = 0;
 
   /// Creates a copy of this Task with specified fields replaced.
   /// Returns a new Task instance with updated values while preserving unchanged ones.
@@ -494,6 +499,7 @@ class Task {
     int? unreadCount,
     int? lastMessageId,
     int? firstMessageId,
+    int? messageCount,
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -532,6 +538,7 @@ class Task {
       unreadCount: unreadCount ?? this.unreadCount,
       lastMessageId: lastMessageId ?? this.lastMessageId,
       firstMessageId: firstMessageId ?? this.firstMessageId,
+      messageCount: messageCount ?? this.messageCount,
     );
 
     // Set color and icon via setters (not constructor parameters)

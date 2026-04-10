@@ -16,6 +16,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -2116,35 +2117,68 @@ class _TaskRowState extends State<_TaskRow> {
             )
             : const Text('—', style: TextStyle(color: _T.slate300)),
 
-      'ref' =>
-        t.ref != null && t.ref!.isNotEmpty
-            ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isCompleted ? _T.slate50 : _T.slate100,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(
-                  color: isCompleted ? _T.slate100 : _T.slate200,
+      'ref' => Row(
+        children: [
+          // Print ref content
+          Expanded(
+            child:
+                t.ref != null && t.ref!.isNotEmpty
+                    ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCompleted ? _T.slate50 : _T.slate100,
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: isCompleted ? _T.slate100 : _T.slate200,
+                        ),
+                      ),
+                      child: Text(
+                        t.ref!,
+                        overflow: TextOverflow.ellipsis,
+                        style: completedBody(
+                          const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: _T.ink3,
+                            fontFamily: 'monospace',
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                    )
+                    : const Text(
+                      '—',
+                      style: TextStyle(fontSize: 13, color: _T.slate300),
+                    ),
+          ),
+
+          // Icon indicator for discussion messages
+          if (t.lastMessageId != null) ...[
+            const SizedBox(width: 6),
+            Text(
+              '${t.messageCount}',
+              style: completedBody(
+                const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: _T.slate400,
                 ),
               ),
-              child: Text(
-                t.ref!,
-                overflow: TextOverflow.ellipsis,
-                style: completedBody(
-                  const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: _T.ink3,
-                    fontFamily: 'monospace',
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-            )
-            : const Text(
-              '—',
-              style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
+            const SizedBox(width: 6),
+            Icon(
+              _hovered
+                  ? CupertinoIcons.chat_bubble_fill
+                  : CupertinoIcons.chat_bubble,
+              size: 14,
+              color: _T.slate400,
+            ),
+          ],
+        ],
+      ),
 
       'stage' => isCompleted ? _CompletedStagePill() : StagePill(stageInfo: s),
 
