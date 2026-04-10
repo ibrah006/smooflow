@@ -612,13 +612,13 @@ class _ProjectHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: activeProject!.color,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: activeProject!.color.withOpacity(0.3),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ],
+                // boxShadow: [
+                //   BoxShadow(
+                //     color: activeProject!.color.withOpacity(0.3),
+                //     blurRadius: 4,
+                //     spreadRadius: 1,
+                //   ),
+                // ],
               ),
             ),
             const SizedBox(width: 10),
