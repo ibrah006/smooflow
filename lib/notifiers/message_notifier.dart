@@ -46,15 +46,19 @@ class MessageNotifier extends StateNotifier<MessageState> {
   Future<void> getMessagesByTask(WidgetRef ref, Task task) async {
     try {
       state.messages.firstWhere((m) => m.id == task.lastMessageId);
+
       // the required messages are in memory for now
     } catch (e) {
-      if (task.lastMessageId != null) {
+      final lastMessageIdForTaskInMemory = _lastMessageIdForTask(task.id);
+
+      if (lastMessageIdForTaskInMemory != null &&
+          task.lastMessageId != lastMessageIdForTaskInMemory) {
         print(
           "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
         );
         // Last message is not in memory, fetch messages after the local last message id
         await getMessagesAfter(
-          afterMessageId: task.lastMessageId!,
+          afterMessageId: lastMessageIdForTaskInMemory,
           taskId: task.id,
         );
       } else {
@@ -71,6 +75,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
       final recentMessages = await _repo.getRecent(taskId: taskId);
 
       final updatedMessages = _mergeMessages(state.messages, recentMessages);
+
+      print("[MESSAGE NOTIFIER] updated messages: ${updatedMessages}");
 
       state = state.copyWith(messages: updatedMessages, isLoading: false);
     } catch (e) {
@@ -292,6 +298,17 @@ class MessageNotifier extends StateNotifier<MessageState> {
       _client.unsubscribeFromMessage(state.selectedMessage!.id);
       state = state.copyWith(selectedMessage: null);
     }
+  }
+
+  /// Assumes that the array is in descending order
+  /// This function is used to find the id of the last message for the specified task
+  int? _lastMessageIdForTask(int taskId) {
+    for (int i = 0; i >= state.messages.length; i--) {
+      if (state.messages[i].taskId == taskId) {
+        return state.messages[i].id;
+      }
+    }
+    return null;
   }
 }
 
