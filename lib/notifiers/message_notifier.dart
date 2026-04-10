@@ -44,6 +44,10 @@ class MessageNotifier extends StateNotifier<MessageState> {
   /// This function doesn't return result,
   /// rely on results from ref.watch/read(messagesNotifierProvider)
   Future<void> getMessagesByTask(WidgetRef ref, Task task) async {
+    // Assuming the passed in task is up to date, if the first and last message ids are the same, it means there is only one message for this task
+    // it could also mean there are no messages for this task, in which case we don't want to make any calls to the backend
+    if (task.lastMessageId == task.firstMessageId) return;
+
     try {
       state.messages.firstWhere((m) => m.id == task.lastMessageId);
 
