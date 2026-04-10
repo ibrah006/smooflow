@@ -2201,35 +2201,27 @@ class _CompletedStagePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: _fg.withOpacity(0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5,
-            height: 5,
-            decoration: const BoxDecoration(
-              color: Color(0xFF4ADE80),
-              shape: BoxShape.circle,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Container(
+        //   width: 5,
+        //   height: 5,
+        //   decoration: const BoxDecoration(
+        //     color: Color(0xFF4ADE80),
+        //     shape: BoxShape.circle,
+        //   ),
+        // ),
+        // const SizedBox(width: 5),
+        const Text(
+          'Completed',
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: _fg,
           ),
-          const SizedBox(width: 5),
-          const Text(
-            'Completed',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: _fg,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
