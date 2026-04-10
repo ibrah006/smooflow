@@ -589,6 +589,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "DETAIL PANEL, messages: ${ref.watch(messageNotifierProvider).messages.length}",
+    );
+
     final si = stageInfo(widget.task.status);
     final proj =
         widget.projects.cast<Project?>().firstWhere(
