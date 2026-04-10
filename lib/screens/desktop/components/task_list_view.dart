@@ -2169,13 +2169,7 @@ class _TaskRowState extends State<_TaskRow> {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(
-              _hovered
-                  ? CupertinoIcons.chat_bubble_fill
-                  : CupertinoIcons.chat_bubble,
-              size: 14,
-              color: _T.slate400,
-            ),
+            Icon(CupertinoIcons.chat_bubble, size: 14, color: _T.slate400),
           ],
         ],
       ),
