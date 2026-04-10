@@ -303,9 +303,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   /// Assumes that the messages array is in descending order
   /// This function is used to find the id of the last message for the specified task
   int? _lastMessageIdForTask(int taskId) {
-    for (int i = 0; i <= state.messages.length; i++) {
-      if (state.messages[i].taskId == taskId) {
-        return state.messages[i].id;
+    if (state.messages.isNotEmpty) {
+      for (int i = 0; i <= state.messages.length; i++) {
+        if (state.messages[i].taskId == taskId) {
+          return state.messages[i].id;
+        }
       }
     }
     return null;
