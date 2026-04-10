@@ -44,6 +44,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   /// This function doesn't return result,
   /// rely on results from ref.watch/read(messagesNotifierProvider)
   Future<void> getMessagesByTask(WidgetRef ref, Task task) async {
+    if (task.lastMessageId == null) {
+      // No mesages for this task, nothing to fetch
+      return;
+    }
+
     try {
       state.messages.firstWhere((m) => m.id == task.lastMessageId);
 
