@@ -2209,29 +2209,21 @@ class _MessageIndicator extends StatelessWidget {
       opacity: dimmed ? 0.5 : 1.0,
       child: Tooltip(
         message: '$count ${count == 1 ? 'message' : 'messages'}',
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-          decoration: BoxDecoration(
-            color: _T.blue.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: _T.blue.withOpacity(0.2), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _T.blue),
-              const SizedBox(width: 4),
-              Text(
-                '$count',
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                  color: _T.blue,
-                  height: 1,
-                ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _T.ink3),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: _T.ink3,
+                height: 1,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
