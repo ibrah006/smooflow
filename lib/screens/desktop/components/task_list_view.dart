@@ -1,22 +1,20 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// task_list_view.dart
+// task_list_view.dahiddrt
 //
 // Complete task list view with real-time WebSocket updates.
-// Professional redesign for agency/printing industry productivity software.
+// This version uses ONLY the WebSocket approach for real-time synchronization.
 //
-// Design improvements:
-//   • Refined typography with better hierarchy
-//   • Sophisticated row interactions with micro-animations
-//   • Professional shadows and depth
-//   • Quick actions on row hover
-//   • Better visual separation and spacing
-//   • Enhanced status indicators
-//   • Agency-grade polish throughout
+// Changes from original:
+//   • Converted to ConsumerStatefulWidget for Riverpod integration
+//   • Uses taskListProvider instead of local state
+//   • Automatically receives real-time updates via WebSocket
+//   • Project column is hidden when a single project is selected (filter active)
+//   • List / Board toggle tabs live in the header bar
+//   • All previous animated column / column-picker behaviour is preserved
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,13 +35,11 @@ import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS
+// TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue = Color(0xFF2563EB);
   static const blue50 = Color(0xFFEFF6FF);
-  static const blue100 = Color(0xFFDBEAFE);
-  static const blue600 = Color(0xFF1D4ED8);
   static const green = Color(0xFF10B981);
   static const amber = Color(0xFFF59E0B);
   static const red = Color(0xFFEF4444);
@@ -54,41 +50,22 @@ class _T {
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
   static const slate500 = Color(0xFF64748B);
-  static const slate600 = Color(0xFF475569);
-  static const slate700 = Color(0xFF334155);
   static const ink = Color(0xFF0F172A);
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
-  static const r = 6.0;
+  static const r = 8.0;
   static const rLg = 12.0;
   static const red50 = Color(0xFFFEE2E2);
-
-  // Professional shadows for depth
-  static final shadowSm = BoxShadow(
-    color: Colors.black.withOpacity(0.02),
-    blurRadius: 2,
-    offset: const Offset(0, 1),
-  );
-  static final shadowMd = BoxShadow(
-    color: Colors.black.withOpacity(0.04),
-    blurRadius: 6,
-    offset: const Offset(0, 2),
-  );
-  static final shadowLg = BoxShadow(
-    color: Colors.black.withOpacity(0.08),
-    blurRadius: 16,
-    offset: const Offset(0, 4),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LAYOUT CONSTANTS
+// LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
-const double _kRowHPad = 20.0;
-const double _kRowVPad = 12.0;
-const double _kCellHPad = 6.0;
-const _kColAnimDuration = Duration(milliseconds: 280);
+const double _kRowHPad = 16.0;
+const double _kCellHPad = 4.0;
+const _kColAnimDuration = Duration(milliseconds: 260);
+
 const kNotificationDuration = const Duration(seconds: 3);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,10 +206,12 @@ const _kViewModeKey = 'smooflow.task_list.view_mode';
 // ─────────────────────────────────────────────────────────────────────────────
 class TaskListView extends ConsumerStatefulWidget {
   final List<Project> projects;
-  final String? selectedProjectId;
+  final String? selectedProjectId; // null = "All Projects"
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final bool isDetailOpen;
+
+  // Board view pass-through props
   final VoidCallback? onAddTask;
   final FocusNode? addTaskFocusNode;
   final bool isAddingTask;
@@ -257,7 +236,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   Set<String> _visibleOptional = {};
   _ViewMode _viewMode = _ViewMode.list;
 
+  // ── Derived: are we in single-project mode? ────────────────────────────────
   bool get _singleProject => widget.selectedProjectId != null;
+
+  /// When the detail panel is open only 'date' and 'task' are shown so the
+  /// list columns don't compete with the panel for space. The full column
+  /// state is restored the moment the panel closes — nothing is mutated,
+  /// this is purely derived from widget.isDetailOpen.
   static const _kDetailCols = {'date', 'task'};
 
   int? lastNotifiedTaskId;
@@ -270,6 +255,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             : {..._kMandatoryIds, ..._visibleOptional};
 
     if (_singleProject) {
+      // Strip 'project' from whatever is showing
       return base.difference({'project'});
     }
     return base;
@@ -283,30 +269,43 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             orElse: () => null,
           );
 
+  // ── Persistence ────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
     _loadPrefs();
+
+    // Load tasks via WebSocket on mount
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _loadTasks();
+    // });
   }
 
   void _loadTasks() {
     final filters = <String, dynamic>{};
+
+    // If a project is selected, filter by project
     if (widget.selectedProjectId != null) {
       filters['projectId'] = widget.selectedProjectId;
     }
+
     ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
   }
 
   void _loadPrefs() {
+    // Column prefs
     final raw = LocalHttp.prefs.getString(_kPrefsKey);
     if (raw != null) {
       final list = (jsonDecode(raw) as List).cast<String>();
       if (mounted) setState(() => _visibleOptional = Set.from(list));
     } else {
-      _saveColPrefs().then((value) {});
+      _saveColPrefs().then((value) {
+        //done
+      });
     }
 
+    // View mode pref
     final vm = LocalHttp.prefs.getString(_kViewModeKey);
     if (vm != null && mounted) {
       setState(
@@ -349,15 +348,19 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _saveViewMode();
   }
 
+  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final members = ref.watch(memberNotifierProvider).members;
+
+    // WebSocket real-time task state
     final taskState = ref.watch(taskNotifierProvider);
     final allTasks = taskState.tasks;
     final isLoading = taskState.isLoading;
     final error = taskState.error;
     final connectionStatus = ref.watch(taskConnectionStatusProvider);
 
+    // Filter tasks by selected project if needed
     final tasks =
         widget.selectedProjectId != null
             ? allTasks
@@ -370,6 +373,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     final reversedTasks = tasks.reversed.toList();
     final effective = _effectiveVisible;
 
+    // Listen for real-time task changes and show notifications
     ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
       previous,
       next,
@@ -392,6 +396,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // ── Project header + view mode tabs + connection status ──────────
           _ProjectHeader(
             activeProject: _activeProject,
             viewMode: _viewMode,
@@ -399,6 +404,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             connectionStatus: connectionStatus,
           ),
 
+          // ── Board sub-view ───────────────────────────────────────────────
           if (_viewMode == _ViewMode.board)
             Expanded(
               child: BoardView(
@@ -413,6 +419,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
               ),
             )
           else ...[
+            // ── Toolbar (column picker) ─────────────────────────────────
             _Toolbar(
               visibleOptional: _visibleOptional,
               isDetailOpen: widget.isDetailOpen,
@@ -421,48 +428,47 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
               onReset: _resetToDefaults,
             ),
 
-            // Professional column header with refined styling
+            // ── Column header row ────────────────────────────────────────
             Container(
-              decoration: BoxDecoration(
-                color: _T.white,
-                border: Border(
-                  bottom: BorderSide(color: _T.slate200, width: 1),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  _kRowHPad,
-                  10,
-                  _kRowHPad,
-                  10,
-                ),
-                child: _AnimatedColRow(
-                  effectiveVisible: effective,
-                  pinnedTrailingCol: _kBillingCol,
-                  builder:
-                      (col, animFraction) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: _kCellHPad,
-                        ),
-                        child: Opacity(
-                          opacity: animFraction,
-                          child: Text(
-                            col.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: _T.slate500,
-                              height: 1.2,
+              color: _T.white,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      _kRowHPad,
+                      8,
+                      _kRowHPad,
+                      8,
+                    ),
+                    child: _AnimatedColRow(
+                      effectiveVisible: effective,
+                      pinnedTrailingCol: _kBillingCol,
+                      builder:
+                          (col, animFraction) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: _kCellHPad,
+                            ),
+                            child: Opacity(
+                              opacity: animFraction,
+                              child: Text(
+                                col.label,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.7,
+                                  color: _T.slate400,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                ),
+                    ),
+                  ),
+                  const Divider(height: 1, thickness: 1, color: _T.slate200),
+                ],
               ),
             ),
 
-            // Data rows with professional spacing
+            // ── Data rows ──────────────────────────────────────────────
             Expanded(
               child:
                   isLoading && tasks.isEmpty
@@ -477,12 +483,18 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       )
                       : tasks.isEmpty
                       ? _EmptyState()
-                      : ListView.builder(
+                      : ListView.separated(
                         padding: const EdgeInsets.symmetric(
                           horizontal: _kRowHPad,
-                          vertical: 10,
+                          vertical: 8,
                         ),
                         itemCount: reversedTasks.length,
+                        separatorBuilder:
+                            (_, __) => const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: _T.slate100,
+                            ),
                         itemBuilder: (_, i) {
                           final t = reversedTasks[i];
                           final p =
@@ -501,16 +513,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                             m = null;
                           }
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: _TaskRow(
-                              task: t,
-                              project: p,
-                              assignee: m,
-                              effectiveVisible: effective,
-                              isSelected: widget.selectedTaskId == t.id,
-                              onTap: () => widget.onTaskSelected(t.id),
-                            ),
+                          return _TaskRow(
+                            task: t,
+                            project: p,
+                            assignee: m,
+                            effectiveVisible: effective,
+                            isSelected: widget.selectedTaskId == t.id,
+                            onTap: () => widget.onTaskSelected(t.id),
                           );
                         },
                       ),
@@ -566,6 +575,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         return;
     }
 
+    print("[TASK_LIST_VIEW] task: ${event.task?.id}, type: ${event.type}");
+
+    // Show notification
     AppToast.show(
       message: message,
       icon: icon,
@@ -577,7 +589,10 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROJECT HEADER - Enhanced with professional styling
+// PROJECT HEADER
+//
+// Shows the active project name (or "All Projects") with its colour dot, plus
+// the List / Board view-mode toggle tabs and connection status indicator.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectHeader extends StatelessWidget {
   final Project? activeProject;
@@ -597,94 +612,78 @@ class _ProjectHeader extends StatelessWidget {
     final isFiltered = activeProject != null;
 
     return Container(
-      height: 56,
-      decoration: BoxDecoration(
+      height: 48,
+      decoration: const BoxDecoration(
         color: _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate200, width: 1)),
-        boxShadow: [_T.shadowSm],
+        border: Border(bottom: BorderSide(color: _T.slate200)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
         children: [
+          // ── Project indicator ─────────────────────────────────────────
           if (isFiltered) ...[
             Container(
-              width: 10,
-              height: 10,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                 color: activeProject!.color,
                 shape: BoxShape.circle,
-                // boxShadow: [
-                //   BoxShadow(
-                //     color: activeProject!.color.withOpacity(0.3),
-                //     blurRadius: 4,
-                //     spreadRadius: 1,
-                //   ),
-                // ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Text(
               activeProject!.name,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: _T.ink,
-                letterSpacing: -0.3,
+                letterSpacing: -0.2,
               ),
             ),
             const SizedBox(width: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: _T.blue50,
+                color: _T.slate100,
                 borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: _T.blue.withOpacity(0.2)),
+                border: Border.all(color: _T.slate200),
               ),
               child: const Text(
                 'Filtered',
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _T.blue,
+                  fontWeight: FontWeight.w600,
+                  color: _T.slate500,
                   letterSpacing: 0.3,
                 ),
               ),
             ),
           ] else ...[
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _T.slate100,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: const Icon(
-                Icons.workspaces_rounded,
-                size: 16,
-                color: _T.slate600,
-              ),
-            ),
-            const SizedBox(width: 10),
+            const Icon(Icons.workspaces_rounded, size: 17, color: _T.slate400),
+            const SizedBox(width: 8),
             const Text(
               'All Projects',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: _T.ink,
-                letterSpacing: -0.3,
+                letterSpacing: -0.2,
               ),
             ),
           ],
 
           const Spacer(),
 
+          // ── Connection status indicator ───────────────────────────────
           connectionStatus.when(
             data: (status) => _ConnectionIndicator(status: status),
             loading: () => const SizedBox(width: 8),
             error: (_, __) => const SizedBox(width: 8),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
+          // ── View mode toggle ──────────────────────────────────────────
           _ViewToggle(current: viewMode, onChange: onViewModeChanged),
         ],
       ),
@@ -739,7 +738,7 @@ class _ConnectionIndicator extends StatelessWidget {
         : Tooltip(
           message: tooltip,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(99),
@@ -749,11 +748,11 @@ class _ConnectionIndicator extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, size: 12, color: color),
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 Text(
                   status == ConnectionStatus.connected ? 'Live' : 'Offline',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: color,
                   ),
@@ -781,31 +780,30 @@ class _ErrorState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: _T.red50,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [_T.shadowSm],
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.error_outline, size: 28, color: _T.red),
+            child: const Icon(Icons.error_outline, size: 24, color: _T.red),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           const Text(
             'Failed to load tasks',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _T.ink,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _T.ink3,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             error,
-            style: const TextStyle(fontSize: 13, color: _T.slate500),
+            style: const TextStyle(fontSize: 13, color: _T.slate400),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 18),
@@ -813,10 +811,6 @@ class _ErrorState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: _T.blue,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
           ),
         ],
@@ -826,8 +820,19 @@ class _ErrorState extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VIEW TOGGLE - Professional pill tabs
+// VIEW TOGGLE  (List / Board pill tabs)
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW TOGGLE
+//
+// Matches the board view filter bar design language exactly:
+//   • No outer container/border — the toggle floats cleanly
+//   • Active tab: slate100 filled pill, ink2 text, colored icon
+//   • Inactive tab: transparent, slate500 text, slate400 icon
+//   • Animated pill slides between tabs (no jump — smooth indicator)
+//   • Hover: slate100 bg on inactive tabs
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _ViewToggle extends StatelessWidget {
   final _ViewMode current;
   final ValueChanged<_ViewMode> onChange;
@@ -836,31 +841,23 @@ class _ViewToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _T.slate100,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: _T.slate200),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ToggleTab(
-            icon: Icons.list_alt_outlined,
-            label: 'List',
-            isActive: current == _ViewMode.list,
-            onTap: () => onChange(_ViewMode.list),
-          ),
-          const SizedBox(width: 2),
-          _ToggleTab(
-            icon: Icons.view_kanban_outlined,
-            label: 'Board',
-            isActive: current == _ViewMode.board,
-            onTap: () => onChange(_ViewMode.board),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ToggleTab(
+          icon: Icons.list_alt_outlined,
+          label: 'List',
+          isActive: current == _ViewMode.list,
+          onTap: () => onChange(_ViewMode.list),
+        ),
+        const SizedBox(width: 2),
+        _ToggleTab(
+          icon: Icons.view_kanban_outlined,
+          label: 'Board',
+          isActive: current == _ViewMode.board,
+          onTap: () => onChange(_ViewMode.board),
+        ),
+      ],
     );
   }
 }
@@ -887,9 +884,15 @@ class _ToggleTabState extends State<_ToggleTab> {
 
   @override
   Widget build(BuildContext context) {
-    final Color bg = widget.isActive ? _T.white : Colors.transparent;
-    final Color iconColor = widget.isActive ? _T.blue : _T.slate500;
-    final Color textColor = widget.isActive ? _T.ink : _T.slate600;
+    final Color bg =
+        widget.isActive
+            ? _T.slate100
+            : (_hovered ? _T.slate100 : Colors.transparent);
+
+    final Color iconColor =
+        widget.isActive ? _T.blue : (_hovered ? _T.slate500 : _T.slate400);
+    final Color textColor =
+        widget.isActive ? _T.ink2 : (_hovered ? _T.ink3 : _T.slate500);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -897,30 +900,32 @@ class _ToggleTabState extends State<_ToggleTab> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Container(
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(5),
-            boxShadow: widget.isActive ? [_T.shadowSm] : null,
+            borderRadius: BorderRadius.circular(6),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 14, color: iconColor),
-              const SizedBox(width: 6),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight:
-                      widget.isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: textColor,
-                  letterSpacing: -0.2,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(widget.icon, size: 13, color: iconColor),
+                const SizedBox(width: 5),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: textColor,
+                  ),
+                  child: Text(widget.label),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1078,7 +1083,7 @@ class _AnimatedColRowState extends State<_AnimatedColRow>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOOLBAR - Enhanced professional styling
+// TOOLBAR
 // ─────────────────────────────────────────────────────────────────────────────
 class _Toolbar extends StatelessWidget {
   final Set<String> visibleOptional;
@@ -1098,36 +1103,21 @@ class _Toolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      decoration: BoxDecoration(
+      height: 40,
+      decoration: const BoxDecoration(
         color: _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate100, width: 1)),
+        border: Border(bottom: BorderSide(color: _T.slate100)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
         children: [
+          // Task count hint when filtered
           if (singleProject)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: _T.blue50,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _T.blue.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.filter_alt, size: 12, color: _T.blue),
-                  SizedBox(width: 5),
-                  Text(
-                    'Project column auto-hidden',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _T.blue,
-                    ),
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Text(
+                'Project column hidden while filtered',
+                style: TextStyle(fontSize: 11, color: _T.slate400),
               ),
             ),
 
@@ -1135,10 +1125,10 @@ class _Toolbar extends StatelessWidget {
 
           if (isDetailOpen)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: _T.slate100,
-                borderRadius: BorderRadius.circular(7),
+                borderRadius: BorderRadius.circular(_T.r),
                 border: Border.all(color: _T.slate200),
               ),
               child: const Row(
@@ -1147,15 +1137,15 @@ class _Toolbar extends StatelessWidget {
                   Icon(
                     Icons.view_sidebar_outlined,
                     size: 13,
-                    color: _T.slate500,
+                    color: _T.slate400,
                   ),
-                  SizedBox(width: 7),
+                  SizedBox(width: 6),
                   Text(
-                    'Core columns only',
+                    'Showing core columns',
                     style: TextStyle(
                       fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: _T.slate600,
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate400,
                     ),
                   ),
                 ],
@@ -1203,7 +1193,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
 
   late final AnimationController _ac = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 200),
+    duration: const Duration(milliseconds: 190),
   );
   late final Animation<double> _fade = CurvedAnimation(
     parent: _ac,
@@ -1211,7 +1201,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
     reverseCurve: Curves.easeIn,
   );
   late final Animation<Offset> _slide = Tween<Offset>(
-    begin: const Offset(0, -0.04),
+    begin: const Offset(0, -0.05),
     end: Offset.zero,
   ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
 
@@ -1276,7 +1266,7 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
               showWhenUnlinked: false,
               targetAnchor: Alignment.bottomRight,
               followerAnchor: Alignment.topRight,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 6),
               child: AnimatedBuilder(
                 animation: _ac,
                 builder:
@@ -1309,8 +1299,8 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
         child: GestureDetector(
           onTap: _toggle,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: _open ? _T.slate100 : (hasCustom ? _T.blue50 : _T.white),
               border: Border.all(
@@ -1318,10 +1308,8 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                     _open
                         ? _T.slate300
                         : (hasCustom ? _T.blue.withOpacity(0.3) : _T.slate200),
-                width: 1,
               ),
-              borderRadius: BorderRadius.circular(7),
-              boxShadow: _open ? [_T.shadowSm] : null,
+              borderRadius: BorderRadius.circular(_T.r),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1329,24 +1317,23 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                 Icon(
                   Icons.view_column_outlined,
                   size: 14,
-                  color: _open || hasCustom ? _T.blue : _T.slate500,
+                  color: _open || hasCustom ? _T.blue : _T.slate400,
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 6),
                 Text(
                   'Columns',
                   style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: _open || hasCustom ? _T.blue : _T.ink2,
-                    letterSpacing: -0.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _open || hasCustom ? _T.blue : _T.ink3,
                   ),
                 ),
                 if (optionalOnCount > 0) ...[
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 5,
+                      vertical: 1,
                     ),
                     decoration: BoxDecoration(
                       color: hasCustom ? _T.blue : _T.slate200,
@@ -1355,21 +1342,21 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
                     child: Text(
                       '$optionalOnCount',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w800,
-                        color: hasCustom ? Colors.white : _T.slate600,
+                        color: hasCustom ? Colors.white : _T.slate500,
                       ),
                     ),
                   ),
                 ],
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 AnimatedRotation(
                   turns: _open ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
+                  duration: const Duration(milliseconds: 190),
+                  child: const Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: 15,
-                    color: _open || hasCustom ? _T.blue : _T.slate400,
+                    size: 14,
+                    color: _T.slate400,
                   ),
                 ),
               ],
@@ -1401,29 +1388,38 @@ class _ColumnPickerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // When in single-project mode, project col is always hidden — exclude it
+    // from the "Always visible" section since it doesn't appear anyway.
     final mandatoryCols = _kCols.where((c) => c.mandatory).toList();
     final optionalCols =
         _kCols.where((c) => !c.mandatory && c.id != 'project').toList();
+
+    // Project col shown as a special "auto" row
     final projectCol = _kCols.firstWhere((c) => c.id == 'project');
+
     final isDefault = _setsEqual(visibleOptional, _kDefaultOptionalOn);
 
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(_T.rLg),
       child: Container(
-        width: 320,
-        constraints: const BoxConstraints(maxHeight: 540),
+        width: 300,
+        constraints: const BoxConstraints(maxHeight: 520),
         decoration: BoxDecoration(
           color: _T.white,
           borderRadius: BorderRadius.circular(_T.rLg),
-          border: Border.all(color: _T.slate200, width: 1),
+          border: Border.all(color: _T.slate200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
-            _T.shadowMd,
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
         child: Column(
@@ -1432,27 +1428,27 @@ class _ColumnPickerPanel extends StatelessWidget {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: _T.slate100)),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: _T.blue50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(7),
                       border: Border.all(color: _T.blue.withOpacity(0.2)),
                     ),
                     child: const Icon(
                       Icons.view_column_outlined,
-                      size: 16,
+                      size: 14,
                       color: _T.blue,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1460,16 +1456,14 @@ class _ColumnPickerPanel extends StatelessWidget {
                         Text(
                           'Manage Columns',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: _T.ink,
-                            letterSpacing: -0.2,
                           ),
                         ),
-                        SizedBox(height: 2),
                         Text(
-                          'Customize your view',
-                          style: TextStyle(fontSize: 11.5, color: _T.slate500),
+                          'Customise what you see in the list',
+                          style: TextStyle(fontSize: 10.5, color: _T.slate400),
                         ),
                       ],
                     ),
@@ -1477,16 +1471,16 @@ class _ColumnPickerPanel extends StatelessWidget {
                   GestureDetector(
                     onTap: onClose,
                     child: Container(
-                      width: 26,
-                      height: 26,
+                      width: 24,
+                      height: 24,
                       decoration: BoxDecoration(
                         color: _T.slate100,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
                         Icons.close_rounded,
-                        size: 14,
-                        color: _T.slate500,
+                        size: 13,
+                        color: _T.slate400,
                       ),
                     ),
                   ),
@@ -1496,23 +1490,24 @@ class _ColumnPickerPanel extends StatelessWidget {
             // Body
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 6),
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SectionLabel('Always visible'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     ...mandatoryCols.map((c) => _LockedColRow(col: c)),
                     _LockedColRow(
                       col: _kBillingCol,
                       trailingHint: 'Always last',
                     ),
-                    const SizedBox(height: 18),
-                    const Divider(height: 1, color: _T.slate100),
                     const SizedBox(height: 16),
+                    const Divider(height: 1, color: _T.slate100),
+                    const SizedBox(height: 14),
 
+                    // Project column — special: auto-managed by filter
                     _SectionLabel('Auto-managed'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _AutoColRow(
                       col: projectCol,
                       label:
@@ -1521,12 +1516,12 @@ class _ColumnPickerPanel extends StatelessWidget {
                               : 'Visible — all projects shown',
                       active: !singleProject,
                     ),
-                    const SizedBox(height: 18),
-                    const Divider(height: 1, color: _T.slate100),
                     const SizedBox(height: 16),
+                    const Divider(height: 1, color: _T.slate100),
+                    const SizedBox(height: 14),
 
                     _SectionLabel('Optional columns'),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     ...optionalCols.map(
                       (c) => _ToggleColRow(
                         col: c,
@@ -1534,14 +1529,14 @@ class _ColumnPickerPanel extends StatelessWidget {
                         onTap: () => onToggle(c.id),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),
             ),
             // Footer
             Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: _T.slate100)),
               ),
@@ -1549,10 +1544,10 @@ class _ColumnPickerPanel extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.restart_alt_rounded,
-                    size: 14,
-                    color: isDefault ? _T.slate300 : _T.slate500,
+                    size: 13,
+                    color: isDefault ? _T.slate300 : _T.slate400,
                   ),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 6),
                   GestureDetector(
                     onTap: isDefault ? null : onReset,
                     child: MouseRegion(
@@ -1563,14 +1558,14 @@ class _ColumnPickerPanel extends StatelessWidget {
                       child: Text(
                         'Reset to defaults',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isDefault ? _T.slate300 : _T.slate600,
+                          color: isDefault ? _T.slate300 : _T.slate500,
                           decoration:
                               isDefault
                                   ? TextDecoration.none
                                   : TextDecoration.underline,
-                          decorationColor: _T.slate500,
+                          decorationColor: _T.slate400,
                         ),
                       ),
                     ),
@@ -1578,7 +1573,7 @@ class _ColumnPickerPanel extends StatelessWidget {
                   const Spacer(),
                   Text(
                     '${optionalCols.where((c) => visibleOptional.contains(c.id)).length}/${optionalCols.length} optional',
-                    style: const TextStyle(fontSize: 11.5, color: _T.slate400),
+                    style: const TextStyle(fontSize: 11, color: _T.slate400),
                   ),
                 ],
               ),
@@ -1591,7 +1586,7 @@ class _ColumnPickerPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTO-MANAGED COLUMN ROW
+// AUTO-MANAGED COLUMN ROW  (project column — controlled by filter)
 // ─────────────────────────────────────────────────────────────────────────────
 class _AutoColRow extends StatelessWidget {
   final _ColDef col;
@@ -1606,12 +1601,12 @@ class _AutoColRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 5),
+    padding: const EdgeInsets.only(bottom: 4),
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: active ? _T.blue50 : _T.slate50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(_T.r),
         border: Border.all(
           color: active ? _T.blue.withOpacity(0.2) : _T.slate200,
         ),
@@ -1619,19 +1614,19 @@ class _AutoColRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: active ? _T.blue.withOpacity(0.1) : _T.slate100,
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
               col.icon,
-              size: 14,
+              size: 13,
               color: active ? _T.blue : _T.slate400,
             ),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1639,23 +1634,21 @@ class _AutoColRow extends StatelessWidget {
                 Text(
                   col.pickerLabel,
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                     color: active ? _T.ink : _T.ink3,
-                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 11, color: _T.slate500),
+                  style: const TextStyle(fontSize: 10.5, color: _T.slate400),
                 ),
               ],
             ),
           ),
           Icon(
             active ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            size: 14,
+            size: 13,
             color: active ? _T.blue : _T.slate300,
           ),
         ],
@@ -1674,34 +1667,33 @@ class _LockedColRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 5),
+    padding: const EdgeInsets.only(bottom: 4),
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: _T.slate50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(_T.r),
         border: Border.all(color: _T.slate200),
       ),
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: _T.slate100,
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(col.icon, size: 14, color: _T.slate400),
+            child: Icon(col.icon, size: 13, color: _T.slate400),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               col.pickerLabel,
               style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
                 color: _T.ink3,
-                letterSpacing: -0.2,
               ),
             ),
           ),
@@ -1709,14 +1701,14 @@ class _LockedColRow extends StatelessWidget {
             Text(
               trailingHint!,
               style: const TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
                 color: _T.slate400,
               ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 6),
           ],
-          const Icon(Icons.lock_outline_rounded, size: 13, color: _T.slate300),
+          const Icon(Icons.lock_outline_rounded, size: 12, color: _T.slate300),
         ],
       ),
     ),
@@ -1751,68 +1743,74 @@ class _ToggleColRowState extends State<_ToggleColRow> {
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.only(bottom: 5),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 4),
           decoration: BoxDecoration(
             color:
                 widget.enabled
-                    ? _T.blue.withOpacity(0.06)
+                    ? _T.blue.withOpacity(0.05)
                     : (_hovering ? _T.slate50 : Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
               color:
                   widget.enabled
-                      ? _T.blue.withOpacity(0.25)
+                      ? _T.blue.withOpacity(0.2)
                       : (_hovering ? _T.slate200 : Colors.transparent),
             ),
           ),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color:
-                      widget.enabled ? _T.blue.withOpacity(0.12) : _T.slate100,
-                  borderRadius: BorderRadius.circular(7),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color:
+                        widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    widget.col.icon,
+                    size: 13,
+                    color: widget.enabled ? _T.blue : _T.slate400,
+                  ),
                 ),
-                child: Icon(
-                  widget.col.icon,
-                  size: 14,
-                  color: widget.enabled ? _T.blue : _T.slate400,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.col.pickerLabel,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: widget.enabled ? _T.ink : _T.ink3,
-                        letterSpacing: -0.2,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.col.pickerLabel,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: widget.enabled ? _T.ink : _T.ink3,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.col.description,
-                      style: const TextStyle(fontSize: 11, color: _T.slate500),
-                    ),
-                  ],
+                      Text(
+                        widget.col.description,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              _MiniSwitch(
-                value: widget.enabled,
-                onChanged: (_) => widget.onTap(),
-              ),
-            ],
+                const SizedBox(width: 8),
+                _MiniSwitch(
+                  value: widget.enabled,
+                  onChanged: (_) => widget.onTap(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1858,16 +1856,16 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text.toUpperCase(),
     style: const TextStyle(
-      fontSize: 10,
+      fontSize: 9.5,
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.9,
-      color: _T.slate500,
+      letterSpacing: 0.8,
+      color: _T.slate400,
     ),
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASK ROW - Professional redesign with sophisticated interactions
+// TASK ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends StatefulWidget {
   final Task task;
@@ -1893,10 +1891,12 @@ class _TaskRow extends StatefulWidget {
 class _TaskRowState extends State<_TaskRow> {
   bool _hovered = false;
 
-  static const _completeBg = Color(0xFFF0FDF4);
-  static const _completeBorder = Color(0xFFBBF7D0);
-  static const _completeText = Color(0xFF166534);
-  static const _completeMuted = Color.fromARGB(255, 31, 220, 129);
+  // Completion tokens — a distinct light green palette so the row reads
+  // "done" at a glance without being loud.
+  static const _completeBg = Color(0xFFF0FDF4); // green-50
+  static const _completeBorder = Color(0xFFBBF7D0); // green-200
+  static const _completeText = Color(0xFF166534); // green-900 — readable
+  static const _completeMuted = Color.fromARGB(255, 31, 220, 129); // green-400
 
   @override
   Widget build(BuildContext context) {
@@ -1916,119 +1916,70 @@ class _TaskRowState extends State<_TaskRow> {
             ? dateParts.take(dateParts.length - 1).join(' ')
             : dateFormatted;
 
-    // Professional row styling with micro-interactions
+    // Completed rows are non-interactive — no hover, no tap
     final Color rowColor =
         isCompleted
             ? (_hovered ? const Color(0xFFDCFCE7) : _completeBg)
             : widget.isSelected
             ? _T.blue50
             : _hovered
-            ? _T.white
+            ? _T.slate50
             : _T.white;
-
-    final List<BoxShadow> rowShadows =
-        isCompleted
-            ? []
-            : _hovered && !widget.isSelected
-            ? [_T.shadowMd]
-            : widget.isSelected
-            ? [_T.shadowSm]
-            : [];
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
           color: rowColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color:
-                isCompleted
-                    ? _completeBorder.withOpacity(0.4)
-                    : widget.isSelected
-                    ? _T.blue.withOpacity(0.3)
-                    : _hovered
-                    ? _T.slate200
-                    : _T.slate100,
-            width: isCompleted ? 1 : 1,
-          ),
-          boxShadow: rowShadows,
+          borderRadius: BorderRadius.circular(isCompleted ? 3 : _T.r),
+          // Subtle green left-edge accent — makes completed rows scannable
+          // in a long list without relying on color alone.
+          border:
+              isCompleted
+                  ? Border(left: BorderSide(color: _completeMuted, width: 2.75))
+                  : null,
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(_T.r),
           child: InkWell(
             onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(8),
-            splashColor: _T.blue.withOpacity(0.05),
-            highlightColor: _T.blue.withOpacity(0.03),
-            child: Stack(
-              children: [
-                // Completion indicator stripe
-                if (isCompleted)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 3,
-                      decoration: BoxDecoration(
-                        color: _completeMuted,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(7),
-                          bottomLeft: Radius.circular(7),
+            borderRadius: BorderRadius.circular(_T.r),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 11,
+                bottom: 11,
+                // Compensate for the 3px border so cells stay aligned with
+                // non-completed rows.
+                left: isCompleted ? 0 : 3,
+              ),
+              child: _AnimatedColRow(
+                effectiveVisible: widget.effectiveVisible,
+                pinnedTrailingCol: _kBillingCol,
+                builder:
+                    (col, opacity) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _kCellHPad,
+                      ),
+                      child: Opacity(
+                        opacity:
+                            isCompleted
+                                ? (opacity * 0.6) // globally dim all cells
+                                : opacity,
+                        child: _cellFor(
+                          col,
+                          t,
+                          p,
+                          m,
+                          s,
+                          dateDisplay,
+                          isCompleted: isCompleted,
                         ),
                       ),
                     ),
-                  ),
-
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    isCompleted ? 12 : _kRowHPad - 8,
-                    _kRowVPad,
-                    _kRowHPad - 8,
-                    _kRowVPad,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _AnimatedColRow(
-                          effectiveVisible: widget.effectiveVisible,
-                          pinnedTrailingCol: _kBillingCol,
-                          builder:
-                              (col, opacity) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: _kCellHPad,
-                                ),
-                                child: Opacity(
-                                  opacity:
-                                      isCompleted ? (opacity * 0.7) : opacity,
-                                  child: _cellFor(
-                                    col,
-                                    t,
-                                    p,
-                                    m,
-                                    s,
-                                    dateDisplay,
-                                    isCompleted: isCompleted,
-                                  ),
-                                ),
-                              ),
-                        ),
-                      ),
-
-                      // TODO: Quick actions on hover (hidden for completed tasks)
-                      // if (_hovered && !isCompleted) ...[
-                      //   const SizedBox(width: 8),
-                      //   _QuickActions(),
-                      // ],
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -2045,10 +1996,12 @@ class _TaskRowState extends State<_TaskRow> {
     String date, {
     required bool isCompleted,
   }) {
+    // Shared text style overrides for completed rows
     TextStyle completedBody(TextStyle base) =>
         isCompleted
             ? base.copyWith(
-              color: _completeText.withOpacity(0.6),
+              color: _completeText.withOpacity(0.55),
+              // decoration: col.id == 'task' ? TextDecoration.lineThrough : null,
               decorationColor: _completeMuted.withOpacity(0.7),
               decorationThickness: 1.5,
             )
@@ -2057,20 +2010,32 @@ class _TaskRowState extends State<_TaskRow> {
     return switch (col.id) {
       'task' => Row(
         children: [
+          // if (isCompleted) ...[
+          //   Container(
+          //     width: 16,
+          //     height: 16,
+          //     margin: const EdgeInsets.only(right: 7),
+          //     decoration: const BoxDecoration(
+          //       color: _completeMuted,
+          //       shape: BoxShape.circle,
+          //     ),
+          //     child: const Icon(
+          //       Icons.check_rounded,
+          //       size: 10,
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // ],
           Expanded(
             child: Text(
               "${t.name}",
               style: completedBody(
                 const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: _T.ink,
-                  letterSpacing: -0.2,
-                  height: 1.3,
                 ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -2081,35 +2046,21 @@ class _TaskRowState extends State<_TaskRow> {
             ? Row(
               children: [
                 Container(
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   decoration: BoxDecoration(
                     color:
                         isCompleted ? _completeMuted.withOpacity(0.5) : p.color,
                     shape: BoxShape.circle,
-                    // boxShadow:
-                    //     isCompleted
-                    //         ? null
-                    //         : [
-                    //           BoxShadow(
-                    //             color: p.color.withOpacity(0.3),
-                    //             blurRadius: 3,
-                    //             spreadRadius: 0.5,
-                    //           ),
-                    //         ],
                   ),
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     p.name,
                     overflow: TextOverflow.ellipsis,
                     style: completedBody(
-                      const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _T.slate600,
-                      ),
+                      const TextStyle(fontSize: 12.5, color: _T.slate500),
                     ),
                   ),
                 ),
@@ -2117,79 +2068,39 @@ class _TaskRowState extends State<_TaskRow> {
             )
             : const Text('—', style: TextStyle(color: _T.slate300)),
 
-      'ref' => Row(
-        children: [
-          // Print ref content
-          Expanded(
-            child:
-                t.ref != null && t.ref!.isNotEmpty
-                    ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isCompleted ? _T.slate50 : _T.slate100,
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(
-                          color: isCompleted ? _T.slate100 : _T.slate200,
-                        ),
-                      ),
-                      child: Text(
-                        t.ref!,
-                        overflow: TextOverflow.ellipsis,
-                        style: completedBody(
-                          const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: _T.ink3,
-                            fontFamily: 'monospace',
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ),
-                    )
-                    : const Text(
-                      '—',
-                      style: TextStyle(fontSize: 13, color: _T.slate300),
-                    ),
-          ),
-
-          // Icon indicator for discussion messages
-          if (t.lastMessageId != null) ...[
-            const SizedBox(width: 6),
-            Text(
-              '${t.messageCount}',
+      'ref' =>
+        t.ref != null && t.ref!.isNotEmpty
+            ? Text(
+              t.ref!,
+              overflow: TextOverflow.ellipsis,
               style: completedBody(
                 const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _T.slate400,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                  fontFamily: 'monospace',
                 ),
               ),
+            )
+            : const Text(
+              '—',
+              style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
-            const SizedBox(width: 6),
-            Icon(CupertinoIcons.chat_bubble, size: 14, color: _T.slate400),
-          ],
-        ],
-      ),
 
+      // Stage pill: in completed rows show a dedicated "Completed" pill
+      // rather than whatever the stage pill renders — cleaner and unambiguous.
       'stage' => isCompleted ? _CompletedStagePill() : StagePill(stageInfo: s),
 
       'date' => Text(
         date,
         style: completedBody(
-          const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: _T.slate500,
-          ),
+          const TextStyle(fontSize: 12.5, color: _T.slate500),
         ),
       ),
 
       'priority' =>
         isCompleted
-            ? Opacity(opacity: 0.5, child: PriorityPill(priority: t.priority))
+            ? Opacity(opacity: 0.45, child: PriorityPill(priority: t.priority))
             : PriorityPill(priority: t.priority),
 
       'size' =>
@@ -2197,25 +2108,21 @@ class _TaskRowState extends State<_TaskRow> {
             ? RichText(
               text: TextSpan(
                 style: completedBody(
-                  const TextStyle(fontSize: 13, color: _T.ink3),
+                  const TextStyle(fontSize: 12.5, color: _T.ink3),
                 ),
                 children: [
-                  TextSpan(
-                    text: t.size!.split(' ')[0],
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  TextSpan(text: t.size!.split(' ')[0]),
                   TextSpan(
                     text:
                         t.size!.split(' ').length > 1
-                            ? ' ${t.size!.split(' ')[1]}'
+                            ? t.size!.split(' ')[1]
                             : '',
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 11,
                       color:
                           isCompleted
-                              ? _completeText.withOpacity(0.4)
+                              ? _completeText.withOpacity(0.35)
                               : _T.slate400,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -2228,20 +2135,13 @@ class _TaskRowState extends State<_TaskRow> {
 
       'qty' =>
         t.quantity != null
-            ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isCompleted ? _T.slate50 : _T.slate100,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                '${t.quantity}',
-                style: completedBody(
-                  const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: _T.ink3,
-                  ),
+            ? Text(
+              '${t.quantity}',
+              style: completedBody(
+                const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
                 ),
               ),
             )
@@ -2259,20 +2159,16 @@ class _TaskRowState extends State<_TaskRow> {
                   child: AvatarWidget(
                     initials: m.initials,
                     color: m.color,
-                    size: 24,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     m.name,
                     overflow: TextOverflow.ellipsis,
                     style: completedBody(
-                      const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _T.slate600,
-                      ),
+                      const TextStyle(fontSize: 12.5, color: _T.slate500),
                     ),
                   ),
                 ),
@@ -2294,99 +2190,35 @@ class _TaskRowState extends State<_TaskRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// QUICK ACTIONS - Appears on row hover for quick task interactions
-// ─────────────────────────────────────────────────────────────────────────────
-class _QuickActions extends StatelessWidget {
-  const _QuickActions();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ActionButton(
-            icon: Icons.more_horiz_rounded,
-            tooltip: 'More options',
-            onTap: () {
-              // Handle more options
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: _hovered ? _T.slate100 : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              widget.icon,
-              size: 16,
-              color: _hovered ? _T.ink2 : _T.slate400,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // COMPLETED STAGE PILL
+// Replaces StagePill in the stage column for completed rows.
 // ─────────────────────────────────────────────────────────────────────────────
 class _CompletedStagePill extends StatelessWidget {
   const _CompletedStagePill();
 
   static const _fg = Color(0xFF166534);
+  static const _bg = Color(0xFFDCFCE7); // green-100
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        Text(
+      children: [
+        // Container(
+        //   width: 5,
+        //   height: 5,
+        //   decoration: const BoxDecoration(
+        //     color: Color(0xFF4ADE80),
+        //     shape: BoxShape.circle,
+        //   ),
+        // ),
+        // const SizedBox(width: 5),
+        const Text(
           'Completed',
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: FontWeight.w700,
             color: _fg,
-            letterSpacing: -0.2,
           ),
         ),
       ],
@@ -2395,7 +2227,7 @@ class _CompletedStagePill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING STATUS CELL
+// BILLING STATUS CELL — updated with dimmed param
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingStatusCell extends StatelessWidget {
   final BillingStatus? status;
@@ -2421,22 +2253,13 @@ class _BillingStatusCell extends StatelessWidget {
     };
 
     return Opacity(
-      opacity: dimmed ? 0.6 : 1.0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: fg.withOpacity(0.2)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: fg,
-            letterSpacing: -0.2,
-          ),
+      opacity: dimmed ? 0.5 : 1.0,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.black,
         ),
       ),
     );
@@ -2453,32 +2276,31 @@ class _EmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             color: _T.slate100,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [_T.shadowSm],
+            borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(
             Icons.assignment_outlined,
-            size: 32,
+            size: 24,
             color: _T.slate400,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         const Text(
           'No tasks yet',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: _T.ink,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: _T.ink3,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
           'Tasks you create will appear here',
-          style: TextStyle(fontSize: 13.5, color: _T.slate500),
+          style: TextStyle(fontSize: 13, color: _T.slate400),
         ),
       ],
     ),
