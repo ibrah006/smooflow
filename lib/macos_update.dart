@@ -95,7 +95,7 @@ Future<void> checkForUpdate(BuildContext context) async {
     print("current version: ${currentVersion}");
 
     // DEBUG
-    _showAfterUpdateReleaseNotes(context, currentVersion);
+    // _showAfterUpdateReleaseNotes(context, currentVersion);
 
     // 5. Compare versions
     if (_isNewerVersion(currentVersion, shortVersion)) {
