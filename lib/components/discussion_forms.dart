@@ -645,6 +645,10 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     widget.onSend(text);
 
     if (mounted) setState(() => _sending = false);
+
+    // DO NOT UPDATE task.unreadMessages HERE, it is for the server to modify its value
+    // If you update unreadMessages locally, it will cause a mismatch between the local state and the server state
+    // which might sometimes not mark the messages as read properly
   }
 
   @override
