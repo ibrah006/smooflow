@@ -168,15 +168,16 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
                   "Discussion threads for tasks! You can now comment and have threaded discussions on each task.",
             ),
             ReleaseNote(
-              icon: Icons.notification_important_sharp,
-              title: "Task Notifications",
+              icon: Icons.bolt_outlined,
+              title: "Improved Readability in Task Details",
               description:
-                  "Fixed in-app notifications spamming when task updated",
+                  "Updated the design of task details to make it easier to read and navigate, especially for tasks with a lot of information.",
             ),
             ReleaseNote(
-              icon: Icons.bolt_outlined,
-              title: "Performance Improvements",
-              description: "Imporved performance in some areas of the app",
+              icon: Icons.notification_important_sharp,
+              title: "Bug Fixes",
+              description:
+                  "Fixed in-app notifications spamming when task updated",
             ),
           ],
         ),
