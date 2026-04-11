@@ -413,7 +413,9 @@ class _LastMessagePreview extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      lastMessage.authorName,
+                      lastMessage.userId == LoginService.currentUser!.id
+                          ? "You"
+                          : lastMessage.authorName,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
