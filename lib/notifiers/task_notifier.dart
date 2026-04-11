@@ -674,20 +674,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
           state = state.copyWith(tasks: tasks);
         }
         break;
-      case TaskChangeType.newMessage:
-        state = state.copyWith(
-          tasks:
-              tasks.map((t) {
-                if (t.id == event.taskId && event.task != null) {
-                  print(
-                    "[TASK NOTIFIER] [newMessage event] updating last message id for the corresponding task if in memory\nlastMessageId: ${event.changes!["lastMessageId"]}",
-                  );
-                  t.lastMessageId = event.changes!["lastMessageId"];
-                }
-                return t;
-              }).toList(),
-        );
-        break;
     }
   }
 

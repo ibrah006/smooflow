@@ -14,8 +14,6 @@ enum TaskChangeType {
   assigneeAdded,
   assigneeRemoved,
   nameUpdated,
-  // new message for this task event
-  newMessage,
 }
 
 /// Task change event from WebSocket
@@ -53,8 +51,6 @@ class TaskChangeEvent {
           return TaskChangeType.assigneeRemoved;
         case 'name_updated':
           return TaskChangeType.nameUpdated;
-        case 'new_message':
-          return TaskChangeType.newMessage;
         default:
           return TaskChangeType.updated;
       }
