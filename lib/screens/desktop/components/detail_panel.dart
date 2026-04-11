@@ -4,7 +4,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/components/discussion_forms.concept.dart';
+import 'package:smooflow/components/discussion_forms.dart';
 import 'package:smooflow/components/permission_gate.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/app_routes.dart';
