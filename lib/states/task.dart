@@ -136,6 +136,12 @@ class TaskState {
       return this;
     }
 
+    if (incrementCount != null) {
+      print("called to increment unread count by $incrementCount");
+    } else {
+      print("called to update unread count to $unreadCount");
+    }
+
     final task = taskById(taskId);
 
     if (task != null) {
