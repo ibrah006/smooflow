@@ -139,7 +139,7 @@ const _kCols = [
     icon: Icons.folder_outlined,
     mandatory: false,
     defaultOn: true,
-    flex: 2,
+    flex: 3,
   ),
   _ColDef(
     id: 'task',
@@ -149,7 +149,7 @@ const _kCols = [
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 4,
+    flex: 5,
   ),
   _ColDef(
     id: 'ref',
@@ -159,7 +159,7 @@ const _kCols = [
     icon: Icons.tag_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 3,
+    flex: 4,
   ),
   _ColDef(
     id: 'stage',
@@ -169,7 +169,7 @@ const _kCols = [
     icon: Icons.view_kanban_outlined,
     mandatory: true,
     defaultOn: true,
-    flex: 2,
+    flex: 3,
   ),
   _ColDef(
     id: 'priority',
@@ -179,7 +179,7 @@ const _kCols = [
     icon: Icons.flag_outlined,
     mandatory: false,
     defaultOn: true,
-    flex: 1,
+    flex: 2,
   ),
   _ColDef(
     id: 'size',
@@ -211,7 +211,7 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: true,
   defaultOn: true,
-  flex: 2,
+  flex: 3,
 );
 
 Set<String> get _kDefaultOptionalOn =>
