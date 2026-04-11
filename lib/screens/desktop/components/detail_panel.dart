@@ -282,34 +282,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
         setState(() => _billingEditMode = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 15,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Billing updated to ${_billingMeta(_billingSelection).label}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: _T.ink,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     } finally {
       if (mounted) setState(() => _billingSaving = false);
