@@ -2086,6 +2086,17 @@ class _TaskRowState extends State<_TaskRow> {
                   decoration: BoxDecoration(
                     color:
                         isCompleted ? _completeMuted.withOpacity(0.5) : p.color,
+                    shape: BoxShape.circle,
+                    // boxShadow:
+                    //     isCompleted
+                    //         ? null
+                    //         : [
+                    //           BoxShadow(
+                    //             color: p.color.withOpacity(0.3),
+                    //             blurRadius: 3,
+                    //             spreadRadius: 0.5,
+                    //           ),
+                    //         ],
                   ),
                 ),
                 const SizedBox(width: 7),
