@@ -590,13 +590,6 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     }
   }
 
-  // Mark the last message for this task as read
-  void markReadLastMessage() async {
-    await ref
-        .read(taskNotifierProvider.notifier)
-        .updateMessageReadStatus(ref, widget.taskId);
-  }
-
   // If the process is force-killed → no callback (same as any OS app)
   // But normal window close (x button) → you get event
   // App closing event (reliable on desktop)
@@ -618,9 +611,6 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     _ctrl.dispose();
     _compose.dispose();
     _scroll.dispose();
-    // Mark last message for this task as read if any
-    markReadLastMessage();
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

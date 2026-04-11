@@ -569,6 +569,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   void _onCloseDiscussion() {
     setState(() => _isDiscussionOpen = false);
+
+    markReadLastMessage();
+  }
+
+  // Mark the last message for this task as read
+  void markReadLastMessage() async {
+    await ref
+        .read(taskNotifierProvider.notifier)
+        .updateMessageReadStatus(ref, widget.task.id);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
