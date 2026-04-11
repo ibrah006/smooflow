@@ -98,7 +98,7 @@ class _MacOSAfterUpdateDialogContentState
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
-                                  'What\'s New in Smooflow ${widget.currentVersion}',
+                                  'Updated to version ${widget.currentVersion}',
                                   style: MacosTheme.of(
                                     context,
                                   ).typography.largeTitle.copyWith(
