@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/enums/shared_storage_options.dart';
+import 'package:smooflow/screens/desktop/components/macos_after_update_dialog_content.dart';
 import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -124,10 +127,57 @@ Future<void> checkForUpdate(BuildContext context) async {
       );
     } else {
       print('App is up to date');
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final lastVersionReleaseNotesShown = prefs.getString(
+        SharedStorageOptions.lastVersionReleaseNotesShown.name,
+      );
+
+      // Debug
+      // if (lastVersionReleaseNotesShown == null ||
+      //     !_isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
+      //   await prefs.setString(
+      //     SharedStorageOptions.lastVersionReleaseNotesShown.name,
+      //     currentVersion,
+      //   );
+      // }
     }
   } catch (e) {
     print('Error checking update: $e');
   }
+}
+
+showAfterUpdateReleaseNotes(context, String currentVersion) {
+  showMacosSheet(
+    context: context,
+    builder:
+        (_) => MacOSAfterUpdateDialogContent(
+          currentVersion: currentVersion,
+          onDismiss: () {
+            Navigator.of(context).pop();
+          },
+          releaseNotes: [
+            ReleaseNote(
+              icon: Icons.message_outlined,
+              title: "Messaging (New)",
+              description:
+                  "Discussion threads for tasks! You can now comment and have threaded discussions on each task.",
+            ),
+            ReleaseNote(
+              icon: Icons.notification_important_sharp,
+              title: "Task Notifications",
+              description:
+                  "Fixed in-app notifications spamming when task updated",
+            ),
+            ReleaseNote(
+              icon: Icons.bolt_outlined,
+              title: "Performance Improvements",
+              description: "Imporved performance in some areas of the app",
+            ),
+          ],
+        ),
+  );
 }
 
 Future<void> downloadFile({
