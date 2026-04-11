@@ -2340,7 +2340,7 @@ class _BillingStatusCell extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
           color: Colors.black,
         ),
