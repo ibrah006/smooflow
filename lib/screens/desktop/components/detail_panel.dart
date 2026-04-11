@@ -1006,10 +1006,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             onSend: (msg) {},
           ),
           if (hasUnread && !_isDiscussionOpen)
-            Positioned(
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 200),
               right: 16,
               bottom:
-                  _footerHovered ? 140 : 90, // Adjust based on footer height
+                  _footerHovered ? 155 : 45, // Adjust based on footer height
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 child: _FloatingUnreadBadge(
