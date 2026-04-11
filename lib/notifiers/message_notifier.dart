@@ -309,7 +309,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
   /// This function is used to find the id of the last message for the specified task
   int? _lastMessageIdForTask(int taskId) {
     if (state.messages.isNotEmpty) {
-      for (int i = 0; i <= state.messages.length; i++) {
+      for (int i = 0; i < state.messages.length; i++) {
         if (state.messages[i].taskId == taskId) {
           return state.messages[i].id;
         }
