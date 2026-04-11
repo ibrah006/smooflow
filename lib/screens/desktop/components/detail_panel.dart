@@ -562,6 +562,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   // On open discussion sheet
   void _onOpenDiscussion() async {
     setState(() => _isDiscussionOpen = true);
+
+    ref.read(messageNotifierProvider).prioritizeTask(widget.task.id);
+
     await ref
         .read(taskNotifierProvider.notifier)
         .updateMessageReadStatus(ref, widget.task.id);
@@ -569,6 +572,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   void _onCloseDiscussion() {
     setState(() => _isDiscussionOpen = false);
+
+    ref.read(messageNotifierProvider).deprioritizeTask(widget.task.id);
 
     markReadLastMessage();
   }

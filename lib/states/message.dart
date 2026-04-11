@@ -18,7 +18,7 @@ class MessageState {
   ///  - Discussion form
   /// 2. Messages that are still being processed
   /// Tasks whose messages shouldn't be removed from state because of the above reasons
-  final List<int> priorityTasks = [];
+  final List<int> priorityTasks;
 
   Message? lastMessageForTask(int taskId) {
     try {
@@ -34,7 +34,20 @@ class MessageState {
     this.error,
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     this.selectedMessage,
+    this.priorityTasks = const [],
   }) : _connectionStatus = connectionStatus;
+
+  MessageState prioritizeTask(int taskId) {
+    if (!priorityTasks.contains(taskId)) {
+      this.priorityTasks.add(taskId);
+    }
+    return this;
+  }
+
+  MessageState deprioritizeTask(int taskId) {
+    this.priorityTasks.remove(taskId);
+    return this;
+  }
 
   MessageState copyWith({
     List<Message>? messages,
