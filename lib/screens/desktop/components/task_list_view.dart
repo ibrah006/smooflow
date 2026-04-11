@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// task_list_view.dahiddrt
+// task_list_view.dart
 //
 // Complete task list view with real-time WebSocket updates.
 // This version uses ONLY the WebSocket approach for real-time synchronization.
@@ -11,6 +11,7 @@
 //   • Project column is hidden when a single project is selected (filter active)
 //   • List / Board toggle tabs live in the header bar
 //   • All previous animated column / column-picker behaviour is preserved
+//   • Message indicator badge shows when task has discussion messages
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -107,7 +108,7 @@ const _kCols = [
     icon: Icons.calendar_today_outlined,
     mandatory: true,
     defaultOn: true,
-    flex: 1,
+    flex: 2,
   ),
   _ColDef(
     id: 'project',
@@ -127,7 +128,7 @@ const _kCols = [
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 3,
+    flex: 4,
   ),
   _ColDef(
     id: 'ref',
@@ -137,7 +138,7 @@ const _kCols = [
     icon: Icons.tag_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 3,
+    flex: 4,
   ),
   _ColDef(
     id: 'stage',
@@ -167,7 +168,7 @@ const _kCols = [
     icon: Icons.straighten_outlined,
     mandatory: false,
     defaultOn: false,
-    flex: 2,
+    flex: 3,
   ),
   _ColDef(
     id: 'qty',
@@ -189,7 +190,7 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: true,
   defaultOn: true,
-  flex: 1,
+  flex: 2,
 );
 
 Set<String> get _kDefaultOptionalOn =>
@@ -1865,7 +1866,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASK ROW
+// TASK ROW - Now with message indicator badge
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends StatefulWidget {
   final Task task;
@@ -1955,30 +1956,39 @@ class _TaskRowState extends State<_TaskRow> {
                 // non-completed rows.
                 left: isCompleted ? 0 : 3,
               ),
-              child: _AnimatedColRow(
-                effectiveVisible: widget.effectiveVisible,
-                pinnedTrailingCol: _kBillingCol,
-                builder:
-                    (col, opacity) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: _kCellHPad,
-                      ),
-                      child: Opacity(
-                        opacity:
-                            isCompleted
-                                ? (opacity * 0.6) // globally dim all cells
-                                : opacity,
-                        child: _cellFor(
-                          col,
-                          t,
-                          p,
-                          m,
-                          s,
-                          dateDisplay,
-                          isCompleted: isCompleted,
-                        ),
-                      ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _AnimatedColRow(
+                      effectiveVisible: widget.effectiveVisible,
+                      pinnedTrailingCol: _kBillingCol,
+                      builder:
+                          (col, opacity) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: _kCellHPad,
+                            ),
+                            child: Opacity(
+                              opacity:
+                                  isCompleted
+                                      ? (opacity *
+                                          0.6) // globally dim all cells
+                                      : opacity,
+                              child: _cellFor(
+                                col,
+                                t,
+                                p,
+                                m,
+                                s,
+                                dateDisplay,
+                                isCompleted: isCompleted,
+                              ),
+                            ),
+                          ),
                     ),
+                  ),
+
+                  const SizedBox(width: 8),
+                ],
               ),
             ),
           ),
@@ -2010,22 +2020,6 @@ class _TaskRowState extends State<_TaskRow> {
     return switch (col.id) {
       'task' => Row(
         children: [
-          // if (isCompleted) ...[
-          //   Container(
-          //     width: 16,
-          //     height: 16,
-          //     margin: const EdgeInsets.only(right: 7),
-          //     decoration: const BoxDecoration(
-          //       color: _completeMuted,
-          //       shape: BoxShape.circle,
-          //     ),
-          //     child: const Icon(
-          //       Icons.check_rounded,
-          //       size: 10,
-          //       color: Colors.white,
-          //     ),
-          //   ),
-          // ],
           Expanded(
             child: Text(
               "${t.name}",
@@ -2179,13 +2173,68 @@ class _TaskRowState extends State<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => _BillingStatusCell(
-        status: t.billingStatus,
-        dimmed: isCompleted,
+      'billing' => Row(
+        children: [
+          Expanded(
+            child: _BillingStatusCell(
+              status: t.billingStatus,
+              dimmed: isCompleted,
+            ),
+          ),
+          // Message indicator badge - appears after all columns
+          if (t.lastMessageId != null) ...[
+            const SizedBox(width: 8),
+            _MessageIndicator(count: t.messageCount, dimmed: isCompleted),
+          ],
+        ],
       ),
 
       _ => const SizedBox.shrink(),
     };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE INDICATOR - Shows when task has discussion messages
+// ─────────────────────────────────────────────────────────────────────────────
+class _MessageIndicator extends StatelessWidget {
+  final int count;
+  final bool dimmed;
+
+  const _MessageIndicator({required this.count, this.dimmed = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: dimmed ? 0.5 : 1.0,
+      child: Tooltip(
+        message: '$count ${count == 1 ? 'message' : 'messages'}',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          decoration: BoxDecoration(
+            color: _T.blue.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: _T.blue.withOpacity(0.2), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _T.blue),
+              const SizedBox(width: 4),
+              Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: _T.blue,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -2204,15 +2253,6 @@ class _CompletedStagePill extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Container(
-        //   width: 5,
-        //   height: 5,
-        //   decoration: const BoxDecoration(
-        //     color: Color(0xFF4ADE80),
-        //     shape: BoxShape.circle,
-        //   ),
-        // ),
-        // const SizedBox(width: 5),
         const Text(
           'Completed',
           style: TextStyle(
