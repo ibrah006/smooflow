@@ -574,7 +574,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   // Mark the last message for this task as read
-  void markReadLastMessage() async {
+  Future<void> markReadLastMessage() async {
     await ref
         .read(taskNotifierProvider.notifier)
         .updateMessageReadStatus(ref, widget.task.id);
