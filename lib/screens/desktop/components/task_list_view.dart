@@ -2226,7 +2226,11 @@ class _TaskRowState extends State<_TaskRow> {
           // Message indicator badge - appears after all columns
           if (t.lastMessageId != null) ...[
             const SizedBox(width: 8),
-            _MessageIndicator(count: t.messageCount, dimmed: isCompleted),
+            _MessageIndicator(
+              count: t.messageCount,
+              dimmed: isCompleted,
+              unread: t.unreadCount > 0,
+            ),
           ],
         ],
       ),
@@ -2242,11 +2246,18 @@ class _TaskRowState extends State<_TaskRow> {
 class _MessageIndicator extends StatelessWidget {
   final int count;
   final bool dimmed;
+  final bool unread;
 
-  const _MessageIndicator({required this.count, this.dimmed = false});
+  const _MessageIndicator({
+    required this.count,
+    this.dimmed = false,
+    required this.unread,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final color = unread ? _T.blue : _T.ink3;
+
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
       child: Tooltip(
@@ -2254,14 +2265,14 @@ class _MessageIndicator extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _T.ink3),
+            Icon(Icons.chat_bubble_outline_rounded, size: 11, color: color),
             const SizedBox(width: 4),
             Text(
               '$count',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: _T.ink3,
+                fontWeight: unread ? FontWeight.w800 : FontWeight.w700,
+                color: color,
                 height: 1,
               ),
             ),
