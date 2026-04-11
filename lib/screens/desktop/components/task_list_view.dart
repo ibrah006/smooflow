@@ -2028,8 +2028,6 @@ class _TaskRowState extends State<_TaskRow> {
                           ),
                     ),
                   ),
-
-                  const SizedBox(width: 8),
                 ],
               ),
             ),
