@@ -23,7 +23,7 @@ void main(List<String> args) async {
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(1200, 720),
+      size: Size(1280, 720),
       minimumSize: Size(1200, 720),
       title: "Smooflow",
     );
