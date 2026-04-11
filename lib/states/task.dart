@@ -136,10 +136,11 @@ class TaskState {
       return this;
     }
 
+    // DEBUG
     if (incrementCount != null) {
-      print("called to increment unread count by $incrementCount");
+      print("[TaskState] called to increment unread count by $incrementCount");
     } else {
-      print("called to update unread count to $unreadCount");
+      print("[TaskState] called to update unread count to $unreadCount");
     }
 
     final task = taskById(taskId);
@@ -155,6 +156,11 @@ class TaskState {
         }
         return task;
       });
+
+      // DEBUG
+      print(
+        "[TaskState] updated unread count for task ${taskId}: ${updatedTasks.firstWhere((task) => task.id == taskId).unreadCount}",
+      );
 
       return this.copyWith(tasks: updatedTasks.toList());
     }
