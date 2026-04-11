@@ -7,6 +7,6 @@ class ApiClient {
   static var localDevUrl = 'http://localhost:3000';
 
   static final LocalHttp http = LocalHttp(
-    baseUrl: false ? localDevUrl : _liveServerUrl,
+    baseUrl: kDebugMode ? localDevUrl : _liveServerUrl,
   );
 }
