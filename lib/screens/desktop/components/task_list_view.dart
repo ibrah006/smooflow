@@ -85,7 +85,7 @@ class _T {
 // LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
 const double _kRowHPad = 16.0;
-const double _kCellHPad = 4.0;
+const double _kCellHPad = 3.0;
 const _kColAnimDuration = Duration(milliseconds: 260);
 
 const kNotificationDuration = const Duration(seconds: 3);
