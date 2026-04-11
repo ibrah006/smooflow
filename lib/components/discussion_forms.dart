@@ -40,6 +40,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
+import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
@@ -602,7 +603,12 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      markReadLastMessage();
+      // Cannot use ref here, so directly call the repo to mark messages as read
+      TaskRepo().updateMessageReadStatus(
+        taskId: widget.taskId,
+        // To mark the last message of this task as read because we cannot access actual local state from here
+        lastSeenMessageId: null,
+      );
     }
   }
 

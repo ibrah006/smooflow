@@ -297,9 +297,10 @@ class TaskRepo {
   }
 
   /// Update the read status of messages for this task for the current user
+  /// pass in [lastSeenMessageId] as null to set the last message of the specified task as seen
   Future<void> updateMessageReadStatus({
     required int taskId,
-    required int lastSeenMessageId,
+    required int? lastSeenMessageId,
   }) async {
     final response = await ApiClient.http.patch(
       '/tasks/$taskId/read',
