@@ -13,6 +13,14 @@ class MessageState {
 
   ConnectionStatus get connectionStatus => _connectionStatus;
 
+  Message? lastMessageForTask(int taskId) {
+    try {
+      return messages.firstWhere((m) => m.taskId == taskId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   MessageState({
     this.messages = const [],
     this.isLoading = false,

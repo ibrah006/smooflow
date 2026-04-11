@@ -295,4 +295,20 @@ class TaskRepo {
       throw jsonDecode(response.body)["message"];
     }
   }
+
+  /// Update the read status of messages for this task for the current user
+  Future<void> updateMessageReadStatus({
+    required int taskId,
+    required int lastSeenMessageId,
+  }) async {
+    final response = await ApiClient.http.patch(
+      '/tasks/$taskId/read',
+      body: {"lastSeenMessageId": lastSeenMessageId},
+    );
+
+    if (response.statusCode != 200) {
+      // throw Exception('Failed to assign printer to print job. Please try again.\nPrinter ID: $printerId\nStatus code: ${response.statusCode}\nError response body: ${response.body}');
+      throw jsonDecode(response.body)["message"];
+    }
+  }
 }

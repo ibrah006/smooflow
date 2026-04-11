@@ -61,6 +61,14 @@ class LocalHttp {
     );
   }
 
+  Future<http.Response> patch(String endpoint, {Map? body}) async {
+    return await http.patch(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {'Content-Type': 'application/json', ...await getHeaders()},
+      body: jsonEncode(body),
+    );
+  }
+
   Future<http.Response> delete(String endpoint, {Map? body}) async {
     return await http.delete(
       Uri.parse('$baseUrl$endpoint'),

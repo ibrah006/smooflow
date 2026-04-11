@@ -585,6 +585,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     setState(() => _isProgressing = false);
   }
 
+  // On open discussion sheet
+  void _onOpenDiscussion() async {
+    setState(() => _isDiscussionOpen = true);
+    await ref
+        .read(taskNotifierProvider.notifier)
+        .updateMessageReadStatus(ref, widget.task.id);
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -983,8 +991,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         const SizedBox(height: 18),
                         DiscussionPreviewStrip(
                           unreadCount: widget.task.unreadCount,
-                          onOpen:
-                              () => setState(() => _isDiscussionOpen = true),
+                          onOpen: _onOpenDiscussion,
                           taskId: widget.task.id,
                         ),
                       ],

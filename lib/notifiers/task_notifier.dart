@@ -7,6 +7,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
@@ -494,6 +495,33 @@ class TaskNotifier extends StateNotifier<TaskState> {
     }
 
     // state = state.updateTask(task);
+  }
+
+  Future<void> updateMessageReadStatus(WidgetRef ref, int taskId) async {
+    final lastMessageForTask = ref
+        .read(messageNotifierProvider)
+        .lastMessageForTask(taskId);
+
+    if (lastMessageForTask == null) {
+      // No messages for this task loaded in memory, so need to update read status
+      return null;
+    }
+
+    // Update local state first
+    state = state.copyWith(
+      tasks:
+          state.tasks.map((task) {
+            if (task.id == taskId) {
+              task.unreadCount = 0;
+            }
+            return task;
+          }).toList(),
+    );
+
+    await _repo.updateMessageReadStatus(
+      taskId: taskId,
+      lastSeenMessageId: lastMessageForTask.id,
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
