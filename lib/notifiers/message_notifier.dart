@@ -6,15 +6,14 @@ import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
 
 class MessageNotifier extends StateNotifier<MessageState> {
   final MessageRepo _repo;
   late final MessageWebSocketClient _client;
 
-  MessageNotifier(this._repo, this._client) : super(MessageState()) {
-    _initializeSocket();
+  MessageNotifier(this._repo, this._client, Ref ref) : super(MessageState()) {
+    _initializeSocket(ref);
   }
 
   ConnectionStatus get connectionStatus => state.connectionStatus;
@@ -132,11 +131,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// Initialize WebSocket and setup listeners
-  void _initializeSocket() {
-    _initialize();
+  void _initializeSocket(Ref ref) {
+    _initialize(ref);
   }
 
-  void _initialize() {
+  void _initialize(Ref ref) {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
       if (mounted) {

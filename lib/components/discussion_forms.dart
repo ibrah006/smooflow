@@ -646,9 +646,9 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
 
     if (mounted) setState(() => _sending = false);
 
-    // DO NOT UPDATE task.unreadMessages HERE, it is for the server to modify its value
+    // Updating task.unreadMessages here is NOT RECOMMENDED, it is recommended to leave it for the server to modify
     // If you update unreadMessages locally, it will cause a mismatch between the local state and the server state
-    // which might sometimes not mark the messages as read properly
+    // which might sometimes not mark the messages as read properly, when the user returns back to the app after closing
   }
 
   @override

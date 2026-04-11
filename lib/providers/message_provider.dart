@@ -12,7 +12,7 @@ final messageNotifierProvider =
     StateNotifierProvider<MessageNotifier, MessageState>((ref) {
       final repo = ref.read(messageRepoProvider);
       final client = ref.read(messageWebSocketClientProvider);
-      return MessageNotifier(repo, client);
+      return MessageNotifier(repo, client, ref);
     });
 
 final messagesByTaskProvider = Provider.family<List<Message>, int>((
