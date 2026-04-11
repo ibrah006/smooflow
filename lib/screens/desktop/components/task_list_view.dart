@@ -536,7 +536,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                           }
 
                           return _TaskRow(
-                            task: t,
+                            taskId: t.id,
                             project: p,
                             assignee: m,
                             effectiveVisible: effective,
@@ -1910,8 +1910,8 @@ class _SectionLabel extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW - Now with message indicator badge
 // ─────────────────────────────────────────────────────────────────────────────
-class _TaskRow extends StatefulWidget {
-  final Task task;
+class _TaskRow extends ConsumerStatefulWidget {
+  final int taskId;
   final Project? project;
   final Member? assignee;
   final Set<String> effectiveVisible;
@@ -1919,7 +1919,7 @@ class _TaskRow extends StatefulWidget {
   final VoidCallback onTap;
 
   const _TaskRow({
-    required this.task,
+    required this.taskId,
     required this.project,
     required this.assignee,
     required this.effectiveVisible,
@@ -1928,10 +1928,10 @@ class _TaskRow extends StatefulWidget {
   });
 
   @override
-  State<_TaskRow> createState() => _TaskRowState();
+  ConsumerState<_TaskRow> createState() => _TaskRowState();
 }
 
-class _TaskRowState extends State<_TaskRow> {
+class _TaskRowState extends ConsumerState<_TaskRow> {
   bool _hovered = false;
 
   // Completion tokens — a distinct light green palette so the row reads
@@ -1943,7 +1943,7 @@ class _TaskRowState extends State<_TaskRow> {
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.task;
+    final t = ref.watch(taskByIdProviderSimple(widget.taskId))!;
     final p = widget.project;
     final m = widget.assignee;
     final now = DateTime.now();

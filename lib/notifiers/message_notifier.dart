@@ -175,7 +175,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       return;
     }
 
-    final messages = List<Message>.from(state.messages);
+    final messages = state.messages;
 
     switch (event.type) {
       case MessageChangeType.created:
@@ -202,7 +202,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
                 .read(taskNotifierProvider.notifier)
                 .updateUnreadCount(
                   taskId: event.message!.taskId,
-                  incrementCount: 1,
+                  incrementUnreadCount: 1,
                 );
           }
         }
