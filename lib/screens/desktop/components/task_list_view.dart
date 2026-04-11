@@ -211,7 +211,7 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: true,
   defaultOn: true,
-  flex: 3,
+  flex: 2,
 );
 
 Set<String> get _kDefaultOptionalOn =>
