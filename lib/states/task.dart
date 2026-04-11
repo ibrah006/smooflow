@@ -124,8 +124,10 @@ class TaskState {
     return copyWith(tasks: _tasks);
   }
 
+  /// This function assumes as a task state update when a SINGLE new message comes in
   TaskState updateUnreadCount({
     required int taskId,
+    required int messageId,
     int? unreadCount,
     int? incrementCount,
   }) {
@@ -149,10 +151,13 @@ class TaskState {
       final updatedTasks = _tasks.map((task) {
         if (task.id == taskId) {
           if (unreadCount != null) {
-            return task..unreadCount = unreadCount;
+            task.unreadCount = unreadCount;
           } else if (incrementCount != null) {
-            return task..unreadCount += incrementCount;
+            task.unreadCount += incrementCount;
           }
+
+          task.messageCount += 1;
+          task.lastMessageId = messageId;
         }
         return task;
       });

@@ -194,6 +194,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
                 .read(taskNotifierProvider.notifier)
                 .updateUnreadCount(
                   taskId: event.message!.taskId,
+                  messageId: event.messageId,
                   unreadCount: 0,
                 );
           } else {
@@ -202,6 +203,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
                 .read(taskNotifierProvider.notifier)
                 .updateUnreadCount(
                   taskId: event.message!.taskId,
+                  messageId: event.messageId,
                   incrementUnreadCount: 1,
                 );
           }

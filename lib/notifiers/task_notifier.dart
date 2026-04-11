@@ -533,11 +533,15 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
   void updateUnreadCount({
     required int taskId,
+
+    /// Message id of the new message that triggered the unread count update
+    required int messageId,
     int? unreadCount,
     int? incrementUnreadCount,
   }) {
     state = state.updateUnreadCount(
       taskId: taskId,
+      messageId: messageId,
       unreadCount: unreadCount,
       incrementCount: incrementUnreadCount,
     );
