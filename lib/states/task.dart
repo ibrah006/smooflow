@@ -162,11 +162,6 @@ class TaskState {
         return task;
       });
 
-      // DEBUG
-      print(
-        "[TaskState] updated unread count for task ${taskId}: ${updatedTasks.firstWhere((task) => task.id == taskId).unreadCount}",
-      );
-
       return this.copyWith(tasks: updatedTasks.toList());
     }
 
