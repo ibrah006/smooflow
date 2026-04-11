@@ -138,7 +138,7 @@ const _kCols = [
     icon: Icons.tag_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 4,
+    flex: 3,
   ),
   _ColDef(
     id: 'stage',
