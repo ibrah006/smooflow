@@ -567,6 +567,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         .updateMessageReadStatus(ref, widget.task.id);
   }
 
+  void _onCloseDiscussion() {
+    () => setState(() => _isDiscussionOpen = false);
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -1011,7 +1015,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           DiscussionSheet(
             taskId: widget.task.id,
             isOpen: _isDiscussionOpen,
-            onClose: () => setState(() => _isDiscussionOpen = false),
+            onClose: _onCloseDiscussion,
             onSend: (msg) {},
           ),
           if (hasUnread && !_isDiscussionOpen)
