@@ -568,7 +568,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   void _onCloseDiscussion() {
-    () => setState(() => _isDiscussionOpen = false);
+    setState(() => _isDiscussionOpen = false);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
