@@ -41,6 +41,8 @@ import 'package:smooflow/providers/task_provider.dart';
 class _T {
   static const blue = Color(0xFF2563EB);
   static const blue50 = Color(0xFFEFF6FF);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue600 = Color(0xFF1D4ED8);
   static const green = Color(0xFF10B981);
   static const amber = Color(0xFFF59E0B);
   static const red = Color(0xFFEF4444);
@@ -51,13 +53,32 @@ class _T {
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
   static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
+  static const slate700 = Color(0xFF334155);
   static const ink = Color(0xFF0F172A);
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
-  static const r = 8.0;
+  static const r = 6.0;
   static const rLg = 12.0;
   static const red50 = Color(0xFFFEE2E2);
+
+  // Professional shadows for depth
+  static final shadowSm = BoxShadow(
+    color: Colors.black.withOpacity(0.02),
+    blurRadius: 2,
+    offset: const Offset(0, 1),
+  );
+  static final shadowMd = BoxShadow(
+    color: Colors.black.withOpacity(0.04),
+    blurRadius: 6,
+    offset: const Offset(0, 2),
+  );
+  static final shadowLg = BoxShadow(
+    color: Colors.black.withOpacity(0.08),
+    blurRadius: 16,
+    offset: const Offset(0, 4),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -613,78 +634,94 @@ class _ProjectHeader extends StatelessWidget {
     final isFiltered = activeProject != null;
 
     return Container(
-      height: 48,
-      decoration: const BoxDecoration(
+      height: 56,
+      decoration: BoxDecoration(
         color: _T.white,
-        border: Border(bottom: BorderSide(color: _T.slate200)),
+        border: Border(bottom: BorderSide(color: _T.slate200, width: 1)),
+        boxShadow: [_T.shadowSm],
       ),
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
         children: [
-          // ── Project indicator ─────────────────────────────────────────
           if (isFiltered) ...[
             Container(
-              width: 9,
-              height: 9,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 color: activeProject!.color,
                 shape: BoxShape.circle,
+                // boxShadow: [
+                //   BoxShadow(
+                //     color: activeProject!.color.withOpacity(0.3),
+                //     blurRadius: 4,
+                //     spreadRadius: 1,
+                //   ),
+                // ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               activeProject!.name,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: _T.ink,
-                letterSpacing: -0.2,
+                letterSpacing: -0.3,
               ),
             ),
             const SizedBox(width: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _T.slate100,
+                color: _T.blue50,
                 borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: _T.slate200),
+                border: Border.all(color: _T.blue.withOpacity(0.2)),
               ),
               child: const Text(
                 'Filtered',
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: _T.slate500,
+                  fontWeight: FontWeight.w700,
+                  color: _T.blue,
                   letterSpacing: 0.3,
                 ),
               ),
             ),
           ] else ...[
-            const Icon(Icons.workspaces_rounded, size: 17, color: _T.slate400),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _T.slate100,
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Icon(
+                Icons.workspaces_rounded,
+                size: 16,
+                color: _T.slate600,
+              ),
+            ),
+            const SizedBox(width: 10),
             const Text(
               'All Projects',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: _T.ink,
-                letterSpacing: -0.2,
+                letterSpacing: -0.3,
               ),
             ),
           ],
 
           const Spacer(),
 
-          // ── Connection status indicator ───────────────────────────────
           connectionStatus.when(
             data: (status) => _ConnectionIndicator(status: status),
             loading: () => const SizedBox(width: 8),
             error: (_, __) => const SizedBox(width: 8),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
 
-          // ── View mode toggle ──────────────────────────────────────────
           _ViewToggle(current: viewMode, onChange: onViewModeChanged),
         ],
       ),
@@ -739,7 +776,7 @@ class _ConnectionIndicator extends StatelessWidget {
         : Tooltip(
           message: tooltip,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(99),
@@ -749,11 +786,11 @@ class _ConnectionIndicator extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, size: 12, color: color),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
                 Text(
                   status == ConnectionStatus.connected ? 'Live' : 'Offline',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: color,
                   ),
@@ -781,30 +818,31 @@ class _ErrorState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: _T.red50,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [_T.shadowSm],
             ),
-            child: const Icon(Icons.error_outline, size: 24, color: _T.red),
+            child: const Icon(Icons.error_outline, size: 28, color: _T.red),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           const Text(
             'Failed to load tasks',
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: _T.ink3,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _T.ink,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             error,
-            style: const TextStyle(fontSize: 13, color: _T.slate400),
+            style: const TextStyle(fontSize: 13, color: _T.slate500),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 18),
@@ -812,6 +850,10 @@ class _ErrorState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: _T.blue,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],
