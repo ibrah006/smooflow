@@ -498,6 +498,13 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   Future<void> updateMessageReadStatus(WidgetRef ref, int taskId) async {
+    final task = state.taskById(taskId);
+
+    if (task?.unreadCount == 0) {
+      // No unread messages, no need to call the API
+      return;
+    }
+
     final lastMessageForTask = ref
         .read(messageNotifierProvider)
         .lastMessageForTask(taskId);
