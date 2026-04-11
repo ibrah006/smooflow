@@ -2229,6 +2229,7 @@ class _TaskRowState extends State<_TaskRow> {
               dimmed: isCompleted,
               unread: t.unreadCount > 0,
             ),
+            const SizedBox(width: 1),
           ],
         ],
       ),
