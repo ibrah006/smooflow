@@ -531,6 +531,18 @@ class TaskNotifier extends StateNotifier<TaskState> {
     );
   }
 
+  void updateUnreadCount({
+    required int taskId,
+    int? unreadCount,
+    int? incrementCount,
+  }) {
+    state = state.updateUnreadCount(
+      taskId: taskId,
+      unreadCount: unreadCount,
+      incrementCount: incrementCount,
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // WEBSOCKET FUNCTIONALITY
   // ─────────────────────────────────────────────────────────────────────────────

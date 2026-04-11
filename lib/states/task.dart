@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 
@@ -121,6 +122,38 @@ class TaskState {
     _tasks.add(task);
 
     return copyWith(tasks: _tasks);
+  }
+
+  TaskState updateUnreadCount({
+    required int taskId,
+    int? unreadCount,
+    int? incrementCount,
+  }) {
+    if (unreadCount == null && incrementCount == null) {
+      debugPrint(
+        "EITHER unreadCount OR incrementCount MUST BE PROVIDED to update the unread count of a task",
+      );
+      return this;
+    }
+
+    final task = taskById(taskId);
+
+    if (task != null) {
+      final updatedTasks = _tasks.map((task) {
+        if (task.id == taskId) {
+          if (unreadCount != null) {
+            return task..unreadCount = unreadCount;
+          } else if (incrementCount != null) {
+            return task..unreadCount += incrementCount;
+          }
+        }
+        return task;
+      });
+
+      return this.copyWith(tasks: updatedTasks.toList());
+    }
+
+    return this;
   }
 
   TaskState copyWith({

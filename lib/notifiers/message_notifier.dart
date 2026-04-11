@@ -6,6 +6,8 @@ import 'package:smooflow/core/api/websocket_clients/message_websocket.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
+import 'package:smooflow/core/services/login_service.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
 
 class MessageNotifier extends StateNotifier<MessageState> {
@@ -144,7 +146,9 @@ class MessageNotifier extends StateNotifier<MessageState> {
     });
 
     // Listen to message changes
-    _client.messageChanges.listen(_handleMessageChange);
+    _client.messageChanges.listen((MessageChangeEvent event) {
+      _handleMessageChange(event, ref);
+    });
 
     // Listen to message list updates
     _client.messageList.listen((messages) {
@@ -166,7 +170,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }
 
   /// Handle message change events from WebSocket
-  void _handleMessageChange(MessageChangeEvent event) {
+  void _handleMessageChange(MessageChangeEvent event, Ref ref) {
     if (!mounted) {
       return;
     }
@@ -182,6 +186,25 @@ class MessageNotifier extends StateNotifier<MessageState> {
           print(
             '[MessageNotifier] message created, new count: ${messages.length}',
           );
+
+          // Update the unread count for the associated task
+          if (event.changedBy == LoginService.currentUser!.id) {
+            // If message was created by the current user, we can assume they have read all messages in this task
+            ref
+                .read(taskNotifierProvider.notifier)
+                .updateUnreadCount(
+                  taskId: event.message!.taskId,
+                  unreadCount: 0,
+                );
+          } else {
+            // If message was created by someone else, increment the unread count for the task
+            ref
+                .read(taskNotifierProvider.notifier)
+                .updateUnreadCount(
+                  taskId: event.message!.taskId,
+                  incrementCount: 1,
+                );
+          }
         }
         break;
 
