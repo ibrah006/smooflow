@@ -602,6 +602,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   // App closing event (reliable on desktop)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // NOTE: DO NOT USE ref here
     if (state == AppLifecycleState.detached) {
       // Cannot use ref here, so directly call the repo to mark messages as read
       TaskRepo().updateMessageReadStatus(
