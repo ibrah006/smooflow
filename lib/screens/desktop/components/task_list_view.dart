@@ -2223,7 +2223,6 @@ class _TaskRowState extends State<_TaskRow> {
           ),
           // Message indicator badge - appears after all columns
           if (t.lastMessageId != null) ...[
-            const SizedBox(width: 8),
             _MessageIndicator(
               count: t.messageCount,
               dimmed: isCompleted,
