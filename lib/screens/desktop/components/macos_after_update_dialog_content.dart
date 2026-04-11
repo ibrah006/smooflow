@@ -68,6 +68,7 @@ class _MacOSAfterUpdateDialogContentState
       data: MacosThemeData.light(),
       child: MacosSheet(
         child: Material(
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 15),
             child: Column(
