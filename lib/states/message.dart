@@ -13,6 +13,13 @@ class MessageState {
 
   ConnectionStatus get connectionStatus => _connectionStatus;
 
+  /// Messages that cannot be removed from state to free up memory
+  /// 1. Messages that are still being displayed in the UI
+  ///  - Discussion form
+  /// 2. Messages that are still being processed
+  /// Tasks whose messages shouldn't be removed from state because of the above reasons
+  final List<int> priorityTasks = [];
+
   Message? lastMessageForTask(int taskId) {
     try {
       return messages.firstWhere((m) => m.taskId == taskId);
