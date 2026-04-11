@@ -612,6 +612,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     final unreadCount = widget.task.unreadCount;
     final hasUnread = unreadCount > 0;
 
+    final floatingBadgeHeight =
+        _footerHovered
+            ? (widget.task.status == TaskStatus.completed
+                ? 75.0
+                : widget.task.status == TaskStatus.waitingPrinting
+                ? 110.0
+                : 155.0)
+            : 45.0;
+
     return Container(
       width: _T.detailW,
       decoration: const BoxDecoration(
@@ -1009,8 +1018,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             AnimatedPositioned(
               duration: Duration(milliseconds: 200),
               right: 16,
-              bottom:
-                  _footerHovered ? 155 : 45, // Adjust based on footer height
+              bottom: floatingBadgeHeight, // Adjust based on footer height
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 child: _FloatingUnreadBadge(
