@@ -275,6 +275,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
   Future<void> getMessagesAfter({
     required int afterMessageId,
     int? taskId,
+    int limit = 20,
   }) async {
     state = state.copyWith(isLoading: true);
 
@@ -282,6 +283,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       final newMessages = await _repo.getMessagesAfter(
         afterMessageId: afterMessageId,
         taskId: taskId,
+        limit: limit,
       );
 
       // Step 4: Update state
@@ -297,6 +299,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
   Future<void> getMessagesBefore({
     required int beforeMessageId,
     int? taskId,
+    int limit = 20,
   }) async {
     state = state.copyWith(isLoading: true);
 
@@ -304,6 +307,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       final olderMessages = await _repo.getMessagesBefore(
         beforeMessageId: beforeMessageId,
         taskId: taskId,
+        limit: limit,
       );
 
       print("older messages for task ${taskId}: ${olderMessages.length}");

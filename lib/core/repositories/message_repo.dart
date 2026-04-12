@@ -94,9 +94,10 @@ class MessageRepo {
   Future<List<Message>> getMessagesAfter({
     required int afterMessageId,
     int? taskId,
+    int? limit,
   }) async {
     final res = await ApiClient.http.get(
-      '/messages?afterId=$afterMessageId${taskId != null ? '&taskId=$taskId' : ''}',
+      '/messages?afterId=$afterMessageId${taskId != null ? '&taskId=$taskId' : ''}${limit != null ? '&limit=$limit' : ''}',
     );
 
     if (res.statusCode != 200) return [];
@@ -109,9 +110,10 @@ class MessageRepo {
   Future<List<Message>> getMessagesBefore({
     required int beforeMessageId,
     int? taskId,
+    int? limit,
   }) async {
     final res = await ApiClient.http.get(
-      '/messages?beforeId=$beforeMessageId${taskId != null ? '&taskId=$taskId' : ''}',
+      '/messages?beforeId=$beforeMessageId${taskId != null ? '&taskId=$taskId' : ''}${limit != null ? '&limit=$limit' : ''}',
     );
 
     if (res.statusCode != 200) return [];
