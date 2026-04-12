@@ -634,7 +634,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         _footerHovered
             ? (widget.task.status == TaskStatus.completed
                 ? 75.0
-                : widget.task.status == TaskStatus.waitingPrinting
+                : widget.task.status == TaskStatus.waitingPrinting ||
+                    widget.task.status == TaskStatus.pending
                 ? 110.0
                 : 155.0)
             : 45.0;
