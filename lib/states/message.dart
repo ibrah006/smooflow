@@ -101,11 +101,13 @@ class MessageState {
     String? error,
     ConnectionStatus? connectionStatus,
     Message? selectedMessage,
-
-    /// This field is required when new messages are added
-    NewMessageState? newMessageState,
+    NewMessageState newMessageState = NewMessageState.messagesAfter,
   }) {
-    // --> 1. Update messages list
+    // --> 1. Check if over memory limit and evict irrelevant messages to the UI
+    final totalLength = (newMessages ?? []).length + messages.length;
+    _evict(newMessageState, totalLength);
+
+    // --> 2. Update messages list
     late final List<Message> updatedList;
     if (newMessages != null) {
       if (newMessages.isEmpty) {
@@ -129,25 +131,6 @@ class MessageState {
       messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
     }
 
-    // --> 2. Check over memory limit
-    final overLimit = updatedList.length > _MAX_MESSAGES;
-
-    while (overLimit) {
-      late final Message toRemoveMessage;
-
-      if (newMessageState == NewMessageState.messagesAfter) {
-        toRemoveMessage = updatedList.removeLast();
-      } else {
-        toRemoveMessage = updatedList.removeAt(0);
-      }
-
-      if (toRemoveMessage.taskId != activeTaskId) {
-        // Remove message from memory
-      } else {
-        // Don't remove message, move the message to end of the message access queue
-      }
-    }
-
     return MessageState(
       messages: updatedList,
       isLoading: isLoading ?? this.isLoading,
@@ -167,8 +150,8 @@ class MessageState {
     }
   }
 
-  void _evict(NewMessageState newMessageState, List<Message> updatedList) {
-    final toRemove = updatedList.length - _MAX_MESSAGES;
+  void _evict(NewMessageState newMessageState, int totalLength) {
+    final toRemove = totalLength - _MAX_MESSAGES;
 
     if (toRemove <= 0) {
       // Nothing to evict, within memory limit set for messages
