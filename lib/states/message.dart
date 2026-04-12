@@ -62,6 +62,23 @@ class MessageState {
     );
   }
 
+  MessageState update({required Message updatedMessage}) {
+    return MessageState(
+      messages:
+          messages.map((m) {
+            if (m.id == updatedMessage.id) {
+              return updatedMessage;
+            }
+            return m;
+          }).toList(),
+      isLoading: this.isLoading,
+      error: this.error,
+      connectionStatus: this.connectionStatus,
+      selectedMessage: this.selectedMessage,
+      priorityTasks: this.priorityTasks,
+    );
+  }
+
   MessageState copyWith({
     // List<Message>? messages,
     List<Message>? newMessages,

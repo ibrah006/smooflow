@@ -82,11 +82,9 @@ class MessageNotifier extends StateNotifier<MessageState> {
     try {
       final recentMessages = await _repo.getRecent(taskId: taskId);
 
-      final updatedMessages = _mergeMessages(state.messages, recentMessages);
+      print("[MESSAGE NOTIFIER] new (recent) messages: ${recentMessages}");
 
-      print("[MESSAGE NOTIFIER] updated messages: ${updatedMessages}");
-
-      state = state.copyWith(messages: updatedMessages, isLoading: false);
+      state = state.copyWith(newMessages: recentMessages, isLoading: false);
     } catch (e) {
       print("[get recent msgs] error: ${e}");
       state = state.copyWith(isLoading: false, error: _parseError(e));
@@ -212,15 +210,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         break;
 
       case MessageChangeType.updated:
-        state = state.copyWith(
-          messages:
-              messages.map((t) {
-                if (t.id == event.messageId && event.message != null) {
-                  return event.message!;
-                }
-                return t;
-              }).toList(),
-        );
+        state = state.update(updatedMessage: event.message!);
         break;
       case MessageChangeType.deleted:
         state = state.remove(messageId: event.messageId);
