@@ -104,8 +104,11 @@ class MessageState {
     NewMessageState newMessageState = NewMessageState.messagesAfter,
   }) {
     // --> 1. Check if over memory limit and evict irrelevant messages to the UI
-    final totalLength = (newMessages ?? []).length + messages.length;
-    _evict(newMessageState, totalLength);
+
+    if (newMessages != null) {
+      final totalLength = newMessages.length + messages.length;
+      _evict(newMessageState, totalLength);
+    }
 
     // --> 2. Update messages list
     late final List<Message> updatedList;
@@ -115,6 +118,7 @@ class MessageState {
 
         // messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
       } else if (newMessages.length == 1) {
+        // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
         this.messages.insert(0, newMessages.first);
 
         // messageAccessQueue.add(newMessages.first.id);
@@ -152,6 +156,8 @@ class MessageState {
 
   void _evict(NewMessageState newMessageState, int totalLength) {
     final toRemove = totalLength - _MAX_MESSAGES;
+
+    print("[MessageState] To remove: ${toRemove}");
 
     if (toRemove <= 0) {
       // Nothing to evict, within memory limit set for messages
