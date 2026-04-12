@@ -288,7 +288,29 @@ class MessageNotifier extends StateNotifier<MessageState> {
       state = state.copyWith(newMessages: newMessages, isLoading: false);
     } catch (e) {
       state = state.copyWith(
-        error: 'Failed to latest messages',
+        error: 'Failed to load newer messages',
+        isLoading: false,
+      );
+    }
+  }
+
+  Future<void> getMessagesBefore({
+    required int beforeMessageId,
+    int? taskId,
+  }) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final newMessages = await _repo.getMessagesBefore(
+        beforeMessageId: beforeMessageId,
+        taskId: taskId,
+      );
+
+      // Step 4: Update state
+      state = state.copyWith(newMessages: newMessages, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to load older messages',
         isLoading: false,
       );
     }
