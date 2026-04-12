@@ -94,8 +94,9 @@ class MessageState {
         // messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
       } else if (newMessages.length == 1) {
         // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
-        this.messages.insert(0, newMessages.first);
+        updatedList = this.messages;
 
+        updatedList.insert(0, newMessages.first);
         // messageAccessQueue.add(newMessages.first.id);
       } else {
         updatedList = _mergeMessages(
