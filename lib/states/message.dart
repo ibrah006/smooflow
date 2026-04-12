@@ -22,7 +22,7 @@ class MessageState {
 
   int? activeTaskId;
 
-  Queue<int> messageAccessQueue;
+  // Queue<int> messageAccessQueue;
 
   /// Messages that cannot be removed from state to free up memory
   /// 1. Messages that are still being displayed in the UI
@@ -51,8 +51,8 @@ class MessageState {
     this.priorityTasks = const [],
     this.activeTaskId,
     Queue<int>? messageAccessQueue,
-  }) : _connectionStatus = connectionStatus,
-       this.messageAccessQueue = messageAccessQueue ?? Queue<int>();
+  }) : _connectionStatus = connectionStatus;
+  //  this.messageAccessQueue = messageAccessQueue ?? Queue<int>();
 
   MessageState prioritizeTask(int taskId) {
     if (!priorityTasks.contains(taskId)) {
@@ -113,22 +113,22 @@ class MessageState {
       if (newMessages.isEmpty) {
         updatedList = this.messages;
 
-        messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
+        // messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
       } else if (newMessages.length == 1) {
         this.messages.insert(0, newMessages.first);
 
-        messageAccessQueue.add(newMessages.first.id);
+        // messageAccessQueue.add(newMessages.first.id);
       } else {
         updatedList = _mergeMessages(
           this.messages,
           newMessages,
-          messageAccessQueue,
+          // ,messageAccessQueue,
         );
       }
     } else {
       updatedList = this.messages;
 
-      messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
+      // messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
     }
 
     return MessageState(
@@ -137,7 +137,7 @@ class MessageState {
       error: error,
       connectionStatus: connectionStatus ?? this.connectionStatus,
       selectedMessage: selectedMessage ?? this.selectedMessage,
-      messageAccessQueue: messageAccessQueue,
+      // messageAccessQueue: messageAccessQueue,
     );
   }
 
@@ -196,11 +196,7 @@ class MessageState {
 ///
 /// Time complexity: O(n + m)
 /// Space complexity: O(n + m)
-List<Message> _mergeMessages(
-  List<Message> existing,
-  List<Message> incoming,
-  Queue<int> messageAccessQueue,
-) {
+List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
   int i = 0;
   int j = 0;
 
