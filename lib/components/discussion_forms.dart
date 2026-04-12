@@ -569,12 +569,49 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     _scroll.addListener(() {
       final position = _scroll.position;
 
-      if (position.pixels <= 40) {
-        print("Near BOTTOM");
+      final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+
+      final messages = ref.watch(messageNotifierProvider).messages;
+
+      if (position.pixels <= 40 && task.lastMessageId != null) {
+        // Near bottom
+        // Load newer messages
+        try {
+          final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
+
+          if (lastMessage.id < task.lastMessageId!) {
+            print("need to load newer messages");
+            ref
+                .read(messageNotifierProvider.notifier)
+                .getMessagesAfter(
+                  taskId: widget.taskId,
+                  afterMessageId: lastMessage.id,
+                );
+          }
+        } catch (e) {
+          // No messages
+        }
       }
 
-      if (position.pixels >= position.maxScrollExtent - 40) {
-        print("Near TOP");
+      if (position.pixels >= position.maxScrollExtent - 40 &&
+          task.firstMessageId != null) {
+        // Near top
+        // Load newer messages
+        try {
+          final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
+
+          if (firstMessage.id > task.firstMessageId!) {
+            print("need to load older messages");
+            ref
+                .read(messageNotifierProvider.notifier)
+                .getMessagesAfter(
+                  taskId: widget.taskId,
+                  afterMessageId: firstMessage.id,
+                );
+          }
+        } catch (e) {
+          // No messages
+        }
       }
     });
 
