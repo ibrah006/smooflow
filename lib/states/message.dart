@@ -148,6 +148,8 @@ class MessageState {
       return false;
     });
 
+    print("[MessageState] to remove: ${toRemove}, removed: ${removed}");
+
     // Force remove
     while (toRemove > removed) {
       if (newMessageState == NewMessageState.messagesAfter) {
