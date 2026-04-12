@@ -609,13 +609,15 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
         // Load newer messages
         try {
           final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
-          print(
-            "first message for this task id in memory: ${firstMessage.id}, actual first message id for this task: ${task.firstMessageId}",
-          );
 
           if (firstMessage.id > task.firstMessageId!) {
             _isLoadingMessages = true;
             print("need to load older messages");
+
+            // messages.lastWhere((m) {
+            //   print("m.id: ${m.id}");
+            //   return false;
+            // });
 
             ref
                 .read(messageNotifierProvider.notifier)
