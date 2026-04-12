@@ -641,6 +641,11 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   @override
   void didUpdateWidget(DiscussionSheet old) {
     super.didUpdateWidget(old);
+
+    if (widget.taskId != old.taskId) {
+      ref.read(messageNotifierProvider).activeTaskId = widget.taskId;
+    }
+
     if (widget.isOpen != old.isOpen) {
       if (widget.isOpen) {
         _ctrl.duration = const Duration(milliseconds: 300);
