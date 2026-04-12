@@ -2222,7 +2222,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
           // Message indicator badge - appears after all columns
           if (t.lastMessageId != null) ...[
             _MessageIndicator(
-              count: t.messageCount,
+              count: t.unreadCount > 0 ? t.unreadCount : t.messageCount,
               dimmed: isCompleted,
               unread: t.unreadCount > 0,
             ),
