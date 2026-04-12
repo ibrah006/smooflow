@@ -1,5 +1,7 @@
 // state/message_state.dart
 
+import 'dart:collection';
+
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/message.dart';
 
@@ -19,6 +21,8 @@ class MessageState {
   ConnectionStatus get connectionStatus => _connectionStatus;
 
   int? activeTaskId;
+
+  Queue<int> messageAccessQueue;
 
   /// Messages that cannot be removed from state to free up memory
   /// 1. Messages that are still being displayed in the UI
@@ -46,7 +50,9 @@ class MessageState {
     this.selectedMessage,
     this.priorityTasks = const [],
     this.activeTaskId,
-  }) : _connectionStatus = connectionStatus;
+    Queue<int>? messageAccessQueue,
+  }) : _connectionStatus = connectionStatus,
+       this.messageAccessQueue = messageAccessQueue ?? Queue<int>();
 
   MessageState prioritizeTask(int taskId) {
     if (!priorityTasks.contains(taskId)) {
@@ -99,34 +105,47 @@ class MessageState {
     /// This field is required when new messages are added
     NewMessageState? newMessageState,
   }) {
-    final overLimit =
-        (newMessages ?? []).length + messages.length > _MAX_MESSAGES;
-
-    // while (overLimit) {
-    //   final toRemove =
-    //       newMessageState == NewMessageState.messagesAfter
-    //           ?
-    //           // Oldest message
-    //           messages.last
-    //           :
-    //           // Newest message
-    //           messages.first;
-
-    //   // if (toRemove.taskId)
-    // }
-
-    // Update messages list
-    late final updatedList;
+    // --> 1. Update messages list
+    late final List<Message> updatedList;
     if (newMessages != null) {
       if (newMessages.isEmpty) {
         updatedList = this.messages;
+
+        messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
       } else if (newMessages.length == 1) {
         this.messages.insert(0, newMessages.first);
+
+        messageAccessQueue.add(newMessages.first.id);
       } else {
-        updatedList = _mergeMessages(this.messages, newMessages);
+        updatedList = _mergeMessages(
+          this.messages,
+          newMessages,
+          messageAccessQueue,
+        );
       }
     } else {
       updatedList = this.messages;
+
+      messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
+    }
+
+    // --> 2. Check over memory limit
+    final overLimit = updatedList.length > _MAX_MESSAGES;
+
+    while (overLimit) {
+      late final Message toRemoveMessage;
+
+      if (newMessageState == NewMessageState.messagesAfter) {
+        toRemoveMessage = updatedList.removeLast();
+      } else {
+        toRemoveMessage = updatedList.removeAt(0);
+      }
+
+      if (toRemoveMessage.taskId != activeTaskId) {
+        // Remove message from memory
+      } else {
+        // Don't remove message, move the message to end of the message access queue
+      }
     }
 
     return MessageState(
@@ -135,7 +154,45 @@ class MessageState {
       error: error,
       connectionStatus: connectionStatus ?? this.connectionStatus,
       selectedMessage: selectedMessage ?? this.selectedMessage,
+      messageAccessQueue: messageAccessQueue,
     );
+  }
+
+  Message? byId(int messageId) {
+    try {
+      return messages.firstWhere((m) => m.id == messageId);
+    } catch (e) {
+      // No such message
+      return null;
+    }
+  }
+
+  void _evict(NewMessageState newMessageState, List<Message> updatedList) {
+    final toRemove = updatedList.length - _MAX_MESSAGES;
+
+    if (toRemove <= 0) {
+      // Nothing to evict, within memory limit set for messages
+      return;
+    }
+
+    int removed = 0;
+    messages.removeWhere((m) {
+      if (removed <= toRemove && m.taskId != activeTaskId) {
+        removed++;
+        return true;
+      }
+      return false;
+    });
+
+    // Force remove
+    while (toRemove > removed) {
+      if (newMessageState == NewMessageState.messagesAfter) {
+        messages.removeLast();
+      } else {
+        messages.removeAt(0);
+      }
+      removed++;
+    }
   }
 }
 
@@ -156,7 +213,11 @@ class MessageState {
 ///
 /// Time complexity: O(n + m)
 /// Space complexity: O(n + m)
-List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
+List<Message> _mergeMessages(
+  List<Message> existing,
+  List<Message> incoming,
+  Queue<int> messageAccessQueue,
+) {
   int i = 0;
   int j = 0;
 
