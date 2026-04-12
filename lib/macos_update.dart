@@ -139,8 +139,9 @@ Future<void> checkForUpdate(BuildContext context) async {
       );
 
       // Debug
-      if (lastVersionReleaseNotesShown != null &&
-          _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
+      // lastVersionReleaseNotesShown != null &&
+      //     _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)
+      if (true) {
         await prefs.setString(
           SharedStorageOptions.lastVersionReleaseNotesShown.name,
           currentVersion,

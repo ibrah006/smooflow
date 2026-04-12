@@ -179,7 +179,7 @@ class _MacOSAfterUpdateDialogContentState
                       child: SingleChildScrollView(
                         controller: _scroll,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 130),
                           child: Column(
                             children: [
                               _Header(
