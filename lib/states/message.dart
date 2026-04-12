@@ -1,4 +1,6 @@
 // state/message_state.dart
+import 'dart:collection';
+
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/message.dart';
 
@@ -50,7 +52,7 @@ class MessageState {
   }
 
   MessageState copyWith({
-    List<Message>? messages,
+    // List<Message>? messages,
     bool? isLoading,
     String? error,
     ConnectionStatus? connectionStatus,

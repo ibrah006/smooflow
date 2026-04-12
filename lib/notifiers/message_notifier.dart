@@ -10,6 +10,8 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
 
+const _MAX_MESSAGES = 15;
+
 class MessageNotifier extends StateNotifier<MessageState> {
   final MessageRepo _repo;
   late final MessageWebSocketClient _client;
@@ -92,16 +94,16 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }
 
   /// GET /messages
-  Future<void> getAllMessages() async {
-    state = state.copyWith(isLoading: true, error: null);
+  // Future<void> getAllMessages() async {
+  //   state = state.copyWith(isLoading: true, error: null);
 
-    try {
-      final messages = await _repo.getAll();
-      state = state.copyWith(isLoading: false, messages: messages);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: _parseError(e));
-    }
-  }
+  //   try {
+  //     final messages = await _repo.getAll();
+  //     state = state.copyWith(isLoading: false, messages: messages);
+  //   } catch (e) {
+  //     state = state.copyWith(isLoading: false, error: _parseError(e));
+  //   }
+  // }
 
   /// POST /messages
   Future<Message?> createMessage({
