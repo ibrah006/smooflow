@@ -609,6 +609,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
         // Load newer messages
         try {
           final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
+          print("first message for this task id: ${firstMessage.id}");
 
           if (firstMessage.id > task.firstMessageId!) {
             _isLoadingMessages = true;
