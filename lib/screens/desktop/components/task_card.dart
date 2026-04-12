@@ -359,6 +359,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 color: member.color,
                                 size: 20,
                               ),
+                            const SizedBox(width: 6), // ← add
+                            _buildMessageIndicator(task),
                             const Spacer(),
                             if (d != null)
                               Row(
@@ -583,6 +585,59 @@ class _TaskCardState extends ConsumerState<TaskCard>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ── Message indicator helper ──────────────────────────────────────────────
+  Widget _buildMessageIndicator(Task task) {
+    final total = task.messageCount;
+    final unread = task.unreadCount;
+
+    if (total == 0) return const SizedBox.shrink();
+
+    final hasUnread = unread > 0;
+    final color = hasUnread ? _T.blue : _T.slate400;
+    final bgColor = hasUnread ? _T.blue.withOpacity(0.08) : Colors.transparent;
+    final label = hasUnread ? '$unread unread' : '$total';
+
+    return Container(
+      padding:
+          hasUnread
+              ? const EdgeInsets.symmetric(horizontal: 5, vertical: 2)
+              : EdgeInsets.zero,
+      decoration:
+          hasUnread
+              ? BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: _T.blue.withOpacity(0.22),
+                  width: 0.8,
+                ),
+              )
+              : null,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            hasUnread
+                ? Icons.mark_chat_unread_rounded
+                : Icons.chat_bubble_outline_rounded,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
       ),
     );
   }
