@@ -183,8 +183,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       case MessageChangeType.created:
         if (event.message != null &&
             !messages.any((t) => t.id == event.messageId)) {
-          messages.insert(0, event.message!);
-          state = state.copyWith(messages: messages);
+          state = state.copyWith(newMessages: [event.message!]);
           print(
             '[MessageNotifier] message created, new count: ${messages.length}',
           );
@@ -224,8 +223,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         );
         break;
       case MessageChangeType.deleted:
-        messages.removeWhere((t) => t.id == event.messageId);
-        state = state.copyWith(messages: messages);
+        state = state.remove(messageId: event.messageId);
 
         // Clear selected message if it was deleted
         if (state.selectedMessage?.id == event.messageId) {
@@ -295,10 +293,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
         taskId: taskId,
       );
 
-      late final updatedList = _mergeMessages(state.messages, newMessages);
-
       // Step 4: Update state
-      state = state.copyWith(messages: updatedList, isLoading: false);
+      state = state.copyWith(newMessages: newMessages, isLoading: false);
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to latest messages',
@@ -365,61 +361,6 @@ List<Message> _mergeSortedMessages(
       i++;
       j++;
     } else if (a.id < b.id) {
-      result.add(a);
-      i++;
-    } else {
-      result.add(b);
-      j++;
-    }
-  }
-
-  // Remaining items
-  while (i < existing.length) {
-    result.add(existing[i++]);
-  }
-
-  while (j < incoming.length) {
-    result.add(incoming[j++]);
-  }
-
-  return result;
-}
-
-/// Merges two sorted lists of messages into a single sorted list.
-///
-/// Both [existing] and [incoming] must already be sorted by `id` in descending order.
-///
-/// This function:
-/// - Preserves overall sorted order (by `id`)
-/// - Inserts incoming messages at the correct positions
-/// - Handles gaps in IDs (they do not need to be continuous)
-/// - Avoids duplicates by resolving equal IDs
-///
-/// Duplicate handling:
-/// - If a message with the same `id` exists in both lists,
-///   the incoming message (`b`) replaces the existing one (`a`).
-///   (You can change this behavior if needed.)
-///
-/// Time complexity: O(n + m)
-/// Space complexity: O(n + m)
-List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
-  int i = 0;
-  int j = 0;
-
-  final result = <Message>[];
-
-  while (i < existing.length && j < incoming.length) {
-    final a = existing[i];
-    final b = incoming[j];
-
-    if (a.id == b.id) {
-      // ✅ Replace duplicate with incoming
-      result.add(b);
-      i++;
-      j++;
-    }
-    // 🔥 DESC: bigger id comes first
-    else if (a.id > b.id) {
       result.add(a);
       i++;
     } else {

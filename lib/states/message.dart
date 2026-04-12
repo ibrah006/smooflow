@@ -51,19 +51,99 @@ class MessageState {
     return this;
   }
 
+  MessageState remove({required int messageId}) {
+    return MessageState(
+      messages: messages.where((m) => m.id != messageId).toList(),
+      isLoading: this.isLoading,
+      error: this.error,
+      connectionStatus: this.connectionStatus,
+      selectedMessage: this.selectedMessage,
+      priorityTasks: this.priorityTasks,
+    );
+  }
+
   MessageState copyWith({
     // List<Message>? messages,
+    List<Message>? newMessages,
     bool? isLoading,
     String? error,
     ConnectionStatus? connectionStatus,
     Message? selectedMessage,
   }) {
+    late final updatedList;
+    if (newMessages != null) {
+      if (newMessages.isEmpty) {
+        updatedList = this.messages;
+      } else if (newMessages.length == 1) {
+        this.messages.insert(0, newMessages.first);
+      } else {
+        updatedList = _mergeMessages(this.messages, newMessages);
+      }
+    } else {
+      updatedList = this.messages;
+    }
+
     return MessageState(
-      messages: messages ?? this.messages,
+      messages: updatedList,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       connectionStatus: connectionStatus ?? this.connectionStatus,
       selectedMessage: selectedMessage ?? this.selectedMessage,
     );
   }
+}
+
+/// Merges two sorted lists of messages into a single sorted list.
+///
+/// Both [existing] and [incoming] must already be sorted by `id` in descending order.
+///
+/// This function:
+/// - Preserves overall sorted order (by `id`)
+/// - Inserts incoming messages at the correct positions
+/// - Handles gaps in IDs (they do not need to be continuous)
+/// - Avoids duplicates by resolving equal IDs
+///
+/// Duplicate handling:
+/// - If a message with the same `id` exists in both lists,
+///   the incoming message (`b`) replaces the existing one (`a`).
+///   (You can change this behavior if needed.)
+///
+/// Time complexity: O(n + m)
+/// Space complexity: O(n + m)
+List<Message> _mergeMessages(List<Message> existing, List<Message> incoming) {
+  int i = 0;
+  int j = 0;
+
+  final result = <Message>[];
+
+  while (i < existing.length && j < incoming.length) {
+    final a = existing[i];
+    final b = incoming[j];
+
+    if (a.id == b.id) {
+      // ✅ Replace duplicate with incoming
+      result.add(b);
+      i++;
+      j++;
+    }
+    // 🔥 DESC: bigger id comes first
+    else if (a.id > b.id) {
+      result.add(a);
+      i++;
+    } else {
+      result.add(b);
+      j++;
+    }
+  }
+
+  // Remaining items
+  while (i < existing.length) {
+    result.add(existing[i++]);
+  }
+
+  while (j < incoming.length) {
+    result.add(incoming[j++]);
+  }
+
+  return result;
 }
