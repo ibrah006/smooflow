@@ -132,7 +132,7 @@ class MessageState {
   void _evict(NewMessageState newMessageState, int totalLength) {
     final toRemove = totalLength - _MAX_MESSAGES;
 
-    print("[MessageState] To remove: ${toRemove}");
+    print("[MessageState] total: ${totalLength} To remove: ${toRemove}");
 
     if (toRemove <= 0) {
       // Nothing to evict, within memory limit set for messages
