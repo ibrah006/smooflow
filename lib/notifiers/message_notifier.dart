@@ -83,7 +83,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         limit: limit ?? 20,
       );
 
-      print("[MESSAGE NOTIFIER] new (recent) messages: ${recentMessages}");
+      // print("[MESSAGE NOTIFIER] new (recent) messages: ${recentMessages}");
 
       state = state.copyWith(newMessages: recentMessages, isLoading: false);
     } catch (e) {

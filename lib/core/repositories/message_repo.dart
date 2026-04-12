@@ -61,9 +61,9 @@ class MessageRepo {
 
     final body = jsonDecode(res.body);
 
-    print(
-      "[MessageRepo] recent messages, status: ${res.statusCode}, response: ${body}",
-    );
+    // print(
+    //   "[MessageRepo] recent messages, status: ${res.statusCode}, response: ${body}",
+    // );
 
     if (res.statusCode != 200) throw body['message'];
 
