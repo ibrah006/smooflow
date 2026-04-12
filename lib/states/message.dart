@@ -18,6 +18,8 @@ class MessageState {
 
   ConnectionStatus get connectionStatus => _connectionStatus;
 
+  int? activeTaskId;
+
   /// Messages that cannot be removed from state to free up memory
   /// 1. Messages that are still being displayed in the UI
   ///  - Discussion form
@@ -43,6 +45,7 @@ class MessageState {
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     this.selectedMessage,
     this.priorityTasks = const [],
+    this.activeTaskId,
   }) : _connectionStatus = connectionStatus;
 
   MessageState prioritizeTask(int taskId) {
@@ -109,7 +112,7 @@ class MessageState {
     //           // Newest message
     //           messages.first;
 
-    //   // if (toremvo)
+    //   // if (toRemove.taskId)
     // }
 
     // Update messages list
