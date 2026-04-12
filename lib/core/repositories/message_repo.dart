@@ -101,7 +101,9 @@ class MessageRepo {
 
     if (res.statusCode != 200) return [];
 
-    return (res.body as List).map((e) => Message.fromJson(e)).toList();
+    return (jsonDecode(res.body) as List)
+        .map((e) => Message.fromJson(e))
+        .toList();
   }
 
   Future<List<Message>> getMessagesBefore({
@@ -114,6 +116,8 @@ class MessageRepo {
 
     if (res.statusCode != 200) return [];
 
-    return (res.body as List).map((e) => Message.fromJson(e)).toList();
+    return (jsonDecode(res.body) as List)
+        .map((e) => Message.fromJson(e))
+        .toList();
   }
 }

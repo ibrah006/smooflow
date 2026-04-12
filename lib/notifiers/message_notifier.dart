@@ -300,24 +300,27 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }) async {
     state = state.copyWith(isLoading: true);
 
-    try {
-      final newMessages = await _repo.getMessagesBefore(
-        beforeMessageId: beforeMessageId,
-        taskId: taskId,
-      );
+    // try {
+    final olderMessages = await _repo.getMessagesBefore(
+      beforeMessageId: beforeMessageId,
+      taskId: taskId,
+    );
 
-      // Step 4: Update state
-      state = state.copyWith(
-        newMessages: newMessages,
-        isLoading: false,
-        newMessageState: NewMessageState.messagesBefore,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to load older messages',
-        isLoading: false,
-      );
-    }
+    print("older messages for task ${taskId}: ${olderMessages.length}");
+
+    // Step 4: Update state
+    state = state.copyWith(
+      newMessages: olderMessages,
+      isLoading: false,
+      newMessageState: NewMessageState.messagesBefore,
+    );
+    // } catch (e) {
+    //   print("error loading message before: ${e}");
+    //   state = state.copyWith(
+    //     error: 'Failed to load older messages',
+    //     isLoading: false,
+    //   );
+    // }
   }
 
   /// Subscribe to a message

@@ -553,6 +553,8 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   final ScrollController _scroll = ScrollController();
   bool _sending = false;
 
+  bool _isLoadingMessages = false;
+
   @override
   void initState() {
     super.initState();
@@ -569,6 +571,10 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     _scroll.addListener(() {
       final position = _scroll.position;
 
+      if (_isLoadingMessages) {
+        return;
+      }
+
       final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
 
       final messages = ref.watch(messageNotifierProvider).messages;
@@ -580,13 +586,17 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
           final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
 
           if (lastMessage.id < task.lastMessageId!) {
+            _isLoadingMessages = true;
             // print("need to load newer messages");
             ref
                 .read(messageNotifierProvider.notifier)
                 .getMessagesAfter(
                   taskId: widget.taskId,
                   afterMessageId: lastMessage.id,
-                );
+                )
+                .then((value) {
+                  _isLoadingMessages = false;
+                });
           }
         } catch (e) {
           // No messages
@@ -601,13 +611,18 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
           final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
 
           if (firstMessage.id > task.firstMessageId!) {
-            // print("need to load older messages");
+            _isLoadingMessages = true;
+            print("need to load older messages");
+
             ref
                 .read(messageNotifierProvider.notifier)
                 .getMessagesBefore(
                   taskId: widget.taskId,
                   beforeMessageId: firstMessage.id,
-                );
+                )
+                .then((value) {
+                  _isLoadingMessages = false;
+                });
           }
         } catch (e) {
           // No messages
