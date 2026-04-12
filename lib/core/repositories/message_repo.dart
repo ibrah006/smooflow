@@ -103,4 +103,17 @@ class MessageRepo {
 
     return (res.body as List).map((e) => Message.fromJson(e)).toList();
   }
+
+  Future<List<Message>> getMessagesBefore({
+    required int beforeMessageId,
+    int? taskId,
+  }) async {
+    final res = await ApiClient.http.get(
+      '/messages?beforeId=$beforeMessageId${taskId != null ? '&taskId=$taskId' : ''}',
+    );
+
+    if (res.statusCode != 200) return [];
+
+    return (res.body as List).map((e) => Message.fromJson(e)).toList();
+  }
 }
