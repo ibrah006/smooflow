@@ -118,6 +118,7 @@ class MessageState {
       connectionStatus: connectionStatus ?? this.connectionStatus,
       selectedMessage: selectedMessage ?? this.selectedMessage,
       // messageAccessQueue: messageAccessQueue,
+      activeTaskId: this.activeTaskId,
     );
   }
 
