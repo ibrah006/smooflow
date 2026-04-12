@@ -94,9 +94,6 @@ Future<void> checkForUpdate(BuildContext context) async {
 
     print("current version: ${currentVersion}");
 
-    // DEBUG
-    _showAfterUpdateReleaseNotes(context, currentVersion);
-
     // 5. Compare versions
     if (_isNewerVersion(currentVersion, shortVersion)) {
       print('Update available! Download at $url');
@@ -137,14 +134,20 @@ Future<void> checkForUpdate(BuildContext context) async {
         SharedStorageOptions.lastVersionReleaseNotesShown.name,
       );
 
+      print(
+        "lastVersionReleaseNotesShown: ${lastVersionReleaseNotesShown}, currentVersion: ${currentVersion}",
+      );
+
       // Debug
-      // if (lastVersionReleaseNotesShown == null ||
-      //     !_isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
-      //   await prefs.setString(
-      //     SharedStorageOptions.lastVersionReleaseNotesShown.name,
-      //     currentVersion,
-      //   );
-      // }
+      if (lastVersionReleaseNotesShown != null &&
+          _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
+        await prefs.setString(
+          SharedStorageOptions.lastVersionReleaseNotesShown.name,
+          currentVersion,
+        );
+
+        _showAfterUpdateReleaseNotes(context, currentVersion);
+      }
     }
   } catch (e) {
     print('Error checking update: $e');
