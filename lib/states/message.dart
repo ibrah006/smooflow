@@ -24,16 +24,6 @@ class MessageState {
 
   // Queue<int> messageAccessQueue;
 
-  /// Messages that cannot be removed from state to free up memory
-  /// 1. Messages that are still being displayed in the UI
-  ///  - Discussion form
-  /// 2. Messages that are still being processed
-  /// Tasks whose messages shouldn't be removed from state because of the above reasons
-  @Deprecated(
-    "priority tasks approach will no longer be used as it's insufficient",
-  )
-  final List<int> priorityTasks;
-
   Message? lastMessageForTask(int taskId) {
     try {
       return messages.firstWhere((m) => m.taskId == taskId);
@@ -48,23 +38,10 @@ class MessageState {
     this.error,
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     this.selectedMessage,
-    this.priorityTasks = const [],
     this.activeTaskId,
     Queue<int>? messageAccessQueue,
   }) : _connectionStatus = connectionStatus;
   //  this.messageAccessQueue = messageAccessQueue ?? Queue<int>();
-
-  MessageState prioritizeTask(int taskId) {
-    if (!priorityTasks.contains(taskId)) {
-      this.priorityTasks.add(taskId);
-    }
-    return this;
-  }
-
-  MessageState deprioritizeTask(int taskId) {
-    this.priorityTasks.remove(taskId);
-    return this;
-  }
 
   MessageState remove({required int messageId}) {
     return MessageState(
@@ -73,7 +50,6 @@ class MessageState {
       error: this.error,
       connectionStatus: this.connectionStatus,
       selectedMessage: this.selectedMessage,
-      priorityTasks: this.priorityTasks,
     );
   }
 
@@ -90,7 +66,6 @@ class MessageState {
       error: this.error,
       connectionStatus: this.connectionStatus,
       selectedMessage: this.selectedMessage,
-      priorityTasks: this.priorityTasks,
     );
   }
 
