@@ -604,9 +604,9 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
             // print("need to load older messages");
             ref
                 .read(messageNotifierProvider.notifier)
-                .getMessagesAfter(
+                .getMessagesBefore(
                   taskId: widget.taskId,
-                  afterMessageId: firstMessage.id,
+                  beforeMessageId: firstMessage.id,
                 );
           }
         } catch (e) {
