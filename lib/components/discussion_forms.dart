@@ -580,7 +580,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
           final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
 
           if (lastMessage.id < task.lastMessageId!) {
-            print("need to load newer messages");
+            // print("need to load newer messages");
             ref
                 .read(messageNotifierProvider.notifier)
                 .getMessagesAfter(
@@ -601,7 +601,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
           final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
 
           if (firstMessage.id > task.firstMessageId!) {
-            print("need to load older messages");
+            // print("need to load older messages");
             ref
                 .read(messageNotifierProvider.notifier)
                 .getMessagesAfter(

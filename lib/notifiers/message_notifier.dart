@@ -307,7 +307,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
       );
 
       // Step 4: Update state
-      state = state.copyWith(newMessages: newMessages, isLoading: false);
+      state = state.copyWith(
+        newMessages: newMessages,
+        isLoading: false,
+        newMessageState: NewMessageState.messagesBefore,
+      );
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load older messages',
