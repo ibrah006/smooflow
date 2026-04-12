@@ -10,8 +10,6 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/message.dart';
 
-const _MAX_MESSAGES = 15;
-
 class MessageNotifier extends StateNotifier<MessageState> {
   final MessageRepo _repo;
   late final MessageWebSocketClient _client;
@@ -72,15 +70,18 @@ class MessageNotifier extends StateNotifier<MessageState> {
       } else {
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
         // No messages for this task, fetch recent messages for the task
-        await getRecent(taskId: task.id);
+        await getRecent(taskId: task.id, limit: 20);
       }
     }
   }
 
-  Future<void> getRecent({int? taskId}) async {
+  Future<void> getRecent({int? taskId, int? limit}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final recentMessages = await _repo.getRecent(taskId: taskId);
+      final recentMessages = await _repo.getRecent(
+        taskId: taskId,
+        limit: limit ?? 20,
+      );
 
       print("[MESSAGE NOTIFIER] new (recent) messages: ${recentMessages}");
 

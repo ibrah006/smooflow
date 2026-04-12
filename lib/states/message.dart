@@ -1,8 +1,9 @@
 // state/message_state.dart
-import 'dart:collection';
 
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/message.dart';
+
+const _MAX_MESSAGES = 15;
 
 class MessageState {
   final List<Message> messages;
@@ -87,6 +88,9 @@ class MessageState {
     ConnectionStatus? connectionStatus,
     Message? selectedMessage,
   }) {
+    final overLimit = newMessages ?? [].length + messages.length;
+
+    // Update messages list
     late final updatedList;
     if (newMessages != null) {
       if (newMessages.isEmpty) {
