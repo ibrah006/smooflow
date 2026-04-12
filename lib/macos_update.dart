@@ -95,7 +95,7 @@ Future<void> checkForUpdate(BuildContext context) async {
     print("current version: ${currentVersion}");
 
     // DEBUG
-    // _showAfterUpdateReleaseNotes(context, currentVersion);
+    _showAfterUpdateReleaseNotes(context, currentVersion);
 
     // 5. Compare versions
     if (_isNewerVersion(currentVersion, shortVersion)) {
@@ -157,6 +157,8 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
     builder:
         (_) => MacOSAfterUpdateDialogContent(
           currentVersion: currentVersion,
+          featureVideoUrl:
+              'https://raw.githubusercontent.com/ibrah006/smooflow/main/screenshots/feature%20demos/messaging.mp4',
           onDismiss: () {
             Navigator.of(context).pop();
           },
