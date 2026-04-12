@@ -153,15 +153,15 @@ class MessageNotifier extends StateNotifier<MessageState> {
     });
 
     // Listen to message list updates
-    _client.messageList.listen((messages) {
-      if (mounted) {
-        state = state.copyWith(
-          messages: messages,
-          isLoading: false,
-          error: null,
-        );
-      }
-    });
+    // _client.messageList.listen((messages) {
+    //   if (mounted) {
+    //     state = state.copyWith(
+    //       messages: messages,
+    //       isLoading: false,
+    //       error: null,
+    //     );
+    //   }
+    // });
 
     // Listen to errors
     _client.errors.listen((error) {
