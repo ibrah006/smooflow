@@ -5,6 +5,8 @@ import 'package:smooflow/core/models/message.dart';
 
 const _MAX_MESSAGES = 15;
 
+enum NewMessageState { messagesAfter, messagesBefore }
+
 class MessageState {
   final List<Message> messages;
   final bool isLoading;
@@ -21,6 +23,9 @@ class MessageState {
   ///  - Discussion form
   /// 2. Messages that are still being processed
   /// Tasks whose messages shouldn't be removed from state because of the above reasons
+  @Deprecated(
+    "priority tasks approach will no longer be used as it's insufficient",
+  )
   final List<int> priorityTasks;
 
   Message? lastMessageForTask(int taskId) {
@@ -87,8 +92,25 @@ class MessageState {
     String? error,
     ConnectionStatus? connectionStatus,
     Message? selectedMessage,
+
+    /// This field is required when new messages are added
+    NewMessageState? newMessageState,
   }) {
-    final overLimit = newMessages ?? [].length + messages.length;
+    final overLimit =
+        (newMessages ?? []).length + messages.length > _MAX_MESSAGES;
+
+    // while (overLimit) {
+    //   final toRemove =
+    //       newMessageState == NewMessageState.messagesAfter
+    //           ?
+    //           // Oldest message
+    //           messages.last
+    //           :
+    //           // Newest message
+    //           messages.first;
+
+    //   // if (toremvo)
+    // }
 
     // Update messages list
     late final updatedList;
