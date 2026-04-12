@@ -566,6 +566,18 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
 
+    _scroll.addListener(() {
+      final position = _scroll.position;
+
+      if (position.pixels <= 40) {
+        print("Near BOTTOM");
+      }
+
+      if (position.pixels >= position.maxScrollExtent - 40) {
+        print("Near TOP");
+      }
+    });
+
     if (widget.isOpen) _ctrl.value = 1.0;
   }
 
