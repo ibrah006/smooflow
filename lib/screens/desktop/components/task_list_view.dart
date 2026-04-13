@@ -413,9 +413,18 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                 .firstWhere((project) => project.id == event.task!.projectId);
           } catch (e) {
             // Project non existent in memory
+            print(
+              "[Task List View] [Task Event] Project non existent in memory, prj: ${event.task!.projectId}",
+            );
             ref
                 .read(projectNotifierProvider.notifier)
-                .getProjectbyId(id: event.task!.projectId);
+                .getProjectbyId(id: event.task!.projectId)
+                .then((value) {
+                  if (value != null)
+                    print("fetched project");
+                  else
+                    print("UNEXPECTED ERROR: COULD NOT FETCH PROJECT");
+                });
           }
 
           _showTaskChangeNotification(context, event);
