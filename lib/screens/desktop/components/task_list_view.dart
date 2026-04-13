@@ -2261,7 +2261,13 @@ class _MessageIndicator extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded, size: 11, color: color),
+            Icon(
+              unread
+                  ? Icons.mark_chat_unread
+                  : Icons.chat_bubble_outline_rounded,
+              size: 11,
+              color: color,
+            ),
             const SizedBox(width: 4),
             Text(
               '$count',
