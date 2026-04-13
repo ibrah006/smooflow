@@ -294,18 +294,6 @@ class _AdminDesktopDashboardScreenState
     });
 
     checkForUpdate(context);
-
-    ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
-      previous,
-      next,
-    ) {
-      next.whenData((event) {
-        // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
-        Future.delayed(Duration(seconds: 5)).then((value) {
-          if (mounted) setState(() {});
-        });
-      });
-    });
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
@@ -320,6 +308,19 @@ class _AdminDesktopDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    // TODO: Not very performance efficient
+    ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((event) {
+        // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
+        Future.delayed(Duration(seconds: 5)).then((value) {
+          if (mounted) setState(() {});
+        });
+      });
+    });
+
     ;
     return GestureDetector(
       onTap: () {
