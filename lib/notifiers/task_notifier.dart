@@ -624,7 +624,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
           if (!tasks.contains(event.task)) {
             _checkProjectExistence(ref, event);
 
-            state.tasks = {...state.tasks, event.task!}.toList();
+            tasks.add(event.task!);
 
             state = state.copyWith(tasks: tasks);
             print('[TaskNotifier] Task created, new count: ${tasks.length}');
