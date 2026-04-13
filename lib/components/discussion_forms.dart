@@ -569,72 +569,72 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
 
-    _scroll.addListener(() {
-      final position = _scroll.position;
+    // _scroll.addListener(() {
+    //   final position = _scroll.position;
 
-      if (_isLoadingMessages) {
-        return;
-      }
+    //   if (_isLoadingMessages) {
+    //     return;
+    //   }
 
-      final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+    //   final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
 
-      final messages = ref.watch(messageNotifierProvider).messages;
+    //   final messages = ref.watch(messageNotifierProvider).messages;
 
-      if (position.pixels <= 40 && task.lastMessageId != null) {
-        // Near bottom
-        // Load newer messages
-        try {
-          final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
+    //   if (position.pixels <= 40 && task.lastMessageId != null) {
+    //     // Near bottom
+    //     // Load newer messages
+    //     try {
+    //       final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
 
-          if (lastMessage.id < task.lastMessageId!) {
-            _isLoadingMessages = true;
-            // print("need to load newer messages");
-            ref
-                .read(messageNotifierProvider.notifier)
-                .getMessagesAfter(
-                  taskId: widget.taskId,
-                  afterMessageId: lastMessage.id,
-                )
-                .then((value) {
-                  _isLoadingMessages = false;
-                });
-          }
-        } catch (e) {
-          // No messages
-        }
-      }
+    //       if (lastMessage.id < task.lastMessageId!) {
+    //         _isLoadingMessages = true;
+    //         // print("need to load newer messages");
+    //         ref
+    //             .read(messageNotifierProvider.notifier)
+    //             .getMessagesAfter(
+    //               taskId: widget.taskId,
+    //               afterMessageId: lastMessage.id,
+    //             )
+    //             .then((value) {
+    //               _isLoadingMessages = false;
+    //             });
+    //       }
+    //     } catch (e) {
+    //       // No messages
+    //     }
+    //   }
 
-      if (position.pixels >= position.maxScrollExtent - 40 &&
-          task.firstMessageId != null) {
-        // Near top
-        // Load newer messages
-        try {
-          final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
+    //   if (position.pixels >= position.maxScrollExtent - 40 &&
+    //       task.firstMessageId != null) {
+    //     // Near top
+    //     // Load newer messages
+    //     try {
+    //       final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
 
-          if (firstMessage.id > task.firstMessageId!) {
-            _isLoadingMessages = true;
-            print("need to load older messages");
+    //       if (firstMessage.id > task.firstMessageId!) {
+    //         _isLoadingMessages = true;
+    //         print("need to load older messages");
 
-            // messages.lastWhere((m) {
-            //   print("m.id: ${m.id}");
-            //   return false;
-            // });
+    //         // messages.lastWhere((m) {
+    //         //   print("m.id: ${m.id}");
+    //         //   return false;
+    //         // });
 
-            ref
-                .read(messageNotifierProvider.notifier)
-                .getMessagesBefore(
-                  taskId: widget.taskId,
-                  beforeMessageId: firstMessage.id,
-                )
-                .then((value) {
-                  _isLoadingMessages = false;
-                });
-          }
-        } catch (e) {
-          // No messages
-        }
-      }
-    });
+    //         ref
+    //             .read(messageNotifierProvider.notifier)
+    //             .getMessagesBefore(
+    //               taskId: widget.taskId,
+    //               beforeMessageId: firstMessage.id,
+    //             )
+    //             .then((value) {
+    //               _isLoadingMessages = false;
+    //             });
+    //       }
+    //     } catch (e) {
+    //       // No messages
+    //     }
+    //   }
+    // });
 
     if (widget.isOpen) _ctrl.value = 1.0;
   }
