@@ -64,7 +64,7 @@ class TaskChangeEvent {
 
     return TaskChangeEvent(
       type: getType(json['type'] as String),
-      taskId: json['taskId'] as int,
+      taskId: json['taskId'] as int?,
       task: json['task'] != null ? Task.fromJson(json['task']) : null,
       changedBy: json['changedBy'] as String?,
       timestamp: DateTime.parse(json['timestamp']),
