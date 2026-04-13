@@ -149,7 +149,17 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                             ),
                           ),
                           // Release Notes
-                          Text("Release Notes"),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Release Notes",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 15),
                           ...List.generate(widget.releaseNotes.length, (index) {
                             final note = widget.releaseNotes[index];
                             return FadeTransition(
