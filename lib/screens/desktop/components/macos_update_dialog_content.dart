@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:smooflow/components/logo.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
@@ -133,7 +134,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                             child: SlideTransition(
                               position: _slideAnimation,
                               child: Padding(
-                                padding: const EdgeInsets.only(bottom: 32),
+                                padding: const EdgeInsets.only(bottom: 25),
                                 child: Text(
                                   'Update from ${widget.currentVersion} to ${widget.newVersion}',
                                   style: MacosTheme.of(
@@ -171,7 +172,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                                     bottom:
                                         index == widget.releaseNotes.length - 1
                                             ? 40
-                                            : 20,
+                                            : 10,
                                   ),
                                   child: _buildReleaseNoteRow(
                                     title: note.title,
@@ -254,6 +255,15 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
         //   padding: const EdgeInsets.only(right: 16, top: 2),
         //   child: Icon(icon, color: const Color(0xFF007AFF), size: 20),
         // ),
+        Container(
+          height: 10,
+          width: 10,
+          margin: EdgeInsets.symmetric(horizontal: 10).copyWith(top: 5),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colorPrimary,
+          ),
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +275,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 1),
               Text(
                 description,
                 style: MacosTheme.of(context).typography.body.copyWith(
