@@ -14,7 +14,7 @@ enum TaskChangeType {
   assigneeAdded,
   assigneeRemoved,
   nameUpdated,
-  new_project,
+  newProject,
 }
 
 /// Task change event from WebSocket

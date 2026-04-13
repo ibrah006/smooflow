@@ -710,6 +710,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
           state = state.copyWith(tasks: tasks);
         }
         break;
+      case TaskChangeType.newProject
     }
   }
 
