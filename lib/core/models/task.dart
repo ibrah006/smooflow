@@ -325,9 +325,10 @@ class Task {
       id: json['id'],
       name: json['name'],
       progressLogIds:
-          (json["progressLogs"] as List)
-              .map((log) => log["id"].toString())
-              .toList(),
+          (json["progressLogs"] as List?)
+              ?.map((log) => log["id"].toString())
+              .toList() ??
+          [],
       description: json['description'],
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
       updatedAt:

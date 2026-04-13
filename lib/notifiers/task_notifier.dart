@@ -598,7 +598,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
     switch (event.type) {
       case TaskChangeType.created:
         if (event.task != null && !tasks.any((t) => t.id == event.taskId)) {
-          tasks.add(event.task!);
+          if (!tasks.contains(event.task)) tasks.add(event.task!);
+
           state = state.copyWith(tasks: tasks);
           print('[TaskNotifier] Task created, new count: ${tasks.length}');
         }
