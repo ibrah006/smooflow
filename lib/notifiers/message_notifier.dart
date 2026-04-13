@@ -75,7 +75,12 @@ class MessageNotifier extends StateNotifier<MessageState> {
         // No messages for this task in memory, fetch recent messages for the task
         await getRecent(taskId: task.id, limit: 20);
       }
+    }
 
+    // Older messages for task
+    try {
+      state.messages.lastWhere((m) => m.id == task.firstMessageId);
+    } catch (e) {
       final firstMessageIdForTaskInMemory = _firstMessageIdForTask(task.id);
 
       print(
