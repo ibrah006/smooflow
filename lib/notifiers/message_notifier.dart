@@ -50,6 +50,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
       return;
     }
 
+    bool gotRecentMessages = false;
+
     try {
       state.messages.firstWhere((m) => m.id == task.lastMessageId);
 
@@ -67,9 +69,28 @@ class MessageNotifier extends StateNotifier<MessageState> {
           afterMessageId: lastMessageIdForTaskInMemory,
           taskId: task.id,
         );
-      } else {
+      } else if (task.lastMessageId != null) {
+        gotRecentMessages = true;
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
-        // No messages for this task, fetch recent messages for the task
+        // No messages for this task in memory, fetch recent messages for the task
+        await getRecent(taskId: task.id, limit: 20);
+      }
+
+      final firstMessageIdForTaskInMemory = _firstMessageIdForTask(task.id);
+
+      if (firstMessageIdForTaskInMemory != null &&
+          task.firstMessageId != firstMessageIdForTaskInMemory) {
+        print(
+          "[MESSAGE_NOTIFIER] task ${task.id} first msg id: ${task.firstMessageId}",
+        );
+        // Last message is not in memory, fetch messages before the local last message id
+        await getMessagesBefore(
+          beforeMessageId: firstMessageIdForTaskInMemory,
+          taskId: task.id,
+        );
+      } else if (task.firstMessageId != null && !gotRecentMessages) {
+        print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
+        // No messages for this task in memory, fetch recent messages for the task
         await getRecent(taskId: task.id, limit: 20);
       }
     }
@@ -360,6 +381,15 @@ class MessageNotifier extends StateNotifier<MessageState> {
           return state.messages[i].id;
         }
       }
+    }
+    return null;
+  }
+
+  /// Assumes that the messages array is in descending order
+  /// This function is used to find the id of the first message for the specified task
+  int? _firstMessageIdForTask(int taskId) {
+    if (state.messages.isNotEmpty) {
+      state.messages.lastWhere((m) => m.taskId == taskId);
     }
     return null;
   }
