@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
 import 'package:smooflow/constants.dart';
@@ -293,6 +294,18 @@ class _AdminDesktopDashboardScreenState
     });
 
     checkForUpdate(context);
+
+    ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((event) {
+        // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
+        Future.delayed(Duration(seconds: 5)).then((value) {
+          if (mounted) setState(() {});
+        });
+      });
+    });
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
