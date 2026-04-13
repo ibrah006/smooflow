@@ -68,6 +68,10 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     }
   }
 
+  void loadProjectToMemory(Project project) {
+    state = state..add(project);
+  }
+
   // Get project by ID
   Future<Project?> getProjectbyId({
     // Can be found in [OrganizationState].projectsLastAdded
@@ -76,7 +80,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     final project = await _repo.projectById(id);
 
     if (project != null) {
-      state = state..add(project);
+      loadProjectToMemory(project);
     } else {
       print("[Project Notifier] This project was not found");
     }

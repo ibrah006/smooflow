@@ -552,28 +552,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // WEBSOCKET FUNCTIONALITY
   // ─────────────────────────────────────────────────────────────────────────────
 
-  void _checkProjectExistence(Ref ref, TaskChangeEvent event) {
-    try {
-      ref
-          .read(projectNotifierProvider)
-          .firstWhere((project) => project.id == event.task!.projectId);
-    } catch (e) {
-      // Project non existent in memory
-      print(
-        "[Task List View] [Task Event] Project non existent in memory, prj: ${event.task!.projectId}",
-      );
-      ref
-          .read(projectNotifierProvider.notifier)
-          .getProjectbyId(id: event.task!.projectId)
-          .then((value) {
-            if (value != null)
-              print("fetched project");
-            else
-              print("UNEXPECTED ERROR: COULD NOT FETCH PROJECT");
-          });
-    }
-  }
-
   /// Initialize WebSocket and setup listeners
   void _initializeSocket(Ref ref) {
     _initialize(ref);
@@ -622,8 +600,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
       case TaskChangeType.created:
         if (event.task != null && !tasks.any((t) => t.id == event.taskId)) {
           if (!tasks.contains(event.task)) {
-            _checkProjectExistence(ref, event);
-
             tasks.add(event.task!);
 
             state = state.copyWith(tasks: tasks);
@@ -633,8 +609,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.updated:
-        _checkProjectExistence(ref, event);
-
         state = state.copyWith(
           tasks:
               tasks.map((t) {
@@ -653,8 +627,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
         if (index != -1) {
           if (event.task != null) {
-            _checkProjectExistence(ref, event);
-
             tasks[index] = event.task!;
             print("event task: ${event.task?.toJson()}");
             print(
@@ -681,7 +653,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.deleted:
-        _checkProjectExistence(ref, event);
         tasks.removeWhere((t) => t.id == event.taskId);
         state = state.copyWith(tasks: tasks);
 
@@ -692,10 +663,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.assigneeAdded:
-        _checkProjectExistence(ref, event);
         break;
       case TaskChangeType.assigneeRemoved:
-        _checkProjectExistence(ref, event);
         final index = tasks.indexWhere((t) => t.id == event.taskId);
         if (index != -1 && event.task != null) {
           tasks[index] = event.task!;
@@ -703,14 +672,13 @@ class TaskNotifier extends StateNotifier<TaskState> {
         }
         break;
       case TaskChangeType.nameUpdated:
-        _checkProjectExistence(ref, event);
         final index = tasks.indexWhere((t) => t.id == event.taskId);
         if (index != -1 && event.task != null) {
           tasks[index] = event.task!;
           state = state.copyWith(tasks: tasks);
         }
         break;
-      case TaskChangeType.newProject
+      case TaskChangeType.newProject:
     }
   }
 
