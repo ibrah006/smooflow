@@ -256,9 +256,9 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
         //   child: Icon(icon, color: const Color(0xFF007AFF), size: 20),
         // ),
         Container(
-          height: 10,
-          width: 10,
-          margin: EdgeInsets.symmetric(horizontal: 10).copyWith(top: 5),
+          height: 8,
+          width: 8,
+          margin: EdgeInsets.symmetric(horizontal: 10).copyWith(top: 6),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: colorPrimary,
