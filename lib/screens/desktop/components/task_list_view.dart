@@ -606,11 +606,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       subtitle: event.task!.name,
       duration: kNotificationDuration,
     );
-
-    // Delay for loading in any project that didn't exist
-    Future.delayed(Duration(seconds: 5)).then((value) {
-      if (mounted) setState(() {});
-    });
   }
 }
 
