@@ -128,9 +128,9 @@ create-dmg \
   "build/macos/Build/Products/Release/smooflow.app"
 ```
 
-### build for intel macs
+### build for both intel & silicon macs
 ```bash
-arch -x86_64 flutter build macos --release     
+arch -x86_64 flutter build macos --release
 ```
 
 ## Build Release & Distrubute
