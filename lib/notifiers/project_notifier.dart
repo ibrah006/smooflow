@@ -70,7 +70,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   void loadProjectToMemory(Project project) {
     final index = state.indexWhere((p) => p.id == project.id);
-    if (index != -1) state = state..add(project);
+    if (index == -1) state = state..add(project);
   }
 
   // Get project by ID
