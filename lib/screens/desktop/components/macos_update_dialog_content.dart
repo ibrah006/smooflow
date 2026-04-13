@@ -9,15 +9,11 @@ import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 class ReleaseNote {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String description;
 
-  ReleaseNote({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
+  ReleaseNote({this.icon, required this.title, required this.description});
 }
 
 class UpdateVersionDialogContent extends StatefulWidget {
@@ -153,6 +149,7 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                             ),
                           ),
                           // Release Notes
+                          Text("Release Notes"),
                           ...List.generate(widget.releaseNotes.length, (index) {
                             final note = widget.releaseNotes[index];
                             return FadeTransition(
@@ -167,7 +164,6 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
                                             : 20,
                                   ),
                                   child: _buildReleaseNoteRow(
-                                    icon: note.icon,
                                     title: note.title,
                                     description: note.description,
                                   ),
@@ -238,17 +234,16 @@ class _UpdateVersionDialogContentState extends State<UpdateVersionDialogContent>
   }
 
   Widget _buildReleaseNoteRow({
-    required IconData icon,
     required String title,
     required String description,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16, top: 2),
-          child: Icon(icon, color: const Color(0xFF007AFF), size: 20),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.only(right: 16, top: 2),
+        //   child: Icon(icon, color: const Color(0xFF007AFF), size: 20),
+        // ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
