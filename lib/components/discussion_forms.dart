@@ -972,25 +972,36 @@ class _MessageListState extends ConsumerState<_MessageList> {
   getMessagesAfter(Message message) {
     if (_isLoadingMessagesAfter) return;
 
-    _isLoadingMessagesAfter = true;
-    ref
-        .read(messageNotifierProvider.notifier)
-        .getMessagesAfter(taskId: message.taskId, afterMessageId: message.id)
-        .then((value) {
-          _isLoadingMessagesAfter = false;
-        });
+    final task = ref.read(taskByIdProviderSimple(message.taskId))!;
+
+    if (message.id < task.lastMessageId!) {
+      _isLoadingMessagesAfter = true;
+      ref
+          .read(messageNotifierProvider.notifier)
+          .getMessagesAfter(taskId: message.taskId, afterMessageId: message.id)
+          .then((value) {
+            _isLoadingMessagesAfter = false;
+          });
+    }
   }
 
   getMessagesBefore(Message message) {
     if (_isLoadingMessagesBefore) return;
 
-    _isLoadingMessagesBefore = true;
-    ref
-        .read(messageNotifierProvider.notifier)
-        .getMessagesBefore(taskId: message.taskId, beforeMessageId: message.id)
-        .then((value) {
-          _isLoadingMessagesBefore = false;
-        });
+    final task = ref.read(taskByIdProviderSimple(message.taskId))!;
+
+    if (message.id < task.firstMessageId!) {
+      _isLoadingMessagesBefore = true;
+      ref
+          .read(messageNotifierProvider.notifier)
+          .getMessagesBefore(
+            taskId: message.taskId,
+            beforeMessageId: message.id,
+          )
+          .then((value) {
+            _isLoadingMessagesBefore = false;
+          });
+    }
   }
 
   @override
