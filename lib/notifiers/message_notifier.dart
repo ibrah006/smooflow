@@ -78,6 +78,10 @@ class MessageNotifier extends StateNotifier<MessageState> {
 
       final firstMessageIdForTaskInMemory = _firstMessageIdForTask(task.id);
 
+      print(
+        "[MESSAGE_NOTIFIER] first message in mem: ${firstMessageIdForTaskInMemory} for task ${task.id}, task.firstMessageId: ${task.firstMessageId}",
+      );
+
       if (firstMessageIdForTaskInMemory != null &&
           task.firstMessageId != firstMessageIdForTaskInMemory) {
         print(
