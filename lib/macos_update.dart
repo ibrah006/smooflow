@@ -10,6 +10,7 @@ import 'package:smooflow/screens/desktop/components/macos_after_update_dialog_co
 import 'package:smooflow/screens/desktop/components/macos_update_dialog_content.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:html/parser.dart' as html;
 
 Future<void> startUpdate({
   // required String newVersion,
@@ -96,7 +97,21 @@ Future<void> checkForUpdate(BuildContext context) async {
     // 5. Compare versions
     // _isNewerVersion(currentVersion, shortVersion)
     if (true) {
-      print('Update available! Download at $url');
+      print('Update available!');
+
+      final description = macItem.getElement('description')?.value;
+
+      final doc = html.parse(description);
+
+      final items = doc.querySelectorAll('li');
+
+      final releaseNotes =
+          items.map((li) {
+            final title = li.querySelector('b')?.text ?? '';
+            final subtitle = li.text.replaceFirst(title, '').trim();
+
+            return {'title': title, 'subtitle': subtitle};
+          }).toList();
 
       showMacosSheet(
         context: context,
@@ -109,18 +124,13 @@ Future<void> checkForUpdate(BuildContext context) async {
                 Navigator.of(context).pop();
               },
               // Release Notes
-              releaseNotes: [
-                ReleaseNote(
-                  title: "Minor bug fixes",
-                  description:
-                      "Fixed some bugs related to updating task print specs",
-                ),
-                ReleaseNote(
-                  title: "Task Notifications",
-                  description:
-                      "Fixed in-app notifications spamming when task updated",
-                ),
-              ],
+              releaseNotes:
+                  releaseNotes.map((note) {
+                    return ReleaseNote(
+                      title: note['title'] ?? "",
+                      description: note['subtitle'] ?? "",
+                    );
+                  }).toList(),
             ),
       );
     } else {
