@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -139,7 +138,8 @@ Future<void> checkForUpdate(BuildContext context) async {
       );
 
       // Debug
-      if (lastVersionReleaseNotesShown != null &&
+      if (currentVersion != "1.0.9" &&
+          lastVersionReleaseNotesShown != null &&
           _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
         await prefs.setString(
           SharedStorageOptions.lastVersionReleaseNotesShown.name,
