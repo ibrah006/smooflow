@@ -111,13 +111,11 @@ Future<void> checkForUpdate(BuildContext context) async {
               // Release Notes
               releaseNotes: [
                 ReleaseNote(
-                  icon: Icons.bug_report_outlined,
                   title: "Minor bug fixes",
                   description:
                       "Fixed some bugs related to updating task print specs",
                 ),
                 ReleaseNote(
-                  icon: Icons.notification_important_sharp,
                   title: "Task Notifications",
                   description:
                       "Fixed in-app notifications spamming when task updated",
