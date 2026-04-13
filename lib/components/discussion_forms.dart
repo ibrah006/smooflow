@@ -45,6 +45,7 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOCAL DESIGN TOKENS  (mirrors _T from detail_panel.dart)
@@ -943,15 +944,20 @@ class _CloseButtonState extends State<_CloseButton> {
 // indented (like Slack/Linear's threading).
 // Empty state shown when no messages exist yet.
 // ─────────────────────────────────────────────────────────────────────────────
-class _MessageList extends StatelessWidget {
+class _MessageList extends ConsumerStatefulWidget {
   final List<Message> messages;
   final ScrollController scroll;
 
   const _MessageList({required this.messages, required this.scroll});
 
+  @override
+  ConsumerState<_MessageList> createState() => _MessageListState();
+}
+
+class _MessageListState extends ConsumerState<_MessageList> {
   bool _isSameAuthorAsPrevious(int i) {
-    if (i == messages.length - 1) return false;
-    return messages[i].authorName == messages[i + 1].authorName;
+    if (i == widget.messages.length - 1) return false;
+    return widget.messages[i].authorName == widget.messages[i + 1].authorName;
   }
 
   String _fmtTime(DateTime t) {
@@ -960,27 +966,76 @@ class _MessageList extends StatelessWidget {
     return '$h:$m';
   }
 
+  bool _isLoadingMessagesAfter = false;
+  bool _isLoadingMessagesBefore = false;
+
+  getMessagesAfter(Message message) {
+    if (_isLoadingMessagesAfter) return;
+
+    _isLoadingMessagesAfter = true;
+    ref
+        .read(messageNotifierProvider.notifier)
+        .getMessagesAfter(taskId: message.taskId, afterMessageId: message.id)
+        .then((value) {
+          _isLoadingMessagesAfter = false;
+        });
+  }
+
+  getMessagesBefore(Message message) {
+    if (_isLoadingMessagesBefore) return;
+
+    _isLoadingMessagesBefore = true;
+    ref
+        .read(messageNotifierProvider.notifier)
+        .getMessagesBefore(taskId: message.taskId, beforeMessageId: message.id)
+        .then((value) {
+          _isLoadingMessagesBefore = false;
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (messages.isEmpty) {
+    if (widget.messages.isEmpty) {
       return _EmptyMessageList();
     }
 
     return ListView.builder(
-      controller: scroll,
+      controller: widget.scroll,
       reverse: true,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      itemCount: messages.length,
+      itemCount: widget.messages.length,
       itemBuilder: (_, i) {
-        final msg = messages[i];
+        final msg = widget.messages[i];
         final grouped = _isSameAuthorAsPrevious(i);
         final isLast = i == 0;
 
-        return _MessageRow(
-          message: msg,
-          grouped: grouped,
-          isLast: isLast,
-          fmtTime: _fmtTime(msg.date),
+        return VisibilityDetector(
+          key: Key(msg.id.toString()),
+          onVisibilityChanged: (info) {
+            final visibleFraction = info.visibleFraction;
+
+            if (visibleFraction > 0) {
+              // This message is visible
+              // check if this is the edge of the messages list for this task, in memory
+              if (i == 0) {
+                // Last message listed in view - newest message
+              }
+              if (i == widget.messages.length - 1) {
+                // First message listed in view - oldest message
+              }
+            }
+
+            if (visibleFraction == 0) {
+              // this message is NOT visible
+            }
+          },
+
+          child: _MessageRow(
+            message: msg,
+            grouped: grouped,
+            isLast: isLast,
+            fmtTime: _fmtTime(msg.date),
+          ),
         );
       },
     );
