@@ -21,7 +21,7 @@ enum TaskChangeType {
 /// Task change event from WebSocket
 class TaskChangeEvent {
   final TaskChangeType type;
-  final int taskId;
+  final int? taskId;
   final Task? task;
   final String? changedBy;
   final DateTime timestamp;
