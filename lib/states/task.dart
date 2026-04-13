@@ -158,6 +158,11 @@ class TaskState {
 
           task.messageCount += 1;
           task.lastMessageId = messageId;
+
+          if (task.messageCount == 1) {
+            // first message
+            task.firstMessageId = messageId;
+          }
         }
         return task;
       });
