@@ -679,6 +679,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
         }
         break;
       case TaskChangeType.newProject:
+        print("new project event, ${event.project!.name}");
         ref
             .read(projectNotifierProvider.notifier)
             .loadProjectToMemory(event.project!);
