@@ -60,107 +60,107 @@ Future<void> checkForUpdate(BuildContext context) async {
   const appcastUrl =
       'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/appcast.xml';
 
-  try {
-    // 1. Download XML
-    final response = await http.get(Uri.parse(appcastUrl));
-    if (response.statusCode != 200) {
-      print('Failed to download appcast: ${response.statusCode}');
-      return;
-    }
+  // try {
+  // 1. Download XML
+  final response = await http.get(Uri.parse(appcastUrl));
+  if (response.statusCode != 200) {
+    print('Failed to download appcast: ${response.statusCode}');
+    return;
+  }
 
-    // 2. Parse XML
-    final document = xml.XmlDocument.parse(response.body);
-    final items = document.findAllElements('item');
+  // 2. Parse XML
+  final document = xml.XmlDocument.parse(response.body);
+  final items = document.findAllElements('item');
 
-    // 3. Filter macOS items only
-    final macItem = items.firstWhere(
-      (item) =>
-          item.getElement('enclosure')?.getAttribute('sparkle:os') == 'macos',
-      orElse: () => throw Exception('No macOS updates found'),
+  // 3. Filter macOS items only
+  final macItem = items.firstWhere(
+    (item) =>
+        item.getElement('enclosure')?.getAttribute('sparkle:os') == 'macos',
+    orElse: () => throw Exception('No macOS updates found'),
+  );
+
+  final shortVersion = macItem.getElement('sparkle:shortVersionString')?.text;
+  final url = macItem.getElement('enclosure')?.getAttribute('url');
+
+  if (shortVersion == null || url == null) {
+    print('Invalid appcast entry');
+    return;
+  }
+
+  // 4. Get current app version
+  // final packageInfo = await PackageVersion();
+  final packageInfo = await PackageInfo.fromPlatform();
+  final currentVersion = packageInfo.version;
+
+  print("current version: ${currentVersion}");
+
+  // 5. Compare versions
+  // _isNewerVersion(currentVersion, shortVersion)
+  if (true) {
+    print('Update available!');
+
+    final description = macItem.getElement('description')?.innerText;
+
+    final doc = html.parse(description);
+
+    final items = doc.querySelectorAll('li');
+
+    final releaseNotes =
+        items.map((li) {
+          final title = li.querySelector('b')?.text ?? '';
+          final subtitle = li.text.replaceFirst(title, '').trim();
+
+          return {'title': title, 'subtitle': subtitle};
+        }).toList();
+
+    showMacosSheet(
+      context: context,
+      builder:
+          (_) => UpdateVersionDialogContent(
+            currentVersion: currentVersion,
+            newVersion: shortVersion,
+            url: url,
+            onDismiss: () {
+              Navigator.of(context).pop();
+            },
+            // Release Notes
+            releaseNotes:
+                releaseNotes.map((note) {
+                  return ReleaseNote(
+                    title: note['title'] ?? "",
+                    description: note['subtitle'] ?? "",
+                  );
+                }).toList(),
+          ),
+    );
+  } else {
+    print('App is up to date');
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final lastVersionReleaseNotesShown = prefs.getString(
+      SharedStorageOptions.lastVersionReleaseNotesShown.name,
     );
 
-    final shortVersion = macItem.getElement('sparkle:shortVersionString')?.text;
-    final url = macItem.getElement('enclosure')?.getAttribute('url');
+    print(
+      "lastVersionReleaseNotesShown: ${lastVersionReleaseNotesShown}, currentVersion: ${currentVersion}",
+    );
 
-    if (shortVersion == null || url == null) {
-      print('Invalid appcast entry');
-      return;
-    }
-
-    // 4. Get current app version
-    // final packageInfo = await PackageVersion();
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;
-
-    print("current version: ${currentVersion}");
-
-    // 5. Compare versions
-    // _isNewerVersion(currentVersion, shortVersion)
-    if (true) {
-      print('Update available!');
-
-      final description = macItem.getElement('description')?.value;
-
-      final doc = html.parse(description);
-
-      final items = doc.querySelectorAll('li');
-
-      final releaseNotes =
-          items.map((li) {
-            final title = li.querySelector('b')?.text ?? '';
-            final subtitle = li.text.replaceFirst(title, '').trim();
-
-            return {'title': title, 'subtitle': subtitle};
-          }).toList();
-
-      showMacosSheet(
-        context: context,
-        builder:
-            (_) => UpdateVersionDialogContent(
-              currentVersion: currentVersion,
-              newVersion: shortVersion,
-              url: url,
-              onDismiss: () {
-                Navigator.of(context).pop();
-              },
-              // Release Notes
-              releaseNotes:
-                  releaseNotes.map((note) {
-                    return ReleaseNote(
-                      title: note['title'] ?? "",
-                      description: note['subtitle'] ?? "",
-                    );
-                  }).toList(),
-            ),
-      );
-    } else {
-      print('App is up to date');
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      final lastVersionReleaseNotesShown = prefs.getString(
+    // Debug
+    if (currentVersion != "1.0.9" &&
+        lastVersionReleaseNotesShown != null &&
+        _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
+      await prefs.setString(
         SharedStorageOptions.lastVersionReleaseNotesShown.name,
+        currentVersion,
       );
 
-      print(
-        "lastVersionReleaseNotesShown: ${lastVersionReleaseNotesShown}, currentVersion: ${currentVersion}",
-      );
-
-      // Debug
-      if (currentVersion != "1.0.9" &&
-          lastVersionReleaseNotesShown != null &&
-          _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
-        await prefs.setString(
-          SharedStorageOptions.lastVersionReleaseNotesShown.name,
-          currentVersion,
-        );
-
-        _showAfterUpdateReleaseNotes(context, currentVersion);
-      }
+      _showAfterUpdateReleaseNotes(context, currentVersion);
     }
-  } catch (e) {
-    print('Error checking update: $e');
   }
+  // } catch (e) {
+  //   print('Error checking update: $e');
+  // }
 }
 
 _showAfterUpdateReleaseNotes(context, String currentVersion) {
