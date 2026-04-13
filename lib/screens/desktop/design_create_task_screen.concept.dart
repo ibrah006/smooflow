@@ -211,7 +211,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
       await ref
           .watch(projectNotifierProvider.notifier)
           .createTask(task: newTask);
-      ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
+      // ref.watch(taskNotifierProvider.notifier).loadTaskToMemory(newTask);
 
       if (mounted) {
         AppToast.show(
