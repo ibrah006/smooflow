@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/api/local_http.dart';
+import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/shared_storage_options.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -25,6 +26,7 @@ class TaskChangeEvent {
   final String? changedBy;
   final DateTime timestamp;
   final Map<String, dynamic>? changes;
+  final Project? project;
 
   TaskChangeEvent({
     required this.type,
@@ -33,6 +35,7 @@ class TaskChangeEvent {
     this.changedBy,
     required this.timestamp,
     this.changes,
+    this.project,
   });
 
   factory TaskChangeEvent.fromJson(Map<String, dynamic> json) {
@@ -52,6 +55,8 @@ class TaskChangeEvent {
           return TaskChangeType.assigneeRemoved;
         case 'name_updated':
           return TaskChangeType.nameUpdated;
+        case 'new_project':
+          return TaskChangeType.newProject;
         default:
           return TaskChangeType.updated;
       }
@@ -64,6 +69,8 @@ class TaskChangeEvent {
       changedBy: json['changedBy'] as String?,
       timestamp: DateTime.parse(json['timestamp']),
       changes: json['changes'] as Map<String, dynamic>?,
+      project:
+          json['project'] != null ? Project.fromJson(json['project']) : null,
     );
   }
 }
