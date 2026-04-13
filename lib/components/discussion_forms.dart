@@ -1019,9 +1019,11 @@ class _MessageListState extends ConsumerState<_MessageList> {
               // check if this is the edge of the messages list for this task, in memory
               if (i == 0) {
                 // Last message listed in view - newest message
+                getMessagesAfter(msg);
               }
               if (i == widget.messages.length - 1) {
                 // First message listed in view - oldest message
+                getMessagesBefore(msg);
               }
             }
 
