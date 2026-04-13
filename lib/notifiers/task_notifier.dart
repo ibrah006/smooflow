@@ -11,8 +11,8 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
-  TaskNotifier(this._repo, this._client) : super(TaskState()) {
-    _initializeSocket();
+  TaskNotifier(this._repo, this._client, Ref ref) : super(TaskState()) {
+    _initializeSocket(ref);
   }
 
   final TaskRepo _repo;
@@ -552,11 +552,11 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// Initialize WebSocket and setup listeners
-  void _initializeSocket() {
-    _initialize();
+  void _initializeSocket(Ref ref) {
+    _initialize(ref);
   }
 
-  void _initialize() {
+  void _initialize(Ref ref) {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
       if (mounted) {
@@ -565,7 +565,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     });
 
     // Listen to task changes
-    _client.taskChanges.listen(_handleTaskChange);
+    _client.taskChanges.listen((event) => _handleTaskChange(ref, event));
 
     // Listen to task list updates
     _client.taskList.listen((tasks) {
@@ -583,7 +583,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
   }
 
   /// Handle task change events from WebSocket
-  void _handleTaskChange(TaskChangeEvent event) {
+  void _handleTaskChange(Ref ref, TaskChangeEvent event) {
     print(
       '[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted',
     );

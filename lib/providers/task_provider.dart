@@ -24,7 +24,7 @@ final taskNotifierProvider = StateNotifierProvider<TaskNotifier, TaskState>((
 ) {
   final repo = ref.watch(taskRepoProvider);
   final client = ref.watch(taskWebSocketClientProvider);
-  return TaskNotifier(repo, client);
+  return TaskNotifier(repo, client, ref);
 });
 
 /// pass in projectId as input
