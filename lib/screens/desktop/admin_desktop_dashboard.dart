@@ -34,6 +34,7 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/macos_update.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
@@ -213,6 +214,10 @@ class _AdminDesktopDashboardScreenState
     super.initState();
     AppToast.init(kNavigatorKey);
     Future.microtask(() async {
+      // Load in message notifier provider and task notifier provider so that even, not being in task list view, our state is up to date
+      ref.read(messageNotifierProvider.notifier);
+      ref.read(taskNotifierProvider.notifier);
+
       try {
         await Future.wait([
           (() async {
