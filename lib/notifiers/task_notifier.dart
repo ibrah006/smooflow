@@ -8,6 +8,7 @@ import 'package:smooflow/core/models/work_activity_log.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
@@ -598,10 +599,32 @@ class TaskNotifier extends StateNotifier<TaskState> {
     switch (event.type) {
       case TaskChangeType.created:
         if (event.task != null && !tasks.any((t) => t.id == event.taskId)) {
-          if (!tasks.contains(event.task)) tasks.add(event.task!);
+          if (!tasks.contains(event.task)) {
+            try {
+              ref
+                  .read(projectNotifierProvider)
+                  .firstWhere((project) => project.id == event.task!.projectId);
+            } catch (e) {
+              // Project non existent in memory
+              print(
+                "[Task List View] [Task Event] Project non existent in memory, prj: ${event.task!.projectId}",
+              );
+              ref
+                  .read(projectNotifierProvider.notifier)
+                  .getProjectbyId(id: event.task!.projectId)
+                  .then((value) {
+                    if (value != null)
+                      print("fetched project");
+                    else
+                      print("UNEXPECTED ERROR: COULD NOT FETCH PROJECT");
+                  });
+            }
 
-          state = state.copyWith(tasks: tasks);
-          print('[TaskNotifier] Task created, new count: ${tasks.length}');
+            tasks.add(event.task!);
+
+            state = state.copyWith(tasks: tasks);
+            print('[TaskNotifier] Task created, new count: ${tasks.length}');
+          }
         }
         break;
 
