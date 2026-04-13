@@ -5,7 +5,7 @@ import 'dart:collection';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/message.dart';
 
-const _MAX_MESSAGES = 30;
+const _MAX_MESSAGES = 40;
 
 enum NewMessageState { messagesAfter, messagesBefore }
 
