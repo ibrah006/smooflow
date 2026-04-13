@@ -75,6 +75,12 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }) async {
     final project = await _repo.projectById(id);
 
+    if (project != null) {
+      state = state..add(project);
+    } else {
+      print("[Project Notifier] This project was not found");
+    }
+
     return project;
   }
 

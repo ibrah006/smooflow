@@ -26,6 +26,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -406,6 +407,17 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                     ?.add(kNotificationDuration)
                     .isBefore(DateTime.now()) ??
                 false)) {
+          try {
+            ref
+                .read(projectNotifierProvider)
+                .firstWhere((project) => project.id == event.task!.projectId);
+          } catch (e) {
+            // Project non existent in memory
+            ref
+                .read(projectNotifierProvider.notifier)
+                .getProjectbyId(id: event.task!.projectId);
+          }
+
           _showTaskChangeNotification(context, event);
           lastNotifiedTaskId = event.taskId;
           lastNotificationTime = DateTime.now();
