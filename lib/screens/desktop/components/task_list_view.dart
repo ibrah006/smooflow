@@ -563,20 +563,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
     switch (event.type) {
       case TaskChangeType.created:
-        message = 'New task created';
-        icon = Icons.add_task;
-        color = _T.green;
-        break;
+        // No notification
+        return;
       case TaskChangeType.updated:
-        message = 'Task updated';
-        icon = Icons.update;
-        color = _T.blue;
-        break;
+        return;
       case TaskChangeType.deleted:
-        message = 'Task deleted';
-        icon = Icons.delete;
-        color = _T.red;
-        break;
+        return;
       case TaskChangeType.statusChanged:
         message = 'Task status changed';
         icon = Icons.swap_horiz;
