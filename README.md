@@ -78,6 +78,7 @@ Gain complete control over your inventory with deep tracking capabilities:
 ---
 
 ### 💰 Accounts & Documents (Still BETA)
+**This feature is still under development**
 Handle financial and documentation workflows with ease:
 - Manage **Quotations and Documents**
 - Maintain and update **Price Lists**
