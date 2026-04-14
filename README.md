@@ -7,45 +7,6 @@ The app focuses on **project management, team collaboration, and production moni
 
 ---
 
-## ✨ Key Features  
-
-### 📊 Project & Workflow Management  
-- Interactive project timelines showing each department’s progress  
-- Track activity, status, and tasks for each project  
-- Department stages: **Planning → Design → Production → Finishing → Application → Finished/Cancelled**  
-
-### 🎨 Design Department  
-- Supports artwork submission & modifications  
-- Built-in client approval/rejection workflow  
-- Mandatory artwork dimension tracking  
-- Restart design cycle if client disapproves  
-
-### 🖨️ Printing Department  
-- Interactive **printer layout/map view** with drag-and-drop placement  
-- Assign printers with nicknames and track assigned staff  
-- Live progress indicators and task statuses  
-- Alerts for errors, failures, or when a printer is stuck  
-
-### 🔧 Finishing & Application  
-- Simple finishing process (MVP stage)  
-- Application staff can **clock in/out**, track dimensions of work completed  
-- Site in-charge approves or rejects reported progress  
-
-### 📈 Analytics & Performance  
-- Admin dashboard with project progress overview  
-- Highlights **top performers** per project  
-- Detects efficiency vs. estimated effort (future AI support planned)  
-- Warnings if deadlines are at risk or extended timelines are needed  
-
-### ⚡ System & Maintenance  
-- Notifications for device/component failures  
-- Manager alerts for urgent attention or technical intervention  
-- Built-in **Notification Center** & **Global Search**  
-
----
-
-## 🚀 Features & Functionality
-
 ### 🗂️ Task Management (Table & Board Views)
 Effortlessly manage your workflow with flexible task visualization:
 - **Table View** for structured, data-rich management  
