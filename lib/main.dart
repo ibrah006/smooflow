@@ -25,6 +25,7 @@ void main(List<String> args) async {
     WindowOptions windowOptions = const WindowOptions(
       size: Size(1280, 720),
       minimumSize: Size(1200, 720),
+      maximumSize: Size(1280, 720),
       title: "Smooflow",
     );
 

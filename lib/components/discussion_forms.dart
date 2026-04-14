@@ -1118,11 +1118,27 @@ class _MessageRow extends StatefulWidget {
 class _MessageRowState extends State<_MessageRow> {
   bool _hovered = false;
 
+  final GlobalKey _widgetKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.isLast)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final RenderBox renderBox =
+            _widgetKey.currentContext?.findRenderObject() as RenderBox;
+        final height = renderBox.size.height;
+        print("Widget Height for last msg: $height");
+      });
+  }
+
   @override
   Widget build(BuildContext context) {
     final msg = widget.message;
 
     return InkWell(
+      key: _widgetKey,
       onTap: () {
         print(
           "tapped message user, ${{"user": msg.authorName, "userId": msg.userId}}",
