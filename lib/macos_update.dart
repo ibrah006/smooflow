@@ -145,7 +145,6 @@ Future<void> checkForUpdate(BuildContext context) async {
       "lastVersionReleaseNotesShown: ${lastVersionReleaseNotesShown}, currentVersion: ${currentVersion}",
     );
 
-    // Debug
     if (currentVersion != "1.0.9" &&
         lastVersionReleaseNotesShown != null &&
         _isNewerVersion(lastVersionReleaseNotesShown, currentVersion)) {
