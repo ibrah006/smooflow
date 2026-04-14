@@ -992,14 +992,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       // DEBUG
-                      if (kDebugMode) ...[
-                        const SizedBox(height: 18),
-                        DiscussionPreviewStrip(
-                          unreadCount: widget.task.unreadCount,
-                          onOpen: _onOpenDiscussion,
-                          taskId: widget.task.id,
-                        ),
-                      ],
+                      const SizedBox(height: 18),
+                      DiscussionPreviewStrip(
+                        unreadCount: widget.task.unreadCount,
+                        onOpen: _onOpenDiscussion,
+                        taskId: widget.task.id,
+                      ),
                       const SizedBox(height: 18),
                     ],
                   ),
