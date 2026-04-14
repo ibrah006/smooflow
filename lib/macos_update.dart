@@ -94,6 +94,12 @@ Future<void> checkForUpdate(BuildContext context) async {
 
     print("current version: ${currentVersion}");
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final lastVersionReleaseNotesShown = prefs.getString(
+      SharedStorageOptions.lastVersionReleaseNotesShown.name,
+    );
+
     // 5. Compare versions
     if (_isNewerVersion(currentVersion, shortVersion)) {
       print('Update available!');
@@ -111,6 +117,16 @@ Future<void> checkForUpdate(BuildContext context) async {
 
             return {'title': title, 'subtitle': subtitle};
           }).toList();
+
+      // Small edge case: This is a weird scenario where the user has used the latest version but has downgraded and is now upgrading to the latest version
+      // So, to ensure they will still see the after-update release notes, we set the lastVersionReleaseNotesShown in shared prefs as the current (downgraded) version
+      if (lastVersionReleaseNotesShown != null &&
+          _isNewerVersion(currentVersion, lastVersionReleaseNotesShown)) {
+        await prefs.setString(
+          SharedStorageOptions.lastVersionReleaseNotesShown.name,
+          currentVersion,
+        );
+      }
 
       showMacosSheet(
         context: context,
@@ -134,12 +150,6 @@ Future<void> checkForUpdate(BuildContext context) async {
       );
     } else {
       print('App is up to date');
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      final lastVersionReleaseNotesShown = prefs.getString(
-        SharedStorageOptions.lastVersionReleaseNotesShown.name,
-      );
 
       print(
         "lastVersionReleaseNotesShown: ${lastVersionReleaseNotesShown}, currentVersion: ${currentVersion}",
