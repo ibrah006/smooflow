@@ -2498,7 +2498,9 @@ class _DetailFooterState extends State<_DetailFooter> {
     final isLocked = widget.next == TaskStatus.printing;
 
     return MouseRegion(
-      onEnter: (_) => _setHovered(true),
+      onEnter: (_) async {
+        _setHovered(true);
+      },
       onExit: (_) => _setHovered(false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
