@@ -317,6 +317,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                                 const SizedBox(height: 7),
                                 DateField(
                                   value: date,
+                                  allowKbInput: false,
                                   onChange: _pickDate,
                                   onClear: () => setState(() => date = null),
                                 ),
