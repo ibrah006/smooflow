@@ -27,7 +27,10 @@ final projectByIdProvider = Provider.family<Project?, String>((ref, id) {
   }
 });
 
-final projectByIdFutureProvider = Provider.family<Future<Project?>, String>((ref, id) async {
+final projectByIdFutureProvider = Provider.family<Future<Project?>, String>((
+  ref,
+  id,
+) async {
   final projects = ref.watch(projectNotifierProvider);
   try {
     return projects.firstWhere(

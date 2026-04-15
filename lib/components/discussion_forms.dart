@@ -526,480 +526,6 @@ class _OpenChevron extends StatelessWidget {
 //     ],
 //   )
 // ─────────────────────────────────────────────────────────────────────────────
-class DiscussionSheet extends ConsumerStatefulWidget {
-  final int taskId;
-  final bool isOpen;
-  final VoidCallback onClose;
-  final ValueChanged<String> onSend;
-
-  const DiscussionSheet({
-    super.key,
-    required this.taskId,
-    required this.isOpen,
-    required this.onClose,
-    required this.onSend,
-  });
-
-  @override
-  ConsumerState<DiscussionSheet> createState() => _DiscussionSheetState();
-}
-
-class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _ctrl;
-  late final Animation<Offset> _slide;
-  late final Animation<double> _fade;
-
-  final TextEditingController _compose = TextEditingController();
-  final ScrollController _scroll = ScrollController();
-  bool _sending = false;
-
-  // Only for INITIAL messages is loading
-  bool _isLoadingMessages = false;
-
-  Future<void> initializeMessages() async {
-    final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
-
-    await Future.microtask(() async {
-      if (!_scroll.hasClients) return;
-
-      final maxScrollExtent = _scroll.position.maxScrollExtent;
-
-      // If no scrolling possible → content too small
-      if (maxScrollExtent == 0) {
-        final newMessagesCount = await ref
-            .read(messageNotifierProvider.notifier)
-            .getMessagesByTask(ref, task);
-
-        if (newMessagesCount > 0) {
-          // Schedule again after next frame
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted)
-              setState(() {
-                _isLoadingMessages = true;
-              });
-            // To ensure contents fill the view port height
-            initializeMessages().then((value) {
-              if (mounted)
-                setState(() {
-                  _isLoadingMessages = false;
-                });
-            });
-          });
-        }
-      }
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-
-    // _scroll.addListener(() {
-    //   final position = _scroll.position;
-
-    //   if (_isLoadingMessages) {
-    //     return;
-    //   }
-
-    //   final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
-
-    //   final messages = ref.watch(messageNotifierProvider).messages;
-
-    //   if (position.pixels <= 40 && task.lastMessageId != null) {
-    //     // Near bottom
-    //     // Load newer messages
-    //     try {
-    //       final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
-
-    //       if (lastMessage.id < task.lastMessageId!) {
-    //         _isLoadingMessages = true;
-    //         // print("need to load newer messages");
-    //         ref
-    //             .read(messageNotifierProvider.notifier)
-    //             .getMessagesAfter(
-    //               taskId: widget.taskId,
-    //               afterMessageId: lastMessage.id,
-    //             )
-    //             .then((value) {
-    //               _isLoadingMessages = false;
-    //             });
-    //       }
-    //     } catch (e) {
-    //       // No messages
-    //     }
-    //   }
-
-    //   if (position.pixels >= position.maxScrollExtent - 40 &&
-    //       task.firstMessageId != null) {
-    //     // Near top
-    //     // Load newer messages
-    //     try {
-    //       final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
-
-    //       if (firstMessage.id > task.firstMessageId!) {
-    //         _isLoadingMessages = true;
-    //         print("need to load older messages");
-
-    //         // messages.lastWhere((m) {
-    //         //   print("m.id: ${m.id}");
-    //         //   return false;
-    //         // });
-
-    //         ref
-    //             .read(messageNotifierProvider.notifier)
-    //             .getMessagesBefore(
-    //               taskId: widget.taskId,
-    //               beforeMessageId: firstMessage.id,
-    //             )
-    //             .then((value) {
-    //               _isLoadingMessages = false;
-    //             });
-    //       }
-    //     } catch (e) {
-    //       // No messages
-    //     }
-    //   }
-    // });
-
-    if (widget.isOpen) _ctrl.value = 1.0;
-  }
-
-  @override
-  void didUpdateWidget(DiscussionSheet old) {
-    super.didUpdateWidget(old);
-
-    if (widget.taskId != old.taskId) {
-      ref.read(messageNotifierProvider).activeTaskId = widget.taskId;
-
-      if (mounted)
-        setState(() {
-          _isLoadingMessages = true;
-        });
-      // To ensure contents fill the view port height
-      initializeMessages().then((value) {
-        if (mounted)
-          setState(() {
-            _isLoadingMessages = false;
-          });
-      });
-    }
-
-    if (widget.isOpen != old.isOpen) {
-      if (widget.isOpen) {
-        _ctrl.duration = const Duration(milliseconds: 300);
-        _ctrl.forward().then((_) => _scrollToBottom());
-      } else {
-        _ctrl.duration = const Duration(milliseconds: 220);
-        _ctrl.reverse();
-      }
-    }
-
-    final messages = ref.read(messagesByTaskProvider(widget.taskId));
-
-    // Scroll to bottom when new messages arrive while open
-    if (messages.length != messages.length && widget.isOpen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-    }
-  }
-
-  // If the process is force-killed → no callback (same as any OS app)
-  // But normal window close (x button) → you get event
-  // App closing event (reliable on desktop)
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // NOTE: DO NOT USE ref here
-    if (state == AppLifecycleState.detached) {
-      // Cannot use ref here, so directly call the repo to mark messages as read
-      TaskRepo().updateMessageReadStatus(
-        taskId: widget.taskId,
-        // To mark the last message of this task as read because we cannot access actual local state from here
-        lastSeenMessageId: null,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    _compose.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _scrollToBottom() {
-    if (_scroll.hasClients) {
-      _scroll.animateTo(
-        0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-      );
-    }
-  }
-
-  Future<void> _send() async {
-    final text = _compose.text.trim();
-    if (text.isEmpty || _sending) return;
-    setState(() => _sending = true);
-
-    final message = await ref
-        .watch(messageNotifierProvider.notifier)
-        .createMessage(text: text, taskId: widget.taskId);
-
-    if (message == null) {
-      // Failed to send message
-      return;
-    }
-
-    _compose.clear();
-    widget.onSend(text);
-
-    if (mounted) setState(() => _sending = false);
-
-    // Updating task.unreadMessages here is NOT RECOMMENDED, it is recommended to leave it for the server to modify
-    // If you update unreadMessages locally, it will cause a mismatch between the local state and the server state
-    // which might sometimes not mark the messages as read properly, when the user returns back to the app after closing
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Don't render anything when fully closed and animation is complete
-    if (!widget.isOpen && !_ctrl.isAnimating && _ctrl.value == 0.0) {
-      return const SizedBox.shrink();
-    }
-
-    return Positioned.fill(
-      child: FadeTransition(
-        opacity: _fade,
-        child: SlideTransition(
-          position: _slide,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: _SheetSurface(
-              taskId: widget.taskId,
-              messages: ref.watch(messagesByTaskProvider(widget.taskId)),
-              scroll: _scroll,
-              compose: _compose,
-              sending: _sending,
-              onClose: widget.onClose,
-              onSend: _send,
-              isMessagesInitLoading: _isLoadingMessages,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SHEET SURFACE — the visual sheet body
-// ─────────────────────────────────────────────────────────────────────────────
-class _SheetSurface extends StatelessWidget {
-  final int taskId;
-  final List<Message> messages;
-  final ScrollController scroll;
-  final TextEditingController compose;
-  final bool sending;
-  final VoidCallback onClose;
-  final VoidCallback onSend;
-  final bool isMessagesInitLoading;
-
-  const _SheetSurface({
-    required this.taskId,
-    required this.messages,
-    required this.scroll,
-    required this.compose,
-    required this.sending,
-    required this.onClose,
-    required this.onSend,
-    required this.isMessagesInitLoading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      heightFactor: 0.74,
-      child: Container(
-        decoration: BoxDecoration(
-          color: _T.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-          border: Border.all(color: _T.slate200),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.10),
-              blurRadius: 24,
-              offset: const Offset(0, -6),
-            ),
-            BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, -1),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-          child: Column(
-            children: [
-              _SheetHeader(taskId: taskId, onClose: onClose),
-              Expanded(
-                child: _MessageList(
-                  messages: messages,
-                  scroll: scroll,
-                  isMessagesInitLoading: isMessagesInitLoading,
-                ),
-              ),
-              _ComposeBar(compose: compose, sending: sending, onSend: onSend),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SHEET HEADER
-//
-// Desktop-appropriate: no drag handle. A top hairline accent strip (2px blue)
-// anchors the eye. Title on left, close button on right.
-// ─────────────────────────────────────────────────────────────────────────────
-class _SheetHeader extends StatelessWidget {
-  final int taskId;
-  final VoidCallback onClose;
-
-  const _SheetHeader({required this.taskId, required this.onClose});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Blue top accent strip
-        Container(height: 2.5, color: _T.blue),
-
-        // Header row
-        Container(
-          height: _T.topbarH,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: _T.slate100)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Icon + label
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: _T.blue50,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 13,
-                  color: _T.blue,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Discussion',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _T.ink,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _T.slate100,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  'TASK-$taskId',
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                    color: _T.slate500,
-                  ),
-                ),
-              ),
-
-              const Spacer(),
-
-              // Close button — chevron down (collapsed metaphor)
-              _CloseButton(onClose: onClose),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CloseButton extends StatefulWidget {
-  final VoidCallback onClose;
-  const _CloseButton({required this.onClose});
-
-  @override
-  State<_CloseButton> createState() => _CloseButtonState();
-}
-
-class _CloseButtonState extends State<_CloseButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: _hovered ? _T.slate100 : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(
-              color: _hovered ? _T.slate200 : Colors.transparent,
-            ),
-          ),
-          child: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 16,
-            color: _hovered ? _T.ink3 : _T.slate400,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MESSAGE LIST
-//
-// Newest message at bottom (chat convention).
-// Groups messages by author when consecutive — only shows avatar + name on
-// the first message of a run, subsequent ones from the same author are
-// indented (like Slack/Linear's threading).
-// Empty state shown when no messages exist yet.
-// ─────────────────────────────────────────────────────────────────────────────
 class _MessageList extends ConsumerStatefulWidget {
   final List<Message> messages;
   final ScrollController scroll;
@@ -1015,7 +541,62 @@ class _MessageList extends ConsumerStatefulWidget {
   ConsumerState<_MessageList> createState() => _MessageListState();
 }
 
-class _MessageListState extends ConsumerState<_MessageList> {
+class _MessageListState extends ConsumerState<_MessageList>
+    with SingleTickerProviderStateMixin {
+  bool _isLoadingMessagesAfter = false;
+  bool _isLoadingMessagesBefore = false;
+
+  // Animation for newly loaded messages
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  final Map<int, bool> _newlyLoadedIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_MessageList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Detect newly loaded messages and animate them in
+    if (widget.messages.length > oldWidget.messages.length) {
+      final newMessages =
+          widget.messages
+              .where((m) => !oldWidget.messages.any((om) => om.id == m.id))
+              .toList();
+
+      for (final msg in newMessages) {
+        _newlyLoadedIds[msg.id] = true;
+      }
+
+      _fadeController.reset();
+      _fadeController.forward().then((_) {
+        // Clean up after animation
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() => _newlyLoadedIds.clear());
+          }
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
   bool _isSameAuthorAsPrevious(int i) {
     if (i == widget.messages.length - 1) return false;
     return widget.messages[i].authorName == widget.messages[i + 1].authorName;
@@ -1027,88 +608,473 @@ class _MessageListState extends ConsumerState<_MessageList> {
     return '$h:$m';
   }
 
-  bool _isLoadingMessagesAfter = false;
-  bool _isLoadingMessagesBefore = false;
-
-  getMessagesAfter(Message message) {
+  Future<void> getMessagesAfter(Message message) async {
     if (_isLoadingMessagesAfter) return;
 
     final task = ref.read(taskByIdProviderSimple(message.taskId))!;
 
-    if (message.id < task.lastMessageId!) {
-      _isLoadingMessagesAfter = true;
-      ref
+    if (task.lastMessageId == null || message.id >= task.lastMessageId!) {
+      return;
+    }
+
+    setState(() => _isLoadingMessagesAfter = true);
+
+    try {
+      await ref
           .read(messageNotifierProvider.notifier)
-          .getMessagesAfter(taskId: message.taskId, afterMessageId: message.id)
-          .then((value) {
-            _isLoadingMessagesAfter = false;
-          });
+          .getMessagesAfter(taskId: message.taskId, afterMessageId: message.id);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMessagesAfter = false);
+      }
     }
   }
 
-  getMessagesBefore(Message message) {
+  Future<void> getMessagesBefore(Message message) async {
     if (_isLoadingMessagesBefore) return;
 
     final task = ref.read(taskByIdProviderSimple(message.taskId))!;
 
-    if (message.id < task.firstMessageId!) {
-      _isLoadingMessagesBefore = true;
-      ref
+    if (task.firstMessageId == null || message.id <= task.firstMessageId!) {
+      return;
+    }
+
+    setState(() => _isLoadingMessagesBefore = true);
+
+    try {
+      await ref
           .read(messageNotifierProvider.notifier)
           .getMessagesBefore(
             taskId: message.taskId,
             beforeMessageId: message.id,
-          )
-          .then((value) {
-            _isLoadingMessagesBefore = false;
-          });
+          );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMessagesBefore = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Initial loading state
+    if (widget.isMessagesInitLoading) {
+      return _SkeletonMessageList();
+    }
+
+    // Empty state
     if (widget.messages.isEmpty) {
       return _EmptyMessageList();
     }
 
-    return ListView.builder(
-      controller: widget.scroll,
-      reverse: true,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      itemCount: widget.messages.length,
-      itemBuilder: (_, i) {
-        final msg = widget.messages[i];
-        final grouped = _isSameAuthorAsPrevious(i);
-        final isLast = i == 0;
+    // Messages loaded - show with loading indicators for pagination
+    return Stack(
+      children: [
+        ListView.builder(
+          controller: widget.scroll,
+          reverse: true,
+          padding: EdgeInsets.only(
+            top: _isLoadingMessagesBefore ? 60 : 12,
+            bottom: _isLoadingMessagesAfter ? 60 : 12,
+          ),
+          itemCount: widget.messages.length,
+          itemBuilder: (_, i) {
+            final msg = widget.messages[i];
+            final grouped = _isSameAuthorAsPrevious(i);
+            final isLast = i == 0;
+            final isNewlyLoaded = _newlyLoadedIds.containsKey(msg.id);
 
-        return VisibilityDetector(
-          key: Key(msg.id.toString()),
-          onVisibilityChanged: (info) {
-            final visibleFraction = info.visibleFraction;
-
-            if (visibleFraction > 0) {
-              // This message is visible
-              // check if this is the edge of the messages list for this task, in memory
-              if (i == 0) {
-                // Last message listed in view - newest message
-                getMessagesAfter(msg);
-              }
-              if (i == widget.messages.length - 1) {
-                // First message listed in view - oldest message
-                getMessagesBefore(msg);
-              }
-            }
-
-            if (visibleFraction == 0) {
-              // this message is NOT visible
-            }
+            return VisibilityDetector(
+              key: Key(msg.id.toString()),
+              onVisibilityChanged: (info) {
+                if (info.visibleFraction > 0) {
+                  if (i == 0) {
+                    // Last message - load newer
+                    getMessagesAfter(msg);
+                  }
+                  if (i == widget.messages.length - 1) {
+                    // First message - load older
+                    getMessagesBefore(msg);
+                  }
+                }
+              },
+              child:
+                  isNewlyLoaded
+                      ? FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                          ).animate(_fadeAnimation),
+                          child: _MessageRow(
+                            message: msg,
+                            grouped: grouped,
+                            isLast: isLast,
+                            fmtTime: _fmtTime(msg.date),
+                          ),
+                        ),
+                      )
+                      : _MessageRow(
+                        message: msg,
+                        grouped: grouped,
+                        isLast: isLast,
+                        fmtTime: _fmtTime(msg.date),
+                      ),
+            );
           },
+        ),
 
-          child: _MessageRow(
-            message: msg,
-            grouped: grouped,
-            isLast: isLast,
-            fmtTime: _fmtTime(msg.date),
+        // Loading indicator at bottom (newer messages)
+        if (_isLoadingMessagesAfter)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _LoadingIndicator(
+              label: 'Loading newer messages',
+              position: _LoadingPosition.bottom,
+            ),
+          ),
+
+        // Loading indicator at top (older messages)
+        if (_isLoadingMessagesBefore)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _LoadingIndicator(
+              label: 'Loading older messages',
+              position: _LoadingPosition.top,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOADING POSITION ENUM
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _LoadingPosition { top, bottom }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOADING INDICATOR
+// Inline spinner shown while loading more messages
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LoadingIndicator extends StatefulWidget {
+  final String label;
+  final _LoadingPosition position;
+
+  const _LoadingIndicator({required this.label, required this.position});
+
+  @override
+  State<_LoadingIndicator> createState() => _LoadingIndicatorState();
+}
+
+class _LoadingIndicatorState extends State<_LoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin:
+              widget.position == _LoadingPosition.top
+                  ? const Offset(0, -0.3)
+                  : const Offset(0, 0.3),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+        ),
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin:
+                  widget.position == _LoadingPosition.top
+                      ? Alignment.topCenter
+                      : Alignment.bottomCenter,
+              end:
+                  widget.position == _LoadingPosition.top
+                      ? Alignment.bottomCenter
+                      : Alignment.topCenter,
+              colors: [_T.white, _T.white.withOpacity(0.0)],
+            ),
+          ),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: _T.slate50,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _T.slate200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(_T.blue),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.label,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKELETON MESSAGE LIST
+// Initial loading state with shimmer effect
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SkeletonMessageList extends StatefulWidget {
+  @override
+  State<_SkeletonMessageList> createState() => _SkeletonMessageListState();
+}
+
+class _SkeletonMessageListState extends State<_SkeletonMessageList>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      itemCount: 8, // Show 8 skeleton messages
+      itemBuilder: (_, i) {
+        // Vary skeleton sizes for realism
+        final isGrouped = i % 3 != 0; // Group some messages
+        final hasLongText = i % 2 == 0;
+
+        return _SkeletonMessageRow(
+          shimmerAnimation: _shimmerController,
+          grouped: isGrouped,
+          hasLongText: hasLongText,
+          delay: i * 50, // Stagger animation
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKELETON MESSAGE ROW
+// Individual skeleton message with shimmer
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SkeletonMessageRow extends StatefulWidget {
+  final AnimationController shimmerAnimation;
+  final bool grouped;
+  final bool hasLongText;
+  final int delay;
+
+  const _SkeletonMessageRow({
+    required this.shimmerAnimation,
+    required this.grouped,
+    required this.hasLongText,
+    required this.delay,
+  });
+
+  @override
+  State<_SkeletonMessageRow> createState() => _SkeletonMessageRowState();
+}
+
+class _SkeletonMessageRowState extends State<_SkeletonMessageRow> {
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Staggered fade-in
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        setState(() {
+          _fadeAnimation = CurvedAnimation(
+            parent: widget.shimmerAnimation,
+            curve: const Interval(0, 0.3, curve: Curves.easeOut),
+          );
+        });
+      }
+    });
+
+    _fadeAnimation = const AlwaysStoppedAnimation(0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, widget.grouped ? 2 : 10, 16, 0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar or spacer
+            SizedBox(
+              width: 30,
+              child:
+                  widget.grouped
+                      ? const SizedBox()
+                      : _ShimmerBox(
+                        animation: widget.shimmerAnimation,
+                        width: 30,
+                        height: 30,
+                        borderRadius: 15,
+                      ),
+            ),
+            const SizedBox(width: 10),
+
+            // Message content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!widget.grouped)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          _ShimmerBox(
+                            animation: widget.shimmerAnimation,
+                            width: 80,
+                            height: 12,
+                            borderRadius: 4,
+                          ),
+                          const SizedBox(width: 8),
+                          _ShimmerBox(
+                            animation: widget.shimmerAnimation,
+                            width: 40,
+                            height: 10,
+                            borderRadius: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                  _ShimmerBox(
+                    animation: widget.shimmerAnimation,
+                    width: double.infinity,
+                    height: 13,
+                    borderRadius: 4,
+                  ),
+                  if (widget.hasLongText) ...[
+                    const SizedBox(height: 4),
+                    _ShimmerBox(
+                      animation: widget.shimmerAnimation,
+                      width: double.infinity,
+                      height: 13,
+                      borderRadius: 4,
+                    ),
+                    const SizedBox(height: 4),
+                    _ShimmerBox(
+                      animation: widget.shimmerAnimation,
+                      width: 200,
+                      height: 13,
+                      borderRadius: 4,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHIMMER BOX
+// Reusable shimmer effect component
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ShimmerBox extends StatelessWidget {
+  final AnimationController animation;
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _ShimmerBox({
+    required this.animation,
+    required this.width,
+    required this.height,
+    required this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              stops:
+                  [
+                    animation.value - 0.3,
+                    animation.value,
+                    animation.value + 0.3,
+                  ].map((v) => v.clamp(0.0, 1.0)).toList(),
+              colors: const [_T.slate100, _T.slate200, _T.slate100],
+            ),
           ),
         );
       },
@@ -1116,41 +1082,93 @@ class _MessageListState extends ConsumerState<_MessageList> {
   }
 }
 
-class _EmptyMessageList extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPROVED EMPTY STATE
+// Enhanced with better visual hierarchy
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EmptyMessageList extends StatefulWidget {
+  @override
+  State<_EmptyMessageList> createState() => _EmptyMessageListState();
+}
+
+class _EmptyMessageListState extends State<_EmptyMessageList>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              size: 20,
-              color: _T.slate300,
-            ),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: _T.blue50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _T.blue.withOpacity(0.1),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 26,
+                  color: _T.blue,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No messages yet',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Start the conversation below',
+                style: TextStyle(fontSize: 12, color: _T.slate400),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'No messages yet',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _T.slate400,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Start the conversation below',
-            style: TextStyle(fontSize: 11.5, color: _T.slate300),
-          ),
-        ],
+        ),
       ),
     );
   }
