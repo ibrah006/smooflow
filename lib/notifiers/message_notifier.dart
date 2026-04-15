@@ -44,8 +44,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
 
     try {
-      await _repo.getById(id);
-      state = state.copyWith(isLoading: false);
+      final message = await _repo.getById(id);
+      state = state.copyWith(isLoading: false, newMessages: [message]);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }

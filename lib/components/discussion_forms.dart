@@ -555,7 +555,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   bool _sending = false;
 
   // Only for INITIAL messages is loading
-  bool _isLoadingMessages = false;
+  bool _isLoadingMessages = true;
 
   Future<void> initializeMessages() async {
     final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
@@ -603,6 +603,14 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+
+    // To ensure contents fill the view port height
+    initializeMessages().then((value) {
+      if (mounted)
+        setState(() {
+          _isLoadingMessages = false;
+        });
+    });
 
     // _scroll.addListener(() {
     //   final position = _scroll.position;

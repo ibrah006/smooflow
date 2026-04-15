@@ -237,6 +237,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     if (widget.task.lastMessageId != null) {
       Future.microtask(() {
+        print("task last message: ${widget.task.lastMessageId}");
         ref
             .read(messageNotifierProvider.notifier)
             .getMessageById(widget.task.lastMessageId!);

@@ -12,10 +12,7 @@ import 'package:smooflow/providers/task_provider.dart';
 class PrintJobDetailsScreen extends ConsumerStatefulWidget {
   final Task task;
 
-  const PrintJobDetailsScreen({
-    Key? key,
-    required this.task,
-  }) : super(key: key);
+  const PrintJobDetailsScreen({Key? key, required this.task}) : super(key: key);
 
   @override
   ConsumerState<PrintJobDetailsScreen> createState() =>
@@ -36,7 +33,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
     'Sep',
     'Oct',
     'Nov',
-    'Dec'
+    'Dec',
   ];
 
   late TextEditingController _runsController;
@@ -80,18 +77,13 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(1.0, 0.0),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -110,13 +102,23 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
       //   stockTransactionBarcode: null,
       //   newTaskStatus: TaskStatus.finishing
       // )));
-      await TaskProvider.setTaskState(ref: ref, taskId: widget.task.id, newStatus: TaskStatus.completed);
-      
+      await TaskProvider.setTaskState(
+        ref: ref,
+        taskId: widget.task.id,
+        newStatus: TaskStatus.completed,
+      );
+
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Print job marked as completed")));
-    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Print job marked as completed")),
+      );
+    } catch (e) {
       debugPrint("Failed to mark print job as completed: $e");
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to mark job as completed. Please try agin")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to mark job as completed. Please try agin"),
+        ),
+      );
     }
   }
 
@@ -174,8 +176,11 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
               if (!_showPrinterSelection && widget.task.isDeprecated)
                 Row(
                   children: const [
-                    Icon(Icons.priority_high_rounded,
-                        size: 14, color: Colors.redAccent),
+                    Icon(
+                      Icons.priority_high_rounded,
+                      size: 14,
+                      color: Colors.redAccent,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       "Deprecated",
@@ -241,7 +246,8 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                       'Project',
                       projects
                           .firstWhere(
-                              (project) => project.id == widget.task.projectId)
+                            (project) => project.id == widget.task.projectId,
+                          )
                           .name,
                     ),
                     const SizedBox(height: 16),
@@ -249,14 +255,12 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                       'Material',
                       materials
                           .firstWhere(
-                              (material) => material.id == widget.task.materialId)
+                            (material) => material.id == widget.task.materialId,
+                          )
                           .name,
                     ),
                     const SizedBox(height: 16),
-                    _buildDetailRow(
-                      'Runs / Batches',
-                      _runsController.text,
-                    ),
+                    _buildDetailRow('Runs / Batches', _runsController.text),
                   ],
                 ),
               ),
@@ -358,10 +362,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 const SizedBox(height: 8),
                 const Text(
                   'Job will start automatically after assignment',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF64748B),
-                  ),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                 ),
               ],
             ),
@@ -384,7 +385,9 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 ...printers
                     .where((p) => p.status == PrinterStatus.active && !p.isBusy)
                     .map((printer) => _buildPrinterOption(printer, true)),
-                if (printers.any((p) => p.status != PrinterStatus.active || p.isBusy)) ...[
+                if (printers.any(
+                  (p) => p.status != PrinterStatus.active || p.isBusy,
+                )) ...[
                   const SizedBox(height: 24),
                   const Text(
                     'Unavailable Printers',
@@ -396,7 +399,9 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                   ),
                   const SizedBox(height: 12),
                   ...printers
-                      .where((p) => p.status != PrinterStatus.active || p.isBusy)
+                      .where(
+                        (p) => p.status != PrinterStatus.active || p.isBusy,
+                      )
                       .map((printer) => _buildPrinterOption(printer, false)),
                 ],
               ],
@@ -420,10 +425,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, color: Colors.black),
-        ),
+        Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
       ],
     );
   }
@@ -442,9 +444,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         decoration: BoxDecoration(
           color: const Color(0xFF10B981).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFF10B981).withOpacity(0.3),
-          ),
+          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -499,11 +499,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 ],
               ),
             ),
-            const Icon(
-              Icons.check_circle,
-              color: Color(0xFF10B981),
-              size: 24,
-            ),
+            const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 24),
           ],
         ),
       );
@@ -514,9 +510,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         decoration: BoxDecoration(
           color: const Color(0xFFF59E0B).withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFF59E0B).withOpacity(0.3),
-          ),
+          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -546,10 +540,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
             const Text(
               'Select a printer to start this print job',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
             ),
           ],
         ),
@@ -569,16 +560,16 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF2563EB).withOpacity(0.1)
-              : isAvailable
+          color:
+              isSelected
+                  ? const Color(0xFF2563EB).withOpacity(0.1)
+                  : isAvailable
                   ? const Color(0xFFF8FAFC)
                   : const Color(0xFFF8FAFC).withOpacity(0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF2563EB)
-                : const Color(0xFFE2E8F0),
+            color:
+                isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -591,13 +582,9 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                 color: statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                Icons.print,
-                color: statusColor,
-                size: 24,
-              ),
+              child: Icon(Icons.print, color: statusColor, size: 24),
             ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,7 +594,8 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isAvailable ? Colors.black : const Color(0xFF9CA3AF),
+                      color:
+                          isAvailable ? Colors.black : const Color(0xFF9CA3AF),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -794,11 +782,7 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
       ),
       child: Text(
         _notesController.text,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.black,
-          height: 1.6,
-        ),
+        style: const TextStyle(fontSize: 14, color: Colors.black, height: 1.6),
       ),
     );
   }
@@ -861,7 +845,6 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
   }
 
   Widget _buildBottomAction(List<Printer> printers) {
-
     // if (!showBottomAction) return const SizedBox.shrink();
 
     if (_isAssigningPrinter) {
@@ -926,7 +909,10 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: widget.task.printerId!=null? _markJobAsComplete : _showPrinterSelectionPage,
+                onPressed:
+                    widget.task.printerId != null
+                        ? _markJobAsComplete
+                        : _showPrinterSelectionPage,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
@@ -937,11 +923,10 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
                   ),
                 ),
                 child: Text(
-                  widget.task.printerId!=null? 'Mark Job as Complete' : 'Assign Printer & Start',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  widget.task.printerId != null
+                      ? 'Mark Job as Complete'
+                      : 'Assign Printer & Start',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -971,9 +956,12 @@ class _PrintJobDetailsScreenState extends ConsumerState<PrintJobDetailsScreen>
         taskId: widget.task.id,
         printerId: printer.id,
         stockTransactionBarcode: widget.task.stockTransactionBarcode,
-        newStatus: TaskStatus.completed);
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), duration: Duration(seconds: 7)));
+        newStatus: TaskStatus.completed,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), duration: Duration(seconds: 7)),
+      );
       setState(() {
         _isAssigningPrinter = false;
       });

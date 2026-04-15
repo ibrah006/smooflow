@@ -77,8 +77,13 @@ class MessageState {
     ConnectionStatus? connectionStatus,
     Message? selectedMessage,
     NewMessageState newMessageState = NewMessageState.messagesAfter,
+    bool isSendMessage = false,
   }) {
     // --> 1. Check if over memory limit and evict irrelevant messages to the UI
+
+    if (isSendMessage && newMessages?.length != 1) {
+      throw "To send/create a message, the new messages parameter should hold exactly 1 new message object, found: ${newMessages?.length ?? 0}";
+    }
 
     if (newMessages != null) {
       final totalLength = newMessages.length + messages.length;
