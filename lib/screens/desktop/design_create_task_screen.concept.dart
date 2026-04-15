@@ -2332,7 +2332,7 @@ class _CalendarPopupState extends State<_CalendarPopup> {
           link: widget.layerLink,
           showWhenUnlinked: false,
           targetAnchor:
-              widget.showAbove ? Alignment.topRight : Alignment.bottomLeft,
+              widget.showAbove ? Alignment.topRight : Alignment.bottomRight,
           followerAnchor:
               widget.showAbove ? Alignment.bottomRight : Alignment.topRight,
           offset: Offset(0, widget.showAbove ? -6 : 6),
