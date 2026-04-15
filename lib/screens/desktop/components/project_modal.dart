@@ -196,7 +196,7 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
                   label: 'Due Date',
                   child: DateField(
                     value: _due,
-                    allowKbInput: true,
+                    allowKbInput: false,
                     onChange: (DateTime? picked) async {
                       if (picked == null) return;
                       setState(() => _due = picked);
