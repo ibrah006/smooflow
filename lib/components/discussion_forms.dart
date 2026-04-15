@@ -556,14 +556,6 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
 
   bool _isLoadingMessages = false;
 
-  @override
-  void didUpdateWidget(DiscussionSheet old) {
-    super.didUpdateWidget(old);
-    if (old.taskId != widget.taskId) {
-      initializeMessages();
-    }
-  }
-
   void initializeMessages() async {
     final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
 
@@ -574,15 +566,17 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
 
       // If no scrolling possible → content too small
       if (maxScrollExtent == 0) {
-        final newMessages = await ref
+        final newMessagesCount = await ref
             .read(messageNotifierProvider.notifier)
             .getMessagesByTask(ref, task);
 
-        // Schedule again after next frame
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // To ensure contents fill the view port height
-          initializeMessages();
-        });
+        if (newMessagesCount > 0) {
+          // Schedule again after next frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // To ensure contents fill the view port height
+            initializeMessages();
+          });
+        }
       }
     });
   }
@@ -676,6 +670,8 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
 
     if (widget.taskId != old.taskId) {
       ref.read(messageNotifierProvider).activeTaskId = widget.taskId;
+
+      initializeMessages();
     }
 
     if (widget.isOpen != old.isOpen) {
