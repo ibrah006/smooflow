@@ -98,10 +98,13 @@ class MessageState {
 
         // messageAccessQueue = Queue.from(updatedList.map((m) => m.id));
       } else if (newMessages.length == 1) {
-        // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
-        updatedList = List.from(this.messages);
-
-        updatedList.insert(0, newMessages.first);
+        if (isSendMessage) {
+          updatedList = List.from(this.messages);
+          // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
+          updatedList.insert(0, newMessages.first);
+        } else {
+          updatedList = _mergeMessages(this.messages, newMessages);
+        }
         // messageAccessQueue.add(newMessages.first.id);
       } else {
         updatedList = _mergeMessages(
