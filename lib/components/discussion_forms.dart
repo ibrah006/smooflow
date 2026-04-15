@@ -554,6 +554,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   final ScrollController _scroll = ScrollController();
   bool _sending = false;
 
+  // Only for INITIAL messages is loading
   bool _isLoadingMessages = false;
 
   void initializeMessages() async {
