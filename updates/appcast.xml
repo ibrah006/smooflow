@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>auto_updater_example</title>
+        <description>Most recent updates to auto_updater_example</description>
+        <language>en</language>
+        <!-- MACOS -->
+        <item>
+            <title>Version 1.1.0</title>
+            <!-- For the macOS item, it is recommended to add 'sparkle:version' and 'sparkle:shortVersionString' to the item node, rather than as part of the enclosure. -->
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <pubDate>14 Apr 2026 16:48:00 +0300</pubDate>
+            
+            <!-- Release Notes -->
+            <description><![CDATA[
+                <h3>New Features</h3>
+                <ul>
+                    <li><b>Task Messaging</b><br/>Discussion threads for tasks! You can now comment and have threaded discussions on each task.</li>
+                    <li><b>Improved Readability in Task Details</b><br/>Updated the design of task details to make it easier to read and navigate, especially for tasks with a lot of information.</li>
+                </ul>
+
+                <h3>Fixes</h3>
+                <ul>
+                    <li><b>Notifications Spam</b><br/>Resolved the spamming of in-app notifications</li>
+                </ul>
+            ]]></description>
+
+            <enclosure url="https://workflow-backend-production.up.railway.app/updates/smooflow-1.1.0-macos.zip"
+                       sparkle:edSignature="9QoZyPWLxNg4SobppVuLDKQeMkLuLkSY1BO0HXnkcB9Q7axJzA4z/GXxCUybadOaO6xFi8dve4aXIjXJve8wCA=="
+                       sparkle:os="macos"
+                       length="14279521"
+                       type="application/octet-stream" />
+        </item>
+        
+        <!-- WINDOWS -->
+        <!-- Users using older than 1.0.9 will not actually get updated because the dsasignature of the below mentioned 1.0.9 is not correct -->
+        <item>
+            <title>Version 1.0.9</title>
+            <pubDate>13 Apr 2026 14:56:00 +0300</pubDate>
+            <enclosure url="https://workflow-backend-production.up.railway.app/updates/smooflow-1.0.9-windows-setup.exe"
+                       sparkle:dsaSignature="MD4CHQDGtFR0/wQQR4HFGWbcw4C/m5CnR37DJLpxnzhOAh0AoCrnUtwhzIz3CY/ebnof3mVaUrHw2W8GaBKP0w=="
+                       sparkle:os="windows"
+                       sparkle:version="1.0.9"
+                       length="0"
+                       type="application/octet-stream" />
+        </item>
+    </channel>
+</rss>

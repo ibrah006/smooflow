@@ -58,7 +58,7 @@ Future<void> checkForUpdate(BuildContext context) async {
   if (!Platform.isMacOS) return null;
 
   const appcastUrl =
-      'https://raw.githubusercontent.com/ibrah006/workflow-backend/main/public/updates/appcast.xml';
+      'https://raw.githubusercontent.com/ibrah006/smooflow/updates/appcast.xml';
 
   try {
     // 1. Download XML
