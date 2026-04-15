@@ -792,6 +792,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
               sending: _sending,
               onClose: widget.onClose,
               onSend: _send,
+              isMessagesInitLoading: _isLoadingMessages,
             ),
           ),
         ),
@@ -811,6 +812,7 @@ class _SheetSurface extends StatelessWidget {
   final bool sending;
   final VoidCallback onClose;
   final VoidCallback onSend;
+  final bool isMessagesInitLoading;
 
   const _SheetSurface({
     required this.taskId,
@@ -820,6 +822,7 @@ class _SheetSurface extends StatelessWidget {
     required this.sending,
     required this.onClose,
     required this.onSend,
+    required this.isMessagesInitLoading,
   });
 
   @override
@@ -849,7 +852,13 @@ class _SheetSurface extends StatelessWidget {
           child: Column(
             children: [
               _SheetHeader(taskId: taskId, onClose: onClose),
-              Expanded(child: _MessageList(messages: messages, scroll: scroll)),
+              Expanded(
+                child: _MessageList(
+                  messages: messages,
+                  scroll: scroll,
+                  isMessagesInitLoading: isMessagesInitLoading,
+                ),
+              ),
               _ComposeBar(compose: compose, sending: sending, onSend: onSend),
             ],
           ),
@@ -994,8 +1003,13 @@ class _CloseButtonState extends State<_CloseButton> {
 class _MessageList extends ConsumerStatefulWidget {
   final List<Message> messages;
   final ScrollController scroll;
+  final bool isMessagesInitLoading;
 
-  const _MessageList({required this.messages, required this.scroll});
+  const _MessageList({
+    required this.messages,
+    required this.scroll,
+    required this.isMessagesInitLoading,
+  });
 
   @override
   ConsumerState<_MessageList> createState() => _MessageListState();
