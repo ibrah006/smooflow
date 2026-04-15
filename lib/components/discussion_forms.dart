@@ -557,6 +557,37 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   bool _isLoadingMessages = false;
 
   @override
+  void didUpdateWidget(DiscussionSheet old) {
+    super.didUpdateWidget(old);
+    if (old.taskId != widget.taskId) {
+      initializeMessages();
+    }
+  }
+
+  void initializeMessages() async {
+    final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+
+    await Future.microtask(() async {
+      if (!_scroll.hasClients) return;
+
+      final maxScrollExtent = _scroll.position.maxScrollExtent;
+
+      // If no scrolling possible → content too small
+      if (maxScrollExtent == 0) {
+        await ref
+            .read(messageNotifierProvider.notifier)
+            .getMessagesByTask(ref, task);
+
+        // Schedule again after next frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // To ensure contents fill the view port height
+          initializeMessages();
+        });
+      }
+    });
+  }
+
+  @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
