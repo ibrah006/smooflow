@@ -34,6 +34,15 @@ class MessageNotifier extends StateNotifier<MessageState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      state.messages.firstWhere((m) => m.id == id);
+
+      // This message already exists in memory
+      return;
+    } catch (e) {
+      // Continue and try to fetch from database
+    }
+
+    try {
       await _repo.getById(id);
       state = state.copyWith(isLoading: false);
     } catch (e) {

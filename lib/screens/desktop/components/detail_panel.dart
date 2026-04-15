@@ -235,11 +235,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     super.initState();
     _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
 
-    // Future.microtask(() {
-    //   ref
-    //       .read(messageNotifierProvider.notifier)
-    //       .getMessagesByTask(ref, widget.task);
-    // });
+    if (widget.task.lastMessageId != null) {
+      Future.microtask(() {
+        ref
+            .read(messageNotifierProvider.notifier)
+            .getMessageById(widget.task.lastMessageId!);
+      });
+    }
   }
 
   @override
@@ -249,13 +251,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
       _billingEditMode = false;
 
-      // if (old.task.id != widget.task.id) {
-      //   Future.microtask(() {
-      //     ref
-      //         .read(messageNotifierProvider.notifier)
-      //         .getMessagesByTask(ref, widget.task);
-      //   });
-      // }
+      if (widget.task.lastMessageId != null) {
+        Future.microtask(() {
+          ref
+              .read(messageNotifierProvider.notifier)
+              .getMessageById(widget.task.lastMessageId!);
+        });
+      }
     }
   }
 
