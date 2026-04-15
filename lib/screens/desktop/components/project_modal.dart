@@ -7,6 +7,7 @@ import 'package:smooflow/core/repositories/company_repo.dart';
 import 'package:smooflow/providers/company_provider.dart';
 import 'package:smooflow/providers/organization_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/modal_components.dart';
 import 'package:smooflow/screens/desktop/components/modal_shell.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
@@ -193,59 +194,70 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
               Expanded(
                 child: ModalField(
                   label: 'Due Date',
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now().add(
-                            const Duration(days: 7),
-                          ),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2028),
-                          builder:
-                              (ctx, child) => Theme(
-                                data: Theme.of(ctx).copyWith(
-                                  colorScheme: const ColorScheme.light(
-                                    primary: _T.blue,
-                                  ),
-                                ),
-                                child: child!,
-                              ),
-                        );
-                        if (d != null) setState(() => _due = d);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _T.slate50,
-                          border: Border.all(color: _T.slate200),
-                          borderRadius: BorderRadius.circular(_T.r),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today_outlined,
-                              size: 14,
-                              color: _T.slate400,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _due != null ? fmtDate(_due!) : 'Select date',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: _due != null ? _T.ink : _T.slate400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  child: DateField(
+                    value: _due,
+                    allowKbInput: true,
+                    onChange: (DateTime? picked) async {
+                      if (picked == null) return;
+                      setState(() => _due = picked);
+                    },
+                    onClear: () {
+                      setState(() => _due = null);
+                    },
                   ),
+                  // MouseRegion(
+                  //   cursor: SystemMouseCursors.click,
+                  //   child: GestureDetector(
+                  //     onTap: () async {
+                  //       final d = await showDatePicker(
+                  //         context: context,
+                  //         initialDate: DateTime.now().add(
+                  //           const Duration(days: 7),
+                  //         ),
+                  //         firstDate: DateTime.now(),
+                  //         lastDate: DateTime(2028),
+                  //         builder:
+                  //             (ctx, child) => Theme(
+                  //               data: Theme.of(ctx).copyWith(
+                  //                 colorScheme: const ColorScheme.light(
+                  //                   primary: _T.blue,
+                  //                 ),
+                  //               ),
+                  //               child: child!,
+                  //             ),
+                  //       );
+                  //       if (d != null) setState(() => _due = d);
+                  //     },
+                  //     child: Container(
+                  //       padding: const EdgeInsets.symmetric(
+                  //         horizontal: 12,
+                  //         vertical: 9,
+                  //       ),
+                  //       decoration: BoxDecoration(
+                  //         color: _T.slate50,
+                  //         border: Border.all(color: _T.slate200),
+                  //         borderRadius: BorderRadius.circular(_T.r),
+                  //       ),
+                  //       child: Row(
+                  //         children: [
+                  //           const Icon(
+                  //             Icons.calendar_today_outlined,
+                  //             size: 14,
+                  //             color: _T.slate400,
+                  //           ),
+                  //           const SizedBox(width: 8),
+                  //           Text(
+                  //             _due != null ? fmtDate(_due!) : 'Select date',
+                  //             style: TextStyle(
+                  //               fontSize: 13,
+                  //               color: _due != null ? _T.ink : _T.slate400,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ),
               ),
               const SizedBox(width: 12),

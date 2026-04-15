@@ -58,10 +58,13 @@ class DateField extends StatefulWidget {
 
   final VoidCallback onClear;
 
+  final bool allowKbInput;
+
   const DateField({
     required this.value,
     required this.onChange,
     required this.onClear,
+    this.allowKbInput = true,
   });
 
   /// Shared formatter — "Jan 15, 2025"
@@ -255,10 +258,15 @@ class _DateFieldState extends State<DateField> {
 
   void _enterTypingMode() {
     _closeCalendar();
-    setState(() => _typingMode = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
-    });
+
+    if (widget.allowKbInput) {
+      setState(() => _typingMode = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
+      });
+    } else {
+      _toggleCalendar();
+    }
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -301,32 +309,42 @@ class _DateFieldState extends State<DateField> {
       children: [
         // Tappable text area → enters typing mode.
         Expanded(
-          child: GestureDetector(
-            onTap: _enterTypingMode,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.event_outlined,
-                    size: 15,
-                    color: filled ? _T.blue : _T.slate400,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      filled
-                          ? DateField.format(widget.value!)
-                          : 'Type or pick a date…',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: filled ? FontWeight.w500 : FontWeight.w400,
-                        color: filled ? _T.ink : _T.slate300,
+          child: MouseRegion(
+            cursor:
+                widget.allowKbInput
+                    ? SystemMouseCursors.text
+                    : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: _enterTypingMode,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.event_outlined,
+                      size: 15,
+                      color: filled ? _T.blue : _T.slate400,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        filled
+                            ? DateField.format(widget.value!)
+                            : '${!widget.allowKbInput ? 'Tap to ' : 'Type or '}pick a date…',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              filled ? FontWeight.w500 : FontWeight.w400,
+                          color: filled ? _T.ink : _T.slate300,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
