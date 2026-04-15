@@ -557,7 +557,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   // Only for INITIAL messages is loading
   bool _isLoadingMessages = false;
 
-  void initializeMessages() async {
+  Future<void> initializeMessages() async {
     final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
 
     await Future.microtask(() async {
@@ -574,8 +574,17 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
         if (newMessagesCount > 0) {
           // Schedule again after next frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted)
+              setState(() {
+                _isLoadingMessages = true;
+              });
             // To ensure contents fill the view port height
-            initializeMessages();
+            initializeMessages().then((value) {
+              if (mounted)
+                setState(() {
+                  _isLoadingMessages = false;
+                });
+            });
           });
         }
       }
@@ -672,7 +681,17 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
     if (widget.taskId != old.taskId) {
       ref.read(messageNotifierProvider).activeTaskId = widget.taskId;
 
-      initializeMessages();
+      if (mounted)
+        setState(() {
+          _isLoadingMessages = true;
+        });
+      // To ensure contents fill the view port height
+      initializeMessages().then((value) {
+        if (mounted)
+          setState(() {
+            _isLoadingMessages = false;
+          });
+      });
     }
 
     if (widget.isOpen != old.isOpen) {
