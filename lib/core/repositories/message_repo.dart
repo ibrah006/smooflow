@@ -9,7 +9,7 @@ import '../models/message.dart';
 class MessageRepo {
   /// GET /messages/:id
   Future<Message?> getById(int id) async {
-    final res = await ApiClient.http.get('/messages/$id');
+    final res = await ApiClient.http.get('/messages/id/$id');
 
     if (res.statusCode != 200) return null;
 
