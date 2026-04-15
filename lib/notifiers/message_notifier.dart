@@ -77,15 +77,19 @@ class MessageNotifier extends StateNotifier<MessageState> {
           "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
         );
         // Last message is not in memory, fetch messages after the local last message id
-        await getMessagesAfter(
+        final messagesAfter = await getMessagesAfter(
           afterMessageId: lastMessageIdForTaskInMemory,
           taskId: task.id,
         );
+
+        return messagesAfter.length;
       } else if (task.lastMessageId != null) {
         gotRecentMessages = true;
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
         // No messages for this task in memory, fetch recent messages for the task
-        await getRecent(taskId: task.id, limit: 20);
+        final messagesBefore = await getRecent(taskId: task.id, limit: 20);
+
+        return messagesBefore.length;
       }
     }
 
@@ -117,7 +121,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  Future<void> getRecent({int? taskId, int? limit}) async {
+  /// Returns the fetched messages from server, NOT from existing state
+  Future<List<Message>> getRecent({int? taskId, int? limit}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final recentMessages = await _repo.getRecent(
@@ -128,9 +133,13 @@ class MessageNotifier extends StateNotifier<MessageState> {
       // print("[MESSAGE NOTIFIER] new (recent) messages: ${recentMessages}");
 
       state = state.copyWith(newMessages: recentMessages, isLoading: false);
+
+      return recentMessages;
     } catch (e) {
       print("[get recent msgs] error: ${e}");
       state = state.copyWith(isLoading: false, error: _parseError(e));
+
+      return [];
     }
   }
 
