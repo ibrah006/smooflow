@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:macos_ui/macos_ui.dart';
 import 'package:path_provider/path_provider.dart';
@@ -57,8 +58,7 @@ Future<void> startUpdate({
 Future<void> checkForUpdate(BuildContext context) async {
   if (!Platform.isMacOS) return null;
 
-  const appcastUrl =
-      'https://raw.githubusercontent.com/ibrah006/smooflow/updates/appcast.xml';
+  final appcastUrl = '${dotenv.env['API_URL']!}/updates/appcast.xml';
 
   try {
     // 1. Download XML
