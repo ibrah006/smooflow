@@ -45,7 +45,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
 
     try {
       final message = await _repo.getById(id);
-      state = state.copyWith(isLoading: false, newMessages: [message]);
+      if (message != null)
+        state = state.copyWith(isLoading: false, newMessages: [message]);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _parseError(e));
     }
@@ -241,7 +242,10 @@ class MessageNotifier extends StateNotifier<MessageState> {
       case MessageChangeType.created:
         if (event.message != null &&
             !messages.any((t) => t.id == event.messageId)) {
-          state = state.copyWith(newMessages: [event.message!]);
+          state = state.copyWith(
+            newMessages: [event.message!],
+            isSendMessage: true,
+          );
           print(
             '[MessageNotifier] message created, new count: ${messages.length}',
           );
