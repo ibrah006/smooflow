@@ -574,7 +574,7 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
 
       // If no scrolling possible → content too small
       if (maxScrollExtent == 0) {
-        await ref
+        final newMessages = await ref
             .read(messageNotifierProvider.notifier)
             .getMessagesByTask(ref, task);
 

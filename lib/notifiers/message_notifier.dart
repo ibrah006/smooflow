@@ -54,10 +54,11 @@ class MessageNotifier extends StateNotifier<MessageState> {
   /// GET
   /// This function doesn't return result,
   /// rely on results from ref.watch/read(messagesNotifierProvider)
-  Future<void> getMessagesByTask(WidgetRef ref, Task task) async {
+  /// ONLY RETURNS length of NEW messages fetched from server
+  Future<int> getMessagesByTask(WidgetRef ref, Task task) async {
     if (task.lastMessageId == null) {
       // No messages for this task, nothing to fetch
-      return;
+      return 0;
     }
 
     bool gotRecentMessages = false;
@@ -66,6 +67,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       state.messages.firstWhere((m) => m.id == task.lastMessageId);
 
       // the required messages are in memory for now
+      return 0;
     } catch (e) {
       final lastMessageIdForTaskInMemory = _lastMessageIdForTask(task.id);
 
@@ -312,7 +314,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
     }
   }
 
-  Future<void> getMessagesAfter({
+  /// Returns the newly fetched messages from server, NOT from existing state
+  Future<List<Message>> getMessagesAfter({
     required int afterMessageId,
     int? taskId,
     int limit = 20,
@@ -328,15 +331,19 @@ class MessageNotifier extends StateNotifier<MessageState> {
 
       // Step 4: Update state
       state = state.copyWith(newMessages: newMessages, isLoading: false);
+
+      return newMessages;
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load newer messages',
         isLoading: false,
       );
+      return [];
     }
   }
 
-  Future<void> getMessagesBefore({
+  /// Returns the fetched messages from server, NOT from existing state
+  Future<List<Message>> getMessagesBefore({
     required int beforeMessageId,
     int? taskId,
     int limit = 20,
@@ -358,12 +365,16 @@ class MessageNotifier extends StateNotifier<MessageState> {
         isLoading: false,
         newMessageState: NewMessageState.messagesBefore,
       );
+
+      return olderMessages;
     } catch (e) {
       print("error loading message before: ${e}");
       state = state.copyWith(
         error: 'Failed to load older messages',
         isLoading: false,
       );
+
+      return [];
     }
   }
 
