@@ -2250,12 +2250,12 @@ class _FieldIconBtnState extends State<_FieldIconBtn> {
     onExit: (_) => setState(() => _hov = false),
     child: GestureDetector(
       onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
+      child: Container(
         width: 36,
         height: 42,
         decoration: BoxDecoration(
           color: _hov ? _T.slate50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           widget.icon,
@@ -2502,7 +2502,7 @@ class _CalNavBtnState extends State<_CalNavBtn> {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: _hov ? _T.slate100 : Colors.transparent,
+          color: _hov ? _T.slate100 : Colors.white,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(widget.icon, size: 16, color: _hov ? _T.ink3 : _T.slate400),
@@ -2549,7 +2549,7 @@ class _DayCellState extends State<_DayCell> {
                   ? _T.slate100
                   : widget.isToday
                   ? _T.blue50
-                  : Colors.transparent,
+                  : Colors.white,
           borderRadius: BorderRadius.circular(6),
           border:
               widget.isToday && !widget.isSelected
