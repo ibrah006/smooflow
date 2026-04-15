@@ -37,6 +37,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       state.messages.firstWhere((m) => m.id == id);
 
       // This message already exists in memory
+      state = state.copyWith(isLoading: false, error: null);
       return;
     } catch (e) {
       // Continue and try to fetch from database
