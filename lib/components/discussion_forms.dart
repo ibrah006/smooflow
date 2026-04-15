@@ -526,6 +526,480 @@ class _OpenChevron extends StatelessWidget {
 //     ],
 //   )
 // ─────────────────────────────────────────────────────────────────────────────
+class DiscussionSheet extends ConsumerStatefulWidget {
+  final int taskId;
+  final bool isOpen;
+  final VoidCallback onClose;
+  final ValueChanged<String> onSend;
+
+  const DiscussionSheet({
+    super.key,
+    required this.taskId,
+    required this.isOpen,
+    required this.onClose,
+    required this.onSend,
+  });
+
+  @override
+  ConsumerState<DiscussionSheet> createState() => _DiscussionSheetState();
+}
+
+class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  late final AnimationController _ctrl;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _fade;
+
+  final TextEditingController _compose = TextEditingController();
+  final ScrollController _scroll = ScrollController();
+  bool _sending = false;
+
+  // Only for INITIAL messages is loading
+  bool _isLoadingMessages = false;
+
+  Future<void> initializeMessages() async {
+    final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+
+    await Future.microtask(() async {
+      if (!_scroll.hasClients) return;
+
+      final maxScrollExtent = _scroll.position.maxScrollExtent;
+
+      // If no scrolling possible → content too small
+      if (maxScrollExtent == 0) {
+        final newMessagesCount = await ref
+            .read(messageNotifierProvider.notifier)
+            .getMessagesByTask(ref, task);
+
+        if (newMessagesCount > 0) {
+          // Schedule again after next frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted)
+              setState(() {
+                _isLoadingMessages = true;
+              });
+            // To ensure contents fill the view port height
+            initializeMessages().then((value) {
+              if (mounted)
+                setState(() {
+                  _isLoadingMessages = false;
+                });
+            });
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+
+    // _scroll.addListener(() {
+    //   final position = _scroll.position;
+
+    //   if (_isLoadingMessages) {
+    //     return;
+    //   }
+
+    //   final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+
+    //   final messages = ref.watch(messageNotifierProvider).messages;
+
+    //   if (position.pixels <= 40 && task.lastMessageId != null) {
+    //     // Near bottom
+    //     // Load newer messages
+    //     try {
+    //       final lastMessage = messages.firstWhere((m) => m.taskId == task.id);
+
+    //       if (lastMessage.id < task.lastMessageId!) {
+    //         _isLoadingMessages = true;
+    //         // print("need to load newer messages");
+    //         ref
+    //             .read(messageNotifierProvider.notifier)
+    //             .getMessagesAfter(
+    //               taskId: widget.taskId,
+    //               afterMessageId: lastMessage.id,
+    //             )
+    //             .then((value) {
+    //               _isLoadingMessages = false;
+    //             });
+    //       }
+    //     } catch (e) {
+    //       // No messages
+    //     }
+    //   }
+
+    //   if (position.pixels >= position.maxScrollExtent - 40 &&
+    //       task.firstMessageId != null) {
+    //     // Near top
+    //     // Load newer messages
+    //     try {
+    //       final firstMessage = messages.lastWhere((m) => m.taskId == task.id);
+
+    //       if (firstMessage.id > task.firstMessageId!) {
+    //         _isLoadingMessages = true;
+    //         print("need to load older messages");
+
+    //         // messages.lastWhere((m) {
+    //         //   print("m.id: ${m.id}");
+    //         //   return false;
+    //         // });
+
+    //         ref
+    //             .read(messageNotifierProvider.notifier)
+    //             .getMessagesBefore(
+    //               taskId: widget.taskId,
+    //               beforeMessageId: firstMessage.id,
+    //             )
+    //             .then((value) {
+    //               _isLoadingMessages = false;
+    //             });
+    //       }
+    //     } catch (e) {
+    //       // No messages
+    //     }
+    //   }
+    // });
+
+    if (widget.isOpen) _ctrl.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(DiscussionSheet old) {
+    super.didUpdateWidget(old);
+
+    if (widget.taskId != old.taskId) {
+      ref.read(messageNotifierProvider).activeTaskId = widget.taskId;
+
+      if (mounted)
+        setState(() {
+          _isLoadingMessages = true;
+        });
+      // To ensure contents fill the view port height
+      initializeMessages().then((value) {
+        if (mounted)
+          setState(() {
+            _isLoadingMessages = false;
+          });
+      });
+    }
+
+    if (widget.isOpen != old.isOpen) {
+      if (widget.isOpen) {
+        _ctrl.duration = const Duration(milliseconds: 300);
+        _ctrl.forward().then((_) => _scrollToBottom());
+      } else {
+        _ctrl.duration = const Duration(milliseconds: 220);
+        _ctrl.reverse();
+      }
+    }
+
+    final messages = ref.read(messagesByTaskProvider(widget.taskId));
+
+    // Scroll to bottom when new messages arrive while open
+    if (messages.length != messages.length && widget.isOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    }
+  }
+
+  // If the process is force-killed → no callback (same as any OS app)
+  // But normal window close (x button) → you get event
+  // App closing event (reliable on desktop)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // NOTE: DO NOT USE ref here
+    if (state == AppLifecycleState.detached) {
+      // Cannot use ref here, so directly call the repo to mark messages as read
+      TaskRepo().updateMessageReadStatus(
+        taskId: widget.taskId,
+        // To mark the last message of this task as read because we cannot access actual local state from here
+        lastSeenMessageId: null,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _compose.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scroll.hasClients) {
+      _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _send() async {
+    final text = _compose.text.trim();
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
+
+    final message = await ref
+        .watch(messageNotifierProvider.notifier)
+        .createMessage(text: text, taskId: widget.taskId);
+
+    if (message == null) {
+      // Failed to send message
+      return;
+    }
+
+    _compose.clear();
+    widget.onSend(text);
+
+    if (mounted) setState(() => _sending = false);
+
+    // Updating task.unreadMessages here is NOT RECOMMENDED, it is recommended to leave it for the server to modify
+    // If you update unreadMessages locally, it will cause a mismatch between the local state and the server state
+    // which might sometimes not mark the messages as read properly, when the user returns back to the app after closing
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Don't render anything when fully closed and animation is complete
+    if (!widget.isOpen && !_ctrl.isAnimating && _ctrl.value == 0.0) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned.fill(
+      child: FadeTransition(
+        opacity: _fade,
+        child: SlideTransition(
+          position: _slide,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _SheetSurface(
+              taskId: widget.taskId,
+              messages: ref.watch(messagesByTaskProvider(widget.taskId)),
+              scroll: _scroll,
+              compose: _compose,
+              sending: _sending,
+              onClose: widget.onClose,
+              onSend: _send,
+              isMessagesInitLoading: _isLoadingMessages,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHEET SURFACE — the visual sheet body
+// ─────────────────────────────────────────────────────────────────────────────
+class _SheetSurface extends StatelessWidget {
+  final int taskId;
+  final List<Message> messages;
+  final ScrollController scroll;
+  final TextEditingController compose;
+  final bool sending;
+  final VoidCallback onClose;
+  final VoidCallback onSend;
+  final bool isMessagesInitLoading;
+
+  const _SheetSurface({
+    required this.taskId,
+    required this.messages,
+    required this.scroll,
+    required this.compose,
+    required this.sending,
+    required this.onClose,
+    required this.onSend,
+    required this.isMessagesInitLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      heightFactor: 0.74,
+      child: Container(
+        decoration: BoxDecoration(
+          color: _T.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+          border: Border.all(color: _T.slate200),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.10),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
+            ),
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, -1),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+          child: Column(
+            children: [
+              _SheetHeader(taskId: taskId, onClose: onClose),
+              Expanded(
+                child: _MessageList(
+                  messages: messages,
+                  scroll: scroll,
+                  isMessagesInitLoading: isMessagesInitLoading,
+                ),
+              ),
+              _ComposeBar(compose: compose, sending: sending, onSend: onSend),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHEET HEADER
+//
+// Desktop-appropriate: no drag handle. A top hairline accent strip (2px blue)
+// anchors the eye. Title on left, close button on right.
+// ─────────────────────────────────────────────────────────────────────────────
+class _SheetHeader extends StatelessWidget {
+  final int taskId;
+  final VoidCallback onClose;
+
+  const _SheetHeader({required this.taskId, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Blue top accent strip
+        Container(height: 2.5, color: _T.blue),
+
+        // Header row
+        Container(
+          height: _T.topbarH,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: _T.slate100)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icon + label
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: _T.blue50,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 13,
+                  color: _T.blue,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Discussion',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _T.slate100,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  'TASK-$taskId',
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: _T.slate500,
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+
+              // Close button — chevron down (collapsed metaphor)
+              _CloseButton(onClose: onClose),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CloseButton extends StatefulWidget {
+  final VoidCallback onClose;
+  const _CloseButton({required this.onClose});
+
+  @override
+  State<_CloseButton> createState() => _CloseButtonState();
+}
+
+class _CloseButtonState extends State<_CloseButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onClose,
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: _hovered ? _T.slate100 : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(
+              color: _hovered ? _T.slate200 : Colors.transparent,
+            ),
+          ),
+          child: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 16,
+            color: _hovered ? _T.ink3 : _T.slate400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE LIST
+//
+// Newest message at bottom (chat convention).
+// Groups messages by author when consecutive — only shows avatar + name on
+// the first message of a run, subsequent ones from the same author are
+// indented (like Slack/Linear's threading).
+// Empty state shown when no messages exist yet.
+// ─────────────────────────────────────────────────────────────────────────────
 class _MessageList extends ConsumerStatefulWidget {
   final List<Message> messages;
   final ScrollController scroll;
