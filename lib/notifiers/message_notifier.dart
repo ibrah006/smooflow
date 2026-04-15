@@ -109,10 +109,12 @@ class MessageNotifier extends StateNotifier<MessageState> {
           "[MESSAGE_NOTIFIER] task ${task.id} first msg id: ${task.firstMessageId}",
         );
         // Last message is not in memory, fetch messages before the local last message id
-        final await getMessagesBefore(
+        final messagesBefore = await getMessagesBefore(
           beforeMessageId: firstMessageIdForTaskInMemory,
           taskId: task.id,
         );
+
+        return messagesBefore.length;
       } else if (task.firstMessageId != null && !gotRecentMessages) {
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
         // No messages for this task in memory, fetch recent messages for the task
