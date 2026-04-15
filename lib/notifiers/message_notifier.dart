@@ -80,6 +80,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         print(
           "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
         );
+
         // Last message is not in memory, fetch messages after the local last message id
         final messagesAfter = await getMessagesAfter(
           afterMessageId: lastMessageIdForTaskInMemory,
@@ -91,6 +92,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         gotRecentMessages = true;
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
         // No messages for this task in memory, fetch recent messages for the task
+
         final recent = await getRecent(taskId: task.id, limit: 20);
 
         return recent.length;
@@ -114,6 +116,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         print(
           "[MESSAGE_NOTIFIER] task ${task.id} first msg id: ${task.firstMessageId}",
         );
+
         // Last message is not in memory, fetch messages before the local last message id
         final messagesBefore = await getMessagesBefore(
           beforeMessageId: firstMessageIdForTaskInMemory,
@@ -123,6 +126,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
         return messagesBefore.length;
       } else if (task.firstMessageId != null && !gotRecentMessages) {
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
+
         // No messages for this task in memory, fetch recent messages for the task
         final recent = await getRecent(taskId: task.id, limit: 20);
 
