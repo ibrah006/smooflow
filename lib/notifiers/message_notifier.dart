@@ -116,7 +116,9 @@ class MessageNotifier extends StateNotifier<MessageState> {
       } else if (task.firstMessageId != null && !gotRecentMessages) {
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
         // No messages for this task in memory, fetch recent messages for the task
-        await getRecent(taskId: task.id, limit: 20);
+        final messagesBefore = await getRecent(taskId: task.id, limit: 20);
+
+        return messagesBefore.length;
       }
     }
   }
