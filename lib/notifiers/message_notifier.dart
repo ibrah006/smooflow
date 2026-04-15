@@ -96,6 +96,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
     // Older messages for task
     try {
       state.messages.lastWhere((m) => m.id == task.firstMessageId);
+
+      return 0;
     } catch (e) {
       final firstMessageIdForTaskInMemory = _firstMessageIdForTask(task.id);
 
@@ -123,6 +125,8 @@ class MessageNotifier extends StateNotifier<MessageState> {
         return recent.length;
       }
     }
+
+    return 0;
   }
 
   /// Returns the fetched messages from server, NOT from existing state
