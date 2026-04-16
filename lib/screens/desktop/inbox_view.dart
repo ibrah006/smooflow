@@ -611,7 +611,7 @@ class _ActivityDetailPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 100),
+      duration: Duration(milliseconds: 80),
       width: isSelected ? _T.detailW : 0,
       child:
           item == null
