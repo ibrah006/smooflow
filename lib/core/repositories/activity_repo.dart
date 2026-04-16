@@ -14,4 +14,18 @@ class ActivityRepo {
     final List<dynamic> body = jsonDecode(response.body);
     return body.map((taskJson) => TaskActivity.fromJson(taskJson)).toList();
   }
+
+  /// POST /activities/mark-seen — Mark inbox message/activity as seen
+  Future markSeen(int activityId) async {
+    final response = await ApiClient.http.post(
+      '/activities/mark-seen',
+      body: {
+        "activityIds": [activityId],
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to mark inbox message(s) as seen');
+    }
+  }
 }
