@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
-import 'package:smooflow/core/repositories/task_activity_repo.dart';
+import 'package:smooflow/core/repositories/activity_repo.dart';
 import 'package:smooflow/data/inbox_item.dart';
 
 class InboxState {
