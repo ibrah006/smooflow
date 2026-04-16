@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/data/inbox_item.dart';
@@ -112,7 +113,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
   @override
   Widget build(BuildContext context) {
-    final inboxState = ref.watch(inboxNotifierProvider);
+    // final inboxState = ref.watch(inboxNotifierProvider);
+
+    final inboxState = InboxState(items: sampleInboxItems);
 
     return Row(
       children: [
