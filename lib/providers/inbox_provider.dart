@@ -44,9 +44,9 @@ class InboxState {
 
 class InboxNotifier extends StateNotifier<InboxState> {
   final ActivityRepo _repo;
-  final MessageRepo _messageRepo;
+  final Ref _ref;
 
-  InboxNotifier(this._repo, this._messageRepo) : super(const InboxState());
+  InboxNotifier(this._repo, this._ref) : super(const InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
   Future<void> fetchInbox({bool refresh = false}) async {
@@ -70,7 +70,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
       // Fetch recent messages (from tasks with unread messages)
       // This is a simplified approach - you might want to optimize this
-      final messagesResponse = await _repo.get(
+      final messagesResponse = await _repo.(
         '/messages/recent',
         queryParameters: {'limit': 20},
       );
@@ -158,6 +158,5 @@ final activityRepoProvider = Provider<ActivityRepo>((ref) => ActivityRepo());
 
 final inboxProvider = StateNotifierProvider<InboxNotifier, InboxState>((ref) {
   final repo = ref.watch(activityRepoProvider);
-  final messageRepo = ref.watch(messageRepoProvider);
-  return InboxNotifier(repo, messageRepo);
+  return InboxNotifier(repo, ref);
 });
