@@ -5,7 +5,7 @@ import 'package:smooflow/core/models/task_activity.dart';
 
 class ActivityRepo {
   /// GET /activities/inbox — fetch inbox activities
-  Future<List<TaskActivity>> fetchInbox() async {
+  Future<List<TaskActivity>> fetchInbox({int limit = 30, int? offset}) async {
     final response = await ApiClient.http.get('/activities/inbox');
     if (response.statusCode != 200) {
       throw Exception('Failed to load inbox: ${response.body}');

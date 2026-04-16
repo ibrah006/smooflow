@@ -55,9 +55,9 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final offset = refresh ? 0 : state.items.length;
 
       // Fetch activities
-      final activitiesResponse = await _repo.get(
-        '/activities/inbox',
-        queryParameters: {'limit': 30, 'offset': offset},
+      final activitiesResponse = await _repo.fetchInbox(
+        limit: 30,
+        offset: offset,
       );
 
       final activities =
