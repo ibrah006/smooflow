@@ -70,14 +70,9 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
       // Fetch recent messages (from tasks with unread messages)
       // This is a simplified approach - you might want to optimize this
-      final messagesResponse = await _ref
+      final messages = await _ref
           .read(messageNotifierProvider.notifier)
           .getRecent(limit: 20);
-
-      final messages =
-          (messagesResponse['messages'] as List)
-              .map((json) => Message.fromJson(json))
-              .toList();
 
       // Merge activities and messages, sort by timestamp
       final activityItems =
