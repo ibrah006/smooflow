@@ -103,12 +103,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   /// Mark activity as seen
   Future<void> markActivitySeen(int activityId) async {
     try {
-      await _repo.post(
-        '/activities/mark-seen',
-        data: {
-          'activityIds': [activityId],
-        },
-      );
+      await _repo.markSeen(activityId);
 
       // Update local state
       final updatedItems =
