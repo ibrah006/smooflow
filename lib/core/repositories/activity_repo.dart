@@ -1,19 +1,16 @@
 import 'dart:convert';
 
 import 'package:smooflow/core/api/api_client.dart';
-import 'package:smooflow/core/models/task_activity.dart';
 
 class ActivityRepo {
   /// GET /activities/inbox — fetch inbox activities
-  Future<List<TaskActivity>> fetchInbox({int limit = 30, int? offset}) async {
+  Future<Map<String, dynamic>> fetchInbox({int limit = 30, int? offset}) async {
     final response = await ApiClient.http.get('/activities/inbox');
     if (response.statusCode != 200) {
       throw Exception('Failed to load inbox: ${response.body}');
     }
 
-    return (jsonDecode(response.body)['activities'] as List)
-        .map((json) => TaskActivity.fromJson(json))
-        .toList();
+    return jsonDecode(response.body);
   }
 
   /// POST /activities/mark-seen — Mark inbox message/activity as seen
