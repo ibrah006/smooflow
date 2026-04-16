@@ -165,8 +165,12 @@ class _InboxViewState extends ConsumerState<InboxView> {
         ),
 
         // Detail panel
-        if (_selectedItem != null)
-          _ActivityDetailPanel(item: _selectedItem!, onClose: _closeDetail),
+        // if (_selectedItem != null)
+        _ActivityDetailPanel(
+          item: _selectedItem,
+          onClose: _closeDetail,
+          isSelected: _selectedItem != null,
+        ),
       ],
     );
   }
@@ -594,39 +598,55 @@ class _EmptyState extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ActivityDetailPanel extends ConsumerWidget {
-  final InboxItem item;
+  final InboxItem? item;
   final VoidCallback onClose;
+  final bool isSelected;
 
-  const _ActivityDetailPanel({required this.item, required this.onClose});
+  const _ActivityDetailPanel({
+    required this.item,
+    required this.onClose,
+    required this.isSelected,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      width: _T.detailW,
-      decoration: const BoxDecoration(
-        color: _T.white,
-        border: Border(left: BorderSide(color: _T.slate200)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          _DetailHeader(onClose: onClose),
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 100),
+      width: isSelected ? _T.detailW : 0,
+      child:
+          item == null
+              ? SizedBox()
+              : Container(
+                // width: _T.detailW,
+                decoration: const BoxDecoration(
+                  color: _T.white,
+                  border: Border(left: BorderSide(color: _T.slate200)),
+                ),
+                child: Column(
+                  children: [
+                    // Header
+                    _DetailHeader(onClose: onClose),
 
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child:
-                  item.type == InboxItemType.activity
-                      ? _ActivityDetailContent(activity: item.activity!)
-                      : _MessageDetailContent(message: item.message!),
-            ),
-          ),
+                    // Content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child:
+                            item!.type == InboxItemType.activity
+                                ? _ActivityDetailContent(
+                                  activity: item!.activity!,
+                                )
+                                : _MessageDetailContent(
+                                  message: item!.message!,
+                                ),
+                      ),
+                    ),
 
-          // Footer action
-          _DetailFooter(item: item),
-        ],
-      ),
+                    // Footer action
+                    _DetailFooter(item: item!),
+                  ],
+                ),
+              ),
     );
   }
 }
