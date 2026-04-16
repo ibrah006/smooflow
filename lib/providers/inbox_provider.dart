@@ -41,7 +41,7 @@ class InboxState {
 }
 
 class InboxNotifier extends StateNotifier<InboxState> {
-  final TaskActivityRepo _repo = TaskActivityRepo();
+  final ActivityRepo _repo = ActivityRepo();
 
   InboxNotifier() : super(const InboxState());
 
