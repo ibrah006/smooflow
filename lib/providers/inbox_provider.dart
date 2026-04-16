@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
+import 'package:smooflow/core/repositories/task_activity_repo.dart';
 import 'package:smooflow/data/inbox_item.dart';
 
 class InboxState {
@@ -40,9 +41,9 @@ class InboxState {
 }
 
 class InboxNotifier extends StateNotifier<InboxState> {
-  final InboxRepo _repo;
+  final TaskActivityRepo _repo = TaskActivityRepo();
 
-  InboxNotifier(this._repo) : super(const InboxState());
+  InboxNotifier() : super(const InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
   Future<void> fetchInbox({bool refresh = false}) async {
@@ -156,6 +157,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
 }
 
 final inboxProvider = StateNotifierProvider<InboxNotifier, InboxState>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return InboxNotifier(apiService);
+  final apiService = ref.watch(taskActivityRepoProvider);
+  return InboxNotifier();
 });
