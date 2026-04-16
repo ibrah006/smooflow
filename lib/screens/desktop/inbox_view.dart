@@ -12,6 +12,7 @@ import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/inbox_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
