@@ -11,8 +11,9 @@ class ActivityRepo {
       throw Exception('Failed to load inbox: ${response.body}');
     }
 
-    final List<dynamic> body = jsonDecode(response.body);
-    return body.map((taskJson) => TaskActivity.fromJson(taskJson)).toList();
+    return (jsonDecode(response.body)['activities'] as List)
+        .map((json) => TaskActivity.fromJson(json))
+        .toList();
   }
 
   /// POST /activities/mark-seen — Mark inbox message/activity as seen
