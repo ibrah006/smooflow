@@ -71,7 +71,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
   void initState() {
     super.initState();
     // Load inbox on mount
-    Future.microtask(() => ref.read(inboxProvider.notifier).fetchInbox());
+    Future.microtask(
+      () => ref.read(inboxNotifierProvider.notifier).fetchInbox(),
+    );
 
     // Infinite scroll
     _scrollController.addListener(_onScroll);
@@ -86,9 +88,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      final inboxState = ref.read(inboxProvider);
+      final inboxState = ref.read(inboxNotifierProvider);
       if (!inboxState.isLoading && inboxState.hasMore) {
-        ref.read(inboxProvider.notifier).fetchInbox();
+        ref.read(inboxNotifierProvider.notifier).fetchInbox();
       }
     }
   }
@@ -98,7 +100,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
     // Mark as seen if it's an activity
     if (item.type == InboxItemType.activity && !item.isSeen) {
-      ref.read(inboxProvider.notifier).markActivitySeen(item.activity!.id);
+      ref
+          .read(inboxNotifierProvider.notifier)
+          .markActivitySeen(item.activity!.id);
     }
   }
 
@@ -108,7 +112,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
   @override
   Widget build(BuildContext context) {
-    final inboxState = ref.watch(inboxProvider);
+    final inboxState = ref.watch(inboxNotifierProvider);
 
     return Row(
       children: [

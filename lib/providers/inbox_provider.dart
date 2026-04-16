@@ -150,7 +150,9 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
 final activityRepoProvider = Provider<ActivityRepo>((ref) => ActivityRepo());
 
-final inboxProvider = StateNotifierProvider<InboxNotifier, InboxState>((ref) {
+final inboxNotifierProvider = StateNotifierProvider<InboxNotifier, InboxState>((
+  ref,
+) {
   final repo = ref.watch(activityRepoProvider);
   return InboxNotifier(repo, ref);
 });
