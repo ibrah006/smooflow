@@ -50,6 +50,7 @@ import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
+import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
@@ -104,6 +105,7 @@ DesignStageInfo _stageInfo(TaskStatus s) =>
 // ─────────────────────────────────────────────────────────────────────────────
 enum _AdminView {
   overview,
+  inbox,
   list,
   clients,
   team,
@@ -382,6 +384,8 @@ class _AdminDesktopDashboardScreenState
                                           projects: _projects,
                                           members: _members,
                                         ))
+                                    : _view == _AdminView.inbox
+                                    ? InboxView()
                                     : _view == _AdminView.list
                                     ? TaskListView(
                                       // tasks:             _visibleTasks,
@@ -601,6 +605,18 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
                 // Tasks nav item → goes straight to list view with no filter
+                _SidebarNavItem(
+                  icon: Icons.assignment_outlined,
+                  label: 'Inbox',
+                  isActive: widget.currentView == _AdminView.inbox,
+                  badge: null,
+                  // widget.tasks.length > 0
+                  //     ? widget.tasks.length.toString()
+                  //     : null,
+                  onTap: () {
+                    widget.onViewChanged(_AdminView.inbox);
+                  },
+                ),
                 _SidebarNavItem(
                   icon: Icons.assignment_outlined,
                   label: 'All Tasks',
@@ -833,6 +849,7 @@ class _AdminTopbar extends StatelessWidget {
   // Returns (category, label) for non-overview views.
   // category is rendered muted, label is rendered bold.
   ({String category, String label}) _sectionMeta() => switch (currentView) {
+    _AdminView.inbox => (category: 'Workspace', label: 'Inbox'),
     _AdminView.list => (category: 'Workspace', label: 'Tasks'),
     _AdminView.reports => (category: 'Workspace', label: 'Reports'),
     _AdminView.printers => (category: 'Operations', label: 'Printers'),
