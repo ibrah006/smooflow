@@ -12,8 +12,9 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
-  TaskNotifier(this._repo, this._client, Ref ref) : super(TaskState()) {
-    _initializeSocket(ref);
+  final Ref ref;
+  TaskNotifier(this._repo, this._client, this.ref) : super(TaskState()) {
+    _initializeSocket();
   }
 
   final TaskRepo _repo;
@@ -553,11 +554,11 @@ class TaskNotifier extends StateNotifier<TaskState> {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// Initialize WebSocket and setup listeners
-  void _initializeSocket(Ref ref) {
-    _initialize(ref);
+  void _initializeSocket() {
+    _initialize();
   }
 
-  void _initialize(Ref ref) {
+  void _initialize() {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
       if (mounted) {
