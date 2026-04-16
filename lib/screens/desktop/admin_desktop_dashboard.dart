@@ -606,7 +606,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 ),
                 // Tasks nav item → goes straight to list view with no filter
                 _SidebarNavItem(
-                  icon: Icons.assignment_outlined,
+                  icon: Icons.inbox_rounded,
                   label: 'Inbox',
                   isActive: widget.currentView == _AdminView.inbox,
                   badge: null,
