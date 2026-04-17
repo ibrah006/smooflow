@@ -220,7 +220,11 @@ class _InboxHeader extends StatelessWidget {
               color: _T.blue50,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.inbox_rounded, size: 16, color: _T.blue),
+            child: const Icon(
+              Icons.notifications_outlined,
+              size: 16,
+              color: _T.blue,
+            ),
           ),
           const SizedBox(width: 12),
           const Text(
