@@ -122,8 +122,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
   _detailPanel() {
     final task = ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
 
-    print("task id: ${_selectedItem?.taskId}");
-
     return DetailPanel(
       task: task!,
       onClose: _closeDetail,
@@ -133,8 +131,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
   @override
   Widget build(BuildContext context) {
-    // final inboxState = ref.watch(inboxNotifierProvider);
-    final inboxState = InboxState(items: sampleInboxItems);
+    final inboxState = ref.watch(inboxNotifierProvider);
 
     return Row(
       children: [
