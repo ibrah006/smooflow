@@ -24,41 +24,41 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   // Brand
-  static const blue       = Color(0xFF2563EB);
-  static const blueHover  = Color(0xFF1D4ED8);
-  static const blue100    = Color(0xFFDBEAFE);
-  static const blue50     = Color(0xFFEFF6FF);
-  static const teal       = Color(0xFF38BDF8);
+  static const blue = Color(0xFF2563EB);
+  static const blueHover = Color(0xFF1D4ED8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const teal = Color(0xFF38BDF8);
 
   // Semantic
-  static const green      = Color(0xFF10B981);
-  static const green50    = Color(0xFFECFDF5);
-  static const amber      = Color(0xFFF59E0B);
-  static const amber50    = Color(0xFFFEF3C7);
-  static const red        = Color(0xFFEF4444);
-  static const red50      = Color(0xFFFEE2E2);
-  static const purple     = Color(0xFF8B5CF6);
-  static const purple50   = Color(0xFFF3E8FF);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
 
   // Neutrals
-  static const slate50    = Color(0xFFF8FAFC);
-  static const slate100   = Color(0xFFF1F5F9);
-  static const slate200   = Color(0xFFE2E8F0);
-  static const slate300   = Color(0xFFCBD5E1);
-  static const slate400   = Color(0xFF94A3B8);
-  static const slate500   = Color(0xFF64748B);
-  static const ink        = Color(0xFF0F172A);
-  static const ink2       = Color(0xFF1E293B);
-  static const ink3       = Color(0xFF334155);
-  static const white      = Colors.white;
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
 
   // Dimensions
-  static const sidebarW  = 220.0;
-  static const topbarH   = 52.0;
-  static const detailW   = 400.0;
+  static const sidebarW = 220.0;
+  static const topbarH = 52.0;
+  static const detailW = 400.0;
 
   // Radius
-  static const r   = 8.0;
+  static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
 }
@@ -67,16 +67,17 @@ class _T {
 // DATA MODELS
 // ─────────────────────────────────────────────────────────────────────────────
 enum TaskFilter { all, mine, overdue }
+
 enum ViewMode { board, list }
 
 /// Extension to compute the next stage in the design pipeline.
 extension TaskStatusNext on TaskStatus {
   TaskStatus? get nextStage => switch (this) {
-    TaskStatus.pending         => TaskStatus.designing,
-    TaskStatus.designing       => TaskStatus.waitingApproval,
+    TaskStatus.pending => TaskStatus.designing,
+    TaskStatus.designing => TaskStatus.waitingApproval,
     TaskStatus.waitingApproval => TaskStatus.clientApproved,
-    TaskStatus.clientApproved  => TaskStatus.printing,
-    _                          => null,
+    TaskStatus.clientApproved => TaskStatus.printing,
+    _ => null,
   };
 }
 
@@ -87,7 +88,8 @@ class DesignDashboardScreen extends ConsumerStatefulWidget {
   const DesignDashboardScreen({super.key});
 
   @override
-  ConsumerState<DesignDashboardScreen> createState() => _DesignDashboardScreenState();
+  ConsumerState<DesignDashboardScreen> createState() =>
+      _DesignDashboardScreenState();
 }
 
 class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
@@ -97,20 +99,27 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   // Read from Riverpod — never mutate directly
   List<Project> get _projects => ref.watch(projectNotifierProvider);
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks.where((t) =>
-      t.status == TaskStatus.pending ||
-      t.status == TaskStatus.designing ||
-      t.status == TaskStatus.waitingApproval ||
-      t.status == TaskStatus.clientApproved ||
-      t.status == TaskStatus.waitingPrinting ||
-      t.status == TaskStatus.printing || 
-      t.status == TaskStatus.printingCompleted).toList();
+  List<Task> get _tasks =>
+      ref
+          .watch(taskNotifierProvider)
+          .tasks
+          .where(
+            (t) =>
+                t.status == TaskStatus.pending ||
+                t.status == TaskStatus.designing ||
+                t.status == TaskStatus.waitingApproval ||
+                t.status == TaskStatus.clientApproved ||
+                t.status == TaskStatus.waitingPrinting ||
+                t.status == TaskStatus.printing ||
+                t.status == TaskStatus.printingCompleted,
+          )
+          .toList();
 
   String? _selectedProjectId;
-  int?    _selectedTaskId;
-  TaskFilter _filter   = TaskFilter.all;
-  ViewMode   _viewMode = ViewMode.board;
-  String     _searchQuery = '';
+  int? _selectedTaskId;
+  TaskFilter _filter = TaskFilter.all;
+  ViewMode _viewMode = ViewMode.board;
+  String _searchQuery = '';
 
   bool _isAddingTask = false;
 
@@ -118,20 +127,31 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   String? get _selectedProjectName {
     try {
-      return _selectedProjectId != null? ref.watch(projectNotifierProvider).firstWhere((p)=> p.id == _selectedProjectId).name : null;
-    } catch(e) {
+      return _selectedProjectId != null
+          ? ref
+              .watch(projectNotifierProvider)
+              .firstWhere((p) => p.id == _selectedProjectId)
+              .name
+          : null;
+    } catch (e) {
       return "Loading Project";
     }
   }
 
-  Task? get _selectedTask => _selectedTaskId == null
-      ? null
-      : _tasks.cast<Task?>().firstWhere((t) => t!.id == _selectedTaskId, orElse: () => null);
+  Task? get _selectedTask =>
+      _selectedTaskId == null
+          ? null
+          : _tasks.cast<Task?>().firstWhere(
+            (t) => t!.id == _selectedTaskId,
+            orElse: () => null,
+          );
 
   List<Task> get _visibleTasks {
     return _tasks.where((t) {
-      if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
-      if (_filter == TaskFilter.mine && !t.assignees.contains(_currentUser.id)) return false;
+      if (_selectedProjectId != null && t.projectId != _selectedProjectId)
+        return false;
+      if (_filter == TaskFilter.mine && !t.assignees.contains(_currentUser.id))
+        return false;
       if (_filter == TaskFilter.overdue) {
         final d = t.dueDate;
         if (d == null || !d.isBefore(DateTime.now())) return false;
@@ -146,7 +166,7 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   }
 
   void _selectTask(int id) => setState(() => _selectedTaskId = id);
-  void _closeDetail()      => setState(() => _selectedTaskId = null);
+  void _closeDetail() => setState(() => _selectedTaskId = null);
 
   /// Advance the selected task to the next stage via the Riverpod notifier.
   Future<void> _advanceTask(Task task) async {
@@ -177,15 +197,31 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 10),
-          Flexible(child: Text(msg, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
-        ]),
+        content: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: _T.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_T.rLg)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
         duration: const Duration(seconds: 3),
         elevation: 8,
       ),
@@ -196,10 +232,14 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      await ref.read(projectNotifierProvider.notifier).load(projectsLastAddedLocal: null);
+      await ref
+          .read(projectNotifierProvider.notifier)
+          .load(projectsLastAddedLocal: null);
       await ref.read(materialNotifierProvider.notifier).fetchMaterials();
       await ref.read(taskNotifierProvider.notifier).loadAll();
-      await ref.read(taskNotifierProvider.notifier).fetchProductionScheduleToday();
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .fetchProductionScheduleToday();
       await ref.read(memberNotifierProvider.notifier).members;
     });
   }
@@ -214,12 +254,12 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // unfocus from add new task 
+        // unfocus from add new task
         print("unfocus now from add new task");
         _addTaskFocusNode.unfocus();
 
         setState(() {
-          _isAddingTask = false;          
+          _isAddingTask = false;
         });
       },
       child: Scaffold(
@@ -229,7 +269,10 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
           onKeyEvent: (_, event) {
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.escape) {
-                if (_selectedTaskId != null) { _closeDetail(); return KeyEventResult.handled; }
+                if (_selectedTaskId != null) {
+                  _closeDetail();
+                  return KeyEventResult.handled;
+                }
               }
             }
             return KeyEventResult.ignored;
@@ -242,8 +285,9 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                 tasks: _tasks,
                 selectedProjectId: _selectedProjectId,
                 viewMode: _viewMode,
-                onProjectSelected: (id) => setState(() => _selectedProjectId = id),
-                onViewModeChanged: (m)  => setState(() => _viewMode = m),
+                onProjectSelected:
+                    (id) => setState(() => _selectedProjectId = id),
+                onViewModeChanged: (m) => setState(() => _viewMode = m),
                 onNewProject: _showProjectModal,
               ),
               // ── Main area ─────────────────────────────────────────────────
@@ -251,62 +295,68 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                 child: Column(
                   children: [
                     _Topbar(
-                      selectedProject: _selectedProjectId != null
-                          ? _projects.cast<Project?>().firstWhere((p) => p!.id == _selectedProjectId, orElse: () => null)
-                          : null,
+                      selectedProject:
+                          _selectedProjectId != null
+                              ? _projects.cast<Project?>().firstWhere(
+                                (p) => p!.id == _selectedProjectId,
+                                orElse: () => null,
+                              )
+                              : null,
                       filter: _filter,
                       viewMode: _viewMode,
                       searchCtrl: _searchCtrl,
-                      onFilterChanged: (f)  => setState(() => _filter = f),
+                      onFilterChanged: (f) => setState(() => _filter = f),
                       onViewModeChanged: (m) => setState(() => _viewMode = m),
-                      onSearchChanged: (q)  => setState(() => _searchQuery = q),
+                      onSearchChanged: (q) => setState(() => _searchQuery = q),
                       onNewTask: _showTaskModal,
                     ),
                     Expanded(
                       child: Row(
                         children: [
                           Expanded(
-                            child: _viewMode == ViewMode.board
-                                ?  _visibleTasks.isEmpty
-                                  ? ProjectEmptyState(
-                                      onCreateTask: () {},
-                                      onClearFilters: () {},
-                                      onProjectSelected: (p) {},
-                                      projectName: _selectedProjectName,
-                                      otherProjects: _projects,
-                                      // _visibleTasks.isEmpty && _projects.isNotEmpty
-                                      hasActiveFilters: false,
-                                    )
-                                    : BoardView(
-                                      tasks: _visibleTasks,
+                            child:
+                                _viewMode == ViewMode.board
+                                    ? _visibleTasks.isEmpty
+                                        ? ProjectEmptyState(
+                                          onCreateTask: () {},
+                                          onClearFilters: () {},
+                                          onProjectSelected: (p) {},
+                                          projectName: _selectedProjectName,
+                                          otherProjects: _projects,
+                                          // _visibleTasks.isEmpty && _projects.isNotEmpty
+                                          hasActiveFilters: false,
+                                        )
+                                        : BoardView(
+                                          tasks: _visibleTasks,
+                                          projects: _projects,
+                                          selectedTaskId: _selectedTaskId,
+                                          onTaskSelected: _selectTask,
+                                          onAddTask: _showTaskModal,
+                                          addTaskFocusNode: _addTaskFocusNode,
+                                          isAddingTask: _isAddingTask,
+                                          selectedProjectId: _selectedProjectId,
+                                        )
+                                    : TaskListView(
+                                      // tasks: _visibleTasks,
                                       projects: _projects,
                                       selectedTaskId: _selectedTaskId,
                                       onTaskSelected: _selectTask,
-                                      onAddTask: _showTaskModal,
-                                      addTaskFocusNode: _addTaskFocusNode,
-                                      isAddingTask: _isAddingTask,
-                                      selectedProjectId: _selectedProjectId
-                                    )
-                                : TaskListView(
-                                    // tasks: _visibleTasks,
-                                    projects: _projects,
-                                    selectedTaskId: _selectedTaskId,
-                                    onTaskSelected: _selectTask,
-                                  ),
+                                    ),
                           ),
                           // ── Detail panel ──────────────────────────────────
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             curve: Curves.easeInOut,
                             width: _selectedTaskId != null ? _T.detailW : 0,
-                            child: _selectedTaskId != null && _selectedTask != null
-                                ? DetailPanel(
-                                    task: _selectedTask!,
-                                    projects: _projects,
-                                    onClose: _closeDetail,
-                                    onAdvance: () => _advanceTask(_selectedTask!),
-                                  )
-                                : const SizedBox.shrink(),
+                            child:
+                                _selectedTaskId != null && _selectedTask != null
+                                    ? DetailPanel(
+                                      task: _selectedTask!,
+                                      onClose: _closeDetail,
+                                      onAdvance:
+                                          () => _advanceTask(_selectedTask!),
+                                    )
+                                    : const SizedBox.shrink(),
                           ),
                         ],
                       ),
@@ -332,14 +382,19 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
 
   void _showTaskModal() async {
     // Determine next id from current task list
-    final nextId = (_tasks.isEmpty ? 0 : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) + 1;
+    final nextId =
+        (_tasks.isEmpty
+            ? 0
+            : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) +
+        1;
     showDialog(
       context: context,
-      builder: (_) => TaskModal(
-        projects: _projects,
-        preselectedProjectId: _selectedProjectId,
-        nextId: nextId,
-      ),
+      builder:
+          (_) => TaskModal(
+            projects: _projects,
+            preselectedProjectId: _selectedProjectId,
+            nextId: nextId,
+          ),
     );
 
     setState(() {});
@@ -359,14 +414,19 @@ class _Sidebar extends ConsumerWidget {
   final VoidCallback onNewProject;
 
   const _Sidebar({
-    required this.projects, required this.tasks, required this.selectedProjectId,
-    required this.viewMode, required this.onProjectSelected,
-    required this.onViewModeChanged, required this.onNewProject,
+    required this.projects,
+    required this.tasks,
+    required this.selectedProjectId,
+    required this.viewMode,
+    required this.onProjectSelected,
+    required this.onViewModeChanged,
+    required this.onNewProject,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeCount = tasks.where((t) => t.status != TaskStatus.clientApproved).length;
+    final activeCount =
+        tasks.where((t) => t.status != TaskStatus.clientApproved).length;
     final members = ref.watch(memberNotifierProvider).members;
 
     return Container(
@@ -378,18 +438,43 @@ class _Sidebar extends ConsumerWidget {
           // Logo
           Container(
             height: _T.topbarH,
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0x10FFFFFF)))),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0x10FFFFFF))),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Logo(size: 25),
                 const SizedBox(width: 9),
-                const Text('smooflow', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: -0.6, color: Colors.white)),
+                const Text(
+                  'smooflow',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    color: Colors.white,
+                  ),
+                ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(color: const Color(0xFF2563EB).withOpacity(0.35), borderRadius: BorderRadius.circular(4)),
-                  child: const Text('DESIGN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: Color(0xFF93C5FD))),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'DESIGN',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: Color(0xFF93C5FD),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -461,17 +546,34 @@ class _Sidebar extends ConsumerWidget {
               onTap: onNewProject,
               borderRadius: BorderRadius.circular(_T.r),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withOpacity(0.14), width: 1.5),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.14),
+                    width: 1.5,
+                  ),
                   borderRadius: BorderRadius.circular(_T.r),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add, size: 14, color: Colors.white.withOpacity(0.4)),
+                    Icon(
+                      Icons.add,
+                      size: 14,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
                     const SizedBox(width: 7),
-                    Text('New Project', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.4))),
+                    Text(
+                      'New Project',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -480,23 +582,48 @@ class _Sidebar extends ConsumerWidget {
 
           // Team section
           Container(
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0x12FFFFFF))),
+            ),
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DESIGN TEAM', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: Colors.white.withOpacity(0.25))),
-                const SizedBox(height: 10),
-                ...members.map((m) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      AvatarWidget(initials: m.initials, color: m.color, size: 26),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(m.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.5)))),
-                    ],
+                Text(
+                  'DESIGN TEAM',
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                    color: Colors.white.withOpacity(0.25),
                   ),
-                )),
+                ),
+                const SizedBox(height: 10),
+                ...members.map(
+                  (m) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        AvatarWidget(
+                          initials: m.initials,
+                          color: m.color,
+                          size: 26,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            m.name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -512,7 +639,15 @@ class _SidebarLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(left: 8, bottom: 4),
-    child: Text(text.toUpperCase(), style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: Colors.white.withOpacity(0.28))),
+    child: Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.0,
+        color: Colors.white.withOpacity(0.28),
+      ),
+    ),
   );
 }
 
@@ -523,7 +658,13 @@ class _SidebarNavItem extends StatelessWidget {
   final String? badge;
   final VoidCallback onTap;
 
-  const _SidebarNavItem({required this.icon, required this.label, required this.isActive, required this.onTap, this.badge});
+  const _SidebarNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    this.badge,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -538,14 +679,40 @@ class _SidebarNavItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: Colors.white.withOpacity(isActive ? 1.0 : 0.5)),
+              Icon(
+                icon,
+                size: 14,
+                color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+              ),
               const SizedBox(width: 9),
-              Expanded(child: Text(label, style: TextStyle(fontSize: 13, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: Colors.white.withOpacity(isActive ? 1.0 : 0.5)))),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+                  ),
+                ),
+              ),
               if (badge != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                  decoration: BoxDecoration(color: _T.blue, borderRadius: BorderRadius.circular(99)),
-                  child: Text(badge!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _T.blue,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -562,7 +729,13 @@ class _SidebarProjectRow extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _SidebarProjectRow({required this.name, required this.color, required this.count, required this.isActive, required this.onTap});
+  const _SidebarProjectRow({
+    required this.name,
+    required this.color,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -577,10 +750,31 @@ class _SidebarProjectRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(
             children: [
-              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
               const SizedBox(width: 9),
-              Expanded(child: Text(name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: Colors.white.withOpacity(isActive ? 0.9 : 0.55)))),
-              Text('$count', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.25))),
+              Expanded(
+                child: Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: Colors.white.withOpacity(isActive ? 0.9 : 0.55),
+                  ),
+                ),
+              ),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.25),
+                ),
+              ),
             ],
           ),
         ),
@@ -605,27 +799,52 @@ class _Topbar extends StatelessWidget {
   final _currentUser = LoginService.currentUser!;
 
   _Topbar({
-    required this.selectedProject, required this.filter, required this.viewMode,
-    required this.searchCtrl, required this.onFilterChanged,
-    required this.onViewModeChanged, required this.onSearchChanged, required this.onNewTask,
+    required this.selectedProject,
+    required this.filter,
+    required this.viewMode,
+    required this.searchCtrl,
+    required this.onFilterChanged,
+    required this.onViewModeChanged,
+    required this.onSearchChanged,
+    required this.onNewTask,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: _T.topbarH,
-      decoration: const BoxDecoration(color: _T.white, border: Border(bottom: BorderSide(color: _T.slate200))),
+      decoration: const BoxDecoration(
+        color: _T.white,
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           // Breadcrumb
-          Text('Design Board', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink3)),
+          Text(
+            'Design Board',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _T.ink3,
+            ),
+          ),
           if (selectedProject != null) ...[
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Text('›', style: TextStyle(color: _T.slate300, fontSize: 13)),
+              child: Text(
+                '›',
+                style: TextStyle(color: _T.slate300, fontSize: 13),
+              ),
             ),
-            Text(selectedProject!.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink)),
+            Text(
+              selectedProject!.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _T.ink,
+              ),
+            ),
           ],
           const SizedBox(width: 16),
 
@@ -678,11 +897,23 @@ class _Topbar extends StatelessWidget {
           // Filters
           Row(
             children: [
-              _FilterChip(label: 'All',     isActive: filter == TaskFilter.all,     onTap: () => onFilterChanged(TaskFilter.all)),
+              _FilterChip(
+                label: 'All',
+                isActive: filter == TaskFilter.all,
+                onTap: () => onFilterChanged(TaskFilter.all),
+              ),
               const SizedBox(width: 4),
-              _FilterChip(label: 'Mine',    isActive: filter == TaskFilter.mine,    onTap: () => onFilterChanged(TaskFilter.mine)),
+              _FilterChip(
+                label: 'Mine',
+                isActive: filter == TaskFilter.mine,
+                onTap: () => onFilterChanged(TaskFilter.mine),
+              ),
               const SizedBox(width: 4),
-              _FilterChip(label: 'Overdue', isActive: filter == TaskFilter.overdue, onTap: () => onFilterChanged(TaskFilter.overdue)),
+              _FilterChip(
+                label: 'Overdue',
+                isActive: filter == TaskFilter.overdue,
+                onTap: () => onFilterChanged(TaskFilter.overdue),
+              ),
             ],
           ),
 
@@ -712,14 +943,32 @@ class _Topbar extends StatelessWidget {
           // User chip
           Container(
             padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-            decoration: BoxDecoration(border: Border.all(color: _T.slate200), borderRadius: BorderRadius.circular(99)),
+            decoration: BoxDecoration(
+              border: Border.all(color: _T.slate200),
+              borderRadius: BorderRadius.circular(99),
+            ),
             child: Row(
               children: [
-                AvatarWidget(initials: _currentUser.initials, color: _T.blue, size: 24),
+                AvatarWidget(
+                  initials: _currentUser.initials,
+                  color: _T.blue,
+                  size: 24,
+                ),
                 const SizedBox(width: 7),
-                Text(_currentUser.nameShort, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _T.ink3)),
+                Text(
+                  _currentUser.nameShort,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _T.ink3,
+                  ),
+                ),
                 const SizedBox(width: 5),
-                const Icon(Icons.keyboard_arrow_down, size: 14, color: _T.slate400),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 14,
+                  color: _T.slate400,
+                ),
               ],
             ),
           ),
@@ -734,7 +983,12 @@ class _ViewToggleBtn extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  const _ViewToggleBtn({required this.icon, required this.label, required this.isActive, required this.onTap});
+  const _ViewToggleBtn({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -746,13 +1000,29 @@ class _ViewToggleBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? _T.white : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4, offset: const Offset(0, 1))] : [],
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                  : [],
         ),
         child: Row(
           children: [
             Icon(icon, size: 12, color: isActive ? _T.ink : _T.slate500),
             const SizedBox(width: 5),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isActive ? _T.ink : _T.slate500)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? _T.ink : _T.slate500,
+              ),
+            ),
           ],
         ),
       ),
@@ -764,7 +1034,11 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.isActive, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -778,7 +1052,14 @@ class _FilterChip extends StatelessWidget {
           border: Border.all(color: isActive ? _T.ink : _T.slate200),
           borderRadius: BorderRadius.circular(99),
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isActive ? _T.white : _T.slate500)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isActive ? _T.white : _T.slate500,
+          ),
+        ),
       ),
     );
   }
@@ -851,30 +1132,56 @@ class _SmooflowLogoMark extends StatelessWidget {
   final double size;
   const _SmooflowLogoMark({required this.size});
   @override
-  Widget build(BuildContext context) => CustomPaint(size: Size(size, size), painter: _LogoPainter());
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size(size, size), painter: _LogoPainter());
 }
 
 class _LogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width; final h = size.height;
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
+    final w = size.width;
+    final h = size.height;
+    final paint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(w * 0.19, h * 0.66), w * 0.065, paint..color = Colors.white.withOpacity(0.5));
-    canvas.drawCircle(Offset(w * 0.48, h * 0.34), w * 0.065, paint..color = Colors.white.withOpacity(0.7));
+    canvas.drawCircle(
+      Offset(w * 0.19, h * 0.66),
+      w * 0.065,
+      paint..color = Colors.white.withOpacity(0.5),
+    );
+    canvas.drawCircle(
+      Offset(w * 0.48, h * 0.34),
+      w * 0.065,
+      paint..color = Colors.white.withOpacity(0.7),
+    );
 
-    final flowPaint = Paint()..color = Colors.white.withOpacity(0.35)..style = PaintingStyle.stroke..strokeWidth = w * 0.055..strokeCap = StrokeCap.round;
-    final flowPath = Path()
-      ..moveTo(w * 0.19, h * 0.66)
-      ..cubicTo(w * 0.19, h * 0.66, w * 0.30, h * 0.34, w * 0.48, h * 0.34)
-      ..cubicTo(w * 0.66, h * 0.34, w * 0.64, h * 0.66, w * 0.81, h * 0.55);
+    final flowPaint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.055
+          ..strokeCap = StrokeCap.round;
+    final flowPath =
+        Path()
+          ..moveTo(w * 0.19, h * 0.66)
+          ..cubicTo(w * 0.19, h * 0.66, w * 0.30, h * 0.34, w * 0.48, h * 0.34)
+          ..cubicTo(w * 0.66, h * 0.34, w * 0.64, h * 0.66, w * 0.81, h * 0.55);
     canvas.drawPath(flowPath, flowPaint);
 
-    final checkPaint = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = w * 0.077..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round;
-    final checkPath = Path()
-      ..moveTo(w * 0.35, h * 0.51)
-      ..lineTo(w * 0.48, h * 0.65)
-      ..lineTo(w * 0.81, h * 0.33);
+    final checkPaint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = w * 0.077
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round;
+    final checkPath =
+        Path()
+          ..moveTo(w * 0.35, h * 0.51)
+          ..lineTo(w * 0.48, h * 0.65)
+          ..lineTo(w * 0.81, h * 0.33);
     canvas.drawPath(checkPath, checkPaint);
   }
 

@@ -24,6 +24,7 @@ import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
@@ -118,6 +119,18 @@ class _InboxViewState extends ConsumerState<InboxView> {
     setState(() => _selectedItem = null);
   }
 
+  _detailPanel() {
+    final task = ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
+
+    print("task id: ${_selectedItem?.taskId}");
+
+    return DetailPanel(
+      task: task!,
+      onClose: _closeDetail,
+      onAdvance: () {}, //_advanceTask(_selectedTask!),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // final inboxState = ref.watch(inboxNotifierProvider);
@@ -178,12 +191,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
         ),
 
         // Detail panel
-        if (_selectedItem != null)
-          _ActivityDetailPanel(
-            item: _selectedItem!,
-            onClose: _closeDetail,
-            // isSelected: true,
-          ),
+        if (_selectedItem?.taskId != null) _detailPanel(),
       ],
     );
   }

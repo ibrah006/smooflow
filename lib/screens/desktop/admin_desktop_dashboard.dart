@@ -422,7 +422,6 @@ class _AdminDesktopDashboardScreenState
                                 _selectedTaskId != null && _selectedTask != null
                                     ? DetailPanel(
                                       task: _selectedTask!,
-                                      projects: _projects,
                                       onClose: _closeDetail,
                                       onAdvance:
                                           () => _advanceTask(_selectedTask!),

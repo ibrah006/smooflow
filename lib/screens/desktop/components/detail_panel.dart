@@ -18,6 +18,7 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
@@ -188,14 +189,12 @@ String _statusLabel(TaskStatus s) => switch (s) {
 // ─────────────────────────────────────────────────────────────────────────────
 class DetailPanel extends ConsumerStatefulWidget {
   final Task task;
-  final List<Project> projects;
   final VoidCallback onClose;
   final VoidCallback onAdvance;
 
   const DetailPanel({
     super.key,
     required this.task,
-    required this.projects,
     required this.onClose,
     required this.onAdvance,
   });
@@ -593,12 +592,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   @override
   Widget build(BuildContext context) {
     final si = stageInfo(widget.task.status);
+    final projects = ref.read(projectNotifierProvider);
     final proj =
-        widget.projects.cast<Project?>().firstWhere(
+        projects.cast<Project?>().firstWhere(
           (p) => p!.id == widget.task.projectId,
           orElse: () => null,
         ) ??
-        widget.projects.first;
+        projects.first;
 
     Member? member;
     try {
