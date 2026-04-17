@@ -54,7 +54,7 @@ class _T {
   static const rLg = 12.0;
   static const rXl = 16.0;
   static const detailW = 600.0;
-  static const topbarH = 85.0;
+  static const topbarH = 60.0;
 }
 
 class InboxView extends ConsumerStatefulWidget {
