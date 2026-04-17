@@ -216,7 +216,7 @@ class TaskRepo {
   }) async {
     final response = await ApiClient.http.put(
       '/tasks/$taskId/progress-stage',
-      body: {"newStatus": newStatus.name},
+      body: {"newStatus": newStatus.name, "isStageForward": isStageForward},
     );
 
     if (response.statusCode != 200) {
