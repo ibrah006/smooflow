@@ -12,23 +12,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/data/inbox_item.dart';
-import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_priority.dart';
-import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/inbox_provider.dart';
-import 'package:smooflow/providers/member_provider.dart';
-import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
-import 'package:smooflow/screens/desktop/constants.dart';
-import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
-import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 // Design tokens (same as before)
