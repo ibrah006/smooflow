@@ -112,12 +112,22 @@ class _InboxViewState extends ConsumerState<InboxView> {
   }
 
   _detailPanel() {
-    final task = ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
+    final task =
+        _selectedItem == null
+            ? null
+            : ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
 
-    return DetailPanel(
-      task: task!,
-      onClose: _closeDetail,
-      onAdvance: () {}, //_advanceTask(_selectedTask!),
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 80),
+      width: task != null ? null : 0,
+      child:
+          task == null
+              ? SizedBox()
+              : DetailPanel(
+                task: task,
+                onClose: _closeDetail,
+                onAdvance: () {}, //_advanceTask(_selectedTask!),
+              ),
     );
   }
 
@@ -180,7 +190,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
         ),
 
         // Detail panel
-        if (_selectedItem?.taskId != null) _detailPanel(),
+        _detailPanel(),
       ],
     );
   }
