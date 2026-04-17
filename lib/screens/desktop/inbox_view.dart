@@ -704,7 +704,7 @@ class _EmptyState extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
-              Icons.inbox_rounded,
+              Icons.notifications_outlined,
               size: 32,
               color: _T.slate300,
             ),
