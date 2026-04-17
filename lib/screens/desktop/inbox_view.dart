@@ -1,7 +1,14 @@
 // ═════════════════════════════════════════════════════════════════════════════
-// INBOX VIEW - Main Screen
+// COMPLETE DETAIL PANEL COMPONENTS
 // ═════════════════════════════════════════════════════════════════════════════
-// FILE: lib/screens/desktop/inbox_view.dart
+// All missing components to complete the comprehensive detail panel:
+// 1. TaskContextCard - Full task metadata display
+// 2. SectionTitle - Consistent section headers
+// 3. ActivityTimeline - Recent activities for the task
+// 4. MessageAttachments - File attachments display
+// 5. PrinterDetailCard - Printer information
+// 6. DetailFooter - Action buttons
+// ═════════════════════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,18 +16,21 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/data/inbox_item.dart';
+import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/inbox_provider.dart';
+import 'package:smooflow/providers/member_provider.dart';
+import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
+import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Design tokens (same as before)
 class _T {
   static const blue = Color(0xFF2563EB);
   static const blueHover = Color(0xFF1D4ED8);
@@ -47,17 +57,12 @@ class _T {
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
-  static const sidebarW = 220.0;
-  static const topbarH = 52.0;
-  static const detailW = 420.0;
   static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
+  static const detailW = 600.0;
+  static const topbarH = 85.0;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INBOX VIEW
-// ─────────────────────────────────────────────────────────────────────────────
 
 class InboxView extends ConsumerStatefulWidget {
   const InboxView({super.key});
@@ -116,7 +121,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
   @override
   Widget build(BuildContext context) {
     // final inboxState = ref.watch(inboxNotifierProvider);
-
     final inboxState = InboxState(items: sampleInboxItems);
 
     return Row(
@@ -174,12 +178,12 @@ class _InboxViewState extends ConsumerState<InboxView> {
         ),
 
         // Detail panel
-        // if (_selectedItem != null)
-        _ActivityDetailPanel(
-          item: _selectedItem,
-          onClose: _closeDetail,
-          isSelected: _selectedItem != null,
-        ),
+        if (_selectedItem != null)
+          _ActivityDetailPanel(
+            item: _selectedItem!,
+            onClose: _closeDetail,
+            isSelected: true,
+          ),
       ],
     );
   }
@@ -247,7 +251,8 @@ class _InboxHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INBOX ITEM ROW
+// Activity INBOX ITEM ROW
+// Shows richer preview with project context, assignees, and quick actions
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _InboxItemRow extends StatefulWidget {
@@ -642,6 +647,83 @@ class _InboxItemRowState extends State<_InboxItemRow> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LOADING & EMPTY STATES
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+  }
+}
+
+class _LoadingMoreIndicator extends StatelessWidget {
+  const _LoadingMoreIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(20),
+      child: Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.inbox_rounded,
+              size: 32,
+              color: _T.slate300,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No updates yet',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Activity will appear here',
+            style: TextStyle(fontSize: 12, color: _T.slate300),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MINI COMPONENTS FOR INBOX PREVIEW
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _ActivityTypeBadge extends StatelessWidget {
   final InboxItem item;
 
@@ -866,126 +948,6 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STAGE PILL (mini)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StagePill extends StatelessWidget {
-  final String label;
-  final bool isFrom;
-
-  const _StagePill({required this.label, required this.isFrom});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: isFrom ? _T.slate100 : _T.blue50,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(
-          color: isFrom ? _T.slate200 : _T.blue.withOpacity(0.3),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: isFrom ? _T.slate500 : _T.blue,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LOADING & EMPTY STATES
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-  }
-}
-
-class _LoadingMoreIndicator extends StatelessWidget {
-  const _LoadingMoreIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(20),
-      child: Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.inbox_rounded,
-              size: 32,
-              color: _T.slate300,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No updates yet',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: _T.slate400,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Activity will appear here',
-            style: TextStyle(fontSize: 12, color: _T.slate300),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Inbox/Activity DETAIL PANEL
-// ═════════════════════════════════════════════════════════════════════════════
-// Features:
-// 1. Full task context (project, assignees, dates, specs)
-// 2. Activity timeline (related activities for this task)
-// 3. Contextual actions (Reply, Progress, Reassign, etc.)
-// 4. File attachments for messages
-// 5. Inline compose for replies
-// 6. Task progression controls
-// 7. Assignee management
-// 8. Related tasks/dependencies
-// ═════════════════════════════════════════════════════════════════════════════
-
 class _ActivityDetailPanel extends ConsumerStatefulWidget {
   final InboxItem? item;
   final VoidCallback onClose;
@@ -1056,6 +1018,8 @@ class _ComprehensiveDetailPanelState
 
   @override
   Widget build(BuildContext context) {
+    final item = widget.item;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
@@ -1068,79 +1032,52 @@ class _ComprehensiveDetailPanelState
                   color: _T.white,
                   border: Border(left: BorderSide(color: _T.slate200)),
                 ),
-                child: Column(
-                  children: [
-                    // Header with close and actions
-                    _DetailHeader(item: widget.item!, onClose: widget.onClose),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(30).copyWith(bottom: 0),
+                  child: Column(
+                    children: [
+                      // Activity/Message detail
+                      if (item != null && item.activity != null)
+                        _ActivityFullDetail(activity: widget.item!.activity!),
 
-                    // Scrollable content
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Main content based on type
-                            if (widget.item!.type == InboxItemType.activity)
-                              _ActivityFullDetail(
-                                activity: widget.item!.activity!,
-                              )
-                            else
-                              _MessageFullDetail(
-                                message: widget.item!.message!,
-                              ),
+                      const SizedBox(height: 24),
 
-                            const SizedBox(height: 24),
+                      // Section title
+                      const _SectionTitle('Task Information'),
+                      const SizedBox(height: 12),
 
-                            // Task context card
-                            _TaskContextCard(item: widget.item!),
+                      // Task context
+                      _TaskContextCard(item: item!),
 
-                            const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                            // Recent activity timeline for this task
-                            const _SectionTitle('Recent Activity'),
-                            const SizedBox(height: 12),
-                            _ActivityTimeline(taskId: widget.item!.taskId),
+                      // Activity timeline
+                      const _SectionTitle('Recent Activity'),
+                      const SizedBox(height: 12),
+                      _ActivityTimeline(taskId: item.taskId),
 
-                            const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                            // Related information
-                            if (widget.item!.type == InboxItemType.activity &&
-                                widget.item!.activity!.type ==
-                                    ActivityType.printerAssigned) ...[
-                              const _SectionTitle('Printer Details'),
-                              const SizedBox(height: 12),
-                              _PrinterDetailCard(
-                                activity: widget.item!.activity!,
-                              ),
-                              const SizedBox(height: 20),
-                            ],
+                      // Printer details (conditional)
+                      if (item.type == InboxItemType.activity &&
+                          item.activity?.type ==
+                              ActivityType.printerAssigned) ...[
+                        const _SectionTitle('Printer Details'),
+                        const SizedBox(height: 12),
+                        if (item.activity != null)
+                          _PrinterDetailCard(activity: item.activity!),
+                        const SizedBox(height: 20),
+                      ],
 
-                            // Message attachments
-                            if (widget.item!.type == InboxItemType.message) ...[
-                              const _SectionTitle('Discussion'),
-                              const SizedBox(height: 12),
-                              _MessageAttachments(
-                                message: widget.item!.message!,
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Footer with actions
-                    _DetailFooter(
-                      item: widget.item!,
-                      isReplying: _isReplying,
-                      isSendingReply: _isSendingReply,
-                      replyController: _replyController,
-                      onStartReply: _startReply,
-                      onCancelReply: _cancelReply,
-                      onSendReply: _sendReply,
-                    ),
-                  ],
+                      // Message attachments (conditional)
+                      if (item.type == InboxItemType.message) ...[
+                        const _SectionTitle('Attachments'),
+                        const SizedBox(height: 12),
+                        if (item.message != null)
+                          _MessageAttachments(message: item.message!),
+                      ],
+                    ],
+                  ),
                 ),
               ),
     );
@@ -1151,70 +1088,70 @@ class _ComprehensiveDetailPanelState
 // DETAIL HEADER with context actions
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _DetailHeader extends StatelessWidget {
-  final InboxItem item;
-  final VoidCallback onClose;
+// class _DetailHeader extends StatelessWidget {
+//   final InboxItem item;
+//   final VoidCallback onClose;
 
-  const _DetailHeader({required this.item, required this.onClose});
+//   const _DetailHeader({required this.item, required this.onClose});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: _T.topbarH,
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _T.slate200)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          // Close button
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: onClose,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  border: Border.all(color: _T.slate200),
-                  borderRadius: BorderRadius.circular(_T.r),
-                ),
-                child: const Icon(Icons.close, size: 14, color: _T.slate400),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: _T.topbarH,
+//       decoration: const BoxDecoration(
+//         border: Border(bottom: BorderSide(color: _T.slate200)),
+//       ),
+//       padding: const EdgeInsets.symmetric(horizontal: 16),
+//       child: Row(
+//         children: [
+//           // Close button
+//           MouseRegion(
+//             cursor: SystemMouseCursors.click,
+//             child: GestureDetector(
+//               onTap: onClose,
+//               child: Container(
+//                 width: 28,
+//                 height: 28,
+//                 decoration: BoxDecoration(
+//                   border: Border.all(color: _T.slate200),
+//                   borderRadius: BorderRadius.circular(_T.r),
+//                 ),
+//                 child: const Icon(Icons.close, size: 14, color: _T.slate400),
+//               ),
+//             ),
+//           ),
+//           const SizedBox(width: 12),
 
-          // Type badge
-          _TypeBadge(item: item),
-          const SizedBox(width: 10),
+//           // Type badge
+//           _TypeBadge(item: item),
+//           const SizedBox(width: 10),
 
-          // Task ID
-          Text(
-            'TASK-${item.taskId}',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-              color: _T.slate400,
-            ),
-          ),
+//           // Task ID
+//           Text(
+//             'TASK-${item.taskId}',
+//             style: const TextStyle(
+//               fontSize: 11,
+//               fontWeight: FontWeight.w700,
+//               letterSpacing: 0.4,
+//               color: _T.slate400,
+//             ),
+//           ),
 
-          const Spacer(),
+//           const Spacer(),
 
-          // More actions
-          _HeaderActionButton(
-            icon: Icons.more_vert,
-            tooltip: 'More options',
-            onTap: () {
-              // Show options menu
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
+//           // More actions
+//           _HeaderActionButton(
+//             icon: Icons.more_vert,
+//             tooltip: 'More options',
+//             onTap: () {
+//               // Show options menu
+//             },
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class _TypeBadge extends StatelessWidget {
   final InboxItem item;
@@ -1324,14 +1261,166 @@ class _HeaderActionButtonState extends State<_HeaderActionButton> {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// COMPREHENSIVE DETAIL PANEL - Part 2
-// Visual Components, Task Context, Timeline, Actions
-// ═════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTIVITY FULL DETAIL
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LARGE VISUAL COMPONENTS (Enhanced from before)
-// ─────────────────────────────────────────────────────────────────────────────
+class _ActivityFullDetail extends StatelessWidget {
+  final TaskActivity activity;
+
+  const _ActivityFullDetail({required this.activity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Actor information
+        Row(
+          children: [
+            AvatarWidget(
+              initials: activity.actorInitials,
+              color: activity.actorColor ?? _T.ink3,
+              size: 52,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    activity.actorName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _getActivityFullDescription(activity),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.slate500,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // Timestamp
+        Row(
+          children: [
+            const Icon(Icons.access_time, size: 13, color: _T.slate400),
+            const SizedBox(width: 6),
+            Text(
+              _formatFullTimestamp(activity.createdAt),
+              style: const TextStyle(fontSize: 12, color: _T.slate400),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Large visual for the activity
+        _buildActivityVisual(activity),
+      ],
+    );
+  }
+
+  Widget _buildActivityVisual(TaskActivity activity) {
+    switch (activity.type) {
+      case ActivityType.stageForward:
+      case ActivityType.stageBackward:
+        return _LargeStageChangeVisual(
+          fromStage: activity.fromStage,
+          toStage: activity.toStage,
+          isForward: activity.type == ActivityType.stageForward,
+        );
+
+      case ActivityType.printerAssigned:
+        return _LargePrinterVisual(
+          printerName: activity.printerName ?? '',
+          printerNickname: activity.printerNickname ?? '',
+        );
+
+      case ActivityType.priorityChanged:
+        return _LargePriorityChangeVisual(
+          fromPriority: activity.fromPriority ?? 2,
+          toPriority: activity.toPriority ?? 2,
+        );
+
+      case ActivityType.assigneeAdded:
+        return _AssigneeAddedVisual(userName: activity.addedUserName);
+
+      case ActivityType.dueDateChanged:
+        return _DueDateChangeVisual(
+          from: activity.metadata?['fromDueDate'],
+          to: activity.metadata?['toDueDate'],
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  String _getActivityFullDescription(TaskActivity activity) {
+    switch (activity.type) {
+      case ActivityType.stageForward:
+        return 'Progressed this task forward in the workflow pipeline';
+      case ActivityType.stageBackward:
+        return 'Moved this task back to a previous stage for revision';
+      case ActivityType.printerAssigned:
+        return 'Assigned this task to a printer and started production';
+      case ActivityType.assigneeAdded:
+        return 'Assigned ${activity.addedUserName} to work on this task';
+      case ActivityType.priorityChanged:
+        return 'Updated the task priority level';
+      case ActivityType.dueDateChanged:
+        return 'Changed the due date for this task';
+      case ActivityType.taskCompleted:
+        return 'Marked this task as completed';
+      default:
+        return 'Made changes to this task';
+    }
+  }
+
+  String _formatFullTimestamp(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60)
+      return '${diff.inMinutes} minute${diff.inMinutes == 1 ? '' : 's'} ago';
+    if (diff.inHours < 24)
+      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inDays < 7)
+      return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final time =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at $time';
+  }
+}
 
 class _LargeStageChangeVisual extends StatelessWidget {
   final String fromStage;
@@ -1453,7 +1542,11 @@ class _StageVisualization extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Icon(si., size: 24, color: isHighlight ? si.color : _T.slate400),
+          // Icon(
+          //   si.icon,
+          //   size: 24,
+          //   color: isHighlight ? si.color : _T.slate400,
+          // ),
           const SizedBox(height: 8),
           Text(
             si.label,
@@ -1915,149 +2008,342 @@ class _MessageFullDetail extends StatelessWidget {
   }
 }
 
-// Continue in final part...
-
 // ─────────────────────────────────────────────────────────────────────────────
-// ACTIVITY FULL DETAIL
+// SECTION TITLE
+// Consistent section headers used throughout the detail panel
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ActivityFullDetail extends StatelessWidget {
-  final TaskActivity activity;
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  final IconData? icon;
+  final Widget? trailing;
 
-  const _ActivityFullDetail({required this.activity});
+  const _SectionTitle(this.text, {this.icon, this.trailing});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        // Actor information
-        Row(
-          children: [
-            AvatarWidget(
-              initials: activity.actorInitials,
-              color: activity.actorColor ?? _T.ink3,
-              size: 52,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activity.actorName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _T.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _getActivityFullDescription(activity),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _T.slate500,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        if (icon != null) ...[
+          Icon(icon, size: 14, color: _T.slate400),
+          const SizedBox(width: 8),
+        ],
+        Text(
+          text.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: _T.slate400,
+          ),
         ),
-
-        const SizedBox(height: 10),
-
-        // Timestamp
-        Row(
-          children: [
-            const Icon(Icons.access_time, size: 13, color: _T.slate400),
-            const SizedBox(width: 6),
-            Text(
-              _formatFullTimestamp(activity.createdAt),
-              style: const TextStyle(fontSize: 12, color: _T.slate400),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        // Large visual for the activity
-        _buildActivityVisual(activity),
+        if (trailing != null) ...[const Spacer(), trailing!],
       ],
     );
   }
+}
 
-  Widget _buildActivityVisual(TaskActivity activity) {
-    switch (activity.type) {
-      case ActivityType.stageForward:
-      case ActivityType.stageBackward:
-        return _LargeStageChangeVisual(
-          fromStage: activity.fromStage,
-          toStage: activity.toStage,
-          isForward: activity.type == ActivityType.stageForward,
-        );
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK CONTEXT CARD
+// Comprehensive task information display
+// ─────────────────────────────────────────────────────────────────────────────
 
-      case ActivityType.printerAssigned:
-        return _LargePrinterVisual(
-          printerName: activity.printerName ?? '',
-          printerNickname: activity.printerNickname ?? '',
-        );
+class _TaskContextCard extends ConsumerWidget {
+  final InboxItem item;
 
-      case ActivityType.priorityChanged:
-        return _LargePriorityChangeVisual(
-          fromPriority: activity.fromPriority ?? 2,
-          toPriority: activity.toPriority ?? 2,
-        );
+  const _TaskContextCard({required this.item});
 
-      case ActivityType.assigneeAdded:
-        return _AssigneeAddedVisual(userName: activity.addedUserName);
-
-      case ActivityType.dueDateChanged:
-        return _DueDateChangeVisual(
-          from: activity.metadata?['fromDueDate'],
-          to: activity.metadata?['toDueDate'],
-        );
-
-      default:
-        return const SizedBox.shrink();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Fetch full task data
+    final task = ref.watch(taskByIdProviderSimple(item.taskId));
+    if (task == null) {
+      return const _LoadingCard();
     }
-  }
 
-  String _getActivityFullDescription(TaskActivity activity) {
-    switch (activity.type) {
-      case ActivityType.stageForward:
-        return 'Progressed this task forward in the workflow pipeline';
-      case ActivityType.stageBackward:
-        return 'Moved this task back to a previous stage for revision';
-      case ActivityType.printerAssigned:
-        return 'Assigned this task to a printer and started production';
-      case ActivityType.assigneeAdded:
-        return 'Assigned ${activity.addedUserName} to work on this task';
-      case ActivityType.priorityChanged:
-        return 'Updated the task priority level';
-      case ActivityType.dueDateChanged:
-        return 'Changed the due date for this task';
-      case ActivityType.taskCompleted:
-        return 'Marked this task as completed';
-      default:
-        return 'Made changes to this task';
-    }
-  }
+    final project = ref.watch(projectByIdProvider(task.projectId));
+    final members = ref.watch(memberNotifierProvider).members;
+    final assignees =
+        members.where((m) => task.assignees.contains(m.id)).toList();
 
-  String _formatFullTimestamp(DateTime dt) {
     final now = DateTime.now();
-    final diff = now.difference(dt);
+    final isOverdue = task.dueDate != null && task.dueDate!.isBefore(now);
+    final isSoon =
+        task.dueDate != null &&
+        !isOverdue &&
+        task.dueDate!.difference(now).inDays <= 3;
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60)
-      return '${diff.inMinutes} minute${diff.inMinutes == 1 ? '' : 's'} ago';
-    if (diff.inHours < 24)
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
-    if (diff.inDays < 7)
-      return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          _CardHeader(
+            title: 'Task Context',
+            icon: Icons.assignment_outlined,
+            iconColor: _T.indigo,
+            iconBg: _T.indigo50,
+          ),
 
+          const _CardDivider(),
+
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Task name
+                Text(
+                  task.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                    height: 1.4,
+                  ),
+                ),
+
+                if (task.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    task.description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.slate500,
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: _T.slate100),
+                const SizedBox(height: 16),
+
+                // Project
+                if (project != null)
+                  _InfoRow(
+                    icon: Icons.folder_outlined,
+                    label: 'Project',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: project.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          project.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: project.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 12),
+
+                // Assignees
+                if (assignees.isNotEmpty)
+                  _InfoRow(
+                    icon: Icons.people_outline,
+                    label: 'Assignees',
+                    child: Wrap(
+                      spacing: -6,
+                      children:
+                          (assignees.take(3).map((member) {
+                                  return AvatarWidget(
+                                    initials: member.initials,
+                                    color: member.color,
+                                    size: 28,
+                                  );
+                                }).toList()
+                                as List<Widget>)
+                            ..add(
+                              assignees.length > 3
+                                  ? Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      color: _T.slate100,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: _T.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '+${assignees.length - 3}',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: _T.slate500,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  : const SizedBox.shrink(),
+                            ),
+                    ),
+                  ),
+
+                if (assignees.isNotEmpty) const SizedBox(height: 12),
+
+                // Priority
+                _InfoRow(
+                  icon: Icons.flag_outlined,
+                  label: 'Priority',
+                  child: PriorityPill(priority: task.priority),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Current Stage
+                _InfoRow(
+                  icon: Icons.timeline_outlined,
+                  label: 'Stage',
+                  child: _StagePill(status: task.status),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Due Date
+                if (task.dueDate != null)
+                  _InfoRow(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Due Date',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatDate(task.dueDate!),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isOverdue
+                                    ? _T.red
+                                    : isSoon
+                                    ? _T.amber
+                                    : _T.slate500,
+                          ),
+                        ),
+                        if (isOverdue || isSoon) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isOverdue ? _T.red50 : _T.amber50,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isOverdue ? 'Overdue' : 'Due soon',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: isOverdue ? _T.red : _T.amber,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                if (task.dueDate != null) const SizedBox(height: 12),
+
+                // Print Specifications
+                if (task.size != null ||
+                    task.quantity != null ||
+                    task.ref != null) ...[
+                  const SizedBox(height: 4),
+                  const Divider(height: 1, color: _T.slate100),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.straighten_outlined,
+                        size: 13,
+                        color: _T.slate400,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Print Specs',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _T.slate400,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    children: [
+                      if (task.ref != null)
+                        _SpecChip(
+                          icon: Icons.tag,
+                          label: 'Ref',
+                          value: task.ref!,
+                        ),
+                      if (task.size != null)
+                        _SpecChip(
+                          icon: Icons.crop_free,
+                          label: 'Size',
+                          value: task.size!,
+                        ),
+                      if (task.quantity != null)
+                        _SpecChip(
+                          icon: Icons.inventory_2_outlined,
+                          label: 'Qty',
+                          value: '${task.quantity} pcs',
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Billing Status
+                const Divider(height: 1, color: _T.slate100),
+                const SizedBox(height: 12),
+
+                _InfoRow(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Billing',
+                  child: _BillingPill(status: task.billingStatus),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dt) {
     final months = [
       'Jan',
       'Feb',
@@ -2072,8 +2358,961 @@ class _ActivityFullDetail extends StatelessWidget {
       'Nov',
       'Dec',
     ];
-    final time =
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at $time';
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTIVITY TIMELINE
+// Shows recent activities for the task
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActivityTimeline extends ConsumerWidget {
+  final int taskId;
+
+  const _ActivityTimeline({required this.taskId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // In real implementation, fetch activities from provider
+    // For now, we'll show a placeholder with sample data
+
+    // final activities = ref.watch(taskActivitiesProvider(taskId));
+
+    // Placeholder - replace with real data
+    final sampleActivities = _getSampleActivities();
+
+    if (sampleActivities.isEmpty) {
+      return _EmptyTimeline();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Timeline',
+            icon: Icons.history_outlined,
+            iconColor: _T.purple,
+            iconBg: _T.purple50,
+          ),
+
+          const _CardDivider(),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                ...sampleActivities.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final activity = entry.value;
+                  final isLast = index == sampleActivities.length - 1;
+
+                  return _TimelineItem(activity: activity, isLast: isLast);
+                }),
+
+                if (sampleActivities.length >= 5)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _ViewAllButton(
+                      label: 'View all activity',
+                      onTap: () {
+                        // Navigate to full activity log
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_TimelineActivityData> _getSampleActivities() {
+    // This would come from your provider in real implementation
+    // Sample data for demonstration
+    return [
+      _TimelineActivityData(
+        actorName: 'You',
+        action: 'progressed stage',
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        type: ActivityType.stageForward,
+      ),
+      _TimelineActivityData(
+        actorName: 'Alice Chen',
+        action: 'assigned printer',
+        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+        type: ActivityType.printerAssigned,
+      ),
+      _TimelineActivityData(
+        actorName: 'Bob Smith',
+        action: 'changed priority',
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        type: ActivityType.priorityChanged,
+      ),
+      _TimelineActivityData(
+        actorName: 'Alice Chen',
+        action: 'updated due date',
+        timestamp: DateTime.now().subtract(const Duration(days: 2)),
+        type: ActivityType.dueDateChanged,
+      ),
+    ];
+  }
+}
+
+class _TimelineActivityData {
+  final String actorName;
+  final String action;
+  final DateTime timestamp;
+  final ActivityType type;
+
+  _TimelineActivityData({
+    required this.actorName,
+    required this.action,
+    required this.timestamp,
+    required this.type,
+  });
+}
+
+class _TimelineItem extends StatelessWidget {
+  final _TimelineActivityData activity;
+  final bool isLast;
+
+  const _TimelineItem({required this.activity, required this.isLast});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline line and dot
+          Column(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: _getActivityColor(activity.type),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _getActivityColor(activity.type).withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 40,
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _T.slate200,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(width: 12),
+
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.ink3,
+                      height: 1.4,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: activity.actorName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: ' ${activity.action}'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  timeago.format(activity.timestamp),
+                  style: const TextStyle(fontSize: 11.5, color: _T.slate400),
+                ),
+              ],
+            ),
+          ),
+
+          // Activity type icon
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: _getActivityColor(activity.type).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              _getActivityIcon(activity.type),
+              size: 12,
+              color: _getActivityColor(activity.type),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getActivityColor(ActivityType type) {
+    switch (type) {
+      case ActivityType.stageForward:
+        return _T.green;
+      case ActivityType.stageBackward:
+        return _T.amber;
+      case ActivityType.printerAssigned:
+        return _T.blue;
+      case ActivityType.priorityChanged:
+        return _T.red;
+      case ActivityType.dueDateChanged:
+        return _T.indigo;
+      default:
+        return _T.slate500;
+    }
+  }
+
+  IconData _getActivityIcon(ActivityType type) {
+    switch (type) {
+      case ActivityType.stageForward:
+        return Icons.trending_up;
+      case ActivityType.stageBackward:
+        return Icons.trending_down;
+      case ActivityType.printerAssigned:
+        return Icons.print_rounded;
+      case ActivityType.priorityChanged:
+        return Icons.flag_outlined;
+      case ActivityType.dueDateChanged:
+        return Icons.calendar_today_outlined;
+      default:
+        return Icons.circle;
+    }
+  }
+}
+
+class _EmptyTimeline extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history_outlined, size: 32, color: _T.slate300),
+            SizedBox(height: 8),
+            Text(
+              'No activity yet',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _T.slate400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE ATTACHMENTS
+// Shows file attachments for messages
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MessageAttachments extends StatelessWidget {
+  final Message message;
+
+  const _MessageAttachments({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    // In real implementation, get attachments from message
+    // For now, we'll show placeholder
+    final attachments = _getSampleAttachments();
+
+    if (attachments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Attachments',
+            icon: Icons.attach_file_outlined,
+            iconColor: _T.teal,
+            iconBg: _T.blue50,
+            trailing: Text(
+              '${attachments.length}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _T.slate400,
+              ),
+            ),
+          ),
+
+          const _CardDivider(),
+
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children:
+                  attachments.map((attachment) {
+                    return _AttachmentItem(attachment: attachment);
+                  }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_AttachmentData> _getSampleAttachments() {
+    // This would come from your message model
+    // Sample data for demonstration
+    return [
+      _AttachmentData(
+        name: 'design_mockup_v2.pdf',
+        size: '2.4 MB',
+        type: 'pdf',
+        url: '',
+      ),
+      _AttachmentData(
+        name: 'final_artwork.png',
+        size: '1.2 MB',
+        type: 'image',
+        url: '',
+      ),
+      _AttachmentData(
+        name: 'print_specifications.xlsx',
+        size: '89 KB',
+        type: 'spreadsheet',
+        url: '',
+      ),
+    ];
+  }
+}
+
+class _AttachmentData {
+  final String name;
+  final String size;
+  final String type;
+  final String url;
+
+  _AttachmentData({
+    required this.name,
+    required this.size,
+    required this.type,
+    required this.url,
+  });
+}
+
+class _AttachmentItem extends StatefulWidget {
+  final _AttachmentData attachment;
+
+  const _AttachmentItem({required this.attachment});
+
+  @override
+  State<_AttachmentItem> createState() => _AttachmentItemState();
+}
+
+class _AttachmentItemState extends State<_AttachmentItem> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: () {
+            // Download or open attachment
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _hovered ? _T.blue50 : _T.slate50,
+              borderRadius: BorderRadius.circular(_T.r),
+              border: Border.all(
+                color: _hovered ? _T.blue.withOpacity(0.3) : _T.slate200,
+              ),
+            ),
+            child: Row(
+              children: [
+                // File type icon
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: _getFileTypeColor(
+                      widget.attachment.type,
+                    ).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    _getFileTypeIcon(widget.attachment.type),
+                    size: 18,
+                    color: _getFileTypeColor(widget.attachment.type),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                // File info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.attachment.name,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: _hovered ? _T.blue : _T.ink3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.attachment.size,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Download icon
+                Icon(
+                  Icons.download_rounded,
+                  size: 16,
+                  color: _hovered ? _T.blue : _T.slate300,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getFileTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return _T.red;
+      case 'image':
+      case 'png':
+      case 'jpg':
+        return _T.purple;
+      case 'spreadsheet':
+      case 'xlsx':
+        return _T.green;
+      case 'document':
+      case 'docx':
+        return _T.blue;
+      default:
+        return _T.slate500;
+    }
+  }
+
+  IconData _getFileTypeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return Icons.picture_as_pdf_outlined;
+      case 'image':
+      case 'png':
+      case 'jpg':
+        return Icons.image_outlined;
+      case 'spreadsheet':
+      case 'xlsx':
+        return Icons.table_chart_outlined;
+      case 'document':
+      case 'docx':
+        return Icons.description_outlined;
+      default:
+        return Icons.insert_drive_file_outlined;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRINTER DETAIL CARD
+// Shows printer information for printer-assigned activities
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PrinterDetailCard extends ConsumerWidget {
+  final TaskActivity activity;
+
+  const _PrinterDetailCard({required this.activity});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // In real implementation, fetch printer details
+    // final printer = ref.watch(printerByIdProvider(activity.printerId));
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Printer Details',
+            icon: Icons.print_rounded,
+            iconColor: _T.blue,
+            iconBg: _T.blue50,
+          ),
+
+          const _CardDivider(),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: _T.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.print_rounded,
+                        size: 24,
+                        color: _T.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            activity.printerName ?? 'Unknown Printer',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _T.ink,
+                            ),
+                          ),
+                          if (activity.printerNickname != null &&
+                              activity.printerNickname!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              activity.printerNickname!,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: _T.slate500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _T.green50,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, size: 12, color: _T.green),
+                          SizedBox(width: 4),
+                          Text(
+                            'Active',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: _T.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: _T.slate100),
+                const SizedBox(height: 16),
+
+                // Printer metadata
+                _InfoRow(
+                  icon: Icons.location_on_outlined,
+                  label: 'Location',
+                  child: const Text(
+                    'Production Floor',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate500,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                _InfoRow(
+                  icon: Icons.pending_actions_outlined,
+                  label: 'Queue',
+                  child: const Text(
+                    '3 jobs waiting',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CardHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final Widget? trailing;
+
+  const _CardHeader({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: iconColor.withOpacity(0.2)),
+            ),
+            child: Icon(icon, size: 14, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: _T.ink2,
+            ),
+          ),
+          if (trailing != null) ...[const Spacer(), trailing!],
+        ],
+      ),
+    );
+  }
+}
+
+class _CardDivider extends StatelessWidget {
+  const _CardDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(height: 1, color: _T.slate100);
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 13, color: _T.slate400),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: _T.slate400),
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+class _StagePill extends StatelessWidget {
+  final TaskStatus status;
+
+  const _StagePill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final si = stageInfo(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: si.bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: si.color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon(si.icon, size: 12, color: si.color),
+          const SizedBox(width: 6),
+          Text(
+            si.label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: si.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BillingPill extends StatelessWidget {
+  final BillingStatus status;
+
+  const _BillingPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = _getBillingMeta(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: meta.bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: meta.color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: meta.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            meta.label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: meta.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _BillingMeta _getBillingMeta(BillingStatus status) {
+    switch (status) {
+      case BillingStatus.pending:
+        return _BillingMeta('Pending', _T.amber, _T.amber50);
+      case BillingStatus.quoteGiven:
+        return _BillingMeta('Quote Given', _T.blue, _T.blue50);
+      case BillingStatus.invoiced:
+        return _BillingMeta('Invoiced', _T.indigo, _T.indigo50);
+      case BillingStatus.foc:
+        return _BillingMeta('FOC', _T.green, _T.green50);
+      case BillingStatus.cancelled:
+        return _BillingMeta('Cancelled', _T.red, _T.red50);
+    }
+  }
+}
+
+class _BillingMeta {
+  final String label;
+  final Color color;
+  final Color bg;
+
+  _BillingMeta(this.label, this.color, this.bg);
+}
+
+class _SpecChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _SpecChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: _T.slate100,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: _T.slate500),
+          const SizedBox(width: 6),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 11, color: _T.slate400),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: _T.ink3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+    );
+  }
+}
+
+class _ViewAllButton extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _ViewAllButton({required this.label, required this.onTap});
+
+  @override
+  State<_ViewAllButton> createState() => _ViewAllButtonState();
+}
+
+class _ViewAllButtonState extends State<_ViewAllButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _hovered ? _T.blue : _T.slate500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward,
+                size: 14,
+                color: _hovered ? _T.blue : _T.slate400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
