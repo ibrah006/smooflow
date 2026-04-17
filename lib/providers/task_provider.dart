@@ -290,6 +290,9 @@ class TaskProvider {
     String? stockTransactionBarcode,
     String? materialId,
     int? stockOutQuantity,
+
+    // Optional paramters
+    bool isStageForward = true,
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
@@ -322,6 +325,7 @@ class TaskProvider {
             taskId: taskId,
             newStatus: newStatus,
             printerId: printerId,
+            isStageForward: isStageForward,
           );
     }
 

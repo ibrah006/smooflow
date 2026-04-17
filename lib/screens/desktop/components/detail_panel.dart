@@ -334,6 +334,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       taskId: widget.task.id,
       printerId: null,
       newStatus: nextStage,
+      isStageForward: true,
     );
 
     setState(() {});
@@ -343,7 +344,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _stageBackTo(TaskStatus target) async {
     await ref
         .watch(taskNotifierProvider.notifier)
-        .progressStage(taskId: widget.task.id, newStatus: target);
+        .progressStage(
+          taskId: widget.task.id,
+          newStatus: target,
+          isStageForward: false,
+        );
     setState(() {});
     widget.onAdvance();
   }

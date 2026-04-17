@@ -376,12 +376,17 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required int taskId,
     required TaskStatus newStatus,
     String? printerId,
+    bool isStageForward = true,
   }) async {
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
     }
 
-    await _repo.progressStage(taskId, newStatus);
+    await _repo.progressStage(
+      taskId,
+      newStatus,
+      isStageForward: isStageForward,
+    );
 
     if (newStatus == TaskStatus.printing) {
       await _assignPrinter(taskId: taskId, printerId: printerId!);
