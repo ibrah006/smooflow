@@ -224,7 +224,7 @@ class _InboxHeader extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           const Text(
-            'Inbox',
+            'Your Inbox',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
