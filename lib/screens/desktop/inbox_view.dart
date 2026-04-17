@@ -182,7 +182,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
           _ActivityDetailPanel(
             item: _selectedItem!,
             onClose: _closeDetail,
-            isSelected: true,
+            // isSelected: true,
           ),
       ],
     );
@@ -948,260 +948,86 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
   }
 }
 
-class _ActivityDetailPanel extends ConsumerStatefulWidget {
-  final InboxItem? item;
+class _ActivityDetailPanel extends ConsumerWidget {
+  final InboxItem item;
   final VoidCallback onClose;
-  final bool isSelected;
 
-  const _ActivityDetailPanel({
-    super.key,
-    required this.item,
-    required this.onClose,
-    required this.isSelected,
-  });
+  const _ActivityDetailPanel({required this.item, required this.onClose});
 
   @override
-  ConsumerState<_ActivityDetailPanel> createState() =>
-      _ComprehensiveDetailPanelState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: _T.detailW,
+      decoration: const BoxDecoration(
+        color: _T.white,
+        border: Border(left: BorderSide(color: _T.slate200)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          _DetailHeader(onClose: onClose),
 
-class _ComprehensiveDetailPanelState
-    extends ConsumerState<_ActivityDetailPanel> {
-  final TextEditingController _replyController = TextEditingController();
-  bool _isReplying = false;
-  bool _isSendingReply = false;
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child:
+                  item.type == InboxItemType.activity
+                      ? _ActivityDetailContent(activity: item.activity!)
+                      : _MessageDetailContent(message: item.message!),
+            ),
+          ),
 
-  // Simulated task data - would come from providers
-  TaskStatus? _currentTaskStatus;
-  List<String> _assignees = [];
-
-  @override
-  void dispose() {
-    _replyController.dispose();
-    super.dispose();
-  }
-
-  void _startReply() {
-    setState(() => _isReplying = true);
-  }
-
-  void _cancelReply() {
-    setState(() {
-      _isReplying = false;
-      _replyController.clear();
-    });
-  }
-
-  Future<void> _sendReply() async {
-    if (_replyController.text.trim().isEmpty) return;
-
-    setState(() => _isSendingReply = true);
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    // TODO: Actual API call to send message
-    // await ref.read(messageNotifierProvider.notifier).sendMessage(...)
-
-    if (mounted) {
-      setState(() {
-        _isSendingReply = false;
-        _isReplying = false;
-        _replyController.clear();
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Reply sent!')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      width: widget.isSelected ? _T.detailW : 0,
-      child:
-          widget.item == null
-              ? const SizedBox()
-              : Container(
-                decoration: const BoxDecoration(
-                  color: _T.white,
-                  border: Border(left: BorderSide(color: _T.slate200)),
-                ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(30).copyWith(bottom: 0),
-                  child: Column(
-                    children: [
-                      // Activity/Message detail
-                      if (item != null && item.activity != null)
-                        _ActivityFullDetail(activity: widget.item!.activity!),
-
-                      const SizedBox(height: 24),
-
-                      // Section title
-                      const _SectionTitle('Task Information'),
-                      const SizedBox(height: 12),
-
-                      // Task context
-                      _TaskContextCard(item: item!),
-
-                      const SizedBox(height: 20),
-
-                      // Activity timeline
-                      const _SectionTitle('Recent Activity'),
-                      const SizedBox(height: 12),
-                      _ActivityTimeline(taskId: item.taskId),
-
-                      const SizedBox(height: 20),
-
-                      // Printer details (conditional)
-                      if (item.type == InboxItemType.activity &&
-                          item.activity?.type ==
-                              ActivityType.printerAssigned) ...[
-                        const _SectionTitle('Printer Details'),
-                        const SizedBox(height: 12),
-                        if (item.activity != null)
-                          _PrinterDetailCard(activity: item.activity!),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Message attachments (conditional)
-                      if (item.type == InboxItemType.message) ...[
-                        const _SectionTitle('Attachments'),
-                        const SizedBox(height: 12),
-                        if (item.message != null)
-                          _MessageAttachments(message: item.message!),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+          // Footer action
+          _DetailFooter(item: item),
+        ],
+      ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL HEADER with context actions
+// DETAIL HEADER
 // ─────────────────────────────────────────────────────────────────────────────
 
-// class _DetailHeader extends StatelessWidget {
-//   final InboxItem item;
-//   final VoidCallback onClose;
+class _DetailHeader extends StatelessWidget {
+  final VoidCallback onClose;
 
-//   const _DetailHeader({required this.item, required this.onClose});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: _T.topbarH,
-//       decoration: const BoxDecoration(
-//         border: Border(bottom: BorderSide(color: _T.slate200)),
-//       ),
-//       padding: const EdgeInsets.symmetric(horizontal: 16),
-//       child: Row(
-//         children: [
-//           // Close button
-//           MouseRegion(
-//             cursor: SystemMouseCursors.click,
-//             child: GestureDetector(
-//               onTap: onClose,
-//               child: Container(
-//                 width: 28,
-//                 height: 28,
-//                 decoration: BoxDecoration(
-//                   border: Border.all(color: _T.slate200),
-//                   borderRadius: BorderRadius.circular(_T.r),
-//                 ),
-//                 child: const Icon(Icons.close, size: 14, color: _T.slate400),
-//               ),
-//             ),
-//           ),
-//           const SizedBox(width: 12),
-
-//           // Type badge
-//           _TypeBadge(item: item),
-//           const SizedBox(width: 10),
-
-//           // Task ID
-//           Text(
-//             'TASK-${item.taskId}',
-//             style: const TextStyle(
-//               fontSize: 11,
-//               fontWeight: FontWeight.w700,
-//               letterSpacing: 0.4,
-//               color: _T.slate400,
-//             ),
-//           ),
-
-//           const Spacer(),
-
-//           // More actions
-//           _HeaderActionButton(
-//             icon: Icons.more_vert,
-//             tooltip: 'More options',
-//             onTap: () {
-//               // Show options menu
-//             },
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-class _TypeBadge extends StatelessWidget {
-  final InboxItem item;
-
-  const _TypeBadge({required this.item});
+  const _DetailHeader({required this.onClose});
 
   @override
   Widget build(BuildContext context) {
-    if (item.type == InboxItemType.message) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: _T.purple50,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.chat_bubble_outline, size: 12, color: _T.purple),
-            const SizedBox(width: 5),
-            const Text(
-              'MESSAGE',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: _T.purple,
+    return Container(
+      height: _T.topbarH,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _T.slate200)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: onClose,
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  border: Border.all(color: _T.slate200),
+                  borderRadius: BorderRadius.circular(_T.r),
+                ),
+                child: const Icon(Icons.close, size: 13, color: _T.slate400),
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: _T.blue50,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_active_outlined, size: 12, color: _T.blue),
-          SizedBox(width: 5),
-          Text(
+          ),
+          const SizedBox(width: 10),
+          const Text(
             'ACTIVITY',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: _T.blue,
+              letterSpacing: 0.3,
+              color: _T.slate400,
             ),
           ),
         ],
@@ -1210,78 +1036,27 @@ class _TypeBadge extends StatelessWidget {
   }
 }
 
-class _HeaderActionButton extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _HeaderActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  State<_HeaderActionButton> createState() => _HeaderActionButtonState();
-}
-
-class _HeaderActionButtonState extends State<_HeaderActionButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: _hovered ? _T.slate100 : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: _hovered ? _T.slate200 : Colors.transparent,
-              ),
-            ),
-            child: Icon(
-              widget.icon,
-              size: 16,
-              color: _hovered ? _T.ink3 : _T.slate400,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// ACTIVITY FULL DETAIL
+// ACTIVITY DETAIL CONTENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ActivityFullDetail extends StatelessWidget {
+class _ActivityDetailContent extends StatelessWidget {
   final TaskActivity activity;
 
-  const _ActivityFullDetail({required this.activity});
+  const _ActivityDetailContent({required this.activity});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Actor information
+        // Activity header with avatar
         Row(
           children: [
             AvatarWidget(
               initials: activity.actorInitials,
               color: activity.actorColor ?? _T.ink3,
-              size: 52,
+              size: 48,
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1291,19 +1066,15 @@ class _ActivityFullDetail extends StatelessWidget {
                   Text(
                     activity.actorName,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: _T.ink,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
-                    _getActivityFullDescription(activity),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _T.slate500,
-                      height: 1.4,
-                    ),
+                    _getActivityDescription(activity),
+                    style: const TextStyle(fontSize: 12.5, color: _T.slate500),
                   ),
                 ],
               ),
@@ -1311,671 +1082,52 @@ class _ActivityFullDetail extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
 
         // Timestamp
-        Row(
-          children: [
-            const Icon(Icons.access_time, size: 13, color: _T.slate400),
-            const SizedBox(width: 6),
-            Text(
-              _formatFullTimestamp(activity.createdAt),
-              style: const TextStyle(fontSize: 12, color: _T.slate400),
-            ),
-          ],
+        Text(
+          _formatTimestamp(activity.createdAt),
+          style: const TextStyle(fontSize: 11.5, color: _T.slate400),
         ),
 
         const SizedBox(height: 24),
 
-        // Large visual for the activity
-        _buildActivityVisual(activity),
+        // Activity visual
+        _ActivityVisual(activity: activity),
+
+        const SizedBox(height: 24),
+
+        // Task info card
+        _TaskInfoCard(
+          taskName: activity.taskName,
+          taskDescription: activity.taskDescription,
+          taskPriority: activity.taskPriority,
+          taskDueDate: activity.taskDueDate,
+          taskStatus: activity.taskStatus,
+        ),
       ],
     );
   }
 
-  Widget _buildActivityVisual(TaskActivity activity) {
+  String _getActivityDescription(TaskActivity activity) {
     switch (activity.type) {
       case ActivityType.stageForward:
+        return 'Moved task forward in the pipeline';
       case ActivityType.stageBackward:
-        return _LargeStageChangeVisual(
-          fromStage: activity.fromStage,
-          toStage: activity.toStage,
-          isForward: activity.type == ActivityType.stageForward,
-        );
-
+        return 'Moved task back to previous stage';
       case ActivityType.printerAssigned:
-        return _LargePrinterVisual(
-          printerName: activity.printerName ?? '',
-          printerNickname: activity.printerNickname ?? '',
-        );
-
-      case ActivityType.priorityChanged:
-        return _LargePriorityChangeVisual(
-          fromPriority: activity.fromPriority ?? 2,
-          toPriority: activity.toPriority ?? 2,
-        );
-
+        return 'Assigned task to a printer';
       case ActivityType.assigneeAdded:
-        return _AssigneeAddedVisual(userName: activity.addedUserName);
-
-      case ActivityType.dueDateChanged:
-        return _DueDateChangeVisual(
-          from: activity.metadata?['fromDueDate'],
-          to: activity.metadata?['toDueDate'],
-        );
-
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  String _getActivityFullDescription(TaskActivity activity) {
-    switch (activity.type) {
-      case ActivityType.stageForward:
-        return 'Progressed this task forward in the workflow pipeline';
-      case ActivityType.stageBackward:
-        return 'Moved this task back to a previous stage for revision';
-      case ActivityType.printerAssigned:
-        return 'Assigned this task to a printer and started production';
-      case ActivityType.assigneeAdded:
-        return 'Assigned ${activity.addedUserName} to work on this task';
+        return 'Assigned ${activity.addedUserName} to task';
       case ActivityType.priorityChanged:
-        return 'Updated the task priority level';
+        return 'Changed task priority';
       case ActivityType.dueDateChanged:
-        return 'Changed the due date for this task';
+        return 'Updated task due date';
       case ActivityType.taskCompleted:
-        return 'Marked this task as completed';
+        return 'Marked task as completed';
       default:
-        return 'Made changes to this task';
+        return 'Updated task';
     }
-  }
-
-  String _formatFullTimestamp(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60)
-      return '${diff.inMinutes} minute${diff.inMinutes == 1 ? '' : 's'} ago';
-    if (diff.inHours < 24)
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
-    if (diff.inDays < 7)
-      return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
-
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final time =
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at $time';
-  }
-}
-
-class _LargeStageChangeVisual extends StatelessWidget {
-  final String fromStage;
-  final String toStage;
-  final bool isForward;
-
-  const _LargeStageChangeVisual({
-    required this.fromStage,
-    required this.toStage,
-    required this.isForward,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors:
-              isForward
-                  ? [_T.green50, _T.green50.withOpacity(0.3)]
-                  : [_T.amber50, _T.amber50.withOpacity(0.3)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(
-          color:
-              isForward ? _T.green.withOpacity(0.3) : _T.amber.withOpacity(0.3),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _StageVisualization(
-                  stage: fromStage,
-                  label: 'FROM',
-                  isHighlight: false,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    Icon(
-                      isForward
-                          ? Icons.arrow_forward_rounded
-                          : Icons.arrow_back_rounded,
-                      size: 28,
-                      color: isForward ? _T.green : _T.amber,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isForward ? 'FORWARD' : 'BACKWARD',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: isForward ? _T.green : _T.amber,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: _StageVisualization(
-                  stage: toStage,
-                  label: 'TO',
-                  isHighlight: true,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StageVisualization extends StatelessWidget {
-  final String stage;
-  final String label;
-  final bool isHighlight;
-
-  const _StageVisualization({
-    required this.stage,
-    required this.label,
-    required this.isHighlight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final si = kStages.firstWhere(
-      (s) => s.stage.name.toLowerCase() == stage.toLowerCase(),
-      orElse: () => kStages.first,
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isHighlight ? si.bg : _T.slate50,
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(
-          color: isHighlight ? si.color.withOpacity(0.4) : _T.slate200,
-          width: isHighlight ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? si.color : _T.slate400,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Icon(
-          //   si.icon,
-          //   size: 24,
-          //   color: isHighlight ? si.color : _T.slate400,
-          // ),
-          const SizedBox(height: 8),
-          Text(
-            si.label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? si.color : _T.slate500,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LargePrinterVisual extends StatelessWidget {
-  final String printerName;
-  final String printerNickname;
-
-  const _LargePrinterVisual({
-    required this.printerName,
-    required this.printerNickname,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_T.blue50, _T.blue50.withOpacity(0.3)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.blue.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: _T.blue.withOpacity(0.15),
-              shape: BoxShape.circle,
-              border: Border.all(color: _T.blue.withOpacity(0.3), width: 2),
-            ),
-            child: const Icon(Icons.print_rounded, size: 32, color: _T.blue),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            printerName,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _T.blue,
-            ),
-          ),
-          if (printerNickname.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              printerNickname,
-              style: TextStyle(fontSize: 13, color: _T.blue.withOpacity(0.7)),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _T.green,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, size: 14, color: Colors.white),
-                SizedBox(width: 6),
-                Text(
-                  'Printer Assigned',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LargePriorityChangeVisual extends StatelessWidget {
-  final int fromPriority;
-  final int toPriority;
-
-  const _LargePriorityChangeVisual({
-    required this.fromPriority,
-    required this.toPriority,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _T.slate50,
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.slate200),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _PriorityCard(priority: fromPriority, label: 'FROM')),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 24,
-              color: _T.slate300,
-            ),
-          ),
-          Expanded(
-            child: _PriorityCard(
-              priority: toPriority,
-              label: 'TO',
-              isHighlight: true,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PriorityCard extends StatelessWidget {
-  final int priority;
-  final String label;
-  final bool isHighlight;
-
-  const _PriorityCard({
-    required this.priority,
-    required this.label,
-    this.isHighlight = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p =
-        priority <= 0 || priority > TaskPriority.values.length
-            ? TaskPriority.normal
-            : TaskPriority.values[priority - 1];
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isHighlight ? _getPriorityBg(p) : _T.white,
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(
-          color:
-              isHighlight ? _getPriorityColor(p).withOpacity(0.4) : _T.slate200,
-          width: isHighlight ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? _getPriorityColor(p) : _T.slate400,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Icon(
-            Icons.flag_outlined,
-            size: 24,
-            color: isHighlight ? _getPriorityColor(p) : _T.slate400,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            p.name[0].toUpperCase() + p.name.substring(1),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? _getPriorityColor(p) : _T.slate500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getPriorityColor(TaskPriority p) {
-    switch (p) {
-      case TaskPriority.normal:
-        return _T.slate500;
-      case TaskPriority.high:
-        return _T.amber;
-      case TaskPriority.urgent:
-        return _T.red;
-    }
-  }
-
-  Color _getPriorityBg(TaskPriority p) {
-    switch (p) {
-      case TaskPriority.normal:
-        return _T.slate50;
-      case TaskPriority.high:
-        return _T.amber50;
-      case TaskPriority.urgent:
-        return _T.red50;
-    }
-  }
-}
-
-class _AssigneeAddedVisual extends StatelessWidget {
-  final String userName;
-
-  const _AssigneeAddedVisual({required this.userName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _T.purple50,
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.purple.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.person_add_outlined, size: 48, color: _T.purple),
-          const SizedBox(height: 12),
-          const Text(
-            'Assigned To',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: _T.purple,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            userName,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: _T.purple,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DueDateChangeVisual extends StatelessWidget {
-  final String? from;
-  final String? to;
-
-  const _DueDateChangeVisual({this.from, this.to});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _T.indigo50,
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.indigo.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _DateCard(date: from, label: 'FROM')),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 20,
-              color: _T.indigo,
-            ),
-          ),
-          Expanded(child: _DateCard(date: to, label: 'TO', isHighlight: true)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateCard extends StatelessWidget {
-  final String? date;
-  final String label;
-  final bool isHighlight;
-
-  const _DateCard({this.date, required this.label, this.isHighlight = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final dt = date != null ? DateTime.parse(date!) : null;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isHighlight ? _T.white : _T.indigo.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(
-          color:
-              isHighlight
-                  ? _T.indigo.withOpacity(0.4)
-                  : _T.indigo.withOpacity(0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? _T.indigo : _T.indigo.withOpacity(0.7),
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Icon(
-            Icons.calendar_today_outlined,
-            size: 20,
-            color: isHighlight ? _T.indigo : _T.indigo.withOpacity(0.7),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            dt != null ? '${dt.month}/${dt.day}/${dt.year}' : '—',
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: isHighlight ? _T.indigo : _T.indigo.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MESSAGE FULL DETAIL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _MessageFullDetail extends StatelessWidget {
-  final Message message;
-
-  const _MessageFullDetail({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Author info
-        Row(
-          children: [
-            AvatarWidget(
-              initials: message.authorInitials,
-              color: message.authorColor ?? _T.ink3,
-              size: 52,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.authorName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _T.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  const Text(
-                    'Posted a new message',
-                    style: TextStyle(fontSize: 13, color: _T.slate500),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 10),
-
-        // Timestamp
-        Row(
-          children: [
-            const Icon(Icons.access_time, size: 13, color: _T.slate400),
-            const SizedBox(width: 6),
-            Text(
-              _formatTimestamp(message.date),
-              style: const TextStyle(fontSize: 12, color: _T.slate400),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 20),
-
-        // Message content
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _T.slate50,
-            borderRadius: BorderRadius.circular(_T.rLg),
-            border: Border.all(color: _T.slate200),
-          ),
-          child: Text(
-            message.message,
-            style: const TextStyle(fontSize: 14, color: _T.ink2, height: 1.6),
-          ),
-        ),
-      ],
-    );
   }
 
   String _formatTimestamp(DateTime dt) {
@@ -1983,367 +1135,11 @@ class _MessageFullDetail extends StatelessWidget {
     final diff = now.difference(dt);
 
     if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60)
-      return '${diff.inMinutes} minute${diff.inMinutes == 1 ? '' : 's'} ago';
-    if (diff.inHours < 24)
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
 
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final time =
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at $time';
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION TITLE
-// Consistent section headers used throughout the detail panel
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  final IconData? icon;
-  final Widget? trailing;
-
-  const _SectionTitle(this.text, {this.icon, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 14, color: _T.slate400),
-          const SizedBox(width: 8),
-        ],
-        Text(
-          text.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: _T.slate400,
-          ),
-        ),
-        if (trailing != null) ...[const Spacer(), trailing!],
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TASK CONTEXT CARD
-// Comprehensive task information display
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _TaskContextCard extends ConsumerWidget {
-  final InboxItem item;
-
-  const _TaskContextCard({required this.item});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Fetch full task data
-    final task = ref.watch(taskByIdProviderSimple(item.taskId));
-    if (task == null) {
-      return const _LoadingCard();
-    }
-
-    final project = ref.watch(projectByIdProvider(task.projectId));
-    final members = ref.watch(memberNotifierProvider).members;
-    final assignees =
-        members.where((m) => task.assignees.contains(m.id)).toList();
-
-    final now = DateTime.now();
-    final isOverdue = task.dueDate != null && task.dueDate!.isBefore(now);
-    final isSoon =
-        task.dueDate != null &&
-        !isOverdue &&
-        task.dueDate!.difference(now).inDays <= 3;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: _T.slate200),
-        borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          _CardHeader(
-            title: 'Task Context',
-            icon: Icons.assignment_outlined,
-            iconColor: _T.indigo,
-            iconBg: _T.indigo50,
-          ),
-
-          const _CardDivider(),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Task name
-                Text(
-                  task.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: _T.ink,
-                    height: 1.4,
-                  ),
-                ),
-
-                if (task.description.trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    task.description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _T.slate500,
-                      height: 1.5,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: _T.slate100),
-                const SizedBox(height: 16),
-
-                // Project
-                if (project != null)
-                  _InfoRow(
-                    icon: Icons.folder_outlined,
-                    label: 'Project',
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: project.color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          project.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: project.color,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 12),
-
-                // Assignees
-                if (assignees.isNotEmpty)
-                  _InfoRow(
-                    icon: Icons.people_outline,
-                    label: 'Assignees',
-                    child: Wrap(
-                      spacing: -6,
-                      children:
-                          (assignees.take(3).map((member) {
-                                  return AvatarWidget(
-                                    initials: member.initials,
-                                    color: member.color,
-                                    size: 28,
-                                  );
-                                }).toList()
-                                as List<Widget>)
-                            ..add(
-                              assignees.length > 3
-                                  ? Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: _T.slate100,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: _T.white,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '+${assignees.length - 3}',
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: _T.slate500,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  : const SizedBox.shrink(),
-                            ),
-                    ),
-                  ),
-
-                if (assignees.isNotEmpty) const SizedBox(height: 12),
-
-                // Priority
-                _InfoRow(
-                  icon: Icons.flag_outlined,
-                  label: 'Priority',
-                  child: PriorityPill(priority: task.priority),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Current Stage
-                _InfoRow(
-                  icon: Icons.timeline_outlined,
-                  label: 'Stage',
-                  child: _StagePill(status: task.status),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Due Date
-                if (task.dueDate != null)
-                  _InfoRow(
-                    icon: Icons.calendar_today_outlined,
-                    label: 'Due Date',
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _formatDate(task.dueDate!),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isOverdue
-                                    ? _T.red
-                                    : isSoon
-                                    ? _T.amber
-                                    : _T.slate500,
-                          ),
-                        ),
-                        if (isOverdue || isSoon) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isOverdue ? _T.red50 : _T.amber50,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              isOverdue ? 'Overdue' : 'Due soon',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: isOverdue ? _T.red : _T.amber,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                if (task.dueDate != null) const SizedBox(height: 12),
-
-                // Print Specifications
-                if (task.size != null ||
-                    task.quantity != null ||
-                    task.ref != null) ...[
-                  const SizedBox(height: 4),
-                  const Divider(height: 1, color: _T.slate100),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.straighten_outlined,
-                        size: 13,
-                        color: _T.slate400,
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Print Specs',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _T.slate400,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 8,
-                    children: [
-                      if (task.ref != null)
-                        _SpecChip(
-                          icon: Icons.tag,
-                          label: 'Ref',
-                          value: task.ref!,
-                        ),
-                      if (task.size != null)
-                        _SpecChip(
-                          icon: Icons.crop_free,
-                          label: 'Size',
-                          value: task.size!,
-                        ),
-                      if (task.quantity != null)
-                        _SpecChip(
-                          icon: Icons.inventory_2_outlined,
-                          label: 'Qty',
-                          value: '${task.quantity} pcs',
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Billing Status
-                const Divider(height: 1, color: _T.slate100),
-                const SizedBox(height: 12),
-
-                _InfoRow(
-                  icon: Icons.receipt_long_outlined,
-                  label: 'Billing',
-                  child: _BillingPill(status: task.billingStatus),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime dt) {
+    // Format as date
     final months = [
       'Jan',
       'Feb',
@@ -2363,331 +1159,92 @@ class _TaskContextCard extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ACTIVITY TIMELINE
-// Shows recent activities for the task
+// ACTIVITY VISUAL
+// Large visual representation of what happened
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ActivityTimeline extends ConsumerWidget {
-  final int taskId;
+class _ActivityVisual extends StatelessWidget {
+  final TaskActivity activity;
 
-  const _ActivityTimeline({required this.taskId});
+  const _ActivityVisual({required this.activity});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // In real implementation, fetch activities from provider
-    // For now, we'll show a placeholder with sample data
+  Widget build(BuildContext context) {
+    switch (activity.type) {
+      case ActivityType.stageForward:
+      case ActivityType.stageBackward:
+        return _StageChangeVisual(
+          fromStage: activity.fromStage,
+          toStage: activity.toStage,
+          isForward: activity.type == ActivityType.stageForward,
+        );
 
-    // final activities = ref.watch(taskActivitiesProvider(taskId));
+      case ActivityType.printerAssigned:
+        return _PrinterAssignedVisual(
+          printerName: activity.printerName ?? '',
+          printerNickname: activity.printerNickname ?? '',
+        );
 
-    // Placeholder - replace with real data
-    final sampleActivities = _getSampleActivities();
+      case ActivityType.priorityChanged:
+        return _PriorityChangeVisual(
+          fromPriority: activity.fromPriority ?? 1,
+          toPriority: activity.toPriority ?? 1,
+        );
 
-    if (sampleActivities.isEmpty) {
-      return _EmptyTimeline();
+      default:
+        return const SizedBox.shrink();
     }
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: _T.slate200),
-        borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CardHeader(
-            title: 'Timeline',
-            icon: Icons.history_outlined,
-            iconColor: _T.purple,
-            iconBg: _T.purple50,
-          ),
-
-          const _CardDivider(),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                ...sampleActivities.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final activity = entry.value;
-                  final isLast = index == sampleActivities.length - 1;
-
-                  return _TimelineItem(activity: activity, isLast: isLast);
-                }),
-
-                if (sampleActivities.length >= 5)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _ViewAllButton(
-                      label: 'View all activity',
-                      onTap: () {
-                        // Navigate to full activity log
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<_TimelineActivityData> _getSampleActivities() {
-    // This would come from your provider in real implementation
-    // Sample data for demonstration
-    return [
-      _TimelineActivityData(
-        actorName: 'You',
-        action: 'progressed stage',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        type: ActivityType.stageForward,
-      ),
-      _TimelineActivityData(
-        actorName: 'Alice Chen',
-        action: 'assigned printer',
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-        type: ActivityType.printerAssigned,
-      ),
-      _TimelineActivityData(
-        actorName: 'Bob Smith',
-        action: 'changed priority',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        type: ActivityType.priorityChanged,
-      ),
-      _TimelineActivityData(
-        actorName: 'Alice Chen',
-        action: 'updated due date',
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-        type: ActivityType.dueDateChanged,
-      ),
-    ];
   }
 }
 
-class _TimelineActivityData {
-  final String actorName;
-  final String action;
-  final DateTime timestamp;
-  final ActivityType type;
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE CHANGE VISUAL
+// ─────────────────────────────────────────────────────────────────────────────
 
-  _TimelineActivityData({
-    required this.actorName,
-    required this.action,
-    required this.timestamp,
-    required this.type,
+class _StageChangeVisual extends StatelessWidget {
+  final String fromStage;
+  final String toStage;
+  final bool isForward;
+
+  const _StageChangeVisual({
+    required this.fromStage,
+    required this.toStage,
+    required this.isForward,
   });
-}
 
-class _TimelineItem extends StatelessWidget {
-  final _TimelineActivityData activity;
-  final bool isLast;
-
-  const _TimelineItem({required this.activity, required this.isLast});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Timeline line and dot
-          Column(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: _getActivityColor(activity.type),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _getActivityColor(activity.type).withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-              ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 40,
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _T.slate200,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(width: 12),
-
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _T.ink3,
-                      height: 1.4,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: activity.actorName,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      TextSpan(text: ' ${activity.action}'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  timeago.format(activity.timestamp),
-                  style: const TextStyle(fontSize: 11.5, color: _T.slate400),
-                ),
-              ],
-            ),
-          ),
-
-          // Activity type icon
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: _getActivityColor(activity.type).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(
-              _getActivityIcon(activity.type),
-              size: 12,
-              color: _getActivityColor(activity.type),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getActivityColor(ActivityType type) {
-    switch (type) {
-      case ActivityType.stageForward:
-        return _T.green;
-      case ActivityType.stageBackward:
-        return _T.amber;
-      case ActivityType.printerAssigned:
-        return _T.blue;
-      case ActivityType.priorityChanged:
-        return _T.red;
-      case ActivityType.dueDateChanged:
-        return _T.indigo;
-      default:
-        return _T.slate500;
-    }
-  }
-
-  IconData _getActivityIcon(ActivityType type) {
-    switch (type) {
-      case ActivityType.stageForward:
-        return Icons.trending_up;
-      case ActivityType.stageBackward:
-        return Icons.trending_down;
-      case ActivityType.printerAssigned:
-        return Icons.print_rounded;
-      case ActivityType.priorityChanged:
-        return Icons.flag_outlined;
-      case ActivityType.dueDateChanged:
-        return Icons.calendar_today_outlined;
-      default:
-        return Icons.circle;
-    }
-  }
-}
-
-class _EmptyTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _T.slate50,
         borderRadius: BorderRadius.circular(_T.rLg),
         border: Border.all(color: _T.slate200),
       ),
-      child: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history_outlined, size: 32, color: _T.slate300),
-            SizedBox(height: 8),
-            Text(
-              'No activity yet',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _T.slate400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MESSAGE ATTACHMENTS
-// Shows file attachments for messages
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _MessageAttachments extends StatelessWidget {
-  final Message message;
-
-  const _MessageAttachments({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    // In real implementation, get attachments from message
-    // For now, we'll show placeholder
-    final attachments = _getSampleAttachments();
-
-    if (attachments.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: _T.slate200),
-        borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          _CardHeader(
-            title: 'Attachments',
-            icon: Icons.attach_file_outlined,
-            iconColor: _T.teal,
-            iconBg: _T.blue50,
-            trailing: Text(
-              '${attachments.length}',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: _T.slate400,
-              ),
+          Expanded(
+            child: _StageBox(
+              label: _formatStage(fromStage),
+              color: _T.slate400,
+              bg: _T.slate100,
             ),
           ),
-
-          const _CardDivider(),
-
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children:
-                  attachments.map((attachment) {
-                    return _AttachmentItem(attachment: attachment);
-                  }).toList(),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(
+              isForward
+                  ? Icons.arrow_forward_rounded
+                  : Icons.arrow_back_rounded,
+              size: 20,
+              color: isForward ? _T.green : _T.amber,
+            ),
+          ),
+          Expanded(
+            child: _StageBox(
+              label: _formatStage(toStage),
+              color: isForward ? _T.green : _T.amber,
+              bg: isForward ? _T.green50 : _T.amber50,
             ),
           ),
         ],
@@ -2695,590 +1252,490 @@ class _MessageAttachments extends StatelessWidget {
     );
   }
 
-  List<_AttachmentData> _getSampleAttachments() {
-    // This would come from your message model
-    // Sample data for demonstration
-    return [
-      _AttachmentData(
-        name: 'design_mockup_v2.pdf',
-        size: '2.4 MB',
-        type: 'pdf',
-        url: '',
-      ),
-      _AttachmentData(
-        name: 'final_artwork.png',
-        size: '1.2 MB',
-        type: 'image',
-        url: '',
-      ),
-      _AttachmentData(
-        name: 'print_specifications.xlsx',
-        size: '89 KB',
-        type: 'spreadsheet',
-        url: '',
-      ),
-    ];
+  String _formatStage(String stage) {
+    return stage
+        .split('_')
+        .map((w) => w[0].toUpperCase() + w.substring(1))
+        .join(' ');
   }
 }
 
-class _AttachmentData {
-  final String name;
-  final String size;
-  final String type;
-  final String url;
+class _StageBox extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color bg;
 
-  _AttachmentData({
-    required this.name,
-    required this.size,
-    required this.type,
-    required this.url,
-  });
-}
-
-class _AttachmentItem extends StatefulWidget {
-  final _AttachmentData attachment;
-
-  const _AttachmentItem({required this.attachment});
-
-  @override
-  State<_AttachmentItem> createState() => _AttachmentItemState();
-}
-
-class _AttachmentItemState extends State<_AttachmentItem> {
-  bool _hovered = false;
+  const _StageBox({required this.label, required this.color, required this.bg});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: () {
-            // Download or open attachment
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _hovered ? _T.blue50 : _T.slate50,
-              borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(
-                color: _hovered ? _T.blue.withOpacity(0.3) : _T.slate200,
-              ),
-            ),
-            child: Row(
-              children: [
-                // File type icon
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: _getFileTypeColor(
-                      widget.attachment.type,
-                    ).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    _getFileTypeIcon(widget.attachment.type),
-                    size: 18,
-                    color: _getFileTypeColor(widget.attachment.type),
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                // File info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.attachment.name,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: _hovered ? _T.blue : _T.ink3,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.attachment.size,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: _T.slate400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Download icon
-                Icon(
-                  Icons.download_rounded,
-                  size: 16,
-                  color: _hovered ? _T.blue : _T.slate300,
-                ),
-              ],
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
       ),
     );
   }
-
-  Color _getFileTypeColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'pdf':
-        return _T.red;
-      case 'image':
-      case 'png':
-      case 'jpg':
-        return _T.purple;
-      case 'spreadsheet':
-      case 'xlsx':
-        return _T.green;
-      case 'document':
-      case 'docx':
-        return _T.blue;
-      default:
-        return _T.slate500;
-    }
-  }
-
-  IconData _getFileTypeIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'pdf':
-        return Icons.picture_as_pdf_outlined;
-      case 'image':
-      case 'png':
-      case 'jpg':
-        return Icons.image_outlined;
-      case 'spreadsheet':
-      case 'xlsx':
-        return Icons.table_chart_outlined;
-      case 'document':
-      case 'docx':
-        return Icons.description_outlined;
-      default:
-        return Icons.insert_drive_file_outlined;
-    }
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRINTER DETAIL CARD
-// Shows printer information for printer-assigned activities
+// PRINTER ASSIGNED VISUAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PrinterDetailCard extends ConsumerWidget {
-  final TaskActivity activity;
+class _PrinterAssignedVisual extends StatelessWidget {
+  final String printerName;
+  final String printerNickname;
 
-  const _PrinterDetailCard({required this.activity});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // In real implementation, fetch printer details
-    // final printer = ref.watch(printerByIdProvider(activity.printerId));
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: _T.slate200),
-        borderRadius: BorderRadius.circular(_T.rLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CardHeader(
-            title: 'Printer Details',
-            icon: Icons.print_rounded,
-            iconColor: _T.blue,
-            iconBg: _T.blue50,
-          ),
-
-          const _CardDivider(),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: _T.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.print_rounded,
-                        size: 24,
-                        color: _T.blue,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            activity.printerName ?? 'Unknown Printer',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _T.ink,
-                            ),
-                          ),
-                          if (activity.printerNickname != null &&
-                              activity.printerNickname!.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              activity.printerNickname!,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                color: _T.slate500,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _T.green50,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle, size: 12, color: _T.green),
-                          SizedBox(width: 4),
-                          Text(
-                            'Active',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: _T.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: _T.slate100),
-                const SizedBox(height: 16),
-
-                // Printer metadata
-                _InfoRow(
-                  icon: Icons.location_on_outlined,
-                  label: 'Location',
-                  child: const Text(
-                    'Production Floor',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _T.slate500,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                _InfoRow(
-                  icon: Icons.pending_actions_outlined,
-                  label: 'Queue',
-                  child: const Text(
-                    '3 jobs waiting',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _T.slate500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CardHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
-  final Widget? trailing;
-
-  const _CardHeader({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBg,
-    this.trailing,
+  const _PrinterAssignedVisual({
+    required this.printerName,
+    required this.printerNickname,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _T.blue50,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.blue.withOpacity(0.3)),
+      ),
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: iconColor.withOpacity(0.2)),
+              color: _T.blue.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 14, color: iconColor),
+            child: const Icon(Icons.print_rounded, size: 24, color: _T.blue),
           ),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: _T.ink2,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  printerName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _T.blue,
+                  ),
+                ),
+                if (printerNickname.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    printerNickname,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _T.blue.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (trailing != null) ...[const Spacer(), trailing!],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _T.green,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, size: 12, color: Colors.white),
+                SizedBox(width: 4),
+                Text(
+                  'Assigned',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _CardDivider extends StatelessWidget {
-  const _CardDivider();
+// ─────────────────────────────────────────────────────────────────────────────
+// PRIORITY CHANGE VISUAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PriorityChangeVisual extends StatelessWidget {
+  final int fromPriority;
+  final int toPriority;
+
+  const _PriorityChangeVisual({
+    required this.fromPriority,
+    required this.toPriority,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, color: _T.slate100);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: PriorityPill(priority: _priorityFromInt(fromPriority)),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 18,
+              color: _T.slate300,
+            ),
+          ),
+          Expanded(child: PriorityPill(priority: _priorityFromInt(toPriority))),
+        ],
+      ),
+    );
+  }
+
+  TaskPriority _priorityFromInt(int p) {
+    if (p <= 0 || p > TaskPriority.values.length) {
+      return TaskPriority.normal;
+    }
+    return TaskPriority.values[p - 1];
   }
 }
 
-class _InfoRow extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK INFO CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TaskInfoCard extends StatelessWidget {
+  final String taskName;
+  final String? taskDescription;
+  final int taskPriority;
+  final DateTime? taskDueDate;
+  final String taskStatus;
+
+  const _TaskInfoCard({
+    required this.taskName,
+    this.taskDescription,
+    required this.taskPriority,
+    this.taskDueDate,
+    required this.taskStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _T.slate100)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: _T.indigo50,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.assignment_outlined,
+                    size: 13,
+                    color: _T.indigo,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Task Details',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  taskName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                    height: 1.4,
+                  ),
+                ),
+
+                if (taskDescription != null && taskDescription!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    taskDescription!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: _T.slate500,
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+                const Divider(height: 1, color: _T.slate100),
+                const SizedBox(height: 12),
+
+                // Metadata grid
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  children: [
+                    _MetaChip(
+                      icon: Icons.flag_outlined,
+                      label: 'Priority',
+                      value: _getPriorityLabel(taskPriority),
+                      color: _getPriorityColor(taskPriority),
+                    ),
+                    if (taskDueDate != null)
+                      _MetaChip(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Due',
+                        value: _formatDate(taskDueDate!),
+                        color: _T.slate500,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getPriorityLabel(int p) {
+    if (p <= 0 || p > TaskPriority.values.length) return 'Normal';
+    return TaskPriority.values[p - 1].name[0].toUpperCase() +
+        TaskPriority.values[p - 1].name.substring(1);
+  }
+
+  Color _getPriorityColor(int p) {
+    if (p <= 0 || p > TaskPriority.values.length) return _T.slate500;
+    final priority = TaskPriority.values[p - 1];
+    switch (priority) {
+      case TaskPriority.normal:
+        return _T.slate500;
+      case TaskPriority.high:
+        return _T.amber;
+      case TaskPriority.urgent:
+        return _T.red;
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
+  }
+}
+
+class _MetaChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Widget child;
+  final String value;
+  final Color color;
 
-  const _InfoRow({
+  const _MetaChip({
     required this.icon,
     required this.label,
-    required this.child,
+    required this.value,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: _T.slate400),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 80,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: _T.slate400),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 11.5, color: _T.slate400),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: color,
           ),
         ),
-        Expanded(child: child),
       ],
     );
   }
 }
 
-class _StagePill extends StatelessWidget {
-  final TaskStatus status;
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE DETAIL CONTENT
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _StagePill({required this.status});
+class _MessageDetailContent extends StatelessWidget {
+  final Message message;
+
+  const _MessageDetailContent({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    final si = stageInfo(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: si.bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: si.color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon(si.icon, size: 12, color: si.color),
-          const SizedBox(width: 6),
-          Text(
-            si.label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: si.color,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Message author
+        Row(
+          children: [
+            AvatarWidget(
+              initials: message.authorInitials,
+              color: message.authorColor ?? _T.ink3,
+              size: 48,
             ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.authorName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Posted a message',
+                    style: TextStyle(fontSize: 12.5, color: _T.slate500),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 18),
+
+        // Message content
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _T.slate50,
+            borderRadius: BorderRadius.circular(_T.rLg),
+            border: Border.all(color: _T.slate200),
           ),
-        ],
-      ),
+          child: Text(
+            message.message,
+            style: const TextStyle(fontSize: 13.5, color: _T.ink2, height: 1.6),
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Task reference
+        Text(
+          'TASK-${message.taskId}',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: _T.slate400,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _BillingPill extends StatelessWidget {
-  final BillingStatus status;
+// ─────────────────────────────────────────────────────────────────────────────
+// DETAIL FOOTER
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _BillingPill({required this.status});
+class _DetailFooter extends StatelessWidget {
+  final InboxItem item;
 
-  @override
-  Widget build(BuildContext context) {
-    final meta = _getBillingMeta(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: meta.bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: meta.color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: meta.color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            meta.label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: meta.color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  _BillingMeta _getBillingMeta(BillingStatus status) {
-    switch (status) {
-      case BillingStatus.pending:
-        return _BillingMeta('Pending', _T.amber, _T.amber50);
-      case BillingStatus.quoteGiven:
-        return _BillingMeta('Quote Given', _T.blue, _T.blue50);
-      case BillingStatus.invoiced:
-        return _BillingMeta('Invoiced', _T.indigo, _T.indigo50);
-      case BillingStatus.foc:
-        return _BillingMeta('FOC', _T.green, _T.green50);
-      case BillingStatus.cancelled:
-        return _BillingMeta('Cancelled', _T.red, _T.red50);
-    }
-  }
-}
-
-class _BillingMeta {
-  final String label;
-  final Color color;
-  final Color bg;
-
-  _BillingMeta(this.label, this.color, this.bg);
-}
-
-class _SpecChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _SpecChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _DetailFooter({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: _T.slate100,
-        borderRadius: BorderRadius.circular(6),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _T.slate200)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: _T.slate500),
-          const SizedBox(width: 6),
-          Text(
-            '$label: ',
-            style: const TextStyle(fontSize: 11, color: _T.slate400),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: _T.ink3,
-            ),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      child: _ViewTaskButton(taskId: item.taskId),
     );
   }
 }
 
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
+class _ViewTaskButton extends StatefulWidget {
+  final int taskId;
+
+  const _ViewTaskButton({required this.taskId});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: _T.slate50,
-        borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.slate200),
-      ),
-      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-    );
-  }
+  State<_ViewTaskButton> createState() => _ViewTaskButtonState();
 }
 
-class _ViewAllButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _ViewAllButton({required this.label, required this.onTap});
-
-  @override
-  State<_ViewAllButton> createState() => _ViewAllButtonState();
-}
-
-class _ViewAllButtonState extends State<_ViewAllButton> {
+class _ViewTaskButtonState extends State<_ViewTaskButton> {
   bool _hovered = false;
 
   @override
@@ -3288,26 +1745,36 @@ class _ViewAllButtonState extends State<_ViewAllButton> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () {
+          // Navigate to task detail
+          // Navigator.of(context).push(...)
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blueHover : _T.blue,
+            borderRadius: BorderRadius.circular(_T.r),
+            boxShadow: [
+              BoxShadow(
+                color: _T.blue.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Icon(Icons.open_in_new_rounded, size: 15, color: Colors.white),
+              SizedBox(width: 8),
               Text(
-                widget.label,
+                'View Full Task',
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: _hovered ? _T.blue : _T.slate500,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_forward,
-                size: 14,
-                color: _hovered ? _T.blue : _T.slate400,
               ),
             ],
           ),
