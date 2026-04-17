@@ -155,6 +155,13 @@ class _InboxViewState extends ConsumerState<InboxView> {
                                 item: item,
                                 isSelected: isSelected,
                                 onTap: () => _onItemTap(item),
+                                onQuickAction: (action) {
+                                  if (action == 'view') {
+                                    // Navigate to full task
+                                  } else if (action == 'reply') {
+                                    // Open reply composer
+                                  }
+                                },
                               );
                             },
                           ),
@@ -245,11 +252,14 @@ class _InboxItemRow extends StatefulWidget {
   final InboxItem item;
   final bool isSelected;
   final VoidCallback onTap;
+  final Function(String action) onQuickAction;
 
   const _InboxItemRow({
+    super.key,
     required this.item,
     required this.isSelected,
     required this.onTap,
+    required this.onQuickAction,
   });
 
   @override
@@ -286,35 +296,35 @@ class _InboxItemRowState extends State<_InboxItemRow> {
               bottom: const BorderSide(color: _T.slate100),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Unseen indicator dot
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(top: 6, right: 12),
-                decoration: BoxDecoration(
-                  color: item.isSeen ? Colors.transparent : _T.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              // Top row: Actor, timestamp, unseen dot
+              Row(
+                children: [
+                  // Unseen indicator
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: item.isSeen ? Colors.transparent : _T.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
 
-              // Actor avatar
-              _buildAvatar(item),
-              const SizedBox(width: 12),
+                  // Actor avatar
+                  _buildAvatar(item),
+                  const SizedBox(width: 10),
 
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header line
-                    Row(
+                  // Actor name & action
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: _buildHeaderText(item)),
-                        const SizedBox(width: 8),
+                        _buildHeaderText(item),
+                        const SizedBox(height: 2),
                         Text(
                           timeago.format(item.timestamp),
                           style: const TextStyle(
@@ -324,46 +334,94 @@ class _InboxItemRowState extends State<_InboxItemRow> {
                         ),
                       ],
                     ),
+                  ),
 
-                    const SizedBox(height: 4),
+                  // Activity type badge
+                  _ActivityTypeBadge(item: item),
+                ],
+              ),
 
-                    // Task name
-                    Text(
+              const SizedBox(height: 12),
+
+              // Task name with project pill
+              Row(
+                children: [
+                  // Project indicator dot
+                  if (item.type == InboxItemType.activity)
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: _T.indigo, // Would be project color
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+
+                  Expanded(
+                    child: Text(
                       item.type == InboxItemType.activity
                           ? item.activity!.taskName
                           : 'TASK-${item.message!.taskId}',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: widget.isSelected ? _T.blue : _T.ink2,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: widget.isSelected ? _T.blue : _T.ink,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                ],
+              ),
 
-                    // Activity-specific content
+              const SizedBox(height: 8),
+
+              // Activity-specific rich preview
+              if (item.type == InboxItemType.activity)
+                _buildActivityPreview(item.activity!)
+              else
+                _buildMessagePreview(item.message!),
+
+              // Bottom row: metadata & quick actions
+              if (_hovered || widget.isSelected) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    // Task metadata chips
                     if (item.type == InboxItemType.activity) ...[
-                      const SizedBox(height: 2),
-                      _buildActivityContent(item.activity!),
+                      _MetadataPill(
+                        icon: Icons.flag_outlined,
+                        label: _getPriorityName(item.activity!.taskPriority),
+                        color: _getPriorityColor(item.activity!.taskPriority),
+                      ),
+                      const SizedBox(width: 6),
+                      if (item.activity!.taskDueDate != null)
+                        _MetadataPill(
+                          icon: Icons.calendar_today_outlined,
+                          label: _formatShortDate(item.activity!.taskDueDate!),
+                          color: _T.slate500,
+                        ),
                     ],
 
-                    // Message preview
-                    if (item.type == InboxItemType.message) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        item.message!.message,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: _T.slate500,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    const Spacer(),
+
+                    // Quick actions
+                    _QuickActionButton(
+                      icon: Icons.open_in_new_rounded,
+                      tooltip: 'View task',
+                      onTap: () => widget.onQuickAction('view'),
+                    ),
+
+                    if (item.type == InboxItemType.message)
+                      _QuickActionButton(
+                        icon: Icons.reply_rounded,
+                        tooltip: 'Reply',
+                        onTap: () => widget.onQuickAction('reply'),
                       ),
-                    ],
                   ],
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -376,13 +434,13 @@ class _InboxItemRowState extends State<_InboxItemRow> {
       return AvatarWidget(
         initials: item.activity!.actorInitials,
         color: item.activity!.actorColor ?? _T.ink3,
-        size: 34,
+        size: 32,
       );
     } else {
       return AvatarWidget(
         initials: item.message!.authorInitials,
         color: item.message!.authorColor ?? _T.ink3,
-        size: 34,
+        size: 32,
       );
     }
   }
@@ -394,90 +452,415 @@ class _InboxItemRowState extends State<_InboxItemRow> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         text: TextSpan(
-          style: const TextStyle(fontSize: 12.5, color: _T.ink3),
+          style: const TextStyle(fontSize: 12.5, color: _T.ink2, height: 1.3),
           children: [
             TextSpan(
               text: activity.actorName,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            TextSpan(text: ' ${_getActivityVerb(activity.type)}'),
+            TextSpan(
+              text: ' ${_getActivityVerb(activity.type)}',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       );
     } else {
       return Text(
-        item.message!.authorName,
+        '${item.message!.authorName} commented',
         style: const TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
-          color: _T.ink3,
+          color: _T.ink2,
         ),
       );
     }
   }
 
-  Widget _buildActivityContent(TaskActivity activity) {
+  Widget _buildActivityPreview(TaskActivity activity) {
     switch (activity.type) {
       case ActivityType.stageForward:
       case ActivityType.stageBackward:
         return Row(
           children: [
-            _StagePill(label: _formatStage(activity.fromStage), isFrom: true),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Icon(Icons.arrow_forward, size: 12, color: _T.slate300),
+            _MiniStagePill(
+              label: _formatStage(activity.fromStage),
+              color: _T.slate500,
+              bg: _T.slate100,
             ),
-            _StagePill(label: _formatStage(activity.toStage), isFrom: false),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(
+                activity.type == ActivityType.stageForward
+                    ? Icons.arrow_forward
+                    : Icons.arrow_back,
+                size: 14,
+                color: _T.slate300,
+              ),
+            ),
+            _MiniStagePill(
+              label: _formatStage(activity.toStage),
+              color:
+                  activity.type == ActivityType.stageForward
+                      ? _T.green
+                      : _T.amber,
+              bg:
+                  activity.type == ActivityType.stageForward
+                      ? _T.green50
+                      : _T.amber50,
+            ),
           ],
         );
 
       case ActivityType.printerAssigned:
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _T.blue50,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: _T.blue.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.print_rounded, size: 14, color: _T.blue),
+              const SizedBox(width: 6),
+              Text(
+                activity.printerNickname ?? activity.printerName ?? '',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _T.blue,
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case ActivityType.assigneeAdded:
+        return Text(
+          'Assigned to ${activity.addedUserName}',
+          style: const TextStyle(fontSize: 12, color: _T.slate500),
+        );
+
+      case ActivityType.priorityChanged:
         return Row(
           children: [
-            const Icon(Icons.print_rounded, size: 13, color: _T.blue),
-            const SizedBox(width: 6),
             Text(
-              activity.printerNickname ?? activity.printerName ?? '',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.blue,
-              ),
+              'Priority: ',
+              style: const TextStyle(fontSize: 12, color: _T.slate400),
             ),
+            _MiniPriorityChip(priority: activity.fromPriority ?? 2),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Icon(Icons.arrow_forward, size: 12, color: _T.slate300),
+            ),
+            _MiniPriorityChip(priority: activity.toPriority ?? 2),
           ],
         );
 
       default:
-        return const SizedBox.shrink();
+        return Text(
+          activity.taskDescription ?? '',
+          style: const TextStyle(fontSize: 12, color: _T.slate500, height: 1.4),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        );
     }
+  }
+
+  Widget _buildMessagePreview(Message message) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: _T.slate50,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: Text(
+        message.message,
+        style: const TextStyle(fontSize: 12.5, color: _T.ink3, height: 1.5),
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
   }
 
   String _getActivityVerb(ActivityType type) {
     switch (type) {
       case ActivityType.stageForward:
-        return 'moved task forward';
+        return 'progressed';
       case ActivityType.stageBackward:
-        return 'moved task back';
+        return 'moved back';
       case ActivityType.printerAssigned:
-        return 'assigned printer';
+        return 'assigned printer to';
       case ActivityType.assigneeAdded:
-        return 'assigned task';
+        return 'assigned';
       case ActivityType.priorityChanged:
-        return 'changed priority';
+        return 'changed priority of';
       case ActivityType.dueDateChanged:
-        return 'changed due date';
+        return 'updated due date for';
       case ActivityType.taskCompleted:
-        return 'completed task';
+        return 'completed';
       default:
-        return 'updated task';
+        return 'updated';
     }
   }
 
-  String _formatStage(String stage) {
-    return stage
-        .split('_')
-        .map((w) => w[0].toUpperCase() + w.substring(1))
-        .join(' ');
+  String _formatStage(String stage) => stage
+      .split('_')
+      .map((w) => w[0].toUpperCase() + w.substring(1))
+      .join(' ');
+
+  String _getPriorityName(int p) {
+    if (p <= 0 || p > TaskPriority.values.length) return 'Normal';
+    return TaskPriority.values[p - 1].name[0].toUpperCase() +
+        TaskPriority.values[p - 1].name.substring(1);
+  }
+
+  Color _getPriorityColor(int p) {
+    if (p <= 0 || p > TaskPriority.values.length) return _T.slate500;
+    final priority = TaskPriority.values[p - 1];
+    switch (priority) {
+      case TaskPriority.normal:
+        return _T.slate500;
+      case TaskPriority.high:
+        return _T.amber;
+      case TaskPriority.urgent:
+        return _T.red;
+    }
+  }
+
+  String _formatShortDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays < 1) return 'Today';
+    if (diff.inDays < 2) return 'Tomorrow';
+    return '${dt.month}/${dt.day}';
+  }
+}
+
+class _ActivityTypeBadge extends StatelessWidget {
+  final InboxItem item;
+
+  const _ActivityTypeBadge({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.type == InboxItemType.message) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: _T.purple50,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Icon(
+          Icons.chat_bubble_outline,
+          size: 11,
+          color: _T.purple,
+        ),
+      );
+    }
+
+    IconData icon;
+    Color color;
+    Color bg;
+
+    switch (item.activity!.type) {
+      case ActivityType.stageForward:
+        icon = Icons.trending_up;
+        color = _T.green;
+        bg = _T.green50;
+        break;
+      case ActivityType.stageBackward:
+        icon = Icons.trending_down;
+        color = _T.amber;
+        bg = _T.amber50;
+        break;
+      case ActivityType.printerAssigned:
+        icon = Icons.print_rounded;
+        color = _T.blue;
+        bg = _T.blue50;
+        break;
+      case ActivityType.priorityChanged:
+        icon = Icons.flag_outlined;
+        color = _T.red;
+        bg = _T.red50;
+        break;
+      default:
+        icon = Icons.notifications_none;
+        color = _T.slate500;
+        bg = _T.slate100;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Icon(icon, size: 11, color: color),
+    );
+  }
+}
+
+class _MiniStagePill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color bg;
+
+  const _MiniStagePill({
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniPriorityChip extends StatelessWidget {
+  final int priority;
+
+  const _MiniPriorityChip({required this.priority});
+
+  @override
+  Widget build(BuildContext context) {
+    final p =
+        priority <= 0 || priority > TaskPriority.values.length
+            ? TaskPriority.normal
+            : TaskPriority.values[priority - 1];
+
+    Color color;
+    switch (p) {
+      case TaskPriority.normal:
+        color = _T.slate500;
+        break;
+      case TaskPriority.high:
+        color = _T.amber;
+        break;
+      case TaskPriority.urgent:
+        color = _T.red;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        p.name[0].toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetadataPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _MetadataPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: _T.slate100,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionButton extends StatefulWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  State<_QuickActionButton> createState() => _QuickActionButtonState();
+}
+
+class _QuickActionButtonState extends State<_QuickActionButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.tooltip,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: _hovered ? _T.blue50 : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              widget.icon,
+              size: 14,
+              color: _hovered ? _T.blue : _T.slate400,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
