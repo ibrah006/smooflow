@@ -119,7 +119,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
             : ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
 
     return AnimatedContainer(
-      duration: Duration(milliseconds: 80),
+      duration: Duration(milliseconds: 130),
       width: task != null ? kDetailWidth : 0,
       child:
           task == null
