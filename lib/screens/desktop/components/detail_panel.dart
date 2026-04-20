@@ -647,7 +647,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             : 45.0;
 
     return Container(
-      width: kDetailW,
+      width: kDetailWidth,
       decoration: const BoxDecoration(
         color: _T.white,
         border: Border(left: BorderSide(color: _T.slate200)),

@@ -120,7 +120,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
     return AnimatedContainer(
       duration: Duration(milliseconds: 80),
-      width: task != null ? kDetailW : 0,
+      width: task != null ? kDetailWidth : 0,
       child:
           task == null
               ? SizedBox()
