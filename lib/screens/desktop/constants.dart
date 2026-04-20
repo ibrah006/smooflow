@@ -26,6 +26,8 @@ class _T {
   static const slate500 = Color(0xFF64748B);
 }
 
+const kDetailW = 400.0;
+
 List<DesignStageInfo> get kStages {
   final isAdmin = LoginService.currentUser!.isAdmin;
 

@@ -60,7 +60,6 @@ class _T {
   static const white = Colors.white;
   static const sidebarW = 220.0;
   static const topbarH = 52.0;
-  static const detailW = 400.0;
   static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
@@ -648,7 +647,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             : 45.0;
 
     return Container(
-      width: _T.detailW,
+      width: kDetailW,
       decoration: const BoxDecoration(
         color: _T.white,
         border: Border(left: BorderSide(color: _T.slate200)),
