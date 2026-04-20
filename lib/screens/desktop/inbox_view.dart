@@ -21,6 +21,7 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 // Design tokens (same as before)
@@ -119,7 +120,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
     return AnimatedContainer(
       duration: Duration(milliseconds: 80),
-      width: task != null ? null : 0,
+      width: task != null ? kDetailW : 0,
       child:
           task == null
               ? SizedBox()
