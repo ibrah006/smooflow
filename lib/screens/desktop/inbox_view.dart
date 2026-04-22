@@ -322,17 +322,6 @@ class _InboxItemRowState extends State<_InboxItemRow> {
               // Top row: Actor, timestamp, unseen dot
               Row(
                 children: [
-                  // Unseen indicator
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: item.isSeen ? Colors.transparent : _T.blue,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-
                   // Actor avatar
                   _buildAvatar(item),
                   const SizedBox(width: 10),
@@ -355,8 +344,16 @@ class _InboxItemRowState extends State<_InboxItemRow> {
                     ),
                   ),
 
-                  // Activity type badge
-                  _ActivityTypeBadge(item: item),
+                  // Unseen indicator
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: item.isSeen ? Colors.transparent : _T.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ],
               ),
 
