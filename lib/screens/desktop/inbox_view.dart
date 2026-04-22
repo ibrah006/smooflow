@@ -319,6 +319,30 @@ class _InboxItemRowState extends State<_InboxItemRow> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Project label
+              // Row(
+              //   children: [
+              //     Container(
+              //       width: 7.5,
+              //       height: 7.5,
+              //       margin: const EdgeInsets.only(right: 5),
+              //       decoration: BoxDecoration(
+              //         color: item.isSeen ? Colors.transparent : _T.blue,
+              //         borderRadius: BorderRadius.circular(3),
+              //       ),
+              //     ),
+              //     Text(
+              //       "Project",
+              //       style: TextStyle(
+              //         fontSize: 12,
+              //         fontWeight: FontWeight.w500,
+              //         color: _hovered ? _T.ink3 : _T.slate400,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // SizedBox(height: 5),
+
               // Top row: Actor, timestamp, unseen dot
               Row(
                 children: [
