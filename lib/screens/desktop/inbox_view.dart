@@ -403,44 +403,44 @@ class _InboxItemRowState extends State<_InboxItemRow> {
                 _buildMessagePreview(item.message!),
 
               // Bottom row: metadata & quick actions
-              if (_hovered || widget.isSelected) ...[
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    // Task metadata chips
-                    if (item.type == InboxItemType.activity) ...[
-                      _MetadataPill(
-                        icon: Icons.flag_outlined,
-                        label: _getPriorityName(item.activity!.taskPriority),
-                        color: _getPriorityColor(item.activity!.taskPriority),
-                      ),
-                      const SizedBox(width: 6),
-                      if (item.activity!.taskDueDate != null)
-                        _MetadataPill(
-                          icon: Icons.calendar_today_outlined,
-                          label: _formatShortDate(item.activity!.taskDueDate!),
-                          color: _T.slate500,
-                        ),
-                    ],
+              // if (_hovered || widget.isSelected) ...[
+              //   const SizedBox(height: 10),
+              //   Row(
+              //     children: [
+              //       // Task metadata chips
+              //       if (item.type == InboxItemType.activity) ...[
+              //         _MetadataPill(
+              //           icon: Icons.flag_outlined,
+              //           label: _getPriorityName(item.activity!.taskPriority),
+              //           color: _getPriorityColor(item.activity!.taskPriority),
+              //         ),
+              //         const SizedBox(width: 6),
+              //         if (item.activity!.taskDueDate != null)
+              //           _MetadataPill(
+              //             icon: Icons.calendar_today_outlined,
+              //             label: _formatShortDate(item.activity!.taskDueDate!),
+              //             color: _T.slate500,
+              //           ),
+              //       ],
 
-                    const Spacer(),
+              //       const Spacer(),
 
-                    // Quick actions
-                    _QuickActionButton(
-                      icon: Icons.open_in_new_rounded,
-                      tooltip: 'View task',
-                      onTap: () => widget.onQuickAction('view'),
-                    ),
+              //       // Quick actions
+              //       _QuickActionButton(
+              //         icon: Icons.open_in_new_rounded,
+              //         tooltip: 'View task',
+              //         onTap: () => widget.onQuickAction('view'),
+              //       ),
 
-                    if (item.type == InboxItemType.message)
-                      _QuickActionButton(
-                        icon: Icons.reply_rounded,
-                        tooltip: 'Reply',
-                        onTap: () => widget.onQuickAction('reply'),
-                      ),
-                  ],
-                ),
-              ],
+              //       if (item.type == InboxItemType.message)
+              //         _QuickActionButton(
+              //           icon: Icons.reply_rounded,
+              //           tooltip: 'Reply',
+              //           onTap: () => widget.onQuickAction('reply'),
+              //         ),
+              //     ],
+              //   ),
+              // ],
             ],
           ),
         ),
