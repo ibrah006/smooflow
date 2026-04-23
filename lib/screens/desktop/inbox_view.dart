@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/data/inbox_item.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/inbox_provider.dart';
@@ -486,8 +487,16 @@ class _InboxItemRowState extends State<_InboxItemRow> {
   }
 
   Widget _buildHeaderText(InboxItem item) {
+    late final String authorName;
+
     if (item.type == InboxItemType.activity) {
       final activity = item.activity!;
+
+      authorName =
+          activity.actorId == LoginService.currentUser!.id
+              ? "You"
+              : activity.actorName;
+
       return RichText(
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -495,7 +504,7 @@ class _InboxItemRowState extends State<_InboxItemRow> {
           style: const TextStyle(fontSize: 12.5, color: _T.ink2, height: 1.3),
           children: [
             TextSpan(
-              text: activity.actorName,
+              text: authorName,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             TextSpan(
@@ -506,8 +515,13 @@ class _InboxItemRowState extends State<_InboxItemRow> {
         ),
       );
     } else {
+      authorName =
+          item.message!.userId == LoginService.currentUser!.id
+              ? "You"
+              : item.message!.authorName;
+
       return Text(
-        '${item.message!.authorName} commented',
+        '${authorName} commented',
         style: const TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
