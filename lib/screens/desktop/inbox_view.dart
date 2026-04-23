@@ -17,6 +17,8 @@ import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/data/inbox_item.dart';
 import 'package:smooflow/enums/task_priority.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/helpers/task_component_helper.dart';
 import 'package:smooflow/providers/inbox_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
@@ -532,13 +534,20 @@ class _InboxItemRowState extends State<_InboxItemRow> {
   }
 
   Widget _buildActivityPreview(TaskActivity activity) {
+    final fromStatusHelper = TaskComponentHelper.get(
+      TaskStatus.values.byName(activity.fromStage),
+    );
+    final toStatusHelper = TaskComponentHelper.get(
+      TaskStatus.values.byName(activity.toStage),
+    );
+
     switch (activity.type) {
       case ActivityType.stageForward:
       case ActivityType.stageBackward:
         return Row(
           children: [
             _MiniStagePill(
-              label: _formatStage(activity.fromStage),
+              label: fromStatusHelper.label,
               color: _T.slate500,
               bg: _T.slate100,
             ),
@@ -553,7 +562,7 @@ class _InboxItemRowState extends State<_InboxItemRow> {
               ),
             ),
             _MiniStagePill(
-              label: _formatStage(activity.toStage),
+              label: toStatusHelper.label,
               color:
                   activity.type == ActivityType.stageForward
                       ? _T.green
