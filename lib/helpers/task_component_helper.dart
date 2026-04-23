@@ -67,8 +67,8 @@ class TaskComponentHelper {
           : 'Not Started';
 
   // ── Factory ────────────────────────────────────────────────────────────────
-  factory TaskComponentHelper.get(Task task) {
-    switch (task.status) {
+  factory TaskComponentHelper.get(TaskStatus taskStatus, [Task? task]) {
+    switch (taskStatus) {
       // ── Design phase ───────────────────────────────────────────────────────
 
       case TaskStatus.pending:
@@ -78,8 +78,8 @@ class TaskComponentHelper {
           'Waiting to be picked up',
           Icons.schedule_rounded,
           _T.amber,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.designing:
@@ -89,8 +89,8 @@ class TaskComponentHelper {
           'Design work is in progress',
           Icons.design_services_rounded,
           _T.blue,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.waitingApproval:
@@ -100,8 +100,8 @@ class TaskComponentHelper {
           'Submitted — pending client review',
           Icons.mark_email_unread_rounded,
           _T.purple,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.clientApproved:
@@ -111,8 +111,8 @@ class TaskComponentHelper {
           'Design signed off — ready for production',
           Icons.verified_rounded,
           _T.emerald,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.revision:
@@ -122,8 +122,8 @@ class TaskComponentHelper {
           'Client requested changes',
           Icons.edit_note_rounded,
           _T.amber,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       // ── Production phase ───────────────────────────────────────────────────
@@ -135,8 +135,8 @@ class TaskComponentHelper {
           'Queued — awaiting printer availability',
           Icons.hourglass_top_rounded,
           _T.amber,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.printing:
@@ -146,8 +146,8 @@ class TaskComponentHelper {
           'Print job is running',
           Icons.print_rounded,
           _T.blue,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.printingCompleted:
@@ -157,8 +157,8 @@ class TaskComponentHelper {
           'Print finished — moving to finishing',
           Icons.print_disabled_rounded, // "done printing" feel
           _T.green,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.finishing:
@@ -168,8 +168,8 @@ class TaskComponentHelper {
           'Post-print finishing in progress',
           Icons.auto_fix_high_rounded,
           _T.blue,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.productionCompleted:
@@ -179,8 +179,8 @@ class TaskComponentHelper {
           'All production steps done',
           Icons.inventory_2_rounded,
           _T.emerald,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       // ── Delivery phase ─────────────────────────────────────────────────────
@@ -192,8 +192,8 @@ class TaskComponentHelper {
           'Ready — awaiting dispatch',
           Icons.inventory_rounded,
           _T.amber,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.delivery:
@@ -203,8 +203,8 @@ class TaskComponentHelper {
           'Item is on its way to the client',
           Icons.local_shipping_rounded,
           _T.blue,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.delivered:
@@ -214,8 +214,8 @@ class TaskComponentHelper {
           'Item received by the client',
           Icons.move_to_inbox_rounded,
           _T.emerald,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       // ── Installation phase ─────────────────────────────────────────────────
@@ -227,8 +227,8 @@ class TaskComponentHelper {
           'Delivered — awaiting install slot',
           Icons.pending_actions_rounded,
           _T.amber,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.installing:
@@ -238,8 +238,8 @@ class TaskComponentHelper {
           'Installation is underway on-site',
           Icons.construction_rounded,
           _T.blue,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.completed:
@@ -249,8 +249,8 @@ class TaskComponentHelper {
           'Installation complete — task closed',
           Icons.check_circle_rounded,
           _T.emerald,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       // ── Cross-cutting states ───────────────────────────────────────────────
@@ -262,8 +262,8 @@ class TaskComponentHelper {
           'Task cannot proceed — action needed',
           Icons.block_rounded,
           _T.red,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
 
       case TaskStatus.paused:
@@ -273,8 +273,8 @@ class TaskComponentHelper {
           'Task is on hold',
           Icons.pause_circle_rounded,
           _T.slate500,
-          task.actualProductionStartTime,
-          task.actualProductionEndTime,
+          task?.actualProductionStartTime,
+          task?.actualProductionEndTime,
         );
     }
     // Dart exhaustiveness ensures no default is needed — all cases covered.
