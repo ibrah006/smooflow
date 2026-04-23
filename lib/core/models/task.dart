@@ -628,7 +628,7 @@ class Task {
     if (status != null) {
       task.status = status;
     }
-    return TaskComponentHelper.get(task);
+    return TaskComponentHelper.get(task.status, task);
   }
 
   Duration get productionDurationElapsed {
