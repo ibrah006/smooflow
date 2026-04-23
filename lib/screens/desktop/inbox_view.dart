@@ -516,7 +516,7 @@ class _InboxItemRowState extends State<_InboxItemRow> {
       );
     } else {
       authorName =
-          item.message!.userId == LoginService.currentUser!.id
+          item.message!.authorId == LoginService.currentUser!.id
               ? "You"
               : item.message!.authorName;
 

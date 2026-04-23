@@ -10,7 +10,7 @@ class Message {
   late final int id;
   final String message;
   final DateTime date;
-  final String userId;
+  final String authorId;
   final int taskId;
 
   final Color? authorColor;
@@ -23,14 +23,14 @@ class Message {
     required this.id,
     required this.message,
     required this.date,
-    required this.userId,
+    required this.authorId,
     required this.taskId,
     required this.authorColor,
     required this.authorName,
   });
 
   Message.create({required this.message, required this.taskId})
-    : userId = LoginService.currentUser!.id,
+    : authorId = LoginService.currentUser!.id,
       authorColor = LoginService.currentUser!.color,
       authorName = LoginService.currentUser!.name,
       date = DateTime.now();
@@ -40,7 +40,7 @@ class Message {
       id: json['id'],
       message: json['message'],
       date: DateTime.parse(json['date']),
-      userId: json['user']?['id'] ?? json['userId'],
+      authorId: json['user']?['id'] ?? json['userId'],
       taskId: json['task']?['id'] ?? json['taskId'],
       authorColor:
           json['user']['color'] != null

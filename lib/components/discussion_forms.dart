@@ -415,7 +415,7 @@ class _LastMessagePreview extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      lastMessage.userId == LoginService.currentUser!.id
+                      lastMessage.authorId == LoginService.currentUser!.id
                           ? "You"
                           : lastMessage.authorName,
                       style: const TextStyle(
@@ -1702,7 +1702,7 @@ class _MessageRowState extends State<_MessageRow> {
       key: _widgetKey,
       onTap: () {
         print(
-          "tapped message user, ${{"user": msg.authorName, "userId": msg.userId}}",
+          "tapped message user, ${{"user": msg.authorName, "userId": msg.authorId}}",
         );
       },
       child: MouseRegion(
@@ -1762,7 +1762,7 @@ class _MessageRowState extends State<_MessageRow> {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
-                                msg.userId == LoginService.currentUser!.id
+                                msg.authorId == LoginService.currentUser!.id
                                     ? 'You'
                                     : msg.authorName,
                                 style: const TextStyle(
