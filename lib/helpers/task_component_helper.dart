@@ -23,12 +23,12 @@ import 'package:smooflow/extensions/date_time_format.dart';
 import 'package:smooflow/extensions/duration_format.dart';
 
 abstract class _T {
-  static const Color amber   = Color(0xFFF59E0B);
-  static const Color blue    = Color(0xFF3B82F6);
-  static const Color purple  = Color(0xFF8B5CF6);
-  static const Color green   = Color(0xFF22C55E);
+  static const Color amber = Color(0xFFF59E0B);
+  static const Color blue = Color(0xFF3B82F6);
+  static const Color purple = Color(0xFF8B5CF6);
+  static const Color green = Color(0xFF22C55E);
   static const Color emerald = Color(0xFF10B981); // approved / fully complete
-  static const Color red     = Color(0xFFEF4444);
+  static const Color red = Color(0xFFEF4444);
   static const Color slate500 = Color(0xFF64748B);
 }
 
@@ -47,23 +47,28 @@ class TaskComponentHelper {
     this.icon,
     this.color,
     this._actualProductionStartTime,
-    this._actualProductionEndTime
+    this._actualProductionEndTime,
   );
 
   final DateTime? _actualProductionStartTime;
   final DateTime? _actualProductionEndTime;
 
-  String get timeDisplay => _actualProductionStartTime != null && _actualProductionEndTime != null?
-    // If production has ended, show total duration
-    _actualProductionEndTime?.difference(_actualProductionStartTime!).formatTime?? 'Just finished'
-    // If production has started but not ended, show how long it's been running
-    : _actualProductionStartTime != null? _actualProductionStartTime!.eventAgo
-    : 'Not Started';
+  String get timeDisplay =>
+      _actualProductionStartTime != null && _actualProductionEndTime != null
+          ?
+          // If production has ended, show total duration
+          _actualProductionEndTime
+                  ?.difference(_actualProductionStartTime!)
+                  .formatTime ??
+              'Just finished'
+          // If production has started but not ended, show how long it's been running
+          : _actualProductionStartTime != null
+          ? _actualProductionStartTime!.eventAgo
+          : 'Not Started';
 
   // ── Factory ────────────────────────────────────────────────────────────────
   factory TaskComponentHelper.get(Task task) {
     switch (task.status) {
-
       // ── Design phase ───────────────────────────────────────────────────────
 
       case TaskStatus.pending:
