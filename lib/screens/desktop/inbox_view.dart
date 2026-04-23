@@ -534,12 +534,17 @@ class _InboxItemRowState extends State<_InboxItemRow> {
   }
 
   Widget _buildActivityPreview(TaskActivity activity) {
-    final fromStatusHelper = TaskComponentHelper.get(
-      TaskStatus.values.byName(activity.fromStage),
-    );
-    final toStatusHelper = TaskComponentHelper.get(
-      TaskStatus.values.byName(activity.toStage),
-    );
+    late final TaskComponentHelper fromStatusHelper;
+    late final TaskComponentHelper toStatusHelper;
+    if (activity.type == ActivityType.stageBackward ||
+        activity.type == ActivityType.stageForward) {
+      fromStatusHelper = TaskComponentHelper.get(
+        TaskStatus.values.byName(activity.fromStage),
+      );
+      toStatusHelper = TaskComponentHelper.get(
+        TaskStatus.values.byName(activity.toStage),
+      );
+    }
 
     switch (activity.type) {
       case ActivityType.stageForward:
