@@ -661,7 +661,7 @@ class _InboxItemRowState extends State<_InboxItemRow> {
       case ActivityType.stageBackward:
         return 'moved back';
       case ActivityType.printerAssigned:
-        return 'assigned printer to';
+        return 'started production job';
       case ActivityType.assigneeAdded:
         return 'assigned';
       case ActivityType.priorityChanged:
