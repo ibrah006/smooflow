@@ -96,7 +96,7 @@ class TaskComponentHelper {
       case TaskStatus.waitingApproval:
         return TaskComponentHelper(
           TaskStatus.waitingApproval,
-          'Waiting Approval',
+          'Awaiting Approval',
           'Submitted — pending client review',
           Icons.mark_email_unread_rounded,
           _T.purple,
