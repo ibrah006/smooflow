@@ -85,7 +85,7 @@ class TaskActivity {
       printerName: json['printerName'],
       printerNickname: json['printerNickname'],
       metadata: json['metadata'],
-      updatedAt: DateTime.parse(json['updated_at']),
+      updatedAt: DateTime.parse(json['updatedAt']),
       isSeen: json['isSeen'] ?? false,
     );
   }

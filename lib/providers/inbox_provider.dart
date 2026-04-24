@@ -54,48 +54,47 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
     state = state.copyWith(isLoading: true, error: null);
 
-    try {
-      final offset = refresh ? 0 : state.items.length;
+    // try {
+    final offset = refresh ? 0 : state.items.length;
 
-      // Fetch activities
-      final activitiesResponse = await _repo.fetchInbox(
-        limit: 30,
-        offset: offset,
-      );
+    // Fetch activities
+    final activitiesResponse = await _repo.fetchInbox(
+      limit: 30,
+      offset: offset,
+    );
 
-      final activities =
-          (activitiesResponse['activities'] as List)
-              .map((json) => TaskActivity.fromJson(json))
-              .toList();
+    final activities =
+        (activitiesResponse['activities'] as List)
+            .map((json) => TaskActivity.fromJson(json))
+            .toList();
 
-      // Fetch recent messages (from tasks with unread messages)
-      // This is a simplified approach - you might want to optimize this
-      final messages = await _ref
-          .read(messageNotifierProvider.notifier)
-          .getRecent(limit: 20);
+    // Fetch recent messages (from tasks with unread messages)
+    // This is a simplified approach - you might want to optimize this
+    final messages = await _ref
+        .read(messageNotifierProvider.notifier)
+        .getRecent(limit: 20);
 
-      // Merge activities and messages, sort by timestamp
-      final activityItems =
-          activities.map((a) => InboxItem.fromActivity(a)).toList();
-      final messageItems =
-          messages.map((m) => InboxItem.fromMessage(m)).toList();
+    // Merge activities and messages, sort by timestamp
+    final activityItems =
+        activities.map((a) => InboxItem.fromActivity(a)).toList();
+    final messageItems = messages.map((m) => InboxItem.fromMessage(m)).toList();
 
-      final allItems = [...activityItems, ...messageItems];
-      allItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final allItems = [...activityItems, ...messageItems];
+    allItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-      final newItems = refresh ? allItems : [...state.items, ...allItems];
+    final newItems = refresh ? allItems : [...state.items, ...allItems];
 
-      state = state.copyWith(
-        items: newItems,
-        isLoading: false,
-        unseenCount: activitiesResponse['unseenCount'] ?? 0,
-        totalCount: activitiesResponse['totalCount'] ?? 0,
-        hasMore: activities.length >= 30,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      print("error: $e");
-    }
+    state = state.copyWith(
+      items: newItems,
+      isLoading: false,
+      unseenCount: activitiesResponse['unseenCount'] ?? 0,
+      totalCount: activitiesResponse['totalCount'] ?? 0,
+      hasMore: activities.length >= 30,
+    );
+    // } catch (e) {
+    //   state = state.copyWith(isLoading: false, error: e.toString());
+    //   print("error: $e");
+    // }
   }
 
   /// Mark activity as seen
