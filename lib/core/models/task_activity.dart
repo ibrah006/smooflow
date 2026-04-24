@@ -37,7 +37,7 @@ class TaskActivity {
   final String? printerNickname;
 
   final Map<String, dynamic>? metadata;
-  final DateTime createdAt;
+  final DateTime updatedAt;
   final bool isSeen;
 
   const TaskActivity({
@@ -57,7 +57,7 @@ class TaskActivity {
     this.printerName,
     this.printerNickname,
     this.metadata,
-    required this.createdAt,
+    required this.updatedAt,
     this.isSeen = false,
   });
 
@@ -85,7 +85,7 @@ class TaskActivity {
       printerName: json['printerName'],
       printerNickname: json['printerNickname'],
       metadata: json['metadata'],
-      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updated_at']),
       isSeen: json['isSeen'] ?? false,
     );
   }

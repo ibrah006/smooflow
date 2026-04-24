@@ -1147,7 +1147,7 @@ class _ActivityDetailContent extends StatelessWidget {
 
         // Timestamp
         Text(
-          _formatTimestamp(activity.createdAt),
+          _formatTimestamp(activity.updatedAt),
           style: const TextStyle(fontSize: 11.5, color: _T.slate400),
         ),
 

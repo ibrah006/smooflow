@@ -94,6 +94,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+      print("error: $e");
     }
   }
 
@@ -125,7 +126,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
                   printerName: item.activity!.printerName,
                   printerNickname: item.activity!.printerNickname,
                   metadata: item.activity!.metadata,
-                  createdAt: item.activity!.createdAt,
+                  updatedAt: item.activity!.updatedAt,
                   isSeen: true,
                 ),
               );

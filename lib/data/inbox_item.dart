@@ -25,7 +25,7 @@ class InboxItem {
     return InboxItem(
       type: InboxItemType.activity,
       activity: activity,
-      timestamp: activity.createdAt,
+      timestamp: activity.updatedAt,
       isSeen: activity.isSeen,
     );
   }
