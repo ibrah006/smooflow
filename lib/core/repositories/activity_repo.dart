@@ -29,4 +29,21 @@ class ActivityRepo {
       throw Exception('Failed to mark inbox message(s) as seen');
     }
   }
+
+  /// GET /activities/inbox — fetch inbox activities before the given id
+  /// returns the number of inbox items that came from server
+  Future<int> getInboxBefore({
+    required int beforeInboxId,
+    int? offset,
+    int? limit = 30,
+  }) async {
+    final response = await ApiClient.http.get(
+      '/activities/inbox?beforeId=${beforeInboxId}${limit != null ? '&limit=$limit' : ''}${offset != null ? '&offset=$offset' : ''}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load inbox: ${response.body}');
+    }
+
+    return jsonDecode(response.body);
+  }
 }
