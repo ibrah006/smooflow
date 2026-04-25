@@ -4,7 +4,10 @@ import 'package:smooflow/core/api/api_client.dart';
 
 class ActivityRepo {
   /// GET /activities/inbox — fetch inbox activities
-  Future<Map<String, dynamic>> fetchInbox({int limit = 30, int? offset}) async {
+  Future<Map<String, dynamic>> fetchRecentInbox({
+    int limit = 30,
+    int? offset,
+  }) async {
     final response = await ApiClient.http.get('/activities/inbox');
     if (response.statusCode != 200) {
       throw Exception('Failed to load inbox: ${response.body}');

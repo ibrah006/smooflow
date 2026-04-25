@@ -58,7 +58,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final offset = refresh ? 0 : state.items.length;
 
       // Fetch activities
-      final activitiesResponse = await _repo.fetchInbox(
+      final activitiesResponse = await _repo.fetchRecentInbox(
         limit: 30,
         offset: offset,
       );
@@ -127,6 +127,70 @@ class InboxNotifier extends StateNotifier<InboxState> {
       );
     } catch (e) {
       print('Error marking activity as seen: $e');
+    }
+  }
+
+  /// Returns the newly fetched inbox from server, NOT from existing state
+  Future<List<Message>> getInboxAfter({
+    required int afterInboxId,
+    int? taskId,
+    int limit = 20,
+  }) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final newMessages = await _repo.getInboxAfter(
+        afterMessageId: afterMessageId,
+        taskId: taskId,
+        limit: limit,
+      );
+
+      // Step 4: Update state
+      state = state.copyWith(newMessages: newMessages, isLoading: false);
+
+      return newMessages;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to load newer messages',
+        isLoading: false,
+      );
+      return [];
+    }
+  }
+
+  /// Returns the fetched messages from server, NOT from existing state
+  Future<List<Message>> getMessagesBefore({
+    required int beforeMessageId,
+    int? taskId,
+    int limit = 20,
+  }) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final olderMessages = await _repo.getMessagesBefore(
+        beforeMessageId: beforeMessageId,
+        taskId: taskId,
+        limit: limit,
+      );
+
+      print("older messages for task ${taskId}: ${olderMessages.length}");
+
+      // Step 4: Update state
+      state = state.copyWith(
+        newMessages: olderMessages,
+        isLoading: false,
+        newMessageState: NewMessageState.messagesBefore,
+      );
+
+      return olderMessages;
+    } catch (e) {
+      print("error loading message before: ${e}");
+      state = state.copyWith(
+        error: 'Failed to load older messages',
+        isLoading: false,
+      );
+
+      return [];
     }
   }
 
