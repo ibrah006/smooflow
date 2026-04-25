@@ -77,7 +77,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
     super.initState();
     // Load inbox on mount
     Future.microtask(
-      () => ref.read(inboxNotifierProvider.notifier).fetchInbox(),
+      () => ref.read(inboxNotifierProvider.notifier).fetchRecentInbox(),
     );
 
     // Infinite scroll
@@ -95,7 +95,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
         _scrollController.position.maxScrollExtent - 200) {
       final inboxState = ref.read(inboxNotifierProvider);
       if (!inboxState.isLoading && inboxState.hasMore) {
-        ref.read(inboxNotifierProvider.notifier).fetchInbox();
+        ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
       }
     }
   }

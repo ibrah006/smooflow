@@ -49,7 +49,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   InboxNotifier(this._repo, this._ref) : super(const InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
-  Future<void> fetchInbox({bool refresh = false}) async {
+  Future<void> fetchRecentInbox({bool refresh = false}) async {
     if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null);
