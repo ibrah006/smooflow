@@ -68,25 +68,12 @@ class InboxNotifier extends StateNotifier<InboxState> {
               .map((json) => TaskActivity.fromJson(json))
               .toList();
 
-      // Fetch recent messages (from tasks with unread messages)
-      // This is a simplified approach - you might want to optimize this
-      final messages = await _ref
-          .read(messageNotifierProvider.notifier)
-          .getRecent(limit: 20);
-
       // Merge activities and messages, sort by timestamp
       final activityItems =
           activities.map((a) => InboxItem.fromActivity(a)).toList();
-      final messageItems =
-          messages.map((m) => InboxItem.fromMessage(m)).toList();
-
-      final allItems = [...activityItems, ...messageItems];
-      allItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-      final newItems = refresh ? allItems : [...state.items, ...allItems];
 
       state = state.copyWith(
-        items: newItems,
+        items: activityItems,
         isLoading: false,
         unseenCount: activitiesResponse['unseenCount'] ?? 0,
         totalCount: activitiesResponse['totalCount'] ?? 0,
