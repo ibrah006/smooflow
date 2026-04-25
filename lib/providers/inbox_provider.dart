@@ -139,16 +139,16 @@ class InboxNotifier extends StateNotifier<InboxState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final newMessages = await _repo.getInboxAfter(
-        afterMessageId: afterMessageId,
+      final newInbox = await _repo.getInboxAfter(
+        afterMessageId: afterInboxId,
         taskId: taskId,
         limit: limit,
       );
 
       // Step 4: Update state
-      state = state.copyWith(newMessages: newMessages, isLoading: false);
+      state = state.copyWith(newMessages: newInbox, isLoading: false);
 
-      return newMessages;
+      return newInbox;
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load newer messages',
@@ -158,31 +158,31 @@ class InboxNotifier extends StateNotifier<InboxState> {
     }
   }
 
-  /// Returns the fetched messages from server, NOT from existing state
-  Future<List<Message>> getMessagesBefore({
-    required int beforeMessageId,
+  /// Returns the fetched inbox from server, NOT from existing state
+  Future<List<Message>> getInboxBefore({
+    required int beforeInboxId,
     int? taskId,
     int limit = 20,
   }) async {
     state = state.copyWith(isLoading: true);
 
     try {
-      final olderMessages = await _repo.getMessagesBefore(
-        beforeMessageId: beforeMessageId,
+      final olderInbox = await _repo.getInboxBefore(
+        beforeMessageId: beforeInboxId,
         taskId: taskId,
         limit: limit,
       );
 
-      print("older messages for task ${taskId}: ${olderMessages.length}");
+      print("older messages for task ${taskId}: ${olderInbox.length}");
 
       // Step 4: Update state
       state = state.copyWith(
-        newMessages: olderMessages,
+        newMessages: olderInbox,
         isLoading: false,
         newMessageState: NewMessageState.messagesBefore,
       );
 
-      return olderMessages;
+      return olderInbox;
     } catch (e) {
       print("error loading message before: ${e}");
       state = state.copyWith(
