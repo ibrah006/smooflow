@@ -1076,13 +1076,13 @@ class _EndOfInboxWidget extends StatelessWidget {
                   color: _T.white,
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(color: _T.slate200),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _T.ink.withOpacity(0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+                  // boxShadow: [
+                  //   BoxShadow(
+                  //     color: _T.ink.withOpacity(0.04),
+                  //     blurRadius: 6,
+                  //     offset: const Offset(0, 1),
+                  //   ),
+                  // ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
