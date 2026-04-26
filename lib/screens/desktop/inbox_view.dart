@@ -710,38 +710,6 @@ class _InboxItemRowState extends State<_InboxItemRow> {
         return 'updated';
     }
   }
-
-  String _formatStage(String stage) => stage
-      .split('_')
-      .map((w) => w[0].toUpperCase() + w.substring(1))
-      .join(' ');
-
-  String _getPriorityName(int p) {
-    if (p <= 0 || p > TaskPriority.values.length) return 'Normal';
-    return TaskPriority.values[p - 1].name[0].toUpperCase() +
-        TaskPriority.values[p - 1].name.substring(1);
-  }
-
-  Color _getPriorityColor(int p) {
-    if (p <= 0 || p > TaskPriority.values.length) return _T.slate500;
-    final priority = TaskPriority.values[p - 1];
-    switch (priority) {
-      case TaskPriority.normal:
-        return _T.slate500;
-      case TaskPriority.high:
-        return _T.amber;
-      case TaskPriority.urgent:
-        return _T.red;
-    }
-  }
-
-  String _formatShortDate(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inDays < 1) return 'Today';
-    if (diff.inDays < 2) return 'Tomorrow';
-    return '${dt.month}/${dt.day}';
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
