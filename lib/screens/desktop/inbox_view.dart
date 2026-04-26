@@ -72,7 +72,8 @@ class _InboxViewState extends ConsumerState<InboxView> {
   InboxItem? _selectedItem;
   final ScrollController _scroll = ScrollController();
 
-  bool _isLoadingInbox = false;
+  // Only for INITIAL messages is loading
+  bool _isLoadingInbox = true;
 
   Future<void> initializeInbox() async {
     await Future.microtask(() async {
@@ -88,10 +89,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
         if (newInboxCount > 0) {
           // Schedule again after next frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted)
-              setState(() {
-                _isLoadingInbox = true;
-              });
             // To ensure contents fill the view port height
             initializeInbox().then((value) {
               if (mounted)
