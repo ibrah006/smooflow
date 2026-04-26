@@ -800,9 +800,9 @@ class _InboxItemRowState extends State<_InboxItemRow>
           mainAxisSize: MainAxisSize.min,
           children: [
             _MiniStagePill(
-              label: fromHelper.label,
-              color: _T.slate500,
-              bg: _T.slate100,
+              label: toHelper.label,
+              color: isForward ? _T.green : _T.amber,
+              bg: isForward ? _T.green50 : _T.amber50,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -814,10 +814,11 @@ class _InboxItemRowState extends State<_InboxItemRow>
                 color: _T.slate300,
               ),
             ),
+
             _MiniStagePill(
-              label: toHelper.label,
-              color: isForward ? _T.green : _T.amber,
-              bg: isForward ? _T.green50 : _T.amber50,
+              label: fromHelper.label,
+              color: _T.slate500,
+              bg: _T.slate100,
             ),
           ],
         );
