@@ -12,8 +12,9 @@ class InboxNotifier extends StateNotifier<InboxState> {
   InboxNotifier(this._repo, this._ref) : super(InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
-  Future<void> fetchRecentInbox({bool refresh = false}) async {
-    if (state.isLoading) return;
+  /// returns the newly fetched inbox items/ activities
+  Future<int> fetchRecentInbox({bool refresh = false}) async {
+    if (state.isLoading) return 0;
 
     state = state.copyWith(isLoading: true, error: null);
 
@@ -42,9 +43,13 @@ class InboxNotifier extends StateNotifier<InboxState> {
         totalCount: activitiesResponse['totalCount'] ?? 0,
         hasMore: activities.length >= 30,
       );
+
+      return inboxItems.length;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       print("error: $e");
+
+      return 0;
     }
   }
 

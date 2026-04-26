@@ -70,29 +70,67 @@ class InboxView extends ConsumerStatefulWidget {
 
 class _InboxViewState extends ConsumerState<InboxView> {
   InboxItem? _selectedItem;
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scroll = ScrollController();
+
+  bool _isLoadingInbox = false;
+
+  Future<void> initializeInbox() async {
+    await Future.microtask(() async {
+      if (!_scroll.hasClients) return;
+
+      final maxScrollExtent = _scroll.position.maxScrollExtent;
+
+      // If no scrolling possible → content too small
+      if (maxScrollExtent == 0) {
+        final newInboxCount =
+            await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
+
+        if (newInboxCount > 0) {
+          // Schedule again after next frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted)
+              setState(() {
+                _isLoadingInbox = true;
+              });
+            // To ensure contents fill the view port height
+            initializeInbox().then((value) {
+              if (mounted)
+                setState(() {
+                  _isLoadingInbox = false;
+                });
+            });
+          });
+        }
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     // Load inbox on mount
-    Future.microtask(
-      () => ref.read(inboxNotifierProvider.notifier).fetchRecentInbox(),
-    );
+    Future.microtask(() {
+      // To ensure contents fill the view port height
+      initializeInbox().then((value) {
+        if (mounted)
+          setState(() {
+            _isLoadingInbox = false;
+          });
+      });
+    });
 
     // Infinite scroll
-    _scrollController.addListener(_onScroll);
+    _scroll.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       final inboxState = ref.read(inboxNotifierProvider);
       if (!inboxState.isLoading && inboxState.hasMore) {
         ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
@@ -162,7 +200,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
                           : inboxState.items.isEmpty
                           ? const _EmptyState()
                           : ListView.builder(
-                            controller: _scrollController,
+                            controller: _scroll,
                             itemCount:
                                 inboxState.items.length +
                                 (inboxState.isLoading ? 1 : 0),
