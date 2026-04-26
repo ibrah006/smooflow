@@ -5,6 +5,9 @@ import 'package:smooflow/core/repositories/activity_repo.dart';
 import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/data/inbox_item.dart';
 import 'package:smooflow/providers/message_provider.dart';
+import 'package:smooflow/states/message.dart';
+
+const _MAX_INBOX_ITEMS = 40;
 
 class InboxState {
   final List<InboxItem> items;
@@ -24,21 +27,79 @@ class InboxState {
   });
 
   InboxState copyWith({
-    List<InboxItem>? items,
+    List<InboxItem>? newItems,
     bool? isLoading,
     String? error,
     int? unseenCount,
     int? totalCount,
     bool? hasMore,
+    bool isCreateItem = false,
+    NewMessageState newItemState = NewMessageState.messagesAfter,
   }) {
+    if (isCreateItem && newItems?.length != 1) {
+      throw "To create an inbox item, exactly 1 item is required, found: ${newItems?.length ?? 0}";
+    }
+
+    if (newItems != null) {
+      final totalLength = newItems.length + items.length;
+      _evict(newItemState, totalLength);
+    }
+
+    late final List<InboxItem> updatedList;
+
+    if (newItems != null) {
+      if (newItems.isEmpty) {
+        updatedList = this.items;
+      } else if (newItems.length == 1 && isCreateItem) {
+        updatedList = List.from(this.items);
+        updatedList.insert(0, newItems.first);
+      } else {
+        updatedList = _mergeInboxItems(this.items, newItems);
+      }
+    } else {
+      updatedList = this.items;
+    }
+
     return InboxState(
-      items: items ?? this.items,
+      items: updatedList,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       unseenCount: unseenCount ?? this.unseenCount,
       totalCount: totalCount ?? this.totalCount,
       hasMore: hasMore ?? this.hasMore,
     );
+  }
+
+  void _evict(NewMessageState newMessageState, int totalLength) {
+    final toRemove = totalLength - _MAX_INBOX_ITEMS;
+
+    print("[MessageState] total: ${totalLength} To remove: ${toRemove}");
+
+    if (toRemove <= 0) {
+      // Nothing to evict, within memory limit set for messages
+      return;
+    }
+
+    int removed = 0;
+    items.removeWhere((m) {
+      if (removed <= toRemove && m.taskId != activeTaskId) {
+        removed++;
+        return true;
+      }
+      return false;
+    });
+
+    print("[MessageState] to remove: ${toRemove}, removed: ${removed}");
+
+    // Force remove
+    while (toRemove > removed) {
+      if (newMessageState == NewMessageState.messagesAfter) {
+        items.removeLast();
+      } else {
+        items.removeAt(0);
+      }
+      removed++;
+    }
   }
 }
 
