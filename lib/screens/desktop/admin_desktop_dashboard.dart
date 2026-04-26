@@ -1034,6 +1034,68 @@ class _BreadcrumbSection extends StatelessWidget {
   }
 }
 
+/// Primary CTA button (matches inbox "View Full Task" style).
+class _PrimaryButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _PrimaryButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<_PrimaryButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blueHover : _T.blue,
+            borderRadius: BorderRadius.circular(_T.r),
+            boxShadow: [
+              BoxShadow(
+                color: _T.blue.withOpacity(_hovered ? 0.35 : 0.2),
+                blurRadius: _hovered ? 10 : 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, size: 15, color: Colors.white),
+              const SizedBox(width: 7),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE TASK BUTTON
 //
@@ -1057,44 +1119,17 @@ class _CreateTaskButtonState extends State<_CreateTaskButton> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap:
-            () => AppRoutes.navigateTo(
-              widget.context,
-              AppRoutes.designCreateTaskScreen,
-              arguments: CreateTaskArgs(
-                preselectedProjectId: widget.selectedProjectId,
-              ),
+    return _PrimaryButton(
+      icon: Icons.add_rounded,
+      label: 'New Task',
+      onTap:
+          () => AppRoutes.navigateTo(
+            widget.context,
+            AppRoutes.designCreateTaskScreen,
+            arguments: CreateTaskArgs(
+              preselectedProjectId: widget.selectedProjectId,
             ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: _hovered ? _T.blueHover : _T.blue,
-            borderRadius: BorderRadius.circular(6),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.add_rounded, size: 14, color: Colors.white),
-              SizedBox(width: 5),
-              Text(
-                'Create Task',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                  letterSpacing: 0.1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
