@@ -131,6 +131,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
                 task: task,
                 onClose: _closeDetail,
                 onAdvance: () {}, //_advanceTask(_selectedTask!),
+                showFooter: false,
               ),
     );
   }
