@@ -21,6 +21,8 @@ class InboxNotifier extends StateNotifier<InboxState> {
     try {
       final offset = refresh ? 0 : state.items.length;
 
+      // TODO: only fetch if needed (i.e., if the last inbox activity doesn't exist in state)
+
       // Fetch activities
       final activitiesResponse = await _repo.fetchRecentInbox(
         limit: 30,
