@@ -77,16 +77,13 @@ class _InboxViewState extends ConsumerState<InboxView>
   bool _isLoadingInbox = true;
 
   Future<void> initializeInbox() async {
-    print("[Inbox View] initialize inbox start");
     await Future.microtask(() async {
-      print("[Inbox View] inbox scroll has clients: ${_scroll.hasClients}");
       if (!_scroll.hasClients) return;
 
       final maxScrollExtent = _scroll.position.maxScrollExtent;
 
       // If no scrolling possible → content too small
       if (maxScrollExtent == 0) {
-        print("[INBOX VIEW] max scroll extent: $maxScrollExtent");
         final newInboxCount =
             await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
 
@@ -165,10 +162,6 @@ class _InboxViewState extends ConsumerState<InboxView>
   @override
   Widget build(BuildContext context) {
     final inboxState = ref.watch(inboxNotifierProvider);
-
-    print(
-      "[Inbox View, build] inbox scroll has clients: ${_scroll.hasClients}",
-    );
 
     return Row(
       children: [
