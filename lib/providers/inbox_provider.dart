@@ -6,6 +6,7 @@ import 'package:smooflow/core/repositories/message_repo.dart';
 import 'package:smooflow/data/inbox_item.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/states/message.dart';
+import 'package:smooflow/utils/mergeByObjectId.dart';
 
 const _MAX_INBOX_ITEMS = 40;
 
@@ -17,13 +18,16 @@ class InboxState {
   final int totalCount;
   final bool hasMore;
 
-  const InboxState({
+  int? activeInboxId;
+
+  InboxState({
     this.items = const [],
     this.isLoading = false,
     this.error,
     this.unseenCount = 0,
     this.totalCount = 0,
     this.hasMore = true,
+    this.activeInboxId,
   });
 
   InboxState copyWith({
@@ -54,7 +58,7 @@ class InboxState {
         updatedList = List.from(this.items);
         updatedList.insert(0, newItems.first);
       } else {
-        updatedList = _mergeInboxItems(this.items, newItems);
+        updatedList = mergeByObjectId(this.items, newItems);
       }
     } else {
       updatedList = this.items;
@@ -73,8 +77,6 @@ class InboxState {
   void _evict(NewMessageState newMessageState, int totalLength) {
     final toRemove = totalLength - _MAX_INBOX_ITEMS;
 
-    print("[MessageState] total: ${totalLength} To remove: ${toRemove}");
-
     if (toRemove <= 0) {
       // Nothing to evict, within memory limit set for messages
       return;
@@ -82,14 +84,12 @@ class InboxState {
 
     int removed = 0;
     items.removeWhere((m) {
-      if (removed <= toRemove && m.taskId != activeTaskId) {
+      if (removed <= toRemove && m.taskId != activeInboxId) {
         removed++;
         return true;
       }
       return false;
     });
-
-    print("[MessageState] to remove: ${toRemove}, removed: ${removed}");
 
     // Force remove
     while (toRemove > removed) {

@@ -16,7 +16,7 @@
 /// Time complexity: O(n + m)
 /// Space complexity: O(n + m)
 /// Requirements: object class T.id should exist and should be of number
-List<T> _mergeByObjectId<T>(List<T> existing, List<T> incoming) {
+List<T> mergeByObjectId<T>(List<T> existing, List<T> incoming) {
   int i = 0;
   int j = 0;
 

@@ -4,6 +4,7 @@ import 'dart:collection';
 
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/message.dart';
+import 'package:smooflow/utils/mergeByObjectId.dart';
 
 const _MAX_MESSAGES = 40;
 
@@ -102,7 +103,7 @@ class MessageState {
         // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
         updatedList.insert(0, newMessages.first);
       } else {
-        updatedList = _mergeMessages(
+        updatedList = mergeByObjectId<Message>(
           this.messages,
           newMessages,
           // ,messageAccessQueue,
@@ -137,8 +138,6 @@ class MessageState {
   void _evict(NewMessageState newMessageState, int totalLength) {
     final toRemove = totalLength - _MAX_MESSAGES;
 
-    print("[MessageState] total: ${totalLength} To remove: ${toRemove}");
-
     if (toRemove <= 0) {
       // Nothing to evict, within memory limit set for messages
       return;
@@ -152,8 +151,6 @@ class MessageState {
       }
       return false;
     });
-
-    print("[MessageState] to remove: ${toRemove}, removed: ${removed}");
 
     // Force remove
     while (toRemove > removed) {
