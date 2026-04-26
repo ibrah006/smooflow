@@ -143,13 +143,13 @@ class InboxNotifier extends StateNotifier<InboxState> {
         limit: limit,
       );
 
-      print("older inbox ${taskId}: ${olderInbox.length}");
+      print("older inbox: ${olderInbox.length}");
 
       // Step 4: Update state
       state = state.copyWith(
-        newMessages: olderInbox,
+        newInbox: olderInbox,
         isLoading: false,
-        newMessageState: NewMessageState.messagesBefore,
+        newInboxState: NewMessageState.messagesBefore,
       );
 
       return olderInbox;
