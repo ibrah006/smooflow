@@ -190,40 +190,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
       await _repo.markSeen(activityId);
 
       // Update local state
-      final updatedItems =
-          state.items.map((item) {
-            if (item.type == InboxItemType.activity &&
-                item.activity!.id == activityId) {
-              return InboxItem.fromActivity(
-                TaskActivity(
-                  id: item.activity!.id,
-                  type: item.activity!.type,
-                  taskId: item.activity!.taskId,
-                  taskName: item.activity!.taskName,
-                  taskDescription: item.activity!.taskDescription,
-                  taskPriority: item.activity!.taskPriority,
-                  taskDueDate: item.activity!.taskDueDate,
-                  taskStatus: item.activity!.taskStatus,
-                  actorId: item.activity!.actorId,
-                  actorName: item.activity!.actorName,
-                  actorInitials: item.activity!.actorInitials,
-                  actorColor: item.activity!.actorColor,
-                  printerId: item.activity!.printerId,
-                  printerName: item.activity!.printerName,
-                  printerNickname: item.activity!.printerNickname,
-                  metadata: item.activity!.metadata,
-                  updatedAt: item.activity!.updatedAt,
-                  isSeen: true,
-                ),
-              );
-            }
-            return item;
-          }).toList();
-
-      state = state.copyWith(
-        newItems: updatedItems,
-        unseenCount: state.unseenCount > 0 ? state.unseenCount - 1 : 0,
-      );
+      state = state.markAsSeen(activityId);
     } catch (e) {
       print('Error marking activity as seen: $e');
     }
