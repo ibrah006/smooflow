@@ -189,12 +189,14 @@ class DetailPanel extends ConsumerStatefulWidget {
   final Task task;
   final VoidCallback onClose;
   final VoidCallback onAdvance;
+  final bool showFooter;
 
   const DetailPanel({
     super.key,
     required this.task,
     required this.onClose,
     required this.onAdvance,
+    this.showFooter = true,
   });
 
   @override
@@ -1011,23 +1013,24 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               ),
 
               // ── Footer ────────────────────────────────────────────────────────
-              _DetailFooter(
-                task: widget.task,
-                next: next,
-                progressBtnEnabled: progressBtnEnabled,
-                ableToReinitialize: ableToReinitialize,
-                canStageBack: canStageBack,
-                advanceButtonKey: _advanceButtonKey,
-                stageBackButtonKey: _stageBackButtonKey,
-                isProgressing: _isProgressing,
-                onAdvanceTap: () {
-                  _onAdvanceTask(progressBtnEnabled);
-                },
-                onStageBackTap: _showStageBackMenu,
-                onHoverChange: (hovered) {
-                  setState(() => _footerHovered = hovered);
-                },
-              ),
+              if (widget.showFooter)
+                _DetailFooter(
+                  task: widget.task,
+                  next: next,
+                  progressBtnEnabled: progressBtnEnabled,
+                  ableToReinitialize: ableToReinitialize,
+                  canStageBack: canStageBack,
+                  advanceButtonKey: _advanceButtonKey,
+                  stageBackButtonKey: _stageBackButtonKey,
+                  isProgressing: _isProgressing,
+                  onAdvanceTap: () {
+                    _onAdvanceTask(progressBtnEnabled);
+                  },
+                  onStageBackTap: _showStageBackMenu,
+                  onHoverChange: (hovered) {
+                    setState(() => _footerHovered = hovered);
+                  },
+                ),
             ],
           ),
 
