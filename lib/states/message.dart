@@ -101,12 +101,6 @@ class MessageState {
         updatedList = List.from(this.messages);
         // DO NOT USE INSERT FOR OTHER THAN CREATE/SEND MESSAGE SCENARIO
         updatedList.insert(0, newMessages.first);
-        // if (isSendMessage) {
-
-        // } else {
-        //   updatedList = _mergeMessages(this.messages, newMessages);
-        // }
-        // messageAccessQueue.add(newMessages.first.id);
       } else {
         updatedList = _mergeMessages(
           this.messages,
