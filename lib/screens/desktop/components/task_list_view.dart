@@ -2057,10 +2057,10 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             child: Text(
               "${t.name}",
               style: completedBody(
-                const TextStyle(
+                TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _T.ink,
+                  color: _hovered ? _T.blue : _T.ink,
                 ),
               ),
             ),
