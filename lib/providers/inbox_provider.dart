@@ -107,7 +107,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   final ActivityRepo _repo;
   final Ref _ref;
 
-  InboxNotifier(this._repo, this._ref) : super(const InboxState());
+  InboxNotifier(this._repo, this._ref) : super(InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
   Future<void> fetchRecentInbox({bool refresh = false}) async {
