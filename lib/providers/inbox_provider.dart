@@ -203,21 +203,26 @@ class InboxNotifier extends StateNotifier<InboxState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final olderInbox = await _repo.getInboxBefore(
+      final olderActivities = await _repo.getInboxBefore(
         beforeInboxId: beforeInboxId,
         limit: limit,
       );
 
-      print("older inbox: ${olderInbox.length}");
+      print("older inbox: ${olderActivities.length}");
+
+      final older =
+          olderActivities
+              .map((activity) => InboxItem.fromActivity(activity))
+              .toList();
 
       // Step 4: Update state
       state = state.copyWith(
-        newInbox: olderInbox,
+        newItems: older,
         isLoading: false,
-        newInboxState: NewMessageState.messagesBefore,
+        newItemState: NewMessageState.messagesBefore,
       );
 
-      return olderInbox;
+      return older;
     } catch (e) {
       print("error loading message before: ${e}");
       state = state.copyWith(
