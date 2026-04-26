@@ -87,7 +87,7 @@ class _T {
   static const white = Colors.white;
 
   static const sidebarW = 220.0;
-  static const topbarH = 52.0;
+  static const topbarH = 60.0;
   static const detailW = 400.0;
 
   static const r = 8.0;
@@ -129,11 +129,14 @@ class AdminDesktopDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDesktopDashboardScreenState
-    extends ConsumerState<AdminDesktopDashboardScreen> {
+    extends ConsumerState<AdminDesktopDashboardScreen>
+    with SingleTickerProviderStateMixin {
   _AdminView _view = _AdminView.overview;
   String? _selectedProjectId;
   int? _selectedTaskId;
   String _searchQuery = '';
+
+  late final AnimationController _mountCtrl;
 
   final FocusNode _addTaskFocusNode = FocusNode();
   bool _isAddingTask = false;
@@ -216,6 +219,12 @@ class _AdminDesktopDashboardScreenState
   void initState() {
     super.initState();
     AppToast.init(kNavigatorKey);
+
+    _mountCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+
     Future.microtask(() async {
       // Load in message notifier provider and task notifier provider so that even, not being in task list view, our state is up to date
       ref.read(messageNotifierProvider.notifier);
@@ -314,6 +323,12 @@ class _AdminDesktopDashboardScreenState
     return KeyEventResult.ignored;
   }
 
+  /// Returns a staggered fade+slide animation for a given slot (0-based).
+  Animation<double> _fade(int slot) => CurvedAnimation(
+    parent: _mountCtrl,
+    curve: Interval(slot * 0.08, (slot * 0.08) + 0.55, curve: Curves.easeOut),
+  );
+
   @override
   Widget build(BuildContext context) {
     // TODO: Not very performance efficient
@@ -368,9 +383,12 @@ class _AdminDesktopDashboardScreenState
               Expanded(
                 child: Column(
                   children: [
-                    _AdminTopbar(
-                      currentView: _view,
-                      selectedProjectId: _selectedProjectId,
+                    FadeTransition(
+                      opacity: _fade(0),
+                      child: _AdminTopbar(
+                        currentView: _view,
+                        selectedProjectId: _selectedProjectId,
+                      ),
                     ),
                     Expanded(
                       child: Row(
@@ -934,48 +952,97 @@ class _GreetingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final dayNames = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final dateString =
+        '${dayNames[now.weekday - 1]}, ${monthNames[now.month - 1]} ${now.day}';
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Greeting + name
-        Text(
-          user != null ? '$greeting, ${user.nameShort}' : greeting,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: _T.ink2,
-          ),
+        // Greeting
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: _T.ink,
+                  height: 1.2,
+                ),
+                children: [
+                  TextSpan(
+                    text: '$greeting, ',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate500,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '${LoginService.currentUser!.name}.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
 
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
 
-        // Separator dot
+        // Date pill
         Container(
-          width: 3,
-          height: 3,
-          decoration: const BoxDecoration(
-            color: _T.slate300,
-            shape: BoxShape.circle,
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        // Date chip
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: _T.slate100,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(99),
           ),
-          child: Text(
-            _fmtDateFull(now),
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w400,
-              color: _T.slate500,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 11,
+                color: _T.slate400,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                dateString,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _T.slate500,
+                ),
+              ),
+            ],
           ),
         ),
       ],

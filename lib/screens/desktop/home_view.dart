@@ -21,11 +21,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/services/login_service.dart';
-import 'package:smooflow/enums/task_priority.dart';
-import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
-import 'package:smooflow/screens/desktop/components/home_topbar.dart';
-import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS  (verbatim from inbox_view.dart — single source of truth)
@@ -304,10 +300,10 @@ class _HomeViewState extends ConsumerState<HomeView>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Top bar ───────────────────────────────────────────────────────
-          FadeTransition(
-            opacity: _fade(0),
-            child: HomeTopBar(greeting: greeting, userName: userName),
-          ),
+          // FadeTransition(
+          //   opacity: _fade(0),
+          //   child: HomeTopBar(greeting: greeting, userName: userName),
+          // ),
 
           // ── Scrollable body ───────────────────────────────────────────────
           Expanded(
