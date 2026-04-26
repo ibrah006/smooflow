@@ -68,7 +68,6 @@ class InboxState {
   }
 
   InboxState copyWith({
-    List<InboxItem>? setItems,
     List<InboxItem>? newItems,
     bool? isLoading,
     String? error,
@@ -232,7 +231,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
   /// Clear all items (for logout, etc.)
   void clear() {
-    state = const InboxState();
+    state = InboxState();
   }
 }
 
