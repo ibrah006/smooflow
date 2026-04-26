@@ -167,11 +167,11 @@ class InboxNotifier extends StateNotifier<InboxState> {
               .toList();
 
       // Merge activities and messages, sort by timestamp
-      final activityItems =
+      final inboxItems =
           activities.map((a) => InboxItem.fromActivity(a)).toList();
 
       state = state.copyWith(
-        items: activityItems,
+        newItems: inboxItems,
         isLoading: false,
         unseenCount: activitiesResponse['unseenCount'] ?? 0,
         totalCount: activitiesResponse['totalCount'] ?? 0,
