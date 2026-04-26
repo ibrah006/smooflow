@@ -6,6 +6,7 @@ enum InboxItemType { activity, message }
 class InboxItem {
   final InboxItemType type;
   final TaskActivity? activity;
+  @Deprecated("This is deprecated and will be removed in future commits")
   final Message? message;
   final DateTime timestamp;
   final bool isSeen;
