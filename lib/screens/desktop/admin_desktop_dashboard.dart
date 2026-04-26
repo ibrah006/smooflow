@@ -50,6 +50,7 @@ import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
+import 'package:smooflow/screens/desktop/home_view.dart';
 import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
@@ -379,11 +380,13 @@ class _AdminDesktopDashboardScreenState
                                 _view == _AdminView.overview
                                     ? (_isInitLoading // ← skeleton branch
                                         ? const OverviewSkeleton()
-                                        : _AdminAnalyticsView(
-                                          tasks: _pipelineTasks,
-                                          projects: _projects,
-                                          members: _members,
-                                        ))
+                                        : HomeView()
+                                    // _AdminAnalyticsView(
+                                    //   tasks: _pipelineTasks,
+                                    //   projects: _projects,
+                                    //   members: _members,
+                                    // )
+                                    )
                                     : _view == _AdminView.inbox
                                     ? InboxView()
                                     : _view == _AdminView.list
