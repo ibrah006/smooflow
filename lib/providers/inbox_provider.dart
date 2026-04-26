@@ -130,50 +130,20 @@ class InboxNotifier extends StateNotifier<InboxState> {
     }
   }
 
-  /// Returns the newly fetched inbox from server, NOT from existing state
-  Future<List<Message>> getInboxAfter({
-    required int afterInboxId,
-    int? taskId,
-    int limit = 20,
-  }) async {
-    state = state.copyWith(isLoading: true);
-
-    try {
-      final newInbox = await _repo.getInboxAfter(
-        afterMessageId: afterInboxId,
-        taskId: taskId,
-        limit: limit,
-      );
-
-      // Step 4: Update state
-      state = state.copyWith(newMessages: newInbox, isLoading: false);
-
-      return newInbox;
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to load newer messages',
-        isLoading: false,
-      );
-      return [];
-    }
-  }
-
   /// Returns the fetched inbox from server, NOT from existing state
-  Future<List<Message>> getInboxBefore({
+  Future<List<InboxItem>> getInboxBefore({
     required int beforeInboxId,
-    int? taskId,
     int limit = 20,
   }) async {
     state = state.copyWith(isLoading: true);
 
     try {
       final olderInbox = await _repo.getInboxBefore(
-        beforeMessageId: beforeInboxId,
-        taskId: taskId,
+        beforeInboxId: beforeInboxId,
         limit: limit,
       );
 
-      print("older messages for task ${taskId}: ${olderInbox.length}");
+      print("older inbox ${taskId}: ${olderInbox.length}");
 
       // Step 4: Update state
       state = state.copyWith(

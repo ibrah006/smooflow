@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/models/task_activity.dart';
 
 class ActivityRepo {
   /// GET /activities/inbox — fetch inbox activities
@@ -32,7 +33,7 @@ class ActivityRepo {
 
   /// GET /activities/inbox — fetch inbox activities before the given id
   /// returns the number of inbox items that came from server
-  Future<int> getInboxBefore({
+  Future<List<TaskActivity>> getInboxBefore({
     required int beforeInboxId,
     int? offset,
     int? limit = 30,
