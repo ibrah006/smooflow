@@ -12,7 +12,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   InboxNotifier(this._repo, this._ref) : super(InboxState());
 
   /// Fetch inbox items (activities + recent messages merged)
-  /// returns the newly fetched inbox items/ activities
+  /// returns the number newly fetched inbox items/ activities
   Future<int> fetchRecentInbox({bool refresh = false}) async {
     if (state.isLoading) return 0;
 
@@ -26,6 +26,8 @@ class InboxNotifier extends StateNotifier<InboxState> {
         limit: 30,
         offset: offset,
       );
+
+      print("activitiesResponse: $activitiesResponse");
 
       final activities =
           (activitiesResponse['activities'] as List)
