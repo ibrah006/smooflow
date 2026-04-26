@@ -118,13 +118,15 @@ class InboxView extends ConsumerStatefulWidget {
 class _InboxViewState extends ConsumerState<InboxView> {
   InboxItem? _selectedItem;
   final ScrollController _scroll = ScrollController();
-  bool _isLoadingInbox = false;
+  bool _isLoadingInbox = true;
   bool _isCheckingNew = false; // top-of-list "checking for new" indicator
 
   Future<void> initializeInbox() async {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
+
       final maxScrollExtent = _scroll.position.maxScrollExtent;
+
       if (maxScrollExtent == 0) {
         final newInboxCount =
             await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
