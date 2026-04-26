@@ -68,7 +68,8 @@ class InboxView extends ConsumerStatefulWidget {
   ConsumerState<InboxView> createState() => _InboxViewState();
 }
 
-class _InboxViewState extends ConsumerState<InboxView> {
+class _InboxViewState extends ConsumerState<InboxView>
+    with WidgetsBindingObserver {
   InboxItem? _selectedItem;
   final ScrollController _scroll = ScrollController();
 
@@ -76,13 +77,16 @@ class _InboxViewState extends ConsumerState<InboxView> {
   bool _isLoadingInbox = true;
 
   Future<void> initializeInbox() async {
+    print("[Inbox View] initialize inbox start");
     await Future.microtask(() async {
+      print("[Inbox View] inbox scroll has clients: ${_scroll.hasClients}");
       if (!_scroll.hasClients) return;
 
       final maxScrollExtent = _scroll.position.maxScrollExtent;
 
       // If no scrolling possible → content too small
       if (maxScrollExtent == 0) {
+        print("[INBOX VIEW] max scroll extent: $maxScrollExtent");
         final newInboxCount =
             await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
 
@@ -90,12 +94,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
           // Schedule again after next frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
             // To ensure contents fill the view port height
-            initializeInbox().then((value) {
-              if (mounted)
-                setState(() {
-                  _isLoadingInbox = false;
-                });
-            });
+            initializeInbox();
           });
         }
       }
@@ -105,9 +104,13 @@ class _InboxViewState extends ConsumerState<InboxView> {
   @override
   void initState() {
     super.initState();
+
     // Load inbox on mount
-    Future.microtask(() {
-      // To ensure contents fill the view port height
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print(
+        "[Inbox View, initState] inbox scroll has clients: ${_scroll.hasClients}",
+      );
+
       initializeInbox().then((value) {
         if (mounted)
           setState(() {
@@ -115,24 +118,12 @@ class _InboxViewState extends ConsumerState<InboxView> {
           });
       });
     });
-
-    // Infinite scroll
-    _scroll.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      final inboxState = ref.read(inboxNotifierProvider);
-      if (!inboxState.isLoading && inboxState.hasMore) {
-        ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
-      }
-    }
   }
 
   void _onItemTap(InboxItem item) {
@@ -174,6 +165,10 @@ class _InboxViewState extends ConsumerState<InboxView> {
   @override
   Widget build(BuildContext context) {
     final inboxState = ref.watch(inboxNotifierProvider);
+
+    print(
+      "[Inbox View, build] inbox scroll has clients: ${_scroll.hasClients}",
+    );
 
     return Row(
       children: [
