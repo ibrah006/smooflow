@@ -27,7 +27,48 @@ class InboxState {
     this.activeInboxId,
   });
 
+  InboxState markAsSeen(int activityId) {
+    return InboxState(
+      items:
+          items.map((item) {
+            if (item.type == InboxItemType.activity &&
+                item.activity!.id == activityId) {
+              return InboxItem.fromActivity(
+                TaskActivity(
+                  id: item.activity!.id,
+                  type: item.activity!.type,
+                  taskId: item.activity!.taskId,
+                  taskName: item.activity!.taskName,
+                  taskDescription: item.activity!.taskDescription,
+                  taskPriority: item.activity!.taskPriority,
+                  taskDueDate: item.activity!.taskDueDate,
+                  taskStatus: item.activity!.taskStatus,
+                  actorId: item.activity!.actorId,
+                  actorName: item.activity!.actorName,
+                  actorInitials: item.activity!.actorInitials,
+                  actorColor: item.activity!.actorColor,
+                  printerId: item.activity!.printerId,
+                  printerName: item.activity!.printerName,
+                  printerNickname: item.activity!.printerNickname,
+                  metadata: item.activity!.metadata,
+                  updatedAt: item.activity!.updatedAt,
+                  isSeen: true,
+                ),
+              );
+            }
+            return item;
+          }).toList(),
+      isLoading: this.isLoading,
+      error: this.error,
+      unseenCount: this.unseenCount,
+      totalCount: this.totalCount,
+      hasMore: this.hasMore,
+      activeInboxId: this.activeInboxId,
+    );
+  }
+
   InboxState copyWith({
+    List<InboxItem>? setItems,
     List<InboxItem>? newItems,
     bool? isLoading,
     String? error,
