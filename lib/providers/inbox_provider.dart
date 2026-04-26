@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/core/repositories/activity_repo.dart';
 import 'package:smooflow/data/inbox_item.dart';
+import 'package:smooflow/states/inbox.dart';
 import 'package:smooflow/states/message.dart';
-import 'package:smooflow/utils/mergeByObjectId.dart';
 
 class InboxNotifier extends StateNotifier<InboxState> {
   final ActivityRepo _repo;
