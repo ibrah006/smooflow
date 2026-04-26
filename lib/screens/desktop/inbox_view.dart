@@ -187,9 +187,7 @@ class _InboxViewState extends ConsumerState<InboxView>
                 // List
                 Expanded(
                   child:
-                      inboxState.isLoading && inboxState.items.isEmpty
-                          ? const _LoadingState()
-                          : inboxState.items.isEmpty
+                      inboxState.items.isEmpty && !_isLoadingInbox
                           ? const _EmptyState()
                           : ListView.builder(
                             controller: _scroll,
