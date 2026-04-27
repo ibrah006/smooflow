@@ -1,18 +1,18 @@
 // ═════════════════════════════════════════════════════════════════════════════
-// COMPLETE DETAIL PANEL COMPONENTS
+// SMOOFLOW — INBOX VIEW
 // ═════════════════════════════════════════════════════════════════════════════
-// All missing components to complete the comprehensive detail panel:
-// 1. TaskContextCard - Full task metadata display
-// 2. SectionTitle - Consistent section headers
-// 3. ActivityTimeline - Recent activities for the task
-// 4. MessageAttachments - File attachments display
-// 5. PrinterDetailCard - Printer information
-// 6. DetailFooter - Action buttons
+// v3 changes
+//  • InboxItem.message REMOVED — all data now lives on TaskActivity.metadata
+//  • _InboxItemRow handles 3 scenarios from a single TaskActivity:
+//      Scenario A — stage change only      (fromStage/toStage set, no message)
+//      Scenario B — stage change + message  (both metadata blocks set)
+//      Scenario C — message only            (message metadata set, no stage data)
+//  • _accentFor / _iconFor / _BadgedAvatar updated accordingly
+//  • Stage pill order fixed: from → arrow → to  (was reversed)
 // ═════════════════════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/core/models/message.dart';
 import 'package:smooflow/core/models/task_activity.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/data/inbox_item.dart';
@@ -27,7 +27,9 @@ import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-// Design tokens (same as before)
+// ─────────────────────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue = Color(0xFF2563EB);
   static const blueHover = Color(0xFF1D4ED8);
@@ -62,12 +64,59 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ACCENT COLOR HELPER
-// Returns the accent color for a given inbox item (used on the left bar & icon)
+// SCENARIO RESOLVER
+// All three situations are derived purely from TaskActivity data —
+// no InboxItem.message reference anywhere.
 // ─────────────────────────────────────────────────────────────────────────────
-Color _accentFor(InboxItem item) {
-  if (item.type == InboxItemType.message) return _T.purple;
-  switch (item.activity!.type) {
+enum _Scenario { stageOnly, stageAndMessage, messageOnly }
+
+extension _ActivityScenario on TaskActivity {
+  /// True when the activity carries a stage transition.
+  bool get _hasStageChange =>
+      (type == ActivityType.stageForward ||
+          type == ActivityType.stageBackward) &&
+      fromStage.isNotEmpty &&
+      toStage.isNotEmpty;
+
+  /// True when the activity metadata includes an inline comment.
+  bool get _hasMessage => message != null && message!.isNotEmpty;
+
+  _Scenario get scenario {
+    if (_hasStageChange && _hasMessage) return _Scenario.stageAndMessage;
+    if (_hasStageChange) return _Scenario.stageOnly;
+    return _Scenario.messageOnly;
+  }
+
+  /// Scenario B only: true when the stage actor and the comment author
+  /// are the same person. Falls back to true when authorId is absent.
+  bool get isSameActor =>
+      authorId == null || authorId!.isEmpty || authorId == actorId;
+
+  /// Derives display initials from the comment author's name string,
+  /// since authorInitials is not stored in metadata — only authorName is.
+  String get authorInitials {
+    final name = (authorName ?? '').trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
+    return parts.first[0].toUpperCase();
+  }
+
+  /// Display name for the comment author, with "You" substitution.
+  String authorDisplayName(String currentUserId) {
+    if (authorId == currentUserId) return 'You';
+    return authorName ?? 'Someone';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACCENT & ICON HELPERS
+// Stage changes drive the accent when present; message-only defaults to purple.
+// ─────────────────────────────────────────────────────────────────────────────
+Color _accentFor(TaskActivity activity) {
+  switch (activity.type) {
     case ActivityType.stageForward:
       return _T.green;
     case ActivityType.stageBackward:
@@ -81,13 +130,12 @@ Color _accentFor(InboxItem item) {
     case ActivityType.taskCompleted:
       return _T.green;
     default:
-      return _T.slate400;
+      return _T.purple; // message-only or unknown
   }
 }
 
-IconData _iconFor(InboxItem item) {
-  if (item.type == InboxItemType.message) return Icons.chat_bubble_rounded;
-  switch (item.activity!.type) {
+IconData _iconFor(TaskActivity activity) {
+  switch (activity.type) {
     case ActivityType.stageForward:
       return Icons.trending_up_rounded;
     case ActivityType.stageBackward:
@@ -101,7 +149,7 @@ IconData _iconFor(InboxItem item) {
     case ActivityType.taskCompleted:
       return Icons.check_circle_rounded;
     default:
-      return Icons.notifications_rounded;
+      return Icons.chat_bubble_rounded;
   }
 }
 
@@ -119,18 +167,16 @@ class _InboxViewState extends ConsumerState<InboxView> {
   InboxItem? _selectedItem;
   final ScrollController _scroll = ScrollController();
   bool _isLoadingInbox = true;
-  bool _isCheckingNew = false; // top-of-list "checking for new" indicator
+  bool _isCheckingNew = false;
 
   Future<void> initializeInbox() async {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
-
       final maxScrollExtent = _scroll.position.maxScrollExtent;
-
       if (maxScrollExtent == 0) {
-        final newInboxCount =
+        final newCount =
             await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
-        if (newInboxCount > 0) {
+        if (newCount > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _isLoadingInbox = true);
             initializeInbox().then((_) {
@@ -142,12 +188,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
     });
   }
 
-  /// Pulls new inbox items from the top (e.g. after a manual refresh or
-  /// returning to the view). Shows the top banner while in-flight.
   Future<void> _checkForNewItems() async {
     if (_isCheckingNew) return;
     setState(() => _isCheckingNew = true);
-    // Replace with your actual "fetch latest" call:
     await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
     if (mounted) setState(() => _isCheckingNew = false);
   }
@@ -170,10 +213,9 @@ class _InboxViewState extends ConsumerState<InboxView> {
   }
 
   void _onScroll() {
-    // Bottom pagination
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      final inboxState = ref.read(inboxNotifierProvider);
-      if (!inboxState.isLoading && inboxState.hasMore) {
+      final s = ref.read(inboxNotifierProvider);
+      if (!s.isLoading && s.hasMore) {
         ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
       }
     }
@@ -181,7 +223,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
 
   void _onItemTap(InboxItem item) {
     setState(() => _selectedItem = item);
-    if (item.type == InboxItemType.activity && !item.isSeen) {
+    if (!item.isSeen) {
       ref
           .read(inboxNotifierProvider.notifier)
           .markActivitySeen(item.activity!.id);
@@ -195,7 +237,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
         _selectedItem == null
             ? null
             : ref.read(taskByIdProviderSimple(_selectedItem!.taskId));
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 130),
       width: task != null ? kDetailWidth : 0,
@@ -222,13 +263,10 @@ class _InboxViewState extends ConsumerState<InboxView> {
             color: _T.slate50,
             child: Column(
               children: [
-                // ── Header ──────────────────────────────────────────────────
                 _InboxHeader(
                   unseenCount: inboxState.unseenCount,
                   onRefresh: _checkForNewItems,
                 ),
-
-                // ── Top "checking for new" banner ────────────────────────────
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child:
@@ -236,8 +274,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
                           ? const _NewContentBanner()
                           : const SizedBox.shrink(),
                 ),
-
-                // ── List ─────────────────────────────────────────────────────
                 Expanded(
                   child:
                       inboxState.items.isEmpty && !_isLoadingInbox
@@ -250,11 +286,8 @@ class _InboxViewState extends ConsumerState<InboxView> {
                               left: 12,
                               right: 12,
                             ),
-                            itemCount:
-                                inboxState.items.length +
-                                1, // +1 for end / loading footer
+                            itemCount: inboxState.items.length + 1,
                             itemBuilder: (context, index) {
-                              // Footer slot
                               if (index == inboxState.items.length) {
                                 if (inboxState.isLoading) {
                                   return const _LoadingMoreIndicator();
@@ -266,22 +299,20 @@ class _InboxViewState extends ConsumerState<InboxView> {
                               }
 
                               final item = inboxState.items[index];
-                              final isSelected = _selectedItem?.id == item.id;
-
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 6),
                                 child: _InboxItemRow(
                                   item: item,
-                                  isSelected: isSelected,
+                                  isSelected: _selectedItem?.id == item.id,
                                   onTap: () => _onItemTap(item),
                                   onMarkRead: () {
-                                    if (!item.isSeen &&
-                                        item.type == InboxItemType.activity) {
+                                    if (!item.isSeen) {
                                       ref
                                           .read(inboxNotifierProvider.notifier)
                                           .markActivitySeen(item.activity!.id);
                                     }
                                   },
+                                  onViewTask: () {},
                                 ),
                               );
                             },
@@ -291,7 +322,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
             ),
           ),
         ),
-
         _detailPanel(),
       ],
     );
@@ -304,7 +334,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
 class _InboxHeader extends StatelessWidget {
   final int unseenCount;
   final VoidCallback onRefresh;
-
   const _InboxHeader({required this.unseenCount, required this.onRefresh});
 
   @override
@@ -359,7 +388,6 @@ class _InboxHeader extends StatelessWidget {
             ),
           ],
           const Spacer(),
-          // Refresh button
           _HeaderIconButton(
             icon: Icons.refresh_rounded,
             tooltip: 'Check for new',
@@ -375,7 +403,6 @@ class _HeaderIconButton extends StatefulWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
-
   const _HeaderIconButton({
     required this.icon,
     required this.tooltip,
@@ -420,7 +447,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// NEW CONTENT BANNER  (top of list, while fetching new items)
+// NEW CONTENT BANNER
 // ═════════════════════════════════════════════════════════════════════════════
 class _NewContentBanner extends StatelessWidget {
   const _NewContentBanner();
@@ -463,13 +490,14 @@ class _NewContentBanner extends StatelessWidget {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// REDESIGNED INBOX ITEM ROW
+// INBOX ITEM ROW — unified card for all 3 scenarios
 // ═════════════════════════════════════════════════════════════════════════════
 class _InboxItemRow extends StatefulWidget {
   final InboxItem item;
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onMarkRead;
+  final VoidCallback onViewTask;
 
   const _InboxItemRow({
     super.key,
@@ -477,6 +505,7 @@ class _InboxItemRow extends StatefulWidget {
     required this.isSelected,
     required this.onTap,
     required this.onMarkRead,
+    required this.onViewTask,
   });
 
   @override
@@ -494,7 +523,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
     super.initState();
     _expandCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 160),
+      duration: const Duration(milliseconds: 180),
     );
     _expandAnim = CurvedAnimation(parent: _expandCtrl, curve: Curves.easeOut);
   }
@@ -515,11 +544,15 @@ class _InboxItemRowState extends State<_InboxItemRow>
     _expandCtrl.reverse();
   }
 
+  TaskActivity get _activity => widget.item.activity!;
+  bool get _isUnread => !widget.item.isSeen;
+
   @override
   Widget build(BuildContext context) {
-    final item = widget.item;
-    final accent = _accentFor(item);
-    final isUnread = !item.isSeen;
+    final activity = _activity;
+    final scenario = activity.scenario;
+    final accent = _accentFor(activity);
+    final isUnread = _isUnread;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -535,8 +568,6 @@ class _InboxItemRowState extends State<_InboxItemRow>
                     ? accent.withOpacity(0.06)
                     : isUnread
                     ? _T.blue50.withOpacity(0.6)
-                    : _hovered
-                    ? _T.white
                     : _T.white,
             borderRadius: BorderRadius.circular(_T.rLg),
             border: Border.all(
@@ -567,7 +598,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Left accent bar ────────────────────────────────────────
+                // ── Left accent bar ──────────────────────────────────────
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   width: 3.5,
@@ -585,134 +616,28 @@ class _InboxItemRowState extends State<_InboxItemRow>
                   ),
                 ),
 
-                // ── Main content ───────────────────────────────────────────
+                // ── Main content ─────────────────────────────────────────
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Row 1: avatar · actor+verb · timestamp · unread dot
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Avatar with activity-type icon badge
-                            _BadgedAvatar(item: item, accent: accent),
-                            const SizedBox(width: 10),
-
-                            // Actor + verb
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildHeaderText(item, accent),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    timeago.format(item.timestamp),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: _T.slate400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Unread dot
-                            if (isUnread)
-                              Container(
-                                width: 7,
-                                height: 7,
-                                margin: const EdgeInsets.only(top: 4),
-                                decoration: const BoxDecoration(
-                                  color: _T.blue,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
-                        ),
+                        // 1. Avatar · actor · verb · time · unread dot
+                        _buildHeader(activity, accent, isUnread, scenario),
 
                         const SizedBox(height: 10),
 
-                        // Row 2: Task name
-                        Row(
-                          children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              margin: const EdgeInsets.only(right: 7, top: 1),
-                              decoration: BoxDecoration(
-                                color: accent.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                item.type == InboxItemType.activity
-                                    ? item.activity!.taskName
-                                    : 'TASK-${item.message!.taskId}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: widget.isSelected ? accent : _T.ink,
-                                  height: 1.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                        // 2. Task name
+                        _buildTaskName(activity, accent),
 
                         const SizedBox(height: 8),
 
-                        // Row 3: Activity or message preview
-                        if (item.type == InboxItemType.activity)
-                          _buildActivityPreview(item.activity!, accent)
-                        else
-                          _buildMessagePreview(item.message!),
+                        // 3. Content block (varies by scenario)
+                        _buildContentBlock(activity, scenario),
 
-                        // Row 4: hover-reveal quick actions
-                        SizeTransition(
-                          sizeFactor: _expandAnim,
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 10),
-                              const Divider(height: 1, color: _T.slate100),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  _QuickActionChip(
-                                    icon: Icons.open_in_new_rounded,
-                                    label: 'View task',
-                                    color: _T.blue,
-                                    bg: _T.blue50,
-                                    onTap: widget.onTap,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  if (item.type == InboxItemType.message)
-                                    _QuickActionChip(
-                                      icon: Icons.reply_rounded,
-                                      label: 'Reply',
-                                      color: _T.purple,
-                                      bg: _T.purple50,
-                                      onTap: () {},
-                                    ),
-                                  if (isUnread) ...[
-                                    const SizedBox(width: 6),
-                                    _QuickActionChip(
-                                      icon: Icons.done_all_rounded,
-                                      label: 'Mark read',
-                                      color: _T.slate500,
-                                      bg: _T.slate100,
-                                      onTap: widget.onMarkRead,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                        // 4. Hover quick-actions
+                        _buildQuickActions(scenario, isUnread),
                       ],
                     ),
                   ),
@@ -725,101 +650,211 @@ class _InboxItemRowState extends State<_InboxItemRow>
     );
   }
 
-  Widget _buildHeaderText(InboxItem item, Color accent) {
-    if (item.type == InboxItemType.activity) {
-      final activity = item.activity!;
-      final actorName =
-          activity.actorId == LoginService.currentUser!.id
-              ? 'You'
-              : activity.actorName;
-      return RichText(
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        text: TextSpan(
-          style: const TextStyle(fontSize: 12.5, color: _T.ink2, height: 1.3),
-          children: [
-            TextSpan(
-              text: actorName,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextSpan(
-              text: ' ${_getActivityVerb(activity.type)}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: _T.slate500,
+  // ── 1. HEADER ─────────────────────────────────────────────────────────────
+  Widget _buildHeader(
+    TaskActivity activity,
+    Color accent,
+    bool isUnread,
+    _Scenario scenario,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BadgedAvatar(activity: activity, accent: accent, scenario: scenario),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeaderText(activity, scenario),
+              const SizedBox(height: 2),
+              Text(
+                timeago.format(activity.updatedAt),
+                style: const TextStyle(fontSize: 11, color: _T.slate400),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
-    } else {
-      final authorName =
-          item.message!.authorId == LoginService.currentUser!.id
-              ? 'You'
-              : item.message!.authorName;
-      return RichText(
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        text: TextSpan(
-          style: const TextStyle(fontSize: 12.5, color: _T.ink2, height: 1.3),
-          children: [
-            TextSpan(
-              text: authorName,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+        if (isUnread)
+          Container(
+            width: 7,
+            height: 7,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: const BoxDecoration(
+              color: _T.blue,
+              shape: BoxShape.circle,
             ),
-            const TextSpan(
-              text: ' commented',
-              style: TextStyle(fontWeight: FontWeight.w500, color: _T.slate500),
-            ),
-          ],
-        ),
-      );
-    }
+          ),
+      ],
+    );
   }
 
-  Widget _buildActivityPreview(TaskActivity activity, Color accent) {
-    late TaskComponentHelper fromHelper, toHelper;
-    if (activity.type == ActivityType.stageBackward ||
-        activity.type == ActivityType.stageForward) {
-      fromHelper = TaskComponentHelper.get(
-        TaskStatus.values.byName(activity.fromStage),
-      );
-      toHelper = TaskComponentHelper.get(
-        TaskStatus.values.byName(activity.toStage),
-      );
+  // Actor name + context-appropriate verb
+  Widget _buildHeaderText(TaskActivity activity, _Scenario scenario) {
+    final isSelf = activity.actorId == LoginService.currentUser!.id;
+    final actorName = isSelf ? 'You' : activity.actorName;
+
+    final String verb;
+    switch (scenario) {
+      case _Scenario.stageOnly:
+        verb = _stageVerb(activity.type);
+        break;
+      case _Scenario.stageAndMessage:
+        verb = '${_stageVerbShort(activity.type)} & commented';
+        break;
+      case _Scenario.messageOnly:
+        verb = 'commented';
+        break;
     }
 
-    switch (activity.type) {
-      case ActivityType.stageForward:
-      case ActivityType.stageBackward:
-        final isForward = activity.type == ActivityType.stageForward;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _MiniStagePill(
-              label: toHelper.label,
-              color: isForward ? _T.green : _T.amber,
-              bg: isForward ? _T.green50 : _T.amber50,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7),
-              child: Icon(
-                isForward
-                    ? Icons.arrow_forward_rounded
-                    : Icons.arrow_back_rounded,
-                size: 13,
-                color: _T.slate300,
-              ),
-            ),
-
-            _MiniStagePill(
-              label: fromHelper.label,
+    return RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: const TextStyle(fontSize: 12.5, color: _T.ink2, height: 1.3),
+        children: [
+          TextSpan(
+            text: actorName,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          TextSpan(
+            text: '  $verb',
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
               color: _T.slate500,
-              bg: _T.slate100,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 2. TASK NAME ──────────────────────────────────────────────────────────
+  Widget _buildTaskName(TaskActivity activity, Color accent) {
+    return Row(
+      children: [
+        Container(
+          width: 5,
+          height: 5,
+          margin: const EdgeInsets.only(right: 7, top: 1),
+          decoration: BoxDecoration(
+            color: accent.withOpacity(0.5),
+            shape: BoxShape.circle,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            activity.taskName,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: widget.isSelected ? accent : _T.ink,
+              height: 1.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── 3. CONTENT BLOCK ──────────────────────────────────────────────────────
+  Widget _buildContentBlock(TaskActivity activity, _Scenario scenario) {
+    switch (scenario) {
+      // ── Scenario A: stage only ───────────────────────────────────────────
+      case _Scenario.stageOnly:
+        return _buildStageTransition(activity);
+
+      // ── Scenario B: stage + message ──────────────────────────────────────
+      case _Scenario.stageAndMessage:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStageTransition(activity),
+            const SizedBox(height: 8),
+            // Inline section label separating the two blocks
+            Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 3,
+                  margin: const EdgeInsets.only(right: 6),
+                  decoration: const BoxDecoration(
+                    color: _T.slate300,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const Text(
+                  'COMMENT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: _T.slate400,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(child: Container(height: 1, color: _T.slate100)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _buildMessageBubble(activity.message!),
           ],
         );
 
+      // ── Scenario C: message only ─────────────────────────────────────────
+      case _Scenario.messageOnly:
+        return _buildMessageBubble(activity.message!);
+    }
+  }
+
+  // Stage transition pill: FROM → arrow → TO
+  Widget _buildStageTransition(TaskActivity activity) {
+    // Non-stage activity types fall through to generic preview
+    if (activity.type != ActivityType.stageForward &&
+        activity.type != ActivityType.stageBackward) {
+      return _buildGenericPreview(activity);
+    }
+
+    final isForward = activity.type == ActivityType.stageForward;
+    final fromHelper = TaskComponentHelper.get(
+      TaskStatus.values.byName(activity.fromStage),
+    );
+    final toHelper = TaskComponentHelper.get(
+      TaskStatus.values.byName(activity.toStage),
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // FROM — always muted slate (where it came from)
+        _MiniStagePill(
+          label: fromHelper.label,
+          color: _T.slate500,
+          bg: _T.slate100,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: Icon(
+            isForward ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
+            size: 13,
+            color: _T.slate300,
+          ),
+        ),
+        // TO — colored (where it is now)
+        _MiniStagePill(
+          label: toHelper.label,
+          color: isForward ? _T.green : _T.amber,
+          bg: isForward ? _T.green50 : _T.amber50,
+        ),
+      ],
+    );
+  }
+
+  // Generic preview for non-stage activity types
+  Widget _buildGenericPreview(TaskActivity activity) {
+    switch (activity.type) {
       case ActivityType.printerAssigned:
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -885,16 +920,22 @@ class _InboxItemRowState extends State<_InboxItemRow>
     }
   }
 
-  Widget _buildMessagePreview(Message message) {
+  // Message bubble — used in both Scenario B and C
+  Widget _buildMessageBubble(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: _T.slate50,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: _T.slate200),
+        color: _T.purple50.withOpacity(0.5),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(2),
+          topRight: Radius.circular(7),
+          bottomLeft: Radius.circular(7),
+          bottomRight: Radius.circular(7),
+        ),
+        border: Border.all(color: _T.purple.withOpacity(0.15)),
       ),
       child: Text(
-        message.message,
+        text,
         style: const TextStyle(fontSize: 12, color: _T.ink3, height: 1.5),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -902,55 +943,115 @@ class _InboxItemRowState extends State<_InboxItemRow>
     );
   }
 
-  String _getActivityVerb(ActivityType type) {
+  // ── 4. HOVER QUICK-ACTIONS ────────────────────────────────────────────────
+  Widget _buildQuickActions(_Scenario scenario, bool isUnread) {
+    // Show "Reply" only when there's actually a message to reply to
+    final hasMessage =
+        scenario == _Scenario.stageAndMessage ||
+        scenario == _Scenario.messageOnly;
+
+    return SizeTransition(
+      sizeFactor: _expandAnim,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: _T.slate100),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _QuickActionChip(
+                icon: Icons.open_in_new_rounded,
+                label: 'View task',
+                color: _T.blue,
+                bg: _T.blue50,
+                onTap: widget.onViewTask,
+              ),
+              if (hasMessage) ...[
+                const SizedBox(width: 6),
+                _QuickActionChip(
+                  icon: Icons.reply_rounded,
+                  label: 'Reply',
+                  color: _T.purple,
+                  bg: _T.purple50,
+                  onTap: () {},
+                ),
+              ],
+              if (isUnread) ...[
+                const SizedBox(width: 6),
+                _QuickActionChip(
+                  icon: Icons.done_all_rounded,
+                  label: 'Mark read',
+                  color: _T.slate500,
+                  bg: _T.slate100,
+                  onTap: widget.onMarkRead,
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Verb helpers ──────────────────────────────────────────────────────────
+  String _stageVerb(ActivityType type) {
     switch (type) {
       case ActivityType.stageForward:
         return 'advanced the task';
       case ActivityType.stageBackward:
         return 'moved task back';
-      case ActivityType.printerAssigned:
-        return 'started production';
-      case ActivityType.assigneeAdded:
-        return 'assigned someone';
-      case ActivityType.priorityChanged:
-        return 'changed priority';
-      case ActivityType.dueDateChanged:
-        return 'updated due date';
       case ActivityType.taskCompleted:
         return 'completed the task';
       default:
         return 'updated the task';
     }
   }
+
+  String _stageVerbShort(ActivityType type) {
+    switch (type) {
+      case ActivityType.stageForward:
+        return 'advanced';
+      case ActivityType.stageBackward:
+        return 'moved back';
+      case ActivityType.taskCompleted:
+        return 'completed';
+      default:
+        return 'updated';
+    }
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
 // BADGED AVATAR
-// Avatar with a small activity-type icon badge in the bottom-right
-// ─────────────────────────────────────────────────────────────────────────────
+// Primary badge (bottom-right): activity-type icon.
+// Secondary dot (top-right, Scenario B only): purple to signal message present.
+// ═════════════════════════════════════════════════════════════════════════════
 class _BadgedAvatar extends StatelessWidget {
-  final InboxItem item;
+  final TaskActivity activity;
   final Color accent;
+  final _Scenario scenario;
 
-  const _BadgedAvatar({required this.item, required this.accent});
+  const _BadgedAvatar({
+    required this.activity,
+    required this.accent,
+    required this.scenario,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final initials =
-        item.type == InboxItemType.activity
-            ? item.activity!.actorInitials
-            : item.message!.authorInitials;
-    final color =
-        item.type == InboxItemType.activity
-            ? (item.activity!.actorColor ?? _T.ink3)
-            : (item.message!.authorColor ?? _T.ink3);
-
     return SizedBox(
       width: 36,
       height: 36,
       child: Stack(
         children: [
-          AvatarWidget(initials: initials, color: color, size: 34),
+          AvatarWidget(
+            initials: activity.actorInitials,
+            color: activity.actorColor ?? _T.ink3,
+            size: 34,
+          ),
+
+          // Primary badge — activity type icon
           Positioned(
             right: 0,
             bottom: 0,
@@ -962,9 +1063,26 @@ class _BadgedAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: _T.white, width: 1.5),
               ),
-              child: Icon(_iconFor(item), size: 8, color: Colors.white),
+              child: Icon(_iconFor(activity), size: 8, color: Colors.white),
             ),
           ),
+
+          // Secondary dot — only for Scenario B (stage + message)
+          // Purple to hint that a comment is also attached.
+          if (scenario == _Scenario.stageAndMessage)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: _T.purple,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _T.white, width: 1.5),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -972,7 +1090,7 @@ class _BadgedAvatar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// QUICK ACTION CHIP  (appears on hover)
+// QUICK ACTION CHIP
 // ─────────────────────────────────────────────────────────────────────────────
 class _QuickActionChip extends StatefulWidget {
   final IconData icon;
@@ -1040,7 +1158,7 @@ class _QuickActionChipState extends State<_QuickActionChip> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// END OF INBOX WIDGET
+// END OF INBOX
 // ═════════════════════════════════════════════════════════════════════════════
 class _EndOfInboxWidget extends StatelessWidget {
   const _EndOfInboxWidget();
@@ -1051,7 +1169,6 @@ class _EndOfInboxWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 8),
       child: Column(
         children: [
-          // Dotted divider line
           Row(
             children: [
               Expanded(
@@ -1074,13 +1191,13 @@ class _EndOfInboxWidget extends StatelessWidget {
                   color: _T.white,
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(color: _T.slate200),
-                  // boxShadow: [
-                  //   BoxShadow(
-                  //     color: _T.ink.withOpacity(0.04),
-                  //     blurRadius: 6,
-                  //     offset: const Offset(0, 1),
-                  //   ),
-                  // ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.ink.withOpacity(0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1088,7 +1205,7 @@ class _EndOfInboxWidget extends StatelessWidget {
                     Container(
                       width: 18,
                       height: 18,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: _T.slate100,
                         shape: BoxShape.circle,
                       ),
@@ -1122,10 +1239,7 @@ class _EndOfInboxWidget extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
-          // Sub-copy
           Text(
             "You've seen everything — you're all caught up.",
             style: TextStyle(
@@ -1142,7 +1256,7 @@ class _EndOfInboxWidget extends StatelessWidget {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SKELETON / SHIMMER LOADING LIST
+// SKELETON LIST
 // ═════════════════════════════════════════════════════════════════════════════
 class _SkeletonList extends StatelessWidget {
   @override
@@ -1204,7 +1318,6 @@ class _SkeletonRowState extends State<_SkeletonRow>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // accent bar
               Container(
                 width: 3.5,
                 height: 64,
@@ -1214,7 +1327,6 @@ class _SkeletonRowState extends State<_SkeletonRow>
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
-              // avatar
               Container(
                 width: 34,
                 height: 34,
@@ -1224,16 +1336,15 @@ class _SkeletonRowState extends State<_SkeletonRow>
                   shape: BoxShape.circle,
                 ),
               ),
-              // text lines
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _shimmerLine(opacity, width: 140, height: 11),
+                    _shimmer(opacity, w: 140, h: 11),
                     const SizedBox(height: 7),
-                    _shimmerLine(opacity, width: 200, height: 13),
+                    _shimmer(opacity, w: 200, h: 13),
                     const SizedBox(height: 9),
-                    _shimmerLine(opacity, width: 110, height: 22, radius: 6),
+                    _shimmer(opacity, w: 110, h: 22, r: 6),
                   ],
                 ),
               ),
@@ -1244,25 +1355,25 @@ class _SkeletonRowState extends State<_SkeletonRow>
     );
   }
 
-  Widget _shimmerLine(
+  Widget _shimmer(
     double opacity, {
-    required double width,
-    required double height,
-    double radius = 4,
+    required double w,
+    required double h,
+    double r = 4,
   }) {
     return Container(
-      width: width,
-      height: height,
+      width: w,
+      height: h,
       decoration: BoxDecoration(
         color: _T.slate200.withOpacity(opacity),
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(r),
       ),
     );
   }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// LOADING MORE INDICATOR (bottom pagination)
+// LOADING MORE / EMPTY STATE
 // ═════════════════════════════════════════════════════════════════════════════
 class _LoadingMoreIndicator extends StatelessWidget {
   const _LoadingMoreIndicator();
@@ -1293,9 +1404,6 @@ class _LoadingMoreIndicator extends StatelessWidget {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// EMPTY STATE
-// ═════════════════════════════════════════════════════════════════════════════
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -1339,7 +1447,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// MINI PILL / CHIP HELPERS (unchanged from original)
+// MINI SHARED COMPONENTS
 // ═════════════════════════════════════════════════════════════════════════════
 class _MiniStagePill extends StatelessWidget {
   final String label;
