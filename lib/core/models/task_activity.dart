@@ -124,10 +124,13 @@ class TaskActivity {
   // Helper getters for UI
   String get fromStage => metadata?['fromStage'] ?? '';
   String get toStage => metadata?['toStage'] ?? '';
+  // Assignee activity
   String get addedUserName => metadata?['addedUserName'] ?? '';
   String get removedUserName => metadata?['removedUserName'] ?? '';
+  // Priority activity - NOT finalized yet, could be stopped before actual implementation
   int? get fromPriority => metadata?['fromPriority'];
   int? get toPriority => metadata?['toPriority'];
+  // Billing activity
   String? get fromBillingStatus => metadata?['fromBillingStatus'];
   String? get toBillingStatus => metadata?['toBillingStatus'];
   // Message metadata
