@@ -130,4 +130,9 @@ class TaskActivity {
   int? get toPriority => metadata?['toPriority'];
   String? get fromBillingStatus => metadata?['fromBillingStatus'];
   String? get toBillingStatus => metadata?['toBillingStatus'];
+  // Message metadata
+  int? get messageId => metadata?['messageId'];
+  String? get message => metadata?['message'];
+  String? get authorId => metadata?['authorId'];
+  String? get authorName => metadata?['authorName'];
 }
