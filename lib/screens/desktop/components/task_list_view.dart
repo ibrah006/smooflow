@@ -158,7 +158,7 @@ const _kCols = [
     pickerLabel: 'Reference',
     description: 'Client reference or PO number',
     icon: Icons.tag_rounded,
-    mandatory: true,
+    mandatory: false,
     defaultOn: true,
     flex: 4,
   ),
