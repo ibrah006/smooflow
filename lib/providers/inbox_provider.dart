@@ -29,8 +29,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
         offset: offset,
       );
 
-      print("activitiesResponse: $activitiesResponse");
-
       final activities =
           (activitiesResponse['activities'] as List)
               .map((json) => TaskActivity.fromJson(json))
