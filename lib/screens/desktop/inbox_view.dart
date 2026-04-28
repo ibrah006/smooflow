@@ -312,7 +312,6 @@ class _InboxViewState extends ConsumerState<InboxView> {
                                           .markActivitySeen(item.activity!.id);
                                     }
                                   },
-                                  onViewTask: () {},
                                 ),
                               );
                             },
@@ -497,7 +496,6 @@ class _InboxItemRow extends StatefulWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onMarkRead;
-  final VoidCallback onViewTask;
 
   const _InboxItemRow({
     super.key,
@@ -505,7 +503,6 @@ class _InboxItemRow extends StatefulWidget {
     required this.isSelected,
     required this.onTap,
     required this.onMarkRead,
-    required this.onViewTask,
   });
 
   @override
@@ -965,7 +962,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
                 label: 'View task',
                 color: _T.blue,
                 bg: _T.blue50,
-                onTap: widget.onViewTask,
+                onTap: widget.onTap,
               ),
               if (hasMessage) ...[
                 const SizedBox(width: 6),
