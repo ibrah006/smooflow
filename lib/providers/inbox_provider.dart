@@ -106,6 +106,41 @@ class InboxNotifier extends StateNotifier<InboxState> {
     }
   }
 
+  /// Returns the fetched inbox from server, NOT from existing state
+  Future<List<InboxItem>> getInboxAfter({
+    required int afterInboxId,
+    int limit = 20,
+  }) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final newerActivities = await _repo.getInboxAfter(
+        afterInboxId: afterInboxId,
+        limit: limit,
+      );
+
+      print("newer inbox: ${newerActivities.length}");
+
+      final newer =
+          newerActivities
+              .map((activity) => InboxItem.fromActivity(activity))
+              .toList();
+
+      // Step 4: Update state
+      state = state.copyWith(newItems: newer, isLoading: false);
+
+      return newer;
+    } catch (e) {
+      print("error loading message after: ${e}");
+      state = state.copyWith(
+        error: 'Failed to load newer messages',
+        isLoading: false,
+      );
+
+      return [];
+    }
+  }
+
   /// Clear all items (for logout, etc.)
   void clear() {
     state = InboxState();
