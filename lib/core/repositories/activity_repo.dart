@@ -32,7 +32,7 @@ class ActivityRepo {
   }
 
   /// GET /activities/inbox — fetch inbox activities before the given id
-  /// returns the number of inbox items that came from server
+  /// returns the inbox items that came from server
   Future<List<TaskActivity>> getInboxBefore({
     required int beforeInboxId,
     int? offset,
