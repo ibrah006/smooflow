@@ -42,7 +42,7 @@ class ActivityRepo {
       '/activities/inbox?beforeId=${beforeInboxId}${limit != null ? '&limit=$limit' : ''}${offset != null ? '&offset=$offset' : ''}',
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to load inbox: ${response.body}');
+      throw Exception('Failed to load inbox before: ${response.body}');
     }
 
     return jsonDecode(response.body);
