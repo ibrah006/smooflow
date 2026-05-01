@@ -47,4 +47,21 @@ class ActivityRepo {
 
     return jsonDecode(response.body);
   }
+
+  /// GET /activities/inbox — fetch inbox activities after the given id
+  /// returns the inbox items that came from server
+  Future<List<TaskActivity>> getInboxAfter({
+    required int afterInboxId,
+    int? offset,
+    int? limit = 30,
+  }) async {
+    final response = await ApiClient.http.get(
+      '/activities/inbox?afterId=${afterInboxId}${limit != null ? '&limit=$limit' : ''}${offset != null ? '&offset=$offset' : ''}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load inbox after: ${response.body}');
+    }
+
+    return jsonDecode(response.body);
+  }
 }
