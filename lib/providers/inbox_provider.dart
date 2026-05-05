@@ -16,7 +16,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   /// This function doesn't return result,
   /// rely on results from ref.watch/read(inboxNotifierProvider)
   /// ONLY RETURNS length of NEW inbox items fetched from server
-  Future<int> getInboxItems(WidgetRef ref) async {
+  Future<int> getInboxItems() async {
     if (state.lastInboxMessageId == null) {
       // No inbox items, nothing to fetch
       return 0;
