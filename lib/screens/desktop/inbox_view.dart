@@ -167,11 +167,21 @@ class InboxView extends ConsumerStatefulWidget {
 class _InboxViewState extends ConsumerState<InboxView> {
   InboxItem? _selectedItem;
   final ScrollController _scroll = ScrollController();
-  bool _isLoadingInbox = true;
-  bool _isCheckingNew = false;
 
-  bool _isLoadingInboxAfter = false, _isLoadingInboxBefore = false;
+  // ── Loading flags ──────────────────────────────────────────────────────────
+  bool _isLoadingInbox = true; // initial full-screen skeleton
+  bool _isCheckingNew = false; // manual refresh (header button)
+  bool _isLoadingNewer = false; // prepending newer items at top
+  bool _isLoadingOlder = false; // appending older items at bottom
 
+  // ── Debounce guards so visibility callbacks don't double-fire ─────────────
+  DateTime? _lastNewerFetch;
+  DateTime? _lastOlderFetch;
+  static const _kFetchDebounce = Duration(milliseconds: 800);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // INIT
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> initializeInbox() async {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
@@ -191,11 +201,87 @@ class _InboxViewState extends ConsumerState<InboxView> {
     });
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // MANUAL REFRESH  (header button — checks for activity newer than top item)
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> _checkForNewItems() async {
     if (_isCheckingNew) return;
     setState(() => _isCheckingNew = true);
     await ref.read(inboxNotifierProvider.notifier).getRecent();
     if (mounted) setState(() => _isCheckingNew = false);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LOAD NEWER  (triggered when the topmost item becomes visible)
+  // Prepends items with id > topItem.id.  Preserves scroll position so the
+  // list doesn't jump when new rows are inserted above the viewport.
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> _loadNewer(InboxItem topItem) async {
+    if (_isLoadingNewer) return;
+    final now = DateTime.now();
+    if (_lastNewerFetch != null &&
+        now.difference(_lastNewerFetch!) < _kFetchDebounce)
+      return;
+    _lastNewerFetch = now;
+
+    setState(() => _isLoadingNewer = true);
+
+    // Capture current scroll offset before new items are inserted above
+    final offsetBefore = _scroll.hasClients ? _scroll.position.pixels : 0.0;
+
+    try {
+      final added = await ref
+          .read(inboxNotifierProvider.notifier)
+          .getInboxAfter(afterInboxId: topItem.id);
+
+      // If rows were prepended, push the scroll down by the height that was
+      // inserted so the user's viewport doesn't jump.
+      if (added.length > 0 && _scroll.hasClients && mounted) {
+        // One frame after the list rebuilds, compute how much taller it got
+        // and compensate.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scroll.hasClients) return;
+          final newOffset = _scroll.position.pixels;
+          // The list inserts at index 0; Flutter keeps scroll pixels constant
+          // which causes a visual jump.  jumpTo the old offset + the delta.
+          final delta =
+              _scroll.position.maxScrollExtent -
+              (_scroll.position.maxScrollExtent - (newOffset - offsetBefore));
+          if (delta.abs() > 1) {
+            _scroll.jumpTo(
+              (_scroll.position.pixels).clamp(
+                0.0,
+                _scroll.position.maxScrollExtent,
+              ),
+            );
+          }
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingNewer = false);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LOAD OLDER  (triggered when the bottommost item becomes visible)
+  // Appends items with id < bottomItem.id.
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> _loadOlder(InboxItem bottomItem) async {
+    if (_isLoadingOlder) return;
+    final now = DateTime.now();
+    if (_lastOlderFetch != null &&
+        now.difference(_lastOlderFetch!) < _kFetchDebounce)
+      return;
+    _lastOlderFetch = now;
+
+    setState(() => _isLoadingOlder = true);
+    try {
+      await ref
+          .read(inboxNotifierProvider.notifier)
+          .getInboxBefore(beforeInboxId: bottomItem.id);
+    } finally {
+      if (mounted) setState(() => _isLoadingOlder = false);
+    }
   }
 
   @override
@@ -215,11 +301,14 @@ class _InboxViewState extends ConsumerState<InboxView> {
     super.dispose();
   }
 
+  // Keyboard-style infinite scroll fallback (in case VisibilityDetector
+  // doesn't fire on fast scrolling)
   void _onScroll() {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       final s = ref.read(inboxNotifierProvider);
-      if (!s.isLoading && s.hasMore) {
-        ref.read(inboxNotifierProvider.notifier).getRecent();
+      if (!s.isLoading && s.hasMore && !_isLoadingOlder) {
+        final items = s.items;
+        if (items.isNotEmpty) _loadOlder(items.last);
       }
     }
   }
@@ -255,53 +344,10 @@ class _InboxViewState extends ConsumerState<InboxView> {
     );
   }
 
-  Future<void> getInboxAfter(InboxItem inboxItem) async {
-    if (_isLoadingInboxAfter) return;
-
-    final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
-
-    if (task.lastMessageId == null || inboxItem.id >= task.lastMessageId!) {
-      return;
-    }
-
-    setState(() => _isLoadingInboxAfter = true);
-
-    try {
-      await ref
-          .read(inboxNotifierProvider.notifier)
-          .getInboxAfter(afterInboxId: inboxItem.id);
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingInboxAfter = false);
-      }
-    }
-  }
-
-  Future<void> getInboxBefore(InboxItem inboxItem) async {
-    if (_isLoadingInboxBefore) return;
-
-    final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
-
-    if (task.firstMessageId == null || inboxItem.id <= task.firstMessageId!) {
-      return;
-    }
-
-    setState(() => _isLoadingInboxBefore = true);
-
-    try {
-      await ref
-          .read(inboxNotifierProvider.notifier)
-          .getInboxBefore(beforeInboxId: inboxItem.id);
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingInboxBefore = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final inboxState = ref.watch(inboxNotifierProvider);
+    final items = inboxState.items;
 
     return Row(
       children: [
@@ -310,20 +356,54 @@ class _InboxViewState extends ConsumerState<InboxView> {
             color: _T.slate50,
             child: Column(
               children: [
+                // ── Header ──────────────────────────────────────────────
                 _InboxHeader(
                   unseenCount: inboxState.unseenCount,
                   onRefresh: _checkForNewItems,
                 ),
+
+                // ── "Checking for new" banner (manual refresh) ──────────
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder:
+                      (child, anim) => SizeTransition(
+                        sizeFactor: CurvedAnimation(
+                          parent: anim,
+                          curve: Curves.easeOut,
+                        ),
+                        axisAlignment: -1,
+                        child: FadeTransition(opacity: anim, child: child),
+                      ),
                   child:
                       _isCheckingNew
                           ? const _NewContentBanner()
                           : const SizedBox.shrink(),
                 ),
+
+                // ── "Newer items loading" banner (auto, top of list) ────
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder:
+                      (child, anim) => SizeTransition(
+                        sizeFactor: CurvedAnimation(
+                          parent: anim,
+                          curve: Curves.easeOut,
+                        ),
+                        axisAlignment: -1,
+                        child: FadeTransition(opacity: anim, child: child),
+                      ),
+                  child:
+                      _isLoadingNewer
+                          ? const _LoadingNewerBanner()
+                          : const SizedBox.shrink(),
+                ),
+
+                // ── List ────────────────────────────────────────────────
                 Expanded(
                   child:
-                      inboxState.items.isEmpty && !_isLoadingInbox
+                      _isLoadingInbox && items.isEmpty
+                          ? _SkeletonList()
+                          : items.isEmpty
                           ? const _EmptyState()
                           : ListView.builder(
                             controller: _scroll,
@@ -333,11 +413,12 @@ class _InboxViewState extends ConsumerState<InboxView> {
                               left: 12,
                               right: 12,
                             ),
-                            itemCount: inboxState.items.length + 1,
+                            itemCount: items.length + 1,
                             itemBuilder: (context, index) {
-                              if (index == inboxState.items.length) {
-                                if (inboxState.isLoading) {
-                                  return const _LoadingMoreIndicator();
+                              // ── Footer slot ───────────────────────
+                              if (index == items.length) {
+                                if (_isLoadingOlder) {
+                                  return const _LoadingOlderBanner();
                                 }
                                 if (!inboxState.hasMore) {
                                   return const _EndOfInboxWidget();
@@ -345,19 +426,23 @@ class _InboxViewState extends ConsumerState<InboxView> {
                                 return const SizedBox.shrink();
                               }
 
-                              final item = inboxState.items[index];
+                              final item = items[index];
+                              final isFirst = index == 0;
+                              final isLast = index == items.length - 1;
+
                               return VisibilityDetector(
-                                key: Key("ITEM-${item.id}"),
+                                key: Key('inbox-item-${item.id}'),
                                 onVisibilityChanged: (info) {
-                                  if (info.visibleFraction > 0) {
-                                    if (index == 0) {
-                                      // Last message - load newer
-                                      getInboxAfter(item);
-                                    }
-                                    if (index == inboxState.items.length - 1) {
-                                      // First message - load older
-                                      getInboxBefore(item);
-                                    }
+                                  if (info.visibleFraction < 0.1) return;
+                                  // Top item visible → try loading newer
+                                  if (isFirst && !_isLoadingNewer) {
+                                    _loadNewer(item);
+                                  }
+                                  // Bottom item visible → try loading older
+                                  if (isLast &&
+                                      !_isLoadingOlder &&
+                                      inboxState.hasMore) {
+                                    _loadOlder(item);
                                   }
                                 },
                                 child: Padding(
@@ -512,8 +597,23 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// NEW CONTENT BANNER
+// LOADING BANNERS
+//
+// Three distinct loading states, each with a clear visual identity:
+//
+//  _NewContentBanner    — manual refresh in-flight (blue, top, triggered by
+//                         the header refresh button).
+//  _LoadingNewerBanner  — auto-fetch of items newer than the top card (blue,
+//                         slides in below the header, disappears when done).
+//  _LoadingOlderBanner  — auto-fetch of items older than the bottom card
+//                         (amber tint, at the list foot, replaces the
+//                         _EndOfInboxWidget while loading).
+//
+// All three use SizeTransition + FadeTransition from the parent
+// AnimatedSwitcher so they slide in/out without layout jumps.
 // ═════════════════════════════════════════════════════════════════════════════
+
+// ── Manual refresh banner ─────────────────────────────────────────────────
 class _NewContentBanner extends StatelessWidget {
   const _NewContentBanner();
 
@@ -523,10 +623,7 @@ class _NewContentBanner extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         color: _T.blue50,
-        border: Border(
-          top: BorderSide(color: _T.blue.withOpacity(0.15)),
-          bottom: BorderSide(color: _T.blue.withOpacity(0.15)),
-        ),
+        border: Border(bottom: BorderSide(color: _T.blue.withOpacity(0.15))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -546,6 +643,84 @@ class _NewContentBanner extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: _T.blue.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Auto-fetch newer items banner (slides in below header) ────────────────
+class _LoadingNewerBanner extends StatelessWidget {
+  const _LoadingNewerBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: _T.blue50,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.blue.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 11,
+            height: 11,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: _T.blue.withOpacity(0.55),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_upward_rounded, size: 11, color: _T.blue),
+          const SizedBox(width: 4),
+          Text(
+            'Loading newer activity…',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: _T.blue.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Auto-fetch older items banner (at bottom of list) ─────────────────────
+class _LoadingOlderBanner extends StatelessWidget {
+  const _LoadingOlderBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 13,
+            height: 13,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: _T.amber.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_downward_rounded, size: 11, color: _T.amber),
+          const SizedBox(width: 4),
+          Text(
+            'Loading older activity…',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: _T.slate400,
             ),
           ),
         ],
@@ -1438,35 +1613,6 @@ class _SkeletonRowState extends State<_SkeletonRow>
 // ═════════════════════════════════════════════════════════════════════════════
 // LOADING MORE / EMPTY STATE
 // ═════════════════════════════════════════════════════════════════════════════
-class _LoadingMoreIndicator extends StatelessWidget {
-  const _LoadingMoreIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: _T.slate300,
-            ),
-          ),
-          const SizedBox(width: 9),
-          const Text(
-            'Loading older activity…',
-            style: TextStyle(fontSize: 12, color: _T.slate400),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
