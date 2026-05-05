@@ -18,7 +18,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
   /// ONLY RETURNS length of NEW inbox items fetched from server
   Future<int> getMessagesByTask(WidgetRef ref) async {
     if (state.lastInboxMessageId == null) {
-      // No messages for this task, nothing to fetch
+      // No inbox items, nothing to fetch
       return 0;
     }
 
