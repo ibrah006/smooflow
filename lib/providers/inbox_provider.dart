@@ -12,12 +12,12 @@ class InboxNotifier extends StateNotifier<InboxState> {
   InboxNotifier(this._repo, this._ref) : super(InboxState());
 
   /// GET
-  /// Fetch the recent messages BEFORE and after
+  /// Fetch the recent inbox BEFORE and after
   /// This function doesn't return result,
-  /// rely on results from ref.watch/read(messagesNotifierProvider)
+  /// rely on results from ref.watch/read(inboxNotifierProvider)
   /// ONLY RETURNS length of NEW messages fetched from server
   Future<int> getMessagesByTask(WidgetRef ref) async {
-    if (task.lastMessageId == null) {
+    if (state.lastInboxMessageId == null) {
       // No messages for this task, nothing to fetch
       return 0;
     }
@@ -25,7 +25,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
     bool gotRecentMessages = false;
 
     try {
-      state.items.firstWhere((m) => m.id == task.lastMessageId);
+      state.items.firstWhere((i) => i.id == state.lastInboxMessageId);
 
       // the required messages are in memory for now
       return 0;
@@ -33,15 +33,14 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final lastMessageIdForTaskInMemory = _lastMessageIdForTask(task.id);
 
       if (lastMessageIdForTaskInMemory != null &&
-          task.lastMessageId != lastMessageIdForTaskInMemory) {
+          state.lastInboxMessageId != lastMessageIdForTaskInMemory) {
         print(
           "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
         );
 
         // Last message is not in memory, fetch messages after the local last message id
-        final messagesAfter = await getMessagesAfter(
-          afterMessageId: lastMessageIdForTaskInMemory,
-          taskId: task.id,
+        final messagesAfter = await getInboxAfter(
+          afterInboxId: lastMessageIdForTaskInMemory,
         );
 
         return messagesAfter.length;
@@ -227,6 +226,18 @@ class InboxNotifier extends StateNotifier<InboxState> {
   /// Clear all items (for logout, etc.)
   void clear() {
     state = InboxState();
+  }
+
+  /// Assumes that the inbox items array is in descending order
+  /// This function is used to find the id of the last inbox item
+  int? _lastInboxItemId() {
+    return state.items.firstOrNull?.id;
+  }
+
+  /// Assumes that the messages array is in descending order
+  /// This function is used to find the id of the first inbox item
+  int? _firstInboxItemId(int taskId) {
+    return state.items.lastOrNull?.id;
   }
 }
 
