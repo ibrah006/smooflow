@@ -115,6 +115,8 @@ class InboxState {
       unseenCount: unseenCount ?? this.unseenCount,
       totalCount: totalCount ?? this.totalCount,
       hasMore: hasMore ?? this.hasMore,
+      lastInboxMessageId: lastInboxMessageId ?? this.lastInboxMessageId,
+      firstInboxMessageId: firstInboxMessageId ?? this.firstInboxMessageId,
     );
   }
 
