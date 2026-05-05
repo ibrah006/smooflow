@@ -88,7 +88,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
   /// Fetch inbox items (activities + recent messages merged)
   /// returns the number newly fetched inbox items/ activities
-  Future<int> fetchRecentInbox({bool refresh = false}) async {
+  Future<int> getRecent({bool refresh = false}) async {
     if (state.isLoading) return 0;
 
     state = state.copyWith(isLoading: true, error: null);

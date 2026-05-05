@@ -175,7 +175,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
       final maxScrollExtent = _scroll.position.maxScrollExtent;
       if (maxScrollExtent == 0) {
         final newCount =
-            await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
+            await ref.read(inboxNotifierProvider.notifier).getRecent();
         if (newCount > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _isLoadingInbox = true);
@@ -191,7 +191,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
   Future<void> _checkForNewItems() async {
     if (_isCheckingNew) return;
     setState(() => _isCheckingNew = true);
-    await ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
+    await ref.read(inboxNotifierProvider.notifier).getRecent();
     if (mounted) setState(() => _isCheckingNew = false);
   }
 
@@ -216,7 +216,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       final s = ref.read(inboxNotifierProvider);
       if (!s.isLoading && s.hasMore) {
-        ref.read(inboxNotifierProvider.notifier).fetchRecentInbox();
+        ref.read(inboxNotifierProvider.notifier).getRecent();
       }
     }
   }
