@@ -67,8 +67,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
         return recent;
       }
     } else {
-      state.messages.lastWhere((m) => m.id == task.firstMessageId);
-
+      // the required inbox items are in memory for now
       return 0;
     }
 
