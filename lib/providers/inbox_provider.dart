@@ -24,7 +24,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
     bool gotRecentMessages = false;
 
-    try {
+    if (state.items.firstOrNull?.id == state.lastInboxMessageId) {
       state.items.firstWhere((i) => i.id == state.lastInboxMessageId);
 
       // the required messages are in memory for now
@@ -230,13 +230,13 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
   /// Assumes that the inbox items array is in descending order
   /// This function is used to find the id of the last inbox item
-  int? _lastInboxItemId() {
+  int? get _lastInboxItemId {
     return state.items.firstOrNull?.id;
   }
 
   /// Assumes that the messages array is in descending order
   /// This function is used to find the id of the first inbox item
-  int? _firstInboxItemId(int taskId) {
+  int? get _firstInboxItemId {
     return state.items.lastOrNull?.id;
   }
 }
