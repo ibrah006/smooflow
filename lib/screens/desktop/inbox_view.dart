@@ -26,6 +26,7 @@ import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:visibility_detector/visibility_detector.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -253,7 +254,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
   }
 
   Future<void> getInboxAfter(InboxItem inboxItem) async {
-    if (_isLoadingMessagesAfter) return;
+    if (_isLoadingInboxAfter) return;
 
     final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
 
@@ -261,7 +262,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
       return;
     }
 
-    setState(() => _isLoadingMessagesAfter = true);
+    setState(() => _isLoadingInboxAfter = true);
 
     try {
       await ref
@@ -269,13 +270,13 @@ class _InboxViewState extends ConsumerState<InboxView> {
           .getInboxAfter(afterInboxId: inboxItem.id);
     } finally {
       if (mounted) {
-        setState(() => _isLoadingMessagesAfter = false);
+        setState(() => _isLoadingInboxAfter = false);
       }
     }
   }
 
   Future<void> getInboxBefore(InboxItem inboxItem) async {
-    if (_isLoadingMessagesBefore) return;
+    if (_isLoadingInboxBefore) return;
 
     final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
 
@@ -283,7 +284,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
       return;
     }
 
-    setState(() => _isLoadingMessagesBefore = true);
+    setState(() => _isLoadingInboxBefore = true);
 
     try {
       await ref
@@ -291,7 +292,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
           .getInboxBefore(beforeInboxId: inboxItem.id);
     } finally {
       if (mounted) {
-        setState(() => _isLoadingMessagesBefore = false);
+        setState(() => _isLoadingInboxBefore = false);
       }
     }
   }
@@ -343,19 +344,38 @@ class _InboxViewState extends ConsumerState<InboxView> {
                               }
 
                               final item = inboxState.items[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: _InboxItemRow(
-                                  item: item,
-                                  isSelected: _selectedItem?.id == item.id,
-                                  onTap: () => _onItemTap(item),
-                                  onMarkRead: () {
-                                    if (!item.isSeen) {
-                                      ref
-                                          .read(inboxNotifierProvider.notifier)
-                                          .markActivitySeen(item.activity!.id);
+                              return VisibilityDetector(
+                                key: Key("ITEM-${item.id}"),
+                                onVisibilityChanged: (info) {
+                                  if (info.visibleFraction > 0) {
+                                    if (index == 0) {
+                                      // Last message - load newer
+                                      getInboxAfter(item);
                                     }
-                                  },
+                                    if (index == widget.messages.length - 1) {
+                                      // First message - load older
+                                      getInboxBefore(item);
+                                    }
+                                  }
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: _InboxItemRow(
+                                    item: item,
+                                    isSelected: _selectedItem?.id == item.id,
+                                    onTap: () => _onItemTap(item),
+                                    onMarkRead: () {
+                                      if (!item.isSeen) {
+                                        ref
+                                            .read(
+                                              inboxNotifierProvider.notifier,
+                                            )
+                                            .markActivitySeen(
+                                              item.activity!.id,
+                                            );
+                                      }
+                                    },
+                                  ),
                                 ),
                               );
                             },
