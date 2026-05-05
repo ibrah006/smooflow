@@ -252,6 +252,50 @@ class _InboxViewState extends ConsumerState<InboxView> {
     );
   }
 
+  Future<void> getInboxAfter(InboxItem inboxItem) async {
+    if (_isLoadingMessagesAfter) return;
+
+    final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
+
+    if (task.lastMessageId == null || inboxItem.id >= task.lastMessageId!) {
+      return;
+    }
+
+    setState(() => _isLoadingMessagesAfter = true);
+
+    try {
+      await ref
+          .read(inboxNotifierProvider.notifier)
+          .getInboxAfter(afterInboxId: inboxItem.id);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMessagesAfter = false);
+      }
+    }
+  }
+
+  Future<void> getInboxBefore(InboxItem inboxItem) async {
+    if (_isLoadingMessagesBefore) return;
+
+    final task = ref.read(taskByIdProviderSimple(inboxItem.taskId))!;
+
+    if (task.firstMessageId == null || inboxItem.id <= task.firstMessageId!) {
+      return;
+    }
+
+    setState(() => _isLoadingMessagesBefore = true);
+
+    try {
+      await ref
+          .read(inboxNotifierProvider.notifier)
+          .getInboxBefore(beforeInboxId: inboxItem.id);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMessagesBefore = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final inboxState = ref.watch(inboxNotifierProvider);
