@@ -56,6 +56,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
   }
 
   /// GET
+  /// Fetch the recent messages BEFORE and after
   /// This function doesn't return result,
   /// rely on results from ref.watch/read(messagesNotifierProvider)
   /// ONLY RETURNS length of NEW messages fetched from server
