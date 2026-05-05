@@ -15,6 +15,9 @@ class InboxState {
 
   int? activeInboxId;
 
+  final String? lastInboxMessageId;
+  final String? firstInboxMessageId;
+
   InboxState({
     this.items = const [],
     this.isLoading = false,
@@ -23,6 +26,8 @@ class InboxState {
     this.totalCount = 0,
     this.hasMore = true,
     this.activeInboxId,
+    this.lastInboxMessageId,
+    this.firstInboxMessageId,
   });
 
   InboxState markAsSeen(int activityId) {
@@ -62,6 +67,8 @@ class InboxState {
       totalCount: this.totalCount,
       hasMore: this.hasMore,
       activeInboxId: this.activeInboxId,
+      lastInboxMessageId: this.lastInboxMessageId,
+      firstInboxMessageId: this.firstInboxMessageId,
     );
   }
 
@@ -74,6 +81,8 @@ class InboxState {
     bool? hasMore,
     bool isCreateItem = false,
     NewMessageState newItemState = NewMessageState.messagesAfter,
+    String? lastInboxMessageId,
+    String? firstInboxMessageId,
   }) {
     if (isCreateItem && newItems?.length != 1) {
       throw "To create an inbox item, exactly 1 item is required, found: ${newItems?.length ?? 0}";

@@ -11,6 +11,89 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
   InboxNotifier(this._repo, this._ref) : super(InboxState());
 
+  /// GET
+  /// Fetch the recent messages BEFORE and after
+  /// This function doesn't return result,
+  /// rely on results from ref.watch/read(messagesNotifierProvider)
+  /// ONLY RETURNS length of NEW messages fetched from server
+  Future<int> getMessagesByTask(WidgetRef ref) async {
+    if (task.lastMessageId == null) {
+      // No messages for this task, nothing to fetch
+      return 0;
+    }
+
+    bool gotRecentMessages = false;
+
+    try {
+      state.items.firstWhere((m) => m.id == task.lastMessageId);
+
+      // the required messages are in memory for now
+      return 0;
+    } catch (e) {
+      final lastMessageIdForTaskInMemory = _lastMessageIdForTask(task.id);
+
+      if (lastMessageIdForTaskInMemory != null &&
+          task.lastMessageId != lastMessageIdForTaskInMemory) {
+        print(
+          "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
+        );
+
+        // Last message is not in memory, fetch messages after the local last message id
+        final messagesAfter = await getMessagesAfter(
+          afterMessageId: lastMessageIdForTaskInMemory,
+          taskId: task.id,
+        );
+
+        return messagesAfter.length;
+      } else if (task.lastMessageId != null) {
+        gotRecentMessages = true;
+        print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
+        // No messages for this task in memory, fetch recent messages for the task
+
+        final recent = await getRecent(taskId: task.id, limit: 20);
+
+        return recent.length;
+      }
+    }
+
+    // Older messages for task
+    try {
+      state.messages.lastWhere((m) => m.id == task.firstMessageId);
+
+      return 0;
+    } catch (e) {
+      final firstMessageIdForTaskInMemory = _firstMessageIdForTask(task.id);
+
+      print(
+        "[MESSAGE_NOTIFIER] first message in mem: ${firstMessageIdForTaskInMemory} for task ${task.id}, task.firstMessageId: ${task.firstMessageId}",
+      );
+
+      if (firstMessageIdForTaskInMemory != null &&
+          task.firstMessageId != firstMessageIdForTaskInMemory) {
+        print(
+          "[MESSAGE_NOTIFIER] task ${task.id} first msg id: ${task.firstMessageId}",
+        );
+
+        // Last message is not in memory, fetch messages before the local last message id
+        final messagesBefore = await getMessagesBefore(
+          beforeMessageId: firstMessageIdForTaskInMemory,
+          taskId: task.id,
+        );
+
+        return messagesBefore.length;
+      } else if (task.firstMessageId != null && !gotRecentMessages) {
+        print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
+
+        // No messages for this task in memory, fetch recent messages for the task
+        final recent = await getRecent(taskId: task.id, limit: 20);
+
+        return recent.length;
+      }
+    }
+
+    return 0;
+  }
+
   /// Fetch inbox items (activities + recent messages merged)
   /// returns the number newly fetched inbox items/ activities
   Future<int> fetchRecentInbox({bool refresh = false}) async {
