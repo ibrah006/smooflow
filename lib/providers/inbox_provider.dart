@@ -25,34 +25,27 @@ class InboxNotifier extends StateNotifier<InboxState> {
     bool gotRecentMessages = false;
 
     if (state.items.firstOrNull?.id == state.lastInboxMessageId) {
-      state.items.firstWhere((i) => i.id == state.lastInboxMessageId);
-
-      // the required messages are in memory for now
-      return 0;
-    } catch (e) {
-      final lastMessageIdForTaskInMemory = _lastMessageIdForTask(task.id);
+      final lastMessageIdForTaskInMemory = _lastInboxItemId;
 
       if (lastMessageIdForTaskInMemory != null &&
           state.lastInboxMessageId != lastMessageIdForTaskInMemory) {
-        print(
-          "[MESSAGE_NOTIFIER] task ${task.id} last msg id: ${task.lastMessageId}",
-        );
-
-        // Last message is not in memory, fetch messages after the local last message id
+        // Last inbox item is not in memory, fetch messages after the local last inbox item id
         final messagesAfter = await getInboxAfter(
           afterInboxId: lastMessageIdForTaskInMemory,
         );
 
         return messagesAfter.length;
-      } else if (task.lastMessageId != null) {
+      } else if (state.lastInboxMessageId != null) {
         gotRecentMessages = true;
-        print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
-        // No messages for this task in memory, fetch recent messages for the task
+        // No inbox items in memory, fetch recent messages for the task
 
         final recent = await getRecent(taskId: task.id, limit: 20);
 
         return recent.length;
       }
+    } else {
+      // the required messages are in memory for now
+      return 0;
     }
 
     // Older messages for task
