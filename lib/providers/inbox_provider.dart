@@ -39,7 +39,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
         gotRecentMessages = true;
         // No inbox items in memory, fetch recent messages for the task
 
-        final recent = await getRecent(taskId: task.id, limit: 20);
+        final recent = await getRecent();
 
         return recent.length;
       }
@@ -77,7 +77,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
         print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
 
         // No messages for this task in memory, fetch recent messages for the task
-        final recent = await getRecent(taskId: task.id, limit: 20);
+        final recent = await getRecent();
 
         return recent.length;
       }
