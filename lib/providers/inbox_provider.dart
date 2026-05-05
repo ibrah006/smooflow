@@ -52,16 +52,8 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
     // Older messages for task
     if (firstMessageIdForTaskInMemory == state.firstInboxMessageId) {
-      print(
-        "[MESSAGE_NOTIFIER] first message in mem: ${firstMessageIdForTaskInMemory} for task ${task.id}, task.firstMessageId: ${task.firstMessageId}",
-      );
-
       if (firstMessageIdForTaskInMemory != null &&
-          task.firstMessageId != firstMessageIdForTaskInMemory) {
-        print(
-          "[MESSAGE_NOTIFIER] task ${task.id} first msg id: ${task.firstMessageId}",
-        );
-
+          state.firstInboxMessageId != firstMessageIdForTaskInMemory) {
         // Last message is not in memory, fetch messages before the local last message id
         final messagesBefore = await getMessagesBefore(
           beforeMessageId: firstMessageIdForTaskInMemory,
