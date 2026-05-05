@@ -175,7 +175,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
       final maxScrollExtent = _scroll.position.maxScrollExtent;
       if (maxScrollExtent == 0) {
         final newCount =
-            await ref.read(inboxNotifierProvider.notifier).getRecent();
+            await ref.read(inboxNotifierProvider.notifier).getInboxItems();
         if (newCount > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _isLoadingInbox = true);
