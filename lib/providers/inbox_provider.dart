@@ -37,14 +37,14 @@ class InboxNotifier extends StateNotifier<InboxState> {
         return messagesAfter.length;
       } else if (state.lastInboxMessageId != null) {
         gotRecentMessages = true;
-        // No inbox items in memory, fetch recent messages for the task
+        // No inbox items in memory, fetch recent inbox items
 
         final recent = await getRecent();
 
         return recent;
       }
     } else {
-      // the required messages are in memory for now
+      // the required inbox items are in memory for now
       return 0;
     }
 
