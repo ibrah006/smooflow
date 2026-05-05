@@ -24,14 +24,14 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
     bool gotRecentMessages = false;
 
-    final lastMessageIdForTaskInMemory = _lastInboxItemId;
+    final lastInboxItemIdInMemory = _lastInboxItemId;
 
-    if (lastMessageIdForTaskInMemory == state.lastInboxMessageId) {
-      if (lastMessageIdForTaskInMemory != null &&
-          state.lastInboxMessageId != lastMessageIdForTaskInMemory) {
+    if (lastInboxItemIdInMemory == state.lastInboxMessageId) {
+      if (lastInboxItemIdInMemory != null &&
+          state.lastInboxMessageId != lastInboxItemIdInMemory) {
         // Last inbox item is not in memory, fetch messages after the local last inbox item id
         final messagesAfter = await getInboxAfter(
-          afterInboxId: lastMessageIdForTaskInMemory,
+          afterInboxId: lastInboxItemIdInMemory,
         );
 
         return messagesAfter.length;
