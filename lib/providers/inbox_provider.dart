@@ -60,9 +60,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
         );
 
         return messagesBefore.length;
-      } else if (task.firstMessageId != null && !gotRecentMessages) {
-        print("[MESSAGE_NOTIFIER] getting recent messages for task ${task.id}");
-
+      } else if (state.firstInboxMessageId != null && !gotRecentMessages) {
         // No messages for this task in memory, fetch recent messages for the task
         final recent = await getRecent();
 
