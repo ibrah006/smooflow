@@ -170,6 +170,8 @@ class _InboxViewState extends ConsumerState<InboxView> {
   bool _isLoadingInbox = true;
   bool _isCheckingNew = false;
 
+  bool _isLoadingInboxAfter = false, _isLoadingInboxBefore = false;
+
   Future<void> initializeInbox() async {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
