@@ -352,7 +352,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
                                       // Last message - load newer
                                       getInboxAfter(item);
                                     }
-                                    if (index == widget.messages.length - 1) {
+                                    if (index == inboxState.items.length - 1) {
                                       // First message - load older
                                       getInboxBefore(item);
                                     }
