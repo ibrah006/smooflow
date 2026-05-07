@@ -20,25 +20,35 @@ class InboxNotifier extends StateNotifier<InboxState> {
     print(
       "[inbox provider] get inbox items, state.lastInboxMessageId: ${state.lastInboxMessageId}",
     );
-    if (state.lastInboxMessageId == null) {
-      // No inbox items, nothing to fetch
-      return 0;
-    }
+    // if (state.lastInboxMessageId == null) {
+    //   // No inbox items, nothing to fetch
+    //   return 0;
+    // }
 
     bool gotRecentMessages = false;
 
     final lastInboxItemIdInMemory = _lastInboxItemId;
 
+    print(
+      "lastInboxItemIdInMemory == state.lastInboxMessageId: ${lastInboxItemIdInMemory == state.lastInboxMessageId}",
+    );
+
     if (lastInboxItemIdInMemory == state.lastInboxMessageId) {
+      print(
+        "state.lastInboxMessageId != null: ${state.lastInboxMessageId != null}",
+      );
       if (lastInboxItemIdInMemory != null &&
           state.lastInboxMessageId != lastInboxItemIdInMemory) {
+        print("[inbox provider] we're are over here");
         // Last inbox item is not in memory, fetch messages after the local last inbox item id
         final messagesAfter = await getInboxAfter(
           afterInboxId: lastInboxItemIdInMemory,
         );
 
         return messagesAfter.length;
-      } else if (state.lastInboxMessageId != null) {
+      } else {
+        // DEBUG:
+        // removed for debug purpose: else if (state.lastInboxMessageId != null)
         gotRecentMessages = true;
         // No inbox items in memory, fetch recent inbox items
 
@@ -98,20 +108,22 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final activitiesResponse = inboxResponse['result'];
 
       print(
-        "[inbox_provider, get recent inbox] ['result']: ${activitiesResponse}, ['activities']: ${inboxResponse['activities']}",
+        "[inbox_provider, get recent inbox] ['result']: ${activitiesResponse.length}, ['activities']: ${inboxResponse['activities']}",
       );
 
       final activities =
-          (activitiesResponse['activities'] as List)
+          (activitiesResponse as List)
               .map((json) => TaskActivity.fromJson(json))
               .toList();
+
+      print("[inbox_provider] activities length: ${activities.length}");
 
       // Merge activities and messages, sort by timestamp
       final inboxItems =
           activities.map((a) => InboxItem.fromActivity(a)).toList();
 
-      final lastInboxId = activitiesResponse["lastInboxId"];
-      final firstInboxId = activitiesResponse["firstInboxId"];
+      final lastInboxId = inboxResponse["lastInboxId"];
+      final firstInboxId = inboxResponse["firstInboxId"];
 
       print(
         "[inbox_provider, get recent inbox] activities response, lastInboxId: ${lastInboxId}, firstInboxId: ${firstInboxId}, activities length: ${activities.length}",
@@ -120,8 +132,8 @@ class InboxNotifier extends StateNotifier<InboxState> {
       state = state.copyWith(
         newItems: inboxItems,
         isLoading: false,
-        unseenCount: activitiesResponse['unseenCount'] ?? 0,
-        totalCount: activitiesResponse['totalCount'] ?? 0,
+        unseenCount: inboxResponse['unseenCount'] ?? 0,
+        totalCount: inboxResponse['totalCount'] ?? 0,
         hasMore: activities.length >= 30,
         lastInboxMessageId: lastInboxId,
         firstInboxMessageId: firstInboxId,
@@ -131,6 +143,8 @@ class InboxNotifier extends StateNotifier<InboxState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       print("[inbox_provider, get recent inbox] error: $e");
+
+      rethrow;
 
       return 0;
     }
