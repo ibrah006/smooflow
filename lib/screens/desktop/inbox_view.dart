@@ -186,10 +186,12 @@ class _InboxViewState extends ConsumerState<InboxView> {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
       final maxScrollExtent = _scroll.position.maxScrollExtent;
-
+      print("[inbox view] max scroll extent: $maxScrollExtent");
       if (maxScrollExtent == 0) {
         final newCount =
             await ref.read(inboxNotifierProvider.notifier).getInboxItems();
+
+        print("[inbox view] initial fetch got $newCount items");
         if (newCount > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _isLoadingInbox = true);
