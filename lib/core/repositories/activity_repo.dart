@@ -14,7 +14,7 @@ class ActivityRepo {
       throw Exception('Failed to load inbox: ${response.body}');
     }
 
-    return jsonDecode(response.body)["activities"];
+    return jsonDecode(response.body);
   }
 
   /// POST /activities/mark-seen — Mark inbox message/activity as seen
@@ -45,7 +45,7 @@ class ActivityRepo {
       throw Exception('Failed to load inbox before: ${response.body}');
     }
 
-    return jsonDecode(response.body)["activities"];
+    return jsonDecode(response.body);
   }
 
   /// GET /activities/inbox — fetch inbox activities after the given id
@@ -62,6 +62,6 @@ class ActivityRepo {
       throw Exception('Failed to load inbox after: ${response.body}');
     }
 
-    return jsonDecode(response.body)["activities"];
+    return jsonDecode(response.body);
   }
 }

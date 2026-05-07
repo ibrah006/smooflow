@@ -87,10 +87,12 @@ class InboxNotifier extends StateNotifier<InboxState> {
       // TODO: only fetch if needed (i.e., if the last inbox activity doesn't exist in state)
 
       // Fetch activities
-      final activitiesResponse = await _repo.fetchRecentInbox(
+      final inboxResponse = await _repo.fetchRecentInbox(
         limit: 30,
         offset: offset,
       );
+
+      final activitiesResponse = inboxResponse['result'];
 
       final activities =
           (activitiesResponse['activities'] as List)
