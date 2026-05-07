@@ -15,8 +15,8 @@ class InboxState {
 
   int? activeInboxId;
 
-  final String? lastInboxMessageId;
-  final String? firstInboxMessageId;
+  final int? lastInboxMessageId;
+  final int? firstInboxMessageId;
 
   InboxState({
     this.items = const [],
@@ -81,8 +81,8 @@ class InboxState {
     bool? hasMore,
     bool isCreateItem = false,
     NewMessageState newItemState = NewMessageState.messagesAfter,
-    String? lastInboxMessageId,
-    String? firstInboxMessageId,
+    int? lastInboxMessageId,
+    int? firstInboxMessageId,
   }) {
     if (isCreateItem && newItems?.length != 1) {
       throw "To create an inbox item, exactly 1 item is required, found: ${newItems?.length ?? 0}";
