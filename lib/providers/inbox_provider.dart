@@ -97,6 +97,10 @@ class InboxNotifier extends StateNotifier<InboxState> {
 
       final activitiesResponse = inboxResponse['result'];
 
+      print(
+        "[inbox_provider, get recent inbox] ['result']: ${activitiesResponse}, ['activities']: ${inboxResponse['activities']}",
+      );
+
       final activities =
           (activitiesResponse['activities'] as List)
               .map((json) => TaskActivity.fromJson(json))
