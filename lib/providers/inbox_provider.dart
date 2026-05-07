@@ -109,6 +109,10 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final lastInboxId = activitiesResponse["lastInboxId"];
       final firstInboxId = activitiesResponse["firstInboxId"];
 
+      print(
+        "[inbox_provider, get recent inbox] activities response, lastInboxId: ${lastInboxId}, firstInboxId: ${firstInboxId}, activities length: ${activities.length}",
+      );
+
       state = state.copyWith(
         newItems: inboxItems,
         isLoading: false,
