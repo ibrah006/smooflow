@@ -144,8 +144,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
       state = state.copyWith(isLoading: false, error: e.toString());
       print("[inbox_provider, get recent inbox] error: $e");
 
-      rethrow;
-
       return 0;
     }
   }
