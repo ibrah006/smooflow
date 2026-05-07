@@ -182,8 +182,6 @@ class InboxNotifier extends StateNotifier<InboxState> {
         limit: limit,
       );
 
-      print("newer inbox: ${newerActivities.length}");
-
       final newer =
           newerActivities
               .map((activity) => InboxItem.fromActivity(activity))
