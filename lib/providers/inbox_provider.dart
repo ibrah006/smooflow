@@ -103,12 +103,17 @@ class InboxNotifier extends StateNotifier<InboxState> {
       final inboxItems =
           activities.map((a) => InboxItem.fromActivity(a)).toList();
 
+      final lastInboxId = activitiesResponse["lastInboxId"];
+      final firstInboxId = activitiesResponse["firstInboxId"];
+
       state = state.copyWith(
         newItems: inboxItems,
         isLoading: false,
         unseenCount: activitiesResponse['unseenCount'] ?? 0,
         totalCount: activitiesResponse['totalCount'] ?? 0,
         hasMore: activities.length >= 30,
+        lastInboxMessageId: lastInboxId,
+        firstInboxMessageId: firstInboxId,
       );
 
       return inboxItems.length;
@@ -155,11 +160,16 @@ class InboxNotifier extends StateNotifier<InboxState> {
               )
               .toList();
 
+      final lastInboxId = olderActivities["lastInboxId"];
+      final firstInboxId = olderActivities["firstInboxId"];
+
       // Step 4: Update state
       state = state.copyWith(
         newItems: older,
         isLoading: false,
         newItemState: NewMessageState.messagesBefore,
+        lastInboxMessageId: lastInboxId,
+        firstInboxMessageId: firstInboxId,
       );
 
       return older;
@@ -195,8 +205,16 @@ class InboxNotifier extends StateNotifier<InboxState> {
               )
               .toList();
 
+      final lastInboxId = newerActivities["lastInboxId"];
+      final firstInboxId = newerActivities["firstInboxId"];
+
       // Step 4: Update state
-      state = state.copyWith(newItems: newer, isLoading: false);
+      state = state.copyWith(
+        newItems: newer,
+        isLoading: false,
+        lastInboxMessageId: lastInboxId,
+        firstInboxMessageId: firstInboxId,
+      );
 
       return newer;
     } catch (e) {
