@@ -33,7 +33,7 @@ class ActivityRepo {
 
   /// GET /activities/inbox — fetch inbox activities before the given id
   /// returns the inbox items that came from server
-  Future<List<TaskActivity>> getInboxBefore({
+  Future<Map> getInboxBefore({
     required int beforeInboxId,
     int? offset,
     int? limit = 30,
@@ -50,7 +50,7 @@ class ActivityRepo {
 
   /// GET /activities/inbox — fetch inbox activities after the given id
   /// returns the inbox items that came from server
-  Future<List<TaskActivity>> getInboxAfter({
+  Future<Map> getInboxAfter({
     required int afterInboxId,
     int? offset,
     int? limit = 30,

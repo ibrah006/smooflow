@@ -148,8 +148,11 @@ class InboxNotifier extends StateNotifier<InboxState> {
       print("older inbox: ${olderActivities.length}");
 
       final older =
-          olderActivities
-              .map((activity) => InboxItem.fromActivity(activity))
+          (olderActivities["result"] as List<Map<String, dynamic>>)
+              .map(
+                (activity) =>
+                    InboxItem.fromActivity(TaskActivity.fromJson(activity)),
+              )
               .toList();
 
       // Step 4: Update state
@@ -185,8 +188,11 @@ class InboxNotifier extends StateNotifier<InboxState> {
       );
 
       final newer =
-          newerActivities
-              .map((activity) => InboxItem.fromActivity(activity))
+          (newerActivities["result"] as List<Map<String, dynamic>>)
+              .map(
+                (activity) =>
+                    InboxItem.fromActivity(TaskActivity.fromJson(activity)),
+              )
               .toList();
 
       // Step 4: Update state
