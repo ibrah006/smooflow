@@ -186,6 +186,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;
       final maxScrollExtent = _scroll.position.maxScrollExtent;
+
       if (maxScrollExtent == 0) {
         final newCount =
             await ref.read(inboxNotifierProvider.notifier).getInboxItems();
@@ -401,9 +402,7 @@ class _InboxViewState extends ConsumerState<InboxView> {
                 // ── List ────────────────────────────────────────────────
                 Expanded(
                   child:
-                      _isLoadingInbox && items.isEmpty
-                          ? _SkeletonList()
-                          : items.isEmpty
+                      items.isEmpty && !_isLoadingInbox
                           ? const _EmptyState()
                           : ListView.builder(
                             controller: _scroll,
