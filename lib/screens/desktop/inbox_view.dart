@@ -1006,45 +1006,39 @@ class _InboxItemRowState extends State<_InboxItemRow>
         return _buildStageTransition(activity);
 
       // ── Scenario B: stage + message ──────────────────────────────────────
+      // When the commenter differs from the stage actor, surface their
+      // identity in the comment card.  When same person, the header row
+      // already identifies them so we keep the card compact.
       case _Scenario.stageAndMessage:
+        final sameActor = activity.isSameActor;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildStageTransition(activity),
-            const SizedBox(height: 8),
-            // Inline section label separating the two blocks
-            Row(
-              children: [
-                Container(
-                  width: 3,
-                  height: 3,
-                  margin: const EdgeInsets.only(right: 6),
-                  decoration: const BoxDecoration(
-                    color: _T.slate300,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const Text(
-                  'COMMENT',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: _T.slate400,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(child: Container(height: 1, color: _T.slate100)),
-              ],
+            const SizedBox(height: 10),
+            _buildCommentPreview(
+              text: activity.message!,
+              authorName:
+                  sameActor
+                      ? null
+                      : activity.authorDisplayName(
+                        LoginService.currentUser!.id,
+                      ),
+              authorInitials: sameActor ? null : activity.authorInitials,
+              authorColor: sameActor ? null : _T.purple,
             ),
-            const SizedBox(height: 6),
-            _buildMessageBubble(activity.message!),
           ],
         );
 
       // ── Scenario C: message only ─────────────────────────────────────────
       case _Scenario.messageOnly:
-        return _buildMessageBubble(activity.message!);
+        final isSelf = activity.actorId == LoginService.currentUser!.id;
+        return _buildCommentPreview(
+          text: activity.message!,
+          authorName: isSelf ? 'You' : activity.actorName,
+          authorInitials: activity.actorInitials,
+          authorColor: activity.actorColor ?? _T.ink3,
+        );
     }
   }
 
@@ -1159,25 +1153,115 @@ class _InboxItemRowState extends State<_InboxItemRow>
     }
   }
 
-  // Message bubble — used in both Scenario B and C
-  Widget _buildMessageBubble(String text) {
+  // ── Comment preview card ──────────────────────────────────────────────────
+  // A structured attribution card used in Scenario B and C.
+  //
+  // Layout:
+  //   ┌─────────────────────────────────────────────┐
+  //   │ [AV] Author Name  ·  commented              │  ← identity row
+  //   ├─────────────────────────────────────────────┤  ← hairline
+  //   │  "Message text truncated to two lines…"     │  ← body
+  //   └─────────────────────────────────────────────┘
+  //
+  // When authorName is null (Scenario B, same actor) the identity row is
+  // omitted and only the body is shown — the header already names the person.
+  Widget _buildCommentPreview({
+    required String text,
+    String? authorName,
+    String? authorInitials,
+    Color? authorColor,
+  }) {
+    final showAuthor = authorName != null && authorName.isNotEmpty;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: _T.purple50.withOpacity(0.5),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(2),
-          topRight: Radius.circular(7),
-          bottomLeft: Radius.circular(7),
-          bottomRight: Radius.circular(7),
-        ),
-        border: Border.all(color: _T.purple.withOpacity(0.15)),
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12, color: _T.ink3, height: 1.5),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Identity row ─────────────────────────────────────────────
+          if (showAuthor) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
+              child: Row(
+                children: [
+                  // Mini avatar
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: (authorColor ?? _T.purple).withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        (authorInitials ?? '?').substring(0, 1),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: authorColor ?? _T.purple,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  // Name
+                  Text(
+                    authorName!,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink2,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  // Separator dot
+                  Container(
+                    width: 3,
+                    height: 3,
+                    decoration: const BoxDecoration(
+                      color: _T.slate300,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  // Action label
+                  const Text(
+                    'commented',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Hairline divider between identity and body
+            Container(height: 1, color: _T.slate100),
+          ],
+
+          // ── Body ─────────────────────────────────────────────────────
+          Padding(
+            padding: EdgeInsets.fromLTRB(10, showAuthor ? 8 : 9, 10, 9),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                color: _T.ink3,
+                height: 1.55,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
