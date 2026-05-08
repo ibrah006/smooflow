@@ -1018,12 +1018,9 @@ class _InboxItemRowState extends State<_InboxItemRow>
             const SizedBox(height: 10),
             _buildCommentPreview(
               text: activity.message!,
-              authorName:
-                  sameActor
-                      ? null
-                      : activity.authorDisplayName(
-                        LoginService.currentUser!.id,
-                      ),
+              authorName: activity.authorDisplayName(
+                LoginService.currentUser!.id,
+              ),
               authorInitials: sameActor ? null : activity.authorInitials,
               authorColor: sameActor ? null : _T.purple,
             ),
