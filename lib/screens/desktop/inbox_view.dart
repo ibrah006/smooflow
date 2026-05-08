@@ -1185,67 +1185,65 @@ class _InboxItemRowState extends State<_InboxItemRow>
         mainAxisSize: MainAxisSize.min,
         children: [
           // ── Identity row ─────────────────────────────────────────────
-          if (showAuthor) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
-              child: Row(
-                children: [
-                  // Mini avatar
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: (authorColor ?? _T.purple).withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        (authorInitials ?? '?').substring(0, 1),
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: authorColor ?? _T.purple,
-                          height: 1,
-                        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
+            child: Row(
+              children: [
+                // Mini avatar
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: (authorColor ?? _T.purple).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      (authorInitials ?? '?').substring(0, 1),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: authorColor ?? _T.purple,
+                        height: 1,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 7),
-                  // Name
-                  Text(
-                    authorName!,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: _T.ink2,
-                    ),
+                ),
+                const SizedBox(width: 7),
+                // Name
+                Text(
+                  authorName!,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink2,
                   ),
-                  const SizedBox(width: 5),
-                  // Separator dot
-                  Container(
-                    width: 3,
-                    height: 3,
-                    decoration: const BoxDecoration(
-                      color: _T.slate300,
-                      shape: BoxShape.circle,
-                    ),
+                ),
+                const SizedBox(width: 5),
+                // Separator dot
+                Container(
+                  width: 3,
+                  height: 3,
+                  decoration: const BoxDecoration(
+                    color: _T.slate300,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 5),
-                  // Action label
-                  const Text(
-                    'commented',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: _T.slate400,
-                    ),
+                ),
+                const SizedBox(width: 5),
+                // Action label
+                const Text(
+                  'commented',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: _T.slate400,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            // Hairline divider between identity and body
-            Container(height: 1, color: _T.slate100),
-          ],
+          ),
+          // Hairline divider between identity and body
+          Container(height: 1, color: _T.slate100),
 
           // ── Body ─────────────────────────────────────────────────────
           Padding(
