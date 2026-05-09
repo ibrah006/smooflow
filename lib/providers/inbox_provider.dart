@@ -46,9 +46,7 @@ class InboxNotifier extends StateNotifier<InboxState> {
         );
 
         return messagesAfter.length;
-      } else {
-        // DEBUG:
-        // removed for debug purpose: else if (state.lastInboxMessageId != null)
+      } else if (state.lastInboxMessageId != null) {
         gotRecentMessages = true;
         // No inbox items in memory, fetch recent inbox items
 
