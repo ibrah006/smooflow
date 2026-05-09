@@ -221,10 +221,11 @@ class InboxNotifier extends StateNotifier<InboxState> {
       );
 
       final newer =
-          (newerActivities["result"] as List<Map<String, dynamic>>)
+          (newerActivities["result"] as List)
               .map(
-                (activity) =>
-                    InboxItem.fromActivity(TaskActivity.fromJson(activity)),
+                (activity) => InboxItem.fromActivity(
+                  TaskActivity.fromJson(activity as Map<String, dynamic>),
+                ),
               )
               .toList();
 
