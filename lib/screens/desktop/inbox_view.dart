@@ -1063,7 +1063,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
         _MiniStagePill(
           label: fromHelper.label,
           color: isForward ? _T.slate500 : _T.amber,
-          bg: isForward ? _T.slate100 : _T.amber50,
+          bg: isForward ? _T.slate100 : _T.amber50.withValues(alpha: 0.5),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -1077,7 +1077,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
         _MiniStagePill(
           label: toHelper.label,
           color: isForward ? _T.green : _T.slate500,
-          bg: isForward ? _T.green50 : _T.slate50,
+          bg: isForward ? _T.green50 : _T.slate50.withValues(alpha: 0.5),
         ),
       ],
     );
@@ -1756,7 +1756,7 @@ class _MiniStagePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
