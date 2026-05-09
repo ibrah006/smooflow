@@ -1058,11 +1058,12 @@ class _InboxItemRowState extends State<_InboxItemRow>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // FROM — always muted slate (where it came from)
+        // FROM
+        // Lower stage
         _MiniStagePill(
           label: fromHelper.label,
-          color: _T.slate500,
-          bg: _T.slate100,
+          color: isForward ? _T.slate500 : _T.amber,
+          bg: isForward ? _T.slate100 : _T.amber50,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -1072,11 +1073,11 @@ class _InboxItemRowState extends State<_InboxItemRow>
             color: _T.slate300,
           ),
         ),
-        // TO — colored (where it is now)
+        // Higher stage — colored (where it is now)
         _MiniStagePill(
           label: toHelper.label,
-          color: isForward ? _T.green : _T.amber,
-          bg: isForward ? _T.green50 : _T.amber50,
+          color: isForward ? _T.green : _T.slate500,
+          bg: isForward ? _T.green50 : _T.slate50,
         ),
       ],
     );
