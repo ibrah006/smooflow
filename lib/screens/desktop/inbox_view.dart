@@ -1021,7 +1021,7 @@ class _InboxItemRowState extends State<_InboxItemRow>
               authorName: activity.authorDisplayName(
                 LoginService.currentUser!.id,
               ),
-              authorInitials: sameActor ? null : activity.authorInitials,
+              authorInitials: activity.authorInitials,
               authorColor: sameActor ? null : _T.purple,
             ),
           ],
