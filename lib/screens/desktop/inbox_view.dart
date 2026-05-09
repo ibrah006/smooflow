@@ -1445,10 +1445,13 @@ class _QuickActionChipState extends State<_QuickActionChip> {
           duration: const Duration(milliseconds: 100),
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(
-            color: _hovered ? widget.color : widget.bg,
+            color: _hovered ? widget.color.withValues(alpha: 0.1) : widget.bg,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: _hovered ? widget.color : widget.color.withOpacity(0.2),
+              color:
+                  _hovered
+                      ? widget.color.withValues(alpha: 0.75)
+                      : widget.color.withOpacity(0.2),
             ),
           ),
           child: Row(
@@ -1457,7 +1460,7 @@ class _QuickActionChipState extends State<_QuickActionChip> {
               Icon(
                 widget.icon,
                 size: 11,
-                color: _hovered ? Colors.white : widget.color,
+                color: widget.color.withValues(alpha: _hovered ? 1 : 0.8),
               ),
               const SizedBox(width: 5),
               Text(
@@ -1465,7 +1468,7 @@ class _QuickActionChipState extends State<_QuickActionChip> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: _hovered ? Colors.white : widget.color,
+                  color: widget.color.withValues(alpha: _hovered ? 1 : 0.8),
                 ),
               ),
             ],
