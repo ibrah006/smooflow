@@ -809,15 +809,20 @@ class _StageChipState extends State<_StageChip> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KANBAN LANE
+// KANBAN LANE — Option B redesign
 //
-// Redesign highlights:
-//   • No border — replaced by a soft shadow for panel elevation
-//   • 2px colored top accent strip (full width, group color)
-//   • Header: cleaner spacing, count badge uses colored text on neutral bg
-//   • Empty state: ultra-minimal ghost
-//   • Add task: dashed ghost row at the bottom
+// Changes from previous version:
+//   • Removed the 2.5px colored top accent strip entirely
+//   • Lane is a clean white panel, no color on the chrome at all
+//   • Header: small filled circle dot (6px, group color) to the left of the
+//     stage label — the only color signal on the lane
+//   • Count badge remains neutral (slate100 bg) for all lanes, including
+//     clientApproved — keeps the header visually flat and consistent
+//   • Lock icon for clientApproved is retained but uses slate400 instead of
+//     the stage color, so it doesn't compete with the dot
+//   • Shadow and border-radius unchanged
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
   final List<Task> tasks;
@@ -883,9 +888,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
         borderRadius: BorderRadius.circular(_T.rLg),
         child: Column(
           children: [
-            // ── Colored top accent strip ─────────────────────────────────────
-            Container(height: 2.5, color: widget.stageInfo.color),
-
             // ── Lane header ──────────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(14, 11, 14, 10),
@@ -894,16 +896,29 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
               ),
               child: Row(
                 children: [
+                  // Colored status dot — the only color on the lane chrome
+                  Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(right: 7),
+                    decoration: BoxDecoration(
+                      color: widget.stageInfo.color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+
+                  // Stage label (+ optional lock icon for clientApproved)
                   Expanded(
                     child: Row(
                       children: [
                         if (isApproved) ...[
-                          Icon(
+                          const Icon(
                             Icons.lock_outline_rounded,
                             size: 11,
-                            color: widget.stageInfo.color,
+                            color:
+                                _T.slate400, // neutral, dot already signals identity
                           ),
-                          const SizedBox(width: 5),
+                          const SizedBox(width: 4),
                         ],
                         Expanded(
                           child: Text(
@@ -923,26 +938,22 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
 
                   const SizedBox(width: 8),
 
-                  // Task count badge
+                  // Task count badge — always neutral
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          isApproved
-                              ? widget.stageInfo.color.withOpacity(0.10)
-                              : _T.slate100,
+                      color: _T.slate100,
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
                       '${widget.tasks.length}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color:
-                            isApproved ? widget.stageInfo.color : _T.slate500,
+                        color: _T.slate500,
                       ),
                     ),
                   ),
@@ -979,24 +990,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                 ],
               ),
             ),
-
-            // ── Add task ─────────────────────────────────────────────────────
-            // if (widget.showAddTaskBtn)
-            //   widget.isAddingTask == true
-            //       ? Focus(
-            //           focusNode: widget.addTaskFocusNode,
-            //           autofocus: true,
-            //           child: TaskCard.add(
-            //             onCreated:         onCreated,
-            //             onDismiss:         onDismiss,
-            //             projects:          ref.watch(projectNotifierProvider),
-            //             selectedProjectId: widget.selectedProjectId,
-            //           ),
-            //         )
-            //       : Padding(
-            //           padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            //           child: _AddCardButton(onTap: onAddTask),
-            //         ),
           ],
         ),
       ),
