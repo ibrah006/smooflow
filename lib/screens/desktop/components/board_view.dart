@@ -1,14 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// BOARD VIEW — drag-and-drop + refined interactions
+// BOARD VIEW — Modern Corporate Redesign
 //
-// Changes from previous version:
-//   • BoardView is now ConsumerStatefulWidget (needs ref for task API)
-//   • Drag-and-drop: each TaskCard is Draggable; each lane is a DragTarget
-//   • _CardProgressOverlay: subtle 2px progress bar + direction pill on
-//     in-transit cards — shown in the SOURCE lane while the API is in-flight
-//   • Lane hover: shadow deepens slightly; drag-over tints bg + colored border
-//   • Drag feedback: card at scale(1.02) with elevated shadow, no decoration
-//   • All other logic (filter bar, drawers, chips, prefs) is unchanged
+// Design language: Linear / Asana / Notion — refined enterprise.
+// - Filter bar: pill-on-active tabs, no underlines, clean surface
+// - Lanes: shadow-elevated panels, colored top accent strip, no border
+// - Cards rendered by TaskCard (unchanged)
+// - _T color tokens untouched
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
@@ -18,13 +15,12 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/task_card.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS
+// DESIGN TOKENS — unchanged from original
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue = Color(0xFF2563EB);
@@ -32,6 +28,7 @@ class _T {
   static const blue100 = Color(0xFFDBEAFE);
   static const blue50 = Color(0xFFEFF6FF);
   static const teal = Color(0xFF38BDF8);
+
   static const green = Color(0xFF10B981);
   static const green50 = Color(0xFFECFDF5);
   static const amber = Color(0xFFF59E0B);
@@ -40,6 +37,7 @@ class _T {
   static const red50 = Color(0xFFFEE2E2);
   static const purple = Color(0xFF8B5CF6);
   static const purple50 = Color(0xFFF3E8FF);
+
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -50,9 +48,11 @@ class _T {
   static const ink2 = Color(0xFF1E293B);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
+
   static const sidebarW = 220.0;
   static const topbarH = 52.0;
   static const detailW = 400.0;
+
   static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
@@ -100,47 +100,9 @@ const _kGroups = <_StageGroup>[
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DRAG & DROP DATA TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Payload carried by the Draggable between source and target lanes.
-class _DragPayload {
-  final int taskId;
-  final TaskStatus fromStage;
-  const _DragPayload({required this.taskId, required this.fromStage});
-}
-
-enum _DragPhase { loading, completing }
-
-/// Tracks a card that is currently being moved via the API.
-class _InTransitTask {
-  final int taskId;
-  final TaskStatus fromStage;
-  final TaskStatus toStage;
-  final bool isForward;
-  final _DragPhase phase;
-
-  const _InTransitTask({
-    required this.taskId,
-    required this.fromStage,
-    required this.toStage,
-    required this.isForward,
-    required this.phase,
-  });
-
-  _InTransitTask copyWith({_DragPhase? phase}) => _InTransitTask(
-    taskId: taskId,
-    fromStage: fromStage,
-    toStage: toStage,
-    isForward: isForward,
-    phase: phase ?? this.phase,
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // BOARD VIEW
 // ─────────────────────────────────────────────────────────────────────────────
-class BoardView extends ConsumerStatefulWidget {
+class BoardView extends StatefulWidget {
   final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
@@ -163,16 +125,13 @@ class BoardView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<BoardView> createState() => _BoardViewState();
+  State<BoardView> createState() => _BoardViewState();
 }
 
-class _BoardViewState extends ConsumerState<BoardView> {
+class _BoardViewState extends State<BoardView> {
   final Set<TaskStatus> _hidden = {};
   final Set<int> _expandedGroups = {};
   bool _hideEmpty = false;
-
-  // Tracks cards currently being moved via the API
-  final Map<int, _InTransitTask> _inTransit = {};
 
   static const _kHideEmptyKey = 'board_view_hide_empty';
 
@@ -193,56 +152,6 @@ class _BoardViewState extends ConsumerState<BoardView> {
     await prefs.setBool(_kHideEmptyKey, value);
   }
 
-  // ── Drag direction ─────────────────────────────────────────────────────────
-  bool _isForwardMove(TaskStatus from, TaskStatus to) {
-    final fromIdx = kStages.indexWhere((si) => si.stage == from);
-    final toIdx = kStages.indexWhere((si) => si.stage == to);
-    return toIdx > fromIdx;
-  }
-
-  // ── Drop handler ───────────────────────────────────────────────────────────
-  Future<void> _onTaskDropped({
-    required int taskId,
-    required TaskStatus fromStage,
-    required TaskStatus toStage,
-  }) async {
-    if (fromStage == toStage) return;
-    final isForward = _isForwardMove(fromStage, toStage);
-
-    setState(() {
-      _inTransit[taskId] = _InTransitTask(
-        taskId: taskId,
-        fromStage: fromStage,
-        toStage: toStage,
-        isForward: isForward,
-        phase: _DragPhase.loading,
-      );
-    });
-
-    try {
-      // Replace with your actual provider method.
-      // Simulate api - update progress
-      await Future.delayed(Duration(seconds: 2));
-
-      if (!mounted) return;
-
-      // Transition to completing phase (fills the progress bar)
-      setState(() {
-        _inTransit[taskId] = _inTransit[taskId]!.copyWith(
-          phase: _DragPhase.completing,
-        );
-      });
-
-      // Allow the completion animation to play before clearing
-      await Future.delayed(const Duration(milliseconds: 700));
-    } catch (_) {
-      // On error: clear immediately — the task stays in its original lane
-    } finally {
-      if (mounted) setState(() => _inTransit.remove(taskId));
-    }
-  }
-
-  // ── Filter bar helpers ─────────────────────────────────────────────────────
   bool _groupFullyOn(int gi) =>
       _kGroups[gi].statuses.every((s) => !_hidden.contains(s));
 
@@ -310,8 +219,10 @@ class _BoardViewState extends ConsumerState<BoardView> {
                   kStages
                       .where((si) {
                         if (_hidden.contains(si.stage)) return false;
-                        if (_hideEmpty && (taskCounts[si.stage] ?? 0) == 0)
-                          return false;
+                        if (_hideEmpty) {
+                          final count = taskCounts[si.stage] ?? 0;
+                          if (count == 0) return false;
+                        }
                         return true;
                       })
                       .map((si) {
@@ -331,8 +242,6 @@ class _BoardViewState extends ConsumerState<BoardView> {
                               isFirst ? widget.addTaskFocusNode : null,
                           isAddingTask: isFirst ? widget.isAddingTask : null,
                           selectedProjectId: widget.selectedProjectId,
-                          inTransit: _inTransit,
-                          onTaskDropped: _onTaskDropped,
                         );
                       })
                       .toList(),
@@ -345,7 +254,19 @@ class _BoardViewState extends ConsumerState<BoardView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FILTER BAR  (unchanged)
+// FILTER BAR
+//
+// Modern pill-style tab controls. Active group = filled slate100 pill.
+// No underlines. Group color appears only in the drawer's left rule.
+// Right side: "With tasks" toggle styled identically to group pills.
+//
+// Structure:
+//   ┌──────────────────────────────────────────────────────┬──────────────┐
+//   │  [Design ∨]  [Production ∨]  [Delivery ∨]  …        │ [With tasks] │
+//   └──────────────────────────────────────────────────────┴──────────────┘
+//   ┌ group-color left rule ───────────────────────────────────────────────┐
+//   │  ☑ Pending  ☑ Designing  ☐ Waiting Approval  ☑ …       [Done]       │
+//   └──────────────────────────────────────────────────────────────────────┘
 // ─────────────────────────────────────────────────────────────────────────────
 class _FilterBar extends StatelessWidget {
   final List<_StageGroup> groups;
@@ -380,16 +301,17 @@ class _FilterBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tab row
+          // ── Tab row ────────────────────────────────────────────────────────
           Container(
             height: 44,
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _T.slate100)),
+              border: Border(bottom: BorderSide(color: _T.slate100, width: 1)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Group tabs
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -411,17 +333,22 @@ class _FilterBar extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // Divider
                 Container(
                   width: 1,
                   height: 20,
                   color: _T.slate200,
                   margin: const EdgeInsets.symmetric(horizontal: 10),
                 ),
+
+                // "With tasks" toggle — same pill style as group tabs
                 _HideEmptyToggle(isOn: hideEmpty, onTap: onToggleHideEmpty),
               ],
             ),
           ),
-          // Detail drawers
+
+          // ── Detail drawers ─────────────────────────────────────────────────
           for (int gi = 0; gi < groups.length; gi++)
             _AnimatedDrawer(
               visible: expandedGroups.contains(gi),
@@ -439,7 +366,12 @@ class _FilterBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GROUP TAB  (unchanged)
+// GROUP TAB — pill style
+//
+// Off:     transparent bg, slate500 text
+// Partial: slate100 bg, ink3 text, faint colored left-dot
+// On:      slate100 bg, ink2 text, bold
+// Chevron: always visible when on/partial, fades in on hover otherwise
 // ─────────────────────────────────────────────────────────────────────────────
 class _GroupTab extends StatefulWidget {
   final _StageGroup group;
@@ -485,7 +417,9 @@ class _GroupTabState extends State<_GroupTab> {
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Label tap target
               InkWell(
                 onTap: widget.onTap,
                 splashColor: Colors.transparent,
@@ -494,6 +428,7 @@ class _GroupTabState extends State<_GroupTab> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Colored dot — visible when active
                       AnimatedOpacity(
                         opacity: active ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 140),
@@ -516,6 +451,7 @@ class _GroupTabState extends State<_GroupTab> {
                           fontWeight:
                               active ? FontWeight.w600 : FontWeight.w400,
                           color: fg,
+                          letterSpacing: 0.0,
                         ),
                         child: Text(widget.group.label),
                       ),
@@ -523,6 +459,8 @@ class _GroupTabState extends State<_GroupTab> {
                   ),
                 ),
               ),
+
+              // Chevron — expand drawer
               AnimatedOpacity(
                 opacity: (active || _hovered) ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 120),
@@ -552,7 +490,7 @@ class _GroupTabState extends State<_GroupTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HIDE EMPTY TOGGLE  (unchanged)
+// HIDE EMPTY TOGGLE — matches group tab pill style exactly
 // ─────────────────────────────────────────────────────────────────────────────
 class _HideEmptyToggle extends StatefulWidget {
   final bool isOn;
@@ -616,7 +554,7 @@ class _HideEmptyToggleState extends State<_HideEmptyToggle> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED DRAWER  (unchanged)
+// ANIMATED DRAWER WRAPPER — unchanged logic, same timing
 // ─────────────────────────────────────────────────────────────────────────────
 class _AnimatedDrawer extends StatefulWidget {
   final bool visible;
@@ -679,7 +617,11 @@ class _AnimatedDrawerState extends State<_AnimatedDrawer>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DETAIL DRAWER  (unchanged)
+// DETAIL DRAWER
+//
+// Redesign: no top/bottom borders. Only left rule (group color) + a very
+// subtle slate50 background separates it from the filter row above.
+// Stage items are compact chips rather than full-height rows.
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailDrawer extends StatelessWidget {
   final _StageGroup group;
@@ -749,6 +691,8 @@ class _DetailDrawer extends StatelessWidget {
               ),
             ),
           ),
+
+          // Done button
           GestureDetector(
             onTap: onCollapse,
             child: MouseRegion(
@@ -782,12 +726,16 @@ class _DetailDrawer extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE CHIP  (unchanged)
+// STAGE CHIP — compact chip inside the detail drawer
+//
+// Visible:  white bg, ink2 text, checkmark icon, slate200 border
+// Hidden:   transparent bg, slate400 text, empty-box icon, no border
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageChip extends StatefulWidget {
   final String label;
   final bool isVisible;
   final VoidCallback onTap;
+
   const _StageChip({
     required this.label,
     required this.isVisible,
@@ -863,11 +811,12 @@ class _StageChipState extends State<_StageChip> {
 // ─────────────────────────────────────────────────────────────────────────────
 // KANBAN LANE
 //
-// Improvements:
-//   • MouseRegion hover: shadow deepens slightly (non-drag hover)
-//   • DragTarget: colored border + faint bg tint when card hovers over lane
-//   • Cards wrapped in Draggable with elevated feedback
-//   • In-transit cards get _CardProgressOverlay stacked on top
+// Redesign highlights:
+//   • No border — replaced by a soft shadow for panel elevation
+//   • 2px colored top accent strip (full width, group color)
+//   • Header: cleaner spacing, count badge uses colored text on neutral bg
+//   • Empty state: ultra-minimal ghost
+//   • Add task: dashed ghost row at the bottom
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
@@ -875,18 +824,11 @@ class _KanbanLane extends ConsumerStatefulWidget {
   final List<Project> projects;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
-  @Deprecated('Fix or remove')
+  @Deprecated("Either fix the existing bug on this or remove it completely")
   final bool showAddTaskBtn;
   final FocusNode? addTaskFocusNode;
   bool? isAddingTask;
-  final String? selectedProjectId;
-  final Map<int, _InTransitTask> inTransit;
-  final Future<void> Function({
-    required int taskId,
-    required TaskStatus fromStage,
-    required TaskStatus toStage,
-  })
-  onTaskDropped;
+  String? selectedProjectId;
 
   _KanbanLane({
     required this.stageInfo,
@@ -898,8 +840,6 @@ class _KanbanLane extends ConsumerStatefulWidget {
     required this.addTaskFocusNode,
     required this.isAddingTask,
     required this.selectedProjectId,
-    required this.inTransit,
-    required this.onTaskDropped,
   });
 
   @override
@@ -907,8 +847,6 @@ class _KanbanLane extends ConsumerStatefulWidget {
 }
 
 class _KanbanLaneState extends ConsumerState<_KanbanLane> {
-  bool _laneHovered = false;
-
   void onAddTask() {
     widget.addTaskFocusNode?.requestFocus();
     setState(() => widget.isAddingTask = true);
@@ -917,337 +855,148 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
   void onDismiss() => setState(() => widget.isAddingTask = false);
   void onCreated(Task task) => setState(() => widget.isAddingTask = false);
 
-  // Shadow levels
-  List<BoxShadow> _shadows({bool hovered = false, bool dragOver = false}) {
-    if (dragOver) {
-      return [
-        BoxShadow(
-          color: widget.stageInfo.color.withOpacity(0.15),
-          blurRadius: 14,
-          offset: const Offset(0, 3),
-        ),
-      ];
-    }
-    return [
-      BoxShadow(
-        color: const Color(0xFF0F172A).withOpacity(hovered ? 0.08 : 0.05),
-        blurRadius: hovered ? 12 : 8,
-        offset: Offset(0, hovered ? 3 : 1),
-      ),
-      BoxShadow(
-        color: const Color(0xFF0F172A).withOpacity(0.03),
-        blurRadius: 2,
-        spreadRadius: 1,
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final isApproved = widget.stageInfo.stage == TaskStatus.clientApproved;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _laneHovered = true),
-      onExit: (_) => setState(() => _laneHovered = false),
-      child: DragTarget<_DragPayload>(
-        onWillAcceptWithDetails:
-            (details) => details.data.fromStage != widget.stageInfo.stage,
-        onAcceptWithDetails: (details) {
-          widget.onTaskDropped(
-            taskId: details.data.taskId,
-            fromStage: details.data.fromStage,
-            toStage: widget.stageInfo.stage,
-          );
-        },
-        builder: (context, candidateData, _) {
-          final isDragOver = candidateData.isNotEmpty;
+    return Container(
+      width: 260,
+      margin: const EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.03),
+            blurRadius: 2,
+            offset: const Offset(0, 0),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_T.rLg),
+        child: Column(
+          children: [
+            // ── Colored top accent strip ─────────────────────────────────────
+            Container(height: 2.5, color: widget.stageInfo.color),
 
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            width: 260,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: BoxDecoration(
-              color:
-                  isDragOver
-                      ? Color.lerp(
-                        _T.white,
-                        widget.stageInfo.color.withOpacity(0.06),
-                        1.0,
-                      )
-                      : _T.white,
-              borderRadius: BorderRadius.circular(_T.rLg),
-              border:
-                  isDragOver
-                      ? Border.all(
-                        color: widget.stageInfo.color.withOpacity(0.45),
-                        width: 1.5,
-                      )
-                      : Border.all(color: Colors.transparent),
-              boxShadow: _shadows(
-                hovered: _laneHovered && !isDragOver,
-                dragOver: isDragOver,
+            // ── Lane header ──────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 11, 14, 10),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _T.slate100)),
               ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(_T.rLg),
-              child: Column(
+              child: Row(
                 children: [
-                  // ── Colored top accent strip ───────────────────────────────
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    height: isDragOver ? 3.5 : 2.5,
-                    color: widget.stageInfo.color,
-                  ),
-
-                  // ── Lane header ────────────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(14, 11, 14, 10),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: _T.slate100)),
-                    ),
+                  Expanded(
                     child: Row(
                       children: [
+                        if (isApproved) ...[
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            size: 11,
+                            color: widget.stageInfo.color,
+                          ),
+                          const SizedBox(width: 5),
+                        ],
                         Expanded(
-                          child: Row(
-                            children: [
-                              if (isApproved) ...[
-                                Icon(
-                                  Icons.lock_outline_rounded,
-                                  size: 11,
-                                  color: widget.stageInfo.color,
-                                ),
-                                const SizedBox(width: 5),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  widget.stageInfo.label,
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: _T.ink,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Count badge — slightly animated on drag-over
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isDragOver
-                                    ? widget.stageInfo.color.withOpacity(0.12)
-                                    : isApproved
-                                    ? widget.stageInfo.color.withOpacity(0.10)
-                                    : _T.slate100,
-                            borderRadius: BorderRadius.circular(99),
-                          ),
                           child: Text(
-                            '${widget.tasks.length}',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  isDragOver || isApproved
-                                      ? widget.stageInfo.color
-                                      : _T.slate500,
+                            widget.stageInfo.label,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: _T.ink,
+                              letterSpacing: 0.0,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // ── Task list ──────────────────────────────────────────────
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.all(10),
-                      children: [
-                        if (widget.tasks.isEmpty && !isDragOver)
-                          _LaneEmpty()
-                        else ...[
-                          ...widget.tasks.map((t) {
-                            final proj =
-                                widget.projects.cast<Project?>().firstWhere(
-                                  (p) => p!.id == t.projectId,
-                                  orElse: () => null,
-                                ) ??
-                                widget.projects.first;
+                  const SizedBox(width: 8),
 
-                            final transit = widget.inTransit[t.id];
-                            final isInTransit = transit != null;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 7),
-                              child: Draggable<_DragPayload>(
-                                data: _DragPayload(
-                                  taskId: t.id,
-                                  fromStage: widget.stageInfo.stage,
-                                ),
-                                // While dragging: source card fades out
-                                childWhenDragging: Opacity(
-                                  opacity: 0.28,
-                                  child: IgnorePointer(
-                                    child: TaskCard(
-                                      task: t,
-                                      project: proj,
-                                      isSelected: false,
-                                      onTap: () {},
-                                      selectedProjectId:
-                                          widget.selectedProjectId,
-                                    ),
-                                  ),
-                                ),
-                                // Feedback: elevated card following cursor
-                                feedback: _DragFeedback(
-                                  task: t,
-                                  project: proj,
-                                  selectedProjectId: widget.selectedProjectId,
-                                ),
-                                // Normal / in-transit card
-                                child: Stack(
-                                  children: [
-                                    TaskCard(
-                                      task: t,
-                                      project: proj,
-                                      isSelected: widget.selectedTaskId == t.id,
-                                      onTap: () => widget.onTaskSelected(t.id),
-                                      selectedProjectId:
-                                          widget.selectedProjectId,
-                                    ),
-                                    if (isInTransit)
-                                      Positioned.fill(
-                                        child: _CardProgressOverlay(
-                                          isForward: transit!.isForward,
-                                          isCompleting:
-                                              transit.phase ==
-                                              _DragPhase.completing,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-
-                          // Drop insertion hint when dragging over
-                          if (isDragOver)
-                            _DropInsertionHint(color: widget.stageInfo.color),
-                        ],
-                      ],
+                  // Task count badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isApproved
+                              ? widget.stageInfo.color.withOpacity(0.10)
+                              : _T.slate100,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${widget.tasks.length}',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isApproved ? widget.stageInfo.color : _T.slate500,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DRAG FEEDBACK  — elevated card at 1.02× scale following the cursor
-// ─────────────────────────────────────────────────────────────────────────────
-class _DragFeedback extends StatelessWidget {
-  final Task task;
-  final Project project;
-  final String? selectedProjectId;
-
-  const _DragFeedback({
-    required this.task,
-    required this.project,
-    required this.selectedProjectId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      elevation: 0,
-      child: SizedBox(
-        // Lane content width: 260 lane - 10px padding each side = 240px
-        width: 240,
-        child: Transform.scale(
-          scale: 1.02,
-          alignment: Alignment.topCenter,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.rLg),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Opacity(
-              opacity: 0.94,
-              child: TaskCard(
-                task: task,
-                project: project,
-                isSelected: false,
-                onTap: () {},
-                selectedProjectId: selectedProjectId,
+            // ── Task list ────────────────────────────────────────────────────
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(10),
+                children: [
+                  if (widget.tasks.isEmpty)
+                    _LaneEmpty()
+                  else
+                    ...widget.tasks.map((t) {
+                      final proj =
+                          widget.projects.cast<Project?>().firstWhere(
+                            (p) => p!.id == t.projectId,
+                            orElse: () => null,
+                          ) ??
+                          widget.projects.first;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 7),
+                        child: TaskCard(
+                          task: t,
+                          project: proj,
+                          isSelected: widget.selectedTaskId == t.id,
+                          onTap: () => widget.onTaskSelected(t.id),
+                          selectedProjectId: widget.selectedProjectId,
+                        ),
+                      );
+                    }),
+                ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DROP INSERTION HINT
-// A dashed row at the bottom of the task list signalling "drop here".
-// ─────────────────────────────────────────────────────────────────────────────
-class _DropInsertionHint extends StatelessWidget {
-  final Color color;
-  const _DropInsertionHint({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      margin: const EdgeInsets.only(top: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
-          // Dashed effect via strokeAlign — solid border is fine at this scale
-        ),
-      ),
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add_rounded, size: 13, color: color.withOpacity(0.6)),
-            const SizedBox(width: 5),
-            Text(
-              'Drop here',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: color.withOpacity(0.7),
-              ),
-            ),
+            // ── Add task ─────────────────────────────────────────────────────
+            // if (widget.showAddTaskBtn)
+            //   widget.isAddingTask == true
+            //       ? Focus(
+            //           focusNode: widget.addTaskFocusNode,
+            //           autofocus: true,
+            //           child: TaskCard.add(
+            //             onCreated:         onCreated,
+            //             onDismiss:         onDismiss,
+            //             projects:          ref.watch(projectNotifierProvider),
+            //             selectedProjectId: widget.selectedProjectId,
+            //           ),
+            //         )
+            //       : Padding(
+            //           padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            //           child: _AddCardButton(onTap: onAddTask),
+            //         ),
           ],
         ),
       ),
@@ -1256,190 +1005,7 @@ class _DropInsertionHint extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CARD PROGRESS OVERLAY
-//
-// Stacked on top of the TaskCard for cards being moved via the API.
-//
-// Visual:
-//   • Direction pill (top-right): tiny spinner + arrow icon + label
-//     Green  = moving forward  (↑)
-//     Amber  = moving backward (↓)
-//   • Thin progress bar at the card bottom
-//     – Indeterminate shimmer while loading
-//     – Fills 0→1 during completing phase, then fades out
-//
-// Kept deliberately subtle — the pill is 9.5px font and the bar is 2.5px.
-// ─────────────────────────────────────────────────────────────────────────────
-class _CardProgressOverlay extends StatefulWidget {
-  final bool isForward;
-  final bool isCompleting;
-
-  const _CardProgressOverlay({
-    required this.isForward,
-    required this.isCompleting,
-  });
-
-  @override
-  State<_CardProgressOverlay> createState() => _CardProgressOverlayState();
-}
-
-class _CardProgressOverlayState extends State<_CardProgressOverlay>
-    with TickerProviderStateMixin {
-  // Indeterminate shimmer (loading phase)
-  late final AnimationController _shimmerCtrl;
-  // Fill animation (completing phase)
-  late final AnimationController _fillCtrl;
-  // Fade-out of the entire overlay
-  late final AnimationController _fadeCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-    _fillCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 380),
-    );
-    _fadeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    );
-  }
-
-  @override
-  void didUpdateWidget(_CardProgressOverlay old) {
-    super.didUpdateWidget(old);
-    // When parent transitions to completing, kick off the sequence
-    if (!old.isCompleting && widget.isCompleting) {
-      _shimmerCtrl.stop();
-      _fillCtrl.forward().then((_) async {
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (mounted) _fadeCtrl.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _shimmerCtrl.dispose();
-    _fillCtrl.dispose();
-    _fadeCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Color accent = widget.isForward ? _T.green : _T.amber;
-    final IconData arrowIcon =
-        widget.isForward
-            ? Icons.arrow_upward_rounded
-            : Icons.arrow_downward_rounded;
-    final String label = widget.isForward ? 'Moving forward' : 'Moving back';
-
-    return FadeTransition(
-      opacity: Tween<double>(
-        begin: 1.0,
-        end: 0.0,
-      ).animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut)),
-      child: Stack(
-        children: [
-          // ── Direction pill (top-right) ─────────────────────────────────
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: accent.withOpacity(0.28)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Spinner or checkmark
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child:
-                        widget.isCompleting
-                            ? Icon(
-                              Icons.check_rounded,
-                              key: const ValueKey('check'),
-                              size: 9,
-                              color: accent,
-                            )
-                            : SizedBox(
-                              key: const ValueKey('spinner'),
-                              width: 9,
-                              height: 9,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.2,
-                                color: accent,
-                              ),
-                            ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(arrowIcon, size: 9, color: accent),
-                  const SizedBox(width: 3),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Progress bar (bottom edge of card) ────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(_T.rLg),
-                bottomRight: Radius.circular(_T.rLg),
-              ),
-              child: SizedBox(
-                height: 2.5,
-                child:
-                    widget.isCompleting
-                        // Fill animation: 0 → 1
-                        ? AnimatedBuilder(
-                          animation: _fillCtrl,
-                          builder:
-                              (_, __) => LinearProgressIndicator(
-                                value: _fillCtrl.value,
-                                backgroundColor: accent.withOpacity(0.12),
-                                color: accent,
-                                minHeight: 2.5,
-                              ),
-                        )
-                        // Indeterminate shimmer
-                        : LinearProgressIndicator(
-                          backgroundColor: accent.withOpacity(0.12),
-                          color: accent,
-                          minHeight: 2.5,
-                        ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LANE EMPTY STATE  (unchanged)
+// LANE EMPTY STATE — very minimal ghost
 // ─────────────────────────────────────────────────────────────────────────────
 class _LaneEmpty extends StatelessWidget {
   @override
@@ -1463,7 +1029,7 @@ class _LaneEmpty extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADD CARD BUTTON  (unchanged)
+// ADD CARD BUTTON — ghost dashed style
 // ─────────────────────────────────────────────────────────────────────────────
 class _AddCardButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -1487,7 +1053,10 @@ class _AddCardButtonState extends State<_AddCardButton> {
         child: Container(
           decoration: BoxDecoration(
             color: _hovered ? _T.slate50 : Colors.transparent,
-            border: Border.all(color: _hovered ? _T.slate300 : _T.slate200),
+            border: Border.all(
+              color: _hovered ? _T.slate300 : _T.slate200,
+              // A "dashed" feel through slightly thinner stroke and color
+            ),
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: AnimatedContainer(
