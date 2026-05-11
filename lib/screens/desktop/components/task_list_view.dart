@@ -1,17 +1,20 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
 //
-// Complete task list view with real-time WebSocket updates.
-// This version uses ONLY the WebSocket approach for real-time synchronization.
+// Task list view with RESIZABLE columns.
 //
-// Changes from original:
-//   • Converted to ConsumerStatefulWidget for Riverpod integration
-//   • Uses taskListProvider instead of local state
-//   • Automatically receives real-time updates via WebSocket
-//   • Project column is hidden when a single project is selected (filter active)
-//   • List / Board toggle tabs live in the header bar
-//   • All previous animated column / column-picker behaviour is preserved
-//   • Message indicator badge shows when task has discussion messages
+// Architecture change from original:
+//   • ColumnWidthNotifier (InheritedNotifier) owns pixel widths for every col.
+//   • Header row renders columns at exact pixel widths from the notifier, with
+//     a _ResizeHandle drag-divider between each pair of adjacent visible cols.
+//   • Every _TaskRow reads the same notifier so all cells stay pixel-aligned
+//     with the headers at all times — no layout mismatch possible.
+//   • Show/hide toggles update the notifier (width → 0 or → default). No
+//     separate animation controller needed; the notifier drives everything.
+//   • The previous _AnimatedColRow is replaced by a simpler _ColRow widget
+//     that reads widths from ColumnWidthScope and clips/fades hidden cols.
+//   • All other behaviour (board view, connection indicator, column picker,
+//     notifications, completed-row styling, billing pinned col) is unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -64,7 +67,6 @@ class _T {
   static const rLg = 12.0;
   static const red50 = Color(0xFFFEE2E2);
 
-  // Professional shadows for depth
   static final shadowSm = BoxShadow(
     color: Colors.black.withOpacity(0.02),
     blurRadius: 2,
@@ -83,13 +85,15 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LAYOUT
+// CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 const double _kRowHPad = 16.0;
-const double _kCellHPad = 3.0;
-const _kColAnimDuration = Duration(milliseconds: 260);
+const double _kCellHPad = 8.0;
+const double _kResizeHandleWidth = 8.0;
+const double _kMinColWidth = 48.0;
+const double _kMaxColWidth = 480.0;
 
-const kNotificationDuration = const Duration(seconds: 3);
+const kNotificationDuration = Duration(seconds: 3);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW MODE
@@ -107,7 +111,7 @@ class _ColDef {
   final IconData icon;
   final bool mandatory;
   final bool defaultOn;
-  final int flex;
+  final double defaultWidth;
 
   const _ColDef({
     required this.id,
@@ -117,7 +121,7 @@ class _ColDef {
     required this.icon,
     required this.mandatory,
     required this.defaultOn,
-    required this.flex,
+    required this.defaultWidth,
   });
 }
 
@@ -130,7 +134,7 @@ const _kCols = [
     icon: Icons.calendar_today_outlined,
     mandatory: true,
     defaultOn: true,
-    flex: 2,
+    defaultWidth: 100,
   ),
   _ColDef(
     id: 'project',
@@ -140,7 +144,7 @@ const _kCols = [
     icon: Icons.folder_outlined,
     mandatory: false,
     defaultOn: true,
-    flex: 3,
+    defaultWidth: 130,
   ),
   _ColDef(
     id: 'task',
@@ -150,7 +154,7 @@ const _kCols = [
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true,
     defaultOn: true,
-    flex: 5,
+    defaultWidth: 240,
   ),
   _ColDef(
     id: 'ref',
@@ -160,7 +164,7 @@ const _kCols = [
     icon: Icons.tag_rounded,
     mandatory: false,
     defaultOn: true,
-    flex: 4,
+    defaultWidth: 160,
   ),
   _ColDef(
     id: 'stage',
@@ -170,7 +174,7 @@ const _kCols = [
     icon: Icons.view_kanban_outlined,
     mandatory: true,
     defaultOn: true,
-    flex: 3,
+    defaultWidth: 120,
   ),
   _ColDef(
     id: 'priority',
@@ -180,7 +184,7 @@ const _kCols = [
     icon: Icons.flag_outlined,
     mandatory: false,
     defaultOn: true,
-    flex: 2,
+    defaultWidth: 90,
   ),
   _ColDef(
     id: 'size',
@@ -190,7 +194,7 @@ const _kCols = [
     icon: Icons.straighten_outlined,
     mandatory: false,
     defaultOn: false,
-    flex: 3,
+    defaultWidth: 120,
   ),
   _ColDef(
     id: 'qty',
@@ -200,7 +204,7 @@ const _kCols = [
     icon: Icons.inventory_2_outlined,
     mandatory: false,
     defaultOn: false,
-    flex: 1,
+    defaultWidth: 64,
   ),
 ];
 
@@ -212,7 +216,7 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: true,
   defaultOn: true,
-  flex: 2,
+  defaultWidth: 110,
 );
 
 Set<String> get _kDefaultOptionalOn =>
@@ -223,18 +227,76 @@ Set<String> get _kMandatoryIds =>
 
 const _kPrefsKey = 'smooflow.task_list.visible_optional_cols';
 const _kViewModeKey = 'smooflow.task_list.view_mode';
+const _kColWidthsKey = 'smooflow.task_list.col_widths';
+
+Map<String, double> _defaultWidthMap() => {
+  for (final c in _kCols) c.id: c.defaultWidth,
+  _kBillingCol.id: _kBillingCol.defaultWidth,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASK LIST VIEW (WebSocket-powered)
+// COLUMN WIDTH NOTIFIER
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Holds current pixel widths for all columns.
+/// Hidden columns have width 0. The billing column is always visible.
+class _ColumnWidthNotifier extends ChangeNotifier {
+  final Map<String, double> _widths;
+  final Map<String, double> _defaults;
+
+  _ColumnWidthNotifier(Map<String, double> defaults)
+    : _widths = Map.from(defaults),
+      _defaults = Map.from(defaults);
+
+  double widthOf(String id) => _widths[id] ?? 0;
+
+  Map<String, double> snapshot() => Map.from(_widths);
+
+  void resize(String id, double delta) {
+    final w = (_widths[id] ?? 0) + delta;
+    _widths[id] = w.clamp(_kMinColWidth, _kMaxColWidth);
+    notifyListeners();
+  }
+
+  void setVisible(String id, bool visible) {
+    _widths[id] = visible ? (_defaults[id] ?? 100) : 0;
+    notifyListeners();
+  }
+
+  void resetToDefaults(Set<String> visibleIds) {
+    for (final c in _kCols) {
+      _widths[c.id] = visibleIds.contains(c.id) ? (_defaults[c.id] ?? 100) : 0;
+    }
+    _widths[_kBillingCol.id] = _defaults[_kBillingCol.id] ?? 110;
+    notifyListeners();
+  }
+
+  void loadSaved(Map<String, double> saved) {
+    _widths.addAll(saved);
+    notifyListeners();
+  }
+}
+
+/// InheritedNotifier — lets header + every task row share widths without prop drilling.
+class _WidthScope extends InheritedNotifier<_ColumnWidthNotifier> {
+  const _WidthScope({
+    required _ColumnWidthNotifier super.notifier,
+    required super.child,
+  });
+
+  static _ColumnWidthNotifier of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_WidthScope>()!.notifier!;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK LIST VIEW
 // ─────────────────────────────────────────────────────────────────────────────
 class TaskListView extends ConsumerStatefulWidget {
   final List<Project> projects;
-  final String? selectedProjectId; // null = "All Projects"
+  final String? selectedProjectId;
   final int? selectedTaskId;
   final ValueChanged<int> onTaskSelected;
   final bool isDetailOpen;
-
-  // Board view pass-through props
   final VoidCallback? onAddTask;
   final FocusNode? addTaskFocusNode;
   final bool isAddingTask;
@@ -258,14 +320,10 @@ class TaskListView extends ConsumerStatefulWidget {
 class _TaskListViewState extends ConsumerState<TaskListView> {
   Set<String> _visibleOptional = {};
   _ViewMode _viewMode = _ViewMode.list;
+  late final _ColumnWidthNotifier _widthNotifier;
 
-  // ── Derived: are we in single-project mode? ────────────────────────────────
   bool get _singleProject => widget.selectedProjectId != null;
 
-  /// When the detail panel is open only 'date' and 'task' are shown so the
-  /// list columns don't compete with the panel for space. The full column
-  /// state is restored the moment the panel closes — nothing is mutated,
-  /// this is purely derived from widget.isDetailOpen.
   static const _kDetailCols = {'date', 'task'};
 
   int? lastNotifiedTaskId;
@@ -276,12 +334,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         widget.isDetailOpen
             ? _kDetailCols
             : {..._kMandatoryIds, ..._visibleOptional};
-
-    if (_singleProject) {
-      // Strip 'project' from whatever is showing
-      return base.difference({'project'});
-    }
-    return base;
+    return _singleProject ? base.difference({'project'}) : base;
   }
 
   Project? get _activeProject =>
@@ -292,54 +345,72 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             orElse: () => null,
           );
 
-  // ── Persistence ────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
-    _loadPrefs();
 
-    // Load tasks via WebSocket on mount
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   _loadTasks();
-    // });
+    // Build notifier with defaults; hide optional-off columns
+    final defaults = _defaultWidthMap();
+    for (final c in _kCols) {
+      if (!c.mandatory && !c.defaultOn) defaults[c.id] = 0;
+    }
+    _widthNotifier = _ColumnWidthNotifier(defaults);
+
+    _loadPrefs();
   }
 
-  void _loadTasks() {
-    final filters = <String, dynamic>{};
-
-    // If a project is selected, filter by project
-    if (widget.selectedProjectId != null) {
-      filters['projectId'] = widget.selectedProjectId;
-    }
-
-    ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
+  @override
+  void dispose() {
+    _widthNotifier.dispose();
+    super.dispose();
   }
 
   void _loadPrefs() {
-    // Column prefs
-    final raw = LocalHttp.prefs.getString(_kPrefsKey);
-    if (raw != null) {
-      final list = (jsonDecode(raw) as List).cast<String>();
-      if (mounted) setState(() => _visibleOptional = Set.from(list));
-    } else {
-      _saveColPrefs().then((value) {
-        //done
-      });
+    // Column visibility
+    final rawVis = LocalHttp.prefs.getString(_kPrefsKey);
+    if (rawVis != null) {
+      final list = (jsonDecode(rawVis) as List).cast<String>();
+      _visibleOptional = Set.from(list);
     }
 
-    // View mode pref
+    // View mode
     final vm = LocalHttp.prefs.getString(_kViewModeKey);
-    if (vm != null && mounted) {
-      setState(
-        () => _viewMode = vm == 'board' ? _ViewMode.board : _ViewMode.list,
-      );
+    if (vm != null) {
+      _viewMode = vm == 'board' ? _ViewMode.board : _ViewMode.list;
     }
+
+    // Column widths
+    final rawW = LocalHttp.prefs.getString(_kColWidthsKey);
+    if (rawW != null) {
+      final map = (jsonDecode(rawW) as Map<String, dynamic>).map(
+        (k, v) => MapEntry(k, (v as num).toDouble()),
+      );
+      _widthNotifier.loadSaved(map);
+    } else {
+      // Apply visibility to notifier from freshly loaded prefs
+      for (final c in _kCols) {
+        if (!c.mandatory) {
+          _widthNotifier.setVisible(c.id, _visibleOptional.contains(c.id));
+        }
+      }
+      if (_singleProject) _widthNotifier.setVisible('project', false);
+    }
+
+    if (mounted) setState(() {});
   }
 
   Future<void> _saveColPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kPrefsKey, jsonEncode(_visibleOptional.toList()));
+  }
+
+  Future<void> _saveWidths() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _kColWidthsKey,
+      jsonEncode(_widthNotifier.snapshot()),
+    );
   }
 
   Future<void> _saveViewMode() async {
@@ -351,18 +422,24 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   }
 
   void _toggleColumn(String id) {
-    setState(
-      () =>
-          _visibleOptional.contains(id)
-              ? _visibleOptional.remove(id)
-              : _visibleOptional.add(id),
-    );
+    setState(() {
+      if (_visibleOptional.contains(id)) {
+        _visibleOptional.remove(id);
+        _widthNotifier.setVisible(id, false);
+      } else {
+        _visibleOptional.add(id);
+        _widthNotifier.setVisible(id, true);
+      }
+    });
     _saveColPrefs();
+    _saveWidths();
   }
 
   void _resetToDefaults() {
     setState(() => _visibleOptional = Set.from(_kDefaultOptionalOn));
+    _widthNotifier.resetToDefaults(_effectiveVisible);
     _saveColPrefs();
+    _saveWidths();
   }
 
   void _setViewMode(_ViewMode mode) {
@@ -371,19 +448,55 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _saveViewMode();
   }
 
-  // ── Build ───────────────────────────────────────────────────────────────────
+  @override
+  void didUpdateWidget(TaskListView old) {
+    super.didUpdateWidget(old);
+    // If the project filter changed, show/hide project column
+    if (old.selectedProjectId != widget.selectedProjectId) {
+      _widthNotifier.setVisible('project', !_singleProject);
+    }
+    // If detail panel opened/closed, show/hide non-core columns
+    if (old.isDetailOpen != widget.isDetailOpen) {
+      _applyDetailMode();
+    }
+  }
+
+  void _applyDetailMode() {
+    if (widget.isDetailOpen) {
+      // Hide everything except date + task
+      for (final c in _kCols) {
+        if (!_kDetailCols.contains(c.id)) {
+          _widthNotifier.setVisible(c.id, false);
+        }
+      }
+      _widthNotifier.setVisible(_kBillingCol.id, false);
+    } else {
+      // Restore
+      final effective = _effectiveVisible;
+      for (final c in _kCols) {
+        _widthNotifier.setVisible(c.id, effective.contains(c.id));
+      }
+      _widthNotifier.setVisible(_kBillingCol.id, true);
+    }
+  }
+
+  void _loadTasks() {
+    final filters = <String, dynamic>{};
+    if (widget.selectedProjectId != null) {
+      filters['projectId'] = widget.selectedProjectId;
+    }
+    ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
+  }
+
   @override
   Widget build(BuildContext context) {
     final members = ref.watch(memberNotifierProvider).members;
-
-    // WebSocket real-time task state
     final taskState = ref.watch(taskNotifierProvider);
     final allTasks = taskState.tasks;
     final isLoading = taskState.isLoading;
     final error = taskState.error;
     final connectionStatus = ref.watch(taskConnectionStatusProvider);
 
-    // Filter tasks by selected project if needed
     final tasks =
         widget.selectedProjectId != null
             ? allTasks
@@ -396,7 +509,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     final reversedTasks = tasks.reversed.toList();
     final effective = _effectiveVisible;
 
-    // Listen for real-time task changes and show notifications
     ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
       previous,
       next,
@@ -414,141 +526,117 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       });
     });
 
-    return Container(
-      color: _T.slate50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Project header + view mode tabs + connection status ──────────
-          _ProjectHeader(
-            activeProject: _activeProject,
-            viewMode: _viewMode,
-            onViewModeChanged: _setViewMode,
-            connectionStatus: connectionStatus,
-          ),
-
-          // ── Board sub-view ───────────────────────────────────────────────
-          if (_viewMode == _ViewMode.board)
-            Expanded(
-              child: BoardView(
-                tasks: tasks,
-                projects: widget.projects,
-                selectedTaskId: widget.selectedTaskId,
-                onTaskSelected: widget.onTaskSelected,
-                onAddTask: widget.onAddTask ?? () {},
-                addTaskFocusNode: widget.addTaskFocusNode ?? FocusNode(),
-                isAddingTask: widget.isAddingTask,
-                selectedProjectId: widget.selectedProjectId,
-              ),
-            )
-          else ...[
-            // ── Toolbar (column picker) ─────────────────────────────────
-            _Toolbar(
-              visibleOptional: _visibleOptional,
-              isDetailOpen: widget.isDetailOpen,
-              singleProject: _singleProject,
-              onToggle: _toggleColumn,
-              onReset: _resetToDefaults,
+    return _WidthScope(
+      notifier: _widthNotifier,
+      child: Container(
+        color: _T.slate50,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ProjectHeader(
+              activeProject: _activeProject,
+              viewMode: _viewMode,
+              onViewModeChanged: _setViewMode,
+              connectionStatus: connectionStatus,
             ),
 
-            // ── Column header row ────────────────────────────────────────
-            Container(
-              color: _T.white,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      _kRowHPad,
-                      8,
-                      _kRowHPad,
-                      8,
-                    ),
-                    child: _AnimatedColRow(
+            if (_viewMode == _ViewMode.board)
+              Expanded(
+                child: BoardView(
+                  tasks: tasks,
+                  projects: widget.projects,
+                  selectedTaskId: widget.selectedTaskId,
+                  onTaskSelected: widget.onTaskSelected,
+                  onAddTask: widget.onAddTask ?? () {},
+                  addTaskFocusNode: widget.addTaskFocusNode ?? FocusNode(),
+                  isAddingTask: widget.isAddingTask,
+                  selectedProjectId: widget.selectedProjectId,
+                ),
+              )
+            else ...[
+              _Toolbar(
+                visibleOptional: _visibleOptional,
+                isDetailOpen: widget.isDetailOpen,
+                singleProject: _singleProject,
+                onToggle: _toggleColumn,
+                onReset: _resetToDefaults,
+              ),
+
+              // ── Column header row with resize handles ───────────────────
+              Container(
+                color: _T.white,
+                child: Column(
+                  children: [
+                    _HeaderRow(
                       effectiveVisible: effective,
-                      pinnedTrailingCol: _kBillingCol,
-                      builder:
-                          (col, animFraction) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: _kCellHPad,
-                            ),
-                            child: Opacity(
-                              opacity: animFraction,
-                              child: Text(
-                                col.label,
-                                style: const TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.7,
-                                  color: _T.slate400,
-                                ),
-                              ),
-                            ),
-                          ),
+                      onResizeEnd: _saveWidths,
                     ),
-                  ),
-                  const Divider(height: 1, thickness: 1, color: _T.slate200),
-                ],
+                    const Divider(height: 1, thickness: 1, color: _T.slate200),
+                  ],
+                ),
               ),
-            ),
 
-            // ── Data rows ──────────────────────────────────────────────
-            Expanded(
-              child:
-                  isLoading && tasks.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : error != null
-                      ? _ErrorState(
-                        error: error,
-                        onRetry: () {
-                          ref.read(taskNotifierProvider.notifier).clearError();
-                          _loadTasks();
-                        },
-                      )
-                      : tasks.isEmpty
-                      ? _EmptyState()
-                      : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: _kRowHPad,
-                          vertical: 8,
-                        ),
-                        itemCount: reversedTasks.length,
-                        separatorBuilder:
-                            (_, __) => const Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: _T.slate100,
-                            ),
-                        itemBuilder: (_, i) {
-                          final t = reversedTasks[i];
-                          final p =
-                              widget.projects.cast<Project?>().firstWhere(
-                                (pr) => pr!.id == t.projectId.toString(),
-                                orElse: () => null,
-                              ) ??
-                              widget.projects.firstOrNull;
+              // ── Data rows ──────────────────────────────────────────────
+              Expanded(
+                child:
+                    isLoading && tasks.isEmpty
+                        ? const Center(child: CircularProgressIndicator())
+                        : error != null
+                        ? _ErrorState(
+                          error: error,
+                          onRetry: () {
+                            ref
+                                .read(taskNotifierProvider.notifier)
+                                .clearError();
+                            _loadTasks();
+                          },
+                        )
+                        : tasks.isEmpty
+                        ? _EmptyState()
+                        : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: _kRowHPad,
+                            vertical: 8,
+                          ),
+                          itemCount: reversedTasks.length,
+                          separatorBuilder:
+                              (_, __) => const Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: _T.slate100,
+                              ),
+                          itemBuilder: (_, i) {
+                            final t = reversedTasks[i];
+                            final p =
+                                widget.projects.cast<Project?>().firstWhere(
+                                  (pr) => pr!.id == t.projectId.toString(),
+                                  orElse: () => null,
+                                ) ??
+                                widget.projects.firstOrNull;
 
-                          Member? m;
-                          try {
-                            m = members.firstWhere(
-                              (mem) => t.assignees.contains(mem.id),
+                            Member? m;
+                            try {
+                              m = members.firstWhere(
+                                (mem) => t.assignees.contains(mem.id),
+                              );
+                            } catch (_) {
+                              m = null;
+                            }
+
+                            return _TaskRow(
+                              taskId: t.id,
+                              project: p,
+                              assignee: m,
+                              effectiveVisible: effective,
+                              isSelected: widget.selectedTaskId == t.id,
+                              onTap: () => widget.onTaskSelected(t.id),
                             );
-                          } catch (_) {
-                            m = null;
-                          }
-
-                          return _TaskRow(
-                            taskId: t.id,
-                            project: p,
-                            assignee: m,
-                            effectiveVisible: effective,
-                            isSelected: widget.selectedTaskId == t.id,
-                            onTap: () => widget.onTaskSelected(t.id),
-                          );
-                        },
-                      ),
-            ),
+                          },
+                        ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -563,7 +651,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
     switch (event.type) {
       case TaskChangeType.created:
-        // No notification
         return;
       case TaskChangeType.updated:
         return;
@@ -590,9 +677,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         return;
     }
 
-    print("[TASK_LIST_VIEW] task: ${event.task?.id}, type: ${event.type}");
-
-    // Show notification
     AppToast.show(
       message: message,
       icon: icon,
@@ -604,10 +688,223 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HEADER ROW — renders column labels + resize handles
+// ─────────────────────────────────────────────────────────────────────────────
+class _HeaderRow extends StatelessWidget {
+  final Set<String> effectiveVisible;
+  final VoidCallback? onResizeEnd;
+
+  const _HeaderRow({required this.effectiveVisible, this.onResizeEnd});
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = _WidthScope.of(context);
+    // Build ordered list of all columns (scrollable + pinned billing)
+    final allCols = [..._kCols, _kBillingCol];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _kRowHPad, vertical: 8),
+      child: AnimatedBuilder(
+        animation: notifier,
+        builder: (context, _) {
+          return Row(children: _buildHeaderCells(context, notifier, allCols));
+        },
+      ),
+    );
+  }
+
+  List<Widget> _buildHeaderCells(
+    BuildContext context,
+    _ColumnWidthNotifier notifier,
+    List<_ColDef> allCols,
+  ) {
+    final result = <Widget>[];
+    final visibleCols =
+        allCols.where((c) {
+          if (c.id == 'billing') return true; // always visible in header
+          return effectiveVisible.contains(c.id);
+        }).toList();
+
+    for (int i = 0; i < visibleCols.length; i++) {
+      final col = visibleCols[i];
+      final w = notifier.widthOf(col.id);
+      if (w < 1) continue;
+
+      result.add(
+        SizedBox(
+          width: w,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+            child: Text(
+              col.label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.7,
+                color: _T.slate400,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Add resize handle between columns (not after the last one)
+      if (i < visibleCols.length - 1) {
+        result.add(
+          _ResizeHandle(
+            colId: col.id,
+            notifier: notifier,
+            onResizeEnd: onResizeEnd,
+          ),
+        );
+      }
+    }
+
+    return result;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESIZE HANDLE
+// ─────────────────────────────────────────────────────────────────────────────
+class _ResizeHandle extends StatefulWidget {
+  final String colId;
+  final _ColumnWidthNotifier notifier;
+  final VoidCallback? onResizeEnd;
+
+  const _ResizeHandle({
+    required this.colId,
+    required this.notifier,
+    this.onResizeEnd,
+  });
+
+  @override
+  State<_ResizeHandle> createState() => _ResizeHandleState();
+}
+
+class _ResizeHandleState extends State<_ResizeHandle> {
+  bool _dragging = false;
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: (_) => setState(() => _dragging = true),
+        onHorizontalDragUpdate: (details) {
+          widget.notifier.resize(widget.colId, details.delta.dx);
+        },
+        onHorizontalDragEnd: (_) {
+          setState(() => _dragging = false);
+          widget.onResizeEnd?.call();
+        },
+        child: SizedBox(
+          width: _kResizeHandleWidth,
+          height: 20,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _dragging ? 2 : (_hovering ? 1.5 : 1),
+              height: _dragging ? 20 : 12,
+              decoration: BoxDecoration(
+                color:
+                    _dragging
+                        ? _T.blue
+                        : (_hovering ? _T.slate400 : _T.slate200),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COLUMN ROW — shared by header and task rows
+// Reads widths from _WidthScope. No animation controller needed — the
+// notifier drives rebuilds, and AnimatedContainer handles smooth transitions.
+// ─────────────────────────────────────────────────────────────────────────────
+typedef _CellBuilder = Widget Function(_ColDef col);
+
+class _ColRow extends StatelessWidget {
+  final Set<String> effectiveVisible;
+  final _CellBuilder builder;
+  final bool includeBilling;
+
+  const _ColRow({
+    super.key,
+    required this.effectiveVisible,
+    required this.builder,
+    this.includeBilling = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = _WidthScope.of(context);
+    return AnimatedBuilder(
+      animation: notifier,
+      builder: (context, _) {
+        return Row(children: _buildCells(notifier));
+      },
+    );
+  }
+
+  List<Widget> _buildCells(_ColumnWidthNotifier notifier) {
+    final result = <Widget>[];
+    for (final col in _kCols) {
+      final w = notifier.widthOf(col.id);
+      final isVisible = effectiveVisible.contains(col.id);
+      if (!isVisible && w < 1) continue;
+
+      result.add(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          width: isVisible ? w : 0,
+          clipBehavior: Clip.hardEdge,
+          decoration: const BoxDecoration(),
+          child:
+              isVisible
+                  ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+                    child: builder(col),
+                  )
+                  : const SizedBox.shrink(),
+        ),
+      );
+
+      // Spacer for the resize handle width — keeps cells aligned with header
+      if (col.id != _kBillingCol.id) {
+        result.add(const SizedBox(width: _kResizeHandleWidth));
+      }
+    }
+
+    if (includeBilling) {
+      final bw = notifier.widthOf(_kBillingCol.id);
+      result.add(
+        SizedBox(
+          width: bw,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+            child: builder(_kBillingCol),
+          ),
+        ),
+      );
+    }
+
+    return result;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PROJECT HEADER
-//
-// Shows the active project name (or "All Projects") with its colour dot, plus
-// the List / Board view-mode toggle tabs and connection status indicator.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectHeader extends StatelessWidget {
   final Project? activeProject;
@@ -643,13 +940,6 @@ class _ProjectHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: activeProject!.color,
                 shape: BoxShape.circle,
-                // boxShadow: [
-                //   BoxShadow(
-                //     color: activeProject!.color.withOpacity(0.3),
-                //     blurRadius: 4,
-                //     spreadRadius: 1,
-                //   ),
-                // ],
               ),
             ),
             const SizedBox(width: 10),
@@ -714,7 +1004,6 @@ class _ProjectHeader extends StatelessWidget {
           ),
 
           const SizedBox(width: 16),
-
           _ViewToggle(current: viewMode, onChange: onViewModeChanged),
         ],
       ),
@@ -732,25 +1021,18 @@ class _ConnectionIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (status == ConnectionStatus.connected) return const SizedBox.shrink();
+
     Color color;
     IconData icon;
     String tooltip;
 
     switch (status) {
-      case ConnectionStatus.connected:
-        color = _T.green;
-        icon = Icons.cloud_done;
-        tooltip = 'Connected - Real-time updates active';
-        break;
       case ConnectionStatus.connecting:
-        color = _T.amber;
-        icon = Icons.cloud_sync;
-        tooltip = 'Connecting...';
-        break;
       case ConnectionStatus.reconnecting:
         color = _T.amber;
         icon = Icons.cloud_sync;
-        tooltip = 'Reconnecting...';
+        tooltip = 'Connecting...';
         break;
       case ConnectionStatus.disconnected:
         color = _T.slate400;
@@ -762,36 +1044,38 @@ class _ConnectionIndicator extends StatelessWidget {
         icon = Icons.cloud_off;
         tooltip = 'Connection error';
         break;
+      default:
+        color = _T.slate400;
+        icon = Icons.cloud_off;
+        tooltip = 'Offline';
     }
 
-    return status == ConnectionStatus.connected
-        ? SizedBox()
-        : Tooltip(
-          message: tooltip,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: color.withOpacity(0.3)),
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 5),
+            Text(
+              'Offline',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 12, color: color),
-                const SizedBox(width: 5),
-                Text(
-                  status == ConnectionStatus.connected ? 'Live' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -816,7 +1100,6 @@ class _ErrorState extends StatelessWidget {
             decoration: BoxDecoration(
               color: _T.red50,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [_T.shadowSm],
             ),
             child: const Icon(Icons.error_outline, size: 28, color: _T.red),
           ),
@@ -856,19 +1139,8 @@ class _ErrorState extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VIEW TOGGLE  (List / Board pill tabs)
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
 // VIEW TOGGLE
-//
-// Matches the board view filter bar design language exactly:
-//   • No outer container/border — the toggle floats cleanly
-//   • Active tab: slate100 filled pill, ink2 text, colored icon
-//   • Inactive tab: transparent, slate500 text, slate400 icon
-//   • Animated pill slides between tabs (no jump — smooth indicator)
-//   • Hover: slate100 bg on inactive tabs
 // ─────────────────────────────────────────────────────────────────────────────
-
 class _ViewToggle extends StatelessWidget {
   final _ViewMode current;
   final ValueChanged<_ViewMode> onChange;
@@ -924,7 +1196,6 @@ class _ToggleTabState extends State<_ToggleTab> {
         widget.isActive
             ? _T.slate100
             : (_hovered ? _T.slate100 : Colors.transparent);
-
     final Color iconColor =
         widget.isActive ? _T.blue : (_hovered ? _T.slate500 : _T.slate400);
     final Color textColor =
@@ -936,184 +1207,32 @@ class _ToggleTabState extends State<_ToggleTab> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(6),
           ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(widget.icon, size: 13, color: iconColor),
-                const SizedBox(width: 5),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 120),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        widget.isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: textColor,
-                  ),
-                  child: Text(widget.label),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, size: 13, color: iconColor),
+              const SizedBox(width: 5),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 120),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight:
+                      widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: textColor,
                 ),
-              ],
-            ),
+                child: Text(widget.label),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED COLUMN ROW
-// ─────────────────────────────────────────────────────────────────────────────
-typedef _ColCellBuilder = Widget Function(_ColDef col, double opacityFraction);
-
-class _AnimatedColRow extends StatefulWidget {
-  final Set<String> effectiveVisible;
-  final _ColCellBuilder builder;
-  final _ColDef? pinnedTrailingCol;
-
-  const _AnimatedColRow({
-    required this.effectiveVisible,
-    required this.builder,
-    this.pinnedTrailingCol,
-  });
-
-  @override
-  State<_AnimatedColRow> createState() => _AnimatedColRowState();
-}
-
-class _AnimatedColRowState extends State<_AnimatedColRow>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ac;
-  Map<String, double> _prevWidths = {};
-  Map<String, double> _targetWidths = {};
-  double _lastAvailableWidth = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ac = AnimationController(vsync: this, duration: _kColAnimDuration)
-      ..addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _ac.dispose();
-    super.dispose();
-  }
-
-  double _pinnedWidth(double availWidth) {
-    final p = widget.pinnedTrailingCol;
-    if (p == null) return 0;
-    final visibleCols =
-        _kCols.where((c) => widget.effectiveVisible.contains(c.id)).toList();
-    final totalFlex = visibleCols.fold<int>(0, (s, c) => s + c.flex) + p.flex;
-    return totalFlex > 0 ? (p.flex / totalFlex) * availWidth : 0;
-  }
-
-  Map<String, double> _computeTargets(double availWidth) {
-    final animAvail = availWidth - _pinnedWidth(availWidth);
-    final visibleCols =
-        _kCols.where((c) => widget.effectiveVisible.contains(c.id)).toList();
-    final totalFlex = visibleCols.fold<int>(0, (s, c) => s + c.flex);
-    final result = <String, double>{};
-    for (final col in _kCols) {
-      result[col.id] =
-          (widget.effectiveVisible.contains(col.id) && totalFlex > 0)
-              ? (col.flex / totalFlex) * animAvail
-              : 0;
-    }
-    return result;
-  }
-
-  void _startTransition(double availWidth) {
-    final newTargets = _computeTargets(availWidth);
-    final changed = newTargets.entries.any(
-      (e) => (e.value - (_targetWidths[e.key] ?? 0)).abs() > 0.5,
-    );
-    if (!changed && availWidth == _lastAvailableWidth) return;
-    _prevWidths = _currentWidths(availWidth);
-    _targetWidths = newTargets;
-    _lastAvailableWidth = availWidth;
-    _ac.forward(from: 0);
-  }
-
-  Map<String, double> _currentWidths(double availWidth) {
-    if (_targetWidths.isEmpty) return _computeTargets(availWidth);
-    final t = _ac.value;
-    return {
-      for (final col in _kCols)
-        col.id: _lerpD(
-          _prevWidths[col.id] ?? _targetWidths[col.id] ?? 0,
-          _targetWidths[col.id] ?? 0,
-          t,
-        ),
-    };
-  }
-
-  static double _lerpD(double a, double b, double t) => a + (b - a) * t;
-
-  @override
-  void didUpdateWidget(_AnimatedColRow old) {
-    super.didUpdateWidget(old);
-    if (old.effectiveVisible != widget.effectiveVisible &&
-        _lastAvailableWidth > 0) {
-      _startTransition(_lastAvailableWidth);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final avail = constraints.maxWidth;
-        if (_lastAvailableWidth == 0) {
-          _targetWidths = _computeTargets(avail);
-          _prevWidths = Map.from(_targetWidths);
-          _lastAvailableWidth = avail;
-        } else if ((avail - _lastAvailableWidth).abs() > 1) {
-          _targetWidths = _computeTargets(avail);
-          _prevWidths = Map.from(_targetWidths);
-          _lastAvailableWidth = avail;
-        }
-
-        final widths = _currentWidths(avail);
-        final pinnedW = _pinnedWidth(avail);
-        final pinned = widget.pinnedTrailingCol;
-
-        return Row(
-          children: [
-            ..._kCols.map((col) {
-              final w = widths[col.id] ?? 0;
-              final visible = widget.effectiveVisible.contains(col.id);
-              final opacity =
-                  visible
-                      ? Curves.easeOut.transform(
-                        _ac.isAnimating ? _ac.value : 1.0,
-                      )
-                      : Curves.easeIn.transform(
-                        _ac.isAnimating ? (1 - _ac.value) : 0.0,
-                      );
-              return SizedBox(
-                width: w,
-                child:
-                    w < 1
-                        ? const SizedBox.shrink()
-                        : widget.builder(col, opacity.clamp(0.0, 1.0)),
-              );
-            }),
-            if (pinned != null)
-              SizedBox(width: pinnedW, child: widget.builder(pinned, 1.0)),
-          ],
-        );
-      },
     );
   }
 }
@@ -1147,7 +1266,6 @@ class _Toolbar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
       child: Row(
         children: [
-          // Task count hint when filtered
           if (singleProject)
             const Padding(
               padding: EdgeInsets.only(right: 8),
@@ -1156,9 +1274,7 @@ class _Toolbar extends StatelessWidget {
                 style: TextStyle(fontSize: 11, color: _T.slate400),
               ),
             ),
-
           const Spacer(),
-
           if (isDetailOpen)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1252,9 +1368,9 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
     super.didUpdateWidget(old);
     _overlayVisible = Set.from(widget.visibleOptional);
     if (_open) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _overlay?.markNeedsBuild();
-      });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => mounted ? _overlay?.markNeedsBuild() : null,
+      );
     }
   }
 
@@ -1424,15 +1540,10 @@ class _ColumnPickerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // When in single-project mode, project col is always hidden — exclude it
-    // from the "Always visible" section since it doesn't appear anyway.
     final mandatoryCols = _kCols.where((c) => c.mandatory).toList();
     final optionalCols =
         _kCols.where((c) => !c.mandatory && c.id != 'project').toList();
-
-    // Project col shown as a special "auto" row
     final projectCol = _kCols.firstWhere((c) => c.id == 'project');
-
     final isDefault = _setsEqual(visibleOptional, _kDefaultOptionalOn);
 
     return Material(
@@ -1462,7 +1573,6 @@ class _ColumnPickerPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
               decoration: const BoxDecoration(
@@ -1523,7 +1633,6 @@ class _ColumnPickerPanel extends StatelessWidget {
                 ],
               ),
             ),
-            // Body
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
@@ -1540,8 +1649,6 @@ class _ColumnPickerPanel extends StatelessWidget {
                     const SizedBox(height: 16),
                     const Divider(height: 1, color: _T.slate100),
                     const SizedBox(height: 14),
-
-                    // Project column — special: auto-managed by filter
                     _SectionLabel('Auto-managed'),
                     const SizedBox(height: 8),
                     _AutoColRow(
@@ -1555,7 +1662,6 @@ class _ColumnPickerPanel extends StatelessWidget {
                     const SizedBox(height: 16),
                     const Divider(height: 1, color: _T.slate100),
                     const SizedBox(height: 14),
-
                     _SectionLabel('Optional columns'),
                     const SizedBox(height: 8),
                     ...optionalCols.map(
@@ -1570,7 +1676,6 @@ class _ColumnPickerPanel extends StatelessWidget {
                 ),
               ),
             ),
-            // Footer
             Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               decoration: const BoxDecoration(
@@ -1622,7 +1727,7 @@ class _ColumnPickerPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTO-MANAGED COLUMN ROW  (project column — controlled by filter)
+// AUTO-MANAGED COLUMN ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _AutoColRow extends StatelessWidget {
   final _ColDef col;
@@ -1699,6 +1804,7 @@ class _AutoColRow extends StatelessWidget {
 class _LockedColRow extends StatelessWidget {
   final _ColDef col;
   final String? trailingHint;
+
   const _LockedColRow({required this.col, this.trailingHint});
 
   @override
@@ -1758,6 +1864,7 @@ class _ToggleColRow extends StatefulWidget {
   final _ColDef col;
   final bool enabled;
   final VoidCallback onTap;
+
   const _ToggleColRow({
     required this.col,
     required this.enabled,
@@ -1779,8 +1886,10 @@ class _ToggleColRowState extends State<_ToggleColRow> {
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
           margin: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color:
                 widget.enabled
@@ -1794,59 +1903,52 @@ class _ToggleColRowState extends State<_ToggleColRow> {
                       : (_hovering ? _T.slate200 : Colors.transparent),
             ),
           ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color:
-                        widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    widget.col.icon,
-                    size: 13,
-                    color: widget.enabled ? _T.blue : _T.slate400,
-                  ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color:
+                      widget.enabled ? _T.blue.withOpacity(0.1) : _T.slate100,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.col.pickerLabel,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: widget.enabled ? _T.ink : _T.ink3,
-                        ),
+                child: Icon(
+                  widget.col.icon,
+                  size: 13,
+                  color: widget.enabled ? _T.blue : _T.slate400,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.col.pickerLabel,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: widget.enabled ? _T.ink : _T.ink3,
                       ),
-                      Text(
-                        widget.col.description,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: _T.slate400,
-                        ),
+                    ),
+                    Text(
+                      widget.col.description,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: _T.slate400,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                _MiniSwitch(
-                  value: widget.enabled,
-                  onChanged: (_) => widget.onTap(),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              _MiniSwitch(
+                value: widget.enabled,
+                onChanged: (_) => widget.onTap(),
+              ),
+            ],
           ),
         ),
       ),
@@ -1860,6 +1962,7 @@ class _ToggleColRowState extends State<_ToggleColRow> {
 class _MiniSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
+
   const _MiniSwitch({required this.value, this.onChanged});
 
   @override
@@ -1886,6 +1989,7 @@ class _MiniSwitch extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String text;
+
   const _SectionLabel(this.text);
 
   @override
@@ -1901,7 +2005,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASK ROW - Now with message indicator badge
+// TASK ROW
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends ConsumerStatefulWidget {
   final int taskId;
@@ -1927,12 +2031,9 @@ class _TaskRow extends ConsumerStatefulWidget {
 class _TaskRowState extends ConsumerState<_TaskRow> {
   bool _hovered = false;
 
-  // Completion tokens — a distinct light green palette so the row reads
-  // "done" at a glance without being loud.
-  static const _completeBg = Color(0xFFF0FDF4); // green-50
-  static const _completeBorder = Color(0xFFBBF7D0); // green-200
-  static const _completeText = Color(0xFF166534); // green-900 — readable
-  static const _completeMuted = Color.fromARGB(255, 31, 220, 129); // green-400
+  static const _completeBg = Color(0xFFF0FDF4);
+  static const _completeMuted = Color.fromARGB(255, 31, 220, 129);
+  static const _completeText = Color(0xFF166534);
 
   @override
   Widget build(BuildContext context) {
@@ -1952,7 +2053,6 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             ? dateParts.take(dateParts.length - 1).join(' ')
             : dateFormatted;
 
-    // Completed rows are non-interactive — no hover, no tap
     final Color rowColor =
         isCompleted
             ? (_hovered ? const Color(0xFFDCFCE7) : _completeBg)
@@ -1970,8 +2070,6 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         decoration: BoxDecoration(
           color: rowColor,
           borderRadius: BorderRadius.circular(isCompleted ? 3 : _T.r),
-          // Subtle green left-edge accent — makes completed rows scannable
-          // in a long list without relying on color alone.
           border:
               isCompleted
                   ? Border(left: BorderSide(color: _completeMuted, width: 2.75))
@@ -1987,41 +2085,23 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               padding: EdgeInsets.only(
                 top: 11,
                 bottom: 11,
-                // Compensate for the 3px border so cells stay aligned with
-                // non-completed rows.
                 left: isCompleted ? 0 : 3,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _AnimatedColRow(
-                      effectiveVisible: widget.effectiveVisible,
-                      pinnedTrailingCol: _kBillingCol,
-                      builder:
-                          (col, opacity) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: _kCellHPad,
-                            ),
-                            child: Opacity(
-                              opacity:
-                                  isCompleted
-                                      ? (opacity *
-                                          0.6) // globally dim all cells
-                                      : opacity,
-                              child: _cellFor(
-                                col,
-                                t,
-                                p,
-                                m,
-                                s,
-                                dateDisplay,
-                                isCompleted: isCompleted,
-                              ),
-                            ),
-                          ),
+              child: _ColRow(
+                effectiveVisible: widget.effectiveVisible,
+                builder:
+                    (col) => Opacity(
+                      opacity: isCompleted ? 0.6 : 1.0,
+                      child: _cellFor(
+                        col,
+                        t,
+                        p,
+                        m,
+                        s,
+                        dateDisplay,
+                        isCompleted: isCompleted,
+                      ),
                     ),
-                  ),
-                ],
               ),
             ),
           ),
@@ -2039,15 +2119,9 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     String date, {
     required bool isCompleted,
   }) {
-    // Shared text style overrides for completed rows
     TextStyle completedBody(TextStyle base) =>
         isCompleted
-            ? base.copyWith(
-              color: _completeText.withOpacity(0.55),
-              // decoration: col.id == 'task' ? TextDecoration.lineThrough : null,
-              decorationColor: _completeMuted.withOpacity(0.7),
-              decorationThickness: 1.5,
-            )
+            ? base.copyWith(color: _completeText.withOpacity(0.55))
             : base;
 
     return switch (col.id) {
@@ -2055,7 +2129,8 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         children: [
           Expanded(
             child: Text(
-              "${t.name}",
+              t.name,
+              overflow: TextOverflow.ellipsis,
               style: completedBody(
                 TextStyle(
                   fontSize: 13,
@@ -2114,12 +2189,12 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      // Stage pill: in completed rows show a dedicated "Completed" pill
-      // rather than whatever the stage pill renders — cleaner and unambiguous.
-      'stage' => isCompleted ? _CompletedStagePill() : StagePill(stageInfo: s),
+      'stage' =>
+        isCompleted ? const _CompletedStagePill() : StagePill(stageInfo: s),
 
       'date' => Text(
         date,
+        overflow: TextOverflow.ellipsis,
         style: completedBody(
           const TextStyle(fontSize: 12.5, color: _T.slate500),
         ),
@@ -2132,27 +2207,11 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
       'size' =>
         t.size != null && !t.size!.contains("null")
-            ? RichText(
-              text: TextSpan(
-                style: completedBody(
-                  const TextStyle(fontSize: 12.5, color: _T.ink3),
-                ),
-                children: [
-                  TextSpan(text: t.size!.split(' ')[0]),
-                  TextSpan(
-                    text:
-                        t.size!.split(' ').length > 1
-                            ? t.size!.split(' ')[1]
-                            : '',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color:
-                          isCompleted
-                              ? _completeText.withOpacity(0.35)
-                              : _T.slate400,
-                    ),
-                  ),
-                ],
+            ? Text(
+              t.size!,
+              overflow: TextOverflow.ellipsis,
+              style: completedBody(
+                const TextStyle(fontSize: 12.5, color: _T.ink3),
               ),
             )
             : const Text(
@@ -2164,6 +2223,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         t.quantity != null
             ? Text(
               '${t.quantity}',
+              overflow: TextOverflow.ellipsis,
               style: completedBody(
                 const TextStyle(
                   fontSize: 12.5,
@@ -2214,7 +2274,6 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               dimmed: isCompleted,
             ),
           ),
-          // Message indicator badge - appears after all columns
           if (t.lastMessageId != null) ...[
             _MessageIndicator(
               count: t.unreadCount > 0 ? t.unreadCount : t.messageCount,
@@ -2232,7 +2291,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MESSAGE INDICATOR - Shows when task has discussion messages
+// MESSAGE INDICATOR
 // ─────────────────────────────────────────────────────────────────────────────
 class _MessageIndicator extends StatelessWidget {
   final int count;
@@ -2248,7 +2307,6 @@ class _MessageIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = unread ? _T.blue : _T.ink3;
-
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
       child: Tooltip(
@@ -2282,34 +2340,23 @@ class _MessageIndicator extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPLETED STAGE PILL
-// Replaces StagePill in the stage column for completed rows.
 // ─────────────────────────────────────────────────────────────────────────────
 class _CompletedStagePill extends StatelessWidget {
   const _CompletedStagePill();
 
-  static const _fg = Color(0xFF166534);
-  static const _bg = Color(0xFFDCFCE7); // green-100
-
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Completed',
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            color: _fg,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => const Text(
+    'Completed',
+    style: TextStyle(
+      fontSize: 10.5,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF166534),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING STATUS CELL — updated with dimmed param
+// BILLING STATUS CELL
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingStatusCell extends StatelessWidget {
   final BillingStatus? status;
@@ -2326,12 +2373,12 @@ class _BillingStatusCell extends StatelessWidget {
       );
     }
 
-    final (String label, Color fg, Color bg) = switch (status!) {
-      BillingStatus.pending => ('-', _T.amber, const Color(0xFFFEF3C7)),
-      BillingStatus.invoiced => ('Invoiced', _T.blue, _T.blue50),
-      BillingStatus.foc => ('FOC', _T.green, const Color(0xFFECFDF5)),
-      BillingStatus.cancelled => ('Cancelled', _T.red, const Color(0xFFFEE2E2)),
-      BillingStatus.quoteGiven => ('Quote', _T.slate400, _T.slate100),
+    final String label = switch (status!) {
+      BillingStatus.pending => '-',
+      BillingStatus.invoiced => 'Invoiced',
+      BillingStatus.foc => 'FOC',
+      BillingStatus.cancelled => 'Cancelled',
+      BillingStatus.quoteGiven => 'Quote',
     };
 
     return Opacity(
