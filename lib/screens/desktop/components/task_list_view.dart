@@ -214,7 +214,7 @@ const _kBillingCol = _ColDef(
   pickerLabel: 'Billing Status',
   description: 'Invoice and payment status',
   icon: Icons.receipt_long_outlined,
-  mandatory: true,
+  mandatory: false,
   defaultOn: true,
   defaultWidth: 110,
 );
@@ -2266,25 +2266,19 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => Row(
-        children: [
-          Expanded(
-            child: _BillingStatusCell(
-              status: t.billingStatus,
-              dimmed: isCompleted,
-            ),
-          ),
-          if (t.lastMessageId != null) ...[
-            _MessageIndicator(
-              count: t.unreadCount > 0 ? t.unreadCount : t.messageCount,
-              dimmed: isCompleted,
-              unread: t.unreadCount > 0,
-            ),
-            const SizedBox(width: 2),
-          ],
-        ],
+      'billing' => _BillingStatusCell(
+        status: t.billingStatus,
+        dimmed: isCompleted,
       ),
 
+      // if (t.lastMessageId != null) ...[
+      //       _MessageIndicator(
+      //         count: t.unreadCount > 0 ? t.unreadCount : t.messageCount,
+      //         dimmed: isCompleted,
+      //         unread: t.unreadCount > 0,
+      //       ),
+      //       const SizedBox(width: 2),
+      //     ],
       _ => const SizedBox.shrink(),
     };
   }
@@ -2389,6 +2383,7 @@ class _BillingStatusCell extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w600,
           color: Colors.black,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
