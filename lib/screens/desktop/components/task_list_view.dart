@@ -1894,13 +1894,13 @@ class _ToggleColRowState extends State<_ToggleColRow> {
             color:
                 widget.enabled
                     ? _T.blue.withOpacity(0.05)
-                    : (_hovering ? _T.slate50 : Colors.transparent),
+                    : (_hovering ? _T.slate50 : Colors.white),
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
               color:
                   widget.enabled
                       ? _T.blue.withOpacity(0.2)
-                      : (_hovering ? _T.slate200 : Colors.transparent),
+                      : (_hovering ? _T.slate200 : Colors.white),
             ),
           ),
           child: Row(
