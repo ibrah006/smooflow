@@ -628,6 +628,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                               project: p,
                               assignee: m,
                               effectiveVisible: effective,
+                              isDetailOpen: widget.isDetailOpen,
                               isSelected: widget.selectedTaskId == t.id,
                               onTap: () => widget.onTaskSelected(t.id),
                             );
@@ -837,11 +838,13 @@ class _ColRow extends StatelessWidget {
   final Set<String> effectiveVisible;
   final _CellBuilder builder;
   final bool includeBilling;
+  final bool isDetailOpen;
 
   const _ColRow({
     super.key,
     required this.effectiveVisible,
     required this.builder,
+    required this.isDetailOpen,
     this.includeBilling = true,
   });
 
@@ -886,7 +889,7 @@ class _ColRow extends StatelessWidget {
       }
     }
 
-    if (includeBilling) {
+    if (includeBilling && !isDetailOpen) {
       final bw = notifier.widthOf(_kBillingCol.id);
       result.add(
         SizedBox(
@@ -2014,6 +2017,7 @@ class _TaskRow extends ConsumerStatefulWidget {
   final Set<String> effectiveVisible;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool isDetailOpen;
 
   const _TaskRow({
     required this.taskId,
@@ -2022,6 +2026,7 @@ class _TaskRow extends ConsumerStatefulWidget {
     required this.effectiveVisible,
     required this.isSelected,
     required this.onTap,
+    required this.isDetailOpen,
   });
 
   @override
@@ -2089,6 +2094,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               ),
               child: _ColRow(
                 effectiveVisible: widget.effectiveVisible,
+                isDetailOpen: widget.isDetailOpen,
                 builder:
                     (col) => Opacity(
                       opacity: isCompleted ? 0.6 : 1.0,
