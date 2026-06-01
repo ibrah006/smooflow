@@ -34,6 +34,11 @@ class Project {
 
   DateTime? taskLastModifiedAt;
 
+  // New
+  // This will reflect the number of tasks that have been completed
+  // A project is considered complete when all of it's tasks are completed
+  int completedTasksCount = 0;
+
   set status(String newStatus) {
     _status = newStatus;
   }
@@ -47,9 +52,7 @@ class Project {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Project &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
+      other is Project && runtimeType == other.runtimeType && id == other.id;
   @override
   int get hashCode => id.hashCode;
 
@@ -81,7 +84,7 @@ class Project {
     required this.materialLogs,
     required this.progressLogLastModifiedAt,
     required this.createdAt,
-    required this.color
+    required this.color,
   }) : _status = status,
        taskLastModifiedAt = null;
 
@@ -95,7 +98,7 @@ class Project {
     required this.assignedManagers,
     required this.client,
     required this.priority,
-    required this.color
+    required this.color,
   }) : _status = "Pending",
        tasks = [],
        dateStarted = DateTime.now(),
@@ -154,7 +157,7 @@ class Project {
               .toList() ??
           [],
       createdAt: DateTime.parse(json['createdAt']),
-      color: (json['color'] as String).toColor()!
+      color: (json['color'] as String).toColor()!,
     );
   }
 
@@ -174,7 +177,7 @@ class Project {
       'client': client.toJson(),
       'priority': priority,
       'progressLogs': progressLogs.map((logId) => {"id": logId}).toList(),
-      "color": color.toHex()
+      "color": color.toHex(),
     };
   }
 
