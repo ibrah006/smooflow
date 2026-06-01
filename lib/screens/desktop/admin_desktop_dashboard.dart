@@ -434,9 +434,7 @@ class _AdminDesktopDashboardScreenState
                                     ? DesktopMaterialsManagementScreen(
                                       onNavigateToReports: () {
                                         setState(() {
-                                          _view =
-                                              _AdminView
-                                                  .reports; // 👈 Animates screen over cleanly matching dashboard behavior
+                                          _view = _AdminView.reports;
                                         });
                                         _closeDetail();
                                       },
@@ -667,13 +665,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     widget.onProjectSelected(null);
                     widget.onViewChanged(_AdminView.list);
                   },
-                ),
-                // Reports Page
-                _SidebarNavItem(
-                  icon: Icons.analytics_rounded,
-                  label: 'Reports',
-                  isActive: widget.currentView == _AdminView.reports,
-                  onTap: () => widget.onViewChanged(_AdminView.reports),
                 ),
               ],
             ),
