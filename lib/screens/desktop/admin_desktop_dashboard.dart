@@ -160,40 +160,6 @@ class _AdminDesktopDashboardScreenState
             orElse: () => null,
           );
 
-  Future<void> _showSnack(BuildContext ctx, String msg, Color color) async {
-    kRootScaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                msg,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: _T.ink,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_T.rLg),
-        ),
-        duration: const Duration(seconds: 3),
-        elevation: 8,
-      ),
-    );
-  }
-
   Future<void> _advanceTask(Task advancedTask) async {
     // final next = advancedTask.status;
     // _showSnack(
@@ -564,19 +530,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
     );
   }
 
-  Future<void> _addProject(Project p) async {
-    await ref.read(projectNotifierProvider.notifier).create(p);
-    if (!mounted) return;
-    _showSnack('Project "${p.name}" created', _T.green);
-  }
-
-  void _showProjectModal() {
-    showDialog(
-      context: context,
-      builder: (_) => ProjectModal(onSave: _addProject),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -889,15 +842,19 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 //   • UserMenuChip: untouched, right-anchored
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _AdminTopbar extends StatelessWidget {
+class _AdminTopbar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
   const _AdminTopbar({required this.currentView, this.selectedProjectId});
 
+  @override
+  ConsumerState<_AdminTopbar> createState() => _AdminTopbarState();
+}
+
+class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
   // ── Section metadata ───────────────────────────────────────────────────────
-  // Returns (category, label) for non-overview views.
-  // category is rendered muted, label is rendered bold.
-  ({String category, String label}) _sectionMeta() => switch (currentView) {
+  ({String category, String label}) _sectionMeta() => switch (widget
+      .currentView) {
     _AdminView.inbox => (category: 'Workspace', label: 'Inbox'),
     _AdminView.list => (category: 'Workspace', label: 'Tasks'),
     _AdminView.reports => (
@@ -908,8 +865,55 @@ class _AdminTopbar extends StatelessWidget {
     _AdminView.inventory => (category: 'Operations', label: 'Inventory'),
     _AdminView.overview => (category: '', label: ''),
     _AdminView.accounts => (category: 'Operations', label: 'Accounts'),
-    _ => (category: 'Management', label: currentView.name.capitalize()),
+    _ => (category: 'Management', label: widget.currentView.name.capitalize()),
   };
+
+  Future<void> _addProject(Project p) async {
+    await ref.read(projectNotifierProvider.notifier).create(p);
+    if (!mounted) return;
+    _showSnack('Project "${p.name}" created', _T.green);
+  }
+
+  void _showProjectModal() {
+    showDialog(
+      context: context,
+      builder: (_) => ProjectModal(onSave: _addProject),
+    );
+  }
+
+  Future<void> _showSnack(String msg, Color color) async {
+    kRootScaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
+        duration: const Duration(seconds: 3),
+        elevation: 8,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -934,7 +938,7 @@ class _AdminTopbar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // ── Left: greeting or section breadcrumb ───────────────────────────
-          if (currentView == _AdminView.overview)
+          if (widget.currentView == _AdminView.overview)
             _GreetingSection(greeting: greeting, user: user, now: now)
           else
             _BreadcrumbSection(meta: _sectionMeta()),
@@ -942,9 +946,23 @@ class _AdminTopbar extends StatelessWidget {
           const Spacer(),
 
           // ── Right: create + user ───────────────────────────────────────────
-          _CreateTaskButton(
-            context: context,
-            selectedProjectId: selectedProjectId,
+          _PrimaryButton(
+            label: "New Project",
+            icon: Icons.add_rounded,
+            onTap: _showProjectModal,
+          ),
+          SizedBox(width: 8),
+          _PrimaryButton(
+            label: "New Task",
+            icon: Icons.add_rounded,
+            onTap:
+                () => AppRoutes.navigateTo(
+                  context,
+                  AppRoutes.designCreateTaskScreen,
+                  arguments: CreateTaskArgs(
+                    preselectedProjectId: widget.selectedProjectId,
+                  ),
+                ),
           ),
           const SizedBox(width: 12),
           if (user != null)
@@ -1191,44 +1209,6 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CREATE TASK BUTTON
-//
-// Custom button — no FilledButton/Material artifacts.
-// Matches the design language of the board's action controls:
-//   • blue fill, white text, 6px radius
-//   • Tight padding — sits at the same visual weight as the filter tabs
-//   • Subtle darkening on hover via AnimatedContainer
-// ─────────────────────────────────────────────────────────────────────────────
-class _CreateTaskButton extends StatefulWidget {
-  final BuildContext context;
-  final String? selectedProjectId;
-  const _CreateTaskButton({required this.context, this.selectedProjectId});
-
-  @override
-  State<_CreateTaskButton> createState() => _CreateTaskButtonState();
-}
-
-class _CreateTaskButtonState extends State<_CreateTaskButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return _PrimaryButton(
-      icon: Icons.add_rounded,
-      label: 'New Task',
-      onTap:
-          () => AppRoutes.navigateTo(
-            widget.context,
-            AppRoutes.designCreateTaskScreen,
-            arguments: CreateTaskArgs(
-              preselectedProjectId: widget.selectedProjectId,
-            ),
-          ),
     );
   }
 }
