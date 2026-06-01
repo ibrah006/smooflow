@@ -71,7 +71,12 @@ class _T {
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 class DesktopMaterialsManagementScreen extends ConsumerStatefulWidget {
-  const DesktopMaterialsManagementScreen({super.key});
+  final VoidCallback? onNavigateToReports; // 👈 Add this property here
+
+  const DesktopMaterialsManagementScreen({
+    super.key,
+    this.onNavigateToReports, // 👈 Hook it up here
+  });
 
   @override
   ConsumerState<DesktopMaterialsManagementScreen> createState() =>
