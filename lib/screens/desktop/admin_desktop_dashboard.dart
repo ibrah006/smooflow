@@ -445,7 +445,7 @@ class _AdminDesktopDashboardScreenState
                             curve: Curves.easeInOut,
                             width: _selectedTaskId != null ? _T.detailW : 0,
                             child:
-                                _selectedTaskId != null && _selectedTask != null
+                                _selectedTaskId != null
                                     ? DetailPanel(
                                       task: _selectedTask!,
                                       onClose: _closeDetail,
