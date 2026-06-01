@@ -946,12 +946,14 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
           const Spacer(),
 
           // ── Right: create + user ───────────────────────────────────────────
-          _PrimaryButton(
+          _OutlinedSecondaryButton(
             label: "New Project",
-            icon: Icons.add_rounded,
+            icon: Icons.folder_open_rounded,
             onTap: _showProjectModal,
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
+
+          // Explicit primary callout
           _PrimaryButton(
             label: "New Task",
             icon: Icons.add_rounded,
@@ -2603,6 +2605,63 @@ class _ColHeader extends StatelessWidget {
       color: _T.slate400,
     ),
   );
+}
+
+class _OutlinedSecondaryButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _OutlinedSecondaryButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_OutlinedSecondaryButton> createState() =>
+      _OutlinedSecondaryButtonState();
+}
+
+class _OutlinedSecondaryButtonState extends State<_OutlinedSecondaryButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.slate50 : _T.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(color: _hovered ? _T.slate300 : _T.slate200),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, size: 14, color: _T.slate500),
+              const SizedBox(width: 6),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
