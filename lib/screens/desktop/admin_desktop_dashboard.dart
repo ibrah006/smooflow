@@ -707,45 +707,46 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-            child: InkWell(
-              onTap: _showProjectModal,
-              borderRadius: BorderRadius.circular(_T.r),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.14),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(_T.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add,
-                      size: 14,
-                      color: Colors.white.withOpacity(0.4),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      'New Project',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+          //   child: InkWell(
+          //     onTap: _showProjectModal,
+          //     borderRadius: BorderRadius.circular(_T.r),
+          //     child: Container(
+          //       padding: const EdgeInsets.symmetric(
+          //         horizontal: 10,
+          //         vertical: 8,
+          //       ),
+          //       decoration: BoxDecoration(
+          //         border: Border.all(
+          //           color: Colors.white.withOpacity(0.14),
+          //           width: 1.5,
+          //         ),
+          //         borderRadius: BorderRadius.circular(_T.r),
+          //       ),
+          //       child: Row(
+          //         mainAxisAlignment: MainAxisAlignment.center,
+          //         children: [
+          //           Icon(
+          //             Icons.add,
+          //             size: 14,
+          //             color: Colors.white.withOpacity(0.4),
+          //           ),
+          //           const SizedBox(width: 7),
+          //           Text(
+          //             'New Project',
+          //             style: TextStyle(
+          //               fontSize: 12.5,
+          //               fontWeight: FontWeight.w500,
+          //               color: Colors.white.withOpacity(0.4),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          SizedBox(height: 12),
 
           // ── Projects ───────────────────────────────────────────────────
           Padding(
