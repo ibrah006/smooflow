@@ -54,6 +54,7 @@ import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
 import 'package:smooflow/screens/desktop/home_view.dart';
 import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
+import 'package:smooflow/screens/desktop/projects_page.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
@@ -116,6 +117,7 @@ enum _AdminView {
   reports,
   accounts,
   settings,
+  projects,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -443,6 +445,10 @@ class _AdminDesktopDashboardScreenState
                                     ? DesktopReportsScreen()
                                     : _view == _AdminView.accounts
                                     ? AccountsManagementScreen()
+                                    : _view == _AdminView.projects
+                                    ? DesktopProjectsScreen(
+                                      initialProjects: _projects,
+                                    )
                                     : SettingsPage(),
                           ),
 
@@ -664,6 +670,19 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   onTap: () {
                     widget.onProjectSelected(null);
                     widget.onViewChanged(_AdminView.list);
+                  },
+                ),
+                _SidebarNavItem(
+                  icon: Icons.folder_open_rounded,
+                  label: 'Projects',
+                  isActive: widget.currentView == _AdminView.projects,
+                  badge:
+                      widget.projects.length > 0
+                          ? widget.projects.length.toString()
+                          : null,
+                  onTap: () {
+                    widget.onProjectSelected(null);
+                    widget.onViewChanged(_AdminView.projects);
                   },
                 ),
               ],
