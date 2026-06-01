@@ -431,7 +431,16 @@ class _AdminDesktopDashboardScreenState
                                     : _view == _AdminView.printers
                                     ? DesktopPrinterManagementScreen()
                                     : _view == _AdminView.inventory
-                                    ? DesktopMaterialsManagementScreen()
+                                    ? DesktopMaterialsManagementScreen(
+                                      onNavigateToReports: () {
+                                        setState(() {
+                                          _view =
+                                              _AdminView
+                                                  .reports; // 👈 Animates screen over cleanly matching dashboard behavior
+                                        });
+                                        _closeDetail();
+                                      },
+                                    )
                                     : _view == _AdminView.reports
                                     ? DesktopReportsScreen()
                                     : _view == _AdminView.accounts
