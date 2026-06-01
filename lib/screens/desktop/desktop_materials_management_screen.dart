@@ -737,6 +737,50 @@ class _Topbar extends StatelessWidget {
             ),
           ],
         ),
+
+        // ─── NEW UI/UX SUB NAV TOGGLE BUTTON ───
+        const SizedBox(width: 32),
+        if (onReportsTap != null)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onReportsTap,
+              borderRadius: BorderRadius.circular(_T.r),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _T.slate100,
+                  borderRadius: BorderRadius.circular(_T.r),
+                  border: Border.all(color: _T.slate200),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.bar_chart_rounded, size: 16, color: _T.blue),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'View Reports',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _T.ink3,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: _T.slate400,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         const Spacer(),
         GhostActionButton(
           label: 'Import CSV',
