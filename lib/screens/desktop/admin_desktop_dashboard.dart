@@ -143,7 +143,11 @@ class _AdminDesktopDashboardScreenState
   bool _isAddingTask = false;
   bool _isInitLoading = true;
 
-  void _selectTask(int id) => setState(() => _selectedTaskId = id);
+  void _selectTask(int id) async {
+    // if (id == _selectedTaskId) return; // already selected
+    setState(() => _selectedTaskId = id);
+  }
+
   void _closeDetail() => setState(() => _selectedTaskId = null);
 
   Task? get _selectedTask =>
