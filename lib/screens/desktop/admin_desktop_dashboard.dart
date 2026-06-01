@@ -765,7 +765,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 _SidebarNavItem(
                   icon: CupertinoIcons.cube_box,
                   label: 'Materials',
-                  isActive: widget.currentView == _AdminView.inventory,
+                  isActive:
+                      widget.currentView == _AdminView.inventory ||
+                      widget.currentView == _AdminView.reports,
                   onTap: () => widget.onViewChanged(_AdminView.inventory),
                 ),
                 _SidebarNavItem(
@@ -878,7 +880,10 @@ class _AdminTopbar extends StatelessWidget {
   ({String category, String label}) _sectionMeta() => switch (currentView) {
     _AdminView.inbox => (category: 'Workspace', label: 'Inbox'),
     _AdminView.list => (category: 'Workspace', label: 'Tasks'),
-    _AdminView.reports => (category: 'Workspace', label: 'Reports'),
+    _AdminView.reports => (
+      category: 'Workspace  /  Materials',
+      label: 'Reports',
+    ),
     _AdminView.printers => (category: 'Operations', label: 'Printers'),
     _AdminView.inventory => (category: 'Operations', label: 'Inventory'),
     _AdminView.overview => (category: '', label: ''),
