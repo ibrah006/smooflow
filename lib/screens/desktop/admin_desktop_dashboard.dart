@@ -14,6 +14,7 @@
 
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -625,18 +626,19 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
                 // Tasks nav item → goes straight to list view with no filter
-                _SidebarNavItem(
-                  icon: Icons.notifications_outlined,
-                  label: 'Inbox',
-                  isActive: widget.currentView == _AdminView.inbox,
-                  badge: null,
-                  // widget.tasks.length > 0
-                  //     ? widget.tasks.length.toString()
-                  //     : null,
-                  onTap: () {
-                    widget.onViewChanged(_AdminView.inbox);
-                  },
-                ),
+                if (kDebugMode)
+                  _SidebarNavItem(
+                    icon: Icons.notifications_outlined,
+                    label: 'Inbox',
+                    isActive: widget.currentView == _AdminView.inbox,
+                    badge: null,
+                    // widget.tasks.length > 0
+                    //     ? widget.tasks.length.toString()
+                    //     : null,
+                    onTap: () {
+                      widget.onViewChanged(_AdminView.inbox);
+                    },
+                  ),
                 _SidebarNavItem(
                   icon: Icons.assignment_outlined,
                   label: 'All Tasks',
