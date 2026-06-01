@@ -382,7 +382,11 @@ class _ManageMaterialsScreenState
       backgroundColor: _T.slate50,
       body: Column(
         children: [
-          _Topbar(onAdd: _openCreate, onImport: _showImportDialog),
+          _Topbar(
+            onAdd: _openCreate,
+            onImport: _showImportDialog,
+            onReportsTap: widget.onNavigateToReports, // 👈 Forward it here
+          ),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
