@@ -447,6 +447,7 @@ class _AdminDesktopDashboardScreenState
                             child:
                                 _selectedTaskId != null
                                     ? DetailPanel(
+                                      key: ValueKey(_selectedTaskId),
                                       task: _selectedTask!,
                                       onClose: _closeDetail,
                                       onAdvance:
