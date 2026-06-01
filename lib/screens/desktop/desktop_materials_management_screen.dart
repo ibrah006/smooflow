@@ -693,7 +693,14 @@ class _SkeletonMaterialTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _Topbar extends StatelessWidget {
   final VoidCallback onAdd, onImport;
-  const _Topbar({required this.onAdd, required this.onImport});
+  final VoidCallback?
+  onReportsTap; // 👈 Add parameter to catch the navigation callback
+
+  const _Topbar({
+    required this.onAdd,
+    required this.onImport,
+    this.onReportsTap, // 👈 Hook parameter up
+  });
 
   @override
   Widget build(BuildContext context) => Container(
