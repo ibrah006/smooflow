@@ -24,8 +24,13 @@ enum ProjectFilter { incomplete, all, completed }
 
 class DesktopProjectsScreen extends StatefulWidget {
   final List<Project> initialProjects;
+  final Function(String id) onProjectSelected;
 
-  const DesktopProjectsScreen({super.key, required this.initialProjects});
+  const DesktopProjectsScreen({
+    super.key,
+    required this.initialProjects,
+    required this.onProjectSelected,
+  });
 
   @override
   State<DesktopProjectsScreen> createState() => _DesktopProjectsScreenState();
@@ -196,9 +201,7 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
       itemBuilder: (context, index) {
         return _ProjectCard(
           project: projects[index],
-          onTap: () {
-            // Context placeholder for handling layout detailed overlay or side sheets
-          },
+          onTap: () => widget.onProjectSelected(projects[index].id),
         );
       },
     );

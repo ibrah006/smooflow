@@ -414,6 +414,13 @@ class _AdminDesktopDashboardScreenState
                                     : _view == _AdminView.projects
                                     ? DesktopProjectsScreen(
                                       initialProjects: _projects,
+                                      onProjectSelected:
+                                          (id) => setState(() {
+                                            _selectedProjectId = id;
+                                            // Switch to list view when a project is selected so the
+                                            // user immediately sees filtered results.
+                                            _view = _AdminView.list;
+                                          }),
                                     )
                                     : SettingsPage(),
                           ),
