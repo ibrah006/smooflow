@@ -462,6 +462,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required int? quantity,
     required String? size,
     required String? name,
+    required DateTime? date,
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {

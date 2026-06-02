@@ -282,6 +282,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             name: null,
+            date: null,
           );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
@@ -436,6 +437,31 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onClose();
   }
 
+  // Update Task Date
+  Future<void> _onTaskDateChange(String newValue) async {
+    final taskDate =
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .date ??
+        null;
+
+    if (taskDate != null) {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            name: null,
+            billingStatus: null,
+            ref: null,
+            quantity: null,
+            size: null,
+            date: taskDate,
+          );
+    }
+  }
+
   // On Update Task title
   Future<void> _onTaskNameChange(String newValue) async {
     final taskName =
@@ -457,6 +483,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             ref: null,
             quantity: null,
             size: null,
+            date: null,
           );
     }
   }
@@ -481,6 +508,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             ref: newValue,
             quantity: null,
             size: null,
+            date: null,
           );
     }
   }
@@ -513,6 +541,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size:
                 '${updateWidth ? newValue : s.width}×${updateWidth ? s.height : newValue} cm',
+            date: null,
           );
     }
   }
@@ -546,6 +575,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             ref: null,
             quantity: newValue.floor(),
             size: null,
+            date: null,
           );
     }
   }
