@@ -449,7 +449,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         null;
 
     if (!taskDate!.isAtSameMomentAs(newValue)) {
-      print("on task date changed called and is through");
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
@@ -885,10 +884,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 //     ),
                                 //   ),
                                 // ),
-                                if (isOverdue) ...[
-                                  const SizedBox(width: 6),
-                                  const _Badge('Overdue', _T.red, _T.red50),
-                                ],
                                 if (isSoon && !isOverdue) ...[
                                   const SizedBox(width: 6),
                                   const _Badge(

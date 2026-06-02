@@ -464,8 +464,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required String? name,
     required DateTime? date,
   }) async {
-    print("update task notifier function called");
-
     int? localTaskNameChangeEventId;
     if (name != null) {
       final canUpdateName = state.canUpdateName(taskId: task.id, newName: name);
@@ -491,8 +489,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
       // Nothing to update
       return;
     }
-
-    print("[update task notifier function] should be passed through");
 
     await _repo.update(
       task: task,
