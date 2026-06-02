@@ -443,6 +443,7 @@ class _AdminDesktopDashboardScreenState
                                               _view = _AdminView.list;
                                             });
                                           },
+                                          onPinProject: 
                                         )
                                         : SettingsPage(),
                               ),

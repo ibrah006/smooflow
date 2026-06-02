@@ -26,11 +26,13 @@ enum ProjectFilter { incomplete, all, completed }
 class DesktopProjectsScreen extends StatefulWidget {
   final List<Project> initialProjects;
   final ValueChanged<String> onProjectSelected;
+  final ValueChanged<String> onPinProject;
 
   const DesktopProjectsScreen({
     super.key,
     required this.initialProjects,
     required this.onProjectSelected,
+    required this.onPinProject,
   });
 
   @override
