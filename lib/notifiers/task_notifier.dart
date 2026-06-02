@@ -496,6 +496,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       quantity: quantity,
       size: size,
       name: name,
+      date: date,
     );
 
     if (localTaskNameChangeEventId != null) {

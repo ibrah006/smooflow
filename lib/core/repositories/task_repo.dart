@@ -273,6 +273,7 @@ class TaskRepo {
     required int? quantity,
     required String? size,
     required String? name,
+    required DateTime? date,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
@@ -290,6 +291,7 @@ class TaskRepo {
         "ref": ref,
         "quantity": quantity,
         "size": size,
+        "date": date?.toIso8601String(),
         ...name != null ? {"name": name} : {},
       },
     );
