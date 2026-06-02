@@ -459,7 +459,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             ref: null,
             quantity: null,
             size: null,
-            date: taskDate,
+            date: newValue,
           );
     }
   }
