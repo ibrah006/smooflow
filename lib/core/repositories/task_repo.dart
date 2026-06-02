@@ -284,6 +284,8 @@ class TaskRepo {
       return;
     }
 
+    print("[task repo] update endpoint, date: $date");
+
     final response = await ApiClient.http.put(
       '/tasks/${task.id}',
       body: {

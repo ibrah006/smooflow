@@ -109,8 +109,6 @@ class _GhostDateInputState extends State<GhostDateInput> {
 
               setState(() {});
 
-              print("on date picked in ghost date field: $d");
-
               widget.onChanged(d);
             },
             onDismiss: _closeCalendar,
