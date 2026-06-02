@@ -58,7 +58,7 @@ class GhostDateInput extends StatefulWidget {
     super.key,
     this.initialValue,
     required this.onChanged,
-    this.color = Colors.black, // fallback token
+    this.color = const Color(0xFF1E293B), // Matches _T.ink3 default
   });
 
   static const double _kCalendarH = 316.0;
@@ -71,8 +71,8 @@ class GhostDateInput extends StatefulWidget {
 class _GhostDateInputState extends State<GhostDateInput> {
   bool _typingMode = false;
   bool _calendarOpen = false;
+  bool _isHovered = false; // Tracks dynamic mouse entrance matrices
 
-  // Crucial: This link connects the target anchor widget with the overlay child layer
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
@@ -123,34 +123,73 @@ class _GhostDateInputState extends State<GhostDateInput> {
 
   @override
   void dispose() {
-    _removeOverlay(); // Clean up overlay to avoid memory leaks if widget is unmounted
+    _removeOverlay();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Basic date parsing fallback helper if you don't use your exact project's utility method
+    // Utility display text logic
     final String dateText =
         widget.initialValue != null
             ? "${widget.initialValue!.day}/${widget.initialValue!.month}/${widget.initialValue!.year}"
-            : "Select Date";
+            : "Set Date";
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        behavior:
-            HitTestBehavior
-                .opaque, // Ensures click metrics capture small text slices precisely
+        behavior: HitTestBehavior.opaque,
         onTap: _toggleCalendar,
-        // FIX: Wrap target base layer inside a CompositedTransformTarget bound to your _layerLink
         child: CompositedTransformTarget(
           link: _layerLink,
-          child: Text(
-            dateText,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: widget.color,
+          // Inline layout container managing the responsive design frame transforms
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              // Smooth background reveal transition
+              color:
+                  _calendarOpen
+                      ? widget.color.withOpacity(0.08)
+                      : (_isHovered
+                          ? widget.color.withOpacity(0.05)
+                          : Colors.transparent),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity:
+                      (_isHovered ||
+                              _calendarOpen ||
+                              widget.initialValue == null)
+                          ? 0.6
+                          : 0.3,
+                  child: Icon(
+                    Icons.calendar_today_rounded,
+                    size: 13,
+                    color: widget.color,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  dateText,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    // Slightly shifts color matching if it's currently open
+                    color:
+                        _calendarOpen
+                            ? widget.color.withOpacity(0.8)
+                            : widget.color,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
