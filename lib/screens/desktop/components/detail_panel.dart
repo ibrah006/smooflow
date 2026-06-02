@@ -447,7 +447,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .date ??
         null;
 
-    if (taskDate != null) {
+    if (taskDate != newValue) {
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
@@ -860,17 +860,36 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             label: 'Date',
                             child: Row(
                               children: [
-                                Text(
-                                  fmtDate(d),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        isOverdue
-                                            ? _T.red
-                                            : isSoon
-                                            ? _T.amber
-                                            : _T.ink3,
+                                // Text(
+                                //   fmtDate(d),
+                                //   style: TextStyle(
+                                //     fontSize: 13,
+                                //     fontWeight: FontWeight.w500,
+                                //     color:
+                                //         isOverdue
+                                //             ? _T.red
+                                //             : isSoon
+                                //             ? _T.amber
+                                //             : _T.ink3,
+                                //   ),
+                                // ),
+                                Expanded(
+                                  child: GhostTextField(
+                                    initialText: fmtDate(d),
+                                    onSubmitted: _onTaskDateChange,
+                                    hint: "Date",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          isOverdue
+                                              ? _T.red
+                                              : isSoon
+                                              ? _T.amber
+                                              : _T.ink3,
+                                      letterSpacing: -0.3,
+                                      height: 1.35,
+                                    ),
                                   ),
                                 ),
                                 if (isOverdue) ...[
