@@ -99,6 +99,8 @@ class _T {
   static const rXl = 16.0;
 }
 
+const String _pinnedProjectsKey = 'pinned_project_ids';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Stage metadata
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,6 +148,8 @@ class _AdminDesktopDashboardScreenState
   final FocusNode _addTaskFocusNode = FocusNode();
   bool _isAddingTask = false;
   bool _isInitLoading = true;
+
+  List<String> _pinnedProjectIds = [];
 
   void _selectTask(int id) async {
     // if (id == _selectedTaskId) return; // already selected
@@ -574,8 +578,9 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final ValueChanged<String?> onProjectSelected;
   final bool isLoading;
   final ValueChanged<String?> togglePinProject;
+  List<String> pinnedProjectIds;
 
-  const _AdminSidebar({
+  _AdminSidebar({
     required this.currentView,
     required this.selectedProjectId,
     required this.projects,
@@ -585,6 +590,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.onProjectSelected,
     required this.isLoading,
     required this.togglePinProject,
+    required this.pinnedProjectIds,
   });
 
   @override
@@ -592,8 +598,6 @@ class _AdminSidebar extends ConsumerStatefulWidget {
 }
 
 class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
-  static const String _pinnedProjectsKey = 'pinned_project_ids';
-  List<String> _pinnedProjectIds = [];
   bool _loadingPins = true;
 
   @override
@@ -608,7 +612,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
       final List<String>? savedPins = prefs.getStringList(_pinnedProjectsKey);
       if (mounted) {
         setState(() {
-          _pinnedProjectIds = savedPins ?? [];
+          widget.pinnedProjectIds = savedPins ?? [];
           _loadingPins = false;
         });
       }
@@ -627,7 +631,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
   @override
   Widget build(BuildContext context) {
     final pinnedProjectsList =
-        widget.projects.where((p) => _pinnedProjectIds.contains(p.id)).toList();
+        widget.projects
+            .where((p) => widget.pinnedProjectIds.contains(p.id))
+            .toList();
 
     return Container(
       width: _T.sidebarW,
@@ -762,7 +768,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     itemBuilder: (ctx) {
                       final unpinned =
                           widget.projects
-                              .where((p) => !_pinnedProjectIds.contains(p.id))
+                              .where(
+                                (p) => !widget.pinnedProjectIds.contains(p.id),
+                              )
                               .toList();
                       if (unpinned.isEmpty) {
                         return [
@@ -812,7 +820,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: _DottedPinButton(
                             allProjects: widget.projects,
-                            pinnedIds: _pinnedProjectIds,
+                            pinnedIds: widget.pinnedProjectIds,
                             onProjectSelectedToPin: widget.togglePinProject,
                             onNavigateToProjects: () {
                               widget.onProjectSelected(null);
