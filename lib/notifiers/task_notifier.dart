@@ -634,6 +634,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
           '[TaskNotifier] Looking for task ${event.taskId}, found at index: $index',
         );
 
+        // If task already exists in memory
         if (index != -1) {
           if (event.task != null) {
             tasks[index] = event.task!;
