@@ -76,6 +76,8 @@ class _GhostDateInputState extends State<GhostDateInput> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
+  DateTime? selectedDate;
+
   void _toggleCalendar() {
     if (_calendarOpen) {
       _closeCalendar();
@@ -103,6 +105,7 @@ class _GhostDateInputState extends State<GhostDateInput> {
             selectedDate: widget.initialValue,
             onPick: (d) {
               widget.onChanged(d);
+              selectedDate = d;
               _closeCalendar();
             },
             onDismiss: _closeCalendar,
@@ -125,6 +128,13 @@ class _GhostDateInputState extends State<GhostDateInput> {
   void dispose() {
     _removeOverlay();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    selectedDate = widget.initialValue;
   }
 
   @override
