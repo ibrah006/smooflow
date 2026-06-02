@@ -439,7 +439,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   // Update Task Date
-  Future<void> _onTaskDateChange(String newValue) async {
+  Future<void> _onTaskDateChange(DateTime newValue) async {
     final taskDate =
         ref
             .read(taskNotifierProvider)
@@ -866,7 +866,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 // ),
                                 GhostDateInput(
                                   initialValue: d,
-                                  onChanged: (newValue) {},
+                                  onChanged: _onTaskDateChange,
                                 ),
                                 // MouseRegion(
                                 //   cursor: SystemMouseCursors.click,
