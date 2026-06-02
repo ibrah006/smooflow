@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-import 'package:smooflow/constants.dart'; // Adjust based on your token imports
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooflow/constants.dart';
+import 'package:smooflow/core/api/api_logger.dart'; // Ensure correct logger import path
 import 'package:smooflow/core/models/project.dart';
 
-/// Local design tokens mapping to your existing layout style guide
 class _T {
   static const Color white = Colors.white;
   static const Color slate50 = Color(0xFFF8FAFC);
@@ -24,7 +25,7 @@ enum ProjectFilter { incomplete, all, completed }
 
 class DesktopProjectsScreen extends StatefulWidget {
   final List<Project> initialProjects;
-  final Function(String id) onProjectSelected;
+  final ValueChanged<String> onProjectSelected;
 
   const DesktopProjectsScreen({
     super.key,
@@ -41,13 +42,56 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
   String _searchQuery = "";
   String? _selectedPriorityFilter;
 
+  static const String _pinnedProjectsKey = 'pinned_project_ids';
+  List<String> _pinnedProjectIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPinsSync();
+  }
+
+  Future<void> _loadPinsSync() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _pinnedProjectIds = prefs.getStringList(_pinnedProjectsKey) ?? [];
+      });
+    } catch (e, s) {
+      await AppLogger.logError(
+        message: "Failed syncing projects list pins",
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
+  Future<void> _togglePinCard(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = List<String>.from(_pinnedProjectIds);
+      if (current.contains(id)) {
+        current.remove(id);
+      } else {
+        current.add(id);
+      }
+      await prefs.setStringList(_pinnedProjectsKey, current);
+      setState(() {
+        _pinnedProjectIds = current;
+      });
+    } catch (e, s) {
+      await AppLogger.logError(
+        message: "Error processing persistent local pin toggles",
+        error: e,
+        stackTrace: s,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 1. Filter structural logic down based on requirements
     final filteredProjects =
         widget.initialProjects.where((project) {
-          // Determine completeness based on model spec: "all tasks completed"
-          // or status flag check
           final isCompleted =
               project.status.toLowerCase() == "finished" ||
               (project.tasks.isNotEmpty &&
@@ -58,7 +102,6 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
           if (_currentFilter == ProjectFilter.completed && !isCompleted)
             return false;
 
-          // Text queries
           if (_searchQuery.isNotEmpty) {
             final matchesName = project.name.toLowerCase().contains(
               _searchQuery.toLowerCase(),
@@ -69,7 +112,6 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
             if (!matchesName && !matchesClient) return false;
           }
 
-          // Priority matching filters
           if (_selectedPriorityFilter != null) {
             if (_selectedPriorityFilter == "High" && project.priority < 2)
               return false;
@@ -78,18 +120,15 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
             if (_selectedPriorityFilter == "Low" && project.priority != 0)
               return false;
           }
-
           return true;
         }).toList();
 
-    // Secondary sorting: High priority structural items pinned to front matrix
     filteredProjects.sort((a, b) => b.priority.compareTo(a.priority));
 
     return Scaffold(
       backgroundColor: _T.slate50,
       body: Column(
         children: [
-          // Screen Action Bar Header
           _Topbar(
             currentFilter: _currentFilter,
             onFilterChanged:
@@ -99,13 +138,30 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
             onPriorityChanged:
                 (val) => setState(() => _selectedPriorityFilter = val),
           ),
-
-          // Core Body Content Context
           Expanded(
             child:
                 filteredProjects.isEmpty
                     ? _buildEmptyState()
-                    : _buildProjectsGrid(filteredProjects),
+                    : GridView.builder(
+                      padding: const EdgeInsets.all(24),
+                      itemCount: filteredProjects.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 380,
+                            mainAxisExtent: 220,
+                            crossAxisSpacing: 18,
+                            mainAxisSpacing: 18,
+                          ),
+                      itemBuilder: (context, index) {
+                        final p = filteredProjects[index];
+                        return _ProjectCard(
+                          project: p,
+                          isPinned: _pinnedProjectIds.contains(p.id),
+                          onPinToggled: () => _togglePinCard(p.id),
+                          onTap: () => widget.onProjectSelected(p.id),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -115,9 +171,9 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
   Widget _buildEmptyState() {
     return Center(
       child: Container(
-        // maxWidth: 420,
+        width: 420,
         padding: const EdgeInsets.all(32),
-        // alignment: TextAlign.center,
+        // textAlign: TextAlign.center,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -139,6 +195,7 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
               _currentFilter == ProjectFilter.incomplete
                   ? 'No Active Projects'
                   : 'No Matches Found',
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -150,6 +207,7 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
               _currentFilter == ProjectFilter.incomplete
                   ? 'All pending operational tasks are caught up. Review historical files instead.'
                   : 'Try loosening your filter parameters or search queries.',
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
                 color: _T.slate400,
@@ -157,21 +215,17 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Nice explicit link requested to dynamically drill/clear state parameters
             if (_currentFilter == ProjectFilter.incomplete)
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _currentFilter = ProjectFilter.all;
-                  });
-                },
+                onPressed:
+                    () => setState(() => _currentFilter = ProjectFilter.all),
                 style: TextButton.styleFrom(foregroundColor: _T.blue),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'All Projects',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -187,27 +241,9 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
       ),
     );
   }
-
-  Widget _buildProjectsGrid(List<Project> projects) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: projects.length,
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 380,
-        mainAxisExtent: 220,
-        crossAxisSpacing: 18,
-        mainAxisSpacing: 18,
-      ),
-      itemBuilder: (context, index) {
-        return _ProjectCard(
-          project: projects[index],
-          onTap: () => widget.onProjectSelected(projects[index].id),
-        );
-      },
-    );
-  }
 }
 
+// ── Dropdown / Input Header Components Filter Topbar ─────────────────────────
 class _Topbar extends StatelessWidget {
   final ProjectFilter currentFilter;
   final ValueChanged<ProjectFilter> onFilterChanged;
@@ -258,8 +294,6 @@ class _Topbar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 32),
-
-          // Segmented Filter Controls
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -287,8 +321,6 @@ class _Topbar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-
-          // Search Box Container Input Field
           Container(
             width: 240,
             height: 36,
@@ -318,8 +350,6 @@ class _Topbar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
-          // Priority Dropdown filter context
           Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -338,12 +368,14 @@ class _Topbar extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: _T.ink),
                 onChanged: onPriorityChanged,
                 items:
-                    ['Low', 'Normal', 'High'].map((String val) {
-                      return DropdownMenuItem<String>(
-                        value: val,
-                        child: Text(val),
-                      );
-                    }).toList(),
+                    ['Low', 'Normal', 'High']
+                        .map(
+                          (String val) => DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(val),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
           ),
@@ -357,7 +389,6 @@ class _FilterTab extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-
   const _FilterTab({
     required this.label,
     required this.isActive,
@@ -373,16 +404,6 @@ class _FilterTab extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? _T.white : Colors.transparent,
           borderRadius: BorderRadius.circular(_T.r - 2),
-          boxShadow:
-              isActive
-                  ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                  : null,
         ),
         child: Text(
           label,
@@ -397,19 +418,25 @@ class _FilterTab extends StatelessWidget {
   }
 }
 
+// ── Interactive Project Card implementation with Pin Toggles ──────────────────
 class _ProjectCard extends StatelessWidget {
   final Project project;
+  final bool isPinned;
+  final VoidCallback onPinToggled;
   final VoidCallback onTap;
 
-  const _ProjectCard({required this.project, required this.onTap});
+  const _ProjectCard({
+    required this.project,
+    required this.isPinned,
+    required this.onPinToggled,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Math tracking configurations for clean percentages display
     final totalTasks = project.tasks.length;
     final doneTasks = project.completedTasksCount;
     final double percent = totalTasks == 0 ? 0.0 : (doneTasks / totalTasks);
-
     final DateFormat formatter = DateFormat('MMM dd, yyyy');
 
     return MouseRegion(
@@ -424,7 +451,7 @@ class _ProjectCard extends StatelessWidget {
             border: Border.all(color: _T.slate200),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withOpacity(0.01),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -433,7 +460,6 @@ class _ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Card Top row indicators
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -474,9 +500,27 @@ class _ProjectCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
 
-                  // Priority pill tag
+                  // Interactive Pin Toggle Button Icon
+                  IconButton(
+                    icon: Icon(
+                      isPinned
+                          ? Icons.push_pin_rounded
+                          : Icons.push_pin_outlined,
+                      size: 14,
+                    ),
+                    color: isPinned ? _T.blue : _T.slate400,
+                    tooltip:
+                        isPinned ? 'Unpin project' : 'Pin project to sidebar',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 16,
+                    onPressed: () {
+                      onPinToggled();
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -499,7 +543,6 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ],
               ),
-
               const Spacer(),
               if (project.description != null &&
                   project.description!.isNotEmpty) ...[
@@ -515,8 +558,6 @@ class _ProjectCard extends StatelessWidget {
                 ),
                 const Spacer(),
               ],
-
-              // Inline Project Task Execution Progression Metrics
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -550,12 +591,9 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
               const Divider(color: _T.slate100, height: 1),
               const SizedBox(height: 8),
-
-              // Card Metadata Footer Layout
               Row(
                 children: [
                   const Icon(
@@ -575,8 +613,6 @@ class _ProjectCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-
-                  // Clean status tag indicator badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
