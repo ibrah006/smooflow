@@ -56,7 +56,7 @@ import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
 import 'package:smooflow/screens/desktop/home_view.dart';
 import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
-import 'package:smooflow/screens/desktop/projects_page.dart';
+import 'package:smooflow/screens/desktop/desktop_projects_screen.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
@@ -497,6 +497,8 @@ class _AdminDesktopDashboardScreenState
   }
 }
 
+// Inside admin_desktop_dashboard.dart ── Make sure SharedPreferences is imported at the top
+
 class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
@@ -620,7 +622,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter actual structural project models using your loaded preferences array
     final pinnedProjectsList =
         widget.projects.where((p) => _pinnedProjectIds.contains(p.id)).toList();
 
@@ -630,7 +631,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Logo ───────────────────────────────────────────────────────
+          // ── Logo Row Context ───────────────────────────────────────────
           Container(
             height: _T.topbarH,
             decoration: const BoxDecoration(
@@ -674,7 +675,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          // ── Nav ────────────────────────────────────────────────────────
+          // ── Primary Navigation Links ───────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
             child: Column(
@@ -727,10 +728,73 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          // ── Pinned Projects Section ────────────────────────────────────
+          // ── Pinned Projects Core Panel ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 20, 10, 5),
-            child: _SidebarLabel('Pinned Projects'),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SidebarLabel('Pinned Projects'),
+                // When projects are already pinned, show a small quick-add contextual menu plus icon
+                if (pinnedProjectsList.isNotEmpty)
+                  PopupMenuButton<Project>(
+                    tooltip: 'Pin another project',
+                    icon: Icon(
+                      Icons.add_rounded,
+                      size: 14,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      maxHeight: 300,
+                      maxWidth: 220,
+                    ),
+                    offset: const Offset(0, 12),
+                    color: _T.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
+                    onSelected: (p) => _togglePinProject(p.id),
+                    itemBuilder: (ctx) {
+                      final unpinned =
+                          widget.projects
+                              .where((p) => !_pinnedProjectIds.contains(p.id))
+                              .toList();
+                      if (unpinned.isEmpty) {
+                        return [
+                          const PopupMenuItem(
+                            enabled: false,
+                            child: Text(
+                              'All projects pinned',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _T.slate400,
+                              ),
+                            ),
+                          ),
+                        ];
+                      }
+                      return unpinned
+                          .map(
+                            (p) => PopupMenuItem<Project>(
+                              value: p,
+                              height: 34,
+                              child: Text(
+                                p.name,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: _T.ink3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList();
+                    },
+                  ),
+              ],
+            ),
           ),
           Expanded(
             child: Padding(
@@ -739,15 +803,16 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   widget.isLoading || _loadingPins
                       ? const SidebarProjectsSkeleton()
                       : pinnedProjectsList.isEmpty
-                      ? Align(
-                        alignment: Alignment.topCenter,
+                      ? Center(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: _DottedPinButton(
-                            onTap: () {
-                              // Route directly into full Project selection stream
-                              // widget.onProjectSelected(null);
-                              // widget.onViewChanged(_AdminView.projects);
+                            allProjects: widget.projects,
+                            pinnedIds: _pinnedProjectIds,
+                            onProjectSelectedToPin: _togglePinProject,
+                            onNavigateToProjects: () {
+                              widget.onProjectSelected(null);
+                              widget.onViewChanged(_AdminView.projects);
                             },
                           ),
                         ),
@@ -779,7 +844,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           ),
           const SizedBox(height: 12),
 
-          // ── Operations ─────────────────────────────────────────────────
+          // ── Operations Block Sections ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 5, 10, 4),
             child: _SidebarLabel('Operations'),
@@ -813,7 +878,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          // ── Manage ─────────────────────────────────────────────────────
+          // ── Management Block Sections ──────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
             child: _SidebarLabel('Manage'),
@@ -851,8 +916,17 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 }
 
 class _DottedPinButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _DottedPinButton({required this.onTap});
+  final List<Project> allProjects;
+  final List<String> pinnedIds;
+  final ValueChanged<String> onProjectSelectedToPin;
+  final VoidCallback onNavigateToProjects;
+
+  const _DottedPinButton({
+    required this.allProjects,
+    required this.pinnedIds,
+    required this.onProjectSelectedToPin,
+    required this.onNavigateToProjects,
+  });
 
   @override
   State<_DottedPinButton> createState() => _DottedPinButtonState();
@@ -863,12 +937,118 @@ class _DottedPinButtonState extends State<_DottedPinButton> {
 
   @override
   Widget build(BuildContext context) {
+    final unpinnedProjects =
+        widget.allProjects
+            .where((p) => !widget.pinnedIds.contains(p.id))
+            .toList();
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
+      child: PopupMenuButton<String>(
+        tooltip: 'Quick pin dropdown menu',
+        offset: const Offset(0, 42),
+        constraints: const BoxConstraints(maxHeight: 280, maxWidth: 230),
+        color: _T.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r),
+          side: const BorderSide(color: _T.slate200),
+        ),
+        onSelected: (value) {
+          if (value == '_view_all_') {
+            widget.onNavigateToProjects();
+          } else {
+            widget.onProjectSelectedToPin(value);
+          }
+        },
+        itemBuilder: (ctx) {
+          if (unpinnedProjects.isEmpty) {
+            return [
+              const PopupMenuItem<String>(
+                enabled: false,
+                child: Text(
+                  'No other projects to pin',
+                  style: TextStyle(fontSize: 12, color: _T.slate400),
+                ),
+              ),
+            ];
+          }
+
+          final List<PopupMenuEntry<String>> items = [];
+          items.add(
+            const PopupMenuItem<String>(
+              enabled: false,
+              height: 26,
+              child: Text(
+                'SELECT A PROJECT TO PIN',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: _T.slate400,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          );
+
+          items.addAll(
+            unpinnedProjects.map(
+              (p) => PopupMenuItem<String>(
+                value: p.id,
+                height: 36,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: p.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        p.name,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _T.ink3,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+
+          items.add(const PopupMenuDivider(height: 1));
+          items.add(
+            const PopupMenuItem<String>(
+              value: '_view_all_',
+              height: 36,
+              child: Row(
+                children: [
+                  Icon(Icons.fullscreen_rounded, size: 15, color: _T.blue),
+                  SizedBox(width: 8),
+                  Text(
+                    'Open Projects Page...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _T.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          return items;
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           width: double.infinity,
