@@ -730,7 +730,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
           // ── Pinned Projects Core Panel ─────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 5),
+            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
