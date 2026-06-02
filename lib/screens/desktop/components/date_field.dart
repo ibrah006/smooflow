@@ -143,9 +143,7 @@ class _GhostDateInputState extends State<GhostDateInput> {
   Widget build(BuildContext context) {
     // Utility display text logic
     final String dateText =
-        _selectedDate != null
-            ? "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}"
-            : "Set Date";
+        _selectedDate != null ? _fmtDateFull(_selectedDate!) : "Set Date";
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -972,7 +970,6 @@ class _DayCellState extends State<_DayCell> {
 }
 
 String _fmtDateFull(DateTime d) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const months = [
     'Jan',
     'Feb',
@@ -987,5 +984,5 @@ String _fmtDateFull(DateTime d) {
     'Nov',
     'Dec',
   ];
-  return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
+  return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
