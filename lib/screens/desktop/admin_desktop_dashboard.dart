@@ -2988,22 +2988,3 @@ class _OutlinedSecondaryButtonState extends State<_OutlinedSecondaryButton> {
 // ─────────────────────────────────────────────────────────────────────────────
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
-
-String _fmtDateFull(DateTime d) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
-}

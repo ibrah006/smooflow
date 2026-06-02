@@ -107,6 +107,8 @@ class _GhostDateInputState extends State<GhostDateInput> {
               widget.onChanged(d);
               _selectedDate = d;
               _closeCalendar();
+
+              setState(() {});
             },
             onDismiss: _closeCalendar,
           ),
@@ -967,4 +969,23 @@ class _DayCellState extends State<_DayCell> {
       ),
     ),
   );
+}
+
+String _fmtDateFull(DateTime d) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
 }
