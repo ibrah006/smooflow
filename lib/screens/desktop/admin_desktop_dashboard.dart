@@ -746,8 +746,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                           child: _DottedPinButton(
                             onTap: () {
                               // Route directly into full Project selection stream
-                              widget.onProjectSelected(null);
-                              widget.onViewChanged(_AdminView.projects);
+                              // widget.onProjectSelected(null);
+                              // widget.onViewChanged(_AdminView.projects);
                             },
                           ),
                         ),
