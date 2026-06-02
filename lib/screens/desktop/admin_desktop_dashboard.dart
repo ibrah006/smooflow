@@ -304,6 +304,69 @@ class _AdminDesktopDashboardScreenState
     curve: Interval(slot * 0.08, (slot * 0.08) + 0.55, curve: Curves.easeOut),
   );
 
+  Future<void> _togglePinProject(String projectId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final updatedPins = List<String>.from(_pinnedProjectIds);
+
+      if (updatedPins.contains(projectId)) {
+        updatedPins.remove(projectId);
+        _showSnack('Project removed from pins', _T.slate400);
+      } else {
+        updatedPins.add(projectId);
+        _showSnack('Project pinned to sidebar', _T.green);
+      }
+
+      await prefs.setStringList(_pinnedProjectsKey, updatedPins);
+      if (mounted) {
+        setState(() {
+          _pinnedProjectIds = updatedPins;
+        });
+      }
+    } catch (e, s) {
+      await AppLogger.logError(
+        message: "Failed to update pinned projects state in shared preferences",
+        error: e,
+        stackTrace: s,
+      );
+      _showSnack('Error saving pin configurations', _T.red);
+    }
+  }
+
+  void _showSnack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.rLg),
+        ),
+        duration: const Duration(seconds: 3),
+        elevation: 8,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: Not very performance efficient
@@ -339,6 +402,7 @@ class _AdminDesktopDashboardScreenState
                 tasks: _pipelineTasks,
                 members: _members,
                 isLoading: _isInitLoading,
+                togglePinProject: _togglePinProject,
                 onViewChanged: (v) {
                   setState(() {
                     _view = v;
@@ -509,6 +573,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final ValueChanged<_AdminView> onViewChanged;
   final ValueChanged<String?> onProjectSelected;
   final bool isLoading;
+  final ValueChanged<String?> togglePinProject;
 
   const _AdminSidebar({
     required this.currentView,
@@ -519,6 +584,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.onViewChanged,
     required this.onProjectSelected,
     required this.isLoading,
+    required this.togglePinProject
   });
 
   @override
@@ -556,69 +622,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
         setState(() => _loadingPins = false);
       }
     }
-  }
-
-  Future<void> _togglePinProject(String projectId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final updatedPins = List<String>.from(_pinnedProjectIds);
-
-      if (updatedPins.contains(projectId)) {
-        updatedPins.remove(projectId);
-        _showSnack('Project removed from pins', _T.slate400);
-      } else {
-        updatedPins.add(projectId);
-        _showSnack('Project pinned to sidebar', _T.green);
-      }
-
-      await prefs.setStringList(_pinnedProjectsKey, updatedPins);
-      if (mounted) {
-        setState(() {
-          _pinnedProjectIds = updatedPins;
-        });
-      }
-    } catch (e, s) {
-      await AppLogger.logError(
-        message: "Failed to update pinned projects state in shared preferences",
-        error: e,
-        stackTrace: s,
-      );
-      _showSnack('Error saving pin configurations', _T.red);
-    }
-  }
-
-  void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                msg,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: _T.ink,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 24, right: 24, left: 200),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_T.rLg),
-        ),
-        duration: const Duration(seconds: 3),
-        elevation: 8,
-      ),
-    );
   }
 
   @override
@@ -755,7 +758,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(_T.r),
                     ),
-                    onSelected: (p) => _togglePinProject(p.id),
+                    onSelected: (p) => widget.togglePinProject(p.id),
                     itemBuilder: (ctx) {
                       final unpinned =
                           widget.projects
@@ -810,7 +813,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                           child: _DottedPinButton(
                             allProjects: widget.projects,
                             pinnedIds: _pinnedProjectIds,
-                            onProjectSelectedToPin: _togglePinProject,
+                            onProjectSelectedToPin: widget.togglePinProject,
                             onNavigateToProjects: () {
                               widget.onProjectSelected(null);
                               widget.onViewChanged(_AdminView.projects);
