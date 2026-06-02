@@ -81,6 +81,8 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
       setState(() {
         _pinnedProjectIds = current;
       });
+
+      widget.onPinProject(id);
     } catch (e, s) {
       await AppLogger.logError(
         message: "Error processing persistent local pin toggles",
