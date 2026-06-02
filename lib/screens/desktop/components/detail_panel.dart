@@ -448,7 +448,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .date ??
         null;
 
-    if (taskDate?.isAtSameMomentAs(newValue) ?? false) {
+    if (!taskDate!.isAtSameMomentAs(newValue)) {
+      print("on task date changed called and is through");
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
