@@ -26,13 +26,13 @@ enum ProjectFilter { incomplete, all, completed }
 class DesktopProjectsScreen extends StatefulWidget {
   final List<Project> initialProjects;
   final ValueChanged<String> onProjectSelected;
-  final ValueChanged<String> onPinProject;
+  final ValueChanged<String> onTogglePinProject;
 
   const DesktopProjectsScreen({
     super.key,
     required this.initialProjects,
     required this.onProjectSelected,
-    required this.onPinProject,
+    required this.onTogglePinProject,
   });
 
   @override
@@ -82,7 +82,7 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
         _pinnedProjectIds = current;
       });
 
-      widget.onPinProject(id);
+      widget.onTogglePinProject(id);
     } catch (e, s) {
       await AppLogger.logError(
         message: "Error processing persistent local pin toggles",

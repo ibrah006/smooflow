@@ -507,7 +507,7 @@ class _AdminDesktopDashboardScreenState
                                               _view = _AdminView.list;
                                             });
                                           },
-                                          onPinProject: 
+                                          onTogglePinProject: _togglePinProject,
                                         )
                                         : SettingsPage(),
                               ),
@@ -584,7 +584,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.onViewChanged,
     required this.onProjectSelected,
     required this.isLoading,
-    required this.togglePinProject
+    required this.togglePinProject,
   });
 
   @override
