@@ -50,7 +50,7 @@ class _T {
   static const rXl = 16.0;
 }
 
-class GhostDateInput extends StatelessWidget {
+class GhostDateInput extends StatefulWidget {
   final DateTime? initialValue;
   final ValueChanged<DateTime?> onChanged;
   final Color color;
@@ -58,19 +58,101 @@ class GhostDateInput extends StatelessWidget {
     super.key,
     this.initialValue,
     required this.onChanged,
-    this.color = _T.ink3,
+    this.color = Colors.black, // fallback token
   });
+
+  static const double _kCalendarH = 316.0;
+  static const double _kGap = 6.0;
+
+  @override
+  State<GhostDateInput> createState() => _GhostDateInputState();
+}
+
+class _GhostDateInputState extends State<GhostDateInput> {
+  bool _typingMode = false;
+  bool _calendarOpen = false;
+
+  // Crucial: This link connects the target anchor widget with the overlay child layer
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+
+  void _toggleCalendar() {
+    if (_calendarOpen) {
+      _closeCalendar();
+      return;
+    }
+
+    final box = context.findRenderObject() as RenderBox?;
+    bool showAbove = false;
+    if (box != null) {
+      final pos = box.localToGlobal(Offset.zero);
+      final screenH = MediaQuery.of(context).size.height;
+      final spaceBelow = screenH - pos.dy - box.size.height;
+      showAbove =
+          spaceBelow < GhostDateInput._kCalendarH + GhostDateInput._kGap + 16;
+    }
+
+    if (_typingMode) setState(() => _typingMode = false);
+    setState(() => _calendarOpen = true);
+
+    _overlayEntry = OverlayEntry(
+      builder:
+          (_) => _CalendarPopup(
+            layerLink: _layerLink,
+            showAbove: showAbove,
+            selectedDate: widget.initialValue,
+            onPick: (d) {
+              widget.onChanged(d);
+              _closeCalendar();
+            },
+            onDismiss: _closeCalendar,
+          ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _closeCalendar() {
+    _removeOverlay();
+    if (mounted) setState(() => _calendarOpen = false);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  @override
+  void dispose() {
+    _removeOverlay(); // Clean up overlay to avoid memory leaks if widget is unmounted
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Basic date parsing fallback helper if you don't use your exact project's utility method
+    final String dateText =
+        widget.initialValue != null
+            ? "${widget.initialValue!.day}/${widget.initialValue!.month}/${widget.initialValue!.year}"
+            : "Select Date";
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: Text(
-        initialValue != null ? fmtDate(initialValue!) : "",
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: color,
+      child: GestureDetector(
+        behavior:
+            HitTestBehavior
+                .opaque, // Ensures click metrics capture small text slices precisely
+        onTap: _toggleCalendar,
+        // FIX: Wrap target base layer inside a CompositedTransformTarget bound to your _layerLink
+        child: CompositedTransformTarget(
+          link: _layerLink,
+          child: Text(
+            dateText,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: widget.color,
+            ),
+          ),
         ),
       ),
     );
