@@ -819,7 +819,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   widget.isLoading || _loadingPins
                       ? const SidebarProjectsSkeleton()
                       : pinnedProjectsList.isEmpty
-                      ? Center(
+                      ? Align(
+                        alignment: Alignment.topCenter,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: _DottedPinButton(
