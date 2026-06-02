@@ -52,7 +52,7 @@ class _T {
 
 class GhostDateInput extends StatefulWidget {
   final DateTime? initialValue;
-  final ValueChanged<DateTime?> onChanged;
+  final ValueChanged<DateTime> onChanged;
   final Color color;
   const GhostDateInput({
     super.key,
@@ -104,11 +104,12 @@ class _GhostDateInputState extends State<GhostDateInput> {
             showAbove: showAbove,
             selectedDate: _selectedDate,
             onPick: (d) {
-              widget.onChanged(d);
               _selectedDate = d;
               _closeCalendar();
 
               setState(() {});
+
+              widget.onChanged(d);
             },
             onDismiss: _closeCalendar,
           ),
