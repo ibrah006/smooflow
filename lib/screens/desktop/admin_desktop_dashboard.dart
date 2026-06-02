@@ -407,11 +407,17 @@ class _AdminDesktopDashboardScreenState
                 members: _members,
                 isLoading: _isInitLoading,
                 togglePinProject: _togglePinProject,
+                pinnedProjectIds: _pinnedProjectIds,
                 onViewChanged: (v) {
                   setState(() {
                     _view = v;
                   });
                   _closeDetail();
+                },
+                onLoadProjects: (value) {
+                  setState(() {
+                    _pinnedProjectIds = value;
+                  });
                 },
                 onProjectSelected:
                     (id) => setState(() {
@@ -577,10 +583,11 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final ValueChanged<_AdminView> onViewChanged;
   final ValueChanged<String?> onProjectSelected;
   final bool isLoading;
-  final ValueChanged<String?> togglePinProject;
-  List<String> pinnedProjectIds;
+  final ValueChanged<String> togglePinProject;
+  final List<String> pinnedProjectIds;
+  final ValueChanged<List<String>> onLoadProjects;
 
-  _AdminSidebar({
+  const _AdminSidebar({
     required this.currentView,
     required this.selectedProjectId,
     required this.projects,
@@ -591,6 +598,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.isLoading,
     required this.togglePinProject,
     required this.pinnedProjectIds,
+    required this.onLoadProjects,
   });
 
   @override
@@ -610,12 +618,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final List<String>? savedPins = prefs.getStringList(_pinnedProjectsKey);
-      if (mounted) {
-        setState(() {
-          widget.pinnedProjectIds = savedPins ?? [];
-          _loadingPins = false;
-        });
-      }
+      widget.onLoadProjects(savedPins ?? []);
+      _loadingPins = false;
     } catch (e, s) {
       await AppLogger.logError(
         message: "Failed to load pinned projects from shared preferences",
