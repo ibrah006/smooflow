@@ -665,38 +665,18 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     color: Colors.white,
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _T.amber.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'ADMIN',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                      color: Color(0xFFFCD34D),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
 
           // ── Primary Navigation Links ───────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 15, 10, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SidebarLabel('Workspace'),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 _SidebarNavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Overview',
@@ -751,7 +731,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
           // ── Pinned Projects Core Panel ─────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 15, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
