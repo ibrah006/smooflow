@@ -410,6 +410,10 @@ class _AdminDesktopDashboardScreenState
                 isLoading: _isInitLoading,
                 isCollapsed: _isSidebarCollapsed,
                 togglePinProject: _togglePinProject,
+                onToggleCollapse:
+                    () => setState(
+                      () => _isSidebarCollapsed = !_isSidebarCollapsed,
+                    ),
                 pinnedProjectIds: _pinnedProjectIds,
                 onViewChanged: (v) {
                   setState(() {
@@ -587,6 +591,8 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final ValueChanged<String> togglePinProject;
   final List<String> pinnedProjectIds;
   final ValueChanged<List<String>> onLoadProjects;
+  final bool isCollapsed;
+  final VoidCallback onToggleCollapse;
 
   const _AdminSidebar({
     required this.currentView,
@@ -600,6 +606,8 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.togglePinProject,
     required this.pinnedProjectIds,
     required this.onLoadProjects,
+    required this.isCollapsed,
+    required this.onToggleCollapse,
   });
 
   @override
@@ -640,47 +648,84 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             .where((p) => widget.pinnedProjectIds.contains(p.id))
             .toList();
 
-    return Container(
-      width: _T.sidebarW,
+    // Compute dynamic width parameters explicitly
+    final double targetWidth = widget.isCollapsed ? 64.0 : _T.sidebarW;
+    final horizontalPadding = widget.isCollapsed ? 8.0 : 10.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: targetWidth,
       color: _T.ink,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Logo Row Context ───────────────────────────────────────────
+          // ── Logo & Collapse Action Trigger ─────────────────────────────
           Container(
             height: _T.topbarH,
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0x10FFFFFF))),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.isCollapsed ? 12 : 16,
+            ),
             child: Row(
+              mainAxisAlignment:
+                  widget.isCollapsed
+                      ? MainAxisAlignment.center
+                      : MainAxisAlignment.start,
               children: [
-                Logo(size: 25),
-                const SizedBox(width: 9),
-                const Text(
-                  'smooflow',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
-                    color: Colors.white,
+                if (!widget.isCollapsed) ...[
+                  Logo(size: 25),
+                  const SizedBox(width: 9),
+                  const Expanded(
+                    child: Text(
+                      'smooflow',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.6,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+                // Premium Toggle Button
+                IconButton(
+                  onPressed: widget.onToggleCollapse,
+                  splashRadius: 16,
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    widget.isCollapsed
+                        ? Icons.menu_open_rounded
+                        : Icons.menu_rounded,
+                    size: 18,
+                    color: Colors.white.withOpacity(0.5),
                   ),
                 ),
               ],
             ),
           ),
 
-          // ── Primary Navigation Links ───────────────────────────────────
+          // ── Primary Workspace Navigation Block ─────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 15, 10, 0),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              15,
+              horizontalPadding,
+              0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SidebarLabel('Workspace'),
+                _SidebarLabel('Workspace', isHidden: widget.isCollapsed),
                 const SizedBox(height: 3),
                 _SidebarNavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Overview',
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.overview,
                   onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
@@ -688,16 +733,17 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   _SidebarNavItem(
                     icon: Icons.notifications_outlined,
                     label: 'Inbox',
+                    isCollapsed: widget.isCollapsed,
                     isActive: widget.currentView == _AdminView.inbox,
                     onTap: () => widget.onViewChanged(_AdminView.inbox),
                   ),
 
-                // Absolute structural replacement locks user interaction completely
                 widget.isLoading
-                    ? const _SidebarItemRowSkeleton()
+                    ? _SidebarItemRowSkeleton(isCollapsed: widget.isCollapsed)
                     : _SidebarNavItem(
                       icon: Icons.assignment_outlined,
                       label: 'All Tasks',
+                      isCollapsed: widget.isCollapsed,
                       isActive:
                           widget.currentView == _AdminView.list &&
                           widget.selectedProjectId == null,
@@ -712,10 +758,11 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     ),
 
                 widget.isLoading
-                    ? const _SidebarItemRowSkeleton()
+                    ? _SidebarItemRowSkeleton(isCollapsed: widget.isCollapsed)
                     : _SidebarNavItem(
                       icon: Icons.folder_open_rounded,
                       label: 'Projects',
+                      isCollapsed: widget.isCollapsed,
                       isActive: widget.currentView == _AdminView.projects,
                       badgeWidget:
                           widget.projects.isNotEmpty
@@ -732,96 +779,127 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
           // ── Pinned Projects Core Panel ─────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              10,
+              horizontalPadding,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SidebarLabel('Pinned Projects'),
-                // When projects are already pinned, show a small quick-add contextual menu plus icon
-                if (pinnedProjectsList.isNotEmpty)
-                  PopupMenuButton<Project>(
-                    tooltip: 'Pin another project',
-                    icon: Icon(
-                      Icons.add_rounded,
-                      size: 14,
-                      color: Colors.white.withOpacity(0.4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _SidebarLabel(
+                      'Pinned Projects',
+                      isHidden: widget.isCollapsed,
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      maxHeight: 300,
-                      maxWidth: 220,
-                    ),
-                    offset: const Offset(0, 12),
-                    color: _T.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(_T.r),
-                    ),
-                    onSelected: (p) => widget.togglePinProject(p.id),
-                    itemBuilder: (ctx) {
-                      final unpinned =
-                          widget.projects
-                              .where(
-                                (p) => !widget.pinnedProjectIds.contains(p.id),
+                    if (pinnedProjectsList.isNotEmpty && !widget.isCollapsed)
+                      PopupMenuButton<Project>(
+                        tooltip: 'Pin another project',
+                        icon: Icon(
+                          Icons.add_rounded,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          maxHeight: 300,
+                          maxWidth: 220,
+                        ),
+                        offset: const Offset(0, 12),
+                        color: _T.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(_T.r),
+                        ),
+                        onSelected: (p) => widget.togglePinProject(p.id),
+                        itemBuilder: (ctx) {
+                          final unpinned =
+                              widget.projects
+                                  .where(
+                                    (p) =>
+                                        !widget.pinnedProjectIds.contains(p.id),
+                                  )
+                                  .toList();
+                          if (unpinned.isEmpty) {
+                            return [
+                              const PopupMenuItem(
+                                enabled: false,
+                                child: Text(
+                                  'All projects pinned',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _T.slate400,
+                                  ),
+                                ),
+                              ),
+                            ];
+                          }
+                          return unpinned
+                              .map(
+                                (p) => PopupMenuItem<Project>(
+                                  value: p,
+                                  height: 34,
+                                  child: Text(
+                                    p.name,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: _T.ink3,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                               )
                               .toList();
-                      if (unpinned.isEmpty) {
-                        return [
-                          const PopupMenuItem(
-                            enabled: false,
-                            child: Text(
-                              'All projects pinned',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: _T.slate400,
-                              ),
-                            ),
-                          ),
-                        ];
-                      }
-                      return unpinned
-                          .map(
-                            (p) => PopupMenuItem<Project>(
-                              value: p,
-                              height: 34,
-                              child: Text(
-                                p.name,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: _T.ink3,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList();
-                    },
+                        },
+                      ),
+                  ],
+                ),
+                if (widget.isCollapsed)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Container(
+                        width: 12,
+                        height: 1,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
+
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child:
                   widget.isLoading || _loadingPins
-                      ? const SidebarProjectsSkeleton()
+                      ? (widget.isCollapsed
+                          ? const SizedBox.shrink()
+                          : const SidebarProjectsSkeleton())
                       : pinnedProjectsList.isEmpty
-                      ? Align(
-                        alignment: Alignment.topCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: _DottedPinButton(
-                            allProjects: widget.projects,
-                            pinnedIds: widget.pinnedProjectIds,
-                            onProjectSelectedToPin: widget.togglePinProject,
-                            onNavigateToProjects: () {
-                              widget.onProjectSelected(null);
-                              widget.onViewChanged(_AdminView.projects);
-                            },
-                          ),
-                        ),
-                      )
+                      ? (widget.isCollapsed
+                          ? const SizedBox.shrink()
+                          : Align(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              child: _DottedPinButton(
+                                allProjects: widget.projects,
+                                pinnedIds: widget.pinnedProjectIds,
+                                onProjectSelectedToPin: widget.togglePinProject,
+                                onNavigateToProjects: () {
+                                  widget.onProjectSelected(null);
+                                  widget.onViewChanged(_AdminView.projects);
+                                },
+                              ),
+                            ),
+                          ))
                       : ListView(
                         padding: EdgeInsets.zero,
                         children:
@@ -833,6 +911,31 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                               final isActive =
                                   widget.selectedProjectId == p.id &&
                                   widget.currentView == _AdminView.list;
+
+                              if (widget.isCollapsed) {
+                                // Compact micro-dot indicator row mapping targets safely
+                                if (widget.isCollapsed) {
+                                  // Compact micro-dot indicator row mapping targets safely
+                                  return Tooltip(
+                                    message: p.name,
+                                    preferBelow: false,
+                                    verticalOffset: 0,
+                                    margin: const EdgeInsets.only(left: 48),
+                                    child: _SidebarNavItem(
+                                      icon: Icons.lens,
+                                      label: '',
+                                      isCollapsed: true,
+                                      isActive: isActive,
+                                      customIconColor: p.color,
+                                      onTap: () {
+                                        widget.onProjectSelected(p.id);
+                                        widget.onViewChanged(_AdminView.list);
+                                      },
+                                    ),
+                                  );
+                                }
+                              }
+
                               return _SidebarProjectRow(
                                 name: p.name,
                                 color: p.color,
@@ -849,24 +952,31 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
           ),
           const SizedBox(height: 12),
 
-          // ── Operations Block Sections ─────────────────────────────────
+          // ── Operations Navigation Block ────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 5, 10, 4),
-            child: _SidebarLabel('Operations'),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              5,
+              horizontalPadding,
+              4,
+            ),
+            child: _SidebarLabel('Operations', isHidden: widget.isCollapsed),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Column(
               children: [
                 _SidebarNavItem(
                   icon: Icons.print_rounded,
                   label: 'Printers',
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.printers,
                   onTap: () => widget.onViewChanged(_AdminView.printers),
                 ),
                 _SidebarNavItem(
                   icon: CupertinoIcons.cube_box,
                   label: 'Materials',
+                  isCollapsed: widget.isCollapsed,
                   isActive:
                       widget.currentView == _AdminView.inventory ||
                       widget.currentView == _AdminView.reports,
@@ -875,7 +985,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 _SidebarNavItem(
                   icon: Icons.account_balance,
                   label: 'Accounts',
-                  showBeta: true,
+                  showBeta: !widget.isCollapsed,
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.accounts,
                   onTap: () => widget.onViewChanged(_AdminView.accounts),
                 ),
@@ -883,30 +994,38 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          // ── Management Block Sections ──────────────────────────────────
+          // ── Management Navigation Block ────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
-            child: _SidebarLabel('Manage'),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              12,
+              horizontalPadding,
+              0,
+            ),
+            child: _SidebarLabel('Manage', isHidden: widget.isCollapsed),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Column(
               children: [
                 _SidebarNavItem(
                   icon: Icons.supervisor_account_sharp,
                   label: 'Clients',
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.clients,
                   onTap: () => widget.onViewChanged(_AdminView.clients),
                 ),
                 _SidebarNavItem(
                   icon: Icons.people_outline_rounded,
                   label: 'Manage Team',
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.team,
                   onTap: () => widget.onViewChanged(_AdminView.team),
                 ),
                 _SidebarNavItem(
                   icon: Icons.settings_rounded,
                   label: 'Settings',
+                  isCollapsed: widget.isCollapsed,
                   isActive: widget.currentView == _AdminView.settings,
                   onTap: () => widget.onViewChanged(_AdminView.settings),
                 ),
@@ -1090,91 +1209,6 @@ class _DottedPinButtonState extends State<_DottedPinButton> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SidebarItemRowSkeleton extends StatefulWidget {
-  const _SidebarItemRowSkeleton();
-
-  @override
-  State<_SidebarItemRowSkeleton> createState() =>
-      _SidebarItemRowSkeletonState();
-}
-
-class _SidebarItemRowSkeletonState extends State<_SidebarItemRowSkeleton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final double pulseOpacity = Tween<double>(
-          begin: 0.1,
-          end: 0.25,
-        ).evaluate(_controller);
-
-        return Container(
-          height: 34,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(pulseOpacity * 0.2),
-            borderRadius: BorderRadius.circular(8.0), // matches _T.r
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Mock Icon Circle
-              Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(pulseOpacity),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Mock Text bar line
-              Container(
-                width: 76,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(pulseOpacity),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const Spacer(),
-              // Mock Badge spaceholder line
-              Container(
-                width: 16,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(pulseOpacity * 0.7),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -2805,32 +2839,40 @@ class _AvatarWidget extends StatelessWidget {
   );
 }
 
+// ── Refactored Sub-Widgets Supporting Compact Dimensions ────────────────────
+
 class _SidebarLabel extends StatelessWidget {
   final String text;
-  const _SidebarLabel(this.text);
+  final bool isHidden;
+  const _SidebarLabel(this.text, {this.isHidden = false});
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 8, bottom: 4),
-    child: Text(
-      text.toUpperCase(),
-      style: TextStyle(
-        fontSize: 9.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.0,
-        color: Colors.white.withOpacity(0.28),
+  Widget build(BuildContext context) {
+    if (isHidden) return const SizedBox(height: 10);
+    return Padding(
+      padding: const EdgeInsets.only(left: 10),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: Colors.white.withOpacity(0.25),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SidebarNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isActive;
-  final Widget?
-  badgeWidget; // Changed from String? badge to Widget? badgeWidget
+  final Widget? badgeWidget;
   final VoidCallback onTap;
   final bool showBeta;
+  final bool isCollapsed;
+  final Color? customIconColor; // Custom track override for pinned dots
 
   const _SidebarNavItem({
     required this.icon,
@@ -2839,6 +2881,8 @@ class _SidebarNavItem extends StatefulWidget {
     this.badgeWidget,
     required this.onTap,
     this.showBeta = false,
+    this.isCollapsed = false,
+    this.customIconColor,
   });
 
   @override
@@ -2850,85 +2894,191 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget mainItem = Container(
+      height: 34,
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: widget.isCollapsed ? 0 : 10),
+      decoration: BoxDecoration(
+        color:
+            widget.isActive
+                ? Colors.white.withOpacity(0.06)
+                : (_hovered
+                    ? Colors.white.withOpacity(0.03)
+                    : Colors.transparent),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Row(
+        mainAxisAlignment:
+            widget.isCollapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+        children: [
+          Icon(
+            widget.icon,
+            size: widget.customIconColor != null ? 8 : 16,
+            color:
+                widget.customIconColor ??
+                Colors.white.withOpacity(widget.isActive ? 0.9 : 0.4),
+          ),
+          if (!widget.isCollapsed) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                      widget.isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: Colors.white.withOpacity(widget.isActive ? 0.9 : 0.55),
+                ),
+              ),
+            ),
+            if (widget.showBeta) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 1.5,
+                ),
+                decoration: BoxDecoration(
+                  color: _T.blue.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: const Text(
+                  'BETA',
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: _T.blue,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            if (widget.badgeWidget != null) ...[
+              DefaultTextStyle.merge(
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.25),
+                ),
+                child: widget.badgeWidget!,
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+        child:
+            widget.isCollapsed
+                ? Tooltip(
+                  message: widget.label.isEmpty ? "" : widget.label,
+                  preferBelow: false,
+                  verticalOffset: 0,
+                  margin: const EdgeInsets.only(left: 48),
+                  child: mainItem,
+                )
+                : mainItem,
+      ),
+    );
+  }
+}
+
+class _SidebarItemRowSkeleton extends StatefulWidget {
+  final bool isCollapsed;
+  const _SidebarItemRowSkeleton({this.isCollapsed = false});
+
+  @override
+  State<_SidebarItemRowSkeleton> createState() =>
+      _SidebarItemRowSkeletonState();
+}
+
+class _SidebarItemRowSkeletonState extends State<_SidebarItemRowSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final double pulseOpacity = Tween<double>(
+          begin: 0.1,
+          end: 0.25,
+        ).evaluate(_controller);
+
+        return Container(
           height: 34,
           margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.isCollapsed ? 0 : 10,
+          ),
           decoration: BoxDecoration(
-            color:
-                widget.isActive
-                    ? Colors.white.withOpacity(0.06)
-                    : (_hovered
-                        ? Colors.white.withOpacity(0.03)
-                        : Colors.transparent),
-            borderRadius: BorderRadius.circular(_T.r),
+            color: Colors.white.withOpacity(pulseOpacity * 0.2),
+            borderRadius: BorderRadius.circular(8.0),
           ),
           child: Row(
+            mainAxisAlignment:
+                widget.isCollapsed
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
-                widget.icon,
-                size: 16,
-                color: Colors.white.withOpacity(widget.isActive ? 0.9 : 0.4),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  widget.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight:
-                        widget.isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: Colors.white.withOpacity(
-                      widget.isActive ? 0.9 : 0.55,
-                    ),
-                  ),
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(pulseOpacity),
+                  shape: BoxShape.circle,
                 ),
               ),
-              if (widget.showBeta) ...[
+              if (!widget.isCollapsed) ...[
+                const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 1.5,
-                  ),
+                  width: 76,
+                  height: 11,
                   decoration: BoxDecoration(
-                    color: _T.blue.withOpacity(0.2),
+                    color: Colors.white.withOpacity(pulseOpacity),
                     borderRadius: BorderRadius.circular(3),
                   ),
-                  child: const Text(
-                    'BETA',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: _T.blue,
-                    ),
-                  ),
                 ),
-                const SizedBox(width: 6),
-              ],
-              // Render the badge placeholder if available
-              if (widget.badgeWidget != null) ...[
-                DefaultTextStyle.merge(
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.25),
+                const Spacer(),
+                Container(
+                  width: 16,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(pulseOpacity * 0.7),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  child: widget.badgeWidget!,
                 ),
               ],
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
