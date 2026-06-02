@@ -710,34 +710,41 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     isActive: widget.currentView == _AdminView.inbox,
                     onTap: () => widget.onViewChanged(_AdminView.inbox),
                   ),
-                _SidebarNavItem(
-                  icon: Icons.assignment_outlined,
-                  label: 'All Tasks',
-                  isActive:
-                      widget.currentView == _AdminView.list &&
-                      widget.selectedProjectId == null,
-                  badge:
-                      widget.tasks.isNotEmpty
-                          ? widget.tasks.length.toString()
-                          : null,
-                  onTap: () {
-                    widget.onProjectSelected(null);
-                    widget.onViewChanged(_AdminView.list);
-                  },
-                ),
-                _SidebarNavItem(
-                  icon: Icons.folder_open_rounded,
-                  label: 'Projects',
-                  isActive: widget.currentView == _AdminView.projects,
-                  badge:
-                      widget.projects.isNotEmpty
-                          ? widget.projects.length.toString()
-                          : null,
-                  onTap: () {
-                    widget.onProjectSelected(null);
-                    widget.onViewChanged(_AdminView.projects);
-                  },
-                ),
+
+                // Absolute structural replacement locks user interaction completely
+                widget.isLoading
+                    ? const _SidebarItemRowSkeleton()
+                    : _SidebarNavItem(
+                      icon: Icons.assignment_outlined,
+                      label: 'All Tasks',
+                      isActive:
+                          widget.currentView == _AdminView.list &&
+                          widget.selectedProjectId == null,
+                      badgeWidget:
+                          widget.tasks.isNotEmpty
+                              ? Text(widget.tasks.length.toString())
+                              : null,
+                      onTap: () {
+                        widget.onProjectSelected(null);
+                        widget.onViewChanged(_AdminView.list);
+                      },
+                    ),
+
+                widget.isLoading
+                    ? const _SidebarItemRowSkeleton()
+                    : _SidebarNavItem(
+                      icon: Icons.folder_open_rounded,
+                      label: 'Projects',
+                      isActive: widget.currentView == _AdminView.projects,
+                      badgeWidget:
+                          widget.projects.isNotEmpty
+                              ? Text(widget.projects.length.toString())
+                              : null,
+                      onTap: () {
+                        widget.onProjectSelected(null);
+                        widget.onViewChanged(_AdminView.projects);
+                      },
+                    ),
               ],
             ),
           ),
@@ -1102,6 +1109,91 @@ class _DottedPinButtonState extends State<_DottedPinButton> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SidebarItemRowSkeleton extends StatefulWidget {
+  const _SidebarItemRowSkeleton();
+
+  @override
+  State<_SidebarItemRowSkeleton> createState() =>
+      _SidebarItemRowSkeletonState();
+}
+
+class _SidebarItemRowSkeletonState extends State<_SidebarItemRowSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final double pulseOpacity = Tween<double>(
+          begin: 0.1,
+          end: 0.25,
+        ).evaluate(_controller);
+
+        return Container(
+          height: 34,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(pulseOpacity * 0.2),
+            borderRadius: BorderRadius.circular(8.0), // matches _T.r
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Mock Icon Circle
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(pulseOpacity),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Mock Text bar line
+              Container(
+                width: 76,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(pulseOpacity),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const Spacer(),
+              // Mock Badge spaceholder line
+              Container(
+                width: 16,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(pulseOpacity * 0.7),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -2750,11 +2842,12 @@ class _SidebarLabel extends StatelessWidget {
   );
 }
 
-class _SidebarNavItem extends StatelessWidget {
+class _SidebarNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isActive;
-  final String? badge;
+  final Widget?
+  badgeWidget; // Changed from String? badge to Widget? badgeWidget
   final VoidCallback onTap;
   final bool showBeta;
 
@@ -2762,87 +2855,95 @@ class _SidebarNavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isActive,
+    this.badgeWidget,
     required this.onTap,
     this.showBeta = false,
-    this.badge,
   });
 
   @override
+  State<_SidebarNavItem> createState() => _SidebarNavItemState();
+}
+
+class _SidebarNavItemState extends State<_SidebarNavItem> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isActive ? _T.blue.withOpacity(0.25) : Colors.transparent,
-      borderRadius: BorderRadius.circular(_T.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(_T.r),
-        hoverColor: Colors.white.withOpacity(0.07),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: 34,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color:
+                widget.isActive
+                    ? Colors.white.withOpacity(0.06)
+                    : (_hovered
+                        ? Colors.white.withOpacity(0.03)
+                        : Colors.transparent),
+            borderRadius: BorderRadius.circular(_T.r),
+          ),
           child: Row(
             children: [
               Icon(
-                icon,
-                size: 14,
-                color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+                widget.icon,
+                size: 16,
+                color: Colors.white.withOpacity(widget.isActive ? 0.9 : 0.4),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 10),
               Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
-                      ),
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight:
+                        widget.isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: Colors.white.withOpacity(
+                      widget.isActive ? 0.9 : 0.55,
                     ),
-                    if (showBeta)
-                      Container(
-                        margin: EdgeInsets.only(left: 5),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFEF4444),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 2,
-                          horizontal: 5,
-                        ),
-                        child: Text(
-                          "BETA",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: "Plus Jakarta Sans",
-                            letterSpacing: 0,
-                            fontSize: 7,
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-              if (badge != null)
+              if (widget.showBeta) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 1,
+                    horizontal: 4,
+                    vertical: 1.5,
                   ),
                   decoration: BoxDecoration(
-                    color: _T.blue,
-                    borderRadius: BorderRadius.circular(99),
+                    color: _T.blue.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  child: Text(
-                    badge!,
-                    style: const TextStyle(
-                      fontSize: 10,
+                  child: const Text(
+                    'BETA',
+                    style: TextStyle(
+                      fontSize: 8,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: _T.blue,
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
+              ],
+              // Render the badge placeholder if available
+              if (widget.badgeWidget != null) ...[
+                DefaultTextStyle.merge(
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.25),
+                  ),
+                  child: widget.badgeWidget!,
+                ),
+              ],
             ],
           ),
         ),
