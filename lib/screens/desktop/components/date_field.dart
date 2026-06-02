@@ -76,7 +76,7 @@ class _GhostDateInputState extends State<GhostDateInput> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
-  DateTime? selectedDate;
+  DateTime? _selectedDate;
 
   void _toggleCalendar() {
     if (_calendarOpen) {
@@ -102,10 +102,10 @@ class _GhostDateInputState extends State<GhostDateInput> {
           (_) => _CalendarPopup(
             layerLink: _layerLink,
             showAbove: showAbove,
-            selectedDate: widget.initialValue,
+            selectedDate: _selectedDate,
             onPick: (d) {
               widget.onChanged(d);
-              selectedDate = d;
+              _selectedDate = d;
               _closeCalendar();
             },
             onDismiss: _closeCalendar,
@@ -134,15 +134,15 @@ class _GhostDateInputState extends State<GhostDateInput> {
   void initState() {
     super.initState();
 
-    selectedDate = widget.initialValue;
+    _selectedDate = widget.initialValue;
   }
 
   @override
   Widget build(BuildContext context) {
     // Utility display text logic
     final String dateText =
-        widget.initialValue != null
-            ? "${widget.initialValue!.day}/${widget.initialValue!.month}/${widget.initialValue!.year}"
+        _selectedDate != null
+            ? "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}"
             : "Set Date";
 
     return MouseRegion(
@@ -175,9 +175,7 @@ class _GhostDateInputState extends State<GhostDateInput> {
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 150),
                   opacity:
-                      (_isHovered ||
-                              _calendarOpen ||
-                              widget.initialValue == null)
+                      (_isHovered || _calendarOpen || _selectedDate == null)
                           ? 0.6
                           : 0.3,
                   child: Icon(
