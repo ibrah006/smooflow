@@ -367,62 +367,84 @@ class _AdminDesktopDashboardScreenState
                       child: Row(
                         children: [
                           Expanded(
-                            child:
-                                _view == _AdminView.overview
-                                    ? (_isInitLoading // ← skeleton branch
-                                        ? const OverviewSkeleton()
-                                        : HomeView()
-                                    // _AdminAnalyticsView(
-                                    //   tasks: _pipelineTasks,
-                                    //   projects: _projects,
-                                    //   members: _members,
-                                    // )
-                                    )
-                                    : _view == _AdminView.inbox
-                                    ? InboxView()
-                                    : _view == _AdminView.list
-                                    ? TaskListView(
-                                      // tasks:             _visibleTasks,
-                                      projects: _projects,
-                                      selectedProjectId: _selectedProjectId,
-                                      selectedTaskId: _selectedTaskId,
-                                      onTaskSelected: _selectTask,
-                                      isDetailOpen: _selectedTaskId != null,
-                                      onAddTask: _showTaskModal,
-                                      addTaskFocusNode: _addTaskFocusNode,
-                                      isAddingTask: _isAddingTask,
-                                    )
-                                    : _view == _AdminView.clients
-                                    ? ClientsPage()
-                                    : _view == _AdminView.team
-                                    ? ManageMembersPage()
-                                    : _view == _AdminView.printers
-                                    ? DesktopPrinterManagementScreen()
-                                    : _view == _AdminView.inventory
-                                    ? DesktopMaterialsManagementScreen(
-                                      onNavigateToReports: () {
-                                        setState(() {
-                                          _view = _AdminView.reports;
-                                        });
-                                        _closeDetail();
-                                      },
-                                    )
-                                    : _view == _AdminView.reports
-                                    ? DesktopReportsScreen()
-                                    : _view == _AdminView.accounts
-                                    ? AccountsManagementScreen()
-                                    : _view == _AdminView.projects
-                                    ? DesktopProjectsScreen(
-                                      initialProjects: _projects,
-                                      onProjectSelected:
-                                          (id) => setState(() {
-                                            _selectedProjectId = id;
-                                            // Switch to list view when a project is selected so the
-                                            // user immediately sees filtered results.
-                                            _view = _AdminView.list;
-                                          }),
-                                    )
-                                    : SettingsPage(),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              switchInCurve: Curves.easeInOutCubic,
+                              switchOutCurve: Curves.easeInOutCubic,
+                              transitionBuilder: (
+                                Widget child,
+                                Animation<double> animation,
+                              ) {
+                                // Combines a clean cross-fade with a tiny, professional forward slide
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(
+                                        0.01,
+                                        0.0,
+                                      ), // Subtle horizontal slide-in
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: KeyedSubtree(
+                                key: ValueKey<_AdminView>(
+                                  _view,
+                                ), // Required so switcher knows when the view enum shifts
+                                child:
+                                    _view == _AdminView.overview
+                                        ? (_isInitLoading
+                                            ? const OverviewSkeleton()
+                                            : HomeView())
+                                        : _view == _AdminView.inbox
+                                        ? InboxView()
+                                        : _view == _AdminView.list
+                                        ? TaskListView(
+                                          projects: _projects,
+                                          selectedProjectId: _selectedProjectId,
+                                          selectedTaskId: _selectedTaskId,
+                                          onTaskSelected: _selectTask,
+                                          isDetailOpen: _selectedTaskId != null,
+                                          onAddTask: _showTaskModal,
+                                          addTaskFocusNode: _addTaskFocusNode,
+                                          isAddingTask: _isAddingTask,
+                                        )
+                                        : _view == _AdminView.clients
+                                        ? ClientsPage()
+                                        : _view == _AdminView.team
+                                        ? ManageMembersPage()
+                                        : _view == _AdminView.printers
+                                        ? DesktopPrinterManagementScreen()
+                                        : _view == _AdminView.inventory
+                                        ? DesktopMaterialsManagementScreen(
+                                          onNavigateToReports: () {
+                                            setState(() {
+                                              _view = _AdminView.reports;
+                                            });
+                                            _closeDetail();
+                                          },
+                                        )
+                                        : _view == _AdminView.reports
+                                        ? DesktopReportsScreen()
+                                        : _view == _AdminView.accounts
+                                        ? AccountsManagementScreen()
+                                        : _view == _AdminView.projects
+                                        ? DesktopProjectsScreen(
+                                          initialProjects: _projects,
+                                          onProjectSelected: (id) {
+                                            // Trigger state alterations sequentially
+                                            setState(() {
+                                              _selectedProjectId = id;
+                                              _view = _AdminView.list;
+                                            });
+                                          },
+                                        )
+                                        : SettingsPage(),
+                              ),
+                            ),
                           ),
 
                           // ── Detail panel ──────────────────────────
