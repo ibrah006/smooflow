@@ -20,6 +20,7 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -860,38 +861,29 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             label: 'Date',
                             child: Row(
                               children: [
-                                // Text(
-                                //   fmtDate(d),
-                                //   style: TextStyle(
-                                //     fontSize: 13,
-                                //     fontWeight: FontWeight.w500,
-                                //     color:
-                                //         isOverdue
-                                //             ? _T.red
-                                //             : isSoon
-                                //             ? _T.amber
-                                //             : _T.ink3,
+                                // Expanded(
+                                //   child:
+                                // ),
+                                GhostDateInput(
+                                  initialValue: d,
+                                  onChanged: (newValue) {},
+                                ),
+                                // MouseRegion(
+                                //   cursor: SystemMouseCursors.click,
+                                //   child: Text(
+                                //     fmtDate(d),
+                                //     style: TextStyle(
+                                //       fontSize: 13,
+                                //       fontWeight: FontWeight.w500,
+                                //       color:
+                                //           isOverdue
+                                //               ? _T.red
+                                //               : isSoon
+                                //               ? _T.amber
+                                //               : _T.ink3,
+                                //     ),
                                 //   ),
                                 // ),
-                                Expanded(
-                                  child: GhostTextField(
-                                    initialText: fmtDate(d),
-                                    onSubmitted: _onTaskDateChange,
-                                    hint: "Date",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isOverdue
-                                              ? _T.red
-                                              : isSoon
-                                              ? _T.amber
-                                              : _T.ink3,
-                                      letterSpacing: -0.3,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ),
                                 if (isOverdue) ...[
                                   const SizedBox(width: 6),
                                   const _Badge('Overdue', _T.red, _T.red50),

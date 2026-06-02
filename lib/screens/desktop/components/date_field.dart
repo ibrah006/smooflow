@@ -17,6 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
+import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS — unchanged
@@ -47,6 +48,33 @@ class _T {
   static const r = 8.0;
   static const rLg = 12.0;
   static const rXl = 16.0;
+}
+
+class GhostDateInput extends StatelessWidget {
+  final DateTime? initialValue;
+  final ValueChanged<DateTime?> onChanged;
+  final Color color;
+  const GhostDateInput({
+    super.key,
+    this.initialValue,
+    required this.onChanged,
+    this.color = _T.ink3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Text(
+        initialValue != null ? fmtDate(initialValue!) : "",
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+    );
+  }
 }
 
 class DateField extends StatefulWidget {
@@ -318,10 +346,7 @@ class _DateFieldState extends State<DateField> {
               onTap: _enterTypingMode,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Row(
                   children: [
                     Icon(
@@ -432,6 +457,7 @@ class _DateFieldState extends State<DateField> {
           ),
         ),
         _FieldDivider(),
+
         // Switch to calendar while still in typing mode.
         _FieldIconBtn(
           icon: Icons.calendar_month_outlined,
