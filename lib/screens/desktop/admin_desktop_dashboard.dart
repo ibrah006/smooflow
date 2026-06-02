@@ -13,12 +13,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/components/logo.dart';
 import 'package:smooflow/components/user_menu_chip.dart';
@@ -495,10 +497,6 @@ class _AdminDesktopDashboardScreenState
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SIDEBAR — Board and List tabs removed; only Overview / Clients / Team remain
-// as nav items. Project list acts as the primary view-switch into the list.
-// ─────────────────────────────────────────────────────────────────────────────
 class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
@@ -525,6 +523,67 @@ class _AdminSidebar extends ConsumerStatefulWidget {
 }
 
 class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
+  static const String _pinnedProjectsKey = 'pinned_project_ids';
+  List<String> _pinnedProjectIds = [];
+  bool _loadingPins = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPinnedProjects();
+  }
+
+  Future<void> _loadPinnedProjects() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String>? savedPins = prefs.getStringList(_pinnedProjectsKey);
+      if (mounted) {
+        setState(() {
+          _pinnedProjectIds = savedPins ?? [];
+          _loadingPins = false;
+        });
+      }
+    } catch (e, s) {
+      await AppLogger.logError(
+        message: "Failed to load pinned projects from shared preferences",
+        error: e,
+        stackTrace: s,
+      );
+      if (mounted) {
+        setState(() => _loadingPins = false);
+      }
+    }
+  }
+
+  Future<void> _togglePinProject(String projectId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final updatedPins = List<String>.from(_pinnedProjectIds);
+
+      if (updatedPins.contains(projectId)) {
+        updatedPins.remove(projectId);
+        _showSnack('Project removed from pins', _T.slate400);
+      } else {
+        updatedPins.add(projectId);
+        _showSnack('Project pinned to sidebar', _T.green);
+      }
+
+      await prefs.setStringList(_pinnedProjectsKey, updatedPins);
+      if (mounted) {
+        setState(() {
+          _pinnedProjectIds = updatedPins;
+        });
+      }
+    } catch (e, s) {
+      await AppLogger.logError(
+        message: "Failed to update pinned projects state in shared preferences",
+        error: e,
+        stackTrace: s,
+      );
+      _showSnack('Error saving pin configurations', _T.red);
+    }
+  }
+
   void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -561,6 +620,10 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
   @override
   Widget build(BuildContext context) {
+    // Filter actual structural project models using your loaded preferences array
+    final pinnedProjectsList =
+        widget.projects.where((p) => _pinnedProjectIds.contains(p.id)).toList();
+
     return Container(
       width: _T.sidebarW,
       color: _T.ink,
@@ -625,19 +688,12 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   isActive: widget.currentView == _AdminView.overview,
                   onTap: () => widget.onViewChanged(_AdminView.overview),
                 ),
-                // Tasks nav item → goes straight to list view with no filter
                 if (kDebugMode)
                   _SidebarNavItem(
                     icon: Icons.notifications_outlined,
                     label: 'Inbox',
                     isActive: widget.currentView == _AdminView.inbox,
-                    badge: null,
-                    // widget.tasks.length > 0
-                    //     ? widget.tasks.length.toString()
-                    //     : null,
-                    onTap: () {
-                      widget.onViewChanged(_AdminView.inbox);
-                    },
+                    onTap: () => widget.onViewChanged(_AdminView.inbox),
                   ),
                 _SidebarNavItem(
                   icon: Icons.assignment_outlined,
@@ -646,7 +702,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                       widget.currentView == _AdminView.list &&
                       widget.selectedProjectId == null,
                   badge:
-                      widget.tasks.length > 0
+                      widget.tasks.isNotEmpty
                           ? widget.tasks.length.toString()
                           : null,
                   onTap: () {
@@ -659,7 +715,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   label: 'Projects',
                   isActive: widget.currentView == _AdminView.projects,
                   badge:
-                      widget.projects.length > 0
+                      widget.projects.isNotEmpty
                           ? widget.projects.length.toString()
                           : null,
                   onTap: () {
@@ -671,7 +727,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
 
-          // ── Projects ───────────────────────────────────────────────────
+          // ── Pinned Projects Section ────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 20, 10, 5),
             child: _SidebarLabel('Pinned Projects'),
@@ -680,12 +736,25 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child:
-                  widget.isLoading
+                  widget.isLoading || _loadingPins
                       ? const SidebarProjectsSkeleton()
+                      : pinnedProjectsList.isEmpty
+                      ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: _DottedPinButton(
+                            onTap: () {
+                              // Route directly into full Project selection stream
+                              widget.onProjectSelected(null);
+                              widget.onViewChanged(_AdminView.projects);
+                            },
+                          ),
+                        ),
+                      )
                       : ListView(
                         padding: EdgeInsets.zero,
                         children:
-                            widget.projects.map((p) {
+                            pinnedProjectsList.map((p) {
                               final cnt =
                                   widget.tasks
                                       .where((t) => t.projectId == p.id)
@@ -707,49 +776,9 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                       ),
             ),
           ),
+          const SizedBox(height: 12),
 
-          // Padding(
-          //   padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-          //   child: InkWell(
-          //     onTap: _showProjectModal,
-          //     borderRadius: BorderRadius.circular(_T.r),
-          //     child: Container(
-          //       padding: const EdgeInsets.symmetric(
-          //         horizontal: 10,
-          //         vertical: 8,
-          //       ),
-          //       decoration: BoxDecoration(
-          //         border: Border.all(
-          //           color: Colors.white.withOpacity(0.14),
-          //           width: 1.5,
-          //         ),
-          //         borderRadius: BorderRadius.circular(_T.r),
-          //       ),
-          //       child: Row(
-          //         mainAxisAlignment: MainAxisAlignment.center,
-          //         children: [
-          //           Icon(
-          //             Icons.add,
-          //             size: 14,
-          //             color: Colors.white.withOpacity(0.4),
-          //           ),
-          //           const SizedBox(width: 7),
-          //           Text(
-          //             'New Project',
-          //             style: TextStyle(
-          //               fontSize: 12.5,
-          //               fontWeight: FontWeight.w500,
-          //               color: Colors.white.withOpacity(0.4),
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          SizedBox(height: 12),
-
-          // ── Projects ───────────────────────────────────────────────────
+          // ── Operations ─────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 5, 10, 4),
             child: _SidebarLabel('Operations'),
@@ -813,51 +842,115 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
               ],
             ),
           ),
-          SizedBox(height: 10),
-
-          // ── Team ───────────────────────────────────────────────────────
-          // Container(
-          //   decoration: const BoxDecoration(
-          //       border: Border(top: BorderSide(color: Color(0x12FFFFFF)))),
-          //   padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          //   child: Column(
-          //     crossAxisAlignment: CrossAxisAlignment.start,
-          //     children: [
-          //       Text('DESIGN TEAM',
-          //           style: TextStyle(
-          //               fontSize: 9.5,
-          //               fontWeight: FontWeight.w700,
-          //               letterSpacing: 1.0,
-          //               color: Colors.white.withOpacity(0.25))),
-          //       const SizedBox(height: 10),
-          //       ...widget.members.map((m) => Padding(
-          //             padding: const EdgeInsets.only(bottom: 8),
-          //             child: Row(children: [
-          //               _AvatarWidget(
-          //                   initials: m.initials,
-          //                   color:    m.color,
-          //                   size:     26),
-          //               const SizedBox(width: 8),
-          //               Expanded(
-          //                   child: Text(m.name,
-          //                       style: TextStyle(
-          //                           fontSize: 12,
-          //                           fontWeight: FontWeight.w500,
-          //                           color: Colors.white.withOpacity(0.5)))),
-          //               Container(
-          //                   width: 6,
-          //                   height: 6,
-          //                   decoration: const BoxDecoration(
-          //                       color: _T.green, shape: BoxShape.circle)),
-          //             ]),
-          //           )),
-          //     ],
-          //   ),
-          // ),
+          const SizedBox(height: 10),
         ],
       ),
     );
   }
+}
+
+class _DottedPinButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _DottedPinButton({required this.onTap});
+
+  @override
+  State<_DottedPinButton> createState() => _DottedPinButtonState();
+}
+
+class _DottedPinButtonState extends State<_DottedPinButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: double.infinity,
+          height: 38,
+          decoration: BoxDecoration(
+            color:
+                _hovered ? Colors.white.withOpacity(0.04) : Colors.transparent,
+            borderRadius: BorderRadius.circular(_T.r),
+          ),
+          child: CustomPaint(
+            painter: _DottedBorderPainter(
+              color: Colors.white.withOpacity(_hovered ? 0.3 : 0.15),
+              radius: _T.r,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.push_pin_outlined,
+                  size: 13,
+                  color: Colors.white.withOpacity(_hovered ? 0.6 : 0.4),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Pin a Project',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(_hovered ? 0.6 : 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DottedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+
+  _DottedBorderPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
+
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    final Path path = Path()..addRRect(rrect);
+
+    // Manual dash processing calculations for precise rendering across desktop frames
+    const double dashWidth = 4.0;
+    const double dashSpace = 4.0;
+
+    final Path dashPath = Path();
+    double distance = 0.0;
+
+    for (final PathMetric pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        dashPath.addPath(
+          pathMetric.extractPath(distance, distance + dashWidth),
+          Offset.zero,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(_DottedBorderPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
