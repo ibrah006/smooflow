@@ -194,6 +194,8 @@ class _AdminDesktopDashboardScreenState
   //   return true;
   // }).toList();
 
+  bool _isSidebarCollapsed = false;
+
   @override
   void initState() {
     super.initState();
@@ -406,6 +408,7 @@ class _AdminDesktopDashboardScreenState
                 tasks: _pipelineTasks,
                 members: _members,
                 isLoading: _isInitLoading,
+                isCollapsed: _isSidebarCollapsed,
                 togglePinProject: _togglePinProject,
                 pinnedProjectIds: _pinnedProjectIds,
                 onViewChanged: (v) {
@@ -571,8 +574,6 @@ class _AdminDesktopDashboardScreenState
     setState(() {});
   }
 }
-
-// Inside admin_desktop_dashboard.dart ── Make sure SharedPreferences is imported at the top
 
 class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
