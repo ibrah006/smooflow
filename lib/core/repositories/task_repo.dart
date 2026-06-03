@@ -296,11 +296,7 @@ class TaskRepo {
         "size": size,
         "date":
             date != null
-                ? DateTime(
-                  date.year,
-                  date.month,
-                  date.day + 1,
-                ).toIso8601String()
+                ? DateTime(date.year, date.month, date.day).toIso8601String()
                 : null,
         ...name != null ? {"name": name} : {},
       },
