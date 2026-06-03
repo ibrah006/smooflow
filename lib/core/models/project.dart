@@ -37,7 +37,8 @@ class Project {
   // New
   // This will reflect the number of tasks that have been completed
   // A project is considered complete when all of it's tasks are completed
-  int completedTasksCount = 0;
+  int completedTasksCount;
+  int tasksCount;
 
   set status(String newStatus) {
     _status = newStatus;
@@ -85,6 +86,8 @@ class Project {
     required this.progressLogLastModifiedAt,
     required this.createdAt,
     required this.color,
+    required this.completedTasksCount,
+    required this.tasksCount,
   }) : _status = status,
        taskLastModifiedAt = null;
 
@@ -105,7 +108,9 @@ class Project {
        progressLogs = [],
        progressLogLastModifiedAt = DateTime.now(),
        taskLastModifiedAt = null,
-       materialLogs = [];
+       materialLogs = [],
+       completedTasksCount = 0,
+       tasksCount = 0;
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(
@@ -158,6 +163,8 @@ class Project {
           [],
       createdAt: DateTime.parse(json['createdAt']),
       color: (json['color'] as String).toColor()!,
+      completedTasksCount: json['tasksCompletedCount'] ?? 0,
+      tasksCount: json['tasksCount'] ?? 0,
     );
   }
 

@@ -20,7 +20,11 @@ class ProjectRepo {
       throw "Failed to fetch projects: ${response.body}";
     }
 
+    print("[GET projects] response body: $body");
+
     projects = (body as List).map((e) => Project.fromJson(e)).toList();
+
+    print("[GET projects] projects: $projects");
 
     return projects;
   }

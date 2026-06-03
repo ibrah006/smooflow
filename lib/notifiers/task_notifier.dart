@@ -627,6 +627,23 @@ class TaskNotifier extends StateNotifier<TaskState> {
                 return t;
               }).toList(),
         );
+
+        print('[Task Notifier] new task event changes: ${event.changes}');
+
+        // Check if task has just been marked as completed
+        if (
+        // This means that it's a status update event
+        event.changes?["status"] != null &&
+            // And that the new status is completed
+            event.task!.status == TaskStatus.completed) {
+          ref
+              .read(projectByIdProvider(event.task!.projectId))!
+              .completedTasksCount++;
+          print(
+            "completed tasks count for project: ${ref.read(projectByIdProvider(event.task!.projectId))!.completedTasksCount}",
+          );
+        }
+
         break;
       case TaskChangeType.statusChanged:
         final index = tasks.indexWhere((t) => t.id == event.taskId);
