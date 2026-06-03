@@ -188,22 +188,22 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
           },
           releaseNotes: [
             ReleaseNote(
-              icon: Icons.message_outlined,
-              title: "Messaging (New)",
+              icon: Icons.bug_report_outlined,
+              title: "Bug fixes & Imporvements",
               description:
-                  "Discussion threads for tasks! You can now comment and have threaded discussions on each task.",
+                  "Task details panel bug fix and ability to update task dates from task details panel.",
             ),
             ReleaseNote(
-              icon: Icons.bolt_outlined,
-              title: "Improved Readability in Task Details",
+              icon: Icons.push_pin_outlined,
+              title: "Pin Projets & New Projects Page",
               description:
-                  "Updated the design of task details to make it easier to read and navigate, especially for tasks with a lot of information.",
+                  "You can now pin projects which will then appear on the left hand panel and you can also view all your projects in a new projects page accessible from the sidebar.",
             ),
             ReleaseNote(
-              icon: Icons.notification_important_sharp,
-              title: "Bug Fixes",
+              icon: Icons.view_sidebar_outlined,
+              title: "Collapsible Left Panel",
               description:
-                  "Fixed in-app notifications spamming when task updated",
+                  "You can now expand or collapse left hand navigation panel!",
             ),
           ],
         ),
