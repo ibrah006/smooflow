@@ -97,9 +97,8 @@ class _DesktopProjectsScreenState extends State<DesktopProjectsScreen> {
     final filteredProjects =
         widget.initialProjects.where((project) {
           final isCompleted =
-              project.status.toLowerCase() == "finished" ||
-              (project.tasks.isNotEmpty &&
-                  project.completedTasksCount == project.tasks.length);
+              project.tasksCount == project.completedTasksCount &&
+              project.tasksCount > 0;
 
           if (_currentFilter == ProjectFilter.incomplete && isCompleted)
             return false;
