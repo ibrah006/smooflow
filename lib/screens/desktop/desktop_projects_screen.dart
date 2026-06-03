@@ -469,6 +469,7 @@ class _ProjectCard extends StatelessWidget {
                   Container(
                     width: 10,
                     height: 10,
+                    margin: EdgeInsets.only(top: 4.5),
                     decoration: BoxDecoration(
                       color: project.color,
                       shape: BoxShape.circle,
