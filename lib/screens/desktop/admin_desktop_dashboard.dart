@@ -698,7 +698,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   onEnter: (_) => setState(() => _isLogoHovered = true),
                   onExit: (_) => setState(() => _isLogoHovered = false),
                   child: Padding(
-                    padding: EdgeInsets.all(5),
+                    padding: EdgeInsets.all(6.5),
                     child: AnimatedCrossFade(
                       duration: Duration(milliseconds: 110),
                       crossFadeState:
