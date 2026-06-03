@@ -2909,8 +2909,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
   @override
   Widget build(BuildContext context) {
     final Widget mainItem = Container(
-      height: 34,
-      margin: const EdgeInsets.symmetric(vertical: 2),
+      height: 33,
       padding: EdgeInsets.symmetric(horizontal: widget.isCollapsed ? 0 : 10),
       decoration: BoxDecoration(
         color:
