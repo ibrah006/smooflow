@@ -615,6 +615,8 @@ class _AdminSidebar extends ConsumerStatefulWidget {
 
 class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
   bool _loadingPins = true;
+  // Only for collapsed state hover effect on logo
+  bool _isLogoHovered = false;
 
   @override
   void initState() {
@@ -690,18 +692,31 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                     ),
                   ),
                 ],
+
                 // Premium Toggle Button
-                IconButton(
-                  onPressed: widget.onToggleCollapse,
-                  splashRadius: 16,
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  icon: Icon(
-                    widget.isCollapsed
-                        ? Icons.menu_open_rounded
-                        : Icons.menu_rounded,
-                    size: 18,
-                    color: Colors.white.withOpacity(0.5),
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isLogoHovered = true),
+                  onExit: (_) => setState(() => _isLogoHovered = false),
+                  child: AnimatedCrossFade(
+                    duration: Duration(milliseconds: 110),
+                    crossFadeState:
+                        _isLogoHovered || !widget.isCollapsed
+                            ? CrossFadeState.showFirst
+                            : CrossFadeState.showSecond,
+                    firstChild: IconButton(
+                      onPressed: widget.onToggleCollapse,
+                      splashRadius: 16,
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        widget.isCollapsed
+                            ? Icons.menu_open_rounded
+                            : Icons.menu_rounded,
+                        size: 18,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                    secondChild: Logo(size: 25),
                   ),
                 ),
               ],
