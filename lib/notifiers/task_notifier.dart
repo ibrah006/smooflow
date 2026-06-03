@@ -615,6 +615,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
             print('[TaskNotifier] Task created, new count: ${tasks.length}');
           }
         }
+
+        ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount++;
+
         break;
 
       case TaskChangeType.updated:
@@ -639,9 +642,6 @@ class TaskNotifier extends StateNotifier<TaskState> {
           ref
               .read(projectByIdProvider(event.task!.projectId))!
               .completedTasksCount++;
-          print(
-            "completed tasks count for project: ${ref.read(projectByIdProvider(event.task!.projectId))!.completedTasksCount}",
-          );
         }
 
         break;
@@ -687,6 +687,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
         if (state.selectedTask?.id == event.taskId) {
           state = state.copyWith(selectedTask: null);
         }
+
+        ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount--;
+
         break;
 
       case TaskChangeType.assigneeAdded:
