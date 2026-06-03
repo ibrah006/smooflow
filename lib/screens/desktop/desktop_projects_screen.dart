@@ -438,7 +438,7 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalTasks = project.tasks.length;
+    final totalTasks = project.tasksCount;
     final doneTasks = project.completedTasksCount;
     final double percent = totalTasks == 0 ? 0.0 : (doneTasks / totalTasks);
     final DateFormat formatter = DateFormat('MMM dd, yyyy');
