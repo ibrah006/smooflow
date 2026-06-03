@@ -181,29 +181,22 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
     builder:
         (_) => MacOSAfterUpdateDialogContent(
           currentVersion: currentVersion,
-          featureVideoUrl:
-              'https://raw.githubusercontent.com/ibrah006/smooflow/main/screenshots/feature%20demos/1.1.1.mp4',
+          featureVideoUrl: null,
+          // 'https://raw.githubusercontent.com/ibrah006/smooflow/main/screenshots/feature%20demos/1.1.1.mp4',
           onDismiss: () {
             Navigator.of(context).pop();
           },
           releaseNotes: [
             ReleaseNote(
               icon: Icons.bug_report_outlined,
-              title: "Bug fixes & Imporvements",
-              description:
-                  "Task details panel bug fix and ability to update task dates from task details panel.",
+              title: "Bug fixes",
+              description: "Date not updating in task details fixed",
             ),
             ReleaseNote(
-              icon: Icons.push_pin_outlined,
-              title: "Pin Projets & New Projects Page",
+              icon: Icons.new_releases_outlined,
+              title: "Some UI Enhancements",
               description:
-                  "You can now pin projects which will then appear on the left hand panel and you can also view all your projects in a new projects page accessible from the sidebar.",
-            ),
-            ReleaseNote(
-              icon: Icons.view_sidebar_outlined,
-              title: "Collapsible Left Panel",
-              description:
-                  "You can now expand or collapse left hand navigation panel!",
+                  "Minor ui enhancements across the app to make it more consistent and polished",
             ),
           ],
         ),
