@@ -740,6 +740,23 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 widget.isLoading
                     ? _SidebarItemRowSkeleton(isCollapsed: widget.isCollapsed)
                     : _SidebarNavItem(
+                      icon: Icons.folder_open_rounded,
+                      label: 'Projects',
+                      isCollapsed: widget.isCollapsed,
+                      isActive: widget.currentView == _AdminView.projects,
+                      badgeWidget:
+                          widget.projects.isNotEmpty
+                              ? Text(widget.projects.length.toString())
+                              : null,
+                      onTap: () {
+                        widget.onProjectSelected(null);
+                        widget.onViewChanged(_AdminView.projects);
+                      },
+                    ),
+
+                widget.isLoading
+                    ? _SidebarItemRowSkeleton(isCollapsed: widget.isCollapsed)
+                    : _SidebarNavItem(
                       icon: Icons.assignment_outlined,
                       label: 'All Tasks',
                       isCollapsed: widget.isCollapsed,
@@ -753,23 +770,6 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                       onTap: () {
                         widget.onProjectSelected(null);
                         widget.onViewChanged(_AdminView.list);
-                      },
-                    ),
-
-                widget.isLoading
-                    ? _SidebarItemRowSkeleton(isCollapsed: widget.isCollapsed)
-                    : _SidebarNavItem(
-                      icon: Icons.folder_open_rounded,
-                      label: 'Projects',
-                      isCollapsed: widget.isCollapsed,
-                      isActive: widget.currentView == _AdminView.projects,
-                      badgeWidget:
-                          widget.projects.isNotEmpty
-                              ? Text(widget.projects.length.toString())
-                              : null,
-                      onTap: () {
-                        widget.onProjectSelected(null);
-                        widget.onViewChanged(_AdminView.projects);
                       },
                     ),
               ],
