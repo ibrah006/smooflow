@@ -697,26 +697,29 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                 MouseRegion(
                   onEnter: (_) => setState(() => _isLogoHovered = true),
                   onExit: (_) => setState(() => _isLogoHovered = false),
-                  child: AnimatedCrossFade(
-                    duration: Duration(milliseconds: 110),
-                    crossFadeState:
-                        _isLogoHovered || !widget.isCollapsed
-                            ? CrossFadeState.showFirst
-                            : CrossFadeState.showSecond,
-                    firstChild: IconButton(
-                      onPressed: widget.onToggleCollapse,
-                      splashRadius: 16,
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      icon: Icon(
-                        widget.isCollapsed
-                            ? Icons.menu_open_rounded
-                            : Icons.menu_rounded,
-                        size: 18,
-                        color: Colors.white.withOpacity(0.5),
+                  child: Padding(
+                    padding: EdgeInsets.all(5),
+                    child: AnimatedCrossFade(
+                      duration: Duration(milliseconds: 110),
+                      crossFadeState:
+                          _isLogoHovered || !widget.isCollapsed
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                      firstChild: IconButton(
+                        onPressed: widget.onToggleCollapse,
+                        splashRadius: 16,
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          widget.isCollapsed
+                              ? Icons.menu_open_rounded
+                              : Icons.menu_rounded,
+                          size: 18,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
                       ),
+                      secondChild: Logo(size: 25),
                     ),
-                    secondChild: Logo(size: 25),
                   ),
                 ),
               ],
