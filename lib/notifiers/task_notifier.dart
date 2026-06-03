@@ -480,6 +480,10 @@ class TaskNotifier extends StateNotifier<TaskState> {
       }
     }
 
+    print(
+      "[TaskNotifier] update called with - billingStatus: $billingStatus, ref: $ref, quantity: $quantity, size: $size, name: $name, date: $date",
+    );
+
     if (billingStatus == null &&
         ref == null &&
         quantity == null &&

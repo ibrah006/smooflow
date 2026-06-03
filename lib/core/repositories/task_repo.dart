@@ -278,7 +278,8 @@ class TaskRepo {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
         quantity == task.quantity &&
-        size == task.size) {
+        size == task.size &&
+        date == task.date) {
       // Abort update
       // Nothing to update
       return;

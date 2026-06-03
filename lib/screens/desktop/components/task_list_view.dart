@@ -570,6 +570,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                     _HeaderRow(
                       effectiveVisible: effective,
                       onResizeEnd: _saveWidths,
+                      isDetailOpen: widget.isDetailOpen,
                     ),
                     const Divider(height: 1, thickness: 1, color: _T.slate200),
                   ],
@@ -694,8 +695,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 class _HeaderRow extends StatelessWidget {
   final Set<String> effectiveVisible;
   final VoidCallback? onResizeEnd;
+  final isDetailOpen;
 
-  const _HeaderRow({required this.effectiveVisible, this.onResizeEnd});
+  const _HeaderRow({
+    required this.effectiveVisible,
+    this.onResizeEnd,
+    required this.isDetailOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -751,7 +757,7 @@ class _HeaderRow extends StatelessWidget {
       );
 
       // Add resize handle between columns (not after the last one)
-      if (i < visibleCols.length - 1) {
+      if (!isDetailOpen && i < visibleCols.length - 1) {
         result.add(
           _ResizeHandle(
             colId: col.id,
