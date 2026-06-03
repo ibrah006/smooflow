@@ -823,7 +823,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                                   .toList();
                           if (unpinned.isEmpty) {
                             return [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 enabled: false,
                                 child: Text(
                                   'All projects pinned',
@@ -840,14 +840,29 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                                 (p) => PopupMenuItem<Project>(
                                   value: p,
                                   height: 34,
-                                  child: Text(
-                                    p.name,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: _T.ink3,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: p.color,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Expanded(
+                                        child: Text(
+                                          p.name,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: _T.ink3,
+                                          ),
+                                          overflow: TextOverflow.fade,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               )
