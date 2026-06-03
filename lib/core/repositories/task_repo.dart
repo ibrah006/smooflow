@@ -285,7 +285,7 @@ class TaskRepo {
       return;
     }
 
-    print("[task repo] update endpoint, date: $date");
+    print("[task repo] update endpoint, date: ${date?.toLocal()}");
 
     final response = await ApiClient.http.put(
       '/tasks/${task.id}',
@@ -294,7 +294,14 @@ class TaskRepo {
         "ref": ref,
         "quantity": quantity,
         "size": size,
-        "date": date?.toIso8601String(),
+        "date":
+            date != null
+                ? DateTime(
+                  date.year,
+                  date.month,
+                  date.day + 1,
+                ).toIso8601String()
+                : null,
         ...name != null ? {"name": name} : {},
       },
     );
