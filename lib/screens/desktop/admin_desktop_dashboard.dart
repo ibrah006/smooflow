@@ -91,7 +91,7 @@ class _T {
 
   static const sidebarW = 220.0;
   static const topbarH = 60.0;
-  static const detailW = 400.0;
+  static const detailW = 450.0;
 
   static const r = 8.0;
   static const rLg = 12.0;
