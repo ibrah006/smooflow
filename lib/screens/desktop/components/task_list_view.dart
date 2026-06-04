@@ -38,6 +38,7 @@ import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -98,7 +99,7 @@ const kNotificationDuration = Duration(seconds: 3);
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW MODE
 // ─────────────────────────────────────────────────────────────────────────────
-enum _ViewMode { list, board }
+enum _ViewMode { list, board, overview }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN DEFINITIONS
@@ -526,6 +527,11 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       });
     });
 
+    final Project? _selectedProject =
+        widget.selectedProjectId != null
+            ? ref.read(projectByIdProvider(widget.selectedProjectId!))
+            : null;
+
     return _WidthScope(
       notifier: _widthNotifier,
       child: Container(
@@ -551,6 +557,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                   addTaskFocusNode: widget.addTaskFocusNode ?? FocusNode(),
                   isAddingTask: widget.isAddingTask,
                   selectedProjectId: widget.selectedProjectId,
+                ),
+              )
+            else if (_viewMode == _ViewMode.overview)
+              Expanded(
+                child: DesktopProjectOverviewScreen(
+                  selectedProjectId: widget.selectedProjectId,
+                  project: _selectedProject,
                 ),
               )
             else ...[
@@ -1013,7 +1026,11 @@ class _ProjectHeader extends StatelessWidget {
           ),
 
           const SizedBox(width: 16),
-          _ViewToggle(current: viewMode, onChange: onViewModeChanged),
+          _ViewToggle(
+            current: viewMode,
+            onChange: onViewModeChanged,
+            selectedProjectId: activeProject?.id,
+          ),
         ],
       ),
     );
@@ -1153,14 +1170,26 @@ class _ErrorState extends StatelessWidget {
 class _ViewToggle extends StatelessWidget {
   final _ViewMode current;
   final ValueChanged<_ViewMode> onChange;
+  final String? selectedProjectId;
 
-  const _ViewToggle({required this.current, required this.onChange});
+  const _ViewToggle({
+    required this.current,
+    required this.onChange,
+    required this.selectedProjectId,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (selectedProjectId != null)
+          _ToggleTab(
+            icon: Icons.timeline_outlined,
+            label: 'Overview',
+            isActive: current == _ViewMode.overview,
+            onTap: () => onChange(_ViewMode.overview),
+          ),
         _ToggleTab(
           icon: Icons.list_alt_outlined,
           label: 'List',
