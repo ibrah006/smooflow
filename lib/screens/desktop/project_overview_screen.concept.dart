@@ -56,12 +56,7 @@ class _DesktopProjectOverviewScreenState
   // Configuration constants for the Gantt timeline viewport metrics
   static const double _dayColumnWidth = 72.0;
   static const double _taskRowHeight = 44.0;
-  static const int _timelineDaysRange =
-      30; // Shows a 30-day corporate schedule planning span
-  // Viewport structural geometry metrics tokens
-  static const double _columnWidth = 80.0;
-  static const double _rowHeight = 60.0;
-  static const int _timelineDaysLimit = 30;
+  static const int _timelineDaysRange = 30;
 
   late DateTime _timelineStartDate;
 
@@ -665,15 +660,13 @@ class _DesktopProjectOverviewScreenState
     int startOffsetDays = taskStart.difference(_timelineStartDate).inDays;
     int durationDays = taskEnd.difference(taskStart).inDays;
 
-    if (durationDays <= 0)
-      durationDays = 1; // Minimum bounding fallback size box constraints
+    if (durationDays <= 0) durationDays = 1;
 
     // Clamp metric values inside viewport window visibility tracks cleanly
     if (startOffsetDays < 0) {
       durationDays += startOffsetDays;
       startOffsetDays = 0;
     }
-    // if (durationDays <= 0) return const SizedBox.shrink();
 
     final double leftSpacingPosition =
         240 + (startOffsetDays * _dayColumnWidth);
@@ -684,6 +677,11 @@ class _DesktopProjectOverviewScreenState
             ? const Color(0xFF10B981)
             : const Color(0xFF3B82F6);
 
+    // Define local accumulator variables to smoothly track fractional drag distances across updates
+    double dragAccumulatorX = 0;
+    double resizeLeftAccumulatorX = 0;
+    double resizeRightAccumulatorX = 0;
+
     return Container(
       height: _taskRowHeight,
       decoration: const BoxDecoration(
@@ -693,7 +691,7 @@ class _DesktopProjectOverviewScreenState
       child: Stack(
         alignment: Alignment.centerLeft,
         children: [
-          // Background Matrix Grid Sync Line Markers Blocks Loop tracking columns
+          // 1. Background Matrix Grid Sync Line Markers
           Positioned.fill(
             child: Row(
               children: [
@@ -713,7 +711,7 @@ class _DesktopProjectOverviewScreenState
             ),
           ),
 
-          // Static Metadata Labels Target Block Anchor Column
+          // 2. Static Metadata Labels Column
           Positioned(
             left: 0,
             width: 240,
@@ -732,67 +730,171 @@ class _DesktopProjectOverviewScreenState
             ),
           ),
 
-          // Interactive Draggable Drag-Horizon Block mapping actions back to core stores
+          // 3. Interactive Component (Draggable & Resizable Timeline Block)
           Positioned(
             left: leftSpacingPosition + 4,
             width: barWidthSize - 8,
-            height: 24,
-            child: GestureDetector(
-              onHorizontalDragUpdate: (DragUpdateDetails details) {
-                // Compute horizontal distance offsets and snap step intervals directly matching days columns scale steps
-                final double deltaX = details.delta.dx;
-                if (deltaX.abs() > _dayColumnWidth / 2) {
-                  final int daysShiftDelta = (deltaX / _dayColumnWidth).round();
-                  if (daysShiftDelta != 0) {
-                    // Calculate shifted date parameters
-                    final DateTime updatedCreatedDate = (task.createdAt
-                            as DateTime)
-                        .add(Duration(days: daysShiftDelta));
-                    final DateTime updatedDueDate =
-                        task.dueDate != null
-                            ? (task.dueDate as DateTime).add(
-                              Duration(days: daysShiftDelta),
-                            )
-                            : updatedCreatedDate.add(const Duration(days: 1));
+            height: 28,
+            child: Tooltip(
+              message:
+                  '${task.name}\nStart: ${DateFormat('MM/dd').format(taskStart)}\nEnd: ${DateFormat('MM/dd').format(taskEnd)}',
+              preferBelow: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: barCoreColor.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: barCoreColor.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    children: [
+                      // ── LEFT RESIZE HANDLE ──
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeLeftRight,
+                        child: GestureDetector(
+                          onHorizontalDragStart:
+                              (_) => resizeLeftAccumulatorX = 0,
+                          onHorizontalDragUpdate: (details) {
+                            resizeLeftAccumulatorX += details.delta.dx;
+                            final int daysShift =
+                                (resizeLeftAccumulatorX / _dayColumnWidth)
+                                    .round();
 
-                    // Optimistic State Mutation Dispatch Handler
-                    setState(() {
-                      task.createdAt = updatedCreatedDate;
-                      if (task.dueDate != null) task.dueDate = updatedDueDate;
-                    });
+                            if (daysShift != 0) {
+                              final DateTime proposedStart = (task.createdAt
+                                      as DateTime)
+                                  .add(Duration(days: daysShift));
+                              // Prevent dragging the start date past or equal to the due date
+                              if (proposedStart.isBefore(
+                                task.dueDate as DateTime,
+                              )) {
+                                setState(() {
+                                  task.createdAt = proposedStart;
+                                });
+                                resizeLeftAccumulatorX = 0;
+                              }
+                            }
+                          },
+                          child: Container(
+                            width: 8,
+                            color: Colors.white.withOpacity(0.25),
+                            child: const Center(
+                              child: Icon(
+                                Icons.more_vert_rounded,
+                                size: 10,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
 
-                    // TODO: Dispatch updated entity back inside notifier provider instance pipeline safely:
-                    // ref.read(taskNotifierProvider.notifier).updateTaskTimeline(task.id, updatedCreatedDate, updatedDueDate);
-                  }
-                }
-              },
-              child: Tooltip(
-                message:
-                    '${task.name}\nStart: ${DateFormat('MM/dd').format(taskStart)}\nEnd: ${DateFormat('MM/dd').format(taskEnd)}',
-                preferBelow: false,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: barCoreColor.withOpacity(0.85),
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: barCoreColor.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                      // ── CENTRAL DRAG HORIZON ZONE ──
+                      Expanded(
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.move,
+                          child: GestureDetector(
+                            onHorizontalDragStart: (_) => dragAccumulatorX = 0,
+                            onHorizontalDragUpdate: (details) {
+                              dragAccumulatorX += details.delta.dx;
+                              final int daysShiftDelta =
+                                  (dragAccumulatorX / _dayColumnWidth).round();
+
+                              if (daysShiftDelta != 0) {
+                                final DateTime updatedCreatedDate =
+                                    (task.createdAt as DateTime).add(
+                                      Duration(days: daysShiftDelta),
+                                    );
+                                final DateTime updatedDueDate =
+                                    task.dueDate != null
+                                        ? (task.dueDate as DateTime).add(
+                                          Duration(days: daysShiftDelta),
+                                        )
+                                        : updatedCreatedDate.add(
+                                          const Duration(days: 1),
+                                        );
+
+                                setState(() {
+                                  task.createdAt = updatedCreatedDate;
+                                  if (task.dueDate != null)
+                                    task.dueDate = updatedDueDate;
+                                });
+
+                                dragAccumulatorX =
+                                    0; // Clear out threshold step segment
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+
+                      // ── CENTRAL BLOCK TEXT OVERLAY ──
+                      // AbsorbPointer lets the central GestureDetector catch drags behind the text
+                      IgnorePointer(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: Text(
+                            task.status.toString().toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+
+                      // ── RIGHT RESIZE HANDLE ──
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeLeftRight,
+                        child: GestureDetector(
+                          onHorizontalDragStart:
+                              (_) => resizeRightAccumulatorX = 0,
+                          onHorizontalDragUpdate: (details) {
+                            resizeRightAccumulatorX += details.delta.dx;
+                            final int daysShift =
+                                (resizeRightAccumulatorX / _dayColumnWidth)
+                                    .round();
+
+                            if (daysShift != 0) {
+                              final DateTime proposedEnd = (task.dueDate
+                                      as DateTime)
+                                  .add(Duration(days: daysShift));
+                              // Prevent shrinking the duration below 1 day
+                              if (proposedEnd.isAfter(
+                                task.createdAt as DateTime,
+                              )) {
+                                setState(() {
+                                  task.dueDate = proposedEnd;
+                                });
+                                resizeRightAccumulatorX = 0;
+                              }
+                            }
+                          },
+                          child: Container(
+                            width: 8,
+                            color: Colors.white.withOpacity(0.25),
+                            child: const Center(
+                              child: Icon(
+                                Icons.more_vert_rounded,
+                                size: 10,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    task.status.toString().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
-                    ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
