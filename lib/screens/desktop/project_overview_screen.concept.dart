@@ -1,7 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/task_provider.dart'; // Ensure access to your design tokens like _T
+
+class PipelineSegment {
+  final TaskStatus status;
+  int startDayOffset; // Grid index offset from baseline timeline start
+  int durationDays; // Span size in grid units
+
+  PipelineSegment({
+    required this.status,
+    required this.startDayOffset,
+    required this.durationDays,
+  });
+}
+
+class ProjectTask {
+  final String id;
+  final String name;
+  final List<PipelineSegment> pipeline;
+
+  ProjectTask({required this.id, required this.name, required this.pipeline});
+}
+
+// Controls whether a specific department allows concurrent jobs or functions as a strict single-task pipeline
+class PipelineRule {
+  final TaskStatus status;
+  bool
+  isExclusive; // If true, two tasks cannot share this stage on the same calendar day
+
+  PipelineRule({required this.status, this.isExclusive = false});
+}
 
 class DesktopProjectOverviewScreen extends ConsumerStatefulWidget {
   final String? selectedProjectId;
@@ -28,8 +58,21 @@ class _DesktopProjectOverviewScreenState
   static const double _taskRowHeight = 44.0;
   static const int _timelineDaysRange =
       30; // Shows a 30-day corporate schedule planning span
+  // Viewport structural geometry metrics tokens
+  static const double _columnWidth = 80.0;
+  static const double _rowHeight = 60.0;
+  static const int _timelineDaysLimit = 30;
 
   late DateTime _timelineStartDate;
+
+  // Global organizational pipeline constraints mapping
+  List<PipelineRule> _pipelineRules = [];
+
+  // Active Project Production Lines
+  List<ProjectTask> _activeTasks = [];
+
+  // Unscheduled Backlog pool waiting to be dragged/dropped into active production chart execution tracks
+  List<ProjectTask> _unassignedBacklog = [];
 
   @override
   void initState() {
@@ -37,6 +80,95 @@ class _DesktopProjectOverviewScreenState
     // Anchor timeline starting point to today at midnight or fallback safely to project creation metrics
     final now = DateTime.now();
     _timelineStartDate = DateTime(now.year, now.month, now.day);
+
+    // Default organizational rules: Design and Printing are typically single-team operational bottlenecks
+    _pipelineRules =
+        TaskStatus.values.map((status) {
+          return PipelineRule(
+            status: status,
+            isExclusive:
+                status == TaskStatus.designing ||
+                status == TaskStatus.printing ||
+                status == TaskStatus.installing,
+          );
+        }).toList();
+
+    // Seed Unscheduled Backlog Queue
+    _unassignedBacklog = [
+      ProjectTask(
+        id: 'task-101',
+        name: 'Airport Lightbox Vinyl Print',
+        pipeline: [],
+      ),
+      ProjectTask(
+        id: 'task-102',
+        name: 'Vehicle Wrap - 3 Delivery Vans',
+        pipeline: [],
+      ),
+      ProjectTask(
+        id: 'task-103',
+        name: 'Exhibition Fabric Wall Display',
+        pipeline: [],
+      ),
+    ];
+
+    // Seed Initial Active Production Lines
+    _activeTasks = [
+      ProjectTask(
+        id: 'task-201',
+        name: 'Flagship Store Front Signage',
+        pipeline: [
+          PipelineSegment(
+            status: TaskStatus.designing,
+            startDayOffset: 0,
+            durationDays: 3,
+          ),
+          PipelineSegment(
+            status: TaskStatus.waitingApproval,
+            startDayOffset: 3,
+            durationDays: 2,
+          ),
+          PipelineSegment(
+            status: TaskStatus.printing,
+            startDayOffset: 5,
+            durationDays: 4,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  // ── ADVANCED CORE PROCESSING: HAZARD DETECTION AND SYSTEM COLLISION CHECKING ──
+
+  bool _isPipelineHazardPresent(
+    ProjectTask targetTask,
+    PipelineSegment targetSegment,
+  ) {
+    // Check if the business rule ignores concurrent execution restrictions for this stage
+    final rule = _pipelineRules.firstWhere(
+      (r) => r.status == targetSegment.status,
+    );
+    if (!rule.isExclusive) return false;
+
+    final targetStart = targetSegment.startDayOffset;
+    final targetEnd = targetSegment.startDayOffset + targetSegment.durationDays;
+
+    for (var task in _activeTasks) {
+      if (task.id == targetTask.id) continue;
+      for (var segment in task.pipeline) {
+        if (segment.status == targetSegment.status) {
+          final currentStart = segment.startDayOffset;
+          final currentEnd = segment.startDayOffset + segment.durationDays;
+
+          // Structural Check for Overlapping Execution Cycles
+          bool zeroOverlaps =
+              targetStart >= currentEnd || targetEnd <= currentStart;
+          if (!zeroOverlaps)
+            return true; // Hazard discovered! Structural bottleneck block triggered.
+        }
+      }
+    }
+    return false;
   }
 
   @override
@@ -666,5 +798,84 @@ class _DesktopProjectOverviewScreenState
         ],
       ),
     );
+  }
+
+  Widget _buildPipelineExtensionController(ProjectTask task) {
+    if (task.pipeline.isEmpty) return const SizedBox.shrink();
+
+    // Determine target location offset directly relative to tail termination elements
+    final lastSegment = task.pipeline.last;
+    final int trailingEdgeIndex =
+        lastSegment.startDayOffset + lastSegment.durationDays;
+
+    if (trailingEdgeIndex >= _timelineDaysLimit) return const SizedBox.shrink();
+
+    final double buttonLeftAnchor =
+        240 + (trailingEdgeIndex * _columnWidth) + 6;
+
+    return Positioned(
+      left: buttonLeftAnchor,
+      child: PopupMenuButton<TaskStatus>(
+        icon: const Icon(
+          Icons.add_circle_rounded,
+          size: 18,
+          color: Color(0xFF10B981),
+        ),
+        tooltip: 'Chain Sequential Phase Execution Cycle',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onSelected: (TaskStatus nextSelectedStatus) {
+          setState(() {
+            task.pipeline.add(
+              PipelineSegment(
+                status: nextSelectedStatus,
+                startDayOffset: trailingEdgeIndex,
+                durationDays: 2, // Standard initialization cycle baseline
+              ),
+            );
+          });
+        },
+        itemBuilder: (context) {
+          // Exclude stages that already exist in the pipeline to prevent duplicate stages for the same task
+          final currentStatuses = task.pipeline.map((s) => s.status).toSet();
+          return TaskStatus.values
+              .where((status) => !currentStatuses.contains(status))
+              .map(
+                (status) => PopupMenuItem<TaskStatus>(
+                  value: status,
+                  child: Text(
+                    status.name.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              )
+              .toList();
+        },
+      ),
+    );
+  }
+
+  Color _getStageHexColor(TaskStatus status) {
+    switch (status) {
+      case TaskStatus.designing:
+        return const Color(0xFF6366F1); // Royal Indigo
+      case TaskStatus.waitingApproval:
+        return const Color(0xFFF59E0B); // Amber
+      case TaskStatus.clientApproved:
+        return const Color(0xFF10B981); // Emerald
+      case TaskStatus.printing:
+        return const Color(0xFF3B82F6); // Wide Blue
+      case TaskStatus.finishing:
+        return const Color(0xFF8B5CF6); // Violet Accent
+      case TaskStatus.installing:
+        return const Color(0xFF06B6D4); // Cyan
+      case TaskStatus.completed:
+        return const Color(0xFF22C55E); // Green Success
+      default:
+        return const Color(0xFF64748B); // Slate Cool Gray Neutral
+    }
   }
 }

@@ -56,6 +56,7 @@ import 'package:smooflow/screens/desktop/home_view.dart';
 import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop/desktop_projects_screen.dart';
+import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
