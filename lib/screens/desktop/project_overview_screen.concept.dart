@@ -507,6 +507,9 @@ class _DesktopProjectOverviewScreenState
                                     _buildTimelineCalendarHeader(),
 
                                     // Interactive Row Rows Iterations Stack View Builder Block
+                                    // ...timelineTasks
+                                    //     .map((tt) => Text(tt.name))
+                                    //     .toList(),
                                     Expanded(
                                       child: ListView.builder(
                                         itemCount: timelineTasks.length,
@@ -670,7 +673,7 @@ class _DesktopProjectOverviewScreenState
       durationDays += startOffsetDays;
       startOffsetDays = 0;
     }
-    if (durationDays <= 0) return const SizedBox.shrink();
+    // if (durationDays <= 0) return const SizedBox.shrink();
 
     final double leftSpacingPosition =
         240 + (startOffsetDays * _dayColumnWidth);
