@@ -19,6 +19,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1183,7 +1184,7 @@ class _ViewToggle extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (selectedProjectId != null)
+        if (kDebugMode && selectedProjectId != null)
           _ToggleTab(
             icon: Icons.timeline_outlined,
             label: 'Overview',
