@@ -301,6 +301,16 @@ class Task {
     _billingStatus = value;
   }
 
+  // Temporary setter
+  set dueDate(DateTime? value) {
+    _dueDate = value;
+  }
+
+  // Temporary setter
+  set createdAt(DateTime? value) {
+    _dueDate = value;
+  }
+
   factory Task.fromJson(Map<String, dynamic> json) {
     late final TaskPriority priority;
 

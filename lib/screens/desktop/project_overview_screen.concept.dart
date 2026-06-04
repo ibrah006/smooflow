@@ -69,6 +69,16 @@ class _DesktopProjectOverviewScreenState
   // Unscheduled Backlog pool waiting to be dragged/dropped into active production chart execution tracks
   List<ProjectTask> _unassignedBacklog = [];
 
+  // Global state-tracking variables for active background creation interactions
+  String? _activeCreatingTaskId;
+  DateTime? _creationStartDay;
+  double _gridDragAccumulator = 0.0;
+
+  // Track dragging/resizing state handles globally so they persist over build cycles
+  final Map<String, double> _dragAccumulators = {};
+  final Map<String, double> _leftResizeAccumulators = {};
+  final Map<String, double> _rightResizeAccumulators = {};
+
   @override
   void initState() {
     super.initState();
@@ -638,8 +648,11 @@ class _DesktopProjectOverviewScreenState
     );
   }
 
+  // ── REFACTORED HIGH-DENSITY INTERACTIVE TASK ROW ──
   Widget _buildGanttInteractiveTaskRow(dynamic task, int index) {
-    // Determine horizontal offsets using structural calendar calculations safely
+    final String taskId = task.id.toString();
+
+    // Safely anchor timeline boundaries
     final taskStart =
         task.createdAt != null
             ? DateTime(
@@ -648,6 +661,7 @@ class _DesktopProjectOverviewScreenState
               task.createdAt!.day,
             )
             : _timelineStartDate;
+
     final taskEnd =
         task.dueDate != null
             ? DateTime(
@@ -662,7 +676,7 @@ class _DesktopProjectOverviewScreenState
 
     if (durationDays <= 0) durationDays = 1;
 
-    // Clamp metric values inside viewport window visibility tracks cleanly
+    // Viewport bounds clipping rules
     if (startOffsetDays < 0) {
       durationDays += startOffsetDays;
       startOffsetDays = 0;
@@ -677,10 +691,13 @@ class _DesktopProjectOverviewScreenState
             ? const Color(0xFF10B981)
             : const Color(0xFF3B82F6);
 
-    // Define local accumulator variables to smoothly track fractional drag distances across updates
-    double dragAccumulatorX = 0;
-    double resizeLeftAccumulatorX = 0;
-    double resizeRightAccumulatorX = 0;
+    // Initialize map keys for persistent drag memory structures if absent
+    _dragAccumulators.putIfAbsent(taskId, () => 0.0);
+    _leftResizeAccumulators.putIfAbsent(taskId, () => 0.0);
+    _rightResizeAccumulators.putIfAbsent(taskId, () => 0.0);
+
+    // Determine if this exact row is currently being interactively created from scratch
+    final bool isCurrentlySpawning = _activeCreatingTaskId == taskId;
 
     return Container(
       height: _taskRowHeight,
@@ -691,27 +708,88 @@ class _DesktopProjectOverviewScreenState
       child: Stack(
         alignment: Alignment.centerLeft,
         children: [
-          // 1. Background Matrix Grid Sync Line Markers
+          // ═══════════════════════════════════════════════════════════════════
+          // 1. DYNAMIC INTERACTIVE GRID CANVAS (DRAG TO CREATE/EXTEND)
+          // ═══════════════════════════════════════════════════════════════════
           Positioned.fill(
             child: Row(
               children: [
-                const SizedBox(width: 240),
-                ...List.generate(
-                  _timelineDaysRange,
-                  (i) => Container(
-                    width: _dayColumnWidth,
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        right: BorderSide(color: Color(0xFFF1F5F9), width: 0.5),
+                const SizedBox(width: 240), // Offset past labels column
+                ...List.generate(_timelineDaysRange, (i) {
+                  final cellDate = _timelineStartDate.add(Duration(days: i));
+
+                  return Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.cell,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanStart: (_) {
+                          setState(() {
+                            _activeCreatingTaskId = taskId;
+                            _creationStartDay = cellDate;
+                            _gridDragAccumulator = 0.0;
+
+                            // Initialize / clear out existing data metrics
+                            task.createdAt = cellDate;
+                            task.dueDate = cellDate.add(
+                              const Duration(days: 1),
+                            );
+                          });
+                        },
+                        onPanUpdate: (details) {
+                          if (_activeCreatingTaskId != taskId ||
+                              _creationStartDay == null)
+                            return;
+
+                          _gridDragAccumulator += details.delta.dx;
+                          final int deltaDays =
+                              (_gridDragAccumulator / _dayColumnWidth).round();
+
+                          if (deltaDays != 0) {
+                            setState(() {
+                              final calculatedEnd = _creationStartDay!.add(
+                                Duration(days: deltaDays + 1),
+                              );
+                              // Ensure sequence integrity: block cannot have negative duration
+                              if (calculatedEnd.isAfter(_creationStartDay!)) {
+                                task.dueDate = calculatedEnd;
+                              }
+                            });
+                            _gridDragAccumulator = 0.0;
+                          }
+                        },
+                        onPanEnd: (_) {
+                          setState(() {
+                            _activeCreatingTaskId = null;
+                            _creationStartDay = null;
+                          });
+                        },
+                        child: Container(
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            color:
+                                isCurrentlySpawning
+                                    ? const Color(0xFFEFF6FF).withOpacity(0.4)
+                                    : Colors.transparent,
+                            border: const Border(
+                              right: BorderSide(
+                                color: Color(0xFFF1F5F9),
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           ),
 
-          // 2. Static Metadata Labels Column
+          // ═══════════════════════════════════════════════════════════════════
+          // 2. STATIC METADATA ROW LABELS
+          // ═══════════════════════════════════════════════════════════════════
           Positioned(
             left: 0,
             width: 240,
@@ -730,176 +808,200 @@ class _DesktopProjectOverviewScreenState
             ),
           ),
 
-          // 3. Interactive Component (Draggable & Resizable Timeline Block)
-          Positioned(
-            left: leftSpacingPosition + 4,
-            width: barWidthSize - 8,
-            height: 28,
-            child: Tooltip(
-              message:
-                  '${task.name}\nStart: ${DateFormat('MM/dd').format(taskStart)}\nEnd: ${DateFormat('MM/dd').format(taskEnd)}',
-              preferBelow: false,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: barCoreColor.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: barCoreColor.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+          // ═══════════════════════════════════════════════════════════════════
+          // 3. INTERACTIVE TIMELINE BLOCK (RENDER ONLY IF TIMELINES ARE VALID)
+          // ═══════════════════════════════════════════════════════════════════
+          if (task.createdAt != null)
+            Positioned(
+              left: leftSpacingPosition + 4,
+              width: barWidthSize - 8,
+              height: 28,
+              child: Tooltip(
+                message:
+                    '${task.name}\nStart: ${DateFormat('MM/dd').format(taskStart)}\nEnd: ${DateFormat('MM/dd').format(taskEnd)}',
+                preferBelow: false,
+                child: AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: 50,
+                  ), // Subtle snapping visual interpolation
+                  decoration: BoxDecoration(
+                    color: barCoreColor.withOpacity(
+                      isCurrentlySpawning ? 0.70 : 0.85,
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Row(
-                    children: [
-                      // ── LEFT RESIZE HANDLE ──
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onHorizontalDragStart:
-                              (_) => resizeLeftAccumulatorX = 0,
-                          onHorizontalDragUpdate: (details) {
-                            resizeLeftAccumulatorX += details.delta.dx;
-                            final int daysShift =
-                                (resizeLeftAccumulatorX / _dayColumnWidth)
-                                    .round();
-
-                            if (daysShift != 0) {
-                              final DateTime proposedStart = (task.createdAt
-                                      as DateTime)
-                                  .add(Duration(days: daysShift));
-                              // Prevent dragging the start date past or equal to the due date
-                              if (proposedStart.isBefore(
-                                task.dueDate as DateTime,
-                              )) {
-                                setState(() {
-                                  task.createdAt = proposedStart;
-                                });
-                                resizeLeftAccumulatorX = 0;
-                              }
-                            }
-                          },
-                          child: Container(
-                            width: 8,
-                            color: Colors.white.withOpacity(0.25),
-                            child: const Center(
-                              child: Icon(
-                                Icons.more_vert_rounded,
-                                size: 10,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // ── CENTRAL DRAG HORIZON ZONE ──
-                      Expanded(
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.move,
-                          child: GestureDetector(
-                            onHorizontalDragStart: (_) => dragAccumulatorX = 0,
-                            onHorizontalDragUpdate: (details) {
-                              dragAccumulatorX += details.delta.dx;
-                              final int daysShiftDelta =
-                                  (dragAccumulatorX / _dayColumnWidth).round();
-
-                              if (daysShiftDelta != 0) {
-                                final DateTime updatedCreatedDate =
-                                    (task.createdAt as DateTime).add(
-                                      Duration(days: daysShiftDelta),
-                                    );
-                                final DateTime updatedDueDate =
-                                    task.dueDate != null
-                                        ? (task.dueDate as DateTime).add(
-                                          Duration(days: daysShiftDelta),
-                                        )
-                                        : updatedCreatedDate.add(
-                                          const Duration(days: 1),
-                                        );
-
-                                setState(() {
-                                  task.createdAt = updatedCreatedDate;
-                                  if (task.dueDate != null)
-                                    task.dueDate = updatedDueDate;
-                                });
-
-                                dragAccumulatorX =
-                                    0; // Clear out threshold step segment
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // ── CENTRAL BLOCK TEXT OVERLAY ──
-                      // AbsorbPointer lets the central GestureDetector catch drags behind the text
-                      IgnorePointer(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: Text(
-                            task.status.toString().toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 0.3,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-
-                      // ── RIGHT RESIZE HANDLE ──
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onHorizontalDragStart:
-                              (_) => resizeRightAccumulatorX = 0,
-                          onHorizontalDragUpdate: (details) {
-                            resizeRightAccumulatorX += details.delta.dx;
-                            final int daysShift =
-                                (resizeRightAccumulatorX / _dayColumnWidth)
-                                    .round();
-
-                            if (daysShift != 0) {
-                              final DateTime proposedEnd = (task.dueDate
-                                      as DateTime)
-                                  .add(Duration(days: daysShift));
-                              // Prevent shrinking the duration below 1 day
-                              if (proposedEnd.isAfter(
-                                task.createdAt as DateTime,
-                              )) {
-                                setState(() {
-                                  task.dueDate = proposedEnd;
-                                });
-                                resizeRightAccumulatorX = 0;
-                              }
-                            }
-                          },
-                          child: Container(
-                            width: 8,
-                            color: Colors.white.withOpacity(0.25),
-                            child: const Center(
-                              child: Icon(
-                                Icons.more_vert_rounded,
-                                size: 10,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
-                        ),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color:
+                          isCurrentlySpawning
+                              ? const Color(0xFF2563EB)
+                              : Colors.transparent,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: barCoreColor.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(5),
+                    child: Row(
+                      children: [
+                        // ── LEFT RESIZE HANDLE ──
+                        MouseRegion(
+                          cursor: SystemMouseCursors.resizeLeftRight,
+                          child: GestureDetector(
+                            onHorizontalDragStart:
+                                (_) => _leftResizeAccumulators[taskId] = 0.0,
+                            onHorizontalDragUpdate: (details) {
+                              _leftResizeAccumulators[taskId] =
+                                  (_leftResizeAccumulators[taskId] ?? 0.0) +
+                                  details.delta.dx;
+                              final int daysShift =
+                                  ((_leftResizeAccumulators[taskId] ?? 0.0) /
+                                          _dayColumnWidth)
+                                      .round();
+
+                              if (daysShift != 0) {
+                                final DateTime proposedStart = (task.createdAt
+                                        as DateTime)
+                                    .add(Duration(days: daysShift));
+                                if (proposedStart.isBefore(
+                                  task.dueDate as DateTime,
+                                )) {
+                                  setState(() {
+                                    task.createdAt = proposedStart;
+                                  });
+                                  _leftResizeAccumulators[taskId] = 0.0;
+                                }
+                              }
+                            },
+                            child: Container(
+                              width: 10,
+                              color: Colors.white.withOpacity(0.15),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.drag_indicator_rounded,
+                                  size: 10,
+                                  color: Colors.white60,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // ── BODY DRAG ZONE ──
+                        Expanded(
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.move,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onHorizontalDragStart:
+                                  (_) => _dragAccumulators[taskId] = 0.0,
+                              onHorizontalDragUpdate: (details) {
+                                _dragAccumulators[taskId] =
+                                    (_dragAccumulators[taskId] ?? 0.0) +
+                                    details.delta.dx;
+                                final int daysShiftDelta =
+                                    ((_dragAccumulators[taskId] ?? 0.0) /
+                                            _dayColumnWidth)
+                                        .round();
+
+                                if (daysShiftDelta != 0) {
+                                  final DateTime updatedCreatedDate =
+                                      (task.createdAt as DateTime).add(
+                                        Duration(days: daysShiftDelta),
+                                      );
+                                  final DateTime updatedDueDate =
+                                      task.dueDate != null
+                                          ? (task.dueDate as DateTime).add(
+                                            Duration(days: daysShiftDelta),
+                                          )
+                                          : updatedCreatedDate.add(
+                                            const Duration(days: 1),
+                                          );
+
+                                  setState(() {
+                                    task.createdAt = updatedCreatedDate;
+                                    if (task.dueDate != null)
+                                      task.dueDate = updatedDueDate;
+                                  });
+                                  _dragAccumulators[taskId] = 0.0;
+                                }
+                              },
+                              child: Stack(
+                                alignment: Alignment.centerLeft,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 6.0),
+                                    child: IgnorePointer(
+                                      child: Text(
+                                        task.status.toString().toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: 0.3,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // ── RIGHT RESIZE HANDLE ──
+                        MouseRegion(
+                          cursor: SystemMouseCursors.resizeLeftRight,
+                          child: GestureDetector(
+                            onHorizontalDragStart:
+                                (_) => _rightResizeAccumulators[taskId] = 0.0,
+                            onHorizontalDragUpdate: (details) {
+                              _rightResizeAccumulators[taskId] =
+                                  (_rightResizeAccumulators[taskId] ?? 0.0) +
+                                  details.delta.dx;
+                              final int daysShift =
+                                  ((_rightResizeAccumulators[taskId] ?? 0.0) /
+                                          _dayColumnWidth)
+                                      .round();
+
+                              if (daysShift != 0) {
+                                final DateTime proposedEnd = (task.dueDate
+                                        as DateTime)
+                                    .add(Duration(days: daysShift));
+                                if (proposedEnd.isAfter(
+                                  task.createdAt as DateTime,
+                                )) {
+                                  setState(() {
+                                    task.dueDate = proposedEnd;
+                                  });
+                                  _rightResizeAccumulators[taskId] = 0.0;
+                                }
+                              }
+                            },
+                            child: Container(
+                              width: 10,
+                              color: Colors.white.withOpacity(0.15),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.drag_indicator_rounded,
+                                  size: 10,
+                                  color: Colors.white60,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
