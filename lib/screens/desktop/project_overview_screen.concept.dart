@@ -792,7 +792,13 @@ class _DesktopProjectOverviewScreenState
       height: _blockHeight,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hoveredSegmentId[task.id] = segment.id),
-        onExit: (_) => setState(() => _hoveredSegmentId[task.id] = null),
+        onExit: (_) async {
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (_hoveredSegmentId[task.id] == segment.id) {
+              setState(() => _hoveredSegmentId[task.id] = null);
+            }
+          });
+        },
         child: Tooltip(
           message:
               '${_getStatusLabel(segment.status)}: ${segment.durationDays.toStringAsFixed(1)} days',
