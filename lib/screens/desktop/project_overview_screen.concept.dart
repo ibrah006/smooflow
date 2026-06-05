@@ -1,14 +1,16 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/task_provider.dart';
 
 class PipelineSegment {
   final String id;
   final TaskStatus status;
-  int startDayOffset;
-  int durationDays;
+  double startDayOffset;
+  double durationDays;
 
   PipelineSegment({
     required this.id,
@@ -33,6 +35,20 @@ class PipelineRule {
   PipelineRule({required this.status, this.isExclusive = false});
 }
 
+class TaskDependency {
+  final String fromSegmentId;
+  final String toSegmentId;
+  final bool fromLeft;
+  final bool toLeft;
+
+  TaskDependency({
+    required this.fromSegmentId,
+    required this.toSegmentId,
+    required this.fromLeft,
+    required this.toLeft,
+  });
+}
+
 class DesktopProjectOverviewScreen extends ConsumerStatefulWidget {
   final String? selectedProjectId;
   final dynamic project;
@@ -50,25 +66,28 @@ class DesktopProjectOverviewScreen extends ConsumerStatefulWidget {
 
 class _DesktopProjectOverviewScreenState
     extends ConsumerState<DesktopProjectOverviewScreen> {
-  final ScrollController _timelineScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+  final ScrollController _verticalScrollController = ScrollController();
+  final GlobalKey _gridCanvasKey = GlobalKey();
 
   static const double _dayColumnWidth = 72.0;
-  static const double _taskRowHeight = 64.0;
+  static const double _taskRowHeight = 54.0;
+  static const double _blockHeight = 32.0;
   static const int _timelineDaysRange = 30;
 
   late DateTime _timelineStartDate;
+  String? _lastSelectedProjectId;
 
   List<PipelineRule> _pipelineRules = [];
-  List<ProjectTask> _activeTasks = [];
-  List<ProjectTask> _unassignedBacklog = [];
+  final List<ProjectTask> _activeTasks = [];
+  final List<TaskDependency> _dependencies = [];
 
-  // Track which segment is being hovered for the add stage button
-  Map<String, String?> _hoveredSegmentId = {};
+  final Map<String, String?> _hoveredSegmentId = {};
 
-  // Track drag state per segment
-  Map<String, double> _dragAccumulators = {};
-  Map<String, double> _leftResizeAccumulators = {};
-  Map<String, double> _rightResizeAccumulators = {};
+  // Active Connection Link Drag State
+  String? _draggingFromSegmentId;
+  bool? _isDraggingFromLeft;
+  Offset? _currentDragPosition;
 
   @override
   void initState() {
@@ -86,93 +105,65 @@ class _DesktopProjectOverviewScreenState
                 status == TaskStatus.installing,
           );
         }).toList();
-
-    _unassignedBacklog = [
-      ProjectTask(
-        id: 'task-101',
-        name: 'Airport Lightbox Vinyl Print',
-        pipeline: [],
-      ),
-      ProjectTask(
-        id: 'task-102',
-        name: 'Vehicle Wrap - 3 Delivery Vans',
-        pipeline: [],
-      ),
-      ProjectTask(
-        id: 'task-103',
-        name: 'Exhibition Fabric Wall Display',
-        pipeline: [],
-      ),
-    ];
-
-    _activeTasks = [
-      ProjectTask(
-        id: 'task-201',
-        name: 'Flagship Store Front Signage',
-        pipeline: [
-          PipelineSegment(
-            id: 'seg-1',
-            status: TaskStatus.designing,
-            startDayOffset: 0,
-            durationDays: 3,
-          ),
-          PipelineSegment(
-            id: 'seg-2',
-            status: TaskStatus.waitingApproval,
-            startDayOffset: 3,
-            durationDays: 2,
-          ),
-          PipelineSegment(
-            id: 'seg-3',
-            status: TaskStatus.printing,
-            startDayOffset: 5,
-            durationDays: 4,
-          ),
-        ],
-      ),
-    ];
   }
 
-  bool _isPipelineHazardPresent(
-    ProjectTask targetTask,
-    PipelineSegment targetSegment,
-  ) {
-    final rule = _pipelineRules.firstWhere(
-      (r) => r.status == targetSegment.status,
-    );
-    if (!rule.isExclusive) return false;
+  void _syncTasksWithProvider(List<dynamic> providerTasks) {
+    final providerIds = providerTasks.map((t) => t.id.toString()).toSet();
 
-    final targetStart = targetSegment.startDayOffset;
-    final targetEnd = targetSegment.startDayOffset + targetSegment.durationDays;
+    _activeTasks.removeWhere((task) => !providerIds.contains(task.id));
 
-    for (var task in _activeTasks) {
-      if (task.id == targetTask.id) continue;
-      for (var segment in task.pipeline) {
-        if (segment.status == targetSegment.status) {
-          final currentStart = segment.startDayOffset;
-          final currentEnd = segment.startDayOffset + segment.durationDays;
+    for (var pTask in providerTasks) {
+      final existingIndex = _activeTasks.indexWhere(
+        (t) => t.id == pTask.id.toString(),
+      );
 
-          bool hasOverlap =
-              !(targetStart >= currentEnd || targetEnd <= currentStart);
-          if (hasOverlap) return true;
+      if (existingIndex == -1) {
+        TaskStatus defaultStatus = TaskStatus.designing;
+        if (pTask.status == 'completed') {
+          defaultStatus = TaskStatus.installing;
+        } else if (pTask.status == 'printing') {
+          defaultStatus = TaskStatus.printing;
+        }
+
+        _activeTasks.add(
+          ProjectTask(
+            id: pTask.id.toString(),
+            name: pTask.name ?? 'Untitled Task',
+            pipeline: [
+              PipelineSegment(
+                id: 'seg-${pTask.id}-init',
+                status: defaultStatus,
+                startDayOffset: 1.0,
+                durationDays: 4.0,
+              ),
+            ],
+          ),
+        );
+      } else {
+        final existing = _activeTasks[existingIndex];
+        if (existing.name != pTask.name) {
+          _activeTasks[existingIndex] = ProjectTask(
+            id: existing.id,
+            name: pTask.name ?? 'Untitled Task',
+            pipeline: existing.pipeline,
+          );
         }
       }
     }
-    return false;
   }
 
   Color _getStatusColor(TaskStatus status) {
     switch (status) {
       case TaskStatus.designing:
-        return const Color(0xFF3B82F6); // Blue
+        return const Color(0xFF2563EB);
       case TaskStatus.waitingApproval:
-        return const Color(0xFFF97316); // Orange
+        return const Color(0xFFD97706);
       case TaskStatus.printing:
-        return const Color(0xFF8B5CF6); // Purple
+        return const Color(0xFF4F46E5);
       case TaskStatus.installing:
-        return const Color(0xFF10B981); // Green
+        return const Color(0xFF059669);
       default:
-        return const Color(0xFF64748B); // Gray
+        return const Color(0xFF475569);
     }
   }
 
@@ -190,7 +181,7 @@ class _DesktopProjectOverviewScreenState
         id: 'seg-${DateTime.now().millisecondsSinceEpoch}',
         status: nextStatus,
         startDayOffset: newStartOffset,
-        durationDays: 3, // Default duration
+        durationDays: 3.0,
       );
 
       final segmentIndex = task.pipeline.indexOf(afterSegment);
@@ -213,9 +204,98 @@ class _DesktopProjectOverviewScreenState
     return TaskStatus.installing;
   }
 
+  // Connection Drag Methods
+  void _startConnectionDrag(String segmentId, bool isLeft, Offset globalPos) {
+    final RenderBox? renderBox =
+        _gridCanvasKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      setState(() {
+        _draggingFromSegmentId = segmentId;
+        _isDraggingFromLeft = isLeft;
+        _currentDragPosition = renderBox.globalToLocal(globalPos);
+      });
+    }
+  }
+
+  void _updateConnectionDrag(Offset globalPos) {
+    final RenderBox? renderBox =
+        _gridCanvasKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && _draggingFromSegmentId != null) {
+      setState(() {
+        _currentDragPosition = renderBox.globalToLocal(globalPos);
+      });
+    }
+  }
+
+  void _endConnectionDrag() {
+    if (_draggingFromSegmentId == null ||
+        _currentDragPosition == null ||
+        _isDraggingFromLeft == null)
+      return;
+
+    String? targetSegmentId;
+    bool targetLeft = true;
+    double minDistance = 24.0; // Proximity target snapping radius
+
+    for (int tIdx = 0; tIdx < _activeTasks.length; tIdx++) {
+      final task = _activeTasks[tIdx];
+      for (var seg in task.pipeline) {
+        if (seg.id == _draggingFromSegmentId) continue;
+
+        // Visual coordinate alignment match with Painter layout offsets
+        final lx = 240 + (seg.startDayOffset * _dayColumnWidth) - 11;
+        final ly = (tIdx * _taskRowHeight) + (_taskRowHeight / 2);
+        double distL = sqrt(
+          pow(lx - _currentDragPosition!.dx, 2) +
+              pow(ly - _currentDragPosition!.dy, 2),
+        );
+        if (distL < minDistance) {
+          minDistance = distL;
+          targetSegmentId = seg.id;
+          targetLeft = true;
+        }
+
+        final rx =
+            240 +
+            ((seg.startDayOffset + seg.durationDays) * _dayColumnWidth) +
+            11;
+        final ry = (tIdx * _taskRowHeight) + (_taskRowHeight / 2);
+        double distR = sqrt(
+          pow(rx - _currentDragPosition!.dx, 2) +
+              pow(ry - _currentDragPosition!.dy, 2),
+        );
+        if (distR < minDistance) {
+          minDistance = distR;
+          targetSegmentId = seg.id;
+          targetLeft = false;
+        }
+      }
+    }
+
+    if (targetSegmentId != null) {
+      setState(() {
+        _dependencies.add(
+          TaskDependency(
+            fromSegmentId: _draggingFromSegmentId!,
+            toSegmentId: targetSegmentId!,
+            fromLeft: _isDraggingFromLeft!,
+            toLeft: targetLeft,
+          ),
+        );
+      });
+    }
+
+    setState(() {
+      _draggingFromSegmentId = null;
+      _isDraggingFromLeft = null;
+      _currentDragPosition = null;
+    });
+  }
+
   @override
   void dispose() {
-    _timelineScrollController.dispose();
+    _horizontalScrollController.dispose();
+    _verticalScrollController.dispose();
     super.dispose();
   }
 
@@ -246,6 +326,14 @@ class _DesktopProjectOverviewScreenState
             .where((t) => t.dueDate != null || t.createdAt != null)
             .toList();
 
+    if (_lastSelectedProjectId != widget.selectedProjectId) {
+      _lastSelectedProjectId = widget.selectedProjectId;
+      _activeTasks.clear();
+      _dependencies.clear();
+    }
+
+    _syncTasksWithProvider(filteredTasks);
+
     final totalCount = timelineTasks.length;
     final completedCount =
         timelineTasks.where((t) => t.status == 'completed').length;
@@ -257,9 +345,7 @@ class _DesktopProjectOverviewScreenState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ═══════════════════════════════════════════════════════════════════
-          // LEFT SIDEBAR
-          // ═══════════════════════════════════════════════════════════════════
+          // Left Sidebar Detail Pane
           Container(
             width: 320,
             decoration: const BoxDecoration(
@@ -281,16 +367,16 @@ class _DesktopProjectOverviewScreenState
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        color: const Color(0xFF2563EB).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(
+                      child: const Text(
                         'PROJECT',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
-                          color: const Color(0xFF3B82F6),
+                          color: Color(0xFF2563EB),
                         ),
                       ),
                     ),
@@ -356,7 +442,7 @@ class _DesktopProjectOverviewScreenState
                             strokeWidth: 4.5,
                             backgroundColor: const Color(0xFFF1F5F9),
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF10B981),
+                              Color(0xFF059669),
                             ),
                           ),
                         ),
@@ -398,22 +484,19 @@ class _DesktopProjectOverviewScreenState
             ),
           ),
 
-          // ═══════════════════════════════════════════════════════════════════
-          // RIGHT CANVAS: GANTT CHART
-          // ═══════════════════════════════════════════════════════════════════
+          // Right Work Canvas: Dynamic Gantt View
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
                 Container(
                   height: 56,
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Project Timeline - Interactive Gantt Chart',
                         style: TextStyle(
                           fontSize: 14,
@@ -423,17 +506,18 @@ class _DesktopProjectOverviewScreenState
                       ),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.info_outline_rounded,
+                          Icon(
+                            Icons.link_rounded,
                             size: 14,
-                            color: Color(0xFF94A3B8),
+                            color: Color(0xFF2563EB),
                           ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Drag blocks to move • Drag edges to resize • Click + to add stages',
+                          SizedBox(width: 4),
+                          Text(
+                            'Click and drag directly from end nodes (●) to link task layers',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2563EB),
                             ),
                           ),
                         ],
@@ -441,14 +525,12 @@ class _DesktopProjectOverviewScreenState
                     ],
                   ),
                 ),
-
-                // Gantt Chart
                 Expanded(
                   child:
                       _activeTasks.isEmpty
                           ? const Center(
                             child: Text(
-                              'No tasks found.',
+                              'No project tasks to show on layout timeline.',
                               style: TextStyle(
                                 color: Color(0xFF64748B),
                                 fontSize: 13,
@@ -456,10 +538,10 @@ class _DesktopProjectOverviewScreenState
                             ),
                           )
                           : Scrollbar(
-                            controller: _timelineScrollController,
+                            controller: _horizontalScrollController,
                             thumbVisibility: true,
                             child: SingleChildScrollView(
-                              controller: _timelineScrollController,
+                              controller: _horizontalScrollController,
                               scrollDirection: Axis.horizontal,
                               physics: const ClampingScrollPhysics(),
                               child: SizedBox(
@@ -469,15 +551,54 @@ class _DesktopProjectOverviewScreenState
                                   children: [
                                     _buildTimelineCalendarHeader(),
                                     Expanded(
-                                      child: ListView.builder(
-                                        itemCount: _activeTasks.length,
-                                        padding: EdgeInsets.zero,
-                                        itemBuilder: (context, index) {
-                                          return _buildTaskRow(
-                                            _activeTasks[index],
-                                            index,
-                                          );
-                                        },
+                                      child: Scrollbar(
+                                        controller: _verticalScrollController,
+                                        thumbVisibility: true,
+                                        child: SingleChildScrollView(
+                                          controller: _verticalScrollController,
+                                          scrollDirection: Axis.vertical,
+                                          child: Stack(
+                                            key: _gridCanvasKey,
+                                            children: [
+                                              // Row Grid Matrix Container
+                                              Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: List.generate(
+                                                  _activeTasks.length,
+                                                  (index) => _buildTaskRow(
+                                                    _activeTasks[index],
+                                                    index,
+                                                  ),
+                                                ),
+                                              ),
+
+                                              // Shared Interactive Painter Overlay
+                                              Positioned.fill(
+                                                child: IgnorePointer(
+                                                  child: CustomPaint(
+                                                    painter: GanttLinkPainter(
+                                                      tasks: _activeTasks,
+                                                      dependencies:
+                                                          _dependencies,
+                                                      draggingFromSegmentId:
+                                                          _draggingFromSegmentId,
+                                                      isDraggingFromLeft:
+                                                          _isDraggingFromLeft,
+                                                      currentDragPosition:
+                                                          _currentDragPosition,
+                                                      dayColumnWidth:
+                                                          _dayColumnWidth,
+                                                      taskRowHeight:
+                                                          _taskRowHeight,
+                                                      getStatusColor:
+                                                          _getStatusColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -498,7 +619,7 @@ class _DesktopProjectOverviewScreenState
     return Container(
       height: 50,
       decoration: const BoxDecoration(
-        color: Color(0xFFF1F5F9),
+        color: Color(0xFFF8FAFC),
         border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       child: Row(
@@ -508,11 +629,12 @@ class _DesktopProjectOverviewScreenState
             padding: const EdgeInsets.only(left: 24),
             alignment: Alignment.centerLeft,
             child: const Text(
-              'TASK',
+              'TASK NAME',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF64748B),
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -533,7 +655,7 @@ class _DesktopProjectOverviewScreenState
                     isToday
                         ? const Color(0xFFEFF6FF)
                         : (isWeekend
-                            ? const Color(0xFFF8FAFC)
+                            ? const Color(0xFFFDFDFD)
                             : Colors.transparent),
                 border: const Border(
                   left: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
@@ -549,7 +671,7 @@ class _DesktopProjectOverviewScreenState
                       fontWeight: FontWeight.w700,
                       color:
                           isToday
-                              ? const Color(0xFF3B82F6)
+                              ? const Color(0xFF2563EB)
                               : const Color(0xFF94A3B8),
                     ),
                   ),
@@ -561,7 +683,7 @@ class _DesktopProjectOverviewScreenState
                       fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
                       color:
                           isToday
-                              ? const Color(0xFF3B82F6)
+                              ? const Color(0xFF2563EB)
                               : const Color(0xFF334155),
                     ),
                   ),
@@ -578,13 +700,15 @@ class _DesktopProjectOverviewScreenState
     return Container(
       height: _taskRowHeight,
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
+        ),
         color: Colors.white,
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         alignment: Alignment.centerLeft,
         children: [
-          // Grid background
           Positioned.fill(
             child: Row(
               children: [
@@ -606,8 +730,6 @@ class _DesktopProjectOverviewScreenState
               ],
             ),
           ),
-
-          // Task label
           Positioned(
             left: 0,
             width: 240,
@@ -618,22 +740,24 @@ class _DesktopProjectOverviewScreenState
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF334155),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1E293B),
                 ),
               ),
             ),
           ),
-
-          // Pipeline segments (blocks)
           Positioned.fill(
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 ...task.pipeline.asMap().entries.map((entry) {
-                  final int segmentIndex = entry.key;
-                  final PipelineSegment segment = entry.value;
-                  return _buildSegmentBlock(task, segment, segmentIndex);
+                  return _buildSegmentBlock(
+                    task,
+                    entry.value,
+                    entry.key,
+                    taskIndex,
+                  );
                 }).toList(),
               ],
             ),
@@ -647,245 +771,375 @@ class _DesktopProjectOverviewScreenState
     ProjectTask task,
     PipelineSegment segment,
     int segmentIndex,
+    int taskIndex,
   ) {
-    final String blockId = '${task.id}-${segment.id}';
     final double leftPosition =
-        240 + (segment.startDayOffset * _dayColumnWidth) + 4;
-    final double blockWidth = (segment.durationDays * _dayColumnWidth) - 8;
+        240 + (segment.startDayOffset * _dayColumnWidth);
+    final double blockWidth = max(16.0, segment.durationDays * _dayColumnWidth);
     final Color blockColor = _getStatusColor(segment.status);
-
-    _dragAccumulators.putIfAbsent(blockId, () => 0.0);
-    _leftResizeAccumulators.putIfAbsent(blockId, () => 0.0);
-    _rightResizeAccumulators.putIfAbsent(blockId, () => 0.0);
-
     final bool isHovered = _hoveredSegmentId[task.id] == segment.id;
 
+    final double topSpacing = (_taskRowHeight - _blockHeight) / 2;
+
+    // Width reserved for the connection handles on both ends
+    const double handleSpace = 14.0;
+
     return Positioned(
-      left: leftPosition,
-      top: 8,
-      width: blockWidth,
-      height: 48,
+      // Parent container expanded by 14px symmetrically to guarantee uninhibited hit-testing input context
+      left: leftPosition - handleSpace,
+      top: topSpacing,
+      width: blockWidth + (handleSpace * 2),
+      height: _blockHeight,
       child: MouseRegion(
-        onEnter: (_) {
-          setState(() {
-            _hoveredSegmentId[task.id] = segment.id;
-          });
-        },
-        onExit: (_) {
-          setState(() {
-            _hoveredSegmentId[task.id] = null;
-          });
-        },
+        onEnter: (_) => setState(() => _hoveredSegmentId[task.id] = segment.id),
+        onExit: (_) => setState(() => _hoveredSegmentId[task.id] = null),
         child: Tooltip(
           message:
-              '${_getStatusLabel(segment.status)}\n${segment.durationDays} days',
+              '${_getStatusLabel(segment.status)}: ${segment.durationDays.toStringAsFixed(1)} days',
           preferBelow: false,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 100),
-            decoration: BoxDecoration(
-              color: blockColor.withOpacity(isHovered ? 0.9 : 0.8),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: blockColor.withOpacity(isHovered ? 0.4 : 0.2),
-                  blurRadius: isHovered ? 8 : 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // Left resize handle
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 8,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: GestureDetector(
-                      onHorizontalDragStart: (_) {
-                        _leftResizeAccumulators[blockId] = 0.0;
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        _leftResizeAccumulators[blockId] =
-                            (_leftResizeAccumulators[blockId] ?? 0.0) +
-                            details.delta.dx;
-                        final int daysShift =
-                            ((_leftResizeAccumulators[blockId] ?? 0.0) /
-                                    _dayColumnWidth)
-                                .round();
-
-                        if (daysShift != 0) {
-                          setState(() {
-                            final newStart = segment.startDayOffset + daysShift;
-                            final maxStart =
-                                segment.startDayOffset +
-                                segment.durationDays -
-                                1;
-                            if (newStart <= maxStart) {
-                              segment.startDayOffset = newStart;
-                              segment.durationDays -= daysShift;
-                            }
-                          });
-                          _leftResizeAccumulators[blockId] = 0.0;
-                        }
-                      },
-                      child: Container(
-                        color: Colors.white.withOpacity(0.1),
-                        child: const Center(
-                          child: Icon(
-                            Icons.drag_indicator_rounded,
-                            size: 8,
-                            color: Colors.white60,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 1. Center Content Main Task Block
+              Positioned(
+                left: handleSpace,
+                right: handleSpace,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: blockColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: blockColor, width: 1.5),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Inner Left Resize Drag Window
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 10,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.resizeLeftRight,
+                          child: Listener(
+                            onPointerMove: (event) {
+                              if (event.buttons == kPrimaryButton) {
+                                final double dayDelta =
+                                    event.delta.dx / _dayColumnWidth;
+                                setState(() {
+                                  final proposedStart =
+                                      segment.startDayOffset + dayDelta;
+                                  final proposedDuration =
+                                      segment.durationDays - dayDelta;
+                                  if (proposedDuration > 0.1 &&
+                                      proposedStart >= 0) {
+                                    segment.startDayOffset = proposedStart;
+                                    segment.durationDays = proposedDuration;
+                                  }
+                                });
+                              }
+                            },
+                            child: Container(color: Colors.transparent),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
 
-                // Main drag area
-                Positioned(
-                  left: 8,
-                  right: 8,
-                  top: 0,
-                  bottom: 0,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.move,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onHorizontalDragStart: (_) {
-                        _dragAccumulators[blockId] = 0.0;
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        _dragAccumulators[blockId] =
-                            (_dragAccumulators[blockId] ?? 0.0) +
-                            details.delta.dx;
-                        final int daysShift =
-                            ((_dragAccumulators[blockId] ?? 0.0) /
-                                    _dayColumnWidth)
-                                .round();
-
-                        if (daysShift != 0) {
-                          setState(() {
-                            segment.startDayOffset += daysShift;
-                          });
-                          _dragAccumulators[blockId] = 0.0;
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                          child: Center(
-                            child: Text(
-                              _getStatusLabel(segment.status),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
+                      // Central Movement Shift Space
+                      Positioned(
+                        left: 10,
+                        right: 10,
+                        top: 0,
+                        bottom: 0,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.move,
+                          child: Listener(
+                            onPointerMove: (event) {
+                              if (event.buttons == kPrimaryButton) {
+                                final double dayDelta =
+                                    event.delta.dx / _dayColumnWidth;
+                                setState(() {
+                                  segment.startDayOffset = max(
+                                    0.0,
+                                    segment.startDayOffset + dayDelta,
+                                  );
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              alignment: Alignment.center,
+                              color: Colors.transparent,
+                              child: Text(
+                                _getStatusLabel(segment.status),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: blockColor,
+                                  letterSpacing: 0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+
+                      // Inner Right Resize Drag Window
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 10,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.resizeLeftRight,
+                          child: Listener(
+                            onPointerMove: (event) {
+                              if (event.buttons == kPrimaryButton) {
+                                final double dayDelta =
+                                    event.delta.dx / _dayColumnWidth;
+                                setState(() {
+                                  final proposedDuration =
+                                      segment.durationDays + dayDelta;
+                                  if (proposedDuration > 0.1) {
+                                    segment.durationDays = proposedDuration;
+                                  }
+                                });
+                              }
+                            },
+                            child: Container(color: Colors.transparent),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
-                // Right resize handle
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 8,
+              // 2. Fully Interactable Left Connection Handle Node: ●─
+              Positioned(
+                left: 0,
+                width: handleSpace,
+                top: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanStart:
+                      (details) => _startConnectionDrag(
+                        segment.id,
+                        true,
+                        details.globalPosition,
+                      ),
+                  onPanUpdate:
+                      (details) =>
+                          _updateConnectionDrag(details.globalPosition),
+                  onPanEnd: (_) => _endConnectionDrag(),
                   child: MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: GestureDetector(
-                      onHorizontalDragStart: (_) {
-                        _rightResizeAccumulators[blockId] = 0.0;
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        _rightResizeAccumulators[blockId] =
-                            (_rightResizeAccumulators[blockId] ?? 0.0) +
-                            details.delta.dx;
-                        final int daysShift =
-                            ((_rightResizeAccumulators[blockId] ?? 0.0) /
-                                    _dayColumnWidth)
-                                .round();
-
-                        if (daysShift != 0) {
-                          setState(() {
-                            final newDuration =
-                                segment.durationDays + daysShift;
-                            if (newDuration > 0) {
-                              segment.durationDays = newDuration;
-                            }
-                          });
-                          _rightResizeAccumulators[blockId] = 0.0;
-                        }
-                      },
-                      child: Container(
-                        color: Colors.white.withOpacity(0.1),
-                        child: const Center(
-                          child: Icon(
-                            Icons.drag_indicator_rounded,
-                            size: 8,
-                            color: Colors.white60,
+                    cursor: SystemMouseCursors.alias,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: blockColor,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
+                          Container(width: 8, height: 1.5, color: blockColor),
+                        ],
                       ),
                     ),
                   ),
                 ),
+              ),
 
-                // Add stage button (appears on hover)
-                if (isHovered && segmentIndex == task.pipeline.length - 1)
-                  Positioned(
-                    right: -20,
-                    top: 50 / 2 - 16,
-                    child: Tooltip(
-                      message: 'Add next stage',
-                      child: GestureDetector(
-                        onTap: () => _addNewSegment(task, segment),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF3B82F6).withOpacity(0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+              // 3. Fully Interactable Right Connection Handle Node: ─●
+              Positioned(
+                right: 0,
+                width: handleSpace,
+                top: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanStart:
+                      (details) => _startConnectionDrag(
+                        segment.id,
+                        false,
+                        details.globalPosition,
+                      ),
+                  onPanUpdate:
+                      (details) =>
+                          _updateConnectionDrag(details.globalPosition),
+                  onPanEnd: (_) => _endConnectionDrag(),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.alias,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(width: 8, height: 1.5, color: blockColor),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: blockColor,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+              ),
+
+              // Floating Add-Stage Context Button
+              if (isHovered && segmentIndex == task.pipeline.length - 1)
+                Positioned(
+                  right: -24,
+                  top: (_blockHeight - 20) / 2,
+                  child: GestureDetector(
+                    onTap: () => _addNewSegment(task, segment),
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0F172A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class GanttLinkPainter extends CustomPainter {
+  final List<ProjectTask> tasks;
+  final List<TaskDependency> dependencies;
+  final String? draggingFromSegmentId;
+  final bool? isDraggingFromLeft;
+  final Offset? currentDragPosition;
+  final double dayColumnWidth;
+  final double taskRowHeight;
+  final Color Function(TaskStatus) getStatusColor;
+
+  GanttLinkPainter({
+    required this.tasks,
+    required this.dependencies,
+    required this.draggingFromSegmentId,
+    required this.isDraggingFromLeft,
+    required this.currentDragPosition,
+    required this.dayColumnWidth,
+    required this.taskRowHeight,
+    required this.getStatusColor,
+  });
+
+  Offset _getNodeOffset(String segmentId, bool isLeft) {
+    for (int tIdx = 0; tIdx < tasks.length; tIdx++) {
+      final task = tasks[tIdx];
+      for (var seg in task.pipeline) {
+        if (seg.id == segmentId) {
+          final double baseLeft = 240 + (seg.startDayOffset * dayColumnWidth);
+          final double x =
+              isLeft
+                  ? (baseLeft - 11.0)
+                  : (baseLeft + (seg.durationDays * dayColumnWidth) + 11.0);
+          final double y = (tIdx * taskRowHeight) + (taskRowHeight / 2);
+          return Offset(x, y);
+        }
+      }
+    }
+    return Offset.zero;
+  }
+
+  Color _getSegmentColor(String segmentId) {
+    for (var task in tasks) {
+      for (var seg in task.pipeline) {
+        if (seg.id == segmentId) return getStatusColor(seg.status);
+      }
+    }
+    return const Color(0xFF475569);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0
+          ..isAntiAlias = true;
+
+    // Render committed tracking dependency layout lines
+    for (var dep in dependencies) {
+      final startPos = _getNodeOffset(dep.fromSegmentId, dep.fromLeft);
+      final endPos = _getNodeOffset(dep.toSegmentId, dep.toLeft);
+
+      if (startPos != Offset.zero && endPos != Offset.zero) {
+        paint.color = _getSegmentColor(dep.fromSegmentId).withOpacity(0.55);
+
+        final path = Path()..moveTo(startPos.dx, startPos.dy);
+        final controlOffset = (startPos.dx - endPos.dx).abs() * 0.45;
+
+        final cp1X =
+            startPos.dx + (dep.fromLeft ? -controlOffset : controlOffset);
+        final cp2X = endPos.dx + (dep.toLeft ? -controlOffset : controlOffset);
+
+        path.cubicTo(cp1X, startPos.dy, cp2X, endPos.dy, endPos.dx, endPos.dy);
+        canvas.drawPath(path, paint);
+      }
+    }
+
+    // Render smooth bezier preview path during node layout dragging actions
+    if (draggingFromSegmentId != null &&
+        currentDragPosition != null &&
+        isDraggingFromLeft != null) {
+      final startPos = _getNodeOffset(
+        draggingFromSegmentId!,
+        isDraggingFromLeft!,
+      );
+      if (startPos != Offset.zero) {
+        paint.color = _getSegmentColor(
+          draggingFromSegmentId!,
+        ).withOpacity(0.75);
+
+        final path = Path()..moveTo(startPos.dx, startPos.dy);
+        final controlOffset =
+            (startPos.dx - currentDragPosition!.dx).abs() * 0.45;
+        final cp1X =
+            startPos.dx +
+            (isDraggingFromLeft! ? -controlOffset : controlOffset);
+
+        path.quadraticBezierTo(
+          cp1X,
+          startPos.dy,
+          currentDragPosition!.dx,
+          currentDragPosition!.dy,
+        );
+        canvas.drawPath(path, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GanttLinkPainter oldDelegate) => true;
 }
