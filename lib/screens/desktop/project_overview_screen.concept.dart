@@ -172,6 +172,7 @@ class _DesktopProjectOverviewScreenState
   }
 
   void _addNewSegment(ProjectTask task, PipelineSegment afterSegment) {
+    print("add new segment called");
     setState(() {
       final newStartOffset =
           afterSegment.startDayOffset + afterSegment.durationDays;
@@ -793,7 +794,7 @@ class _DesktopProjectOverviewScreenState
       child: MouseRegion(
         onEnter: (_) => setState(() => _hoveredSegmentId[task.id] = segment.id),
         onExit: (_) async {
-          Future.delayed(const Duration(milliseconds: 600), () {
+          Future.delayed(const Duration(milliseconds: 800), () {
             if (_hoveredSegmentId[task.id] == segment.id) {
               setState(() => _hoveredSegmentId[task.id] = null);
             }
@@ -1014,20 +1015,14 @@ class _DesktopProjectOverviewScreenState
                 Positioned(
                   right: -24,
                   top: (_blockHeight - 20) / 2,
-                  child: GestureDetector(
-                    onTap: () => _addNewSegment(task, segment),
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0F172A),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 12,
-                      ),
+                  child: IconButton(
+                    onPressed: () {
+                      _addNewSegment(task, segment);
+                    },
+                    icon: const Icon(
+                      Icons.add_circle,
+                      color: Color(0xFF0F172A),
+                      size: 17,
                     ),
                   ),
                 ),
