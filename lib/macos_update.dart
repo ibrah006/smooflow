@@ -190,13 +190,8 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
             ReleaseNote(
               icon: Icons.bug_report_outlined,
               title: "Bug fixes",
-              description: "Date not updating in task details fixed",
-            ),
-            ReleaseNote(
-              icon: Icons.new_releases_outlined,
-              title: "Some UI Enhancements",
               description:
-                  "Minor ui enhancements across the app to make it more consistent and polished",
+                  "Duplicate projects issue when a new project is created fixed.",
             ),
           ],
         ),
