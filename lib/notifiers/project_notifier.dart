@@ -107,6 +107,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     final createdProjectId = await _repo.createProject(newProject);
 
     newProject.initializeId(createdProjectId);
+    // TODO: Check the purpose of calling this function here
     _pushRecentProjectToTop(createdProjectId);
 
     // Add to active projects if start date is >= now
@@ -117,7 +118,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
       activeProjects = [...activeProjects, newProject];
     }
 
-    state = [...state, newProject];
+    // state = [...state, newProject];
   }
 
   // This function is a must call, when creating the progresslog along with the progress log notifier

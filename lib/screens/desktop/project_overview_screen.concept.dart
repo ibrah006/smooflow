@@ -1013,8 +1013,8 @@ class _DesktopProjectOverviewScreenState
               // Floating Add-Stage Context Button
               if (isHovered && segmentIndex == task.pipeline.length - 1)
                 Positioned(
-                  right: -24,
-                  top: (_blockHeight - 20) / 2,
+                  right: -28,
+                  top: (_blockHeight - 20) / 100,
                   child: IconButton(
                     onPressed: () {
                       _addNewSegment(task, segment);
