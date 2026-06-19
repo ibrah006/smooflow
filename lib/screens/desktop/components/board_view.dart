@@ -19,6 +19,11 @@ import 'package:smooflow/screens/desktop/components/task_card.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 
+// ── Private SharedPreferences Keys ───────────────────────────────────────────
+const String _kHideEmptyKey = 'board_view_hide_empty';
+const String _kHiddenStatusesKey = 'board_view_hidden_statuses';
+const String _kExpandedGroupsKey = 'board_view_expanded_groups';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — unchanged from original
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,8 +138,6 @@ class _BoardViewState extends State<BoardView> {
   final Set<int> _expandedGroups = {};
   bool _hideEmpty = false;
 
-  static const _kHideEmptyKey = 'board_view_hide_empty';
-
   @override
   void initState() {
     super.initState();
@@ -143,13 +146,44 @@ class _BoardViewState extends State<BoardView> {
 
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getBool(_kHideEmptyKey) ?? false;
-    if (saved != _hideEmpty) setState(() => _hideEmpty = saved);
+
+    final savedHideEmpty = prefs.getBool(_kHideEmptyKey) ?? false;
+
+    final savedHiddenStr = prefs.getStringList(_kHiddenStatusesKey) ?? [];
+    final savedHidden =
+        savedHiddenStr
+            .where((name) => TaskStatus.values.any((e) => e.name == name))
+            .map((name) => TaskStatus.values.byName(name))
+            .toSet();
+
+    final savedExpandedStr = prefs.getStringList(_kExpandedGroupsKey) ?? [];
+    final savedExpanded =
+        savedExpandedStr.map((s) => int.tryParse(s)).whereType<int>().toSet();
+
+    setState(() {
+      _hideEmpty = savedHideEmpty;
+      _hidden.clear();
+      _hidden.addAll(savedHidden);
+      _expandedGroups.clear();
+      _expandedGroups.addAll(savedExpanded);
+    });
   }
 
   Future<void> _saveHideEmpty(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kHideEmptyKey, value);
+  }
+
+  Future<void> _saveHiddenStatuses() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stringList = _hidden.map((s) => s.name).toList();
+    await prefs.setStringList(_kHiddenStatusesKey, stringList);
+  }
+
+  Future<void> _saveExpandedGroups() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stringList = _expandedGroups.map((id) => id.toString()).toList();
+    await prefs.setStringList(_kExpandedGroupsKey, stringList);
   }
 
   bool _groupFullyOn(int gi) =>
@@ -161,22 +195,30 @@ class _BoardViewState extends State<BoardView> {
         g.statuses.any((s) => _hidden.contains(s));
   }
 
-  void _toggleGroup(int gi) => setState(() {
-    final g = _kGroups[gi];
-    _groupFullyOn(gi)
-        ? _hidden.addAll(g.statuses)
-        : _hidden.removeAll(g.statuses);
-  });
+  void _toggleGroup(int gi) {
+    setState(() {
+      final g = _kGroups[gi];
+      _groupFullyOn(gi)
+          ? _hidden.addAll(g.statuses)
+          : _hidden.removeAll(g.statuses);
+    });
+    _saveHiddenStatuses();
+  }
 
-  void _toggleStage(TaskStatus s) =>
-      setState(() => _hidden.contains(s) ? _hidden.remove(s) : _hidden.add(s));
+  void _toggleStage(TaskStatus s) {
+    setState(() => _hidden.contains(s) ? _hidden.remove(s) : _hidden.add(s));
+    _saveHiddenStatuses();
+  }
 
-  void _toggleExpand(int gi) => setState(
-    () =>
-        _expandedGroups.contains(gi)
-            ? _expandedGroups.remove(gi)
-            : _expandedGroups.add(gi),
-  );
+  void _toggleExpand(int gi) {
+    setState(
+      () =>
+          _expandedGroups.contains(gi)
+              ? _expandedGroups.remove(gi)
+              : _expandedGroups.add(gi),
+    );
+    _saveExpandedGroups();
+  }
 
   void _toggleHideEmpty() {
     final next = !_hideEmpty;
@@ -255,18 +297,6 @@ class _BoardViewState extends State<BoardView> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FILTER BAR
-//
-// Modern pill-style tab controls. Active group = filled slate100 pill.
-// No underlines. Group color appears only in the drawer's left rule.
-// Right side: "With tasks" toggle styled identically to group pills.
-//
-// Structure:
-//   ┌──────────────────────────────────────────────────────┬──────────────┐
-//   │  [Design ∨]  [Production ∨]  [Delivery ∨]  …        │ [With tasks] │
-//   └──────────────────────────────────────────────────────┴──────────────┘
-//   ┌ group-color left rule ───────────────────────────────────────────────┐
-//   │  ☑ Pending  ☑ Designing  ☐ Waiting Approval  ☑ …       [Done]       │
-//   └──────────────────────────────────────────────────────────────────────┘
 // ─────────────────────────────────────────────────────────────────────────────
 class _FilterBar extends StatelessWidget {
   final List<_StageGroup> groups;
@@ -367,11 +397,6 @@ class _FilterBar extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GROUP TAB — pill style
-//
-// Off:     transparent bg, slate500 text
-// Partial: slate100 bg, ink3 text, faint colored left-dot
-// On:      slate100 bg, ink2 text, bold
-// Chevron: always visible when on/partial, fades in on hover otherwise
 // ─────────────────────────────────────────────────────────────────────────────
 class _GroupTab extends StatefulWidget {
   final _StageGroup group;
@@ -554,7 +579,7 @@ class _HideEmptyToggleState extends State<_HideEmptyToggle> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED DRAWER WRAPPER — unchanged logic, same timing
+// ANIMATED DRAWER WRAPPER
 // ─────────────────────────────────────────────────────────────────────────────
 class _AnimatedDrawer extends StatefulWidget {
   final bool visible;
@@ -618,10 +643,6 @@ class _AnimatedDrawerState extends State<_AnimatedDrawer>
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL DRAWER
-//
-// Redesign: no top/bottom borders. Only left rule (group color) + a very
-// subtle slate50 background separates it from the filter row above.
-// Stage items are compact chips rather than full-height rows.
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailDrawer extends StatelessWidget {
   final _StageGroup group;
@@ -727,9 +748,6 @@ class _DetailDrawer extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STAGE CHIP — compact chip inside the detail drawer
-//
-// Visible:  white bg, ink2 text, checkmark icon, slate200 border
-// Hidden:   transparent bg, slate400 text, empty-box icon, no border
 // ─────────────────────────────────────────────────────────────────────────────
 class _StageChip extends StatefulWidget {
   final String label;
@@ -810,19 +828,7 @@ class _StageChipState extends State<_StageChip> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KANBAN LANE — Option B redesign
-//
-// Changes from previous version:
-//   • Removed the 2.5px colored top accent strip entirely
-//   • Lane is a clean white panel, no color on the chrome at all
-//   • Header: small filled circle dot (6px, group color) to the left of the
-//     stage label — the only color signal on the lane
-//   • Count badge remains neutral (slate100 bg) for all lanes, including
-//     clientApproved — keeps the header visually flat and consistent
-//   • Lock icon for clientApproved is retained but uses slate400 instead of
-//     the stage color, so it doesn't compete with the dot
-//   • Shadow and border-radius unchanged
 // ─────────────────────────────────────────────────────────────────────────────
-
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
   final List<Task> tasks;
@@ -896,7 +902,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
               ),
               child: Row(
                 children: [
-                  // Colored status dot — the only color on the lane chrome
+                  // Colored status dot
                   Container(
                     width: 6,
                     height: 6,
@@ -907,7 +913,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                     ),
                   ),
 
-                  // Stage label (+ optional lock icon for clientApproved)
+                  // Stage label
                   Expanded(
                     child: Row(
                       children: [
@@ -915,8 +921,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                           const Icon(
                             Icons.lock_outline_rounded,
                             size: 11,
-                            color:
-                                _T.slate400, // neutral, dot already signals identity
+                            color: _T.slate400,
                           ),
                           const SizedBox(width: 4),
                         ],
@@ -938,7 +943,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
 
                   const SizedBox(width: 8),
 
-                  // Task count badge — always neutral
+                  // Task count badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
@@ -998,7 +1003,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LANE EMPTY STATE — very minimal ghost
+// LANE EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 class _LaneEmpty extends StatelessWidget {
   @override
@@ -1022,7 +1027,7 @@ class _LaneEmpty extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADD CARD BUTTON — ghost dashed style
+// ADD CARD BUTTON
 // ─────────────────────────────────────────────────────────────────────────────
 class _AddCardButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -1046,10 +1051,7 @@ class _AddCardButtonState extends State<_AddCardButton> {
         child: Container(
           decoration: BoxDecoration(
             color: _hovered ? _T.slate50 : Colors.transparent,
-            border: Border.all(
-              color: _hovered ? _T.slate300 : _T.slate200,
-              // A "dashed" feel through slightly thinner stroke and color
-            ),
+            border: Border.all(color: _hovered ? _T.slate300 : _T.slate200),
             borderRadius: BorderRadius.circular(_T.r),
           ),
           child: AnimatedContainer(
