@@ -139,31 +139,6 @@ class _ManageMaterialsScreenState
     );
   }
 
-  void _showWriteOffDialog(MaterialModel material) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.35),
-      builder:
-          (_) => WriteOffDialog(
-            material: material,
-            onConfirm: (qty, note) async {
-              Navigator.of(context).pop();
-              // stockOut with the encoded note — reuses existing provider method
-              await ref
-                  .read(materialNotifierProvider.notifier)
-                  .stockOut(material.id, qty, notes: note);
-              ref.read(materialNotifierProvider.notifier).fetchMaterials();
-              AppToast.show(
-                message: 'Write-off recorded',
-                subtitle: '${fmtStock(qty)} ${material.unitShort} removed',
-                icon: Icons.remove_circle_outline_rounded,
-                color: _T.red,
-              );
-            },
-          ),
-    );
-  }
-
   void _showQuickStockInDialog(MaterialModel material) {
     showDialog<void>(
       context: context,
