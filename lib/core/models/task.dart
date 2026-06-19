@@ -129,7 +129,7 @@ class Task {
     required String name,
     required String description,
     required DateTime? dueDate,
-    TaskStatus status = TaskStatus.designing,
+    TaskStatus status = TaskStatus.pending,
     required List<String> assignees,
     List<MaterialLog> estimatedMaterials = const [],
     List<MaterialLog> usedMaterials = const [],
