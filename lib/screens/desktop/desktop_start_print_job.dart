@@ -2101,24 +2101,6 @@ class _JobSummaryCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _T.slate100,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _T.slate200),
-                ),
-                child: Text(
-                  'TASK-${task.id}',
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
-                    color: _T.slate500,
-                    fontFamily: 'monospace',
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
             ],
           ),
         ),
