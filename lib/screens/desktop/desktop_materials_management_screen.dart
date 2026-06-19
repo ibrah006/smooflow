@@ -1782,7 +1782,7 @@ class _BatchDetailPanel extends StatelessWidget {
                       _BatchInfoRow(
                         icon: Icons.add_circle_outline_rounded,
                         label: 'Original Qty',
-                        value: '${fmtStock(remaining)} $unit',
+                        value: '${fmtStock(remaining + consumed)} $unit',
                         valueColor: _T.green,
                       ),
                       const Divider(height: 16, color: _T.slate100),
