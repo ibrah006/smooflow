@@ -735,7 +735,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
               ),
 
               // ── Stage stepper ─────────────────────────────────────────────────
-              _StageStepper(currentStatus: widget.task.status),
+              _StageStepper(
+                currentStatus: widget.task.status,
+                onStageTap: (status) {
+                  _onAdvanceTask(true, newStage: status);
+                },
+              ),
 
               // ── Scrollable body ───────────────────────────────────────────────
               Expanded(
@@ -3208,7 +3213,7 @@ class _Badge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAGE STEPPER  (unchanged)
+// MILESTONE MODEL & DATA
 // ─────────────────────────────────────────────────────────────────────────────
 class _Milestone {
   final String shortLabel;
@@ -3219,8 +3224,8 @@ class _Milestone {
 
 const List<_Milestone> _kMilestones = [
   _Milestone('Design', TaskStatus.designing, Color(0xFF8B5CF6)),
-  _Milestone('Print', TaskStatus.printing, Color(0xFF2563EB)),
-  _Milestone('Finish', TaskStatus.finishing, Color(0xFF0EA5E9)),
+  _Milestone('Production', TaskStatus.waitingPrinting, Color(0xFF2563EB)),
+  _Milestone('Finishing', TaskStatus.finishing, Color(0xFF0EA5E9)),
   _Milestone('Delivery', TaskStatus.delivery, Color(0xFF10B981)),
   _Milestone('Install', TaskStatus.installing, Color(0xFF10B981)),
   _Milestone('Done', TaskStatus.completed, Color(0xFF10B981)),
@@ -3247,9 +3252,14 @@ int _milestoneIndexFor(TaskStatus status) => switch (status) {
   TaskStatus.paused => 0,
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE STEPPER
+// ─────────────────────────────────────────────────────────────────────────────
 class _StageStepper extends StatelessWidget {
   final TaskStatus currentStatus;
-  const _StageStepper({required this.currentStatus});
+  final ValueChanged<TaskStatus>? onStageTap;
+
+  const _StageStepper({required this.currentStatus, this.onStageTap});
 
   @override
   Widget build(BuildContext context) {
@@ -3274,93 +3284,179 @@ class _StageStepper extends StatelessWidget {
               ),
             );
           }
+
           final idx = i ~/ 2;
           final m = _kMilestones[idx];
           final isDone = idx < curIdx;
           final isCurrent = idx == curIdx;
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      isDone
-                          ? _T.blue
-                          : isCurrent
-                          ? _T.white
-                          : _T.slate100,
-                  border: Border.all(
-                    color:
-                        isDone
-                            ? _T.blue
-                            : isCurrent
-                            ? _T.blue
-                            : _T.slate200,
-                    width: isCurrent ? 2 : 1.5,
-                  ),
-                  boxShadow:
-                      isCurrent
-                          ? [
-                            BoxShadow(
-                              color: _T.blue.withOpacity(0.15),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                          : null,
-                ),
-                child: Center(
-                  child:
-                      isDone
-                          ? const Icon(
-                            Icons.check,
-                            size: 12,
-                            color: Colors.white,
-                          )
-                          : isCurrent
-                          ? Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: m.color,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                          : Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                              color: _T.slate300,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                m.shortLabel,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                  color:
-                      isCurrent
-                          ? _T.blue
-                          : isDone
-                          ? _T.ink3
-                          : _T.slate400,
-                ),
-              ),
-            ],
+          // Future milestones are interactive and clickable to advance the task forward
+          final bool clickable = idx > curIdx;
+
+          return _StepperMilestoneItem(
+            milestone: m,
+            isDone: isDone,
+            isCurrent: isCurrent,
+            clickable: clickable,
+            onTap: clickable ? () => onStageTap?.call(m.status) : null,
           );
         }),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEPPER MILESTONE ITEM (Handles Hover and Animations)
+// ─────────────────────────────────────────────────────────────────────────────
+class _StepperMilestoneItem extends StatefulWidget {
+  final _Milestone milestone;
+  final bool isDone;
+  final bool isCurrent;
+  final bool clickable;
+  final VoidCallback? onTap;
+
+  const _StepperMilestoneItem({
+    required this.milestone,
+    required this.isDone,
+    required this.isCurrent,
+    required this.clickable,
+    required this.onTap,
+  });
+
+  @override
+  State<_StepperMilestoneItem> createState() => _StepperMilestoneItemState();
+}
+
+class _StepperMilestoneItemState extends State<_StepperMilestoneItem> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final showHover = widget.clickable && _hovered;
+    final m = widget.milestone;
+
+    Widget milestoneContent = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      child: Transform.scale(
+        scale: showHover ? 1.08 : 1.0, // Micro-scaling interaction feedback
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    widget.isDone
+                        ? _T.blue
+                        : widget.isCurrent
+                        ? _T.white
+                        : showHover
+                        ? _T
+                            .slate200 // Highlights background on hover
+                        : _T.slate100,
+                border: Border.all(
+                  color:
+                      widget.isDone
+                          ? _T.blue
+                          : widget.isCurrent
+                          ? _T.blue
+                          : showHover
+                          ? _T
+                              .slate400 // Darkens border on hover
+                          : _T.slate200,
+                  width: widget.isCurrent ? 2 : 1.5,
+                ),
+                boxShadow:
+                    widget.isCurrent
+                        ? [
+                          BoxShadow(
+                            color: _T.blue.withOpacity(0.15),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                        : showHover
+                        ? [
+                          BoxShadow(
+                            color: _T.slate300.withOpacity(0.2),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                        : null,
+              ),
+              child: Center(
+                child:
+                    widget.isDone
+                        ? const Icon(Icons.check, size: 12, color: Colors.white)
+                        : widget.isCurrent
+                        ? Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: m.color,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                        : Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color:
+                                showHover
+                                    ? _T.ink3
+                                    : _T.slate300, // sharpens center dot on hover
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 150),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                color:
+                    widget.isCurrent
+                        ? _T.blue
+                        : widget.isDone
+                        ? _T.ink3
+                        : showHover
+                        ? _T
+                            .ink3 // Sharpens text color on hover
+                        : _T.slate400,
+              ),
+              textAlign: TextAlign.center,
+              child: Text(m.shortLabel),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // If interactive, provide an explanatory tooltip context matching the pipeline logic
+    if (widget.clickable) {
+      milestoneContent = Tooltip(
+        message: 'Move to ${m.shortLabel}',
+        preferBelow: true,
+        verticalOffset: 20,
+        child: milestoneContent,
+      );
+    }
+
+    return MouseRegion(
+      cursor: widget.clickable ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(onTap: widget.onTap, child: milestoneContent),
     );
   }
 }
