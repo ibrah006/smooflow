@@ -1026,23 +1026,21 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 18),
                             ],
 
                             // Stage pipeline
-                            const _DetailSectionTitle('Stage Pipeline'),
-                            const SizedBox(height: 8),
-                            StagePipeline(
-                              currentStatus: widget.task.status,
-                              onStageTap: (status) {
-                                _onAdvanceTask(true, newStage: status);
-                              },
-                            ),
+                            // const _DetailSectionTitle('Stage Pipeline'),
+                            // const SizedBox(height: 8),
+                            // StagePipeline(
+                            //   currentStatus: widget.task.status,
+                            //   onStageTap: (status) {
+                            //     _onAdvanceTask(true, newStage: status);
+                            //   },
+                            // ),
                           ],
                         ),
                       ),
 
-                      // DEBUG
                       const SizedBox(height: 18),
                       DiscussionPreviewStrip(
                         unreadCount: widget.task.unreadCount,
