@@ -1226,9 +1226,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                             batch: _selectedBatch!,
                             consumptions: consumptions,
                             unit: m.unitShort,
-                            remaining:
-                                _selectedBatch!.quantity -
-                                consumptions.totalQuantity,
+                            remaining: _selectedBatch!.quantity,
                           ),
                 ),
               ],
@@ -1599,7 +1597,7 @@ class _BatchRowState extends State<_BatchRow> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '${fmtStock(b.quantity)} ${widget.unit}',
+                      '${fmtStock(b.quantity + widget.consumed)} ${widget.unit}',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -1675,7 +1673,9 @@ class _BatchDetailPanel extends StatelessWidget {
 
     final consumed = consumptions.totalQuantity;
     final usePct =
-        b.quantity > 0 ? (consumed / b.quantity).clamp(0.0, 1.0) : 0.0;
+        b.quantity > 0
+            ? (consumed / (b.quantity + consumed)).clamp(0.0, 1.0)
+            : 0.0;
 
     final Color statusColor;
     final String statusLabel;
