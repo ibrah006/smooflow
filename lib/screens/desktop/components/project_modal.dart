@@ -154,7 +154,7 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
             label: 'Customer',
             required: true,
             child:
-                _clients.isEmpty
+                _clients.isEmpty && _client == null
                     ? Text(
                       "No Clients Available",
                       style: TextStyle(
@@ -166,8 +166,140 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
                       initialValue: _client,
                       options: _clients,
                       hint: 'Select or type customer name...',
+                      allowCreation: true,
                       displayStringForOption: (company) => company.name,
                       onSelected: (v) => setState(() => _client = v),
+                      onCreateOption: (String typedName) async {
+                        // Safety Gate: Explicitly prompt confirmation to ensure no accidental creations occur
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder:
+                              (ctx) => AlertDialog(
+                                backgroundColor: Colors.white,
+                                surfaceTintColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(_T.r),
+                                ),
+                                title: const Text(
+                                  'Create Customer Profile',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: _T.ink,
+                                  ),
+                                ),
+                                content: Text(
+                                  'Are you sure you want to initialize a new company directory record for "$typedName"?',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: _T.ink3,
+                                  ),
+                                ),
+                                actionsPadding: const EdgeInsets.only(
+                                  right: 16,
+                                  bottom: 16,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.of(ctx).pop(false),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        color: _T.slate400,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _T.blue,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    onPressed:
+                                        () => Navigator.of(ctx).pop(true),
+                                    child: const Text(
+                                      'Create',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        );
+
+                        if (confirmed != true) return null;
+
+                        try {
+                          // Execute the Repository setup operation directly
+                          final newCompany = await CompanyRepo.createCompany(
+                            Company.create(
+                              name: typedName,
+                              description: "",
+                              phone: "",
+                              email: "",
+                              industry: "",
+                              contactName: "",
+                            ),
+                          );
+
+                          // Assume your UI context parses or refetches standard lists here:
+                          // For example: await ref.read(clientNotifierProvider.notifier).refresh();
+
+                          // Generate a local mock or query return payload item to sync state instantly
+
+                          return newCompany;
+                        } catch (e) {
+                          // Sleek, minimal corporate error snackbar notification
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: _T.ink,
+                              margin: const EdgeInsets.all(24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(_T.r),
+                              ),
+                              content: Row(
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: _T.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Flexible(
+                                    child: Text(
+                                      e.toString().replaceAll(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          return null;
+                        }
+                      },
                     ),
           ),
           const SizedBox(height: 16),

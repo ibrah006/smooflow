@@ -44,12 +44,16 @@ class _T {
   static const rXl = 16.0;
 }
 
-class ModalAutocomplete<T extends Object> extends StatelessWidget {
+class ModalAutocomplete<T extends Object> extends StatefulWidget {
   final T? initialValue;
   final List<T> options;
   final String Function(T) displayStringForOption;
   final ValueChanged<T?> onSelected;
   final String hint;
+
+  // Creation hooks
+  final bool allowCreation;
+  final Future<T?> Function(String typedText)? onCreateOption;
 
   const ModalAutocomplete({
     required this.options,
@@ -57,42 +61,93 @@ class ModalAutocomplete<T extends Object> extends StatelessWidget {
     required this.onSelected,
     this.initialValue,
     this.hint = '',
+    this.allowCreation = false,
+    this.onCreateOption,
     super.key,
   });
+
+  @override
+  State<ModalAutocomplete<T>> createState() => _ModalAutocompleteState<T>();
+}
+
+class _ModalAutocompleteState<T extends Object>
+    extends State<ModalAutocomplete<T>> {
+  late TextEditingController _fieldController;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Autocomplete<T>(
+        return Autocomplete<Object>(
           initialValue:
-              initialValue != null
+              widget.initialValue != null
                   ? TextEditingValue(
-                    text: displayStringForOption(initialValue!),
+                    text: widget.displayStringForOption(widget.initialValue!),
                   )
                   : const TextEditingValue(),
-          displayStringForOption: displayStringForOption,
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            // Returns all items if the field is empty (acting like a dropdown),
-            // otherwise filters options by search query matching.
-            if (textEditingValue.text.isEmpty) {
-              return options;
-            }
-            return options.where((T option) {
-              return displayStringForOption(
-                option,
-              ).toLowerCase().contains(textEditingValue.text.toLowerCase());
-            });
+          displayStringForOption: (obj) {
+            if (obj is String)
+              return obj; // Handles the virtual creation string token
+            return widget.displayStringForOption(obj as T);
           },
-          onSelected: onSelected,
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            final text = textEditingValue.text.trim();
+
+            // Filter existing options match
+            final filtered =
+                widget.options.where((T option) {
+                  return widget
+                      .displayStringForOption(option)
+                      .toLowerCase()
+                      .contains(text.toLowerCase());
+                }).toList();
+
+            // If creation is allowed, text isn't empty, and no exact match exists, append a virtual action string
+            if (widget.allowCreation && text.isNotEmpty) {
+              final hasExactMatch = widget.options.any(
+                (o) =>
+                    widget.displayStringForOption(o).toLowerCase() ==
+                    text.toLowerCase(),
+              );
+              if (!hasExactMatch) {
+                // Return original matches + a pure string token representing the dynamic creation action
+                return [...filtered, text];
+              }
+            }
+
+            return filtered.isEmpty && text.isEmpty ? widget.options : filtered;
+          },
+          onSelected: (Object selection) async {
+            if (selection is String) {
+              // User deliberately selected the action item row to create a new client
+              if (widget.onCreateOption != null) {
+                final createdItem = await widget.onCreateOption!(selection);
+                if (createdItem != null) {
+                  widget.onSelected(createdItem);
+                  _fieldController.text = widget.displayStringForOption(
+                    createdItem,
+                  );
+                } else {
+                  // If canceled/failed, reset field to blank or previous value
+                  _fieldController.text =
+                      widget.initialValue != null
+                          ? widget.displayStringForOption(widget.initialValue!)
+                          : '';
+                }
+              }
+            } else {
+              // Regular selection
+              widget.onSelected(selection as T);
+            }
+          },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            _fieldController = controller;
             return TextField(
               controller: controller,
               focusNode: focusNode,
-              onSubmitted: (_) => onFieldSubmitted(),
               style: const TextStyle(fontSize: 13, color: _T.ink),
               decoration: InputDecoration(
-                hintText: hint,
+                hintText: widget.hint,
                 hintStyle: const TextStyle(color: _T.slate400),
                 filled: true,
                 fillColor: _T.slate50,
@@ -130,7 +185,7 @@ class ModalAutocomplete<T extends Object> extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: Container(
                   width: constraints.maxWidth,
-                  height: 200,
+                  height: 220,
                   decoration: BoxDecoration(
                     border: Border.all(color: _T.slate200),
                     borderRadius: BorderRadius.circular(_T.r),
@@ -140,7 +195,44 @@ class ModalAutocomplete<T extends Object> extends StatelessWidget {
                     shrinkWrap: true,
                     itemCount: iterableOptions.length,
                     itemBuilder: (BuildContext context, int index) {
-                      final T option = iterableOptions.elementAt(index);
+                      final Object option = iterableOptions.elementAt(index);
+
+                      // Check if it's the dynamic creation option row
+                      if (option is String) {
+                        return InkWell(
+                          onTap: () => onSelectedOption(option),
+                          child: Container(
+                            color: _T.blue50.withOpacity(0.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.add_rounded,
+                                  size: 14,
+                                  color: _T.blue,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Create new customer: "$option"',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _T.blue,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Standard dropdown list rows
                       return InkWell(
                         onTap: () => onSelectedOption(option),
                         child: Padding(
@@ -149,7 +241,7 @@ class ModalAutocomplete<T extends Object> extends StatelessWidget {
                             vertical: 10,
                           ),
                           child: Text(
-                            displayStringForOption(option),
+                            widget.displayStringForOption(option as T),
                             style: const TextStyle(fontSize: 13, color: _T.ink),
                           ),
                         ),

@@ -25,7 +25,7 @@ class CompanyRepo {
   }
 
   /// returns error message, if any
-  static Future<String?> createCompany(Company company) async {
+  static Future<Company> createCompany(Company company) async {
     try {
       final response = await ApiClient.http.post(
         ApiEndpoints.companies,
@@ -38,7 +38,9 @@ class CompanyRepo {
         return body["error"];
       }
 
-      final createdAt = DateTime.parse(body["company"]["createdAt"]);
+      print("response ${response.statusCode} body: ${body}");
+
+      final createdAt = DateTime.parse(body["createdAt"]);
 
       company.createdAt = createdAt;
 
@@ -48,10 +50,12 @@ class CompanyRepo {
       if (response.statusCode == 209) {
         companies.add(body["company"]);
       }
+
+      return company;
     } catch (e) {
       debugPrint("Error creating company profile,\nerror: $e");
+      throw "Error creating company profile";
     }
-    return null;
   }
 
   // returns error message, if any
@@ -59,7 +63,7 @@ class CompanyRepo {
     try {
       final response = await ApiClient.http.put(
         "/companies/${udpatedCompany.id}",
-        body: udpatedCompany.toJson()
+        body: udpatedCompany.toJson(),
       );
 
       final body = jsonDecode(response.body) as Map;

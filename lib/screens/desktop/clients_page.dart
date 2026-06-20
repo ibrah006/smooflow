@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,34 +15,34 @@ import 'package:smooflow/screens/desktop/components/kpi_card.dart';
 // DESIGN TOKENS — exact copy of _T from admin_desktop_dashboard.dart
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  static const blue       = Color(0xFF2563EB);
-  static const blueHover  = Color(0xFF1D4ED8);
-  static const blue100    = Color(0xFFDBEAFE);
-  static const blue50     = Color(0xFFEFF6FF);
-  static const teal       = Color(0xFF38BDF8);
-  static const green      = Color(0xFF10B981);
-  static const green50    = Color(0xFFECFDF5);
-  static const amber      = Color(0xFFF59E0B);
-  static const amber50    = Color(0xFFFEF3C7);
-  static const red        = Color(0xFFEF4444);
-  static const red50      = Color(0xFFFEE2E2);
-  static const purple     = Color(0xFF8B5CF6);
-  static const purple50   = Color(0xFFF3E8FF);
-  static const slate50    = Color(0xFFF8FAFC);
-  static const slate100   = Color(0xFFF1F5F9);
-  static const slate200   = Color(0xFFE2E8F0);
-  static const slate300   = Color(0xFFCBD5E1);
-  static const slate400   = Color(0xFF94A3B8);
-  static const slate500   = Color(0xFF64748B);
-  static const ink        = Color(0xFF0F172A);
-  static const ink2       = Color(0xFF1E293B);
-  static const ink3       = Color(0xFF334155);
-  static const white      = Colors.white;
-  static const sidebarW  = 220.0;
-  static const topbarH   = 52.0;
-  static const r         = 8.0;
-  static const rLg       = 12.0;
-  static const rXl       = 16.0;
+  static const blue = Color(0xFF2563EB);
+  static const blueHover = Color(0xFF1D4ED8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const teal = Color(0xFF38BDF8);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
+  static const sidebarW = 220.0;
+  static const topbarH = 52.0;
+  static const r = 8.0;
+  static const rLg = 12.0;
+  static const rXl = 16.0;
 }
 
 enum ClientStatus { active, inactive, pending }
@@ -107,14 +106,16 @@ class _ClientsViewState extends ConsumerState<ClientsView>
     with SingleTickerProviderStateMixin {
   // ── Animation
   late final AnimationController _ac = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 800));
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  );
 
   // ── Local UI State (non-WebSocket state)
-  _SortField    _sort       = _SortField.name;
-  bool          _sortAsc    = true;
-  FilterStatus _filter     = FilterStatus.all;
-  TableViewMode     _viewMode   = TableViewMode.table;
-  String        _search     = '';
+  _SortField _sort = _SortField.name;
+  bool _sortAsc = true;
+  FilterStatus _filter = FilterStatus.all;
+  TableViewMode _viewMode = TableViewMode.table;
+  String _search = '';
 
   final _searchCtrl = TextEditingController();
 
@@ -132,7 +133,9 @@ class _ClientsViewState extends ConsumerState<ClientsView>
   }
 
   Animation<double> _stagger(double s, double e) => CurvedAnimation(
-      parent: _ac, curve: Interval(s, e, curve: Curves.easeOutCubic));
+    parent: _ac,
+    curve: Interval(s, e, curve: Curves.easeOutCubic),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -145,14 +148,14 @@ class _ClientsViewState extends ConsumerState<ClientsView>
     final companies = _getFilteredCompanies(companyState.companies);
 
     // Show real-time update notification
-    ref.listen<AsyncValue<CompanyChangeEvent>>(
-      companyChangesStreamProvider,
-      (previous, next) {
-        next.whenData((event) {
-          _showChangeNotification(context, event);
-        });
-      },
-    );
+    ref.listen<AsyncValue<CompanyChangeEvent>>(companyChangesStreamProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((event) {
+        _showChangeNotification(context, event);
+      });
+    });
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,8 +179,9 @@ class _ClientsViewState extends ConsumerState<ClientsView>
                   opacity: _stagger(0.0, 0.40),
                   child: SlideTransition(
                     position: Tween<Offset>(
-                            begin: const Offset(0, 0.04), end: Offset.zero)
-                        .animate(_stagger(0.0, 0.40)),
+                      begin: const Offset(0, 0.04),
+                      end: Offset.zero,
+                    ).animate(_stagger(0.0, 0.40)),
                     child: _buildKpiStrip(companyState.companies),
                   ),
                 ),
@@ -188,8 +192,9 @@ class _ClientsViewState extends ConsumerState<ClientsView>
                   opacity: _stagger(0.12, 0.50),
                   child: SlideTransition(
                     position: Tween<Offset>(
-                            begin: const Offset(0, 0.04), end: Offset.zero)
-                        .animate(_stagger(0.12, 0.50)),
+                      begin: const Offset(0, 0.04),
+                      end: Offset.zero,
+                    ).animate(_stagger(0.12, 0.50)),
                     child: _buildToolbar(companyState.companies),
                   ),
                 ),
@@ -217,51 +222,74 @@ class _ClientsViewState extends ConsumerState<ClientsView>
                     opacity: _stagger(0.22, 0.70),
                     child: SlideTransition(
                       position: Tween<Offset>(
-                              begin: const Offset(0, 0.04), end: Offset.zero)
-                          .animate(_stagger(0.22, 0.70)),
-                      child: _viewMode == TableViewMode.table
-                          ? _ClientTable(
-                              clients: companies,
-                              sort: _sort,
-                              sortAsc: _sortAsc,
-                              selected: selectedCompany,
-                              onSort: (f) => setState(() {
-                                if (_sort == f) {
-                                  _sortAsc = !_sortAsc;
-                                } else {
-                                  _sort = f;
-                                  _sortAsc = true;
-                                }
-                              }),
-                              onSelect: (c) {
-                                if (selectedCompany?.id == c.id) {
-                                  ref.read(selectedCompanyProvider.notifier).state = null;
-                                  ref.read(companyListProvider.notifier)
-                                      .unsubscribeFromCompany(c.id);
-                                } else {
-                                  ref.read(selectedCompanyProvider.notifier).state = c;
-                                  ref.read(companyListProvider.notifier)
-                                      .subscribeToCompany(c.id);
-                                }
-                              },
-                              onEdit: (c) => _showCreateClientSheet(context, client: c),
-                            )
-                          : _ClientGrid(
-                              clients: companies,
-                              selected: selectedCompany,
-                              onSelect: (c) {
-                                if (selectedCompany?.id == c.id) {
-                                  ref.read(selectedCompanyProvider.notifier).state = null;
-                                  ref.read(companyListProvider.notifier)
-                                      .unsubscribeFromCompany(c.id);
-                                } else {
-                                  ref.read(selectedCompanyProvider.notifier).state = c;
-                                  ref.read(companyListProvider.notifier)
-                                      .subscribeToCompany(c.id);
-                                }
-                              },
-                              onEdit: (c) => _showCreateClientSheet(context, client: c),
-                            ),
+                        begin: const Offset(0, 0.04),
+                        end: Offset.zero,
+                      ).animate(_stagger(0.22, 0.70)),
+                      child:
+                          _viewMode == TableViewMode.table
+                              ? _ClientTable(
+                                clients: companies,
+                                sort: _sort,
+                                sortAsc: _sortAsc,
+                                selected: selectedCompany,
+                                onSort:
+                                    (f) => setState(() {
+                                      if (_sort == f) {
+                                        _sortAsc = !_sortAsc;
+                                      } else {
+                                        _sort = f;
+                                        _sortAsc = true;
+                                      }
+                                    }),
+                                onSelect: (c) {
+                                  if (selectedCompany?.id == c.id) {
+                                    ref
+                                        .read(selectedCompanyProvider.notifier)
+                                        .state = null;
+                                    ref
+                                        .read(companyListProvider.notifier)
+                                        .unsubscribeFromCompany(c.id);
+                                  } else {
+                                    ref
+                                        .read(selectedCompanyProvider.notifier)
+                                        .state = c;
+                                    ref
+                                        .read(companyListProvider.notifier)
+                                        .subscribeToCompany(c.id);
+                                  }
+                                },
+                                onEdit:
+                                    (c) => _showCreateClientSheet(
+                                      context,
+                                      client: c,
+                                    ),
+                              )
+                              : _ClientGrid(
+                                clients: companies,
+                                selected: selectedCompany,
+                                onSelect: (c) {
+                                  if (selectedCompany?.id == c.id) {
+                                    ref
+                                        .read(selectedCompanyProvider.notifier)
+                                        .state = null;
+                                    ref
+                                        .read(companyListProvider.notifier)
+                                        .unsubscribeFromCompany(c.id);
+                                  } else {
+                                    ref
+                                        .read(selectedCompanyProvider.notifier)
+                                        .state = c;
+                                    ref
+                                        .read(companyListProvider.notifier)
+                                        .subscribeToCompany(c.id);
+                                  }
+                                },
+                                onEdit:
+                                    (c) => _showCreateClientSheet(
+                                      context,
+                                      client: c,
+                                    ),
+                              ),
                     ),
                   ),
               ],
@@ -274,17 +302,23 @@ class _ClientsViewState extends ConsumerState<ClientsView>
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
           width: selectedCompany != null ? 320.0 : 0,
-          child: selectedCompany != null
-              ? _ClientDetailPanel(
-                  client: selectedCompany,
-                  onClose: () {
-                    ref.read(companyListProvider.notifier)
-                        .unsubscribeFromCompany(selectedCompany.id);
-                    ref.read(selectedCompanyProvider.notifier).state = null;
-                  },
-                  onEdit: () => _showCreateClientSheet(context, client: selectedCompany),
-                )
-              : const SizedBox.shrink(),
+          child:
+              selectedCompany != null
+                  ? _ClientDetailPanel(
+                    client: selectedCompany,
+                    onClose: () {
+                      ref
+                          .read(companyListProvider.notifier)
+                          .unsubscribeFromCompany(selectedCompany.id);
+                      ref.read(selectedCompanyProvider.notifier).state = null;
+                    },
+                    onEdit:
+                        () => _showCreateClientSheet(
+                          context,
+                          client: selectedCompany,
+                        ),
+                  )
+                  : const SizedBox.shrink(),
         ),
       ],
     );
@@ -292,21 +326,27 @@ class _ClientsViewState extends ConsumerState<ClientsView>
 
   // ── Helper: Get filtered companies ──────────────────────────────────────
   List<Company> _getFilteredCompanies(List<Company> allCompanies) {
-    var list = allCompanies.where((c) {
-      // Search filter
-      final matchSearch = _search.isEmpty ||
-          c.name.toLowerCase().contains(_search.toLowerCase()) ||
-          (c.contactName?.toLowerCase().contains(_search.toLowerCase()) ?? false) ||
-          (c.email?.toLowerCase().contains(_search.toLowerCase()) ?? false) ||
-          (c.industry?.toLowerCase().contains(_search.toLowerCase()) ?? false);
+    var list =
+        allCompanies.where((c) {
+          // Search filter
+          final matchSearch =
+              _search.isEmpty ||
+              c.name.toLowerCase().contains(_search.toLowerCase()) ||
+              (c.contactName?.toLowerCase().contains(_search.toLowerCase()) ??
+                  false) ||
+              (c.email?.toLowerCase().contains(_search.toLowerCase()) ??
+                  false) ||
+              (c.industry?.toLowerCase().contains(_search.toLowerCase()) ??
+                  false);
 
-      // Status filter
-      final matchStatus = _filter == FilterStatus.all ||
-          (_filter == FilterStatus.active && c.isActive) ||
-          (_filter == FilterStatus.inactive && !c.isActive);
+          // Status filter
+          final matchStatus =
+              _filter == FilterStatus.all ||
+              (_filter == FilterStatus.active && c.isActive) ||
+              (_filter == FilterStatus.inactive && !c.isActive);
 
-      return matchSearch && matchStatus;
-    }).toList();
+          return matchSearch && matchStatus;
+        }).toList();
 
     // Sort
     list.sort((a, b) {
@@ -336,38 +376,40 @@ class _ClientsViewState extends ConsumerState<ClientsView>
   Widget _buildKpiStrip(List<Company> companies) {
     final activeCount = companies.where((c) => c.isActive).length;
     final inactiveCount = companies.where((c) => !c.isActive).length;
-    
-    return Row(children: [
-      KpiCard(
-        icon: Icons.business_outlined,
-        iconColor: _T.blue,
-        iconBg: _T.blue50,
-        label: 'Total Clients',
-        value: '${companies.length}',
-        sub: 'All accounts',
-        subPositive: null,
-      ),
-      const SizedBox(width: 12),
-      KpiCard(
-        icon: Icons.check_circle_outline_rounded,
-        iconColor: _T.green,
-        iconBg: _T.green50,
-        label: 'Active',
-        value: '$activeCount',
-        sub: 'In good standing',
-        subPositive: true,
-      ),
-      const SizedBox(width: 12),
-      KpiCard(
-        icon: Icons.cancel_outlined,
-        iconColor: _T.slate400,
-        iconBg: _T.slate100,
-        label: 'Inactive',
-        value: '$inactiveCount',
-        sub: 'Not active',
-        subPositive: false,
-      ),
-    ]);
+
+    return Row(
+      children: [
+        KpiCard(
+          icon: Icons.business_outlined,
+          iconColor: _T.blue,
+          iconBg: _T.blue50,
+          label: 'Total Clients',
+          value: '${companies.length}',
+          sub: 'All accounts',
+          subPositive: null,
+        ),
+        const SizedBox(width: 12),
+        KpiCard(
+          icon: Icons.check_circle_outline_rounded,
+          iconColor: _T.green,
+          iconBg: _T.green50,
+          label: 'Active',
+          value: '$activeCount',
+          sub: 'In good standing',
+          subPositive: true,
+        ),
+        const SizedBox(width: 12),
+        KpiCard(
+          icon: Icons.cancel_outlined,
+          iconColor: _T.slate400,
+          iconBg: _T.slate100,
+          label: 'Inactive',
+          value: '$inactiveCount',
+          sub: 'Not active',
+          subPositive: false,
+        ),
+      ],
+    );
   }
 
   // ── Helper: Build toolbar ───────────────────────────────────────────────
@@ -453,15 +495,18 @@ class _ClientsViewState extends ConsumerState<ClientsView>
 }
 
 class _FilterChip extends StatelessWidget {
-  final String     label;
-  final int?       count;
-  final Color?     dotColor;
-  final bool       isActive;
+  final String label;
+  final int? count;
+  final Color? dotColor;
+  final bool isActive;
   final VoidCallback onTap;
 
   const _FilterChip({
-    required this.label, required this.isActive, required this.onTap,
-    this.count, this.dotColor,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    this.count,
+    this.dotColor,
   });
 
   @override
@@ -475,30 +520,44 @@ class _FilterChip extends StatelessWidget {
           color: isActive ? _T.blue50 : Colors.transparent,
           borderRadius: BorderRadius.circular(_T.r),
           border: Border.all(
-              color: isActive ? _T.blue.withOpacity(0.4) : Colors.transparent),
+            color: isActive ? _T.blue.withOpacity(0.4) : Colors.transparent,
+          ),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (dotColor != null) ...[
-            Container(
-              width: 5, height: 5,
-              decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 5),
-          ],
-          Text(label,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (dotColor != null) ...[
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
               style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? _T.blue : _T.slate500)),
-          if (count != null) ...[
-            const SizedBox(width: 5),
-            Text('$count',
+                fontSize: 12.5,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? _T.blue : _T.slate500,
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 5),
+              Text(
+                '$count',
                 style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? _T.blue : _T.slate400)),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? _T.blue : _T.slate400,
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -509,16 +568,20 @@ class _FilterChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientTable extends StatelessWidget {
   final List<Company> clients;
-  final _SortField   sort;
-  final bool         sortAsc;
-  final Company?      selected;
+  final _SortField sort;
+  final bool sortAsc;
+  final Company? selected;
   final ValueChanged<_SortField> onSort;
-  final ValueChanged<Company>     onSelect;
-  final ValueChanged<Company>     onEdit;
+  final ValueChanged<Company> onSelect;
+  final ValueChanged<Company> onEdit;
 
   const _ClientTable({
-    required this.clients, required this.sort, required this.sortAsc,
-    required this.selected, required this.onSort, required this.onSelect,
+    required this.clients,
+    required this.sort,
+    required this.sortAsc,
+    required this.selected,
+    required this.onSort,
+    required this.onSelect,
     required this.onEdit,
   });
 
@@ -544,16 +607,36 @@ class _ClientTable extends StatelessWidget {
                 topRight: Radius.circular(_T.rLg),
               ),
             ),
-            child: Row(children: [
-              const SizedBox(width: 36 + 10),           // avatar spacer
-              Expanded(flex: 4, child: _SortHeader('Company', _SortField.name, sort, sortAsc, onSort)),
-              Expanded(flex: 3, child: _ColHeader('Contact')),
-              Expanded(flex: 2, child: _ColHeader('Industry')),
-              // Expanded(flex: 1, child: _SortHeader('Projects', _SortField.projects, sort, sortAsc, onSort)),
-              // Expanded(flex: 1, child: _SortHeader('Tasks', _SortField.tasks, sort, sortAsc, onSort)),
-              Expanded(flex: 2, child: _SortHeader('Joined', _SortField.joined, sort, sortAsc, onSort)),
-              const SizedBox(width: 36),                // actions spacer
-            ]),
+            child: Row(
+              children: [
+                const SizedBox(width: 36 + 10), // avatar spacer
+                Expanded(
+                  flex: 4,
+                  child: _SortHeader(
+                    'Company',
+                    _SortField.name,
+                    sort,
+                    sortAsc,
+                    onSort,
+                  ),
+                ),
+                Expanded(flex: 3, child: _ColHeader('Contact')),
+                Expanded(flex: 2, child: _ColHeader('Industry')),
+                // Expanded(flex: 1, child: _SortHeader('Projects', _SortField.projects, sort, sortAsc, onSort)),
+                // Expanded(flex: 1, child: _SortHeader('Tasks', _SortField.tasks, sort, sortAsc, onSort)),
+                Expanded(
+                  flex: 2,
+                  child: _SortHeader(
+                    'Joined',
+                    _SortField.joined,
+                    sort,
+                    sortAsc,
+                    onSort,
+                  ),
+                ),
+                const SizedBox(width: 36), // actions spacer
+              ],
+            ),
           ),
 
           // Data rows
@@ -579,10 +662,10 @@ class _ClientTable extends StatelessWidget {
 }
 
 class _SortHeader extends StatelessWidget {
-  final String       label;
-  final _SortField   field;
-  final _SortField   active;
-  final bool         asc;
+  final String label;
+  final _SortField field;
+  final _SortField active;
+  final bool asc;
   final ValueChanged<_SortField> onSort;
 
   const _SortHeader(this.label, this.field, this.active, this.asc, this.onSort);
@@ -592,22 +675,30 @@ class _SortHeader extends StatelessWidget {
     final isActive = field == active;
     return GestureDetector(
       onTap: () => onSort(field),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
             style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-                color: isActive ? _T.blue : _T.slate400)),
-        const SizedBox(width: 3),
-        Icon(
-          isActive
-              ? (asc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded)
-              : Icons.unfold_more_rounded,
-          size: 11,
-          color: isActive ? _T.blue : _T.slate300,
-        ),
-      ]),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: isActive ? _T.blue : _T.slate400,
+            ),
+          ),
+          const SizedBox(width: 3),
+          Icon(
+            isActive
+                ? (asc
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded)
+                : Icons.unfold_more_rounded,
+            size: 11,
+            color: isActive ? _T.blue : _T.slate300,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -617,20 +708,28 @@ class _ColHeader extends StatelessWidget {
   const _ColHeader(this.text);
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 10, fontWeight: FontWeight.w700,
-          letterSpacing: 0.5, color: _T.slate400));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.5,
+      color: _T.slate400,
+    ),
+  );
 }
 
 class _ClientTableRow extends StatefulWidget {
-  final Company       client;
-  final bool         isSelected, isLast;
+  final Company client;
+  final bool isSelected, isLast;
   final VoidCallback onTap, onEdit;
 
   const _ClientTableRow({
-    required this.client, required this.isSelected, required this.isLast,
-    required this.onTap, required this.onEdit,
+    required this.client,
+    required this.isSelected,
+    required this.isLast,
+    required this.onTap,
+    required this.onEdit,
   });
 
   @override
@@ -644,27 +743,31 @@ class _ClientTableRowState extends State<_ClientTableRow> {
   Widget build(BuildContext context) {
     final c = widget.client;
     return MouseRegion(
-      onEnter:  (_) => setState(() => _hovered = true),
-      onExit:   (_) => setState(() => _hovered = false),
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: widget.isSelected
-                ? _T.blue50
-                : _hovered
+            color:
+                widget.isSelected
+                    ? _T.blue50
+                    : _hovered
                     ? _T.slate50
                     : _T.white,
-            border: widget.isLast
-                ? null
-                : const Border(bottom: BorderSide(color: _T.slate100)),
-            borderRadius: widget.isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(_T.rLg),
-                    bottomRight: Radius.circular(_T.rLg))
-                : null,
+            border:
+                widget.isLast
+                    ? null
+                    : const Border(bottom: BorderSide(color: _T.slate100)),
+            borderRadius:
+                widget.isLast
+                    ? const BorderRadius.only(
+                      bottomLeft: Radius.circular(_T.rLg),
+                      bottomRight: Radius.circular(_T.rLg),
+                    )
+                    : null,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -679,15 +782,23 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.name,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: _T.ink)),
+                    Text(
+                      c.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _T.ink,
+                      ),
+                    ),
                     const SizedBox(height: 1),
-                    Text(c.email?? "N/a",
-                        style: const TextStyle(
-                            fontSize: 11, color: _T.slate400,
-                            fontWeight: FontWeight.w400)),
+                    Text(
+                      c.email ?? "N/a",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -695,10 +806,14 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               // Contact
               Expanded(
                 flex: 3,
-                child: Text(c.contactName?? "N/a",
-                    style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w500,
-                        color: _T.ink3)),
+                child: Text(
+                  c.contactName ?? "N/a",
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: _T.ink3,
+                  ),
+                ),
               ),
 
               // Industry
@@ -707,15 +822,22 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: _T.slate100,
                       borderRadius: BorderRadius.circular(99),
                     ),
-                    child: Text(c.industry?? "Not provided",
-                        style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: _T.slate500)),
+                    child: Text(
+                      c.industry ?? "Not provided",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _T.slate500,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -750,10 +872,14 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               // Joined
               Expanded(
                 flex: 2,
-                child: Text(_fmtDate(c.createdAt),
-                    style: const TextStyle(
-                        fontSize: 12, color: _T.slate400,
-                        fontWeight: FontWeight.w500)),
+                child: Text(
+                  _fmtDate(c.createdAt),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _T.slate400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
 
               // Actions
@@ -769,8 +895,11 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                       borderRadius: BorderRadius.circular(_T.r),
                       child: const Padding(
                         padding: EdgeInsets.all(6),
-                        child: Icon(Icons.edit_outlined,
-                            size: 14, color: _T.slate400),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          size: 14,
+                          color: _T.slate400,
+                        ),
                       ),
                     ),
                   ),
@@ -789,12 +918,14 @@ class _ClientTableRowState extends State<_ClientTableRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientGrid extends StatelessWidget {
   final List<Company> clients;
-  final Company?      selected;
+  final Company? selected;
   final ValueChanged<Company> onSelect, onEdit;
 
   const _ClientGrid({
-    required this.clients, required this.selected,
-    required this.onSelect, required this.onEdit,
+    required this.clients,
+    required this.selected,
+    required this.onSelect,
+    required this.onEdit,
   });
 
   @override
@@ -810,24 +941,27 @@ class _ClientGrid extends StatelessWidget {
         childAspectRatio: 1.22,
       ),
       itemCount: clients.length,
-      itemBuilder: (_, i) => _ClientGridCard(
-        client:     clients[i],
-        isSelected: selected?.id == clients[i].id,
-        onTap:      () => onSelect(clients[i]),
-        onEdit:     () => onEdit(clients[i]),
-      ),
+      itemBuilder:
+          (_, i) => _ClientGridCard(
+            client: clients[i],
+            isSelected: selected?.id == clients[i].id,
+            onTap: () => onSelect(clients[i]),
+            onEdit: () => onEdit(clients[i]),
+          ),
     );
   }
 }
 
 class _ClientGridCard extends StatefulWidget {
   final Company client;
-  final bool   isSelected;
+  final bool isSelected;
   final VoidCallback onTap, onEdit;
 
   const _ClientGridCard({
-    required this.client, required this.isSelected,
-    required this.onTap, required this.onEdit,
+    required this.client,
+    required this.isSelected,
+    required this.onTap,
+    required this.onEdit,
   });
 
   @override
@@ -842,7 +976,7 @@ class _ClientGridCardState extends State<_ClientGridCard> {
     final c = widget.client;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
@@ -855,10 +989,16 @@ class _ClientGridCardState extends State<_ClientGridCard> {
               width: widget.isSelected ? 1.5 : 1.0,
             ),
             borderRadius: BorderRadius.circular(_T.rLg),
-            boxShadow: _hovered
-                ? [BoxShadow(color: Colors.black.withOpacity(0.06),
-                    blurRadius: 16, offset: const Offset(0, 4))]
-                : null,
+            boxShadow:
+                _hovered
+                    ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                    : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -871,15 +1011,26 @@ class _ClientGridCardState extends State<_ClientGridCard> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(c.name,
-                  style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w700,
-                      color: _T.ink, height: 1.2),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                c.name,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                  height: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               const SizedBox(height: 2),
-              Text(c.contactName?? "No contact",
-                  style: const TextStyle(fontSize: 11.5, color: _T.slate400,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                c.contactName ?? "No contact",
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: _T.slate400,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const Spacer(),
               // Row(children: [
               //   _GridStat(Icons.folder_outlined, '${c.projectCount}', _T.purple),
@@ -907,8 +1058,8 @@ class _ClientGridCardState extends State<_ClientGridCard> {
 
 class _GridStat extends StatelessWidget {
   final IconData icon;
-  final String   value;
-  final Color    color;
+  final String value;
+  final Color color;
   const _GridStat(this.icon, this.value, this.color);
 
   @override
@@ -917,9 +1068,14 @@ class _GridStat extends StatelessWidget {
     children: [
       Icon(icon, size: 12, color: color),
       const SizedBox(width: 4),
-      Text(value,
-          style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
     ],
   );
 }
@@ -928,11 +1084,13 @@ class _GridStat extends StatelessWidget {
 // CLIENT DETAIL PANEL — slides in from right
 // ─────────────────────────────────────────────────────────────────────────────
 class _ClientDetailPanel extends StatelessWidget {
-  final Company       client;
+  final Company client;
   final VoidCallback onClose, onEdit;
 
   const _ClientDetailPanel({
-    required this.client, required this.onClose, required this.onEdit,
+    required this.client,
+    required this.onClose,
+    required this.onEdit,
   });
 
   @override
@@ -950,18 +1108,26 @@ class _ClientDetailPanel extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
             decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: _T.slate200))),
-            child: Row(children: [
-              const Text('Company details',
+              border: Border(bottom: BorderSide(color: _T.slate200)),
+            ),
+            child: Row(
+              children: [
+                const Text(
+                  'Company details',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: _T.ink)),
-              const Spacer(),
-              // Edit
-              _IconBtn(Icons.edit_outlined, onEdit),
-              const SizedBox(width: 4),
-              // Close
-              _IconBtn(Icons.close_rounded, onClose),
-            ]),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                ),
+                const Spacer(),
+                // Edit
+                _IconBtn(Icons.edit_outlined, onEdit),
+                const SizedBox(width: 4),
+                // Close
+                _IconBtn(Icons.close_rounded, onClose),
+              ],
+            ),
           ),
 
           Expanded(
@@ -972,17 +1138,24 @@ class _ClientDetailPanel extends StatelessWidget {
                 children: [
                   // Identity
                   Center(
-                    child: Column(children: [
-                      _ClientAvatar(client: c, size: 56),
-                      const SizedBox(height: 10),
-                      Text(c.name,
+                    child: Column(
+                      children: [
+                        _ClientAvatar(client: c, size: 56),
+                        const SizedBox(height: 10),
+                        Text(
+                          c.name,
                           style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w800,
-                              color: _T.ink, letterSpacing: -0.3),
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: 4),
-                      _StatusBadge(),
-                    ]),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: _T.ink,
+                            letterSpacing: -0.3,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        _StatusBadge(),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 20),
                   const Divider(height: 1, color: _T.slate100),
@@ -990,17 +1163,25 @@ class _ClientDetailPanel extends StatelessWidget {
 
                   // Contact info
                   _DetailSection('Contact', [
-                    _DetailRow(Icons.person_outline, c.contactName?? "No provided"),
-                    _DetailRow(Icons.email_outlined, c.email?? "Not provided"),
-                    _DetailRow(Icons.phone_outlined, c.phone?? "Not provided"),
+                    _DetailRow(
+                      Icons.person_outline,
+                      c.contactName ?? "No provided",
+                    ),
+                    _DetailRow(Icons.email_outlined, c.email ?? "Not provided"),
+                    _DetailRow(Icons.phone_outlined, c.phone ?? "Not provided"),
                   ]),
                   const SizedBox(height: 16),
 
                   // Business info
                   _DetailSection('Business', [
-                    _DetailRow(Icons.business_outlined, c.industry?? "Not provided"),
-                    _DetailRow(Icons.calendar_today_outlined,
-                        'Joined ${_fmtDateLong(c.createdAt)}'),
+                    _DetailRow(
+                      Icons.business_outlined,
+                      c.industry ?? "Not provided",
+                    ),
+                    _DetailRow(
+                      Icons.calendar_today_outlined,
+                      'Joined ${_fmtDateLong(c.createdAt)}',
+                    ),
                   ]),
                   const SizedBox(height: 16),
 
@@ -1023,19 +1204,23 @@ class _ClientDetailPanel extends StatelessWidget {
 }
 
 class _DetailSection extends StatelessWidget {
-  final String        title;
-  final List<Widget>  rows;
+  final String title;
+  final List<Widget> rows;
   const _DetailSection(this.title, this.rows);
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title.toUpperCase(),
-          style: TextStyle(
-              fontSize: 9.5, fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              color: _T.slate400.withOpacity(0.8))),
+      Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: _T.slate400.withOpacity(0.8),
+        ),
+      ),
       const SizedBox(height: 8),
       ...rows,
     ],
@@ -1044,53 +1229,72 @@ class _DetailSection extends StatelessWidget {
 
 class _DetailRow extends StatelessWidget {
   final IconData icon;
-  final String   value;
+  final String value;
   const _DetailRow(this.icon, this.value);
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Row(children: [
-      Icon(icon, size: 13, color: _T.slate400),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(value,
+    child: Row(
+      children: [
+        Icon(icon, size: 13, color: _T.slate400),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
             style: const TextStyle(
-                fontSize: 12.5, fontWeight: FontWeight.w500, color: _T.ink3),
-            overflow: TextOverflow.ellipsis),
-      ),
-    ]),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: _T.ink3,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
 class _StatTile extends StatelessWidget {
   final String label, value;
-  final Color  color, bg;
+  final Color color, bg;
   const _StatTile(this.label, this.value, this.color, this.bg);
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-        color: bg,
-        border: Border.all(color: color.withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(_T.r)),
-    child: Column(children: [
-      Text(value,
+      color: bg,
+      border: Border.all(color: color.withOpacity(0.2)),
+      borderRadius: BorderRadius.circular(_T.r),
+    ),
+    child: Column(
+      children: [
+        Text(
+          value,
           style: TextStyle(
-              fontSize: 22, fontWeight: FontWeight.w800,
-              color: color, letterSpacing: -0.5)),
-      const SizedBox(height: 2),
-      Text(label,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: color,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
           style: const TextStyle(
-              fontSize: 10.5, fontWeight: FontWeight.w600,
-              color: _T.slate500)),
-    ]),
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: _T.slate500,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
 class _IconBtn extends StatelessWidget {
-  final IconData     icon;
+  final IconData icon;
   final VoidCallback onTap;
   const _IconBtn(this.icon, this.onTap);
 
@@ -1101,10 +1305,12 @@ class _IconBtn extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(_T.r),
       child: Container(
-        width: 28, height: 28,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
-            border: Border.all(color: _T.slate200),
-            borderRadius: BorderRadius.circular(_T.r)),
+          border: Border.all(color: _T.slate200),
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
         child: Icon(icon, size: 13, color: _T.slate400),
       ),
     ),
@@ -1125,7 +1331,9 @@ class _CreateClientSheet extends ConsumerStatefulWidget {
 class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ac = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 320));
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
 
   // Form controllers
   final _namCtrl = TextEditingController();
@@ -1200,7 +1408,9 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
       if (mounted) {
         Navigator.of(context).pop();
         _showSuccess(
-          _isEdit ? 'Company updated successfully' : 'Company created successfully',
+          _isEdit
+              ? 'Company updated successfully'
+              : 'Company created successfully',
         );
       }
     } catch (e) {
@@ -1216,25 +1426,25 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
   Future<void> _createCompany() async {
     final phone = _phnCtrl.text.trim().isNotEmpty ? _phnCtrl.text.trim() : null;
     final email = _emlCtrl.text.trim().isNotEmpty ? _emlCtrl.text.trim() : null;
-    final contactName = _conCtrl.text.trim().isNotEmpty ? _conCtrl.text.trim() : null;
+    final contactName =
+        _conCtrl.text.trim().isNotEmpty ? _conCtrl.text.trim() : null;
 
-    final errorMessage = await CompanyRepo.createCompany(
-      Company.create(
-        name: _namCtrl.text.trim(),
-        description: "",
-        phone: phone,
-        email: email,
-        industry: _selectedIndustry,
-        contactName: contactName,
-      ),
-    );
-
-    if (errorMessage != null) {
-      throw Exception(errorMessage);
+    try {
+      await CompanyRepo.createCompany(
+        Company.create(
+          name: _namCtrl.text.trim(),
+          description: "",
+          phone: phone,
+          email: email,
+          industry: _selectedIndustry,
+          contactName: contactName,
+        ),
+      );
+    } catch (e) {
+      rethrow;
     }
 
     // WebSocket will automatically broadcast the new company to all connected clients
-    // The backend should handle: wsService.broadcastCompanyCreated(organizationId, company, userId)
   }
 
   /// Update existing company
@@ -1243,7 +1453,8 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
 
     final phone = _phnCtrl.text.trim().isNotEmpty ? _phnCtrl.text.trim() : null;
     final email = _emlCtrl.text.trim().isNotEmpty ? _emlCtrl.text.trim() : null;
-    final contactName = _conCtrl.text.trim().isNotEmpty ? _conCtrl.text.trim() : null;
+    final contactName =
+        _conCtrl.text.trim().isNotEmpty ? _conCtrl.text.trim() : null;
 
     // Create updated company object preserving existing fields
     final updatedCompany = Company.update(
@@ -1259,9 +1470,7 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
       color: widget.existing!.color, // Preserve color
     );
 
-    final errorMessage = await CompanyRepo.updateCompany(
-      updatedCompany,
-    );
+    final errorMessage = await CompanyRepo.updateCompany(updatedCompany);
 
     if (errorMessage != null) {
       throw Exception(errorMessage);
@@ -1471,26 +1680,30 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(_T.r),
-                          borderSide: const BorderSide(color: _T.blue, width: 1.5),
+                          borderSide: const BorderSide(
+                            color: _T.blue,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       dropdownColor: _T.white,
                       borderRadius: BorderRadius.circular(_T.rLg),
-                      items: _industries
-                          .map(
-                            (ind) => DropdownMenuItem(
-                              value: ind,
-                              child: Text(
-                                ind,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: _T.ink,
-                                  fontWeight: FontWeight.w500,
+                      items:
+                          _industries
+                              .map(
+                                (ind) => DropdownMenuItem(
+                                  value: ind,
+                                  child: Text(
+                                    ind,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: _T.ink,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                              )
+                              .toList(),
                       onChanged: (v) => setState(() => _selectedIndustry = v),
                     ),
                     const SizedBox(height: 24),
@@ -1509,7 +1722,8 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                      onPressed:
+                          _saving ? null : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _T.slate500,
                         side: const BorderSide(color: _T.slate200),
@@ -1540,19 +1754,22 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
                           borderRadius: BorderRadius.circular(_T.r),
                         ),
                       ),
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                      icon:
+                          _saving
+                              ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Icon(
+                                _isEdit
+                                    ? Icons.check_rounded
+                                    : Icons.add_rounded,
+                                size: 16,
                               ),
-                            )
-                          : Icon(
-                              _isEdit ? Icons.check_rounded : Icons.add_rounded,
-                              size: 16,
-                            ),
                       label: Text(
                         _saving
                             ? (_isEdit ? 'Saving…' : 'Creating…')
@@ -1578,32 +1795,37 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
 // FORM FIELD HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 class _Field extends StatelessWidget {
-  final String                label, hint;
+  final String label, hint;
   final TextEditingController controller;
-  final IconData              icon;
-  final bool                  required;
-  final TextInputType?        keyboard;
+  final IconData icon;
+  final bool required;
+  final TextInputType? keyboard;
 
   const _Field({
-    required this.label, required this.hint,
-    required this.controller, required this.icon,
-    this.required = false, this.keyboard,
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.icon,
+    this.required = false,
+    this.keyboard,
   });
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Row(children: [
-        _FieldLabel(label),
-        if (required) ...[
-          const SizedBox(width: 3),
-          const Text('*', style: TextStyle(color: _T.red, fontSize: 12)),
+      Row(
+        children: [
+          _FieldLabel(label),
+          if (required) ...[
+            const SizedBox(width: 3),
+            const Text('*', style: TextStyle(color: _T.red, fontSize: 12)),
+          ],
         ],
-      ]),
+      ),
       const SizedBox(height: 6),
       TextField(
-        controller:  controller,
+        controller: controller,
         keyboardType: keyboard,
         style: const TextStyle(fontSize: 13, color: _T.ink),
         decoration: InputDecoration(
@@ -1612,16 +1834,22 @@ class _Field extends StatelessWidget {
           prefixIcon: Icon(icon, size: 15, color: _T.slate400),
           filled: true,
           fillColor: _T.slate50,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-              borderSide: const BorderSide(color: _T.slate200)),
+            borderRadius: BorderRadius.circular(_T.r),
+            borderSide: const BorderSide(color: _T.slate200),
+          ),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-              borderSide: const BorderSide(color: _T.slate200)),
+            borderRadius: BorderRadius.circular(_T.r),
+            borderSide: const BorderSide(color: _T.slate200),
+          ),
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-              borderSide: const BorderSide(color: _T.blue, width: 1.5)),
+            borderRadius: BorderRadius.circular(_T.r),
+            borderSide: const BorderSide(color: _T.blue, width: 1.5),
+          ),
         ),
       ),
     ],
@@ -1633,9 +1861,14 @@ class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 12, fontWeight: FontWeight.w600, color: _T.ink3));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: _T.ink3,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1647,24 +1880,36 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color, bg) = switch (status) {
-      ClientStatus.active   => ('Active',   _T.green,   _T.green50),
+      ClientStatus.active => ('Active', _T.green, _T.green50),
       ClientStatus.inactive => ('Inactive', _T.slate400, _T.slate100),
-      ClientStatus.pending  => ('Pending',  _T.amber,   _T.amber50),
+      ClientStatus.pending => ('Pending', _T.amber, _T.amber50),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: color.withOpacity(0.35)),
-          borderRadius: BorderRadius.circular(99)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 5, height: 5,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 5),
-        Text(label,
+        color: bg,
+        border: Border.all(color: color.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
             style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: color)),
-      ]),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1679,15 +1924,23 @@ class _ClientAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: size, height: size,
+    width: size,
+    height: size,
     decoration: BoxDecoration(
-        color: client.color?.withOpacity(0.12), shape: BoxShape.circle,
-        border: Border.all(color: client.color.withOpacity(0.25))),
+      color: client.color?.withOpacity(0.12),
+      shape: BoxShape.circle,
+      border: Border.all(color: client.color.withOpacity(0.25)),
+    ),
     child: Center(
-      child: Text(client.initials,
-          style: TextStyle(
-              fontSize: size * 0.33, fontWeight: FontWeight.w800,
-              color: client.color, letterSpacing: -0.5)),
+      child: Text(
+        client.initials,
+        style: TextStyle(
+          fontSize: size * 0.33,
+          fontWeight: FontWeight.w800,
+          color: client.color,
+          letterSpacing: -0.5,
+        ),
+      ),
     ),
   );
 }
@@ -1704,19 +1957,32 @@ class _EmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52, height: 52,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-                color: _T.slate100, borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.business_outlined,
-                size: 24, color: _T.slate400),
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.business_outlined,
+              size: 24,
+              color: _T.slate400,
+            ),
           ),
           const SizedBox(height: 14),
-          const Text('No clients found',
-              style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w700, color: _T.ink3)),
+          const Text(
+            'No clients found',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _T.ink3,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('Try adjusting your search or filters.',
-              style: TextStyle(fontSize: 12.5, color: _T.slate400)),
+          const Text(
+            'Try adjusting your search or filters.',
+            style: TextStyle(fontSize: 12.5, color: _T.slate400),
+          ),
         ],
       ),
     ),
@@ -1733,24 +1999,31 @@ class _SidebarLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(left: 8, bottom: 4),
-    child: Text(text.toUpperCase(),
-        style: TextStyle(
-            fontSize: 9.5, fontWeight: FontWeight.w700,
-            letterSpacing: 1.0,
-            color: Colors.white.withOpacity(0.28))),
+    child: Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.0,
+        color: Colors.white.withOpacity(0.28),
+      ),
+    ),
   );
 }
 
 class _SidebarNavItem extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final bool         isActive;
-  final String?      badge;
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final String? badge;
   final VoidCallback onTap;
 
   const _SidebarNavItem({
-    required this.icon, required this.label, required this.isActive,
-    required this.onTap, this.badge,
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    this.badge,
   });
 
   @override
@@ -1763,28 +2036,42 @@ class _SidebarNavItem extends StatelessWidget {
       hoverColor: Colors.white.withOpacity(0.07),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Row(children: [
-          Icon(icon, size: 14,
-              color: Colors.white.withOpacity(isActive ? 1.0 : 0.5)),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: Colors.white.withOpacity(isActive ? 1.0 : 0.5))),
-          ),
-          if (badge != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-              decoration: BoxDecoration(
-                  color: _T.blue, borderRadius: BorderRadius.circular(99)),
-              child: Text(badge!,
-                  style: const TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
             ),
-        ]),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: Colors.white.withOpacity(isActive ? 1.0 : 0.5),
+                ),
+              ),
+            ),
+            if (badge != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: _T.blue,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     ),
   );
@@ -1792,14 +2079,17 @@ class _SidebarNavItem extends StatelessWidget {
 
 class _SidebarProjectRow extends StatelessWidget {
   final String name;
-  final Color  color;
-  final int    count;
-  final bool   isActive;
+  final Color color;
+  final int count;
+  final bool isActive;
   final VoidCallback onTap;
 
   const _SidebarProjectRow({
-    required this.name, required this.color, required this.count,
-    required this.isActive, required this.onTap,
+    required this.name,
+    required this.color,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
   });
 
   @override
@@ -1812,23 +2102,35 @@ class _SidebarProjectRow extends StatelessWidget {
       hoverColor: Colors.white.withOpacity(0.06),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Row(children: [
-          Container(width: 8, height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(name,
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                name,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: Colors.white.withOpacity(isActive ? 0.9 : 0.55))),
-          ),
-          Text('$count',
+                  fontSize: 12.5,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: Colors.white.withOpacity(isActive ? 0.9 : 0.55),
+                ),
+              ),
+            ),
+            Text(
+              '$count',
               style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.25))),
-        ]),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.25),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -1851,10 +2153,16 @@ class _LogoPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final paint = Paint()..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(w * 0.19, h * 0.66), w * 0.065,
-        paint..color = Colors.white.withOpacity(0.5));
-    canvas.drawCircle(Offset(w * 0.48, h * 0.34), w * 0.065,
-        paint..color = Colors.white.withOpacity(0.7));
+    canvas.drawCircle(
+      Offset(w * 0.19, h * 0.66),
+      w * 0.065,
+      paint..color = Colors.white.withOpacity(0.5),
+    );
+    canvas.drawCircle(
+      Offset(w * 0.48, h * 0.34),
+      w * 0.065,
+      paint..color = Colors.white.withOpacity(0.7),
+    );
     canvas.drawPath(
       Path()
         ..moveTo(w * 0.19, h * 0.66)
@@ -1885,14 +2193,38 @@ class _LogoPainter extends CustomPainter {
 }
 
 String _fmtDate(DateTime d) {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun',
-                   'Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
 String _fmtDateLong(DateTime d) {
-  const months = ['January','February','March','April','May','June',
-                   'July','August','September','October','November','December'];
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
@@ -1901,16 +2233,22 @@ class _Toolbar extends StatelessWidget {
   final FilterStatus filter;
   final TableViewMode viewMode;
   final int activeCount, pendingCount, inactiveCount;
-  final ValueChanged<String>        onSearchChanged;
+  final ValueChanged<String> onSearchChanged;
   final ValueChanged<FilterStatus> onFilterChanged;
-  final ValueChanged<TableViewMode>     onViewModeChanged;
-  final VoidCallback                onAddClient;
+  final ValueChanged<TableViewMode> onViewModeChanged;
+  final VoidCallback onAddClient;
 
   const _Toolbar({
-    required this.searchCtrl, required this.filter, required this.viewMode,
-    required this.activeCount, required this.pendingCount, required this.inactiveCount,
-    required this.onSearchChanged, required this.onFilterChanged,
-    required this.onViewModeChanged, required this.onAddClient,
+    required this.searchCtrl,
+    required this.filter,
+    required this.viewMode,
+    required this.activeCount,
+    required this.pendingCount,
+    required this.inactiveCount,
+    required this.onSearchChanged,
+    required this.onFilterChanged,
+    required this.onViewModeChanged,
+    required this.onAddClient,
   });
 
   @override
@@ -1918,132 +2256,151 @@ class _Toolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: _T.white,
-          border: Border.all(color: _T.slate200),
-          borderRadius: BorderRadius.circular(_T.rLg)),
-      child: Row(children: [
-
-        // ── Search ─────────────────────────────────────────────────────
-        Expanded(
-          flex: 3,
-          child: SizedBox(
-            height: 36,
-            child: TextField(
-              controller: searchCtrl,
-              onChanged: onSearchChanged,
-              style: const TextStyle(fontSize: 13, color: _T.ink),
-              decoration: InputDecoration(
-                hintText: 'Search clients, contacts, industries…',
-                hintStyle: const TextStyle(fontSize: 13, color: _T.slate400),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    size: 16, color: _T.slate400),
-                filled: true,
-                fillColor: _T.slate50,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.slate200)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.slate200)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_T.r),
-                    borderSide: const BorderSide(color: _T.blue, width: 1.5)),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-
-        // ── Status filter tabs ─────────────────────────────────────────
-        // _FilterChip(
-        //   label: 'All',
-        //   isActive: filter == _FilterStatus.all,
-        //   onTap: () => onFilterChanged(_FilterStatus.all),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Active',
-        //   count: activeCount,
-        //   dotColor: _T.green,
-        //   isActive: filter == _FilterStatus.active,
-        //   onTap: () => onFilterChanged(_FilterStatus.active),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Pending',
-        //   count: pendingCount,
-        //   dotColor: _T.amber,
-        //   isActive: filter == _FilterStatus.pending,
-        //   onTap: () => onFilterChanged(_FilterStatus.pending),
-        // ),
-        // const SizedBox(width: 4),
-        // _FilterChip(
-        //   label: 'Inactive',
-        //   count: inactiveCount,
-        //   dotColor: _T.slate400,
-        //   isActive: filter == _FilterStatus.inactive,
-        //   onTap: () => onFilterChanged(_FilterStatus.inactive),
-        // ),
-        // const SizedBox(width: 10),
-
-        // ── View toggle ────────────────────────────────────────────────
-        Container(
-          height: 32,
-          decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(_T.r)),
-          child: Row(children: [
-            _ViewToggleBtn(
-              icon: Icons.table_rows_outlined,
-              isActive: viewMode == TableViewMode.table,
-              onTap: () => onViewModeChanged(TableViewMode.table),
-            ),
-            _ViewToggleBtn(
-              icon: Icons.grid_view_rounded,
-              isActive: viewMode == TableViewMode.grid,
-              onTap: () => onViewModeChanged(TableViewMode.grid),
-            ),
-          ]),
-        ),
-        const SizedBox(width: 10),
-
-        // ── Add client CTA ─────────────────────────────────────────────
-        Material(
-          color: _T.blue,
-          borderRadius: BorderRadius.circular(_T.r),
-          child: InkWell(
-            onTap: onAddClient,
-            borderRadius: BorderRadius.circular(_T.r),
-            hoverColor: _T.blueHover,
-            child: Container(
+        color: _T.white,
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
+      child: Row(
+        children: [
+          // ── Search ─────────────────────────────────────────────────────
+          Expanded(
+            flex: 3,
+            child: SizedBox(
               height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 15, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Add Company',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600,
-                          color: Colors.white)),
-                ],
+              child: TextField(
+                controller: searchCtrl,
+                onChanged: onSearchChanged,
+                style: const TextStyle(fontSize: 13, color: _T.ink),
+                decoration: InputDecoration(
+                  hintText: 'Search clients, contacts, industries…',
+                  hintStyle: const TextStyle(fontSize: 13, color: _T.slate400),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    size: 16,
+                    color: _T.slate400,
+                  ),
+                  filled: true,
+                  fillColor: _T.slate50,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
+                    borderSide: const BorderSide(color: _T.slate200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
+                    borderSide: const BorderSide(color: _T.slate200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
+                    borderSide: const BorderSide(color: _T.blue, width: 1.5),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ]),
+          const SizedBox(width: 10),
+
+          // ── Status filter tabs ─────────────────────────────────────────
+          // _FilterChip(
+          //   label: 'All',
+          //   isActive: filter == _FilterStatus.all,
+          //   onTap: () => onFilterChanged(_FilterStatus.all),
+          // ),
+          // const SizedBox(width: 4),
+          // _FilterChip(
+          //   label: 'Active',
+          //   count: activeCount,
+          //   dotColor: _T.green,
+          //   isActive: filter == _FilterStatus.active,
+          //   onTap: () => onFilterChanged(_FilterStatus.active),
+          // ),
+          // const SizedBox(width: 4),
+          // _FilterChip(
+          //   label: 'Pending',
+          //   count: pendingCount,
+          //   dotColor: _T.amber,
+          //   isActive: filter == _FilterStatus.pending,
+          //   onTap: () => onFilterChanged(_FilterStatus.pending),
+          // ),
+          // const SizedBox(width: 4),
+          // _FilterChip(
+          //   label: 'Inactive',
+          //   count: inactiveCount,
+          //   dotColor: _T.slate400,
+          //   isActive: filter == _FilterStatus.inactive,
+          //   onTap: () => onFilterChanged(_FilterStatus.inactive),
+          // ),
+          // const SizedBox(width: 10),
+
+          // ── View toggle ────────────────────────────────────────────────
+          Container(
+            height: 32,
+            decoration: BoxDecoration(
+              color: _T.slate100,
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+            child: Row(
+              children: [
+                _ViewToggleBtn(
+                  icon: Icons.table_rows_outlined,
+                  isActive: viewMode == TableViewMode.table,
+                  onTap: () => onViewModeChanged(TableViewMode.table),
+                ),
+                _ViewToggleBtn(
+                  icon: Icons.grid_view_rounded,
+                  isActive: viewMode == TableViewMode.grid,
+                  onTap: () => onViewModeChanged(TableViewMode.grid),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // ── Add client CTA ─────────────────────────────────────────────
+          Material(
+            color: _T.blue,
+            borderRadius: BorderRadius.circular(_T.r),
+            child: InkWell(
+              onTap: onAddClient,
+              borderRadius: BorderRadius.circular(_T.r),
+              hoverColor: _T.blueHover,
+              child: Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 15, color: Colors.white),
+                    SizedBox(width: 6),
+                    Text(
+                      'Add Company',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _ViewToggleBtn extends StatelessWidget {
   final IconData icon;
-  final bool     isActive;
+  final bool isActive;
   final VoidCallback onTap;
 
-  const _ViewToggleBtn({required this.icon, required this.isActive, required this.onTap});
+  const _ViewToggleBtn({
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2051,18 +2408,23 @@ class _ViewToggleBtn extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        width: 32, height: 32,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: isActive ? _T.white : Colors.transparent,
           borderRadius: BorderRadius.circular(_T.r - 1),
-          boxShadow: isActive
-              ? [BoxShadow(color: Colors.black.withOpacity(0.07),
-                  blurRadius: 4, offset: const Offset(0, 1))]
-              : null,
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                  : null,
         ),
-        child: Icon(icon,
-            size: 15,
-            color: isActive ? _T.ink : _T.slate400),
+        child: Icon(icon, size: 15, color: isActive ? _T.ink : _T.slate400),
       ),
     );
   }

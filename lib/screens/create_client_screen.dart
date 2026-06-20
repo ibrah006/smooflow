@@ -154,23 +154,22 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
                           _isLoading = true;
                         });
 
-                        final errorMessage = await CompanyRepo.createCompany(
-                          Company.create(
-                            name: _nameController.text,
-                            description: _descriptionController.text,
-                          ),
-                        );
+                        try {
+                          await CompanyRepo.createCompany(
+                            Company.create(
+                              name: _nameController.text,
+                              description: _descriptionController.text,
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(e.toString())));
+                        }
 
                         setState(() {
                           _isLoading = false;
                         });
-
-                        if (errorMessage != null) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(errorMessage)));
-                          return;
-                        }
 
                         Navigator.pop(context);
                       },
