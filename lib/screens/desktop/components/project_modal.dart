@@ -138,7 +138,7 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
       icon: Icons.folder_outlined,
       iconColor: _T.blue,
       title: 'New Project',
-      subtitle: 'Create a project to group design tasks',
+      subtitle: 'Create a project to group tasks',
       onClose: () => Navigator.pop(context),
       onSave: _saving ? null : _submit,
       saveLabel: _saving ? 'Creating…' : 'Create Project',
