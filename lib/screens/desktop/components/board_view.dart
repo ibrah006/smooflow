@@ -138,10 +138,39 @@ class _BoardViewState extends State<BoardView> {
   final Set<int> _expandedGroups = {};
   bool _hideEmpty = false;
 
+  // Controller to handle horizontal lane scrolling
+  late final ScrollController _horizontalController;
+
   @override
   void initState() {
     super.initState();
+    _horizontalController = ScrollController();
     _loadPrefs();
+  }
+
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(BoardView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Detect if a new task has been created/added to the list
+    if (widget.tasks.length > oldWidget.tasks.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_horizontalController.hasClients) {
+          // Bring the horizontal offset back to 0 so the first lanes are visible
+          _horizontalController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadPrefs() async {
@@ -255,6 +284,7 @@ class _BoardViewState extends State<BoardView> {
           child: Container(
             color: _T.slate50,
             child: ListView(
+              controller: _horizontalController,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               children:
@@ -827,7 +857,7 @@ class _StageChipState extends State<_StageChip> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KANBAN LANE — Option B redesign
+// KANBAN LANE
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
@@ -858,6 +888,67 @@ class _KanbanLane extends ConsumerStatefulWidget {
 }
 
 class _KanbanLaneState extends ConsumerState<_KanbanLane> {
+  // Controller to handle vertical scrolling inside this specific lane
+  late final ScrollController _verticalController;
+
+  @override
+  void initState() {
+    super.initState();
+    _verticalController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_KanbanLane oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Detect if a new task was added to this lane specifically
+    if (widget.tasks.length > oldWidget.tasks.length) {
+      // Isolate the newly added task item
+      final oldIds = oldWidget.tasks.map((t) => t.id).toSet();
+      final newCreatedTask = widget.tasks.firstWhere(
+        (t) => !oldIds.contains(t.id),
+        orElse: () => widget.tasks.last,
+      );
+      final index = widget.tasks.indexOf(newCreatedTask);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_verticalController.hasClients) {
+          if (index == 0) {
+            // Task was prepended at the top
+            _verticalController.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+            );
+          } else if (index == widget.tasks.length - 1) {
+            // Task was appended at the very bottom
+            _verticalController.animateTo(
+              _verticalController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+            );
+          } else {
+            // Task was added somewhere in the middle (estimate location based on relative index)
+            final targetOffset =
+                _verticalController.position.maxScrollExtent *
+                (index / (widget.tasks.length - 1));
+            _verticalController.animateTo(
+              targetOffset,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        }
+      });
+    }
+  }
+
   void onAddTask() {
     widget.addTaskFocusNode?.requestFocus();
     setState(() => widget.isAddingTask = true);
@@ -969,6 +1060,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
             // ── Task list ────────────────────────────────────────────────────
             Expanded(
               child: ListView(
+                controller: _verticalController,
                 padding: const EdgeInsets.all(10),
                 children: [
                   if (widget.tasks.isEmpty)
