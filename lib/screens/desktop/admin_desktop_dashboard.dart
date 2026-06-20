@@ -947,37 +947,35 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
 
                               if (widget.isCollapsed) {
                                 // Compact micro-dot indicator row mapping targets safely
-                                if (widget.isCollapsed) {
-                                  // Compact micro-dot indicator row mapping targets safely
-                                  return Tooltip(
-                                    message: p.name,
-                                    preferBelow: false,
-                                    verticalOffset: 0,
-                                    margin: const EdgeInsets.only(left: 48),
-                                    child: _SidebarNavItem(
-                                      icon: Icons.lens,
-                                      label: '',
-                                      isCollapsed: true,
-                                      isActive: isActive,
-                                      customIconColor: p.color,
-                                      onTap: () {
-                                        widget.onProjectSelected(p.id);
-                                        widget.onViewChanged(_AdminView.list);
-                                      },
-                                    ),
-                                  );
-                                }
+                                return Tooltip(
+                                  message: p.name,
+                                  preferBelow: false,
+                                  verticalOffset: 0,
+                                  margin: const EdgeInsets.only(left: 48),
+                                  child: _SidebarNavItem(
+                                    icon: Icons.lens,
+                                    label: '',
+                                    isCollapsed: true,
+                                    isActive: isActive,
+                                    customIconColor: p.color,
+                                    onTap: () {
+                                      widget.onProjectSelected(p.id);
+                                      widget.onViewChanged(_AdminView.list);
+                                    },
+                                  ),
+                                );
                               }
 
-                              return _SidebarProjectRow(
-                                name: p.name,
-                                color: p.color,
+                              // Enhanced hover-to-unpin wrapper for expanded state
+                              return _PinnedProjectHoverRow(
+                                project: p,
                                 count: cnt,
                                 isActive: isActive,
                                 onTap: () {
                                   widget.onProjectSelected(p.id);
                                   widget.onViewChanged(_AdminView.list);
                                 },
+                                onUnpin: widget.togglePinProject,
                               );
                             }).toList(),
                       ),
@@ -1066,6 +1064,87 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             ),
           ),
           const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Hover-Masking Unpin Wrapper Widget ───────────────────────────────────────
+class _PinnedProjectHoverRow extends StatefulWidget {
+  final Project project;
+  final int count;
+  final bool isActive;
+  final VoidCallback onTap;
+  final ValueChanged<String> onUnpin;
+
+  const _PinnedProjectHoverRow({
+    required this.project,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
+    required this.onUnpin,
+  });
+
+  @override
+  State<_PinnedProjectHoverRow> createState() => _PinnedProjectHoverRowState();
+}
+
+class _PinnedProjectHoverRowState extends State<_PinnedProjectHoverRow> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          // Underlying default sidebar project row
+          _SidebarProjectRow(
+            name: widget.project.name,
+            color: widget.project.color,
+            count: widget.count,
+            isActive: widget.isActive,
+            onTap: widget.onTap,
+          ),
+
+          // Floating unpin option overlaid precisely when hovered
+          if (_isHovered)
+            Positioned(
+              right: 12,
+              child: GestureDetector(
+                onTap: () => widget.onUnpin(widget.project.id),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    padding: const EdgeInsets.all(2.5),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          Icons.push_pin_rounded,
+                          size: 13,
+                          color: Colors.grey.shade300,
+                        ),
+                        Transform.rotate(
+                          angle: math.pi / 4,
+                          child: Container(
+                            width: 4,
+                            height: 17,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              border: Border.all(color: _T.ink, width: 1.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
