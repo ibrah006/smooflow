@@ -162,21 +162,12 @@ class _ProjectModalState extends ConsumerState<ProjectModal> {
                         fontSize: 13,
                       ),
                     )
-                    : ModalDropdown<Company?>(
-                      value: _client,
-                      items:
-                          _clients
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(
-                                    c.name,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                      onChanged: (v) => setState(() => _client = v),
+                    : ModalAutocomplete<Company>(
+                      initialValue: _client,
+                      options: _clients,
+                      hint: 'Select or type customer name...',
+                      displayStringForOption: (company) => company.name,
+                      onSelected: (v) => setState(() => _client = v),
                     ),
           ),
           const SizedBox(height: 16),
