@@ -303,17 +303,23 @@ class _BoardViewState extends State<BoardView> {
                                 .where((t) => t.status == si.stage)
                                 .toList();
                         final isFirst = kStages.indexOf(si) == 0;
-                        return _KanbanLane(
-                          stageInfo: si,
-                          tasks: stageTasks,
-                          projects: widget.projects,
-                          selectedTaskId: widget.selectedTaskId,
-                          onTaskSelected: widget.onTaskSelected,
-                          showAddTaskBtn: si.label == 'Initialized',
-                          addTaskFocusNode:
-                              isFirst ? widget.addTaskFocusNode : null,
-                          isAddingTask: isFirst ? widget.isAddingTask : null,
-                          selectedProjectId: widget.selectedProjectId,
+
+                        // Wrap inside Align to let the child wrap its content
+                        // height instead of stretching to full viewport height.
+                        return Align(
+                          alignment: Alignment.topCenter,
+                          child: _KanbanLane(
+                            stageInfo: si,
+                            tasks: stageTasks,
+                            projects: widget.projects,
+                            selectedTaskId: widget.selectedTaskId,
+                            onTaskSelected: widget.onTaskSelected,
+                            showAddTaskBtn: si.label == 'Initialized',
+                            addTaskFocusNode:
+                                isFirst ? widget.addTaskFocusNode : null,
+                            isAddingTask: isFirst ? widget.isAddingTask : null,
+                            selectedProjectId: widget.selectedProjectId,
+                          ),
                         );
                       })
                       .toList(),
@@ -984,6 +990,8 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(_T.rLg),
         child: Column(
+          mainAxisSize:
+              MainAxisSize.min, // shrink-wrap header + inner items list
           children: [
             // ── Lane header ──────────────────────────────────────────────────
             Container(
@@ -1058,8 +1066,11 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
             ),
 
             // ── Task list ────────────────────────────────────────────────────
-            Expanded(
+            Flexible(
+              // Changed from Expanded to Flexible to wrap content height dynamically
               child: ListView(
+                shrinkWrap:
+                    true, // Sizes ListView height strictly to item bounds
                 controller: _verticalController,
                 padding: const EdgeInsets.all(10),
                 children: [
