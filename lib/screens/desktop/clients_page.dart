@@ -807,7 +807,9 @@ class _ClientTableRowState extends State<_ClientTableRow> {
               Expanded(
                 flex: 3,
                 child: Text(
-                  c.contactName ?? "N/a",
+                  c.contactName != null && c.contactName!.trim().isNotEmpty
+                      ? c.contactName!.trim()
+                      : "N/a",
                   style: const TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
@@ -831,7 +833,9 @@ class _ClientTableRowState extends State<_ClientTableRow> {
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      c.industry ?? "Not provided",
+                      c.industry != null && c.industry!.trim().isNotEmpty
+                          ? c.industry!.trim()
+                          : "Not provided",
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -1521,6 +1525,10 @@ class _CreateClientSheetState extends ConsumerState<_CreateClientSheet>
 
   @override
   Widget build(BuildContext context) {
+    if (!_industries.contains(_selectedIndustry)) {
+      _selectedIndustry = null;
+    }
+
     return AnimatedBuilder(
       animation: _ac,
       builder: (_, child) => Opacity(opacity: _ac.value, child: child),
