@@ -1042,11 +1042,16 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       const SizedBox(height: 18),
+
                       DiscussionPreviewStrip(
                         unreadCount: widget.task.unreadCount,
                         onOpen: _onOpenDiscussion,
                         taskId: widget.task.id,
                       ),
+
+                      // Debug as of now
+                      if (kDebugMode) EmbeddedDiscussionArea(task: widget.task),
+
                       const SizedBox(height: 18),
                     ],
                   ),
