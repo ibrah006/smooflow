@@ -49,6 +49,7 @@ import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
@@ -122,6 +123,7 @@ enum _AdminView {
   accounts,
   settings,
   projects,
+  createTask,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,6 +455,11 @@ class _AdminDesktopDashboardScreenState
                         currentView: _view,
                         selectedProjectId: _selectedProjectId,
                         detailPanelProjectId: detailPanelProjectId,
+                        onCreateNewTask: () {
+                          setState(() {
+                            _view = _AdminView.createTask;
+                          });
+                        },
                       ),
                     ),
                     Expanded(
@@ -535,7 +542,13 @@ class _AdminDesktopDashboardScreenState
                                           },
                                           onTogglePinProject: _togglePinProject,
                                         )
-                                        : SettingsPage(),
+                                        : _view == _AdminView.settings
+                                        ? SettingsPage()
+                                        : DesignCreateTaskScreen(
+                                          initialProject:
+                                              _selectedProjectId ??
+                                              detailPanelProjectId,
+                                        ),
                               ),
                             ),
                           ),
@@ -1395,10 +1408,12 @@ class _AdminTopbar extends ConsumerStatefulWidget {
   final String? selectedProjectId;
   // The project's task that's open in the detail panel
   final String? detailPanelProjectId;
+  final Function() onCreateNewTask;
   const _AdminTopbar({
     required this.currentView,
     this.selectedProjectId,
     required this.detailPanelProjectId,
+    required this.onCreateNewTask,
   });
 
   @override
@@ -1419,6 +1434,7 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
     _AdminView.inventory => (category: 'Operations', label: 'Inventory'),
     _AdminView.overview => (category: '', label: ''),
     _AdminView.accounts => (category: 'Operations', label: 'Accounts'),
+    _AdminView.createTask => (category: 'Workspace', label: 'New Task'),
     _ => (category: 'Management', label: widget.currentView.name.capitalize()),
   };
 
@@ -1511,15 +1527,7 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
           _PrimaryButton(
             label: "New Task",
             icon: Icons.add_rounded,
-            onTap:
-                () => AppRoutes.navigateTo(
-                  context,
-                  AppRoutes.designCreateTaskScreen,
-                  arguments: CreateTaskArgs(
-                    preselectedProjectId:
-                        widget.selectedProjectId ?? widget.detailPanelProjectId,
-                  ),
-                ),
+            onTap: widget.onCreateNewTask,
           ),
           const SizedBox(width: 12),
           if (user != null)
