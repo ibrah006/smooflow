@@ -40,6 +40,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/message.dart';
+import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
@@ -1965,6 +1966,542 @@ class _SendButtonState extends State<_SendButton> {
                     Icons.send_rounded,
                     size: 15,
                     color: widget.enabled ? Colors.white : _T.slate300,
+                  ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMBEDDED DISCUSSION AREA
+// Inline corporate discussion feed restricted to 4 initial messages.
+// ─────────────────────────────────────────────────────────────────────────────
+class EmbeddedDiscussionArea extends ConsumerStatefulWidget {
+  final Task task;
+
+  const EmbeddedDiscussionArea({super.key, required this.task});
+
+  @override
+  ConsumerState<EmbeddedDiscussionArea> createState() =>
+      _EmbeddedDiscussionAreaState();
+}
+
+class _EmbeddedDiscussionAreaState
+    extends ConsumerState<EmbeddedDiscussionArea> {
+  final TextEditingController _compose = TextEditingController();
+
+  bool _sending = false;
+  bool _isLoadingOlder = false;
+  bool _isInitLoading = true;
+
+  int _displayLimit = 4; // Start with max 4 messages
+
+  @override
+  void initState() {
+    super.initState();
+    _initMessages();
+  }
+
+  @override
+  void didUpdateWidget(EmbeddedDiscussionArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.task.id != oldWidget.task.id) {
+      _displayLimit = 4;
+      _initMessages();
+    }
+  }
+
+  @override
+  void dispose() {
+    _compose.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initMessages() async {
+    setState(() => _isInitLoading = true);
+
+    // Notify the app we're viewing this task's messages
+    ref.read(messageNotifierProvider).activeTaskId = widget.task.id;
+    await ref
+        .read(taskNotifierProvider.notifier)
+        .updateMessageReadStatus(ref, widget.task.id);
+
+    // Fetch initial batch if not present
+    await ref
+        .read(messageNotifierProvider.notifier)
+        .getMessagesByTask(ref, widget.task);
+
+    if (mounted) setState(() => _isInitLoading = false);
+  }
+
+  Future<void> _loadOlderMessages() async {
+    final messages = ref.read(messagesByTaskProvider(widget.task.id));
+
+    // If we already have more local messages than currently displayed, just reveal them.
+    if (messages.length > _displayLimit) {
+      setState(() => _displayLimit += 10);
+      return;
+    }
+
+    // Otherwise, fetch from the server if there are actually older messages to fetch.
+    if (widget.task.firstMessageId != null && messages.isNotEmpty) {
+      final oldestLocal =
+          messages.last; // messages are descending (newest at 0)
+
+      if (oldestLocal.id > widget.task.firstMessageId!) {
+        setState(() => _isLoadingOlder = true);
+
+        await ref
+            .read(messageNotifierProvider.notifier)
+            .getMessagesBefore(
+              taskId: widget.task.id,
+              beforeMessageId: oldestLocal.id,
+              limit: 10,
+            );
+
+        if (mounted) {
+          setState(() {
+            _displayLimit += 10;
+            _isLoadingOlder = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _send() async {
+    final text = _compose.text.trim();
+    if (text.isEmpty || _sending) return;
+
+    setState(() => _sending = true);
+    final message = await ref
+        .read(messageNotifierProvider.notifier)
+        .createMessage(text: text, taskId: widget.task.id);
+
+    if (message != null) {
+      _compose.clear();
+      // Reset limit slightly if sending pushes us out of view, or keep it.
+      // Usually, when you send a message, it gets added to index 0, so it appears instantly.
+    }
+
+    if (mounted) setState(() => _sending = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allMessages = ref.watch(messagesByTaskProvider(widget.task.id));
+
+    // Ensure we only take up to the display limit.
+    // Provider list is newest-first. Reverse it so oldest is at top, newest at bottom.
+    final displayedMessages =
+        allMessages.take(_displayLimit).toList().reversed.toList();
+
+    // Determine if we can load older messages
+    final bool hasMoreLocal = allMessages.length > _displayLimit;
+    final bool hasMoreServer =
+        widget.task.firstMessageId != null &&
+        (allMessages.isEmpty ||
+            allMessages.last.id > widget.task.firstMessageId!);
+    final bool showLoadOlder = hasMoreLocal || hasMoreServer;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'DISCUSSION',
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: _T.slate50,
+              border: Border.all(color: _T.slate200),
+              borderRadius: BorderRadius.circular(_T.rLg),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(_T.rLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Message Area ──────────────────────────────────────────
+                  Container(
+                    color: _T.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child:
+                        _isInitLoading
+                            ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _T.slate300,
+                                ),
+                              ),
+                            )
+                            : displayedMessages.isEmpty
+                            ? _buildEmptyState()
+                            : Column(
+                              children: [
+                                if (showLoadOlder) _buildLoadOlderButton(),
+                                ...displayedMessages.asMap().entries.map((
+                                  entry,
+                                ) {
+                                  final i = entry.key;
+                                  final msg = entry.value;
+                                  // Grouping logic: check if the previous message (above it) has the same author
+                                  final grouped =
+                                      i > 0 &&
+                                      displayedMessages[i - 1].authorId ==
+                                          msg.authorId;
+
+                                  return _InlineMessageRow(
+                                    message: msg,
+                                    grouped: grouped,
+                                  );
+                                }),
+                              ],
+                            ),
+                  ),
+
+                  // ── Compose Area ──────────────────────────────────────────
+                  _EmbeddedComposeBar(
+                    compose: _compose,
+                    sending: _sending,
+                    onSend: _send,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadOlderButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Center(
+        child: MouseRegion(
+          cursor:
+              _isLoadingOlder
+                  ? SystemMouseCursors.basic
+                  : SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: _isLoadingOlder ? null : _loadOlderMessages,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: _T.slate50,
+                border: Border.all(color: _T.slate200),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child:
+                  _isLoadingOlder
+                      ? const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _T.slate400,
+                        ),
+                      )
+                      : const Text(
+                        'Load older messages',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _T.slate500,
+                        ),
+                      ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _T.slate50,
+              shape: BoxShape.circle,
+              border: Border.all(color: _T.slate200),
+            ),
+            child: const Icon(
+              Icons.forum_outlined,
+              size: 20,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'No messages yet',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _T.ink3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Start the discussion below.',
+            style: TextStyle(fontSize: 11.5, color: _T.slate400),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INLINE MESSAGE ROW
+// ─────────────────────────────────────────────────────────────────────────────
+class _InlineMessageRow extends StatelessWidget {
+  final Message message;
+  final bool grouped;
+
+  const _InlineMessageRow({required this.message, required this.grouped});
+
+  String _fmtTime(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMe = message.authorId == LoginService.currentUser?.id;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: grouped ? 4 : 14,
+        bottom: 2,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 28,
+            child:
+                grouped
+                    ? const SizedBox()
+                    : AvatarWidget(
+                      initials: message.authorInitials,
+                      color: message.authorColor ?? _T.ink3,
+                      size: 28,
+                    ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!grouped)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          isMe ? 'You' : message.authorName,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: _T.ink2,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _fmtTime(message.date),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: _T.slate400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  message.message,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _T.ink3,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMBEDDED COMPOSE BAR
+// Adapted to lock tightly to the bottom of the container.
+// ─────────────────────────────────────────────────────────────────────────────
+class _EmbeddedComposeBar extends StatefulWidget {
+  final TextEditingController compose;
+  final bool sending;
+  final VoidCallback onSend;
+
+  const _EmbeddedComposeBar({
+    required this.compose,
+    required this.sending,
+    required this.onSend,
+  });
+
+  @override
+  State<_EmbeddedComposeBar> createState() => _EmbeddedComposeBarState();
+}
+
+class _EmbeddedComposeBarState extends State<_EmbeddedComposeBar> {
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.compose.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    final hasText = widget.compose.text.trim().isNotEmpty;
+    if (hasText != _hasText) setState(() => _hasText = hasText);
+  }
+
+  @override
+  void dispose() {
+    widget.compose.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: _T.slate50,
+        border: Border(top: BorderSide(color: _T.slate200)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: _T.white,
+                borderRadius: BorderRadius.circular(_T.r),
+                border: Border.all(color: _T.slate200),
+              ),
+              child: TextField(
+                controller: widget.compose,
+                maxLines: 4,
+                minLines: 1,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _T.ink2,
+                  height: 1.45,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Write a message…',
+                  hintStyle: TextStyle(fontSize: 13, color: _T.slate300),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _EmbeddedSendButton(
+            enabled: _hasText && !widget.sending,
+            sending: widget.sending,
+            onTap: widget.onSend,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmbeddedSendButton extends StatefulWidget {
+  final bool enabled;
+  final bool sending;
+  final VoidCallback onTap;
+
+  const _EmbeddedSendButton({
+    required this.enabled,
+    required this.sending,
+    required this.onTap,
+  });
+
+  @override
+  State<_EmbeddedSendButton> createState() => _EmbeddedSendButtonState();
+}
+
+class _EmbeddedSendButtonState extends State<_EmbeddedSendButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg =
+        widget.enabled ? (_hovered ? _T.blueHover : _T.blue) : _T.slate200;
+
+    return MouseRegion(
+      cursor:
+          widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.enabled ? widget.onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(_T.r),
+          ),
+          child:
+              widget.sending
+                  ? const Center(
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                  : Icon(
+                    Icons.send_rounded,
+                    size: 15,
+                    color: widget.enabled ? Colors.white : _T.slate400,
                   ),
         ),
       ),
