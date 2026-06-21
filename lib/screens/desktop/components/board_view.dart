@@ -111,7 +111,7 @@ class BoardView extends StatefulWidget {
   final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
-  final ValueChanged<int> onTaskSelected;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
   final VoidCallback onAddTask;
   final FocusNode addTaskFocusNode;
   final bool isAddingTask;
@@ -870,7 +870,7 @@ class _KanbanLane extends ConsumerStatefulWidget {
   final List<Task> tasks;
   final List<Project> projects;
   final int? selectedTaskId;
-  final ValueChanged<int> onTaskSelected;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
   @Deprecated("Either fix the existing bug on this or remove it completely")
   final bool showAddTaskBtn;
   final FocusNode? addTaskFocusNode;
@@ -1090,7 +1090,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                           task: t,
                           project: proj,
                           isSelected: widget.selectedTaskId == t.id,
-                          onTap: () => widget.onTaskSelected(t.id),
+                          onTap: () => widget.onTaskSelected(t.id, t.projectId),
                           selectedProjectId: widget.selectedProjectId,
                         ),
                       );

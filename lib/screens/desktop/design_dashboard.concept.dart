@@ -165,7 +165,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
     }).toList();
   }
 
-  void _selectTask(int id) => setState(() => _selectedTaskId = id);
+  void _selectTask(int id, String detailPanelProjectId) =>
+      setState(() => _selectedTaskId = id);
   void _closeDetail() => setState(() => _selectedTaskId = null);
 
   /// Advance the selected task to the next stage via the Riverpod notifier.

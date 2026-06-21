@@ -143,6 +143,8 @@ class _AdminDesktopDashboardScreenState
   int? _selectedTaskId;
   String _searchQuery = '';
 
+  String? detailPanelProjectId;
+
   late final AnimationController _mountCtrl;
 
   final FocusNode _addTaskFocusNode = FocusNode();
@@ -151,12 +153,18 @@ class _AdminDesktopDashboardScreenState
 
   List<String> _pinnedProjectIds = [];
 
-  void _selectTask(int id) async {
+  void _selectTask(int taskId, String projectId) async {
     // if (id == _selectedTaskId) return; // already selected
-    setState(() => _selectedTaskId = id);
+    setState(() {
+      _selectedTaskId = taskId;
+      detailPanelProjectId = projectId;
+    });
   }
 
-  void _closeDetail() => setState(() => _selectedTaskId = null);
+  void _closeDetail() => setState(() {
+    _selectedTaskId = null;
+    detailPanelProjectId = null;
+  });
 
   Task? get _selectedTask =>
       _selectedTaskId == null
@@ -444,6 +452,7 @@ class _AdminDesktopDashboardScreenState
                       child: _AdminTopbar(
                         currentView: _view,
                         selectedProjectId: _selectedProjectId,
+                        detailPanelProjectId: detailPanelProjectId,
                       ),
                     ),
                     Expanded(
@@ -1384,7 +1393,13 @@ class _DottedBorderPainter extends CustomPainter {
 class _AdminTopbar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
-  const _AdminTopbar({required this.currentView, this.selectedProjectId});
+  // The project's task that's open in the detail panel
+  final String? detailPanelProjectId;
+  const _AdminTopbar({
+    required this.currentView,
+    this.selectedProjectId,
+    required this.detailPanelProjectId,
+  });
 
   @override
   ConsumerState<_AdminTopbar> createState() => _AdminTopbarState();
@@ -1501,7 +1516,8 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
                   context,
                   AppRoutes.designCreateTaskScreen,
                   arguments: CreateTaskArgs(
-                    preselectedProjectId: widget.selectedProjectId,
+                    preselectedProjectId:
+                        widget.selectedProjectId ?? widget.detailPanelProjectId,
                   ),
                 ),
           ),

@@ -297,7 +297,7 @@ class TaskListView extends ConsumerStatefulWidget {
   final List<Project> projects;
   final String? selectedProjectId;
   final int? selectedTaskId;
-  final ValueChanged<int> onTaskSelected;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
   final bool isDetailOpen;
   final VoidCallback? onAddTask;
   final FocusNode? addTaskFocusNode;
@@ -645,7 +645,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                               effectiveVisible: effective,
                               isDetailOpen: widget.isDetailOpen,
                               isSelected: widget.selectedTaskId == t.id,
-                              onTap: () => widget.onTaskSelected(t.id),
+                              onTap:
+                                  () =>
+                                      widget.onTaskSelected(t.id, t.projectId),
                             );
                           },
                         ),
