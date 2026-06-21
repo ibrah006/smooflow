@@ -10,7 +10,6 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/modal_components.dart';
 import 'package:smooflow/screens/desktop/components/modal_shell.dart';
-import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
