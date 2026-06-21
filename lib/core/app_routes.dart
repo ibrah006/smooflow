@@ -445,6 +445,7 @@ class AppRoutes {
         if (args is CreateTaskArgs) {
           screen = DesignCreateTaskScreen(
             initialProject: args.preselectedProjectId,
+            onClose: () {},
           );
         }
         break;

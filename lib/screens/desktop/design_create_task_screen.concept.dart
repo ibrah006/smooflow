@@ -109,7 +109,12 @@ _PriMeta priMeta(TaskPriority p) =>
 // ─────────────────────────────────────────────────────────────────────────────
 class DesignCreateTaskScreen extends ConsumerStatefulWidget {
   final String? initialProject;
-  const DesignCreateTaskScreen({super.key, this.initialProject});
+  final Function() onClose;
+  const DesignCreateTaskScreen({
+    super.key,
+    this.initialProject,
+    required this.onClose,
+  });
 
   @override
   ConsumerState<DesignCreateTaskScreen> createState() =>
@@ -213,8 +218,9 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
           icon: Icons.add_task_rounded,
           color: _T.green,
         );
-        Navigator.of(context).pop(true);
+        // Navigator.of(context).pop(true);
       }
+      widget.onClose();
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
@@ -237,7 +243,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
       backgroundColor: _T.slate50,
       body: Column(
         children: [
-          _Topbar(onBack: () => Navigator.of(context).pop()),
+          // _Topbar(onBack: () => Navigator.of(context).pop()),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,7 +377,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                   qty: _qtyCtrl.text.trim(),
                   saving: _saving,
                   canSave: _formOk || !_submitted,
-                  onCancel: () => Navigator.of(context).pop(),
+                  onCancel: widget.onClose,
                   onSave: _submit,
                   date: date,
                 ),
@@ -1432,7 +1438,7 @@ class _GhostButtonState extends State<_GhostButton> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: _hovered && !disabled ? _T.slate100 : Colors.transparent,
+            color: _hovered && !disabled ? _T.slate100 : Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(color: _T.slate200),
           ),

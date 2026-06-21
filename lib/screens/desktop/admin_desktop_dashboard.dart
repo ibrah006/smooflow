@@ -153,6 +153,8 @@ class _AdminDesktopDashboardScreenState
   bool _isAddingTask = false;
   bool _isInitLoading = true;
 
+  bool _showCreateTaskOverlay = false;
+
   List<String> _pinnedProjectIds = [];
 
   void _selectTask(int taskId, String projectId) async {
@@ -455,117 +457,147 @@ class _AdminDesktopDashboardScreenState
                         currentView: _view,
                         selectedProjectId: _selectedProjectId,
                         detailPanelProjectId: detailPanelProjectId,
+                        // ── UPDATE TRIGGER HERE ────────────────────────
                         onCreateNewTask: () {
                           setState(() {
-                            _view = _AdminView.createTask;
+                            _showCreateTaskOverlay = true;
                           });
                         },
+                        // ───────────────────────────────────────────────
                       ),
                     ),
                     Expanded(
-                      child: Row(
+                      // ── WRAP BODY IN A STACK TO RETAIN STATE ─────────
+                      child: Stack(
                         children: [
-                          Expanded(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 250),
-                              switchInCurve: Curves.easeInOutCubic,
-                              switchOutCurve: Curves.easeInOutCubic,
-                              transitionBuilder: (
-                                Widget child,
-                                Animation<double> animation,
-                              ) {
-                                // Combines a clean cross-fade with a tiny, professional forward slide
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(
-                                        0.01,
-                                        0.0,
-                                      ), // Subtle horizontal slide-in
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
+                          // Layer 0: The actual workspace views & details panel
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 250),
+                                  switchInCurve: Curves.easeInOutCubic,
+                                  switchOutCurve: Curves.easeInOutCubic,
+                                  transitionBuilder: (
+                                    Widget child,
+                                    Animation<double> animation,
+                                  ) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: Tween<Offset>(
+                                          begin: const Offset(0.01, 0.0),
+                                          end: Offset.zero,
+                                        ).animate(animation),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: KeyedSubtree(
+                                    key: ValueKey<_AdminView>(_view),
+                                    child:
+                                        _view == _AdminView.overview
+                                            ? (_isInitLoading
+                                                ? const OverviewSkeleton()
+                                                : HomeView())
+                                            : _view == _AdminView.inbox
+                                            ? InboxView()
+                                            : _view == _AdminView.list
+                                            ? TaskListView(
+                                              projects: _projects,
+                                              selectedProjectId:
+                                                  _selectedProjectId,
+                                              selectedTaskId: _selectedTaskId,
+                                              onTaskSelected: _selectTask,
+                                              isDetailOpen:
+                                                  _selectedTaskId != null,
+                                              onAddTask: _showTaskModal,
+                                              addTaskFocusNode:
+                                                  _addTaskFocusNode,
+                                              isAddingTask: _isAddingTask,
+                                            )
+                                            : _view == _AdminView.clients
+                                            ? ClientsPage()
+                                            : _view == _AdminView.team
+                                            ? ManageMembersPage()
+                                            : _view == _AdminView.printers
+                                            ? DesktopPrinterManagementScreen()
+                                            : _view == _AdminView.inventory
+                                            ? DesktopMaterialsManagementScreen(
+                                              onNavigateToReports: () {
+                                                setState(
+                                                  () =>
+                                                      _view =
+                                                          _AdminView.reports,
+                                                );
+                                                _closeDetail();
+                                              },
+                                            )
+                                            : _view == _AdminView.reports
+                                            ? DesktopReportsScreen()
+                                            : _view == _AdminView.accounts
+                                            ? AccountsManagementScreen()
+                                            : _view == _AdminView.projects
+                                            ? DesktopProjectsScreen(
+                                              initialProjects: _projects,
+                                              onProjectSelected: (id) {
+                                                setState(() {
+                                                  _selectedProjectId = id;
+                                                  _view = _AdminView.list;
+                                                });
+                                              },
+                                              onTogglePinProject:
+                                                  _togglePinProject,
+                                            )
+                                            : const SettingsPage(), // Replaced fallback case
                                   ),
-                                );
-                              },
-                              child: KeyedSubtree(
-                                key: ValueKey<_AdminView>(
-                                  _view,
-                                ), // Required so switcher knows when the view enum shifts
-                                child:
-                                    _view == _AdminView.overview
-                                        ? (_isInitLoading
-                                            ? const OverviewSkeleton()
-                                            : HomeView())
-                                        : _view == _AdminView.inbox
-                                        ? InboxView()
-                                        : _view == _AdminView.list
-                                        ? TaskListView(
-                                          projects: _projects,
-                                          selectedProjectId: _selectedProjectId,
-                                          selectedTaskId: _selectedTaskId,
-                                          onTaskSelected: _selectTask,
-                                          isDetailOpen: _selectedTaskId != null,
-                                          onAddTask: _showTaskModal,
-                                          addTaskFocusNode: _addTaskFocusNode,
-                                          isAddingTask: _isAddingTask,
-                                        )
-                                        : _view == _AdminView.clients
-                                        ? ClientsPage()
-                                        : _view == _AdminView.team
-                                        ? ManageMembersPage()
-                                        : _view == _AdminView.printers
-                                        ? DesktopPrinterManagementScreen()
-                                        : _view == _AdminView.inventory
-                                        ? DesktopMaterialsManagementScreen(
-                                          onNavigateToReports: () {
-                                            setState(() {
-                                              _view = _AdminView.reports;
-                                            });
-                                            _closeDetail();
-                                          },
-                                        )
-                                        : _view == _AdminView.reports
-                                        ? DesktopReportsScreen()
-                                        : _view == _AdminView.accounts
-                                        ? AccountsManagementScreen()
-                                        : _view == _AdminView.projects
-                                        ? DesktopProjectsScreen(
-                                          initialProjects: _projects,
-                                          onProjectSelected: (id) {
-                                            // Trigger state alterations sequentially
-                                            setState(() {
-                                              _selectedProjectId = id;
-                                              _view = _AdminView.list;
-                                            });
-                                          },
-                                          onTogglePinProject: _togglePinProject,
-                                        )
-                                        : _view == _AdminView.settings
-                                        ? SettingsPage()
-                                        : DesignCreateTaskScreen(
-                                          initialProject:
-                                              _selectedProjectId ??
-                                              detailPanelProjectId,
-                                        ),
+                                ),
                               ),
-                            ),
+
+                              // Detail panel
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeInOut,
+                                width: _selectedTaskId != null ? _T.detailW : 0,
+                                child:
+                                    _selectedTaskId != null
+                                        ? DetailPanel(
+                                          key: ValueKey(_selectedTaskId),
+                                          task: _selectedTask!,
+                                          onClose: _closeDetail,
+                                          onAdvance:
+                                              () =>
+                                                  _advanceTask(_selectedTask!),
+                                        )
+                                        : const SizedBox.shrink(),
+                              ),
+                            ],
                           ),
 
-                          // ── Detail panel ──────────────────────────
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
-                            width: _selectedTaskId != null ? _T.detailW : 0,
+                          // Layer 1: Elegant Overlay for Creating Tasks ───
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
                             child:
-                                _selectedTaskId != null
-                                    ? DetailPanel(
-                                      key: ValueKey(_selectedTaskId),
-                                      task: _selectedTask!,
-                                      onClose: _closeDetail,
-                                      onAdvance:
-                                          () => _advanceTask(_selectedTask!),
+                                _showCreateTaskOverlay
+                                    ? Container(
+                                      key: const ValueKey(
+                                        'create_task_overlay',
+                                      ),
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).scaffoldBackgroundColor, // Prevents underlying text bleed-through
+                                      child: DesignCreateTaskScreen(
+                                        initialProject:
+                                            _selectedProjectId ??
+                                            detailPanelProjectId,
+                                        onClose: () {
+                                          // ── HANDLE CANCEL BACK TO PREVIOUS STATE ──
+                                          setState(() {
+                                            _showCreateTaskOverlay = false;
+                                          });
+                                        },
+                                      ),
                                     )
                                     : const SizedBox.shrink(),
                           ),

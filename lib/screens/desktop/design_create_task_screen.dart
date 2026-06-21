@@ -13,7 +13,8 @@ class DesignCreateTaskScreen extends ConsumerStatefulWidget {
     String? notes,
     bool autoProgress,
     String? priority,
-  ) onCreateTask;
+  )
+  onCreateTask;
 
   const DesignCreateTaskScreen({
     Key? key,
@@ -22,7 +23,8 @@ class DesignCreateTaskScreen extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<DesignCreateTaskScreen> createState() => _DesignCreateTaskScreenState();
+  ConsumerState<DesignCreateTaskScreen> createState() =>
+      _DesignCreateTaskScreenState();
 }
 
 class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
@@ -47,9 +49,10 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
 
     Future.microtask(() {
       if (widget.preselectedProjectId != null) {
-        _selectedProjectId = ref.read(projectByIdProvider(widget.preselectedProjectId!))!.id;
+        _selectedProjectId =
+            ref.read(projectByIdProvider(widget.preselectedProjectId!))!.id;
         setState(() {});
-      }      
+      }
     });
 
     _animationController = AnimationController(
@@ -58,20 +61,14 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.03, 0),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
     _animationController.forward();
@@ -97,7 +94,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
         );
         return;
       }
-      
+
       final newTask = Task.create(
         name: _taskNameController.text.trim(),
         description: _notesController.text.trim(),
@@ -131,7 +128,9 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
 
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Task created")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Task created")));
     }
   }
 
@@ -155,15 +154,9 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            flex: 3,
-                            child: _buildMainForm(),
-                          ),
+                          Expanded(flex: 3, child: _buildMainForm()),
                           const SizedBox(width: 32),
-                          Expanded(
-                            flex: 2,
-                            child: _buildSidebar(),
-                          ),
+                          Expanded(flex: 2, child: _buildSidebar()),
                         ],
                       ),
                     ),
@@ -233,10 +226,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                 SizedBox(height: 2),
                 Text(
                   'Initialize a new task in the design phase',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF64748B),
-                  ),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                 ),
               ],
             ),
@@ -246,10 +236,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF64748B),
               side: const BorderSide(color: Color(0xFFE2E8F0)),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             ),
             child: const Text(
               'Cancel',
@@ -267,10 +254,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: colorPrimary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               elevation: 0,
             ),
           ),
@@ -280,7 +264,6 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
   }
 
   Widget _buildMainForm() {
-
     final projects = ref.watch(projectNotifierProvider);
 
     return Form(
@@ -321,10 +304,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: colorPrimary,
-                      width: 2,
-                    ),
+                    borderSide: const BorderSide(color: colorPrimary, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -375,56 +355,51 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: colorPrimary,
-                      width: 2,
-                    ),
+                    borderSide: const BorderSide(color: colorPrimary, width: 2),
                   ),
                 ),
                 hint: Text(
                   'Select a project for this task',
-                  style: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 ),
                 isExpanded: true,
-                items: projects.map((project) {
-                  return DropdownMenuItem<String>(
-                    value: project.id,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          project.name,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
-                          ),
+                items:
+                    projects.map((project) {
+                      return DropdownMenuItem<String>(
+                        value: project.id,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              project.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            // Row(
+                            //   children: [
+                            //     Icon(
+                            //       Icons.business_rounded,
+                            //       size: 12,
+                            //       color: Colors.grey.shade500,
+                            //     ),
+                            //     const SizedBox(width: 4),
+                            //     Text(
+                            //       project.client.name,
+                            //       style: TextStyle(
+                            //         fontSize: 11,
+                            //         color: Colors.grey.shade600,
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                          ],
                         ),
-                        // Row(
-                        //   children: [
-                        //     Icon(
-                        //       Icons.business_rounded,
-                        //       size: 12,
-                        //       color: Colors.grey.shade500,
-                        //     ),
-                        //     const SizedBox(width: 4),
-                        //     Text(
-                        //       project.client.name,
-                        //       style: TextStyle(
-                        //         fontSize: 11,
-                        //         color: Colors.grey.shade600,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedProjectId = value;
@@ -443,57 +418,63 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: _priorities.map((priority) {
-                  final isSelected = _selectedPriority == priority;
-                  final color = _getPriorityColor(priority);
+                children:
+                    _priorities.map((priority) {
+                      final isSelected = _selectedPriority == priority;
+                      final color = _getPriorityColor(priority);
 
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedPriority = isSelected ? null : priority;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? color.withOpacity(0.1)
-                            : const Color(0xFFF8FAFC),
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedPriority = isSelected ? null : priority;
+                          });
+                        },
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? color : const Color(0xFFE2E8F0),
-                          width: isSelected ? 2 : 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getPriorityIcon(priority),
-                            size: 18,
-                            color:
-                                isSelected ? color : const Color(0xFF64748B),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            priority,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? color
-                                  : const Color(0xFF64748B),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? color.withOpacity(0.1)
+                                    : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isSelected ? color : const Color(0xFFE2E8F0),
+                              width: isSelected ? 2 : 1.5,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getPriorityIcon(priority),
+                                size: 18,
+                                color:
+                                    isSelected
+                                        ? color
+                                        : const Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                priority,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      isSelected
+                                          ? color
+                                          : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 24),
               _buildSectionLabel('Notes', required: false),
@@ -521,10 +502,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: colorPrimary,
-                      width: 2,
-                    ),
+                    borderSide: const BorderSide(color: colorPrimary, width: 2),
                   ),
                   contentPadding: const EdgeInsets.all(16),
                 ),
@@ -577,14 +555,16 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _autoProgress
-                    ? const Color(0xFF10B981).withOpacity(0.05)
-                    : const Color(0xFFF8FAFC),
+                color:
+                    _autoProgress
+                        ? const Color(0xFF10B981).withOpacity(0.05)
+                        : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: _autoProgress
-                      ? const Color(0xFF10B981).withOpacity(0.3)
-                      : const Color(0xFFE2E8F0),
+                  color:
+                      _autoProgress
+                          ? const Color(0xFF10B981).withOpacity(0.3)
+                          : const Color(0xFFE2E8F0),
                   width: _autoProgress ? 2 : 1,
                 ),
               ),
@@ -593,17 +573,19 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _autoProgress
-                          ? const Color(0xFF10B981).withOpacity(0.15)
-                          : Colors.grey.shade200,
+                      color:
+                          _autoProgress
+                              ? const Color(0xFF10B981).withOpacity(0.15)
+                              : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.auto_awesome_rounded,
                       size: 20,
-                      color: _autoProgress
-                          ? const Color(0xFF10B981)
-                          : Colors.grey.shade500,
+                      color:
+                          _autoProgress
+                              ? const Color(0xFF10B981)
+                              : Colors.grey.shade500,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -761,10 +743,7 @@ class _DesignCreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen>
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF64748B),
-          ),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
         ),
         const Spacer(),
         Container(
