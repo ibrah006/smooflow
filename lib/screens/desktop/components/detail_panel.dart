@@ -1050,7 +1050,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       // Debug as of now
-                      if (kDebugMode) EmbeddedDiscussionArea(task: widget.task),
+                      if (kDebugMode) ...[
+                        const SizedBox(height: 18),
+                        EmbeddedDiscussionArea(task: widget.task),
+                      ],
 
                       const SizedBox(height: 18),
                     ],
