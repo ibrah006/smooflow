@@ -24,6 +24,24 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
+/// Tracks a single print specification row's inputs inside the form state
+class _PrintSpecInput {
+  final TextEditingController refCtrl;
+  final TextEditingController sizeCtrl;
+  final TextEditingController qtyCtrl;
+
+  _PrintSpecInput({String? ref, String? size, int? qty})
+    : refCtrl = TextEditingController(text: ref),
+      sizeCtrl = TextEditingController(text: size),
+      qtyCtrl = TextEditingController(text: qty != null ? '$qty' : '');
+
+  void dispose() {
+    refCtrl.dispose();
+    sizeCtrl.dispose();
+    qtyCtrl.dispose();
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS — unchanged
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,6 +146,8 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
   final _hCtrl = TextEditingController();
   final _qtyCtrl = TextEditingController();
 
+  final List<_PrintSpecInput> _printSpecs = [];
+
   Project? _project;
   TaskPriority? _priority = TaskPriority.normal;
   bool _submitted = false;
@@ -173,6 +193,22 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  // Helper methods to manage rows dynamically
+  void _addSpecRow() {
+    setState(() {
+      _printSpecs.add(_PrintSpecInput());
+    });
+  }
+
+  void _removeSpecRow(int index) {
+    if (_printSpecs.length > 1) {
+      setState(() {
+        _printSpecs[index].dispose();
+        _printSpecs.removeAt(index);
+      });
+    }
   }
 
   Future<void> _pickDate(DateTime? picked) async {
@@ -340,25 +376,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                             title: 'Print Specifications',
                             subtitle:
                                 'Optional — reference, dimensions and quantity',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _SmooField(
-                                  controller: _refCtrl,
-                                  label: 'Reference (Ref)',
-                                  hint: 'e.g. PO-2024-0491',
-                                  icon: Icons.tag_rounded,
-                                  required: false,
-                                ),
-                                const SizedBox(height: 16),
-                                _SizeRow(wCtrl: _wCtrl, hCtrl: _hCtrl),
-                                const SizedBox(height: 16),
-                                _QtyField(
-                                  controller: _qtyCtrl,
-                                  enabled: _hasSize,
-                                ),
-                              ],
-                            ),
+                            child: _buildPrintSpecsSection(),
                           ),
                         ],
                       ),
@@ -385,6 +403,233 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPrintSpecsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.layers_outlined, size: 16, color: _T.slate500),
+            SizedBox(width: 8),
+            Text(
+              'PRINT SPECIFICATIONS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+                color: _T.slate500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        // Column Header Labels (Gives a clean structured table appearance)
+        if (_printSpecs.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildSectionColumnHeader(
+                    Icons.tag_rounded,
+                    'Reference / Name',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: _buildSectionColumnHeader(
+                    Icons.aspect_ratio_rounded,
+                    'Dimensions / Size',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 130,
+                  child: _buildSectionColumnHeader(
+                    Icons.inventory_2_outlined,
+                    'Quantity',
+                  ),
+                ),
+                // Spacer equivalent to match the trailing delete action button layout spacing
+                const SizedBox(width: 40),
+              ],
+            ),
+          ),
+
+        // Dynamic List of Print Specification Item Rows
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _printSpecs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final spec = _printSpecs[index];
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Reference Input Field
+                Expanded(
+                  flex: 3,
+                  child: _buildFormInputField(
+                    controller: spec.refCtrl,
+                    hintText: 'e.g., Front Banner Matte',
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Size Input Field
+                Expanded(
+                  flex: 2,
+                  child: _buildFormInputField(
+                    controller: spec.sizeCtrl,
+                    hintText: 'e.g., 2400 × 1200 mm',
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Quantity Input Field with Trailing Unit Accent
+                SizedBox(
+                  width: 130,
+                  child: _buildFormInputField(
+                    controller: spec.qtyCtrl,
+                    hintText: '0',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    suffixWidget: const Padding(
+                      padding: EdgeInsets.only(right: 12),
+                      child: Text(
+                        'pcs',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _T.slate400,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Dynamic Row Removal Action Button
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child:
+                      _printSpecs.length > 1
+                          ? IconButton(
+                            onPressed: () => _removeSpecRow(index),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                            ),
+                            color: _T.slate400,
+                            hoverColor: Colors.red.shade50,
+                            focusColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                            tooltip: 'Remove item',
+                          )
+                          : const SizedBox.shrink(),
+                ),
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // Add Specification Action Button (Clean, structured dashed feel layout)
+        OutlinedButton.icon(
+          onPressed: _addSpecRow,
+          icon: const Icon(Icons.add_rounded, size: 15, color: _T.slate500),
+          label: const Text(
+            'Add row item',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _T.slate500,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: _T.slate200),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Helper to render unified metadata text headings above columns
+  Widget _buildSectionColumnHeader(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 12, color: _T.slate400),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: _T.slate400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Helper rendering explicit, production-ready form inputs matching system text fields
+  Widget _buildFormInputField({
+    required TextEditingController controller,
+    required String hintText,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    Widget? suffixWidget,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: _T.ink,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: _T.slate400,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 11,
+          ),
+          border: InputBorder.none,
+          isDense: true,
+          suffixIcon: suffixWidget,
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
+        ),
       ),
     );
   }
