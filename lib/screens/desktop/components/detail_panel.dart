@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -368,7 +369,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     showGeneralDialog(
       context: context,
-      barrierColor: Colors.white,
+      barrierColor: Colors.transparent,
       barrierDismissible: true,
       barrierLabel: 'stage-back',
       pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
@@ -2999,6 +3000,11 @@ class _DetailFooterState extends State<_DetailFooter> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3144,7 +3150,7 @@ class _StageBackMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       elevation: 0,
       child: Container(
         decoration: BoxDecoration(
