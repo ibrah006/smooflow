@@ -25,12 +25,9 @@ import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
-import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/priority_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
-import 'package:smooflow/screens/desktop/components/stage_pipeline.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
-import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
