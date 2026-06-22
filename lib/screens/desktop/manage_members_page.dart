@@ -68,6 +68,7 @@ class _T {
 // FILTER / SORT STATE
 // ─────────────────────────────────────────────────────────────────────────────
 enum _SortField { name, role, joined }
+
 enum _FilterRole { all, admin, manager, designer, delivery, viewer }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,7 +116,9 @@ class MembersView extends ConsumerStatefulWidget {
 class _MembersViewState extends ConsumerState<MembersView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ac = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 800));
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  );
 
   _SortField _sort = _SortField.name;
   bool _sortAsc = true;
@@ -139,7 +142,9 @@ class _MembersViewState extends ConsumerState<MembersView>
   }
 
   Animation<double> _stagger(double s, double e) => CurvedAnimation(
-      parent: _ac, curve: Interval(s, e, curve: Curves.easeOutCubic));
+    parent: _ac,
+    curve: Interval(s, e, curve: Curves.easeOutCubic),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -150,14 +155,14 @@ class _MembersViewState extends ConsumerState<MembersView>
     final members = _getFilteredMembers(memberState.members);
 
     // Listen for real-time changes
-    ref.listen<AsyncValue<MemberChangeEvent>>(
-      memberChangesStreamProvider,
-      (previous, next) {
-        next.whenData((event) {
-          _showChangeNotification(context, event);
-        });
-      },
-    );
+    ref.listen<AsyncValue<MemberChangeEvent>>(memberChangesStreamProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((event) {
+        _showChangeNotification(context, event);
+      });
+    });
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,8 +185,9 @@ class _MembersViewState extends ConsumerState<MembersView>
                   opacity: _stagger(0.0, 0.40),
                   child: SlideTransition(
                     position: Tween<Offset>(
-                            begin: const Offset(0, 0.04), end: Offset.zero)
-                        .animate(_stagger(0.0, 0.40)),
+                      begin: const Offset(0, 0.04),
+                      end: Offset.zero,
+                    ).animate(_stagger(0.0, 0.40)),
                     child: _buildKpiStrip(memberState.members),
                   ),
                 ),
@@ -192,8 +198,9 @@ class _MembersViewState extends ConsumerState<MembersView>
                   opacity: _stagger(0.12, 0.50),
                   child: SlideTransition(
                     position: Tween<Offset>(
-                            begin: const Offset(0, 0.04), end: Offset.zero)
-                        .animate(_stagger(0.12, 0.50)),
+                      begin: const Offset(0, 0.04),
+                      end: Offset.zero,
+                    ).animate(_stagger(0.12, 0.50)),
                     child: _buildToolbar(memberState.members),
                   ),
                 ),
@@ -221,51 +228,74 @@ class _MembersViewState extends ConsumerState<MembersView>
                     opacity: _stagger(0.22, 0.70),
                     child: SlideTransition(
                       position: Tween<Offset>(
-                              begin: const Offset(0, 0.04), end: Offset.zero)
-                          .animate(_stagger(0.22, 0.70)),
-                      child: _viewMode == TableViewMode.table
-                          ? _MemberTable(
-                              members: members,
-                              sort: _sort,
-                              sortAsc: _sortAsc,
-                              selected: selectedMember,
-                              onSort: (f) => setState(() {
-                                if (_sort == f) {
-                                  _sortAsc = !_sortAsc;
-                                } else {
-                                  _sort = f;
-                                  _sortAsc = true;
-                                }
-                              }),
-                              onSelect: (m) {
-                                if (selectedMember?.id == m.id) {
-                                  ref.read(selectedMemberProvider.notifier).state = null;
-                                  ref.read(memberListProvider.notifier)
-                                      .unsubscribeFromMember(m.id);
-                                } else {
-                                  ref.read(selectedMemberProvider.notifier).state = m;
-                                  ref.read(memberListProvider.notifier)
-                                      .subscribeToMember(m.id);
-                                }
-                              },
-                              onEdit: (m) => _showInviteMemberSheet(context, existing: m),
-                            )
-                          : _MemberGrid(
-                              members: members,
-                              selected: selectedMember,
-                              onSelect: (m) {
-                                if (selectedMember?.id == m.id) {
-                                  ref.read(selectedMemberProvider.notifier).state = null;
-                                  ref.read(memberListProvider.notifier)
-                                      .unsubscribeFromMember(m.id);
-                                } else {
-                                  ref.read(selectedMemberProvider.notifier).state = m;
-                                  ref.read(memberListProvider.notifier)
-                                      .subscribeToMember(m.id);
-                                }
-                              },
-                              onEdit: (m) => _showInviteMemberSheet(context, existing: m),
-                            ),
+                        begin: const Offset(0, 0.04),
+                        end: Offset.zero,
+                      ).animate(_stagger(0.22, 0.70)),
+                      child:
+                          _viewMode == TableViewMode.table
+                              ? _MemberTable(
+                                members: members,
+                                sort: _sort,
+                                sortAsc: _sortAsc,
+                                selected: selectedMember,
+                                onSort:
+                                    (f) => setState(() {
+                                      if (_sort == f) {
+                                        _sortAsc = !_sortAsc;
+                                      } else {
+                                        _sort = f;
+                                        _sortAsc = true;
+                                      }
+                                    }),
+                                onSelect: (m) {
+                                  if (selectedMember?.id == m.id) {
+                                    ref
+                                        .read(selectedMemberProvider.notifier)
+                                        .state = null;
+                                    ref
+                                        .read(memberListProvider.notifier)
+                                        .unsubscribeFromMember(m.id);
+                                  } else {
+                                    ref
+                                        .read(selectedMemberProvider.notifier)
+                                        .state = m;
+                                    ref
+                                        .read(memberListProvider.notifier)
+                                        .subscribeToMember(m.id);
+                                  }
+                                },
+                                onEdit:
+                                    (m) => _showInviteMemberSheet(
+                                      context,
+                                      existing: m,
+                                    ),
+                              )
+                              : _MemberGrid(
+                                members: members,
+                                selected: selectedMember,
+                                onSelect: (m) {
+                                  if (selectedMember?.id == m.id) {
+                                    ref
+                                        .read(selectedMemberProvider.notifier)
+                                        .state = null;
+                                    ref
+                                        .read(memberListProvider.notifier)
+                                        .unsubscribeFromMember(m.id);
+                                  } else {
+                                    ref
+                                        .read(selectedMemberProvider.notifier)
+                                        .state = m;
+                                    ref
+                                        .read(memberListProvider.notifier)
+                                        .subscribeToMember(m.id);
+                                  }
+                                },
+                                onEdit:
+                                    (m) => _showInviteMemberSheet(
+                                      context,
+                                      existing: m,
+                                    ),
+                              ),
                     ),
                   ),
               ],
@@ -278,39 +308,48 @@ class _MembersViewState extends ConsumerState<MembersView>
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
           width: selectedMember != null ? 320.0 : 0,
-          child: selectedMember != null
-              ? _MemberDetailPanel(
-                  member: selectedMember,
-                  onClose: () {
-                    ref.read(memberListProvider.notifier)
-                        .unsubscribeFromMember(selectedMember.id);
-                    ref.read(selectedMemberProvider.notifier).state = null;
-                  },
-                  onEdit: () => _showInviteMemberSheet(context, existing: selectedMember),
-                )
-              : const SizedBox.shrink(),
+          child:
+              selectedMember != null
+                  ? _MemberDetailPanel(
+                    member: selectedMember,
+                    onClose: () {
+                      ref
+                          .read(memberListProvider.notifier)
+                          .unsubscribeFromMember(selectedMember.id);
+                      ref.read(selectedMemberProvider.notifier).state = null;
+                    },
+                    onEdit:
+                        () => _showInviteMemberSheet(
+                          context,
+                          existing: selectedMember,
+                        ),
+                  )
+                  : const SizedBox.shrink(),
         ),
       ],
     );
   }
 
   List<Member> _getFilteredMembers(List<Member> allMembers) {
-    var list = allMembers.where((m) {
-      // Search filter
-      final matchSearch = _search.isEmpty ||
-          m.name.toLowerCase().contains(_search.toLowerCase()) ||
-          m.email.toLowerCase().contains(_search.toLowerCase());
+    var list =
+        allMembers.where((m) {
+          // Search filter
+          final matchSearch =
+              _search.isEmpty ||
+              m.name.toLowerCase().contains(_search.toLowerCase()) ||
+              m.email.toLowerCase().contains(_search.toLowerCase());
 
-      // Role filter
-      final matchRole = _filter == _FilterRole.all ||
-          (_filter == _FilterRole.admin && m.role == 'admin') ||
-          (_filter == _FilterRole.manager && m.role == 'manager') ||
-          (_filter == _FilterRole.designer && m.role == 'designer') ||
-          (_filter == _FilterRole.delivery && m.role == 'delivery') ||
-          (_filter == _FilterRole.viewer && m.role == 'viewer');
+          // Role filter
+          final matchRole =
+              _filter == _FilterRole.all ||
+              (_filter == _FilterRole.admin && m.role == 'admin') ||
+              (_filter == _FilterRole.manager && m.role == 'manager') ||
+              (_filter == _FilterRole.designer && m.role == 'designer') ||
+              (_filter == _FilterRole.delivery && m.role == 'delivery') ||
+              (_filter == _FilterRole.viewer && m.role == 'viewer');
 
-      return matchSearch && matchRole;
-    }).toList();
+          return matchSearch && matchRole;
+        }).toList();
 
     // Sort
     list.sort((a, b) {
@@ -341,36 +380,37 @@ class _MembersViewState extends ConsumerState<MembersView>
 
     return Row(
       children: [
-      KpiCard(
-        icon: Icons.people_outline,
-        iconColor: _T.blue,
-        iconBg: _T.blue50,
-        label: 'Total Members',
-        value: '${members.length}',
-        sub: 'In your organization',
-        subPositive: null,
-      ),
-      const SizedBox(width: 12),
-      KpiCard(
-        icon: Icons.admin_panel_settings_outlined,
-        iconColor: _T.purple,
-        iconBg: _T.purple50,
-        label: 'Admins',
-        value: '$adminCount',
-        sub: 'Full access',
-        subPositive: null,
-      ),
-      const SizedBox(width: 12),
-      KpiCard(
-        icon: Icons.work_outline,
-        iconColor: _T.green,
-        iconBg: _T.green50,
-        label: 'Staff',
-        value: '${managerCount + designerCount + deliveryCount}',
-        sub: 'Active contributors',
-        subPositive: true,
-      ),
-    ]);
+        KpiCard(
+          icon: Icons.people_outline,
+          iconColor: _T.blue,
+          iconBg: _T.blue50,
+          label: 'Total Members',
+          value: '${members.length}',
+          sub: 'In your organization',
+          subPositive: null,
+        ),
+        const SizedBox(width: 12),
+        KpiCard(
+          icon: Icons.admin_panel_settings_outlined,
+          iconColor: _T.purple,
+          iconBg: _T.purple50,
+          label: 'Admins',
+          value: '$adminCount',
+          sub: 'Full access',
+          subPositive: null,
+        ),
+        const SizedBox(width: 12),
+        KpiCard(
+          icon: Icons.work_outline,
+          iconColor: _T.green,
+          iconBg: _T.green50,
+          label: 'Staff',
+          value: '${managerCount + designerCount + deliveryCount}',
+          sub: 'Active contributors',
+          subPositive: true,
+        ),
+      ],
+    );
   }
 
   Widget _buildToolbar(List<Member> members) {
@@ -501,7 +541,11 @@ class _Toolbar extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Search members...',
                   hintStyle: const TextStyle(color: _T.slate400, fontSize: 13),
-                  prefixIcon: const Icon(Icons.search, size: 16, color: _T.slate400),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 16,
+                    color: _T.slate400,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 ),
@@ -566,11 +610,18 @@ class _Toolbar extends StatelessWidget {
               onTap: onInviteMember,
               borderRadius: BorderRadius.circular(_T.r),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                    const Icon(
+                      Icons.add_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 6),
                     const Text(
                       'Invite Member',
@@ -726,25 +777,28 @@ class _MemberTable extends StatelessWidget {
             ),
             child: Row(
               children: [
-                SizedBox(
-                  width: 48,
-                  child: _ColHeader(''),
-                ),
+                SizedBox(width: 48, child: _ColHeader('')),
                 Expanded(
                   flex: 3,
-                  child: _SortHeader('Name', _SortField.name, sort, sortAsc, onSort),
+                  child: _SortHeader(
+                    'Name',
+                    _SortField.name,
+                    sort,
+                    sortAsc,
+                    onSort,
+                  ),
                 ),
-                Expanded(
-                  flex: 3,
-                  child: _ColHeader('Email'),
-                ),
+                Expanded(flex: 3, child: _ColHeader('Email')),
+                Expanded(flex: 2, child: _ColHeader('Role')),
                 Expanded(
                   flex: 2,
-                  child: _ColHeader('Role'),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: _SortHeader('Joined', _SortField.joined, sort, sortAsc, onSort),
+                  child: _SortHeader(
+                    'Joined',
+                    _SortField.joined,
+                    sort,
+                    sortAsc,
+                    onSort,
+                  ),
                 ),
                 SizedBox(width: 80, child: _ColHeader('Actions')),
               ],
@@ -784,7 +838,15 @@ class _SortHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _T.slate400)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: _T.slate400,
+            ),
+          ),
           if (isActive)
             Icon(
               asc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
@@ -833,7 +895,12 @@ class _MemberTableRow extends StatefulWidget {
 class _MemberTableRowState extends State<_MemberTableRow> {
   bool _hovered = false;
 
-  bool canUpdateRole(Member m)=> LoginService.currentUser!.email != m.email && ['admin', 'manager'].contains(LoginService.currentUser!.role.toLowerCase());
+  bool canUpdateRole(Member m) =>
+      LoginService.currentUser!.email != m.email &&
+      [
+        'admin',
+        'manager',
+      ].contains(LoginService.currentUser!.role.toLowerCase());
 
   @override
   Widget build(BuildContext context) {
@@ -850,8 +917,15 @@ class _MemberTableRowState extends State<_MemberTableRow> {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: _hovered || widget.isSelected ? _T.blue.withOpacity(0.04) : Colors.transparent,
-            border: Border(bottom: BorderSide(color: widget.isLast ? Colors.transparent : _T.slate200)),
+            color:
+                _hovered || widget.isSelected
+                    ? _T.blue.withOpacity(0.04)
+                    : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: widget.isLast ? Colors.transparent : _T.slate200,
+              ),
+            ),
           ),
           child: Row(
             children: [
@@ -868,7 +942,7 @@ class _MemberTableRowState extends State<_MemberTableRow> {
                   ),
                   child: Center(
                     child: Text(
-                      m.initials.isNotEmpty ? m.initials[0] : '?',
+                      m.initials.isNotEmpty ? m.initials.toUpperCase()[0] : '?',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -882,8 +956,12 @@ class _MemberTableRowState extends State<_MemberTableRow> {
               Expanded(
                 flex: 3,
                 child: Text(
-                  m.name,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _T.ink),
+                  m.name.capitalize(),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _T.ink,
+                  ),
                 ),
               ),
               // Email
@@ -900,7 +978,10 @@ class _MemberTableRowState extends State<_MemberTableRow> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: roleBg,
                       borderRadius: BorderRadius.circular(_T.r),
@@ -928,17 +1009,20 @@ class _MemberTableRowState extends State<_MemberTableRow> {
               // Actions
               SizedBox(
                 width: 80,
-                child: _hovered
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!canUpdateRole(m)) SizedBox(width: 30)
-                          else _IconBtn(Icons.edit_outlined, widget.onEdit),
-                          // const SizedBox(width: 4),
-                          // _IconBtn(Icons.more_vert_rounded, () {}),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
+                child:
+                    _hovered
+                        ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!canUpdateRole(m))
+                              SizedBox(width: 30)
+                            else
+                              _IconBtn(Icons.edit_outlined, widget.onEdit),
+                            // const SizedBox(width: 4),
+                            // _IconBtn(Icons.more_vert_rounded, () {}),
+                          ],
+                        )
+                        : const SizedBox.shrink(),
               ),
             ],
           ),
@@ -1011,12 +1095,13 @@ class _MemberGrid extends StatelessWidget {
         childAspectRatio: 1.3,
       ),
       itemCount: members.length,
-      itemBuilder: (_, i) => _MemberGridCard(
-        member: members[i],
-        isSelected: selected?.id == members[i].id,
-        onTap: () => onSelect(members[i]),
-        onEdit: () => onEdit(members[i]),
-      ),
+      itemBuilder:
+          (_, i) => _MemberGridCard(
+            member: members[i],
+            isSelected: selected?.id == members[i].id,
+            onTap: () => onSelect(members[i]),
+            onEdit: () => onEdit(members[i]),
+          ),
     );
   }
 }
@@ -1061,15 +1146,16 @@ class _MemberGridCardState extends State<_MemberGridCard> {
               width: widget.isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(_T.rLg),
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                _hovered
+                    ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                    : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1084,7 +1170,10 @@ class _MemberGridCardState extends State<_MemberGridCard> {
                     decoration: BoxDecoration(
                       color: _T.amber.withOpacity(0.15),
                       shape: BoxShape.circle,
-                      border: Border.all(color: _T.amber.withOpacity(0.3), width: 1.5),
+                      border: Border.all(
+                        color: _T.amber.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -1098,8 +1187,7 @@ class _MemberGridCardState extends State<_MemberGridCard> {
                     ),
                   ),
                   const Spacer(),
-                  if (_hovered)
-                    _IconBtn(Icons.edit_outlined, widget.onEdit),
+                  if (_hovered) _IconBtn(Icons.edit_outlined, widget.onEdit),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1118,10 +1206,7 @@ class _MemberGridCardState extends State<_MemberGridCard> {
               // Email
               Text(
                 m.email,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: _T.slate500,
-                ),
+                style: const TextStyle(fontSize: 11, color: _T.slate500),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1131,7 +1216,10 @@ class _MemberGridCardState extends State<_MemberGridCard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: roleBg,
                       borderRadius: BorderRadius.circular(_T.r),
@@ -1148,10 +1236,7 @@ class _MemberGridCardState extends State<_MemberGridCard> {
                   ),
                   Text(
                     _fmtDate(m.createdAt),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: _T.slate400,
-                    ),
+                    style: const TextStyle(fontSize: 9, color: _T.slate400),
                   ),
                 ],
               ),
@@ -1204,7 +1289,7 @@ class _MemberDetailPanel extends StatelessWidget {
   final Member member;
   final VoidCallback onClose;
   final VoidCallback onEdit;
-  final VoidCallback? onRemove;       // null → hide Remove (e.g. current user)
+  final VoidCallback? onRemove; // null → hide Remove (e.g. current user)
   final VoidCallback? onResendInvite; // optional extra action
 
   const _MemberDetailPanel({
@@ -1215,7 +1300,12 @@ class _MemberDetailPanel extends StatelessWidget {
     this.onResendInvite,
   });
 
-  bool canUpdateRole(Member m)=> LoginService.currentUser!.email != m.email && ['admin', 'manager'].contains(LoginService.currentUser!.role.toLowerCase());
+  bool canUpdateRole(Member m) =>
+      LoginService.currentUser!.email != m.email &&
+      [
+        'admin',
+        'manager',
+      ].contains(LoginService.currentUser!.role.toLowerCase());
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -1304,11 +1394,7 @@ class _MemberDetailPanel extends StatelessWidget {
                     color: _T.ink,
                   ),
                 ),
-                _IconBtn(
-                  Icons.close_rounded,
-                  onClose,
-                  tooltip: 'Close panel',
-                ),
+                _IconBtn(Icons.close_rounded, onClose, tooltip: 'Close panel'),
               ],
             ),
           ),
@@ -1341,12 +1427,15 @@ class _MemberDetailPanel extends StatelessWidget {
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: _T.blue50,
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                      color: _T.blue.withOpacity(0.3)),
+                                    color: _T.blue.withOpacity(0.3),
+                                  ),
                                 ),
                                 child: const Text(
                                   'YOU',
@@ -1371,36 +1460,30 @@ class _MemberDetailPanel extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // ── Contact ────────────────────────────────────────────────
-                  _DetailSection(
-                    'Contact',
-                    [
-                      _DetailRow(
-                        Icons.email_outlined,
-                        m.email,
-                        label: 'Email address',
-                        copyable: true,
-                      ),
-                    ],
-                  ),
+                  _DetailSection('Contact', [
+                    _DetailRow(
+                      Icons.email_outlined,
+                      m.email,
+                      label: 'Email address',
+                      copyable: true,
+                    ),
+                  ]),
 
                   const SizedBox(height: 12),
 
                   // ── Organization ───────────────────────────────────────────
-                  _DetailSection(
-                    'Organization',
-                    [
-                      _DetailRow(
-                        Icons.business_outlined,
-                        m.role.capitalize(),
-                        label: 'Department',
-                      ),
-                      _DetailRow(
-                        Icons.calendar_today_outlined,
-                        _fmtDateLong(m.createdAt),
-                        label: 'Joined',
-                      ),
-                    ],
-                  ),
+                  _DetailSection('Organization', [
+                    _DetailRow(
+                      Icons.business_outlined,
+                      m.role.capitalize(),
+                      label: 'Department',
+                    ),
+                    _DetailRow(
+                      Icons.calendar_today_outlined,
+                      _fmtDateLong(m.createdAt),
+                      label: 'Joined',
+                    ),
+                  ]),
 
                   const SizedBox(height: 12),
 
@@ -1579,23 +1662,19 @@ class _DetailRow extends StatelessWidget {
           ),
           // Copy button
           if (copyable)
-            _IconBtn(
-              Icons.copy_rounded,
-              () {
-                Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Copied: $value'),
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(_T.r),
-                    ),
+            _IconBtn(Icons.copy_rounded, () {
+              Clipboard.setData(ClipboardData(text: value));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Copied: $value'),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
                   ),
-                );
-              },
-              tooltip: 'Copy',
-            ),
+                ),
+              );
+            }, tooltip: 'Copy'),
         ],
       ),
     );
@@ -1620,11 +1699,7 @@ class _DetailSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionLabel(title),
-          ...rows,
-          const SizedBox(height: 4),
-        ],
+        children: [_SectionLabel(title), ...rows, const SizedBox(height: 4)],
       ),
     );
   }
@@ -1637,23 +1712,35 @@ class _RoleBadge extends StatelessWidget {
 
   static Color _color(String r) {
     switch (r.toLowerCase()) {
-      case 'admin':    return _T.purple;
-      case 'manager':  return _T.blue;
-      case 'designer': return _T.green;
-      case 'delivery': return _T.amber;
-      case 'accounts': return _T.ink2;
-      default:         return _T.slate400;
+      case 'admin':
+        return _T.purple;
+      case 'manager':
+        return _T.blue;
+      case 'designer':
+        return _T.green;
+      case 'delivery':
+        return _T.amber;
+      case 'accounts':
+        return _T.ink2;
+      default:
+        return _T.slate400;
     }
   }
 
   static Color _bg(String r) {
     switch (r.toLowerCase()) {
-      case 'admin':    return _T.purple50;
-      case 'manager':  return _T.blue50;
-      case 'designer': return _T.green50;
-      case 'delivery': return _T.amber50;
-      case 'accounts': return _T.ink3.withOpacity(0.1);
-      default:         return _T.slate100;
+      case 'admin':
+        return _T.purple50;
+      case 'manager':
+        return _T.blue50;
+      case 'designer':
+        return _T.green50;
+      case 'delivery':
+        return _T.amber50;
+      case 'accounts':
+        return _T.ink3.withOpacity(0.1);
+      default:
+        return _T.slate100;
     }
   }
 
@@ -1715,16 +1802,16 @@ class _PrimaryButton extends StatelessWidget {
     required this.label,
     required this.color,
     required this.onTap,
-    this.disabled = false
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: disabled? color.withOpacity(0.5) : color,
+      color: disabled ? color.withOpacity(0.5) : color,
       borderRadius: BorderRadius.circular(_T.r),
       child: InkWell(
-        onTap: disabled? null : onTap,
+        onTap: disabled ? null : onTap,
         borderRadius: BorderRadius.circular(_T.r),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 11),
@@ -1801,62 +1888,80 @@ class _OutlineButton extends StatelessWidget {
 // ROLE METADATA  (identical to invite_member_screen.dart)
 // ─────────────────────────────────────────────────────────────────────────────
 class _Role {
-  final String   value;
-  final String   label;
-  final String   description;
-  final Color    color;
-  final Color    bg;
+  final String value;
+  final String label;
+  final String description;
+  final Color color;
+  final Color bg;
   final IconData icon;
   const _Role({
-    required this.value,    required this.label,
+    required this.value,
+    required this.label,
     required this.description,
-    required this.color,    required this.bg,
+    required this.color,
+    required this.bg,
     required this.icon,
   });
 }
 
 final _kRoles = [
   _Role(
-    value: 'admin',       label: 'Admin',
+    value: 'admin',
+    label: 'Admin',
     description: 'Full access',
-    color: _T.blue,       bg: _T.blue50,
+    color: _T.blue,
+    bg: _T.blue50,
     icon: Icons.shield_outlined,
   ),
   _Role(
-    value: 'design',      label: 'Design',
+    value: 'design',
+    label: 'Design',
     description: 'Design department',
-    color: _T.purple,     bg: _T.purple50,
+    color: _T.purple,
+    bg: _T.purple50,
     icon: Icons.palette_outlined,
   ),
   _Role(
-    value: 'production',  label: 'Production',
+    value: 'production',
+    label: 'Production',
     description: 'Print & production',
-    color: _T.amber,      bg: _T.amber50,
+    color: _T.amber,
+    bg: _T.amber50,
     icon: Icons.print_outlined,
   ),
   _Role(
-    value: 'accounts',  label: 'Accounts',
+    value: 'accounts',
+    label: 'Accounts',
     description: 'Accounts department',
-    color: _T.ink2,      bg: _T.ink2.withOpacity(0.1),
+    color: _T.ink2,
+    bg: _T.ink2.withOpacity(0.1),
     icon: Icons.account_tree_sharp,
   ),
   _Role(
-    value: 'delivery',    label: 'Delivery',
+    value: 'delivery',
+    label: 'Delivery',
     description: 'Handle deliveries',
-    color: _T.green,      bg: _T.green50,
+    color: _T.green,
+    bg: _T.green50,
     icon: Icons.local_shipping_outlined,
   ),
   _Role(
-    value: 'viewer',      label: 'Viewer',
+    value: 'viewer',
+    label: 'Viewer',
     description: 'Read-only',
-    color: _T.slate500,   bg: _T.slate100,
+    color: _T.slate500,
+    bg: _T.slate100,
     icon: Icons.visibility_outlined,
   ),
 ];
 
 _Role? _roleByValue(String? v) =>
-    v == null ? null : _kRoles.cast<_Role?>()
-        .firstWhere((r) => r?.value == v, orElse: () => null);
+    v == null
+        ? null
+        : _kRoles.cast<_Role?>().firstWhere(
+          (r) => r?.value == v,
+          orElse: () => null,
+        );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INVITE MEMBER BOTTOM SHEET
@@ -1866,17 +1971,15 @@ class _InviteMemberSheet extends ConsumerStatefulWidget {
   const _InviteMemberSheet({this.existing});
 
   @override
-  ConsumerState<_InviteMemberSheet> createState() =>
-      _InviteMemberSheetState();
+  ConsumerState<_InviteMemberSheet> createState() => _InviteMemberSheetState();
 }
 
-class _InviteMemberSheetState
-    extends ConsumerState<_InviteMemberSheet> {
+class _InviteMemberSheetState extends ConsumerState<_InviteMemberSheet> {
   // ── Form state ─────────────────────────────────────────────────────────────
-  final _emailCtrl  = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _emailFocus = FocusNode();
   String? _selectedRole;
-  bool    _busy     = false;
+  bool _busy = false;
 
   bool get _isEdit => widget.existing != null;
 
@@ -1916,8 +2019,8 @@ class _InviteMemberSheetState
       return;
     }
 
-    final orgFuture = ref.read(
-        organizationNotifierProvider.notifier).getCurrentOrganization;
+    final orgFuture =
+        ref.read(organizationNotifierProvider.notifier).getCurrentOrganization;
     final org = await orgFuture;
 
     // Private domain mismatch
@@ -1976,7 +2079,10 @@ class _InviteMemberSheetState
           .updateMemberRole(widget.existing!.id, _selectedRole!);
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop();
-      _snack('Role updated to ${_roleByValue(_selectedRole)?.label ?? _selectedRole}.', isError: false);
+      _snack(
+        'Role updated to ${_roleByValue(_selectedRole)?.label ?? _selectedRole}.',
+        isError: false,
+      );
     } catch (e) {
       _snack(e.toString(), isError: true);
     } finally {
@@ -1986,28 +2092,42 @@ class _InviteMemberSheetState
 
   void _snack(String msg, {required bool isError}) {
     // Show on the root scaffold, not the sheet (sheet may already be popping)
-    final messenger = ScaffoldMessenger.maybeOf(
-        Navigator.of(context, rootNavigator: true).context)
-        ?? ScaffoldMessenger.of(context);
-    messenger.showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(
-          isError
-              ? Icons.error_outline_rounded
-              : Icons.check_circle_outline_rounded,
-          size: 15, color: Colors.white,
+    final messenger =
+        ScaffoldMessenger.maybeOf(
+          Navigator.of(context, rootNavigator: true).context,
+        ) ??
+        ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 15,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(msg,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500))),
-      ]),
-      backgroundColor: _T.ink,
-      behavior:        SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_T.r)),
-      duration: const Duration(seconds: 4),
-    ));
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   // ── BUILD ──────────────────────────────────────────────────────────────────
@@ -2017,159 +2137,192 @@ class _InviteMemberSheetState
 
     return Container(
       decoration: const BoxDecoration(
-        color:        _T.white,
+        color: _T.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(_T.rXl)),
       ),
       // Handle + sheet content
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-
-        // ── Drag handle ────────────────────────────────────────────────
-        Center(child: Container(
-          margin: const EdgeInsets.only(top: 12, bottom: 4),
-          width: 36, height: 4,
-          decoration: BoxDecoration(
-              color: _T.slate200,
-              borderRadius: BorderRadius.circular(2)),
-        )),
-
-        // ── Topbar row ─────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 12, 0),
-          child: Row(children: [
-            // Icon badge
-            Container(
-              width: 32, height: 32,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Drag handle ────────────────────────────────────────────────
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                color:        _isEdit ? _T.purple50 : _T.blue50,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(
-                    color: (_isEdit ? _T.purple : _T.blue).withOpacity(0.2)),
-              ),
-              child: Icon(
-                _isEdit
-                    ? Icons.manage_accounts_outlined
-                    : Icons.person_add_outlined,
-                size: 15,
-                color: _isEdit ? _T.purple : _T.blue,
+                color: _T.slate200,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isEdit ? 'Edit Role' : 'Invite Member',
-                  style: const TextStyle(fontSize: 15,
-                      fontWeight: FontWeight.w700, color: _T.ink,
-                      letterSpacing: -0.2),
-                ),
-                Text(
-                  _isEdit
-                      ? 'Change the role for ${widget.existing!.name}'
-                      : 'Send a role-specific invitation',
-                  style: const TextStyle(fontSize: 10.5,
-                      color: _T.slate400, fontWeight: FontWeight.w500),
-                ),
-              ],
-            )),
-            // Close button
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(_T.r),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: const Icon(Icons.close_rounded,
-                      size: 18, color: _T.slate400),
-                ),
-              ),
-            ),
-          ]),
-        ),
-
-        // ── Divider ────────────────────────────────────────────────────
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Divider(height: 1, color: _T.slate100),
-        ),
-
-        // ── Body (scrollable for small screens) ────────────────────────
-        Flexible(child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-              20, 0, 20,
-              MediaQuery.of(context).viewInsets.bottom + 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-
-              // ── Edit mode: member identity card ───────────────────────
-              if (_isEdit) ...[
-                _MemberIdentityCard(member: widget.existing!),
-                const SizedBox(height: 20),
-              ],
-
-              // ── Invite mode: email field ──────────────────────────────
-              if (!_isEdit) ...[
-                const _FieldLabel('Email address'),
-                const SizedBox(height: 7),
-                _SheetTextField(
-                  controller:   _emailCtrl,
-                  focusNode:    _emailFocus,
-                  hintText:     'colleague@domain.com',
-                  prefixIcon:   Icons.alternate_email_rounded,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 20),
-              ],
-
-              // ── Role picker (both modes) ───────────────────────────────
-              const _FieldLabel('Role'),
-              const SizedBox(height: 10),
-              _RolePickerGrid(
-                selected:   _selectedRole,
-                onSelected: (r) => setState(() => _selectedRole = r),
-              ),
-              const SizedBox(height: 24),
-
-              // ── CTA ───────────────────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : (_isEdit ? _saveRole : _sendInvite),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _isEdit
-                        ? (role?.color ?? _T.purple)
-                        : _T.blue,
-                    disabledBackgroundColor: _T.slate100,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.rLg)),
-                  ),
-                  icon: _busy
-                      ? const SizedBox(width: 16, height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: Colors.white))
-                      : Icon(
-                          _isEdit
-                              ? Icons.check_rounded
-                              : Icons.send_rounded,
-                          size: 16),
-                  label: Text(
-                    _busy
-                        ? (_isEdit ? 'Saving…' : 'Sending…')
-                        : (_isEdit ? 'Save Role' : 'Send Invitation'),
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
           ),
-        )),
-      ]),
+
+          // ── Topbar row ─────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 12, 0),
+            child: Row(
+              children: [
+                // Icon badge
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _isEdit ? _T.purple50 : _T.blue50,
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(
+                      color: (_isEdit ? _T.purple : _T.blue).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Icon(
+                    _isEdit
+                        ? Icons.manage_accounts_outlined
+                        : Icons.person_add_outlined,
+                    size: 15,
+                    color: _isEdit ? _T.purple : _T.blue,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isEdit ? 'Edit Role' : 'Invite Member',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      Text(
+                        _isEdit
+                            ? 'Change the role for ${widget.existing!.name}'
+                            : 'Send a role-specific invitation',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: _T.slate400,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Close button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(_T.r),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: _T.slate400,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Divider ────────────────────────────────────────────────────
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Divider(height: 1, color: _T.slate100),
+          ),
+
+          // ── Body (scrollable for small screens) ────────────────────────
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                0,
+                20,
+                MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Edit mode: member identity card ───────────────────────
+                  if (_isEdit) ...[
+                    _MemberIdentityCard(member: widget.existing!),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Invite mode: email field ──────────────────────────────
+                  if (!_isEdit) ...[
+                    const _FieldLabel('Email address'),
+                    const SizedBox(height: 7),
+                    _SheetTextField(
+                      controller: _emailCtrl,
+                      focusNode: _emailFocus,
+                      hintText: 'colleague@domain.com',
+                      prefixIcon: Icons.alternate_email_rounded,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Role picker (both modes) ───────────────────────────────
+                  const _FieldLabel('Role'),
+                  const SizedBox(height: 10),
+                  _RolePickerGrid(
+                    selected: _selectedRole,
+                    onSelected: (r) => setState(() => _selectedRole = r),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── CTA ───────────────────────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed:
+                          _busy ? null : (_isEdit ? _saveRole : _sendInvite),
+                      style: FilledButton.styleFrom(
+                        backgroundColor:
+                            _isEdit ? (role?.color ?? _T.purple) : _T.blue,
+                        disabledBackgroundColor: _T.slate100,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(_T.rLg),
+                        ),
+                      ),
+                      icon:
+                          _busy
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Icon(
+                                _isEdit
+                                    ? Icons.check_rounded
+                                    : Icons.send_rounded,
+                                size: 16,
+                              ),
+                      label: Text(
+                        _busy
+                            ? (_isEdit ? 'Saving…' : 'Sending…')
+                            : (_isEdit ? 'Save Role' : 'Send Invitation'),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2188,61 +2341,88 @@ class _MemberIdentityCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:        _T.slate50,
+        color: _T.slate50,
         borderRadius: BorderRadius.circular(_T.rLg),
-        border:       Border.all(color: _T.slate200),
+        border: Border.all(color: _T.slate200),
       ),
-      child: Row(children: [
-        // Avatar circle
-        Container(
-          width: 42, height: 42,
-          decoration: BoxDecoration(
-            color:  role?.bg ?? _T.blue50,
-            shape:  BoxShape.circle,
-            border: Border.all(
-                color: (role?.color ?? _T.blue).withOpacity(0.25)),
-          ),
-          child: Center(child: Text(
-            member.initials,
-            style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w800,
-              color: role?.color ?? _T.blue,
-            ),
-          )),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(member.name,
-                style: const TextStyle(fontSize: 13.5,
-                    fontWeight: FontWeight.w700, color: _T.ink)),
-            const SizedBox(height: 2),
-            Text(member.email,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11.5, color: _T.slate400,
-                    fontWeight: FontWeight.w500)),
-          ],
-        )),
-        const SizedBox(width: 10),
-        // Current role pill
-        if (role != null)
+      child: Row(
+        children: [
+          // Avatar circle
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color:        role.bg,
-              borderRadius: BorderRadius.circular(99),
-              border:       Border.all(color: role.color.withOpacity(0.3)),
+              color: role?.bg ?? _T.blue50,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: (role?.color ?? _T.blue).withOpacity(0.25),
+              ),
             ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(role.icon, size: 11, color: role.color),
-              const SizedBox(width: 4),
-              Text(role.label,
-                  style: TextStyle(fontSize: 10.5,
-                      fontWeight: FontWeight.w700, color: role.color)),
-            ]),
+            child: Center(
+              child: Text(
+                member.initials,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: role?.color ?? _T.blue,
+                ),
+              ),
+            ),
           ),
-      ]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.name,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  member.email,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: _T.slate400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Current role pill
+          if (role != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: role.bg,
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: role.color.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(role.icon, size: 11, color: role.color),
+                  const SizedBox(width: 4),
+                  Text(
+                    role.label,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: role.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -2254,35 +2434,43 @@ class _MemberIdentityCard extends StatelessWidget {
 // Each card: icon badge · label · description · animated selection state.
 // ─────────────────────────────────────────────────────────────────────────────
 class _RolePickerGrid extends StatelessWidget {
-  final String?               selected;
+  final String? selected;
   final ValueChanged<String?> onSelected;
   const _RolePickerGrid({required this.selected, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
     return GridView.count(
-      crossAxisCount:   2,
+      crossAxisCount: 2,
       crossAxisSpacing: 10,
-      mainAxisSpacing:  10,
+      mainAxisSpacing: 10,
       childAspectRatio: 3.2,
-      shrinkWrap:       true,
+      shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      children: _kRoles.map((role) {
-        final active = selected == role.value;
-        return _RoleCard(role: role, active: active,
-            onTap: () => onSelected(active ? null : role.value));
-      }).toList(),
+      children:
+          _kRoles.map((role) {
+            final active = selected == role.value;
+            return _RoleCard(
+              role: role,
+              active: active,
+              onTap: () => onSelected(active ? null : role.value),
+            );
+          }).toList(),
     );
   }
 }
 
 class _RoleCard extends StatefulWidget {
-  final _Role        role;
-  final bool         active;
+  final _Role role;
+  final bool active;
   final VoidCallback onTap;
-  const _RoleCard({required this.role, required this.active,
-      required this.onTap});
-  @override State<_RoleCard> createState() => _RoleCardState();
+  const _RoleCard({
+    required this.role,
+    required this.active,
+    required this.onTap,
+  });
+  @override
+  State<_RoleCard> createState() => _RoleCardState();
 }
 
 class _RoleCardState extends State<_RoleCard> {
@@ -2294,73 +2482,92 @@ class _RoleCardState extends State<_RoleCard> {
     final a = widget.active;
 
     return MouseRegion(
-      cursor:  SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
           decoration: BoxDecoration(
-            color: a
-                ? r.bg
-                : _hovered
+            color:
+                a
+                    ? r.bg
+                    : _hovered
                     ? _T.slate50
                     : _T.white,
             borderRadius: BorderRadius.circular(_T.rLg),
             border: Border.all(
-              color: a
-                  ? r.color.withOpacity(0.55)
-                  : _hovered
+              color:
+                  a
+                      ? r.color.withOpacity(0.55)
+                      : _hovered
                       ? _T.slate300
                       : _T.slate200,
               width: a ? 1.5 : 1,
             ),
-            boxShadow: a
-                ? [BoxShadow(
-                    color:      r.color.withOpacity(0.10),
-                    blurRadius: 10,
-                    offset:     const Offset(0, 3))]
-                : null,
+            boxShadow:
+                a
+                    ? [
+                      BoxShadow(
+                        color: r.color.withOpacity(0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                    : null,
           ),
-          child: Row(children: [
-            // Icon badge
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color:        a ? r.color.withOpacity(0.15) : _T.slate100,
-                borderRadius: BorderRadius.circular(7),
+          child: Row(
+            children: [
+              // Icon badge
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: a ? r.color.withOpacity(0.15) : _T.slate100,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(r.icon, size: 13, color: a ? r.color : _T.slate400),
               ),
-              child: Icon(r.icon, size: 13,
-                  color: a ? r.color : _T.slate400),
-            ),
-            const SizedBox(width: 10),
-            // Labels
-            Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment:  MainAxisAlignment.center,
-              children: [
-                Text(r.label, style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: a ? FontWeight.w700 : FontWeight.w600,
-                  color: a ? r.color : _T.ink3,
-                )),
-                Text(r.description, style: TextStyle(
-                  fontSize: 10.5,
-                  color: a ? r.color.withOpacity(0.65) : _T.slate400,
-                  fontWeight: FontWeight.w400,
-                )),
-              ],
-            )),
-            // Check mark
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 140),
-              opacity: a ? 1.0 : 0.0,
-              child: Icon(Icons.check_circle_rounded,
-                  size: 15, color: r.color),
-            ),
-          ]),
+              const SizedBox(width: 10),
+              // Labels
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      r.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: a ? FontWeight.w700 : FontWeight.w600,
+                        color: a ? r.color : _T.ink3,
+                      ),
+                    ),
+                    Text(
+                      r.description,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: a ? r.color.withOpacity(0.65) : _T.slate400,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Check mark
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 140),
+                opacity: a ? 1.0 : 0.0,
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 15,
+                  color: r.color,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2372,10 +2579,10 @@ class _RoleCardState extends State<_RoleCard> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SheetTextField extends StatefulWidget {
   final TextEditingController controller;
-  final FocusNode?            focusNode;
-  final String                hintText;
-  final IconData              prefixIcon;
-  final TextInputType?        keyboardType;
+  final FocusNode? focusNode;
+  final String hintText;
+  final IconData prefixIcon;
+  final TextInputType? keyboardType;
   const _SheetTextField({
     required this.controller,
     required this.hintText,
@@ -2383,7 +2590,8 @@ class _SheetTextField extends StatefulWidget {
     this.focusNode,
     this.keyboardType,
   });
-  @override State<_SheetTextField> createState() => _SheetTextFieldState();
+  @override
+  State<_SheetTextField> createState() => _SheetTextFieldState();
 }
 
 class _SheetTextFieldState extends State<_SheetTextField> {
@@ -2394,6 +2602,7 @@ class _SheetTextFieldState extends State<_SheetTextField> {
     super.initState();
     widget.focusNode?.addListener(_onFocus);
   }
+
   void _onFocus() =>
       setState(() => _focused = widget.focusNode?.hasFocus ?? false);
 
@@ -2407,27 +2616,35 @@ class _SheetTextFieldState extends State<_SheetTextField> {
   Widget build(BuildContext context) => AnimatedContainer(
     duration: const Duration(milliseconds: 150),
     decoration: BoxDecoration(
-      color:        _focused ? _T.white : _T.slate50,
+      color: _focused ? _T.white : _T.slate50,
       borderRadius: BorderRadius.circular(_T.r),
-      border:       Border.all(
+      border: Border.all(
         color: _focused ? _T.blue : _T.slate200,
         width: _focused ? 1.5 : 1,
       ),
     ),
     child: TextField(
-      controller:   widget.controller,
-      focusNode:    widget.focusNode,
+      controller: widget.controller,
+      focusNode: widget.focusNode,
       keyboardType: widget.keyboardType,
       style: const TextStyle(
-          fontSize: 13.5, color: _T.ink, fontWeight: FontWeight.w500),
+        fontSize: 13.5,
+        color: _T.ink,
+        fontWeight: FontWeight.w500,
+      ),
       decoration: InputDecoration(
-        hintText:  widget.hintText,
+        hintText: widget.hintText,
         hintStyle: const TextStyle(
-            fontSize: 13.5, color: _T.slate300, fontWeight: FontWeight.w400),
+          fontSize: 13.5,
+          color: _T.slate300,
+          fontWeight: FontWeight.w400,
+        ),
         prefixIcon: Icon(widget.prefixIcon, size: 16, color: _T.slate400),
-        border:           InputBorder.none,
-        contentPadding:   const EdgeInsets.symmetric(
-            vertical: 12, horizontal: 14),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 14,
+        ),
       ),
     ),
   );
@@ -2440,10 +2657,15 @@ class _FieldLabel extends StatelessWidget {
   final String text;
   const _FieldLabel(this.text);
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w700,
-          color: _T.slate500, letterSpacing: 0.2));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      color: _T.slate500,
+      letterSpacing: 0.2,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2461,7 +2683,11 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'No members found',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _T.ink3),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _T.ink3,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -2478,11 +2704,37 @@ class _EmptyState extends StatelessWidget {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 String _fmtDate(DateTime d) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
 String _fmtDateLong(DateTime d) {
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
