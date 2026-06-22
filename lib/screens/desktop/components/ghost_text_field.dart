@@ -86,6 +86,8 @@ class _GhostTextFieldState extends State<GhostTextField> {
   bool _hovered = false;
   bool _focused = false;
 
+  String _lastSubmittedText = '';
+
   @override
   void initState() {
     super.initState();
@@ -163,6 +165,13 @@ class _GhostTextFieldState extends State<GhostTextField> {
     return fs;
   }
 
+  void _submit(String value) {
+    if (value != _lastSubmittedText) {
+      _lastSubmittedText = value;
+      widget.onSubmitted.call(value);
+    }
+  }
+
   // ── Build ───────────────────────────────────────────────────────────────────
 
   @override
@@ -171,36 +180,43 @@ class _GhostTextFieldState extends State<GhostTextField> {
     final vPad = (fontSize * 0.35).clamp(4.0, 10.0);
     final hPad = widget.hPadding ?? 6;
 
-    final field = TextField(
-      controller: _controller,
-      focusNode: _focus,
-      minLines: 1,
-      maxLines: _maxLines,
-      keyboardType: _keyboardType,
-      textInputAction: _inputAction,
-      inputFormatters: _formatters,
-      onSubmitted: widget.onSubmitted,
-      onTapUpOutside: (_) => widget.onSubmitted(_controller.text),
-      onChanged: (v) {
-        // Rebuild on every keystroke so IntrinsicWidth re-measures
-        if (widget.mode == GhostFieldMode.inline) setState(() {});
-        widget.onChanged?.call(v);
+    final field = Focus(
+      onFocusChange: (hasFocus) {
+        if (!hasFocus) {
+          _submit(_controller.text); // Fire on click-away
+        }
       },
-      onEditingComplete: widget.onEditingComplete,
-      style: widget.style,
-      cursorColor: _T.blue,
-      cursorWidth: 1.5,
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        hintStyle: widget.style.copyWith(color: _T.slate300),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: hPad,
-          vertical: vPad,
-        ).copyWith(right: 5),
+      child: TextField(
+        controller: _controller,
+        focusNode: _focus,
+        minLines: 1,
+        maxLines: _maxLines,
+        keyboardType: _keyboardType,
+        textInputAction: _inputAction,
+        inputFormatters: _formatters,
+        onSubmitted: _submit,
+        onTapUpOutside: (_) => widget.onSubmitted(_controller.text),
+        onChanged: (v) {
+          // Rebuild on every keystroke so IntrinsicWidth re-measures
+          if (widget.mode == GhostFieldMode.inline) setState(() {});
+          widget.onChanged?.call(v);
+        },
+        onEditingComplete: widget.onEditingComplete,
+        style: widget.style,
+        cursorColor: _T.blue,
+        cursorWidth: 1.5,
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: widget.style.copyWith(color: _T.slate300),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: hPad,
+            vertical: vPad,
+          ).copyWith(right: 5),
+        ),
       ),
     );
 

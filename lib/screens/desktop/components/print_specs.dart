@@ -621,9 +621,6 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                       widget.item.width = double.tryParse(v) ?? 0;
                       widget.onUpdate();
                     },
-                    onEditingComplete: () {
-                      print("on width editing complete");
-                    },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
                       fontSize: 13,
