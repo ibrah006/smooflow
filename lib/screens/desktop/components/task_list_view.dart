@@ -991,7 +991,7 @@ class _ColRow extends StatelessWidget {
       );
 
       // Spacer for the resize handle width — keeps cells aligned with header
-      if (col.id != _kBillingCol.id) {
+      if (col.id != _kBillingCol.id && !isDetailOpen) {
         result.add(const SizedBox(width: _kResizeHandleWidth));
       }
     }
