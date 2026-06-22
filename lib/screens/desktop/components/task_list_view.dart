@@ -1234,9 +1234,7 @@ class _ToggleTabState extends State<_ToggleTab> {
   @override
   Widget build(BuildContext context) {
     final Color bg =
-        widget.isActive
-            ? _T.slate100
-            : (_hovered ? _T.slate100 : Colors.transparent);
+        widget.isActive ? _T.slate100 : (_hovered ? _T.slate100 : Colors.white);
     final Color iconColor =
         widget.isActive ? _T.blue : (_hovered ? _T.slate500 : _T.slate400);
     final Color textColor =

@@ -911,11 +911,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         taskId: widget.task.id,
                       ),
 
-                      if (kDebugMode) ...[
-                        const SizedBox(height: 18),
-                        EmbeddedDiscussionArea(task: widget.task),
-                      ],
-
+                      // if (kDebugMode) ...[
+                      //   const SizedBox(height: 18),
+                      //   EmbeddedDiscussionArea(task: widget.task),
+                      // ],
                       const SizedBox(height: 18),
                     ],
                   ),
