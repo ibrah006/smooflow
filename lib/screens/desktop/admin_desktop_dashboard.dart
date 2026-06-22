@@ -430,6 +430,7 @@ class _AdminDesktopDashboardScreenState
                 onViewChanged: (v) {
                   setState(() {
                     _view = v;
+                    _showCreateTaskOverlay = false;
                   });
                   _closeDetail();
                 },
