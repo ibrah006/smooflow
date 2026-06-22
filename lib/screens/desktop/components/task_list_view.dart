@@ -254,9 +254,14 @@ class _ColumnWidthNotifier extends ChangeNotifier {
 
   Map<String, double> snapshot() => Map.from(_widths);
 
-  void resize(String id, double delta) {
+  void resize(String id, double delta, {double? maxAllowedWidth}) {
     final w = (_widths[id] ?? 0) + delta;
-    _widths[id] = w.clamp(_kMinColWidth, _kMaxColWidth);
+    // Ensure the upper limit is bound by both the screen edge and the global maximum constraint
+    final maxW = maxAllowedWidth ?? _kMaxColWidth;
+    _widths[id] = w.clamp(
+      _kMinColWidth,
+      maxW.clamp(_kMinColWidth, _kMaxColWidth),
+    );
     notifyListeners();
   }
 
@@ -326,16 +331,14 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   bool get _singleProject => widget.selectedProjectId != null;
 
-  static const _kDetailCols = {'date', 'task'};
+  // static const _kDetailCols = {'date', 'task'};
 
   int? lastNotifiedTaskId;
   DateTime? lastNotificationTime;
 
   Set<String> get _effectiveVisible {
-    final base =
-        widget.isDetailOpen
-            ? _kDetailCols
-            : {..._kMandatoryIds, ..._visibleOptional};
+    // Always use the full set of mandatory and chosen optional columns
+    final base = {..._kMandatoryIds, ..._visibleOptional};
     return _singleProject ? base.difference({'project'}) : base;
   }
 
@@ -464,22 +467,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   }
 
   void _applyDetailMode() {
-    if (widget.isDetailOpen) {
-      // Hide everything except date + task
-      for (final c in _kCols) {
-        if (!_kDetailCols.contains(c.id)) {
-          _widthNotifier.setVisible(c.id, false);
-        }
-      }
-      _widthNotifier.setVisible(_kBillingCol.id, false);
-    } else {
-      // Restore
-      final effective = _effectiveVisible;
-      for (final c in _kCols) {
-        _widthNotifier.setVisible(c.id, effective.contains(c.id));
-      }
-      _widthNotifier.setVisible(_kBillingCol.id, true);
+    // Always maintain standard visibility and keep the billing column visible
+    final effective = _effectiveVisible;
+    for (final c in _kCols) {
+      _widthNotifier.setVisible(c.id, effective.contains(c.id));
     }
+    _widthNotifier.setVisible(_kBillingCol.id, true);
   }
 
   void _loadTasks() {
@@ -576,81 +569,146 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                 onReset: _resetToDefaults,
               ),
 
-              // ── Column header row with resize handles ───────────────────
-              Container(
-                color: _T.white,
-                child: Column(
-                  children: [
-                    _HeaderRow(
-                      effectiveVisible: effective,
-                      onResizeEnd: _saveWidths,
-                      isDetailOpen: widget.isDetailOpen,
-                    ),
-                    const Divider(height: 1, thickness: 1, color: _T.slate200),
-                  ],
-                ),
-              ),
-
-              // ── Data rows ──────────────────────────────────────────────
+              // ── HORIZONTAL SCROLL CONTEXT FOR HEADERS & ROWS ──
               Expanded(
-                child:
-                    isLoading && tasks.isEmpty
-                        ? const Center(child: CircularProgressIndicator())
-                        : error != null
-                        ? _ErrorState(
-                          error: error,
-                          onRetry: () {
-                            ref
-                                .read(taskNotifierProvider.notifier)
-                                .clearError();
-                            _loadTasks();
-                          },
-                        )
-                        : tasks.isEmpty
-                        ? _EmptyState()
-                        : ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: _kRowHPad,
-                            vertical: 8,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AnimatedBuilder(
+                      animation: _widthNotifier,
+                      builder: (context, _) {
+                        // 1. Calculate the exact content width matching all columns + spacers
+                        double tableWidth = 0;
+                        for (final col in _kCols) {
+                          if (effective.contains(col.id)) {
+                            tableWidth += _widthNotifier.widthOf(col.id);
+                            tableWidth += _kResizeHandleWidth;
+                          }
+                        }
+                        tableWidth += _widthNotifier.widthOf(_kBillingCol.id);
+                        tableWidth +=
+                            2 * _kRowHPad; // Include list's horizontal padding
+
+                        // 2. Ensure layout expands to at least the available viewport width
+                        final scrollableWidth =
+                            tableWidth > constraints.maxWidth
+                                ? tableWidth
+                                : constraints.maxWidth;
+
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: scrollableWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // ── Column header row with resize handles ───────────
+                                Container(
+                                  color: _T.white,
+                                  child: Column(
+                                    children: [
+                                      _HeaderRow(
+                                        effectiveVisible: effective,
+                                        onResizeEnd: _saveWidths,
+                                        isDetailOpen: widget.isDetailOpen,
+                                        constraintsMaxWidth:
+                                            constraints
+                                                .maxWidth, // Pass the bounding constraint width here
+                                      ),
+                                      const Divider(
+                                        height: 1,
+                                        thickness: 1,
+                                        color: _T.slate200,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // ── Data rows ──────────────────────────────────────
+                                Expanded(
+                                  child:
+                                      isLoading && tasks.isEmpty
+                                          ? const Center(
+                                            child: CircularProgressIndicator(),
+                                          )
+                                          : error != null
+                                          ? _ErrorState(
+                                            error: error,
+                                            onRetry: () {
+                                              ref
+                                                  .read(
+                                                    taskNotifierProvider
+                                                        .notifier,
+                                                  )
+                                                  .clearError();
+                                              _loadTasks();
+                                            },
+                                          )
+                                          : tasks.isEmpty
+                                          ? _EmptyState()
+                                          : ListView.separated(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: _kRowHPad,
+                                              vertical: 8,
+                                            ),
+                                            itemCount: reversedTasks.length,
+                                            separatorBuilder:
+                                                (_, __) => const Divider(
+                                                  height: 1,
+                                                  thickness: 1,
+                                                  color: _T.slate100,
+                                                ),
+                                            itemBuilder: (_, i) {
+                                              final t = reversedTasks[i];
+                                              final p =
+                                                  widget.projects
+                                                      .cast<Project?>()
+                                                      .firstWhere(
+                                                        (pr) =>
+                                                            pr!.id ==
+                                                            t.projectId
+                                                                .toString(),
+                                                        orElse: () => null,
+                                                      ) ??
+                                                  widget.projects.firstOrNull;
+
+                                              Member? m;
+                                              try {
+                                                m = members.firstWhere(
+                                                  (mem) => t.assignees.contains(
+                                                    mem.id,
+                                                  ),
+                                                );
+                                              } catch (_) {
+                                                m = null;
+                                              }
+
+                                              return _TaskRow(
+                                                taskId: t.id,
+                                                project: p,
+                                                assignee: m,
+                                                effectiveVisible: effective,
+                                                isDetailOpen:
+                                                    widget.isDetailOpen,
+                                                isSelected:
+                                                    widget.selectedTaskId ==
+                                                    t.id,
+                                                onTap:
+                                                    () => widget.onTaskSelected(
+                                                      t.id,
+                                                      t.projectId,
+                                                    ),
+                                              );
+                                            },
+                                          ),
+                                ),
+                              ],
+                            ),
                           ),
-                          itemCount: reversedTasks.length,
-                          separatorBuilder:
-                              (_, __) => const Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: _T.slate100,
-                              ),
-                          itemBuilder: (_, i) {
-                            final t = reversedTasks[i];
-                            final p =
-                                widget.projects.cast<Project?>().firstWhere(
-                                  (pr) => pr!.id == t.projectId.toString(),
-                                  orElse: () => null,
-                                ) ??
-                                widget.projects.firstOrNull;
-
-                            Member? m;
-                            try {
-                              m = members.firstWhere(
-                                (mem) => t.assignees.contains(mem.id),
-                              );
-                            } catch (_) {
-                              m = null;
-                            }
-
-                            return _TaskRow(
-                              taskId: t.id,
-                              project: p,
-                              assignee: m,
-                              effectiveVisible: effective,
-                              isDetailOpen: widget.isDetailOpen,
-                              isSelected: widget.selectedTaskId == t.id,
-                              onTap:
-                                  () =>
-                                      widget.onTaskSelected(t.id, t.projectId),
-                            );
-                          },
-                        ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ],
@@ -711,18 +769,19 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 class _HeaderRow extends StatelessWidget {
   final Set<String> effectiveVisible;
   final VoidCallback? onResizeEnd;
-  final isDetailOpen;
+  final bool isDetailOpen;
+  final double constraintsMaxWidth; // Add this line
 
   const _HeaderRow({
     required this.effectiveVisible,
     this.onResizeEnd,
     required this.isDetailOpen,
+    required this.constraintsMaxWidth, // Add this line
   });
 
   @override
   Widget build(BuildContext context) {
     final notifier = _WidthScope.of(context);
-    // Build ordered list of all columns (scrollable + pinned billing)
     final allCols = [..._kCols, _kBillingCol];
 
     return Padding(
@@ -744,9 +803,21 @@ class _HeaderRow extends StatelessWidget {
     final result = <Widget>[];
     final visibleCols =
         allCols.where((c) {
-          if (c.id == 'billing') return true; // always visible in header
+          if (c.id == 'billing') return true;
           return effectiveVisible.contains(c.id);
         }).toList();
+
+    // Start with the initial padding offset
+    double accumulatedLeft = _kRowHPad;
+
+    for (int i = 0; i < visibleCols.length; i++) {
+      final col = visibleCols[i];
+      final w = notifier.widthOf(col.id);
+
+      accumulatedLeft += w;
+
+      // Max width equals total screen space minus everything up to this column
+    }
 
     for (int i = 0; i < visibleCols.length; i++) {
       final col = visibleCols[i];
@@ -772,15 +843,22 @@ class _HeaderRow extends StatelessWidget {
         ),
       );
 
-      // Add resize handle between columns (not after the last one)
+      // accumulatedLeft += w;
+
+      // // Max width equals total screen space minus everything up to this column
+      // final maxAllowedWidth = constraintsMaxWidth - accumulatedLeft;
+      final maxAllowedWidth = constraintsMaxWidth - accumulatedLeft;
+
       if (!isDetailOpen && i < visibleCols.length - 1) {
         result.add(
           _ResizeHandle(
             colId: col.id,
             notifier: notifier,
             onResizeEnd: onResizeEnd,
+            maxAllowedWidth: maxAllowedWidth, // Pass calculation here
           ),
         );
+        accumulatedLeft += _kResizeHandleWidth;
       }
     }
 
@@ -795,11 +873,13 @@ class _ResizeHandle extends StatefulWidget {
   final String colId;
   final _ColumnWidthNotifier notifier;
   final VoidCallback? onResizeEnd;
+  final double maxAllowedWidth; // Add this line
 
   const _ResizeHandle({
     required this.colId,
     required this.notifier,
     this.onResizeEnd,
+    required this.maxAllowedWidth, // Add this line
   });
 
   @override
@@ -820,7 +900,12 @@ class _ResizeHandleState extends State<_ResizeHandle> {
         behavior: HitTestBehavior.opaque,
         onHorizontalDragStart: (_) => setState(() => _dragging = true),
         onHorizontalDragUpdate: (details) {
-          widget.notifier.resize(widget.colId, details.delta.dx);
+          // Pass maxAllowedWidth to the resize trigger
+          widget.notifier.resize(
+            widget.colId,
+            details.delta.dx,
+            maxAllowedWidth: widget.maxAllowedWidth,
+          );
         },
         onHorizontalDragEnd: (_) {
           setState(() => _dragging = false);
@@ -911,7 +996,7 @@ class _ColRow extends StatelessWidget {
       }
     }
 
-    if (includeBilling && !isDetailOpen) {
+    if (includeBilling) {
       final bw = notifier.widthOf(_kBillingCol.id);
       result.add(
         SizedBox(

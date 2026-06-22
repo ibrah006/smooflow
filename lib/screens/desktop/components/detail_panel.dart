@@ -715,7 +715,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         crossAxisCount: 2,
                         childAspectRatio: 2.8,
                         crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
                         children: [
                           _DetailMetaCell(
                             label: 'Current Stage',
@@ -830,7 +829,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       ),
 
                       // ── PRINT SPECIFICATIONS (NEW INLINE MULTI-SIZE EDITOR) ──
-                      const SizedBox(height: 18),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: Column(

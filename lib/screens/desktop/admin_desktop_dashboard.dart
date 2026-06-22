@@ -59,6 +59,8 @@ import 'package:smooflow/screens/desktop/desktop_projects_screen.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
+const sidebarW = 220.0;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +91,6 @@ class _T {
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
 
-  static const sidebarW = 220.0;
   static const topbarH = 60.0;
   static const detailW = 520.0;
 
@@ -704,7 +705,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
             .toList();
 
     // Compute dynamic width parameters explicitly
-    final double targetWidth = widget.isCollapsed ? 64.0 : _T.sidebarW;
+    final double targetWidth = widget.isCollapsed ? 64.0 : sidebarW;
     final horizontalPadding = widget.isCollapsed ? 8.0 : 10.0;
 
     return AnimatedContainer(
