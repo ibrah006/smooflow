@@ -1,6 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,7 +219,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   bool _billingSaving = false;
 
   bool _isDiscussionOpen = false;
-
   bool _footerHovered = false;
 
   bool get _isAccountant =>
@@ -312,7 +313,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     widget.onAdvance();
   }
 
-  /// DO NOT use this function to progress task to printing stage
   Future<void> _progressTaskStage({TaskStatus? newTaskStage}) async {
     late final TaskStatus nextStage;
 
@@ -330,8 +330,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       nextStage = widget.task.status.nextStage!;
     }
 
-    // await ref.watch(taskNotifierProvider.notifier)
-    //     .progressStage(taskId: widget.task.id, newStatus: nextStage);
     await TaskProvider.setTaskState(
       ref: ref,
       taskId: widget.task.id,
@@ -373,7 +371,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     showGeneralDialog(
       context: context,
-      barrierColor: Colors.transparent,
+      barrierColor: Colors.white,
       barrierDismissible: true,
       barrierLabel: 'stage-back',
       pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
@@ -421,8 +419,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     );
   }
 
-  // ── Print Job action ──────────────────────────────────────────────────────
-
   Future<void> _startPrintJobScreen() async {
     AppRoutes.navigateTo(
       context,
@@ -431,15 +427,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     );
   }
 
-  // ── Delete Task ──────────────────────────────────────────────────────
-
   Future<void> _onDeleteTask() async {
-    // Delete handled
-    // Close detail panel
     widget.onClose();
   }
 
-  // Update Task Date
   Future<void> _onTaskDateChange(DateTime newValue) async {
     final taskDate =
         ref
@@ -464,7 +455,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  // On Update Task title
   Future<void> _onTaskNameChange(String newValue) async {
     final taskName =
         ref
@@ -474,8 +464,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .name;
 
     if (taskName != newValue.trim()) {
-      print("Task name change event to be called");
-
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
@@ -490,102 +478,36 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  // ── On Print Specs change ─────────────────────────────────────────────────────────────────
-  Future<void> _onTaskRefChange(String newValue) async {
-    final taskRef =
-        ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
-            .ref ??
-        '';
+  // ── Multi-Print Specs Update Routine ──────────────────────────────────────
+  Future<void> _onPrintSpecsChange(
+    List<PrintSpecItem> specs,
+    bool sharedRef,
+  ) async {
+    // We aggregate quantity for backwards compatibility
+    final totalQty = specs.fold(0, (sum, item) => sum + item.qty);
+    final masterRef =
+        sharedRef && specs.isNotEmpty
+            ? specs.first.ref
+            : (specs.isNotEmpty ? specs.first.ref : '');
 
-    if (taskRef != newValue.trim()) {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            name: null,
-            billingStatus: null,
-            ref: newValue,
-            quantity: null,
-            size: null,
-            date: null,
-          );
-    }
-  }
+    // We serialize the entire multi-size layout into the size field
+    final serializedSize = jsonEncode(specs.map((e) => e.toMap()).toList());
 
-  Future<void> _onTaskSizeChange(
-    double newValue, {
-    required bool updateWidth,
-  }) async {
-    final taskSize =
-        ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
-            .size;
-
-    final s = getSize(taskSize);
-
-    if (
-    // if width is the requested update and new width is detected
-    (updateWidth && s.width != newValue) ||
-        // if height is the requested update and new height is detected
-        (!updateWidth && s.height != newValue)) {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            name: null,
-            billingStatus: null,
-            ref: null,
-            quantity: null,
-            size:
-                '${updateWidth ? newValue : s.width}×${updateWidth ? s.height : newValue} cm',
-            date: null,
-          );
-    }
-  }
-
-  Future<void> _onTaskQuantityChange(double newValue) async {
-    final taskQuantity =
-        ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
-            .quantity ??
-        0;
-
-    bool hasDecimal = newValue % 1 != 0;
-    if (hasDecimal) {
-      AppToast.show(
-        message: "Ignored Decimal in Size",
-        subtitle:
-            "Quantity must be a whole number. Rounded down to ${newValue.floor()}",
-        icon: Icons.info_outline,
-        color: _T.amber,
-      );
-    }
-    if (taskQuantity != newValue.floor()) {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            name: null,
-            billingStatus: null,
-            ref: null,
-            quantity: newValue.floor(),
-            size: null,
-            date: null,
-          );
-    }
+    await ref
+        .read(taskNotifierProvider.notifier)
+        .update(
+          task: widget.task,
+          name: null,
+          billingStatus: null,
+          ref: masterRef,
+          quantity: totalQty,
+          size: serializedSize,
+          date: null,
+        );
   }
 
   Future<void> _onAdvanceTask(bool canAdvance, {TaskStatus? newStage}) async {
     if (!canAdvance) return;
-
-    print("new stage: $newStage");
 
     setState(() => _isProgressing = true);
 
@@ -598,12 +520,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     setState(() => _isProgressing = false);
   }
 
-  // On open discussion sheet
   void _onOpenDiscussion() async {
     setState(() => _isDiscussionOpen = true);
-
     ref.read(messageNotifierProvider).activeTaskId = widget.task.id;
-
     await ref
         .read(taskNotifierProvider.notifier)
         .updateMessageReadStatus(ref, widget.task.id);
@@ -611,20 +530,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   void _onCloseDiscussion() {
     setState(() => _isDiscussionOpen = false);
-
     ref.read(messageNotifierProvider).activeTaskId = null;
-
     markReadLastMessage();
   }
 
-  // Mark the last message for this task as read
   Future<void> markReadLastMessage() async {
     await ref
         .read(taskNotifierProvider.notifier)
         .updateMessageReadStatus(ref, widget.task.id);
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -663,8 +577,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         next != TaskStatus.printing && next != null || ableToReinitialize;
 
     final canStageBack = _previousStatuses(widget.task.status).isNotEmpty;
-
-    // Print job CTA visibility
     final isWaitingPrinting = widget.task.status == TaskStatus.waitingPrinting;
 
     final unreadCount = widget.task.unreadCount;
@@ -734,7 +646,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 ),
               ),
 
-              // ── Stage stepper ─────────────────────────────────────────────────
               _StageStepper(
                 currentStatus: widget.task.status,
                 onStageTap: (status) {
@@ -749,7 +660,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
                       Padding(
                         padding: EdgeInsetsGeometry.symmetric(
                           horizontal: 10,
@@ -767,12 +677,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ),
                         ),
                       ),
-                      // Text(
-                      //   widget.task.name,
-                      //   style: const
-                      // ),
                       const SizedBox(height: 2),
-                      // Project Name label
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: Row(
@@ -797,10 +702,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ],
                         ),
                       ),
-                      // Color tags area
                       const SizedBox(height: 18),
 
-                      // Details grid
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: const _DetailSectionTitle('Details'),
@@ -867,29 +770,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             label: 'Date',
                             child: Row(
                               children: [
-                                // Expanded(
-                                //   child:
-                                // ),
                                 GhostDateInput(
                                   initialValue: d,
                                   onChanged: _onTaskDateChange,
                                 ),
-                                // MouseRegion(
-                                //   cursor: SystemMouseCursors.click,
-                                //   child: Text(
-                                //     fmtDate(d),
-                                //     style: TextStyle(
-                                //       fontSize: 13,
-                                //       fontWeight: FontWeight.w500,
-                                //       color:
-                                //           isOverdue
-                                //               ? _T.red
-                                //               : isSoon
-                                //               ? _T.amber
-                                //               : _T.ink3,
-                                //     ),
-                                //   ),
-                                // ),
                                 if (isSoon && !isOverdue) ...[
                                   const SizedBox(width: 6),
                                   const _Badge(
@@ -946,27 +830,20 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         ],
                       ),
 
-                      // Rest of task details
+                      // ── PRINT SPECIFICATIONS (NEW INLINE MULTI-SIZE EDITOR) ──
+                      const SizedBox(height: 18),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 18),
-                            // ── PRINT SPECIFICATIONS ─────────────────────────────────
-                            // if (hasPrintSpecs) ...[
                             const _DetailSectionTitle('Print Specifications'),
-                            const SizedBox(height: 10),
-                            _PrintSpecsCard(
-                              reference: widget.task.ref,
-                              size: widget.task.size,
-                              quantity: widget.task.quantity,
-                              onTaskRefChange: _onTaskRefChange,
-                              onTaskQuantityChange: _onTaskQuantityChange,
-                              onTaskSizeChange: _onTaskSizeChange,
+                            const SizedBox(height: 8),
+                            _PrintSpecsEditor(
+                              task: widget.task,
+                              onUpdate: _onPrintSpecsChange,
                             ),
                             const SizedBox(height: 18),
-                            // ],
 
                             // ── BILLING ───────────────────────────────────────────────
                             const _DetailSectionTitle('Billing'),
@@ -988,7 +865,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             ),
                             const SizedBox(height: 18),
 
-                            // ── START PRINT JOB (production / admin only) ─────────────
                             if (isWaitingPrinting)
                               PermissionGate(
                                 permission: UserPermission.schedulePrintAction,
@@ -1006,7 +882,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 ),
                               ),
 
-                            // Description
                             if (widget.task.description.trim().isNotEmpty) ...[
                               const _DetailSectionTitle('Description'),
                               const SizedBox(height: 8),
@@ -1027,16 +902,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 ),
                               ),
                             ],
-
-                            // Stage pipeline
-                            // const _DetailSectionTitle('Stage Pipeline'),
-                            // const SizedBox(height: 8),
-                            // StagePipeline(
-                            //   currentStatus: widget.task.status,
-                            //   onStageTap: (status) {
-                            //     _onAdvanceTask(true, newStage: status);
-                            //   },
-                            // ),
                           ],
                         ),
                       ),
@@ -1049,7 +914,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         taskId: widget.task.id,
                       ),
 
-                      // Debug as of now
                       if (kDebugMode) ...[
                         const SizedBox(height: 18),
                         EmbeddedDiscussionArea(task: widget.task),
@@ -1061,7 +925,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 ),
               ),
 
-              // ── Footer ────────────────────────────────────────────────────────
               if (widget.showFooter)
                 _DetailFooter(
                   task: widget.task,
@@ -1093,7 +956,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             AnimatedPositioned(
               duration: Duration(milliseconds: 200),
               right: 16,
-              bottom: floatingBadgeHeight, // Adjust based on footer height
+              bottom: floatingBadgeHeight,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 child: _FloatingUnreadBadge(
@@ -1266,7 +1129,7 @@ class _PrinterSelectionDialogState
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Container(
         width: 360,
@@ -1706,209 +1569,491 @@ class _PrinterRowState extends State<_PrinterRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 // PRINT SPECIFICATIONS CARD  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
-class _PrintSpecsCard extends StatelessWidget {
-  final String? reference;
-  final String? size;
-  final int? quantity;
-  final Function(String newValue) onTaskRefChange;
-  final Function(double newValue) onTaskQuantityChange;
-  final Function(double newValue, {required bool updateWidth}) onTaskSizeChange;
+class PrintSpecItem {
+  String id;
+  String ref;
+  double width;
+  double height;
+  int qty;
+  String unit;
 
-  const _PrintSpecsCard({
-    required this.reference,
-    required this.size,
-    required this.quantity,
-    required this.onTaskRefChange,
-    required this.onTaskQuantityChange,
-    required this.onTaskSizeChange,
+  PrintSpecItem({
+    required this.id,
+    required this.ref,
+    required this.width,
+    required this.height,
+    required this.qty,
+    this.unit = 'cm',
   });
 
-  Widget _sizeWidget(String? size) {
-    final s = getSize(size);
-    final rightUnit = size != null ? getUnit(size) : 'cm';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        GhostTextField(
-          initialText: s.width.toString(),
-          onSubmitted: (newValue) {
-            onTaskSizeChange(double.tryParse(newValue) ?? 0, updateWidth: true);
-          },
-          mode: GhostFieldMode.inline,
-          isDecimalOnlyField: true,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: _T.ink,
-          ),
-        ),
-        Text(
-          '×',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w300,
-            color: _T.slate300,
-          ),
-        ),
-        GhostTextField(
-          initialText: s.height.toString(),
-          onSubmitted: (newValue) {
-            onTaskSizeChange(
-              double.tryParse(newValue) ?? 0,
-              updateWidth: false,
-            );
-          },
-          mode: GhostFieldMode.inline,
-          isDecimalOnlyField: true,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: _T.ink,
-          ),
-        ),
-        // Text(
-        //   rightNum,
-        //   style: const TextStyle(
-        //     fontSize: 15,
-        //     fontWeight: FontWeight.w700,
-        //     color: _T.ink,
-        //   ),
-        // ),
-        if (rightUnit.isNotEmpty) ...[
-          const SizedBox(width: 5),
-          Text(
-            rightUnit,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: _T.slate400,
-            ),
-          ),
-        ],
-      ],
-    );
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'ref': ref,
+    'w': width,
+    'h': height,
+    'qty': qty,
+    'u': unit,
+  };
+
+  factory PrintSpecItem.fromMap(Map<String, dynamic> map) => PrintSpecItem(
+    id: map['id'] ?? UniqueKey().toString(),
+    ref: map['ref'] ?? '',
+    width: (map['w'] as num?)?.toDouble() ?? 0.0,
+    height: (map['h'] as num?)?.toDouble() ?? 0.0,
+    qty: map['qty'] as int? ?? 1,
+    unit: map['u'] ?? 'cm',
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW CORPORATE INLINE MULTI-SIZE EDITOR
+// ─────────────────────────────────────────────────────────────────────────────
+class _PrintSpecsEditor extends StatefulWidget {
+  final Task task;
+  final Function(List<PrintSpecItem> specs, bool sharedRef) onUpdate;
+
+  const _PrintSpecsEditor({required this.task, required this.onUpdate});
+
+  @override
+  State<_PrintSpecsEditor> createState() => _PrintSpecsEditorState();
+}
+
+class _PrintSpecsEditorState extends State<_PrintSpecsEditor> {
+  bool _sharedRef = true;
+  List<PrintSpecItem> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpecs();
   }
+
+  @override
+  void didUpdateWidget(covariant _PrintSpecsEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.task.id != widget.task.id) {
+      _initSpecs();
+    }
+  }
+
+  void _initSpecs() {
+    final sizeStr = widget.task.size ?? '';
+    if (sizeStr.trim().startsWith('[')) {
+      try {
+        final List<dynamic> decoded = jsonDecode(sizeStr);
+        _items = decoded.map((e) => PrintSpecItem.fromMap(e)).toList();
+
+        // Auto-detect if they share a ref
+        if (_items.isNotEmpty) {
+          final firstRef = _items.first.ref;
+          _sharedRef = _items.every((item) => item.ref == firstRef);
+        } else {
+          _sharedRef = true;
+        }
+        return;
+      } catch (_) {}
+    }
+
+    // Fallback: migrate legacy simple string representation
+    final s = getSize(widget.task.size);
+    final u = getUnit(widget.task.size ?? '');
+    _items = [
+      PrintSpecItem(
+        id: UniqueKey().toString(),
+        ref: widget.task.ref ?? '',
+        width: s.width,
+        height: s.height,
+        qty: widget.task.quantity ?? 1,
+        unit: u.isEmpty ? 'cm' : u,
+      ),
+    ];
+  }
+
+  void _notifyChange() {
+    widget.onUpdate(_items, _sharedRef);
+  }
+
+  String _fmtNum(double n) =>
+      n == n.toInt() ? n.toInt().toString() : n.toString();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _T.white,
+        color: _T.slate50.withOpacity(0.5),
         borderRadius: BorderRadius.circular(_T.rLg),
-        border: Border.all(color: _T.slate200),
       ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-            child: Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: _T.indigo50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _T.indigo.withOpacity(0.2)),
+          // ── Shared Ref Toggle ──
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _sharedRef = !_sharedRef);
+                if (_sharedRef && _items.isNotEmpty) {
+                  final masterRef = _items.first.ref;
+                  for (var item in _items) {
+                    item.ref = masterRef;
+                  }
+                }
+                _notifyChange();
+              },
+              child: Row(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    child: Icon(
+                      _sharedRef
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      key: ValueKey(_sharedRef),
+                      color: _sharedRef ? _T.blue : _T.slate400,
+                      size: 15,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.straighten_outlined,
-                    size: 15,
-                    color: _T.indigo,
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Use a single reference for all sizes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate500,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Print Specs',
-                      style: TextStyle(
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Master Shared Reference Field ──
+          if (_sharedRef) ...[
+            Container(
+              padding: const EdgeInsets.only(left: 2, bottom: 8),
+              child: Row(
+                children: [
+                  const Text(
+                    'Ref:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate400,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GhostTextField(
+                      key: ValueKey(
+                        'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
+                      ),
+                      initialText: _items.isNotEmpty ? _items.first.ref : '',
+                      onSubmitted: (val) {
+                        for (var item in _items) {
+                          item.ref = val;
+                        }
+                        _notifyChange();
+                      },
+                      mode: GhostFieldMode.inline,
+                      style: const TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: _T.ink,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'monospace',
+                        color: _T.ink3,
                       ),
                     ),
-                    Text(
-                      'Reference, dimensions & quantity',
-                      style: TextStyle(fontSize: 11, color: _T.slate400),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: _T.slate200),
+            const SizedBox(height: 8),
+          ],
+
+          // ── Table Headers ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                if (!_sharedRef)
+                  const Expanded(
+                    flex: 3,
+                    child: Text(
+                      'REF',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: _T.slate400,
+                      ),
+                    ),
+                  ),
+                const Expanded(
+                  flex: 4,
+                  child: Text(
+                    'SIZE (W × H cm)',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: _T.slate400,
+                    ),
+                  ),
+                ),
+                const Expanded(
+                  flex: 2,
+                  child: Text(
+                    'QTY',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: _T.slate400,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 28), // delete placeholder
+              ],
+            ),
+          ),
+
+          // ── Table Rows ──
+          ..._items.asMap().entries.map((e) {
+            final index = e.key;
+            final item = e.value;
+            return _SpecRowInline(
+              key: ValueKey(item.id),
+              item: item,
+              sharedRef: _sharedRef,
+              onUpdate: () => _notifyChange(),
+              onDelete: () {
+                setState(() => _items.removeAt(index));
+                _notifyChange();
+              },
+            );
+          }),
+
+          // ── Add Item Button ──
+          const SizedBox(height: 4),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _items.add(
+                    PrintSpecItem(
+                      id: UniqueKey().toString(),
+                      ref:
+                          _sharedRef && _items.isNotEmpty
+                              ? _items.first.ref
+                              : '',
+                      width: 0,
+                      height: 0,
+                      qty: 1,
+                    ),
+                  );
+                });
+                _notifyChange();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: _T.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 12,
+                        color: _T.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Add another size',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: _T.blue,
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Divider(height: 1, color: _T.slate100),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SpecRow(
-                  icon: Icons.tag_rounded,
-                  label: 'Ref',
-                  child: GhostTextField(
-                    onSubmitted: onTaskRefChange,
-                    mode: GhostFieldMode.label,
-                    initialText: reference ?? '',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _T.ink3,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _SpecRow(
-                  icon: Icons.crop_free_rounded,
-                  label: 'Size',
-                  child: _sizeWidget(size),
-                ),
-                const SizedBox(height: 12),
-                _SpecRow(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Qty',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      GhostTextField(
-                        initialText: '${quantity ?? 0}',
-                        onSubmitted:
-                            (newValue) => onTaskQuantityChange(
-                              double.tryParse(newValue) ?? 0,
-                            ),
-                        mode: GhostFieldMode.inline,
-                        inlineMinWidth: 30,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _T.ink,
-                        ),
-                      ),
-                      const Text(
-                        'pcs',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: _T.slate400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SpecRowInline extends StatefulWidget {
+  final PrintSpecItem item;
+  final bool sharedRef;
+  final VoidCallback onUpdate;
+  final VoidCallback onDelete;
+
+  const _SpecRowInline({
+    super.key,
+    required this.item,
+    required this.sharedRef,
+    required this.onUpdate,
+    required this.onDelete,
+  });
+
+  @override
+  State<_SpecRowInline> createState() => _SpecRowInlineState();
+}
+
+class _SpecRowInlineState extends State<_SpecRowInline> {
+  bool _hovered = false;
+
+  String _fmt(double n) => n == n.toInt() ? n.toInt().toString() : n.toString();
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: _hovered ? _T.white : Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: _hovered ? _T.slate200 : Colors.white),
+        ),
+        child: Row(
+          children: [
+            // Internal Item Ref (Hidden if shared)
+            if (!widget.sharedRef)
+              Expanded(
+                flex: 3,
+                child: GhostTextField(
+                  key: ValueKey('${widget.item.id}_ref'),
+                  initialText: widget.item.ref,
+                  onSubmitted: (v) {
+                    widget.item.ref = v;
+                    widget.onUpdate();
+                  },
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontFamily: 'monospace',
+                    color: _T.ink3,
+                  ),
+                  mode: GhostFieldMode.inline,
+                ),
+              ),
+
+            // Width x Height
+            Expanded(
+              flex: 4,
+              child: Row(
+                children: [
+                  GhostTextField(
+                    key: ValueKey('${widget.item.id}_w'),
+                    initialText: _fmt(widget.item.width),
+                    onSubmitted: (v) {
+                      widget.item.width = double.tryParse(v) ?? 0;
+                      widget.onUpdate();
+                    },
+                    isDecimalOnlyField: true,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.ink,
+                    ),
+                    mode: GhostFieldMode.inline,
+                    inlineMinWidth: 24,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      '×',
+                      style: TextStyle(color: _T.slate400, fontSize: 13),
+                    ),
+                  ),
+                  GhostTextField(
+                    key: ValueKey('${widget.item.id}_h'),
+                    initialText: _fmt(widget.item.height),
+                    onSubmitted: (v) {
+                      widget.item.height = double.tryParse(v) ?? 0;
+                      widget.onUpdate();
+                    },
+                    isDecimalOnlyField: true,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.ink,
+                    ),
+                    mode: GhostFieldMode.inline,
+                    inlineMinWidth: 24,
+                  ),
+                ],
+              ),
+            ),
+
+            // Quantity
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  GhostTextField(
+                    key: ValueKey('${widget.item.id}_qty'),
+                    initialText: widget.item.qty.toString(),
+                    onSubmitted: (v) {
+                      widget.item.qty = int.tryParse(v) ?? 0;
+                      widget.onUpdate();
+                    },
+                    isDecimalOnlyField: true,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.ink,
+                    ),
+                    mode: GhostFieldMode.inline,
+                    inlineMinWidth: 20,
+                  ),
+                  const SizedBox(width: 2),
+                  const Text(
+                    'pcs',
+                    style: TextStyle(fontSize: 11, color: _T.slate400),
+                  ),
+                ],
+              ),
+            ),
+
+            // Delete Action
+            SizedBox(
+              width: 28,
+              child: AnimatedOpacity(
+                opacity: _hovered ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 150),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: _T.slate400,
+                  ),
+                  hoverColor: _T.red50,
+                  color: _T.red,
+                  onPressed: widget.onDelete,
+                  splashRadius: 16,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2371,7 +2516,7 @@ class _GhostButtonState extends State<_GhostButton> {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: _hovered && !disabled ? _T.slate100 : Colors.transparent,
+            color: _hovered && !disabled ? _T.slate100 : Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(color: _T.slate200),
           ),
@@ -2826,7 +2971,7 @@ class _DetailFooterState extends State<_DetailFooter> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(color: _T.slate200),
                       borderRadius: BorderRadius.circular(_T.r),
                     ),
@@ -3003,7 +3148,7 @@ class _StageBackMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: Colors.white,
       elevation: 0,
       child: Container(
         decoration: BoxDecoration(
@@ -3102,7 +3247,7 @@ class _StageBackRowState extends State<_StageBackRow> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          color: _hovered ? _T.slate50 : Colors.transparent,
+          color: _hovered ? _T.slate50 : Colors.white,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             decoration: BoxDecoration(
