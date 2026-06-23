@@ -46,7 +46,7 @@ class _DeleteProjectDialogState extends ConsumerState<DeleteProjectDialog> {
       if (mounted) {
         Navigator.of(context).pop(); // Close the confirmation dialog
         AppToast.show(
-          message: 'Project safely deleted',
+          message: 'Project deleted',
           icon: Icons.delete_forever_rounded,
           color: _T.red,
         );
