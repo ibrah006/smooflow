@@ -49,8 +49,8 @@ class _PrintSpecInput {
 
   _PrintSpecInput({String? ref, int? width, int? height, int? qty})
     : refCtrl = TextEditingController(text: ref),
-      widthCtrl = TextEditingController(text: width.toString()),
-      heightCtrl = TextEditingController(text: height.toString()),
+      widthCtrl = TextEditingController(text: width?.toString() ?? ''),
+      heightCtrl = TextEditingController(text: height?.toString() ?? ''),
       qtyCtrl = TextEditingController(text: qty != null ? '$qty' : '');
 
   void dispose() {
@@ -610,52 +610,49 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
       ],
     );
   }
+}
 
-  /// Helper rendering explicit, production-ready form inputs matching system text fields
-  Widget _buildFormInputField({
-    required TextEditingController controller,
-    required String hintText,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    Widget? suffixWidget,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_T.r),
-        border: Border.all(color: _T.slate200),
+/// Helper rendering explicit, production-ready form inputs matching system text fields
+Widget _buildFormInputField({
+  required TextEditingController controller,
+  required String hintText,
+  TextInputType? keyboardType,
+  List<TextInputFormatter>? inputFormatters,
+  Widget? suffixWidget,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(_T.r),
+      border: Border.all(color: _T.slate200),
+    ),
+    child: TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: _T.ink,
       ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        style: const TextStyle(
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: _T.ink,
+          fontWeight: FontWeight.w400,
+          color: _T.slate400,
         ),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            color: _T.slate400,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 11,
-          ),
-          border: InputBorder.none,
-          isDense: true,
-          suffixIcon: suffixWidget,
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 0,
-            minHeight: 0,
-          ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 11,
         ),
+        border: InputBorder.none,
+        isDense: true,
+        suffixIcon: suffixWidget,
+        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _BackButton extends StatefulWidget {
@@ -920,10 +917,9 @@ class _DimensionInput extends StatelessWidget {
       children: [
         // Width
         Expanded(
-          child: TextField(
+          child: _buildFormInputField(
             controller: widthCtrl,
-            decoration: inputDecoration,
-            style: inputStyle,
+            hintText: "0",
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
@@ -940,10 +936,9 @@ class _DimensionInput extends StatelessWidget {
 
         // Height
         Expanded(
-          child: TextField(
+          child: _buildFormInputField(
             controller: heightCtrl,
-            decoration: inputDecoration,
-            style: inputStyle,
+            hintText: "0",
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
