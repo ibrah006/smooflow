@@ -73,6 +73,11 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     if (index == -1) state = state..add(project);
   }
 
+  void deleteProject(String projectId) {
+    state.removeWhere((p) => p.id == projectId);
+    state = state;
+  }
+
   // Get project by ID
   Future<Project?> getProjectbyId({
     // Can be found in [OrganizationState].projectsLastAdded
