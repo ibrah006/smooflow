@@ -463,7 +463,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                   flex: 2,
                   child: _buildSectionColumnHeader(
                     Icons.aspect_ratio_rounded,
-                    'Dimensions / Size',
+                    'Dimensions / Size (cm)',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -506,7 +506,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                   flex: 2,
                   child: _buildFormInputField(
                     controller: spec.sizeCtrl,
-                    hintText: 'e.g., 2400 × 1200 mm',
+                    hintText: 'e.g., 2400 × 1200 cm',
                   ),
                 ),
                 const SizedBox(width: 12),
