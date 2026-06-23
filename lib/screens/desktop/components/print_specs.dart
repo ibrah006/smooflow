@@ -280,6 +280,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
     // ];
   }
 
+  @deprecated
   void _notifyChange() {
     widget.onUpdate(_items, _sharedRef);
   }
@@ -306,13 +307,18 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                 setState(() => _sharedRef = !_sharedRef);
                 // Shared reference and multiple specs found
                 if (_sharedRef && _items.isNotEmpty) {
-                  // final masterRef = _items.first.ref;
+                  final masterRef = _items.first.ref;
                   // for (var item in _items) {
                   //   item.ref = masterRef;
                   // }
-                  // TODO: Update all print spec references
+
+                  final updatedItems =
+                      _items
+                          .map((item) => item.copyWith(ref: masterRef))
+                          .toList();
+
+                  widget.onUpdate(updatedItems, true);
                 }
-                _notifyChange();
               },
               child: Row(
                 children: [
@@ -369,8 +375,12 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                         // for (var item in _items) {
                         //   item.ref = val;
                         // }
-                        // TODO: change the ref for all print specs for this task
-                        _notifyChange();
+                        final updatedItems =
+                            _items
+                                .map((item) => item.copyWith(ref: val))
+                                .toList();
+
+                        widget.onUpdate(updatedItems, true);
                       },
                       mode: GhostFieldMode.inline,
                       style: const TextStyle(
@@ -472,6 +482,12 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                   // );
 
                   // TODO: add new print spec item
+                  final updatedItems =
+                      _items
+                          .map((item) => item.copyWith(ref: masterRef))
+                          .toList();
+
+                  widget.onUpdate(updatedItems, true);
                 });
                 _notifyChange();
               },
