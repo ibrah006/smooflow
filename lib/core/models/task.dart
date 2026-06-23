@@ -1,6 +1,7 @@
 // task routes
 
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -63,6 +64,8 @@ class Task {
   int? firstMessageId;
   int unreadCount;
 
+  List<PrintSpec> printSpecs;
+
   // Constructor to initialize values
   Task({
     required int id,
@@ -99,6 +102,7 @@ class Task {
     required this.lastMessageId,
     required this.firstMessageId,
     required this.messageCount,
+    required this.printSpecs,
   }) : _id = id,
        _name = name,
        _description = description,
@@ -148,6 +152,7 @@ class Task {
     DateTime? date,
     int messagesCount = 0,
     int unreadCount = 0,
+    this.printSpecs = const [],
   }) : _name = name,
        _description = description,
        _dueDate = dueDate,
@@ -407,6 +412,10 @@ class Task {
       firstMessageId: json['firstMessageId'],
       unreadCount: json['unreadCount'] ?? 0,
       messageCount: json['messageCount'] ?? 0,
+      printSpecs:
+          (json['printSpecs'] as List)
+              .map((printSpec) => PrintSpec.fromJson(printSpec))
+              .toList(),
     );
   }
 
@@ -430,7 +439,8 @@ class Task {
       unreadCount = original.unreadCount,
       lastMessageId = original.lastMessageId,
       firstMessageId = original.firstMessageId,
-      messageCount = original.messageCount {
+      messageCount = original.messageCount,
+      printSpecs = original.printSpecs {
     updatedAt = original.updatedAt;
     TaskStatus status = original._status;
     _status = status;
@@ -460,7 +470,8 @@ class Task {
       _stockTransactionIds = [],
       date = null,
       unreadCount = 0,
-      messageCount = 0;
+      messageCount = 0,
+      printSpecs = [];
 
   /// Creates a copy of this Task with specified fields replaced.
   /// Returns a new Task instance with updated values while preserving unchanged ones.
@@ -511,6 +522,7 @@ class Task {
     int? lastMessageId,
     int? firstMessageId,
     int? messageCount,
+    List<PrintSpec>? printSpec,
   }) {
     final newTask = Task(
       id: id ?? _id,
@@ -550,6 +562,7 @@ class Task {
       lastMessageId: lastMessageId ?? this.lastMessageId,
       firstMessageId: firstMessageId ?? this.firstMessageId,
       messageCount: messageCount ?? this.messageCount,
+      printSpecs: printSpec ?? this.printSpecs,
     );
 
     // Set color and icon via setters (not constructor parameters)
@@ -599,6 +612,7 @@ class Task {
       'quantity': _quantity,
       "billingStatus": billingStatus.name,
       "created": date?.toIso8601String(),
+      "printSpecs": printSpecs.map((printSpec) => printSpec.toJson()),
     };
     try {
       return {'id': id, ...json};

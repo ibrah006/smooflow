@@ -491,57 +491,57 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
 
           // ── Add Item Button ──
           const SizedBox(height: 4),
-          // MouseRegion(
-          //   cursor: SystemMouseCursors.click,
-          //   child: GestureDetector(
-          //     onTap: () {
-          //       setState(() {
-          //         _items.add(
-          //           PrintSpecItem(
-          //             id: UniqueKey().toString(),
-          //             ref:
-          //                 _sharedRef && _items.isNotEmpty
-          //                     ? _items.first.ref
-          //                     : '',
-          //             width: 0,
-          //             height: 0,
-          //             qty: 1,
-          //           ),
-          //         );
-          //       });
-          //       _notifyChange();
-          //     },
-          //     child: Padding(
-          //       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-          //       child: Row(
-          //         mainAxisSize: MainAxisSize.min,
-          //         children: [
-          //           Container(
-          //             padding: const EdgeInsets.all(2),
-          //             decoration: BoxDecoration(
-          //               color: _T.blue.withOpacity(0.1),
-          //               borderRadius: BorderRadius.circular(4),
-          //             ),
-          //             child: const Icon(
-          //               Icons.add_rounded,
-          //               size: 12,
-          //               color: _T.blue,
-          //             ),
-          //           ),
-          //           const SizedBox(width: 6),
-          //           const Text(
-          //             'Add another size',
-          //             style: TextStyle(
-          //               fontSize: 11.5,
-          //               fontWeight: FontWeight.w600,
-          //               color: _T.blue,
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //   ),
-          // ),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _items.add(
+                    PrintSpecItem(
+                      id: UniqueKey().toString(),
+                      ref:
+                          _sharedRef && _items.isNotEmpty
+                              ? _items.first.ref
+                              : '',
+                      width: 0,
+                      height: 0,
+                      qty: 1,
+                    ),
+                  );
+                });
+                _notifyChange();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: _T.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 12,
+                        color: _T.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Add another size',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: _T.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
