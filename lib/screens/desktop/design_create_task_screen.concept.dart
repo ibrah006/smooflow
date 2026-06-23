@@ -21,7 +21,6 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
@@ -29,12 +28,14 @@ extension _PrintSpecInputsToPrintSpecs on List<_PrintSpecInput> {
   List<PrintSpec> toPrintSpecs() =>
       map((item) {
         final ref = item.refCtrl.text.trim();
-        final size = item.sizeCtrl.text.trim().replaceAll(RegExp(r'[xX]'), '×');
+        final w = double.tryParse(item.widthCtrl.text);
+        final h = double.tryParse(item.heightCtrl.text);
+        final size = '$w×$h cm';
         final qty = item.qtyCtrl.text.trim();
 
         return PrintSpec.create(
           ref: ref.isNotEmpty ? ref : null,
-          size: size.isNotEmpty ? size : null,
+          size: size,
           quantity: int.tryParse(qty),
         );
       }).toList();
@@ -43,17 +44,19 @@ extension _PrintSpecInputsToPrintSpecs on List<_PrintSpecInput> {
 /// Tracks a single print specification row's inputs inside the form state
 class _PrintSpecInput {
   final TextEditingController refCtrl;
-  final TextEditingController sizeCtrl;
+  final TextEditingController widthCtrl, heightCtrl;
   final TextEditingController qtyCtrl;
 
-  _PrintSpecInput({String? ref, String? size, int? qty})
+  _PrintSpecInput({String? ref, int? width, int? height, int? qty})
     : refCtrl = TextEditingController(text: ref),
-      sizeCtrl = TextEditingController(text: size),
+      widthCtrl = TextEditingController(text: width.toString()),
+      heightCtrl = TextEditingController(text: height.toString()),
       qtyCtrl = TextEditingController(text: qty != null ? '$qty' : '');
 
   void dispose() {
     refCtrl.dispose();
-    sizeCtrl.dispose();
+    widthCtrl.dispose();
+    heightCtrl.dispose();
     qtyCtrl.dispose();
   }
 }
@@ -504,9 +507,12 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
                 // Size Input Field
                 Expanded(
                   flex: 2,
-                  child: _buildFormInputField(
-                    controller: spec.sizeCtrl,
-                    hintText: 'e.g., 2400 × 1200 cm',
+                  child: Expanded(
+                    flex: 2,
+                    child: _DimensionInput(
+                      widthCtrl: spec.widthCtrl,
+                      heightCtrl: spec.heightCtrl,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -887,6 +893,73 @@ class _ProjectDropdown extends StatelessWidget {
               )
               .toList(),
       onChanged: onChanged,
+    );
+  }
+}
+
+class _DimensionInput extends StatelessWidget {
+  final TextEditingController widthCtrl;
+  final TextEditingController heightCtrl;
+
+  const _DimensionInput({required this.widthCtrl, required this.heightCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // Shared styling for the narrow inputs
+    final inputStyle = const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+    );
+    final inputDecoration = InputDecoration(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      isDense: true,
+    );
+
+    return Row(
+      children: [
+        // Width
+        Expanded(
+          child: TextField(
+            controller: widthCtrl,
+            decoration: inputDecoration,
+            style: inputStyle,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+        ),
+
+        // The '×' separator
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6),
+          child: Text(
+            '×',
+            style: TextStyle(color: _T.slate400, fontWeight: FontWeight.bold),
+          ),
+        ),
+
+        // Height
+        Expanded(
+          child: TextField(
+            controller: heightCtrl,
+            decoration: inputDecoration,
+            style: inputStyle,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+        ),
+
+        // Fixed 'cm' label
+        const SizedBox(width: 8),
+        const Text(
+          'cm',
+          style: TextStyle(
+            fontSize: 12,
+            color: _T.slate400,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
