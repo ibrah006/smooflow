@@ -10,9 +10,13 @@ class PrintSpec {
   }
 
   double get height {
-    return size != null
-        ? double.tryParse(size!.split('×')[1].split('cm').first.trim()) ?? 0
+    return size != null && unit != null
+        ? double.tryParse(size!.split('×')[1].split(unit!).first.trim()) ?? 0
         : 0;
+  }
+
+  String? get unit {
+    return size != null ? size!.split('×')[1].split(' ')[1] : null;
   }
 
   PrintSpec({required this.id, this.ref, this.size, this.quantity});

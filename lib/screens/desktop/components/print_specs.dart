@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 
 class _T {
@@ -225,7 +222,12 @@ class _PrinterRowState extends State<PrinterRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 class PrintSpecsEditor extends StatefulWidget {
   final Task task;
-  final Function(List<PrintSpec> specs, bool sharedRef) onUpdate;
+  final Function(
+    List<PrintSpec>? specs,
+    bool sharedRef, {
+    PrintSpec? updatedSpec,
+  })
+  onUpdate;
 
   const PrintSpecsEditor({required this.task, required this.onUpdate});
 
@@ -453,7 +455,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
               key: ValueKey(item.id),
               item: item,
               sharedRef: _sharedRef,
-              onUpdate: () => _notifyChange(),
+              onUpdate: widget.onUpdate,
               onDelete: () {
                 setState(() => _items.removeAt(index));
                 _notifyChange();
@@ -468,28 +470,18 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
+                  final printSpec = PrintSpec.create(
+                    ref:
+                        _sharedRef && _items.isNotEmpty ? _items.first.ref : '',
+                    size: "0×0 cm",
+                    quantity: 1,
+                  );
                   // _items.add(
-                  //   PrintSpec(
-                  //     id: UniqueKey().toString(),
-                  //     ref:
-                  //         _sharedRef && _items.isNotEmpty
-                  //             ? _items.first.ref
-                  //             : '',
-                  //     width: 0,
-                  //     height: 0,
-                  //     qty: 1,
-                  //   ),
+                  //  printSpec
                   // );
 
-                  // TODO: add new print spec item
-                  final updatedItems =
-                      _items
-                          .map((item) => item.copyWith(ref: masterRef))
-                          .toList();
-
-                  widget.onUpdate(updatedItems, true);
+                  widget.onUpdate([..._items, printSpec], true);
                 });
-                _notifyChange();
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -531,7 +523,12 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
 class _SpecRowInline extends StatefulWidget {
   final PrintSpec item;
   final bool sharedRef;
-  final VoidCallback onUpdate;
+  final Function(
+    List<PrintSpec>? specs,
+    bool sharedRef, {
+    PrintSpec? updatedSpec,
+  })
+  onUpdate;
   final VoidCallback onDelete;
 
   const _SpecRowInline({
@@ -576,8 +573,12 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                   initialText: widget.item.ref ?? '',
                   onSubmitted: (v) {
                     // widget.item.ref = v;
-                    // TODO: change particular reference
-                    widget.onUpdate();
+                    final updatedPrintSpec = widget.item.copyWith(ref: v);
+                    widget.onUpdate(
+                      null,
+                      widget.sharedRef,
+                      updatedSpec: updatedPrintSpec,
+                    );
 
                     print("[internal ref] - on submitted");
                   },
@@ -600,8 +601,14 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     initialText: _fmt(widget.item.width),
                     onSubmitted: (v) {
                       // widget.item.width = double.tryParse(v) ?? 0;
-                      // TODO: update print spec width
-                      widget.onUpdate();
+                      final updatedPrintSpec = widget.item.copyWith(
+                        size: '$v×${widget.item.height} ${widget.item.unit}',
+                      );
+                      widget.onUpdate(
+                        null,
+                        widget.sharedRef,
+                        updatedSpec: updatedPrintSpec,
+                      );
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -624,8 +631,14 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     initialText: _fmt(widget.item.height),
                     onSubmitted: (v) {
                       // widget.item.height = double.tryParse(v) ?? 0;
-                      // TODO: update print spec height
-                      widget.onUpdate();
+                      final updatedPrintSpec = widget.item.copyWith(
+                        size: '${widget.item.width}×$v ${widget.item.unit}',
+                      );
+                      widget.onUpdate(
+                        null,
+                        widget.sharedRef,
+                        updatedSpec: updatedPrintSpec,
+                      );
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -650,8 +663,14 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     initialText: widget.item.quantity.toString(),
                     onSubmitted: (v) {
                       // widget.item.quantity = int.tryParse(v) ?? 0;
-                      // TODO: update print spec quantity
-                      widget.onUpdate();
+                      final updatedPrintSpec = widget.item.copyWith(
+                        quantity: int.tryParse(v) ?? 0,
+                      );
+                      widget.onUpdate(
+                        null,
+                        widget.sharedRef,
+                        updatedSpec: updatedPrintSpec,
+                      );
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(

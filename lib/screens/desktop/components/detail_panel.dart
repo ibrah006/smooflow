@@ -480,9 +480,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // ── Multi-Print Specs Update Routine ──────────────────────────────────────
   Future<void> _onPrintSpecsChange(
-    List<PrintSpec> specs,
-    bool sharedRef,
-  ) async {
+    List<PrintSpec>? updatedSpecs,
+    bool sharedRef, {
+    PrintSpec? updatedSpec,
+  }) async {
+    final specs =
+        updatedSpecs ??
+        ref
+            .read(taskNotifierProvider)
+            .tasks
+            .firstWhere((t) => t.id == widget.task.id)
+            .printSpecs;
+
     // We aggregate quantity for backwards compatibility
     // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
     final masterRef =
