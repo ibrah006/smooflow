@@ -275,7 +275,7 @@ class TaskRepo {
     @deprecated required String? size,
     required String? name,
     required DateTime? date,
-    required List<PrintSpec>? printSpecs,
+    required List<PrintSpec>? newPrintSpec,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
@@ -301,7 +301,7 @@ class TaskRepo {
                 ? DateTime(date.year, date.month, date.day).toIso8601String()
                 : null,
         ...name != null ? {"name": name} : {},
-        "printSpecs": printSpecs?.map((spec) => spec.toJson()).toList(),
+        "printSpecs": newPrintSpec?.map((spec) => spec.id).toList(),
       },
     );
 

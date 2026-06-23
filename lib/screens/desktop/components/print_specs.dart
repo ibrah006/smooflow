@@ -225,7 +225,7 @@ class PrintSpecsEditor extends StatefulWidget {
   final Function(
     List<PrintSpec>? specs,
     bool sharedRef, {
-    PrintSpec? updatedSpec,
+    PrintSpec? newPrintSpec,
   })
   onUpdate;
 
@@ -319,7 +319,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                           .map((item) => item.copyWith(ref: masterRef))
                           .toList();
 
-                  widget.onUpdate(updatedItems, true);
+                  widget.onUpdate(updatedItems, _sharedRef);
                 }
               },
               child: Row(
@@ -480,7 +480,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                   //  printSpec
                   // );
 
-                  widget.onUpdate([..._items, printSpec], true);
+                  widget.onUpdate(null, _sharedRef, newPrintSpec: printSpec);
                 });
               },
               child: Padding(
@@ -526,7 +526,7 @@ class _SpecRowInline extends StatefulWidget {
   final Function(
     List<PrintSpec>? specs,
     bool sharedRef, {
-    PrintSpec? updatedSpec,
+    PrintSpec? newPrintSpec,
   })
   onUpdate;
   final VoidCallback onDelete;
@@ -574,11 +574,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                   onSubmitted: (v) {
                     // widget.item.ref = v;
                     final updatedPrintSpec = widget.item.copyWith(ref: v);
-                    widget.onUpdate(
-                      null,
-                      widget.sharedRef,
-                      updatedSpec: updatedPrintSpec,
-                    );
+                    widget.onUpdate([updatedPrintSpec], widget.sharedRef);
 
                     print("[internal ref] - on submitted");
                   },
@@ -604,11 +600,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                       final updatedPrintSpec = widget.item.copyWith(
                         size: '$v×${widget.item.height} ${widget.item.unit}',
                       );
-                      widget.onUpdate(
-                        null,
-                        widget.sharedRef,
-                        updatedSpec: updatedPrintSpec,
-                      );
+                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -634,11 +626,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                       final updatedPrintSpec = widget.item.copyWith(
                         size: '${widget.item.width}×$v ${widget.item.unit}',
                       );
-                      widget.onUpdate(
-                        null,
-                        widget.sharedRef,
-                        updatedSpec: updatedPrintSpec,
-                      );
+                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -666,11 +654,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                       final updatedPrintSpec = widget.item.copyWith(
                         quantity: int.tryParse(v) ?? 0,
                       );
-                      widget.onUpdate(
-                        null,
-                        widget.sharedRef,
-                        updatedSpec: updatedPrintSpec,
-                      );
+                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(

@@ -286,7 +286,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
             name: null,
             date: null,
-            printSpecs: null,
+            newPrintSpec: null,
           );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
@@ -452,7 +452,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: newValue,
-            printSpecs: null,
+            newPrintSpec: null,
           );
     }
   }
@@ -476,19 +476,19 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: null,
-            printSpecs: null,
+            newPrintSpec: null,
           );
     }
   }
 
   // ── Multi-Print Specs Update Routine ──────────────────────────────────────
   Future<void> _onPrintSpecsChange(
-    List<PrintSpec>? specs,
+    List<PrintSpec>? updatedPrintSpecs,
     bool sharedRef, {
-    PrintSpec? updatedSpec,
+    PrintSpec? newPrintSpec,
   }) async {
     final updatedSpecs =
-        specs ??
+        updatedPrintSpecs ??
         ref
             .read(taskNotifierProvider)
             .tasks
@@ -518,7 +518,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           quantity: null,
           size: serializedSize,
           date: null,
-          printSpecs: updatedSpecs,
+          newPrintSpec: updatedSpecs,
         );
   }
 
