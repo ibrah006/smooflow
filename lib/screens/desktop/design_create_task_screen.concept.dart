@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_priority.dart';
@@ -23,6 +24,21 @@ import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
+
+extension _PrintSpecInputsToPrintSpecs on List<_PrintSpecInput> {
+  List<PrintSpec> toPrintSpecs() =>
+      map((item) {
+        final ref = item.refCtrl.text.trim();
+        final size = item.sizeCtrl.text.trim().replaceAll(RegExp(r'[xX]'), '×');
+        final qty = item.qtyCtrl.text.trim();
+
+        return PrintSpec.create(
+          ref: ref.isNotEmpty ? ref : null,
+          size: size.isNotEmpty ? size : null,
+          quantity: int.tryParse(qty),
+        );
+      }).toList();
+}
 
 /// Tracks a single print specification row's inputs inside the form state
 class _PrintSpecInput {
@@ -241,6 +257,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
         size: '$w×$h cm',
         quantity: qty,
         date: date,
+        printSpecs: _printSpecs.toPrintSpecs(),
       );
 
       await ref

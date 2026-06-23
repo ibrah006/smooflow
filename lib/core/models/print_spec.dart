@@ -1,11 +1,13 @@
 class PrintSpec {
-  final int id;
+  late final int id;
   final String? ref;
   final String? size;
   final int? quantity;
   // final int taskId;
 
-  const PrintSpec({required this.id, this.ref, this.size, this.quantity});
+  PrintSpec({required this.id, this.ref, this.size, this.quantity});
+
+  PrintSpec.create({this.ref, this.size, this.quantity});
 
   factory PrintSpec.fromJson(Map<String, dynamic> json) {
     return PrintSpec(
