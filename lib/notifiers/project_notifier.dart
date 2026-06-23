@@ -15,6 +15,8 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     _orgRepo = OrganizationRepo();
   }
 
+  List<String> projectsQueuedForDelete = [];
+
   final ProjectRepo _repo;
 
   // update on this data won't really notify
@@ -74,6 +76,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   void deleteProject(String projectId) {
+    projectsQueuedForDelete.remove(projectId);
     state.removeWhere((p) => p.id == projectId);
     state = state;
   }
@@ -301,6 +304,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
 
   Future<void> delete(String id) async {
     try {
+      projectsQueuedForDelete.add(id);
       await _repo.delete(id);
     } catch (e) {
       rethrow;

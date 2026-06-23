@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/api/api_logger.dart'; // Ensure correct logger import path
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/delete_project_dialog.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -430,6 +431,7 @@ class _FilterTab extends StatelessWidget {
 }
 
 // ── Interactive Project Card implementation with Pin Toggles ──────────────────
+// ── Interactive Project Card implementation with Pin Toggles ──────────────────
 class _ProjectCard extends ConsumerWidget {
   final Project project;
   final bool isPinned;
@@ -555,11 +557,9 @@ class _ProjectCard extends ConsumerWidget {
         );
         break;
       case 'delete_id':
-        // Show the elegant desktop-style delete confirmation dialog
         showDialog(
           context: context,
-          barrierDismissible:
-              false, // Prevents accidental closing during network requests
+          barrierDismissible: false,
           builder: (context) => DeleteProjectDialog(project: project),
         );
         break;
@@ -580,213 +580,252 @@ class _ProjectCard extends ConsumerWidget {
             .where((t) => t.projectId == project.id)
             .isEmpty;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior:
-            HitTestBehavior.opaque, // Ensures the entire box is right-clickable
-        onTap: onTap,
-        onSecondaryTapUp:
-            (details) => _showContextMenu(
-              context,
-              details,
-              canDeleteProject,
-            ), // Handles Right-Click
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _T.white,
-            borderRadius: BorderRadius.circular(_T.r),
-            border: Border.all(color: _T.slate200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.01),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    margin: const EdgeInsets.only(top: 4.5),
-                    decoration: BoxDecoration(
-                      color: project.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: _T.ink,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          project.client.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: _T.slate500,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
+    final isDeleting = ref
+        .watch(projectNotifierProvider.notifier)
+        .projectsQueuedForDelete
+        .contains(project.id);
 
-                  // Interactive Pin Toggle Button Icon
-                  IconButton(
-                    icon: Icon(
-                      isPinned
-                          ? Icons.push_pin_rounded
-                          : Icons.push_pin_outlined,
-                      size: 14,
-                    ),
-                    color: isPinned ? _T.blue : _T.slate400,
-                    tooltip:
-                        isPinned ? 'Unpin project' : 'Pin project to sidebar',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    splashRadius: 16,
-                    onPressed: () {
-                      onPinToggled();
-                    },
+    return MouseRegion(
+      // 1. Change mouse cursor to standard OS 'wait/busy' spinner when deleting
+      cursor: isDeleting ? SystemMouseCursors.wait : SystemMouseCursors.click,
+      child: IgnorePointer(
+        // 2. Freeze all underlying pointer interactions (clicks, context menus) completely
+        ignoring: false,
+        child: GestureDetector(
+          onTap: onTap,
+          onSecondaryTapUp:
+              (details) =>
+                  !isDeleting
+                      ? _showContextMenu(context, details, canDeleteProject)
+                      : null,
+          child: AnimatedOpacity(
+            // 3. Smooth transition to fade-out/dim the card container content
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            opacity: isDeleting ? 0.45 : 1.0,
+            child: Stack(
+              children: [
+                // Core Project Card UI Structure
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _T.white,
+                    borderRadius: BorderRadius.circular(_T.r),
+                    border: Border.all(color: _T.slate200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.01),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: project.priorityColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      project.priority >= 2
-                          ? 'High'
-                          : (project.priority == 1 ? 'Normal' : 'Low'),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: project.priorityColor,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            margin: const EdgeInsets.only(top: 4.5),
+                            decoration: BoxDecoration(
+                              color: project.color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  project.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _T.ink,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  project.client.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: _T.slate500,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // Interactive Pin Toggle Button Icon
+                          IconButton(
+                            icon: Icon(
+                              isPinned
+                                  ? Icons.push_pin_rounded
+                                  : Icons.push_pin_outlined,
+                              size: 14,
+                            ),
+                            color: isPinned ? _T.blue : _T.slate400,
+                            tooltip:
+                                isPinned
+                                    ? 'Unpin project'
+                                    : 'Pin project to sidebar',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            splashRadius: 16,
+                            onPressed: () {
+                              onPinToggled();
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: project.priorityColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              project.priority >= 2
+                                  ? 'High'
+                                  : (project.priority == 1 ? 'Normal' : 'Low'),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: project.priorityColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      if (project.description != null &&
+                          project.description!.isNotEmpty) ...[
+                        Text(
+                          project.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: _T.slate400,
+                            height: 1.4,
+                          ),
+                        ),
+                        const Spacer(),
+                      ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tasks: $doneTasks/$totalTasks completed',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _T.slate500,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${(percent * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _T.ink3,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: percent,
+                          minHeight: 5,
+                          backgroundColor: _T.slate100,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            percent == 1.0 ? colorPositiveStatus : _T.blue,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(color: _T.slate100, height: 1),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            CupertinoIcons.calendar,
+                            size: 13,
+                            color: _T.slate400,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            project.dueDate != null
+                                ? 'Due ${formatter.format(project.dueDate!)}'
+                                : 'No static deadline',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: _T.slate400,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: project.statusColor.withOpacity(0.3),
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              project.status.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: project.statusColor,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 4. Clean micro-loading strip overlay that mounts smoothly on top
+                if (isDeleting)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(_T.r),
+                        topRight: Radius.circular(_T.r),
+                      ),
+                      child: const LinearProgressIndicator(
+                        minHeight: 3,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation<Color>(_T.red),
                       ),
                     ),
                   ),
-                ],
-              ),
-              const Spacer(),
-              if (project.description != null &&
-                  project.description!.isNotEmpty) ...[
-                Text(
-                  project.description!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: _T.slate400,
-                    height: 1.4,
-                  ),
-                ),
-                const Spacer(),
               ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Tasks: $doneTasks/$totalTasks completed',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: _T.slate500,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '${(percent * 100).toStringAsFixed(0)}%',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: _T.ink3,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: percent,
-                  minHeight: 5,
-                  backgroundColor: _T.slate100,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    percent == 1.0 ? colorPositiveStatus : _T.blue,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Divider(color: _T.slate100, height: 1),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(
-                    CupertinoIcons.calendar,
-                    size: 13,
-                    color: _T.slate400,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    project.dueDate != null
-                        ? 'Due ${formatter.format(project.dueDate!)}'
-                        : 'No static deadline',
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      color: _T.slate400,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: project.statusColor.withOpacity(0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      project.status.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: project.statusColor,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
