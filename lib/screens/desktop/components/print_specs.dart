@@ -356,26 +356,26 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
               },
               child: Row(
                 children: [
-                  // AnimatedSwitcher(
-                  //   duration: const Duration(milliseconds: 150),
-                  //   child: Icon(
-                  //     _sharedRef
-                  //         ? Icons.check_circle_rounded
-                  //         : Icons.radio_button_unchecked_rounded,
-                  //     key: ValueKey(_sharedRef),
-                  //     color: _sharedRef ? _T.blue : _T.slate400,
-                  //     size: 15,
-                  //   ),
-                  // ),
-                  // const SizedBox(width: 8),
-                  // const Text(
-                  //   'Use a single reference for all sizes',
-                  //   style: TextStyle(
-                  //     fontSize: 12,
-                  //     fontWeight: FontWeight.w500,
-                  //     color: _T.slate500,
-                  //   ),
-                  // ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    child: Icon(
+                      _sharedRef
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      key: ValueKey(_sharedRef),
+                      color: _sharedRef ? _T.blue : _T.slate400,
+                      size: 15,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Use a single reference for all sizes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: _T.slate500,
+                    ),
+                  ),
                 ],
               ),
             ),
