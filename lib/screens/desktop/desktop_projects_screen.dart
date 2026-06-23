@@ -8,6 +8,7 @@ import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/api/api_logger.dart'; // Ensure correct logger import path
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/delete_project_dialog.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 class _T {
@@ -551,6 +552,15 @@ class _ProjectCard extends ConsumerWidget {
           message: 'Project ID copied',
           icon: Icons.check_circle_outline,
           color: _T.blue,
+        );
+        break;
+      case 'delete_id':
+        // Show the elegant desktop-style delete confirmation dialog
+        showDialog(
+          context: context,
+          barrierDismissible:
+              false, // Prevents accidental closing during network requests
+          builder: (context) => DeleteProjectDialog(project: project),
         );
         break;
     }

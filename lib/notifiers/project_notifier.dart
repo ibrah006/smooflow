@@ -298,7 +298,7 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     try {
       await _repo.delete(id);
 
-      state.removeWhere((task) => task.id == id);
+      state.removeWhere((project) => project.id == id);
     } catch (e) {
       rethrow;
     }
