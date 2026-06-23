@@ -198,4 +198,13 @@ class ProjectRepo {
 
     return ProjectReportDetails.fromJson(data);
   }
+
+  Future<void> delete(String projectId) async {
+    final response = await ApiClient.http.delete('/projects/$projectId');
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete project');
+    }
+    // Successfully deleted project
+  }
 }
