@@ -16,6 +16,7 @@ enum TaskChangeType {
   assigneeRemoved,
   nameUpdated,
   newProject,
+  deleteProject,
 }
 
 /// Task change event from WebSocket
@@ -57,6 +58,8 @@ class TaskChangeEvent {
           return TaskChangeType.nameUpdated;
         case 'new_project':
           return TaskChangeType.newProject;
+        case 'project_deleted':
+          return TaskChangeType.deleteProject;
         default:
           return TaskChangeType.updated;
       }
