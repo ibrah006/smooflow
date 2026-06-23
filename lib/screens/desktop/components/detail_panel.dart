@@ -286,6 +286,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
             name: null,
             date: null,
+            printSpecs: null,
           );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
@@ -451,6 +452,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: newValue,
+            printSpecs: null,
           );
     }
   }
@@ -474,18 +476,19 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: null,
+            printSpecs: null,
           );
     }
   }
 
   // ── Multi-Print Specs Update Routine ──────────────────────────────────────
   Future<void> _onPrintSpecsChange(
-    List<PrintSpec>? updatedSpecs,
+    List<PrintSpec>? specs,
     bool sharedRef, {
     PrintSpec? updatedSpec,
   }) async {
-    final specs =
-        updatedSpecs ??
+    final updatedSpecs =
+        specs ??
         ref
             .read(taskNotifierProvider)
             .tasks
@@ -495,12 +498,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     // We aggregate quantity for backwards compatibility
     // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
     final masterRef =
-        sharedRef && specs.isNotEmpty
-            ? specs.first.ref
-            : (specs.isNotEmpty ? specs.first.ref : '');
+        sharedRef && updatedSpecs.isNotEmpty
+            ? updatedSpecs.first.ref
+            : (updatedSpecs.isNotEmpty ? updatedSpecs.first.ref : '');
 
     // We serialize the entire multi-size layout into the size field
-    final serializedSize = jsonEncode(specs.map((e) => e.toJson()).toList());
+    @deprecated
+    final serializedSize = jsonEncode(
+      updatedSpecs.map((e) => e.toJson()).toList(),
+    );
 
     await ref
         .read(taskNotifierProvider.notifier)
@@ -512,6 +518,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           quantity: null,
           size: serializedSize,
           date: null,
+          printSpecs: updatedSpecs,
         );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -458,11 +459,12 @@ class TaskNotifier extends StateNotifier<TaskState> {
   Future<void> update({
     required Task task,
     required BillingStatus? billingStatus,
-    required String? ref,
-    required int? quantity,
-    required String? size,
+    @deprecated required String? ref,
+    @deprecated required int? quantity,
+    @deprecated required String? size,
     required String? name,
     required DateTime? date,
+    required List<PrintSpec>? printSpecs,
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {
@@ -502,6 +504,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       size: size,
       name: name,
       date: date,
+      printSpecs: printSpecs,
     );
 
     if (localTaskNameChangeEventId != null) {

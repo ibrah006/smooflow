@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/api/api_client.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -269,11 +270,12 @@ class TaskRepo {
   Future<void> update({
     required Task task,
     required BillingStatus? billingStatus,
-    required String? ref,
-    required int? quantity,
-    required String? size,
+    @deprecated required String? ref,
+    @deprecated required int? quantity,
+    @deprecated required String? size,
     required String? name,
     required DateTime? date,
+    required List<PrintSpec>? printSpecs,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
