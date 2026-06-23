@@ -12,6 +12,7 @@ import 'package:smooflow/components/permission_gate.dart';
 import 'package:smooflow/core/app_routes.dart';
 import 'package:smooflow/core/args/schedule_print_job_args.dart';
 import 'package:smooflow/core/models/member.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
@@ -479,18 +480,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // ── Multi-Print Specs Update Routine ──────────────────────────────────────
   Future<void> _onPrintSpecsChange(
-    List<PrintSpecItem> specs,
+    List<PrintSpec> specs,
     bool sharedRef,
   ) async {
     // We aggregate quantity for backwards compatibility
-    final totalQty = specs.fold(0, (sum, item) => sum + item.qty);
+    // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
     final masterRef =
         sharedRef && specs.isNotEmpty
             ? specs.first.ref
             : (specs.isNotEmpty ? specs.first.ref : '');
 
     // We serialize the entire multi-size layout into the size field
-    final serializedSize = jsonEncode(specs.map((e) => e.toMap()).toList());
+    final serializedSize = jsonEncode(specs.map((e) => e.toJson()).toList());
 
     await ref
         .read(taskNotifierProvider.notifier)
@@ -499,7 +500,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           name: null,
           billingStatus: null,
           ref: masterRef,
-          quantity: totalQty,
+          quantity: null,
           size: serializedSize,
           date: null,
         );

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
@@ -220,50 +221,11 @@ class _PrinterRowState extends State<PrinterRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRINT SPECIFICATIONS CARD  (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-class PrintSpecItem {
-  String id;
-  String ref;
-  double width;
-  double height;
-  int qty;
-  String unit;
-
-  PrintSpecItem({
-    required this.id,
-    required this.ref,
-    required this.width,
-    required this.height,
-    required this.qty,
-    this.unit = 'cm',
-  });
-
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'ref': ref,
-    'w': width,
-    'h': height,
-    'qty': qty,
-    'u': unit,
-  };
-
-  factory PrintSpecItem.fromMap(Map<String, dynamic> map) => PrintSpecItem(
-    id: map['id'] ?? UniqueKey().toString(),
-    ref: map['ref'] ?? '',
-    width: (map['w'] as num?)?.toDouble() ?? 0.0,
-    height: (map['h'] as num?)?.toDouble() ?? 0.0,
-    qty: map['qty'] as int? ?? 1,
-    unit: map['u'] ?? 'cm',
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // NEW CORPORATE INLINE MULTI-SIZE EDITOR
 // ─────────────────────────────────────────────────────────────────────────────
 class PrintSpecsEditor extends StatefulWidget {
   final Task task;
-  final Function(List<PrintSpecItem> specs, bool sharedRef) onUpdate;
+  final Function(List<PrintSpec> specs, bool sharedRef) onUpdate;
 
   const PrintSpecsEditor({required this.task, required this.onUpdate});
 
@@ -273,7 +235,7 @@ class PrintSpecsEditor extends StatefulWidget {
 
 class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
   bool _sharedRef = true;
-  List<PrintSpecItem> _items = [];
+  List<PrintSpec> _items = [];
 
   @override
   void initState() {
@@ -290,36 +252,32 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
   }
 
   void _initSpecs() {
-    final sizeStr = widget.task.size ?? '';
-    if (sizeStr.trim().startsWith('[')) {
-      try {
-        final List<dynamic> decoded = jsonDecode(sizeStr);
-        _items = decoded.map((e) => PrintSpecItem.fromMap(e)).toList();
+    try {
+      _items = widget.task.printSpecs;
 
-        // Auto-detect if they share a ref
-        if (_items.isNotEmpty) {
-          final firstRef = _items.first.ref;
-          _sharedRef = _items.every((item) => item.ref == firstRef);
-        } else {
-          _sharedRef = true;
-        }
-        return;
-      } catch (_) {}
-    }
+      // Auto-detect if they share a ref
+      if (_items.isNotEmpty) {
+        final firstRef = _items.first.ref;
+        _sharedRef = _items.every((item) => item.ref == firstRef);
+      } else {
+        _sharedRef = true;
+      }
+      return;
+    } catch (_) {}
 
     // Fallback: migrate legacy simple string representation
-    final s = getSize(widget.task.size);
-    final u = getUnit(widget.task.size ?? '');
-    _items = [
-      PrintSpecItem(
-        id: UniqueKey().toString(),
-        ref: widget.task.ref ?? '',
-        width: s.width,
-        height: s.height,
-        qty: widget.task.quantity ?? 1,
-        unit: u.isEmpty ? 'cm' : u,
-      ),
-    ];
+    // final s = getSize(widget.task.size);
+    // final u = getUnit(widget.task.size ?? '');
+    // _items = [
+    //   PrintSpec(
+    //     id: UniqueKey().toString(),
+    //     ref: widget.task.ref ?? '',
+    //     width: s.width,
+    //     height: s.height,
+    //     qty: widget.task.quantity ?? 1,
+    //     unit: u.isEmpty ? 'cm' : u,
+    //   ),
+    // ];
   }
 
   void _notifyChange() {
@@ -346,11 +304,13 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _sharedRef = !_sharedRef);
+                // Shared reference and multiple specs found
                 if (_sharedRef && _items.isNotEmpty) {
-                  final masterRef = _items.first.ref;
-                  for (var item in _items) {
-                    item.ref = masterRef;
-                  }
+                  // final masterRef = _items.first.ref;
+                  // for (var item in _items) {
+                  //   item.ref = masterRef;
+                  // }
+                  // TODO: Update all print spec references
                 }
                 _notifyChange();
               },
@@ -403,11 +363,13 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                       key: ValueKey(
                         'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
                       ),
-                      initialText: _items.isNotEmpty ? _items.first.ref : '',
+                      initialText:
+                          _items.isNotEmpty ? (_items.first.ref ?? '') : '',
                       onSubmitted: (val) {
-                        for (var item in _items) {
-                          item.ref = val;
-                        }
+                        // for (var item in _items) {
+                        //   item.ref = val;
+                        // }
+                        // TODO: change the ref for all print specs for this task
                         _notifyChange();
                       },
                       mode: GhostFieldMode.inline,
@@ -496,18 +458,20 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _items.add(
-                    PrintSpecItem(
-                      id: UniqueKey().toString(),
-                      ref:
-                          _sharedRef && _items.isNotEmpty
-                              ? _items.first.ref
-                              : '',
-                      width: 0,
-                      height: 0,
-                      qty: 1,
-                    ),
-                  );
+                  // _items.add(
+                  //   PrintSpec(
+                  //     id: UniqueKey().toString(),
+                  //     ref:
+                  //         _sharedRef && _items.isNotEmpty
+                  //             ? _items.first.ref
+                  //             : '',
+                  //     width: 0,
+                  //     height: 0,
+                  //     qty: 1,
+                  //   ),
+                  // );
+
+                  // TODO: add new print spec item
                 });
                 _notifyChange();
               },
@@ -549,7 +513,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
 }
 
 class _SpecRowInline extends StatefulWidget {
-  final PrintSpecItem item;
+  final PrintSpec item;
   final bool sharedRef;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
@@ -593,9 +557,10 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                 flex: 3,
                 child: GhostTextField(
                   key: ValueKey('${widget.item.id}_ref'),
-                  initialText: widget.item.ref,
+                  initialText: widget.item.ref ?? '',
                   onSubmitted: (v) {
-                    widget.item.ref = v;
+                    // widget.item.ref = v;
+                    // TODO: change particular reference
                     widget.onUpdate();
 
                     print("[internal ref] - on submitted");
@@ -618,7 +583,8 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     key: ValueKey('${widget.item.id}_w'),
                     initialText: _fmt(widget.item.width),
                     onSubmitted: (v) {
-                      widget.item.width = double.tryParse(v) ?? 0;
+                      // widget.item.width = double.tryParse(v) ?? 0;
+                      // TODO: update print spec width
                       widget.onUpdate();
                     },
                     isDecimalOnlyField: true,
@@ -641,7 +607,8 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     key: ValueKey('${widget.item.id}_h'),
                     initialText: _fmt(widget.item.height),
                     onSubmitted: (v) {
-                      widget.item.height = double.tryParse(v) ?? 0;
+                      // widget.item.height = double.tryParse(v) ?? 0;
+                      // TODO: update print spec height
                       widget.onUpdate();
                     },
                     isDecimalOnlyField: true,
@@ -664,9 +631,10 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                 children: [
                   GhostTextField(
                     key: ValueKey('${widget.item.id}_qty'),
-                    initialText: widget.item.qty.toString(),
+                    initialText: widget.item.quantity.toString(),
                     onSubmitted: (v) {
-                      widget.item.qty = int.tryParse(v) ?? 0;
+                      // widget.item.quantity = int.tryParse(v) ?? 0;
+                      // TODO: update print spec quantity
                       widget.onUpdate();
                     },
                     isDecimalOnlyField: true,

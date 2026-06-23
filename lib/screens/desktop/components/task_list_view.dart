@@ -785,10 +785,6 @@ class _HeaderRow extends StatelessWidget {
     final notifier = _WidthScope.of(context);
     final allCols = [..._kCols, _kBillingCol];
 
-    print(
-      "constraints max width: ${constraintsMaxWidth}, max width: ${MediaQuery.of(context).size.width}",
-    );
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad, vertical: 8),
       child: AnimatedBuilder(

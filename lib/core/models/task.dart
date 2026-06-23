@@ -612,7 +612,7 @@ class Task {
       'quantity': _quantity,
       "billingStatus": billingStatus.name,
       "created": date?.toIso8601String(),
-      "printSpecs": printSpecs.map((printSpec) => printSpec.toJson()),
+      "printSpecs": printSpecs.map((printSpec) => printSpec.toJson()).toList(),
     };
     try {
       return {'id': id, ...json};

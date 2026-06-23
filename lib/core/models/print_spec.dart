@@ -5,6 +5,16 @@ class PrintSpec {
   final int? quantity;
   // final int taskId;
 
+  double get width {
+    return size != null ? double.tryParse(size!.split('×').first) ?? 0 : 0;
+  }
+
+  double get height {
+    return size != null
+        ? double.tryParse(size!.split('×')[1].split('cm').first.trim()) ?? 0
+        : 0;
+  }
+
   PrintSpec({required this.id, this.ref, this.size, this.quantity});
 
   PrintSpec.create({this.ref, this.size, this.quantity});
@@ -19,7 +29,7 @@ class PrintSpec {
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'ref': ref, 'size': size, 'quantity': quantity};
+    return {'ref': ref, 'size': size, 'quantity': quantity};
   }
 
   PrintSpec copyWith({
