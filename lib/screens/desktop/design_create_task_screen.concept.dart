@@ -519,7 +519,7 @@ class _CreateTaskScreenState extends ConsumerState<DesignCreateTaskScreen> {
 
                 // Quantity Input Field with Trailing Unit Accent
                 SizedBox(
-                  width: 130,
+                  width: 100,
                   child: _buildFormInputField(
                     controller: spec.qtyCtrl,
                     hintText: '0',
