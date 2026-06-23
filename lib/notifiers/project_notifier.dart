@@ -293,4 +293,14 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     }
     return _getReportForPeriod(period);
   }
+
+  Future<void> delete(String id) async {
+    try {
+      await _repo.delete(id);
+
+      state.removeWhere((task) => task.id == id);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
