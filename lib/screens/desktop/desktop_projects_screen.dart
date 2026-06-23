@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/core/api/api_logger.dart'; // Ensure correct logger import path
 import 'package:smooflow/core/models/project.dart';
+import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 
 class _T {
   static const Color white = Colors.white;
+  static const red = Color(0xFFEF4444);
   static const Color slate50 = Color(0xFFF8FAFC);
   static const Color slate100 = Color(0xFFF1F5F9);
   static const Color slate200 = Color(0xFFE2E8F0);
   static const Color slate300 = Color(0xFFCBD5E1);
   static const Color slate400 = Color(0xFF94A3B8);
   static const Color slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
   static const Color slate700 = Color(0xFF334155);
+  static const Color slate800 = Color(0xFF1E293B);
   static const Color ink = Color(0xFF0F172A);
   static const Color ink3 = Color(0xFF1E293B);
   static const Color blue = Color(0xFF2563EB);
@@ -422,7 +429,7 @@ class _FilterTab extends StatelessWidget {
 }
 
 // ── Interactive Project Card implementation with Pin Toggles ──────────────────
-class _ProjectCard extends StatelessWidget {
+class _ProjectCard extends ConsumerWidget {
   final Project project;
   final bool isPinned;
   final VoidCallback onPinToggled;
@@ -435,17 +442,146 @@ class _ProjectCard extends StatelessWidget {
     required this.onTap,
   });
 
+  void _showContextMenu(
+    BuildContext context,
+    TapUpDetails details,
+    bool canDeleteProject,
+  ) async {
+    // 1. Locate the absolute global overlay layout boundary
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    // 2. Derive bounding vectors exactly where the cursor is pointing
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromLTWH(details.globalPosition.dx, details.globalPosition.dy, 0, 0),
+      Offset.zero & overlay.size,
+    );
+
+    // 3. Render a native desktop-behaving Material PopupMenu
+    final result = await showMenu<String>(
+      context: context,
+      position: position,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: _T.slate200, width: 1),
+      ),
+      color: _T.white,
+      surfaceTintColor: Colors.transparent,
+      items: [
+        PopupMenuItem<String>(
+          value: 'open',
+          height: 36,
+          child: Row(
+            children: [
+              Icon(Icons.open_in_new_rounded, size: 16, color: _T.slate600),
+              const SizedBox(width: 10),
+              const Text(
+                'Open Project',
+                style: TextStyle(fontSize: 13, color: _T.slate800),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'toggle_pin',
+          height: 36,
+          child: Row(
+            children: [
+              Icon(
+                isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+                size: 16,
+                color: _T.slate600,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                isPinned ? 'Unpin from Sidebar' : 'Pin to Sidebar',
+                style: const TextStyle(fontSize: 13, color: _T.slate800),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'copy_id',
+          height: 36,
+          child: Row(
+            children: [
+              Icon(Icons.copy_rounded, size: 16, color: _T.slate600),
+              const SizedBox(width: 10),
+              Text(
+                'Copy Project ID',
+                style: const TextStyle(fontSize: 13, color: _T.slate800),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete_id',
+          height: 36,
+          enabled: canDeleteProject,
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline_rounded, size: 16, color: _T.red),
+              const SizedBox(width: 10),
+              Opacity(
+                opacity: canDeleteProject ? 1 : 0.4,
+                child: Text(
+                  'Delete ${canDeleteProject ? 'Project' : '(Unavailable)'}',
+                  style: const TextStyle(fontSize: 13, color: _T.red),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    // 4. Handle menu item selection callbacks
+    if (!context.mounted) return;
+    switch (result) {
+      case 'open':
+        onTap();
+        break;
+      case 'toggle_pin':
+        onPinToggled();
+        break;
+      case 'copy_id':
+        await Clipboard.setData(ClipboardData(text: project.id.toString()));
+        AppToast.show(
+          message: 'Project ID copied',
+          icon: Icons.check_circle_outline,
+          color: _T.blue,
+        );
+        break;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final totalTasks = project.tasksCount;
     final doneTasks = project.completedTasksCount;
     final double percent = totalTasks == 0 ? 0.0 : (doneTasks / totalTasks);
     final DateFormat formatter = DateFormat('MMM dd, yyyy');
 
+    final canDeleteProject =
+        ref
+            .watch(taskNotifierProvider)
+            .tasks
+            .where((t) => t.projectId == project.id)
+            .isEmpty;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
+        behavior:
+            HitTestBehavior.opaque, // Ensures the entire box is right-clickable
         onTap: onTap,
+        onSecondaryTapUp:
+            (details) => _showContextMenu(
+              context,
+              details,
+              canDeleteProject,
+            ), // Handles Right-Click
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -469,7 +605,7 @@ class _ProjectCard extends StatelessWidget {
                   Container(
                     width: 10,
                     height: 10,
-                    margin: EdgeInsets.only(top: 4.5),
+                    margin: const EdgeInsets.only(top: 4.5),
                     decoration: BoxDecoration(
                       color: project.color,
                       shape: BoxShape.circle,

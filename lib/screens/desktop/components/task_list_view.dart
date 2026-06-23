@@ -31,6 +31,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -784,6 +785,10 @@ class _HeaderRow extends StatelessWidget {
     final notifier = _WidthScope.of(context);
     final allCols = [..._kCols, _kBillingCol];
 
+    print(
+      "constraints max width: ${constraintsMaxWidth}, max width: ${MediaQuery.of(context).size.width}",
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _kRowHPad, vertical: 8),
       child: AnimatedBuilder(
@@ -813,15 +818,6 @@ class _HeaderRow extends StatelessWidget {
     for (int i = 0; i < visibleCols.length; i++) {
       final col = visibleCols[i];
       final w = notifier.widthOf(col.id);
-
-      accumulatedLeft += w;
-
-      // Max width equals total screen space minus everything up to this column
-    }
-
-    for (int i = 0; i < visibleCols.length; i++) {
-      final col = visibleCols[i];
-      final w = notifier.widthOf(col.id);
       if (w < 1) continue;
 
       result.add(
@@ -843,11 +839,10 @@ class _HeaderRow extends StatelessWidget {
         ),
       );
 
-      // accumulatedLeft += w;
-
-      // // Max width equals total screen space minus everything up to this column
-      // final maxAllowedWidth = constraintsMaxWidth - accumulatedLeft;
+      // Max width equals total screen space minus everything up to this column
       final maxAllowedWidth = constraintsMaxWidth - accumulatedLeft;
+
+      accumulatedLeft += w;
 
       if (!isDetailOpen && i < visibleCols.length - 1) {
         result.add(
@@ -991,7 +986,7 @@ class _ColRow extends StatelessWidget {
       );
 
       // Spacer for the resize handle width — keeps cells aligned with header
-      if (col.id != _kBillingCol.id && !isDetailOpen) {
+      if (col.id != _kBillingCol.id) {
         result.add(const SizedBox(width: _kResizeHandleWidth));
       }
     }
