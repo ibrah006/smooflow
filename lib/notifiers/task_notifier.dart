@@ -10,6 +10,7 @@ import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
@@ -660,6 +661,25 @@ class TaskNotifier extends StateNotifier<TaskState> {
           ref
               .read(projectByIdProvider(event.task!.projectId))!
               .completedTasksCount++;
+        } else if (event.changes?["newPrintSpecs"] != null) {
+          // This means that it's a new print spec event
+
+          ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
+                  .task!
+                  .id] =
+              ref
+                  .read(taskNotifierProvider)
+                  .currentlyCreatingSpecs[event.taskId]
+                  ?.map((spec) {
+                    if (spec.tempLocalId ==
+                        event.changes!["newPrintSpecs"]["tempLocalId"]) {
+                      spec.initializeId(event.changes!["newPrintSpecs"]["id"]);
+                    }
+
+                    return spec;
+                  })
+                  .toList() ??
+              [];
         }
 
         break;
