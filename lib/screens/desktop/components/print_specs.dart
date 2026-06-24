@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 
 class _T {
@@ -438,6 +440,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             final item = e.value;
             return _SpecRowInline(
               key: ValueKey(item.id),
+              taskId: widget.task.id,
               item: item,
               sharedRef: _sharedRef,
               onChanged: (updatedItem) {
@@ -554,11 +557,12 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
   }
 }
 
-class _SpecRowInline extends StatefulWidget {
+class _SpecRowInline extends ConsumerStatefulWidget {
   final PrintSpec item;
   final bool sharedRef;
   final ValueChanged<PrintSpec> onChanged;
   final VoidCallback onDelete;
+  final int taskId;
 
   _SpecRowInline({
     super.key,
@@ -566,19 +570,33 @@ class _SpecRowInline extends StatefulWidget {
     required this.sharedRef,
     required this.onChanged,
     required this.onDelete,
+    required this.taskId,
   });
 
   @override
-  State<_SpecRowInline> createState() => _SpecRowInlineState();
+  ConsumerState<_SpecRowInline> createState() => _SpecRowInlineState();
 }
 
-class _SpecRowInlineState extends State<_SpecRowInline> {
+class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
   bool _hovered = false;
 
   String _fmt(double n) => n == n.toInt() ? n.toInt().toString() : n.toString();
 
   @override
   Widget build(BuildContext context) {
+    try {
+      ref
+          .read(taskNotifierProvider)
+          .currentlyCreatingSpecs[widget.taskId]
+          ?.removeWhere((spec) {
+            widget.item.initializeId(spec.createdId!);
+
+            return spec.tempLocalId == widget.item.id;
+          });
+    } catch (e) {
+      // pass
+    }
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
