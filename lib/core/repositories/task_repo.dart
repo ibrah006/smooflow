@@ -302,7 +302,8 @@ class TaskRepo {
                 ? DateTime(date.year, date.month, date.day).toIso8601String()
                 : null,
         ...name != null ? {"name": name} : {},
-        "printSpecs": updatedPrintSpecs?.map((spec) => spec.id).toList(),
+        "updatedPrintSpecs": updatedPrintSpecs?.map((spec) => spec.id).toList(),
+        "newPrintSpec": newPrintSpec,
       },
     );
 
