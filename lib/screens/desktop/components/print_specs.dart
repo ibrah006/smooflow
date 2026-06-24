@@ -354,7 +354,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                     child: GhostTextField(
                       onEditingComplete: _notifyChange,
                       key: ValueKey(
-                        'master_ref_${_items.isNotEmpty ? _items.first.tempId : ''}',
+                        'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
                       ),
                       initialText:
                           _items.isNotEmpty ? (_items.first.ref ?? '') : '',
@@ -437,7 +437,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             final index = e.key;
             final item = e.value;
             return _SpecRowInline(
-              key: ValueKey(item.tempId),
+              key: ValueKey(item.id),
               item: item,
               sharedRef: _sharedRef,
               onChanged: (updatedItem) {
@@ -446,11 +446,11 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                 });
 
                 // Transient items created locally possess negative IDs
-                final bool isLocalDraft = updatedItem.tempId < 0;
+                final bool isLocalDraft = updatedItem.id < 0;
 
                 if (isLocalDraft) {
                   // Guard against multi-field edit duplicate creation streams
-                  if (_committedTransientIds.contains(updatedItem.tempId)) {
+                  if (_committedTransientIds.contains(updatedItem.id)) {
                     return;
                   }
 
@@ -478,7 +478,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                   }
 
                   if (hasChanged) {
-                    _committedTransientIds.add(updatedItem.tempId);
+                    _committedTransientIds.add(updatedItem.id);
                     widget.onUpdate(
                       null,
                       _sharedRef,
@@ -598,7 +598,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               Expanded(
                 flex: 3,
                 child: GhostTextField(
-                  key: ValueKey('${widget.item.tempId}_ref'),
+                  key: ValueKey('${widget.item.id}_ref'),
                   initialText: widget.item.ref ?? '',
                   onSubmitted: (v) {
                     widget.item.ref = v;
@@ -620,7 +620,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               child: Row(
                 children: [
                   GhostTextField(
-                    key: ValueKey('${widget.item.tempId}_w'),
+                    key: ValueKey('${widget.item.id}_w'),
                     initialText: _fmt(widget.item.width),
                     onSubmitted: (v) {
                       final updatedPrintSpec = widget.item.copyWith(
@@ -646,7 +646,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     ),
                   ),
                   GhostTextField(
-                    key: ValueKey('${widget.item.tempId}_h'),
+                    key: ValueKey('${widget.item.id}_h'),
                     initialText: _fmt(widget.item.height),
                     onSubmitted: (v) {
                       final updatedPrintSpec = widget.item.copyWith(
@@ -674,7 +674,7 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               child: Row(
                 children: [
                   GhostTextField(
-                    key: ValueKey('${widget.item.tempId}_qty'),
+                    key: ValueKey('${widget.item.id}_qty'),
                     initialText: widget.item.quantity.toString(),
                     onSubmitted: (v) {
                       final updatedPrintSpec = widget.item.copyWith(

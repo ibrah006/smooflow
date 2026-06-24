@@ -1,23 +1,30 @@
 import 'dart:math';
 
-import 'package:uuid/uuid.dart';
-
 class PrintSpec {
-  late final int id;
+  late final int _id;
+
+  int get id {
+    try {
+      return _id;
+    } catch (e) {
+      return _tempId!;
+    }
+  }
+
   String? ref;
   String? size;
   int? quantity;
   // final int taskId;
 
-  late final int _tempId;
+  int? _tempId;
 
-  int get tempId {
-    try {
-      return id;
-    } catch (e) {
-      return _tempId;
-    }
-  }
+  // int get tempId {
+  //   try {
+  //     return id;
+  //   } catch (e) {
+  //     return _tempId;
+  //   }
+  // }
 
   double get width {
     return size != null ? double.tryParse(size!.split('×').first) ?? 0 : 0;
@@ -33,7 +40,7 @@ class PrintSpec {
     return size != null ? size!.split('×')[1].split(' ')[1] : null;
   }
 
-  PrintSpec({required this.id, this.ref, this.size, this.quantity});
+  PrintSpec({required int id, this.ref, this.size, this.quantity}) : _id = id;
 
   PrintSpec.create({this.ref, this.size, this.quantity})
     : _tempId = Random().nextInt(2000000) * -1;
@@ -59,7 +66,7 @@ class PrintSpec {
     int? taskId,
   }) {
     return PrintSpec(
-      id: id ?? this.tempId,
+      id: id ?? this.id,
       ref: ref ?? this.ref,
       size: size ?? this.size,
       quantity: quantity ?? this.quantity,
