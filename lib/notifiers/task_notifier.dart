@@ -499,6 +499,13 @@ class TaskNotifier extends StateNotifier<TaskState> {
       return;
     }
 
+    if (newPrintSpec != null) {
+      state.currentlyCreatingSpecs[task.id] = [
+        ...state.currentlyCreatingSpecs[task.id] ?? [],
+        CreatingPrintSpecID(newPrintSpec.tempId),
+      ];
+    }
+
     await _repo.update(
       task: task,
       billingStatus: billingStatus,

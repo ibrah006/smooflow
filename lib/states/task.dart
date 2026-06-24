@@ -56,6 +56,9 @@ class TaskState {
     _connectionStatus = value;
   }
 
+  // { taskId: creating print specs for this task }
+  final Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = {};
+
   TaskState({
     List<Task> tasks = const [],
     bool isLoading = false,
@@ -211,4 +214,17 @@ class TaskState {
       return null;
     }
   }
+}
+
+class CreatingPrintSpecID {
+  int tempLocalId;
+  int? _createdId;
+
+  CreatingPrintSpecID(this.tempLocalId);
+
+  initializeId(int id) {
+    _createdId = id;
+  }
+
+  int? get createdId => _createdId;
 }
