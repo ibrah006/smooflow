@@ -304,7 +304,7 @@ class TaskRepo {
         ...name != null ? {"name": name} : {},
         "updatedPrintSpecs":
             updatedPrintSpecs?.map((spec) => spec.toJson()).toList(),
-        "newPrintSpec": newPrintSpec,
+        "newPrintSpec": newPrintSpec?.toCreateJson(),
       },
     );
 
