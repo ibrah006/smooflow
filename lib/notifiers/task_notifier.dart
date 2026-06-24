@@ -503,7 +503,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
     if (newPrintSpec != null) {
       state.currentlyCreatingSpecs[task.id] = [
         ...state.currentlyCreatingSpecs[task.id] ?? [],
-        CreatingPrintSpecID(newPrintSpec.tempId),
+        // here newPrintSpec.id automatically returns temp local id
+        CreatingPrintSpecID(newPrintSpec.id),
       ];
     }
 
