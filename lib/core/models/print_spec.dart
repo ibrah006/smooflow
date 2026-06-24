@@ -62,6 +62,10 @@ class PrintSpec {
     return {'ref': ref, 'size': size, 'quantity': quantity};
   }
 
+  Map<String, dynamic> toCreateJson() {
+    return {...toJson(), 'tempLocalId': id};
+  }
+
   PrintSpec copyWith({
     int? id,
     String? ref,
