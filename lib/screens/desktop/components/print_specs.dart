@@ -116,7 +116,6 @@ class _PrinterRowState extends State<PrinterRow> {
             ),
             child: Row(
               children: [
-                // Printer icon badge
                 Container(
                   width: 34,
                   height: 34,
@@ -141,7 +140,6 @@ class _PrinterRowState extends State<PrinterRow> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Name + nickname
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +165,6 @@ class _PrinterRowState extends State<PrinterRow> {
                     ],
                   ),
                 ),
-                // Status pill
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -239,6 +236,9 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
   bool _sharedRef = true;
   List<PrintSpec> _items = [];
 
+  // Tracks transient local item IDs that have fired an API request to prevent duplicate creation
+  final Set<int> _committedTransientIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -254,10 +254,10 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
   }
 
   void _initSpecs() {
+    _committedTransientIds.clear();
     try {
-      _items = widget.task.printSpecs;
+      _items = List.from(widget.task.printSpecs);
 
-      // Auto-detect if they share a ref
       if (_items.isNotEmpty) {
         final firstRef = _items.first.ref;
         _sharedRef = _items.every((item) => item.ref == firstRef);
@@ -266,23 +266,8 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
       }
       return;
     } catch (_) {}
-
-    // Fallback: migrate legacy simple string representation
-    // final s = getSize(widget.task.size);
-    // final u = getUnit(widget.task.size ?? '');
-    // _items = [
-    //   PrintSpec(
-    //     id: UniqueKey().toString(),
-    //     ref: widget.task.ref ?? '',
-    //     width: s.width,
-    //     height: s.height,
-    //     qty: widget.task.quantity ?? 1,
-    //     unit: u.isEmpty ? 'cm' : u,
-    //   ),
-    // ];
   }
 
-  @deprecated
   void _notifyChange() {
     widget.onUpdate(_items, _sharedRef);
   }
@@ -307,12 +292,12 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _sharedRef = !_sharedRef);
-                // Shared reference and multiple specs found
                 if (_sharedRef && _items.isNotEmpty) {
                   final masterRef = _items.first.ref;
-                  // for (var item in _items) {
-                  //   item.ref = masterRef;
-                  // }
+
+                  for (int i = 0; i < _items.length; i++) {
+                    _items[i] = _items[i].copyWith(ref: masterRef);
+                  }
 
                   final updatedItems =
                       _items
@@ -369,14 +354,14 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                     child: GhostTextField(
                       onEditingComplete: _notifyChange,
                       key: ValueKey(
-                        'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
+                        'master_ref_${_items.isNotEmpty ? _items.first.tempId : ''}',
                       ),
                       initialText:
                           _items.isNotEmpty ? (_items.first.ref ?? '') : '',
                       onSubmitted: (val) {
-                        // for (var item in _items) {
-                        //   item.ref = val;
-                        // }
+                        for (int i = 0; i < _items.length; i++) {
+                          _items[i] = _items[i].copyWith(ref: val);
+                        }
                         final updatedItems =
                             _items
                                 .map((item) => item.copyWith(ref: val))
@@ -442,7 +427,7 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 28), // delete placeholder
+                const SizedBox(width: 28),
               ],
             ),
           ),
@@ -452,13 +437,65 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
             final index = e.key;
             final item = e.value;
             return _SpecRowInline(
-              key: ValueKey(item.id),
+              key: ValueKey(item.tempId),
               item: item,
               sharedRef: _sharedRef,
-              onUpdate: widget.onUpdate,
+              onChanged: (updatedItem) {
+                setState(() {
+                  _items[index] = updatedItem;
+                });
+
+                // Transient items created locally possess negative IDs
+                final bool isLocalDraft = updatedItem.tempId < 0;
+
+                if (isLocalDraft) {
+                  // Guard against multi-field edit duplicate creation streams
+                  if (_committedTransientIds.contains(updatedItem.tempId)) {
+                    return;
+                  }
+
+                  const String defaultSize = "0×0 cm";
+                  const int defaultQty = 1;
+                  final String defaultRef =
+                      _sharedRef && _items.isNotEmpty
+                          ? (_items.first.ref ?? '')
+                          : '';
+
+                  bool hasChanged = false;
+
+                  // Evaluate if size or quantity deviated from fallback metrics
+                  if (updatedItem.size != defaultSize ||
+                      updatedItem.quantity != defaultQty) {
+                    hasChanged = true;
+                  }
+
+                  // Evaluate if unique custom tracking code reference was set
+                  if (!_sharedRef &&
+                      updatedItem.ref != defaultRef &&
+                      updatedItem.ref != null &&
+                      updatedItem.ref!.trim().isNotEmpty) {
+                    hasChanged = true;
+                  }
+
+                  if (hasChanged) {
+                    _committedTransientIds.add(updatedItem.tempId);
+                    widget.onUpdate(
+                      null,
+                      _sharedRef,
+                      newPrintSpec: updatedItem,
+                    );
+                  }
+                } else {
+                  // Standard direct update synchronization flow for real entity objects
+                  widget.onUpdate([updatedItem], _sharedRef);
+                }
+              },
               onDelete: () {
-                setState(() => _items.removeAt(index));
-                _notifyChange();
+                final removed = _items.removeAt(index);
+                setState(() {});
+                if (removed.id > 0) {
+                  _notifyChange();
+                }
               },
             );
           }),
@@ -476,11 +513,8 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
                     size: "0×0 cm",
                     quantity: 1,
                   );
-                  // _items.add(
-                  //  printSpec
-                  // );
-
-                  widget.onUpdate(null, _sharedRef, newPrintSpec: printSpec);
+                  _items.add(printSpec);
+                  // Dynamic API service synchronization is deferred until layout is modified
                 });
               },
               child: Padding(
@@ -523,19 +557,14 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
 class _SpecRowInline extends StatefulWidget {
   final PrintSpec item;
   final bool sharedRef;
-  final Function(
-    List<PrintSpec>? specs,
-    bool sharedRef, {
-    PrintSpec? newPrintSpec,
-  })
-  onUpdate;
+  final ValueChanged<PrintSpec> onChanged;
   final VoidCallback onDelete;
 
-  const _SpecRowInline({
+  _SpecRowInline({
     super.key,
     required this.item,
     required this.sharedRef,
-    required this.onUpdate,
+    required this.onChanged,
     required this.onDelete,
   });
 
@@ -569,14 +598,12 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               Expanded(
                 flex: 3,
                 child: GhostTextField(
-                  key: ValueKey('${widget.item.id}_ref'),
+                  key: ValueKey('${widget.item.tempId}_ref'),
                   initialText: widget.item.ref ?? '',
                   onSubmitted: (v) {
-                    // widget.item.ref = v;
+                    widget.item.ref = v;
                     final updatedPrintSpec = widget.item.copyWith(ref: v);
-                    widget.onUpdate([updatedPrintSpec], widget.sharedRef);
-
-                    print("[internal ref] - on submitted");
+                    widget.onChanged(updatedPrintSpec);
                   },
                   style: const TextStyle(
                     fontSize: 12.5,
@@ -593,14 +620,14 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               child: Row(
                 children: [
                   GhostTextField(
-                    key: ValueKey('${widget.item.id}_w'),
+                    key: ValueKey('${widget.item.tempId}_w'),
                     initialText: _fmt(widget.item.width),
                     onSubmitted: (v) {
-                      // widget.item.width = double.tryParse(v) ?? 0;
                       final updatedPrintSpec = widget.item.copyWith(
-                        size: '$v×${widget.item.height} ${widget.item.unit}',
+                        size:
+                            '$v×${_fmt(widget.item.height)} ${widget.item.unit ?? 'cm'}',
                       );
-                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
+                      widget.onChanged(updatedPrintSpec);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -619,14 +646,14 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
                     ),
                   ),
                   GhostTextField(
-                    key: ValueKey('${widget.item.id}_h'),
+                    key: ValueKey('${widget.item.tempId}_h'),
                     initialText: _fmt(widget.item.height),
                     onSubmitted: (v) {
-                      // widget.item.height = double.tryParse(v) ?? 0;
                       final updatedPrintSpec = widget.item.copyWith(
-                        size: '${widget.item.width}×$v ${widget.item.unit}',
+                        size:
+                            '${_fmt(widget.item.width)}×$v ${widget.item.unit ?? 'cm'}',
                       );
-                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
+                      widget.onChanged(updatedPrintSpec);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(
@@ -647,14 +674,13 @@ class _SpecRowInlineState extends State<_SpecRowInline> {
               child: Row(
                 children: [
                   GhostTextField(
-                    key: ValueKey('${widget.item.id}_qty'),
+                    key: ValueKey('${widget.item.tempId}_qty'),
                     initialText: widget.item.quantity.toString(),
                     onSubmitted: (v) {
-                      // widget.item.quantity = int.tryParse(v) ?? 0;
                       final updatedPrintSpec = widget.item.copyWith(
                         quantity: int.tryParse(v) ?? 0,
                       );
-                      widget.onUpdate([updatedPrintSpec], widget.sharedRef);
+                      widget.onChanged(updatedPrintSpec);
                     },
                     isDecimalOnlyField: true,
                     style: const TextStyle(

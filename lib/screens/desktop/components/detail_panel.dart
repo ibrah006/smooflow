@@ -286,6 +286,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
             name: null,
             date: null,
+            updatedPrintSpecs: null,
             newPrintSpec: null,
           );
       widget.task.billingStatus = _billingSelection;
@@ -452,6 +453,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: newValue,
+            updatedPrintSpecs: null,
             newPrintSpec: null,
           );
     }
@@ -476,6 +478,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             quantity: null,
             size: null,
             date: null,
+            updatedPrintSpecs: null,
             newPrintSpec: null,
           );
     }
@@ -487,26 +490,18 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     bool sharedRef, {
     PrintSpec? newPrintSpec,
   }) async {
-    final updatedSpecs =
-        updatedPrintSpecs ??
-        ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
-            .printSpecs;
-
     // We aggregate quantity for backwards compatibility
     // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
-    final masterRef =
-        sharedRef && updatedSpecs.isNotEmpty
-            ? updatedSpecs.first.ref
-            : (updatedSpecs.isNotEmpty ? updatedSpecs.first.ref : '');
+    // final masterRef =
+    //     sharedRef && updatedSpecs.isNotEmpty
+    //         ? updatedSpecs.first.ref
+    //         : (updatedSpecs.isNotEmpty ? updatedSpecs.first.ref : '');
 
-    // We serialize the entire multi-size layout into the size field
-    @deprecated
-    final serializedSize = jsonEncode(
-      updatedSpecs.map((e) => e.toJson()).toList(),
-    );
+    // // We serialize the entire multi-size layout into the size field
+    // @deprecated
+    // final serializedSize = jsonEncode(
+    //   updatedSpecs.map((e) => e.toJson()).toList(),
+    // );
 
     await ref
         .read(taskNotifierProvider.notifier)
@@ -514,11 +509,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           task: widget.task,
           name: null,
           billingStatus: null,
-          ref: masterRef,
+          ref: null,
           quantity: null,
-          size: serializedSize,
+          size: null,
           date: null,
-          newPrintSpec: updatedSpecs,
+          updatedPrintSpecs: updatedPrintSpecs,
+          newPrintSpec: newPrintSpec,
         );
   }
 

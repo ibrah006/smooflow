@@ -464,7 +464,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
     @deprecated required String? size,
     required String? name,
     required DateTime? date,
-    required List<PrintSpec>? newPrintSpec,
+    required List<PrintSpec>? updatedPrintSpecs,
+    required PrintSpec? newPrintSpec,
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {
@@ -491,7 +492,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
         quantity == null &&
         size == null &&
         name == null &&
-        date == null) {
+        date == null &&
+        updatedPrintSpecs == null &&
+        newPrintSpec == null) {
       // Nothing to update
       return;
     }
@@ -504,6 +507,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       size: size,
       name: name,
       date: date,
+      updatedPrintSpecs: updatedPrintSpecs,
       newPrintSpec: newPrintSpec,
     );
 
