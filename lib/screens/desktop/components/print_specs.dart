@@ -461,8 +461,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
               // pass
             }
 
-            print("print spec id: ${item.id}");
-
             return _SpecRowInline(
               key: ValueKey(item.id),
               taskId: widget.task.id,
