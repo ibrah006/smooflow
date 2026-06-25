@@ -442,6 +442,35 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
           ..._items.asMap().entries.map((e) {
             final index = e.key;
             final item = e.value;
+
+            try {
+              final createdId =
+                  ref
+                      .read(taskNotifierProvider)
+                      .currentlyCreatingSpecs[widget.task.id]
+                      ?.lastWhere((spec) {
+                        print(
+                          "[_PrintSpecsEditor items.asMap().entries.map(e=> _SpecRowInline] spec temp id: ${spec.tempLocalId}, item id: ${item.id}",
+                        );
+                        return spec.tempLocalId == item.id;
+                      })
+                      .createdId;
+              if (createdId != null) {
+                print("local id: ${item.id} created id: ${createdId}");
+                try {
+                  item.initializeId(createdId);
+                } catch (e) {
+                  print(
+                    "error caught at [_PrintSpecsEditor] when trying to initialize createdId: $e",
+                  );
+                }
+              }
+            } catch (e) {
+              // pass
+            }
+
+            print("print spec id: ${item.id}");
+
             return _SpecRowInline(
               key: ValueKey(item.id),
               taskId: widget.task.id,
@@ -588,20 +617,6 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      final createdId =
-          ref
-              .read(taskNotifierProvider)
-              .currentlyCreatingSpecs[widget.taskId]
-              ?.firstWhere((spec) {
-                return spec.tempLocalId == widget.item.id;
-              })
-              .createdId;
-      if (createdId != null) widget.item.initializeId(createdId);
-    } catch (e) {
-      // pass
-    }
-
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),

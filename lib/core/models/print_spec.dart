@@ -66,6 +66,14 @@ class PrintSpec {
     return {...toJson(), 'tempLocalId': id};
   }
 
+  PrintSpec._copyWithTempId(
+    int tempId,
+    String? ref,
+    String? size,
+    int? quantity,
+    int? taskId,
+  );
+
   PrintSpec copyWith({
     int? id,
     String? ref,
@@ -73,11 +81,13 @@ class PrintSpec {
     int? quantity,
     int? taskId,
   }) {
-    return PrintSpec(
-      id: id ?? this.id,
-      ref: ref ?? this.ref,
-      size: size ?? this.size,
-      quantity: quantity ?? this.quantity,
-    );
+    return (id ?? this.id) < 0
+        ? PrintSpec._copyWithTempId(id ?? this.id, ref, size, quantity, taskId)
+        : PrintSpec(
+          id: id ?? this.id,
+          ref: ref ?? this.ref,
+          size: size ?? this.size,
+          quantity: quantity ?? this.quantity,
+        );
   }
 }
