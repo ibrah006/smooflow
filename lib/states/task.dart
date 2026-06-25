@@ -234,7 +234,9 @@ class TaskState {
       error: error,
       selectedTask: selectedTask,
       connectionStatus: connectionStatus ?? _connectionStatus,
-      currentlyCreatingSpecs: currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
+      currentlyCreatingSpecs: Map<int, List<CreatingPrintSpecID>>.from(
+        currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
+      ),
     );
   }
 
