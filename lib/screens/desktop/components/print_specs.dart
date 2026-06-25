@@ -219,7 +219,7 @@ class _PrinterRowState extends State<PrinterRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 // NEW CORPORATE INLINE MULTI-SIZE EDITOR
 // ─────────────────────────────────────────────────────────────────────────────
-class PrintSpecsEditor extends StatefulWidget {
+class PrintSpecsEditor extends ConsumerStatefulWidget {
   final Task task;
   final Function(
     List<PrintSpec>? specs,
@@ -231,10 +231,10 @@ class PrintSpecsEditor extends StatefulWidget {
   const PrintSpecsEditor({required this.task, required this.onUpdate});
 
   @override
-  State<PrintSpecsEditor> createState() => _PrintSpecsEditorState();
+  ConsumerState<PrintSpecsEditor> createState() => _PrintSpecsEditorState();
 }
 
-class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
+class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   bool _sharedRef = true;
   List<PrintSpec> _items = [];
 
@@ -279,6 +279,10 @@ class _PrintSpecsEditorState extends State<PrintSpecsEditor> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "currentlyCreatingSpecs: ${ref.read(taskNotifierProvider).currentlyCreatingSpecs}",
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: _T.slate50.withOpacity(0.5),
