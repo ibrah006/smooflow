@@ -110,7 +110,7 @@ List<DesignStageInfo> get kStages {
     // ── Delivery ───────────────────────────
     DesignStageInfo(
       TaskStatus.waitingDelivery,
-      'Waiting Delivery',
+      'Awaiting Delivery',
       'Dispatch',
       _T.amber,
       _T.amber50,
@@ -133,7 +133,7 @@ List<DesignStageInfo> get kStages {
     // ── Installation ───────────────────────
     DesignStageInfo(
       TaskStatus.waitingInstallation,
-      'Waiting Installation',
+      'Awaiting Installation',
       'Install Queue',
       _T.amber,
       _T.amber50,

@@ -672,6 +672,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
                   .read(taskNotifierProvider)
                   .currentlyCreatingSpecs[event.taskId]
                   ?.map((spec) {
+                    print(
+                      "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
+                    );
                     if (spec.tempLocalId ==
                         event.changes!["newPrintSpec"]["tempLocalId"]) {
                       spec.initializeId(event.changes!["newPrintSpec"]["id"]);
