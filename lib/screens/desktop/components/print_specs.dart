@@ -279,10 +279,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "currentlyCreatingSpecs: ${ref.read(taskNotifierProvider).currentlyCreatingSpecs}",
-    );
-
     return Container(
       decoration: BoxDecoration(
         color: _T.slate50.withOpacity(0.5),
@@ -588,24 +584,23 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      ref
-          .read(taskNotifierProvider)
-          .currentlyCreatingSpecs[widget.taskId]
-          ?.firstWhere((spec) {
-            if (spec.tempLocalId == widget.item.id) {
-              widget.item.initializeId(spec.createdId!);
-              print("initialized id: ${widget.item.id}");
-              return true;
-            }
+    print(
+      "currentlyCreatingSpecs: ${ref.read(taskNotifierProvider).currentlyCreatingSpecs}",
+    );
 
-            return false;
-          });
+    try {
+      final createdId =
+          ref
+              .read(taskNotifierProvider)
+              .currentlyCreatingSpecs[widget.taskId]
+              ?.firstWhere((spec) {
+                return spec.tempLocalId == widget.item.id;
+              })
+              .createdId;
+      if (createdId != null) widget.item.initializeId(createdId);
     } catch (e) {
       // pass
     }
-
-    print("print spec id: ${widget.item.id}");
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),

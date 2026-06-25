@@ -92,6 +92,7 @@ class TaskState {
     String? error,
     Task? selectedTask,
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
+    Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
   }) : _error = error,
        _isLoading = isLoading,
        _tasks = tasks,
@@ -210,6 +211,7 @@ class TaskState {
     Task? newTask,
     Task? selectedTask,
     ConnectionStatus? connectionStatus,
+    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
   }) {
     final List<Task> ts = tasks ?? _tasks;
     // if (tasks != null) {
@@ -231,6 +233,7 @@ class TaskState {
       error: error,
       selectedTask: selectedTask,
       connectionStatus: connectionStatus ?? _connectionStatus,
+      currentlyCreatingSpecs: currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
     );
   }
 
