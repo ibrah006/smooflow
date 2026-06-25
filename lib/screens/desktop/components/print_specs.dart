@@ -588,22 +588,22 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
-    // try {
-    //   ref
-    //       .read(taskNotifierProvider)
-    //       .currentlyCreatingSpecs[widget.taskId]
-    //       ?.removeWhere((spec) {
-    //         if (spec.tempLocalId == widget.item.id) {
-    //           widget.item.initializeId(spec.createdId!);
-    //           print("initialized id: ${widget.item.id}");
-    //           return true;
-    //         }
+    try {
+      ref
+          .read(taskNotifierProvider)
+          .currentlyCreatingSpecs[widget.taskId]
+          ?.firstWhere((spec) {
+            if (spec.tempLocalId == widget.item.id) {
+              widget.item.initializeId(spec.createdId!);
+              print("initialized id: ${widget.item.id}");
+              return true;
+            }
 
-    //         return false;
-    //       });
-    // } catch (e) {
-    //   // pass
-    // }
+            return false;
+          });
+    } catch (e) {
+      // pass
+    }
 
     print("print spec id: ${widget.item.id}");
 

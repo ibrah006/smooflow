@@ -57,15 +57,18 @@ class TaskState {
   }
 
   // { taskId: creating print specs for this task }
-  final Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = {};
+  final Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs = {};
+
+  Map<int, List<CreatingPrintSpecID>> get currentlyCreatingSpecs =>
+      _currentlyCreatingSpecs;
 
   void initializeCurrentlyCreatingSpec(
     int taskId,
     int specLocalId,
     int specCreatedId,
   ) {
-    currentlyCreatingSpecs[taskId] =
-        currentlyCreatingSpecs[taskId]?.map((spec) {
+    _currentlyCreatingSpecs[taskId] =
+        _currentlyCreatingSpecs[taskId]?.map((spec) {
           if (spec.tempLocalId == specLocalId) {
             spec.initializeId(specCreatedId);
           }
@@ -76,8 +79,8 @@ class TaskState {
   }
 
   void addCurrentlyCreatingSpec(int taskId, int specLocalId) {
-    currentlyCreatingSpecs[taskId] = [
-      ...currentlyCreatingSpecs[taskId] ?? [],
+    _currentlyCreatingSpecs[taskId] = [
+      ..._currentlyCreatingSpecs[taskId] ?? [],
       // here newPrintSpec.id automatically returns temp local id
       CreatingPrintSpecID(specLocalId),
     ];
