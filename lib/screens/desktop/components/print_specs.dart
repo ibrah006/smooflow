@@ -456,6 +456,10 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
                 if (createdId != null) {
                   item.initializeId(createdId);
+
+                  ref
+                      .read(taskNotifierProvider)
+                      .removeCurrentlyCreatingSpec(widget.task.id, createdId);
                 }
               }
             } catch (e) {

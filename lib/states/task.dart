@@ -86,6 +86,12 @@ class TaskState {
     ];
   }
 
+  void removeCurrentlyCreatingSpec(int taskId, int specCreatedId) {
+    _currentlyCreatingSpecs[taskId]?.removeWhere(
+      (spec) => spec.createdId == specCreatedId,
+    );
+  }
+
   TaskState({
     List<Task> tasks = const [],
     bool isLoading = false,
