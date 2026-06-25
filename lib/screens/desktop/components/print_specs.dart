@@ -279,6 +279,10 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "currentlyCreatingSpecs: ${ref.read(taskNotifierProvider).currentlyCreatingSpecs}",
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: _T.slate50.withOpacity(0.5),

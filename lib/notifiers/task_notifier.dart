@@ -10,7 +10,6 @@ import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskNotifier extends StateNotifier<TaskState> {
@@ -637,6 +636,9 @@ class TaskNotifier extends StateNotifier<TaskState> {
         break;
 
       case TaskChangeType.updated:
+        print(
+          "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
+        );
         state = state.copyWith(
           tasks:
               tasks.map((t) {
@@ -645,6 +647,11 @@ class TaskNotifier extends StateNotifier<TaskState> {
                 }
                 return t;
               }).toList(),
+          currentlyCreatingSpecs: state.currentlyCreatingSpecs,
+        );
+
+        print(
+          "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
         );
 
         print('[Task Notifier] new task event changes: ${event.changes}');
