@@ -449,14 +449,10 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                       .read(taskNotifierProvider)
                       .currentlyCreatingSpecs[widget.task.id]
                       ?.lastWhere((spec) {
-                        print(
-                          "[_PrintSpecsEditor items.asMap().entries.map(e=> _SpecRowInline] spec temp id: ${spec.tempLocalId}, item id: ${item.id}",
-                        );
                         return spec.tempLocalId == item.id;
                       })
                       .createdId;
               if (createdId != null) {
-                print("local id: ${item.id} created id: ${createdId}");
                 try {
                   item.initializeId(createdId);
                 } catch (e) {
