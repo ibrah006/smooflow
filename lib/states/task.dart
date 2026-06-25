@@ -59,6 +59,22 @@ class TaskState {
   // { taskId: creating print specs for this task }
   final Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = {};
 
+  void initializeCurrentlyCreatingSpec(
+    int taskId,
+    int specLocalId,
+    int specCreatedId,
+  ) {
+    currentlyCreatingSpecs[taskId] =
+        currentlyCreatingSpecs[taskId]?.map((spec) {
+          if (spec.tempLocalId == specLocalId) {
+            spec.initializeId(specCreatedId);
+          }
+
+          return spec;
+        }).toList() ??
+        [];
+  }
+
   TaskState({
     List<Task> tasks = const [],
     bool isLoading = false,

@@ -665,25 +665,31 @@ class TaskNotifier extends StateNotifier<TaskState> {
         } else if (event.changes?["newPrintSpec"] != null) {
           // This means that it's a new print spec event
 
-          ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
-                  .task!
-                  .id] =
-              ref
-                  .read(taskNotifierProvider)
-                  .currentlyCreatingSpecs[event.taskId]
-                  ?.map((spec) {
-                    print(
-                      "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
-                    );
-                    if (spec.tempLocalId ==
-                        event.changes!["newPrintSpec"]["tempLocalId"]) {
-                      spec.initializeId(event.changes!["newPrintSpec"]["id"]);
-                    }
+          state.initializeCurrentlyCreatingSpec(
+            event.task!.id,
+            event.changes!["newPrintSpec"]["tempLocalId"],
+            event.changes!["newPrintSpec"]["id"],
+          );
 
-                    return spec;
-                  })
-                  .toList() ??
-              [];
+          // ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
+          //         .task!
+          //         .id] =
+          //     ref
+          //         .read(taskNotifierProvider)
+          //         .currentlyCreatingSpecs[event.taskId]
+          //         ?.map((spec) {
+          //           print(
+          //             "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
+          //           );
+          //           if (spec.tempLocalId ==
+          //               event.changes!["newPrintSpec"]["tempLocalId"]) {
+          //             spec.initializeId(event.changes!["newPrintSpec"]["id"]);
+          //           }
+
+          //           return spec;
+          //         })
+          //         .toList() ??
+          //     [];
         }
 
         break;
