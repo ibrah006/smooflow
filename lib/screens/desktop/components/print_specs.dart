@@ -588,18 +588,24 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      ref
-          .read(taskNotifierProvider)
-          .currentlyCreatingSpecs[widget.taskId]
-          ?.removeWhere((spec) {
-            widget.item.initializeId(spec.createdId!);
+    // try {
+    //   ref
+    //       .read(taskNotifierProvider)
+    //       .currentlyCreatingSpecs[widget.taskId]
+    //       ?.removeWhere((spec) {
+    //         if (spec.tempLocalId == widget.item.id) {
+    //           widget.item.initializeId(spec.createdId!);
+    //           print("initialized id: ${widget.item.id}");
+    //           return true;
+    //         }
 
-            return spec.tempLocalId == widget.item.id;
-          });
-    } catch (e) {
-      // pass
-    }
+    //         return false;
+    //       });
+    // } catch (e) {
+    //   // pass
+    // }
+
+    print("print spec id: ${widget.item.id}");
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),

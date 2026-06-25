@@ -662,7 +662,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
           ref
               .read(projectByIdProvider(event.task!.projectId))!
               .completedTasksCount++;
-        } else if (event.changes?["newPrintSpecs"] != null) {
+        } else if (event.changes?["newPrintSpec"] != null) {
           // This means that it's a new print spec event
 
           ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
@@ -673,8 +673,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
                   .currentlyCreatingSpecs[event.taskId]
                   ?.map((spec) {
                     if (spec.tempLocalId ==
-                        event.changes!["newPrintSpecs"]["tempLocalId"]) {
-                      spec.initializeId(event.changes!["newPrintSpecs"]["id"]);
+                        event.changes!["newPrintSpec"]["tempLocalId"]) {
+                      spec.initializeId(event.changes!["newPrintSpec"]["id"]);
                     }
 
                     return spec;

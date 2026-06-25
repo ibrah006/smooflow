@@ -54,8 +54,8 @@ class PrintSpec {
     );
   }
 
-  void initializeId(int id) {
-    _id = id;
+  void initializeId(int newId) {
+    _id = newId;
   }
 
   Map<String, dynamic> toJson() {
