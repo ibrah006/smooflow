@@ -453,6 +453,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                           return spec.tempLocalId == item.id;
                         })
                         .createdId;
+
                 if (createdId != null) {
                   item.initializeId(createdId);
                 }
