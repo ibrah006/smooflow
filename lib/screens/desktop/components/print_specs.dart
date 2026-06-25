@@ -584,10 +584,6 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "currentlyCreatingSpecs: ${ref.read(taskNotifierProvider).currentlyCreatingSpecs}",
-    );
-
     try {
       final createdId =
           ref
