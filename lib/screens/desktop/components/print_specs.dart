@@ -453,13 +453,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                       })
                       .createdId;
               if (createdId != null) {
-                try {
-                  item.initializeId(createdId);
-                } catch (e) {
-                  print(
-                    "error caught at [_PrintSpecsEditor] when trying to initialize createdId: $e",
-                  );
-                }
+                item.initializeId(createdId);
               }
             } catch (e) {
               // pass
