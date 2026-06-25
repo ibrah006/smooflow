@@ -75,6 +75,14 @@ class TaskState {
         [];
   }
 
+  void addCurrentlyCreatingSpec(int taskId, int specLocalId) {
+    currentlyCreatingSpecs[taskId] = [
+      ...currentlyCreatingSpecs[taskId] ?? [],
+      // here newPrintSpec.id automatically returns temp local id
+      CreatingPrintSpecID(specLocalId),
+    ];
+  }
+
   TaskState({
     List<Task> tasks = const [],
     bool isLoading = false,

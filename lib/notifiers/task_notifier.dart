@@ -501,11 +501,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     }
 
     if (newPrintSpec != null) {
-      state.currentlyCreatingSpecs[task.id] = [
-        ...state.currentlyCreatingSpecs[task.id] ?? [],
-        // here newPrintSpec.id automatically returns temp local id
-        CreatingPrintSpecID(newPrintSpec.id),
-      ];
+      state.addCurrentlyCreatingSpec(task.id, newPrintSpec.id);
     }
 
     await _repo.update(
