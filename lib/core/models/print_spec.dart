@@ -60,7 +60,7 @@ class PrintSpec {
   }
 
   Map<String, dynamic> toJson() {
-    return {'ref': ref, 'size': size, 'quantity': quantity};
+    return {'ref': ref, 'size': size, 'quantity': quantity, 'id': id};
   }
 
   Map<String, dynamic> toCreateJson() {

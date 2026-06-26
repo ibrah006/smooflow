@@ -36,7 +36,7 @@ extension _PrintSpecInputsToPrintSpecs on List<_PrintSpecInput> {
         return PrintSpec.create(
           ref: ref.isNotEmpty ? ref : null,
           size: size,
-          quantity: int.tryParse(qty),
+          quantity: int.tryParse(qty) ?? 0,
         );
       }).toList();
 }
