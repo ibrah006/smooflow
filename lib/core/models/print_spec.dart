@@ -42,8 +42,9 @@ class PrintSpec {
 
   PrintSpec({required int id, this.ref, this.size, this.quantity}) : _id = id;
 
-  PrintSpec.create({this.ref, this.size, this.quantity})
-    : _tempId = Random().nextInt(2000000) * -1;
+  PrintSpec.create({this.ref, this.size, int quantity = 1})
+    : _tempId = Random().nextInt(2000000) * -1,
+      this.quantity = quantity;
 
   factory PrintSpec.fromJson(Map<String, dynamic> json) {
     return PrintSpec(
