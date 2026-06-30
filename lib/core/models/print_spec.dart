@@ -51,7 +51,7 @@ class PrintSpec {
       id: json['id'] as int,
       ref: json['ref'] as String?,
       size: json['size'] as String?,
-      quantity: json['quantity'] as int?,
+      quantity: (json['quantity'] as int?) ?? 0,
     );
   }
 
