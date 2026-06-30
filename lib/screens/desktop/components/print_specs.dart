@@ -707,8 +707,13 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
               child: Row(
                 children: [
                   GhostTextField(
+                    hint: "0",
                     key: ValueKey('${widget.item.id}_qty'),
-                    initialText: widget.item.quantity.toString(),
+                    initialText:
+                        widget.item.quantity?.toString() == null ||
+                                widget.item.quantity == 0
+                            ? ""
+                            : widget.item.quantity.toString(),
                     onSubmitted: (v) {
                       final updatedPrintSpec = widget.item.copyWith(
                         quantity: int.tryParse(v) ?? 0,
