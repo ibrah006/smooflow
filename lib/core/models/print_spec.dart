@@ -37,7 +37,11 @@ class PrintSpec {
   }
 
   String? get unit {
-    return size != null ? size!.split('×')[1].split(' ')[1] : null;
+    try {
+      return size != null ? size!.split('×')[1].split(' ')[1] : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   PrintSpec({required int id, this.ref, this.size, this.quantity}) : _id = id;
