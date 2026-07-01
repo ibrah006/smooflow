@@ -274,9 +274,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
     widget.onUpdate(_items, _sharedRef);
   }
 
-  String _fmtNum(double n) =>
-      n == n.toInt() ? n.toInt().toString() : n.toString();
-
   @override
   Widget build(BuildContext context) {
     return Container(
