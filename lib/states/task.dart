@@ -77,27 +77,13 @@ class TaskState {
   }) {
     final targetSpecIds = targetSpecs.map((spec) => spec.id).toList();
 
-    print("target spec ids: $targetSpecIds");
-
     for (MapEntry<int, bool> _currentlyDeletingSpec
         in _currentlyDeletingSpecs.entries) {
-      print(
-        "[removeCurrentlyDeletingSpec] main for ${_currentlyDeletingSpec.key} with value ${_currentlyDeletingSpec.value}",
-      );
       for (int i = 0; i < targetSpecIds.length; i++) {
         final specId = targetSpecIds[i];
-
-        print(
-          "[removeCurrentlyDeletingSpec] currently deleting spec id: ${_currentlyDeletingSpec.key}",
-        );
-
         if (_currentlyDeletingSpec.key == specId &&
             // if the spec has already been deleted as well
             _currentlyDeletingSpec.value == true) {
-          print(
-            "[removeCurrentlyDeletingSpec] to be removed print spec id: ${specId}",
-          );
-
           _currentlyDeletingSpecs.remove(specId);
 
           targetSpecs.removeAt(i);
