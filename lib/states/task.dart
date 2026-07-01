@@ -56,7 +56,7 @@ class TaskState {
     _connectionStatus = value;
   }
 
-  // { taskId: creating print specs for this task }
+  /// { taskId: creating print specs for this task }
   Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
 
   Map<int, List<CreatingPrintSpecID>> get currentlyCreatingSpecs =>
