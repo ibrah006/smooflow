@@ -277,10 +277,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "currently deleting specs: ${ref.watch(taskNotifierProvider).currentlyDeletingSpecs}",
-    );
-
     try {
       ref
           .read(taskNotifierProvider)
