@@ -56,6 +56,10 @@ class TaskState {
     _connectionStatus = value;
   }
 
+  Map<int, List<int>> _currentlyDeletingSpecs;
+
+  Map<int, List<int>> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
+
   /// { taskId: creating print specs for this task }
   Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
 
@@ -106,12 +110,14 @@ class TaskState {
     Task? selectedTask,
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
+    Map<int, List<int>> currentlyDeletingSpecs = const {},
   }) : _error = error,
        _isLoading = isLoading,
        _tasks = tasks,
        _selectedTask = selectedTask,
        _connectionStatus = connectionStatus,
-       _currentlyCreatingSpecs = currentlyCreatingSpecs;
+       _currentlyCreatingSpecs = currentlyCreatingSpecs,
+       _currentlyDeletingSpecs = currentlyDeletingSpecs;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway = [];
 
@@ -226,6 +232,7 @@ class TaskState {
     Task? selectedTask,
     ConnectionStatus? connectionStatus,
     Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
+    Map<int, List<int>>? currentlyDeletingSpecs,
   }) {
     final List<Task> ts = tasks ?? _tasks;
     // if (tasks != null) {
@@ -249,6 +256,9 @@ class TaskState {
       connectionStatus: connectionStatus ?? _connectionStatus,
       currentlyCreatingSpecs: Map<int, List<CreatingPrintSpecID>>.from(
         currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
+      ),
+      currentlyDeletingSpecs: Map<int, List<int>>.from(
+        currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       ),
     );
   }
