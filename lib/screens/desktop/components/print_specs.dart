@@ -426,7 +426,8 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 28),
+                // Expanded spacer to account for the animated trailing actions
+                const SizedBox(width: 56),
               ],
             ),
           ),
@@ -502,11 +503,22 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   }
 
                   if (hasChanged) {
+                    late final sharedRef;
+                    if (_sharedRef) {
+                      try {
+                        sharedRef = _items.first.ref ?? '';
+                      } catch (_) {
+                        sharedRef = '';
+                      }
+                    }
+
                     _committedTransientIds.add(updatedItem.id);
                     widget.onUpdate(
                       null,
                       _sharedRef,
-                      newPrintSpec: updatedItem,
+                      newPrintSpec:
+                          updatedItem
+                            ..ref = _sharedRef ? sharedRef : updatedItem.ref,
                     );
                   }
                 } else {
@@ -601,7 +613,77 @@ class _SpecRowInline extends ConsumerStatefulWidget {
 class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
   bool _hovered = false;
 
+  // Local state for tracking edits before committing to API
+  late PrintSpec _editedItem;
+  int _rebuildCounter =
+      0; // Increments to force GhostTextFields to reset text upon discard
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _editedItem = widget.item.copyWith();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SpecRowInline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the parent passes down a new version (e.g. after a successful API save),
+    // we reset our local state to match the fresh source of truth.
+    if (oldWidget.item != widget.item) {
+      _editedItem = widget.item.copyWith();
+      _rebuildCounter++;
+      _isSaving = false;
+    }
+  }
+
   String _fmt(double n) => n == n.toInt() ? n.toInt().toString() : n.toString();
+
+  bool get _isDraft => widget.item.id < 0;
+
+  bool get _hasChanges {
+    if (_isDraft)
+      return false; // Drafts trigger API creation immediately on change
+    return _editedItem.ref != widget.item.ref ||
+        _editedItem.width != widget.item.width ||
+        _editedItem.height != widget.item.height ||
+        _editedItem.quantity != widget.item.quantity;
+  }
+
+  void _saveLocalChanges() {
+    setState(() => _isSaving = true);
+    widget.onChanged(_editedItem);
+
+    // Fallback: If parent fails to update widget.item, reset the loader after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && _isSaving) {
+        setState(() => _isSaving = false);
+      }
+    });
+  }
+
+  void _discardLocalChanges() {
+    setState(() {
+      _editedItem = widget.item.copyWith();
+      _rebuildCounter++; // Force GhostTextFields to re-initialize with reverted text
+    });
+  }
+
+  Widget _buildHighlight({required bool isModified, required Widget child}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+      decoration: BoxDecoration(
+        color: isModified ? _T.amber.withOpacity(0.12) : Colors.transparent,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isModified ? _T.amber.withOpacity(0.3) : Colors.transparent,
+          width: 1,
+        ),
+      ),
+      child: child,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -609,56 +691,59 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
         .watch(taskNotifierProvider)
         .isCurrentlyCreatingSpec(widget.taskId, widget.item.id);
 
+    final bool isLocked = isCurrentlyCreating || _isSaving;
+
     return MouseRegion(
-      // Disable hover adjustments completely while executing an API call
-      onEnter:
-          isCurrentlyCreating ? null : (_) => setState(() => _hovered = true),
-      onExit:
-          isCurrentlyCreating ? null : (_) => setState(() => _hovered = false),
+      onEnter: isLocked ? null : (_) => setState(() => _hovered = true),
+      onExit: isLocked ? null : (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 2),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: (_hovered && !isCurrentlyCreating) ? _T.white : Colors.white,
+          color: (_hovered && !isLocked) ? _T.white : Colors.white,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color:
-                (_hovered && !isCurrentlyCreating) ? _T.slate200 : Colors.white,
+            color: (_hovered && !isLocked) ? _T.slate200 : Colors.white,
           ),
         ),
-        // IgnorePointer intercepts all tap and focus gestures across child widgets
         child: IgnorePointer(
-          ignoring: isCurrentlyCreating,
+          ignoring: isLocked,
           child: Row(
             children: [
-              // Wrap inner values with an AnimatedOpacity to visually dim out locked options
               Expanded(
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
-                  opacity: isCurrentlyCreating ? 0.55 : 1.0,
+                  opacity: isLocked ? 0.55 : 1.0,
                   child: Row(
                     children: [
                       // Internal Item Ref (Hidden if shared)
                       if (!widget.sharedRef)
                         Expanded(
                           flex: 3,
-                          child: GhostTextField(
-                            key: ValueKey('${widget.item.id}_ref'),
-                            initialText: widget.item.ref ?? '',
-                            onSubmitted: (v) {
-                              widget.item.ref = v;
-                              final updatedPrintSpec = widget.item.copyWith(
-                                ref: v,
-                              );
-                              widget.onChanged(updatedPrintSpec);
-                            },
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontFamily: 'monospace',
-                              color: _T.ink3,
+                          child: _buildHighlight(
+                            isModified:
+                                !_isDraft && _editedItem.ref != widget.item.ref,
+                            child: GhostTextField(
+                              key: ValueKey(
+                                '${widget.item.id}_ref_$_rebuildCounter',
+                              ),
+                              initialText: _editedItem.ref ?? '',
+                              onSubmitted: (v) {
+                                _editedItem = _editedItem.copyWith(ref: v);
+                                if (_isDraft) {
+                                  widget.onChanged(_editedItem);
+                                } else {
+                                  setState(() {});
+                                }
+                              },
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontFamily: 'monospace',
+                                color: _T.ink3,
+                              ),
+                              mode: GhostFieldMode.inline,
                             ),
-                            mode: GhostFieldMode.inline,
                           ),
                         ),
 
@@ -667,24 +752,35 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
                         flex: 4,
                         child: Row(
                           children: [
-                            GhostTextField(
-                              key: ValueKey('${widget.item.id}_w'),
-                              initialText: _fmt(widget.item.width),
-                              onSubmitted: (v) {
-                                final updatedPrintSpec = widget.item.copyWith(
-                                  size:
-                                      '$v×${_fmt(widget.item.height)} ${widget.item.unit ?? 'cm'}',
-                                );
-                                widget.onChanged(updatedPrintSpec);
-                              },
-                              isDecimalOnlyField: true,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _T.ink,
+                            _buildHighlight(
+                              isModified:
+                                  !_isDraft &&
+                                  _editedItem.width != widget.item.width,
+                              child: GhostTextField(
+                                key: ValueKey(
+                                  '${widget.item.id}_w_$_rebuildCounter',
+                                ),
+                                initialText: _fmt(_editedItem.width),
+                                onSubmitted: (v) {
+                                  _editedItem = _editedItem.copyWith(
+                                    size:
+                                        '$v×${_fmt(_editedItem.height)} ${_editedItem.unit ?? 'cm'}',
+                                  );
+                                  if (_isDraft) {
+                                    widget.onChanged(_editedItem);
+                                  } else {
+                                    setState(() {});
+                                  }
+                                },
+                                isDecimalOnlyField: true,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _T.ink,
+                                ),
+                                mode: GhostFieldMode.inline,
+                                inlineMinWidth: 24,
                               ),
-                              mode: GhostFieldMode.inline,
-                              inlineMinWidth: 24,
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 4),
@@ -696,24 +792,35 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
                                 ),
                               ),
                             ),
-                            GhostTextField(
-                              key: ValueKey('${widget.item.id}_h'),
-                              initialText: _fmt(widget.item.height),
-                              onSubmitted: (v) {
-                                final updatedPrintSpec = widget.item.copyWith(
-                                  size:
-                                      '${_fmt(widget.item.width)}×$v ${widget.item.unit ?? 'cm'}',
-                                );
-                                widget.onChanged(updatedPrintSpec);
-                              },
-                              isDecimalOnlyField: true,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _T.ink,
+                            _buildHighlight(
+                              isModified:
+                                  !_isDraft &&
+                                  _editedItem.height != widget.item.height,
+                              child: GhostTextField(
+                                key: ValueKey(
+                                  '${widget.item.id}_h_$_rebuildCounter',
+                                ),
+                                initialText: _fmt(_editedItem.height),
+                                onSubmitted: (v) {
+                                  _editedItem = _editedItem.copyWith(
+                                    size:
+                                        '${_fmt(_editedItem.width)}×$v ${_editedItem.unit ?? 'cm'}',
+                                  );
+                                  if (_isDraft) {
+                                    widget.onChanged(_editedItem);
+                                  } else {
+                                    setState(() {});
+                                  }
+                                },
+                                isDecimalOnlyField: true,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _T.ink,
+                                ),
+                                mode: GhostFieldMode.inline,
+                                inlineMinWidth: 24,
                               ),
-                              mode: GhostFieldMode.inline,
-                              inlineMinWidth: 24,
                             ),
                           ],
                         ),
@@ -724,28 +831,39 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
                         flex: 2,
                         child: Row(
                           children: [
-                            GhostTextField(
-                              hint: "0",
-                              key: ValueKey('${widget.item.id}_qty'),
-                              initialText:
-                                  widget.item.quantity?.toString() == null ||
-                                          widget.item.quantity == 0
-                                      ? ""
-                                      : widget.item.quantity.toString(),
-                              onSubmitted: (v) {
-                                final updatedPrintSpec = widget.item.copyWith(
-                                  quantity: int.tryParse(v) ?? 0,
-                                );
-                                widget.onChanged(updatedPrintSpec);
-                              },
-                              isDecimalOnlyField: true,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _T.ink,
+                            _buildHighlight(
+                              isModified:
+                                  !_isDraft &&
+                                  _editedItem.quantity != widget.item.quantity,
+                              child: GhostTextField(
+                                hint: "0",
+                                key: ValueKey(
+                                  '${widget.item.id}_qty_$_rebuildCounter',
+                                ),
+                                initialText:
+                                    _editedItem.quantity?.toString() == null ||
+                                            _editedItem.quantity == 0
+                                        ? ""
+                                        : _editedItem.quantity.toString(),
+                                onSubmitted: (v) {
+                                  _editedItem = _editedItem.copyWith(
+                                    quantity: int.tryParse(v) ?? 0,
+                                  );
+                                  if (_isDraft) {
+                                    widget.onChanged(_editedItem);
+                                  } else {
+                                    setState(() {});
+                                  }
+                                },
+                                isDecimalOnlyField: true,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _T.ink,
+                                ),
+                                mode: GhostFieldMode.inline,
+                                inlineMinWidth: 20,
                               ),
-                              mode: GhostFieldMode.inline,
-                              inlineMinWidth: 20,
                             ),
                             const SizedBox(width: 2),
                             const Text(
@@ -755,52 +873,108 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
                                 color: _T.slate400,
                               ),
                             ),
+
+                            Spacer(),
+
+                            // Trailing Actions (Loader / Save & Discard / Delete)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: _hasChanges ? 56 : 28,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 150),
+                                child:
+                                    isLocked
+                                        ? const Center(
+                                          key: ValueKey('loader'),
+                                          child: SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 1.5,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    _T.slate400,
+                                                  ),
+                                            ),
+                                          ),
+                                        )
+                                        : _hasChanges
+                                        ? Row(
+                                          key: const ValueKey('actions'),
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Tooltip(
+                                              message: "Discard changes",
+                                              child: InkWell(
+                                                onTap: _discardLocalChanges,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                child: const Padding(
+                                                  padding: EdgeInsets.all(4.0),
+                                                  child: Icon(
+                                                    Icons.undo_rounded,
+                                                    size: 14,
+                                                    color: _T.slate400,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Tooltip(
+                                              message: "Save changes",
+                                              child: InkWell(
+                                                onTap: _saveLocalChanges,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(
+                                                    4.0,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: _T.green,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.check_rounded,
+                                                    size: 12,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                        : AnimatedOpacity(
+                                          key: const ValueKey('delete_btn'),
+                                          opacity: _hovered ? 1.0 : 0.0,
+                                          duration: const Duration(
+                                            milliseconds: 150,
+                                          ),
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.close_rounded,
+                                              size: 14,
+                                              color: _T.slate400,
+                                            ),
+                                            hoverColor: _T.red50,
+                                            color: _T.red,
+                                            onPressed: widget.onDelete,
+                                            splashRadius: 16,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                        ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-
-              // Delete Action Slot / Loader Container
-              SizedBox(
-                width: 28,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 150),
-                  child:
-                      isCurrentlyCreating
-                          ? const Center(
-                            key: ValueKey('loader'),
-                            child: SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _T.slate400,
-                                ),
-                              ),
-                            ),
-                          )
-                          : AnimatedOpacity(
-                            key: const ValueKey('delete_btn'),
-                            opacity: _hovered ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 150),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                size: 14,
-                                color: _T.slate400,
-                              ),
-                              hoverColor: _T.red50,
-                              color: _T.red,
-                              onPressed: widget.onDelete,
-                              splashRadius: 16,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ),
                 ),
               ),
             ],
