@@ -277,6 +277,24 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      "currently deleting specs: ${ref.watch(taskNotifierProvider).currentlyDeletingSpecs}",
+    );
+
+    try {
+      ref
+          .read(taskNotifierProvider)
+          .removeCurrentlyDeletingSpec(
+            targetSpecs: _items,
+            onRemove: (printSpecIndex) {
+              widget.task.printSpecs.removeAt(printSpecIndex);
+              _items = widget.task.printSpecs;
+            },
+          );
+    } catch (E) {
+      // pass
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: _T.slate50.withOpacity(0.5),
@@ -438,6 +456,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
             final index = e.key;
             final item = e.value;
 
+            // Currently creating
             try {
               if (item.id < 0) {
                 final createdId =
@@ -528,14 +547,14 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                 }
               },
               onDelete: () {
-                final removed = _items.removeAt(index);
+                final toBeRemoved = _items.elementAt(index);
                 setState(() {});
-                if (removed.id > 0) {
+                if (toBeRemoved.id > 0) {
                   // Request API deletion for persisted items
                   widget.onUpdate(
                     null,
                     _sharedRef,
-                    deletePrintSpecId: removed.id,
+                    deletePrintSpecId: toBeRemoved.id,
                   );
                 }
               },
@@ -697,20 +716,31 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
         .watch(taskNotifierProvider)
         .isCurrentlyCreatingSpec(widget.taskId, widget.item.id);
 
-    final bool isLocked = isCurrentlyCreating || _isSaving;
+    final isCurrentlyDeleting = ref
+        .watch(taskNotifierProvider)
+        .isCurrentlyDeletingSpec(widget.item.id);
+
+    final bool isLocked =
+        isCurrentlyCreating || _isSaving || isCurrentlyDeleting;
 
     return MouseRegion(
       onEnter: isLocked ? null : (_) => setState(() => _hovered = true),
       onExit: isLocked ? null : (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 2),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: (_hovered && !isLocked) ? _T.white : Colors.white,
+          color:
+              isCurrentlyDeleting
+                  ? _T.red50.withOpacity(0.5)
+                  : ((_hovered && !isLocked) ? _T.white : Colors.white),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: (_hovered && !isLocked) ? _T.slate200 : Colors.white,
+            color:
+                isCurrentlyDeleting
+                    ? _T.red.withOpacity(0.2)
+                    : ((_hovered && !isLocked) ? _T.slate200 : Colors.white),
           ),
         ),
         child: IgnorePointer(
@@ -720,7 +750,7 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
               Expanded(
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
-                  opacity: isLocked ? 0.55 : 1.0,
+                  opacity: isLocked ? 0.5 : 1.0,
                   child: Row(
                     children: [
                       // Internal Item Ref (Hidden if shared)

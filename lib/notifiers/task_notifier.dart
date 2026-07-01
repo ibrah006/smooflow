@@ -505,6 +505,10 @@ class TaskNotifier extends StateNotifier<TaskState> {
       state.addCurrentlyCreatingSpec(task.id, newPrintSpec.id);
     }
 
+    if (deletePrintSpecId != null) {
+      state.addCurrentlyCreatingSpec(task.id, deletePrintSpecId);
+    }
+
     await _repo.update(
       task: task,
       billingStatus: billingStatus,
@@ -520,6 +524,10 @@ class TaskNotifier extends StateNotifier<TaskState> {
 
     if (localTaskNameChangeEventId != null) {
       state.removeTaskNameChangeEvent(localTaskNameChangeEventId);
+    }
+
+    if (deletePrintSpecId != null) {
+      state.specDeleted(deletePrintSpecId);
     }
 
     // state = state.updateTask(task);

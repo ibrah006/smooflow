@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 
@@ -56,9 +57,68 @@ class TaskState {
     _connectionStatus = value;
   }
 
-  Map<int, List<int>> _currentlyDeletingSpecs;
+  /// { print_spec_id: true/false } -> true means the spec has been deleted, false means it is being deleted
+  Map<int, bool> _currentlyDeletingSpecs;
 
-  Map<int, List<int>> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
+  Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
+
+  void addCurrentlyDeletingSpec(int targetSpecId) {
+    _currentlyDeletingSpecs[targetSpecId] = false;
+  }
+
+  /// function of _currentlyDeletingSpecs
+  void specDeleted(int targetSpecId) {
+    _currentlyDeletingSpecs[targetSpecId] = true;
+  }
+
+  void removeCurrentlyDeletingSpec({
+    required List<PrintSpec> targetSpecs,
+    Function(int printSpecIndex)? onRemove,
+  }) {
+    final targetSpecIds = targetSpecs.map((spec) => spec.id).toList();
+
+    print("target spec ids: $targetSpecIds");
+
+    for (MapEntry<int, bool> _currentlyDeletingSpec
+        in _currentlyDeletingSpecs.entries) {
+      print(
+        "[removeCurrentlyDeletingSpec] main for ${_currentlyDeletingSpec.key} with value ${_currentlyDeletingSpec.value}",
+      );
+      for (int i = 0; i < targetSpecIds.length; i++) {
+        final specId = targetSpecIds[i];
+
+        print(
+          "[removeCurrentlyDeletingSpec] currently deleting spec id: ${_currentlyDeletingSpec.key}",
+        );
+
+        if (_currentlyDeletingSpec.key == specId &&
+            // if the spec has already been deleted as well
+            _currentlyDeletingSpec.value == true) {
+          print(
+            "[removeCurrentlyDeletingSpec] to be removed print spec id: ${specId}",
+          );
+
+          _currentlyDeletingSpecs.remove(specId);
+
+          targetSpecs.removeAt(i);
+
+          onRemove?.call(i);
+        }
+      }
+    }
+
+    // _currentlyDeletingSpecs.removeWhere((specId, isDeleted) {
+    //   if (targetSpecIds.contains(specId) && isDeleted) {
+    //     _tasks.firstWhere((task) => task.id == taskId);
+    //     return true;
+    //   }
+    //   return false;
+    // });
+  }
+
+  bool isCurrentlyDeletingSpec(int targetSpecId) {
+    return _currentlyDeletingSpecs.containsKey(targetSpecId);
+  }
 
   /// { taskId: creating print specs for this task }
   Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
@@ -110,7 +170,7 @@ class TaskState {
     Task? selectedTask,
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
-    Map<int, List<int>> currentlyDeletingSpecs = const {},
+    Map<int, bool> currentlyDeletingSpecs = const {},
   }) : _error = error,
        _isLoading = isLoading,
        _tasks = tasks,
@@ -232,7 +292,7 @@ class TaskState {
     Task? selectedTask,
     ConnectionStatus? connectionStatus,
     Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
-    Map<int, List<int>>? currentlyDeletingSpecs,
+    Map<int, bool>? currentlyDeletingSpecs,
   }) {
     final List<Task> ts = tasks ?? _tasks;
     // if (tasks != null) {
@@ -257,7 +317,7 @@ class TaskState {
       currentlyCreatingSpecs: Map<int, List<CreatingPrintSpecID>>.from(
         currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
       ),
-      currentlyDeletingSpecs: Map<int, List<int>>.from(
+      currentlyDeletingSpecs: Map<int, bool>.from(
         currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       ),
     );
