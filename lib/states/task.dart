@@ -92,6 +92,13 @@ class TaskState {
     );
   }
 
+  bool isCurrentlyCreatingSpec(int taskId, int specLocalId) {
+    return _currentlyCreatingSpecs[taskId]?.any(
+          (spec) => spec.tempLocalId == specLocalId,
+        ) ??
+        false;
+  }
+
   TaskState({
     List<Task> tasks = const [],
     bool isLoading = false,

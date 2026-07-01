@@ -612,154 +612,206 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 
   @override
   Widget build(BuildContext context) {
+    final isCurrentlyCreating = ref
+        .watch(taskNotifierProvider)
+        .isCurrentlyCreatingSpec(widget.taskId, widget.item.id);
+
     return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      // Disable hover adjustments completely while executing an API call
+      onEnter:
+          isCurrentlyCreating ? null : (_) => setState(() => _hovered = true),
+      onExit:
+          isCurrentlyCreating ? null : (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 2),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: _hovered ? _T.white : Colors.white,
+          color: (_hovered && !isCurrentlyCreating) ? _T.white : Colors.white,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: _hovered ? _T.slate200 : Colors.white),
+          border: Border.all(
+            color:
+                (_hovered && !isCurrentlyCreating) ? _T.slate200 : Colors.white,
+          ),
         ),
-        child: Row(
-          children: [
-            // Internal Item Ref (Hidden if shared)
-            if (!widget.sharedRef)
+        // IgnorePointer intercepts all tap and focus gestures across child widgets
+        child: IgnorePointer(
+          ignoring: isCurrentlyCreating,
+          child: Row(
+            children: [
+              // Wrap inner values with an AnimatedOpacity to visually dim out locked options
               Expanded(
-                flex: 3,
-                child: GhostTextField(
-                  key: ValueKey('${widget.item.id}_ref'),
-                  initialText: widget.item.ref ?? '',
-                  onSubmitted: (v) {
-                    widget.item.ref = v;
-                    final updatedPrintSpec = widget.item.copyWith(ref: v);
-                    widget.onChanged(updatedPrintSpec);
-                  },
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontFamily: 'monospace',
-                    color: _T.ink3,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isCurrentlyCreating ? 0.55 : 1.0,
+                  child: Row(
+                    children: [
+                      // Internal Item Ref (Hidden if shared)
+                      if (!widget.sharedRef)
+                        Expanded(
+                          flex: 3,
+                          child: GhostTextField(
+                            key: ValueKey('${widget.item.id}_ref'),
+                            initialText: widget.item.ref ?? '',
+                            onSubmitted: (v) {
+                              widget.item.ref = v;
+                              final updatedPrintSpec = widget.item.copyWith(
+                                ref: v,
+                              );
+                              widget.onChanged(updatedPrintSpec);
+                            },
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontFamily: 'monospace',
+                              color: _T.ink3,
+                            ),
+                            mode: GhostFieldMode.inline,
+                          ),
+                        ),
+
+                      // Width x Height
+                      Expanded(
+                        flex: 4,
+                        child: Row(
+                          children: [
+                            GhostTextField(
+                              key: ValueKey('${widget.item.id}_w'),
+                              initialText: _fmt(widget.item.width),
+                              onSubmitted: (v) {
+                                final updatedPrintSpec = widget.item.copyWith(
+                                  size:
+                                      '$v×${_fmt(widget.item.height)} ${widget.item.unit ?? 'cm'}',
+                                );
+                                widget.onChanged(updatedPrintSpec);
+                              },
+                              isDecimalOnlyField: true,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                              ),
+                              mode: GhostFieldMode.inline,
+                              inlineMinWidth: 24,
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: Text(
+                                '×',
+                                style: TextStyle(
+                                  color: _T.slate400,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            GhostTextField(
+                              key: ValueKey('${widget.item.id}_h'),
+                              initialText: _fmt(widget.item.height),
+                              onSubmitted: (v) {
+                                final updatedPrintSpec = widget.item.copyWith(
+                                  size:
+                                      '${_fmt(widget.item.width)}×$v ${widget.item.unit ?? 'cm'}',
+                                );
+                                widget.onChanged(updatedPrintSpec);
+                              },
+                              isDecimalOnlyField: true,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                              ),
+                              mode: GhostFieldMode.inline,
+                              inlineMinWidth: 24,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Quantity
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          children: [
+                            GhostTextField(
+                              hint: "0",
+                              key: ValueKey('${widget.item.id}_qty'),
+                              initialText:
+                                  widget.item.quantity?.toString() == null ||
+                                          widget.item.quantity == 0
+                                      ? ""
+                                      : widget.item.quantity.toString(),
+                              onSubmitted: (v) {
+                                final updatedPrintSpec = widget.item.copyWith(
+                                  quantity: int.tryParse(v) ?? 0,
+                                );
+                                widget.onChanged(updatedPrintSpec);
+                              },
+                              isDecimalOnlyField: true,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _T.ink,
+                              ),
+                              mode: GhostFieldMode.inline,
+                              inlineMinWidth: 20,
+                            ),
+                            const SizedBox(width: 2),
+                            const Text(
+                              'pcs',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _T.slate400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  mode: GhostFieldMode.inline,
                 ),
               ),
 
-            // Width x Height
-            Expanded(
-              flex: 4,
-              child: Row(
-                children: [
-                  GhostTextField(
-                    key: ValueKey('${widget.item.id}_w'),
-                    initialText: _fmt(widget.item.width),
-                    onSubmitted: (v) {
-                      final updatedPrintSpec = widget.item.copyWith(
-                        size:
-                            '$v×${_fmt(widget.item.height)} ${widget.item.unit ?? 'cm'}',
-                      );
-                      widget.onChanged(updatedPrintSpec);
-                    },
-                    isDecimalOnlyField: true,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _T.ink,
-                    ),
-                    mode: GhostFieldMode.inline,
-                    inlineMinWidth: 24,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      '×',
-                      style: TextStyle(color: _T.slate400, fontSize: 13),
-                    ),
-                  ),
-                  GhostTextField(
-                    key: ValueKey('${widget.item.id}_h'),
-                    initialText: _fmt(widget.item.height),
-                    onSubmitted: (v) {
-                      final updatedPrintSpec = widget.item.copyWith(
-                        size:
-                            '${_fmt(widget.item.width)}×$v ${widget.item.unit ?? 'cm'}',
-                      );
-                      widget.onChanged(updatedPrintSpec);
-                    },
-                    isDecimalOnlyField: true,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _T.ink,
-                    ),
-                    mode: GhostFieldMode.inline,
-                    inlineMinWidth: 24,
-                  ),
-                ],
-              ),
-            ),
-
-            // Quantity
-            Expanded(
-              flex: 2,
-              child: Row(
-                children: [
-                  GhostTextField(
-                    hint: "0",
-                    key: ValueKey('${widget.item.id}_qty'),
-                    initialText:
-                        widget.item.quantity?.toString() == null ||
-                                widget.item.quantity == 0
-                            ? ""
-                            : widget.item.quantity.toString(),
-                    onSubmitted: (v) {
-                      final updatedPrintSpec = widget.item.copyWith(
-                        quantity: int.tryParse(v) ?? 0,
-                      );
-                      widget.onChanged(updatedPrintSpec);
-                    },
-                    isDecimalOnlyField: true,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _T.ink,
-                    ),
-                    mode: GhostFieldMode.inline,
-                    inlineMinWidth: 20,
-                  ),
-                  const SizedBox(width: 2),
-                  const Text(
-                    'pcs',
-                    style: TextStyle(fontSize: 11, color: _T.slate400),
-                  ),
-                ],
-              ),
-            ),
-
-            // Delete Action
-            SizedBox(
-              width: 28,
-              child: AnimatedOpacity(
-                opacity: _hovered ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 150),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: _T.slate400,
-                  ),
-                  hoverColor: _T.red50,
-                  color: _T.red,
-                  onPressed: widget.onDelete,
-                  splashRadius: 16,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+              // Delete Action Slot / Loader Container
+              SizedBox(
+                width: 28,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  child:
+                      isCurrentlyCreating
+                          ? const Center(
+                            key: ValueKey('loader'),
+                            child: SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  _T.slate400,
+                                ),
+                              ),
+                            ),
+                          )
+                          : AnimatedOpacity(
+                            key: const ValueKey('delete_btn'),
+                            opacity: _hovered ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 150),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: _T.slate400,
+                              ),
+                              hoverColor: _T.red50,
+                              color: _T.red,
+                              onPressed: widget.onDelete,
+                              splashRadius: 16,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
