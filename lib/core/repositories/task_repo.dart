@@ -277,6 +277,7 @@ class TaskRepo {
     required DateTime? date,
     required List<PrintSpec>? updatedPrintSpecs,
     required PrintSpec? newPrintSpec,
+    required int? deletePrintSpecId,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
@@ -305,6 +306,7 @@ class TaskRepo {
         "updatedPrintSpecs":
             updatedPrintSpecs?.map((spec) => spec.toJson()).toList(),
         "newPrintSpec": newPrintSpec?.toCreateJson(),
+        "deletePrintSpecId": deletePrintSpecId,
       },
     );
 

@@ -288,6 +288,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             date: null,
             updatedPrintSpecs: null,
             newPrintSpec: null,
+            deletePrintSpecId: null,
           );
       widget.task.billingStatus = _billingSelection;
       if (mounted) {
@@ -455,6 +456,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             date: newValue,
             updatedPrintSpecs: null,
             newPrintSpec: null,
+            deletePrintSpecId: null,
           );
     }
   }
@@ -480,6 +482,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             date: null,
             updatedPrintSpecs: null,
             newPrintSpec: null,
+            deletePrintSpecId: null,
           );
     }
   }
@@ -489,6 +492,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     List<PrintSpec>? updatedPrintSpecs,
     bool sharedRef, {
     PrintSpec? newPrintSpec,
+    int? deletePrintSpecId,
   }) async {
     // We aggregate quantity for backwards compatibility
     // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
@@ -515,6 +519,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           date: null,
           updatedPrintSpecs: updatedPrintSpecs,
           newPrintSpec: newPrintSpec,
+          deletePrintSpecId: deletePrintSpecId,
         );
   }
 

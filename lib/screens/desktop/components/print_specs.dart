@@ -225,6 +225,7 @@ class PrintSpecsEditor extends ConsumerStatefulWidget {
     List<PrintSpec>? specs,
     bool sharedRef, {
     PrintSpec? newPrintSpec,
+    int? deletePrintSpecId,
   })
   onUpdate;
 
@@ -530,7 +531,12 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                 final removed = _items.removeAt(index);
                 setState(() {});
                 if (removed.id > 0) {
-                  _notifyChange();
+                  // Request API deletion for persisted items
+                  widget.onUpdate(
+                    null,
+                    _sharedRef,
+                    deletePrintSpecId: removed.id,
+                  );
                 }
               },
             );

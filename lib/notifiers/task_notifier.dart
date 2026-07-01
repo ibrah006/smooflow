@@ -466,6 +466,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required DateTime? date,
     required List<PrintSpec>? updatedPrintSpecs,
     required PrintSpec? newPrintSpec,
+    required int? deletePrintSpecId,
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {
@@ -494,7 +495,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
         name == null &&
         date == null &&
         updatedPrintSpecs == null &&
-        newPrintSpec == null) {
+        newPrintSpec == null &&
+        deletePrintSpecId == null) {
       // Nothing to update
       return;
     }
@@ -513,6 +515,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       date: date,
       updatedPrintSpecs: updatedPrintSpecs,
       newPrintSpec: newPrintSpec,
+      deletePrintSpecId: deletePrintSpecId,
     );
 
     if (localTaskNameChangeEventId != null) {
