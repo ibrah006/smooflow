@@ -42,13 +42,13 @@ class _T {
 }
 
 class SelectionPill<T> extends StatefulWidget {
+  final T initialValue;
   final List<(T value, Color color, Color bg)> values;
-  final T currentValue;
-  final ValueChanged<T>?
+  final Future Function(T)?
   onChanged; // Added callback to support selection changes
 
   const SelectionPill({
-    required this.currentValue,
+    required this.initialValue,
     required this.values,
     this.onChanged,
     super.key,
@@ -65,6 +65,8 @@ class _SelectionPillState<T> extends State<SelectionPill<T>>
   bool _isHovered = false;
   bool _isOpen = false;
 
+  late T currentValue;
+
   late final AnimationController _animationController;
   late final Animation<double> _expandAnimation;
 
@@ -79,6 +81,8 @@ class _SelectionPillState<T> extends State<SelectionPill<T>>
       parent: _animationController,
       curve: Curves.easeOutCubic,
     );
+
+    currentValue = widget.initialValue;
   }
 
   @override
@@ -162,16 +166,16 @@ class _SelectionPillState<T> extends State<SelectionPill<T>>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children:
                               widget.values.map((item) {
-                                final isSelected =
-                                    item.$1 == widget.currentValue;
+                                final isSelected = item.$1 == currentValue;
                                 return _DropdownItemRow(
                                   title: _formatTitle(item.$1),
                                   color: item.$2,
                                   bg: item.$3,
                                   isSelected: isSelected,
-                                  onTap: () {
-                                    widget.onChanged?.call(item.$1);
+                                  onTap: () async {
                                     _closeDropdown();
+
+                                    await widget.onChanged!(item.$1);
                                   },
                                 );
                               }).toList(),
@@ -188,9 +192,7 @@ class _SelectionPillState<T> extends State<SelectionPill<T>>
 
   @override
   Widget build(BuildContext context) {
-    final item = widget.values.firstWhere(
-      (value) => value.$1 == widget.currentValue,
-    );
+    final item = widget.values.firstWhere((value) => value.$1 == currentValue);
     final String title = _formatTitle(item.$1);
     final showIcon = _isHovered || _isOpen;
 

@@ -215,28 +215,28 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   bool _isProgressing = false;
 
   // ── Billing state ─────────────────────────────────────────────────────────
-  late BillingStatus _billingSelection;
+  @deprecated
   bool _billingEditMode = false;
   bool _billingSaving = false;
 
   bool _isDiscussionOpen = false;
   bool _footerHovered = false;
 
-  bool get _isAccountant =>
-      LoginService.currentUser?.role == 'accountant' ||
-      LoginService.currentUser?.isAdmin == true;
+  // bool get _isAccountant =>
+  //     LoginService.currentUser?.role == 'accountant' ||
+  //     LoginService.currentUser?.isAdmin == true;
 
-  bool get _billingDirty {
-    final saved = widget.task.billingStatus ?? BillingStatus.pending;
-    return _billingSelection != saved;
-  }
+  // bool get _billingDirty {
+  //   final saved = widget.task.billingStatus ?? BillingStatus.pending;
+  //   return _billingSelection != saved;
+  // }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
+    // _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
 
     if (widget.task.lastMessageId != null) {
       Future.microtask(() {
@@ -252,7 +252,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   void didUpdateWidget(DetailPanel old) {
     super.didUpdateWidget(old);
     if (old.task.id != widget.task.id) {
-      _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
+      // _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
       _billingEditMode = false;
 
       if (widget.task.lastMessageId != null) {
@@ -270,18 +270,20 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   void _enterBillingEditMode() => setState(() => _billingEditMode = true);
 
   void _cancelBillingEdit() => setState(() {
-    _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
+    // _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
     _billingEditMode = false;
   });
 
-  Future<void> _saveBillingStatus() async {
-    setState(() => _billingSaving = true);
+  Future<void> _saveBillingStatus(BillingStatus newStatus) async {
+    setState(() {
+      _billingSaving = true;
+    });
     try {
       await ref
           .read(taskNotifierProvider.notifier)
           .update(
             task: widget.task,
-            billingStatus: _billingSelection,
+            billingStatus: newStatus,
             ref: null,
             quantity: null,
             size: null,
@@ -291,7 +293,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             newPrintSpec: null,
             deletePrintSpecId: null,
           );
-      widget.task.billingStatus = _billingSelection;
+      widget.task.billingStatus = newStatus;
       if (mounted) {
         setState(() => _billingEditMode = false);
       }
@@ -757,7 +759,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           _DetailMetaCell(
                             label: 'Priority',
                             child: SelectionPill(
-                              currentValue: widget.task.priority,
+                              initialValue: widget.task.priority,
                               values: [
                                 (TaskPriority.normal, _T.slate500, _T.slate100),
                                 (TaskPriority.high, _T.amber, _T.amber50),
@@ -811,7 +813,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           // ),
                           _DetailMetaCell(
                             label: 'Billing',
-                            child: SelectionPill(
+                            child: SelectionPill<BillingStatus>(
+                              initialValue: widget.task.billingStatus,
                               values: [
                                 (BillingStatus.pending, _T.amber, _T.amber50),
                                 (BillingStatus.quoteGiven, _T.blue, _T.blue50),
@@ -823,7 +826,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 (BillingStatus.foc, _T.green, _T.green50),
                                 (BillingStatus.cancelled, _T.red, _T.red50),
                               ],
-                              currentValue: widget.task.billingStatus,
+                              onChanged: _saveBillingStatus,
                             ),
                           ),
                           _DetailMetaCell(
@@ -901,25 +904,24 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             const SizedBox(height: 18),
 
                             // ── BILLING ───────────────────────────────────────────────
-                            const _DetailSectionTitle('Billing'),
-                            const SizedBox(height: 10),
-                            _BillingCard(
-                              savedStatus:
-                                  widget.task.billingStatus ??
-                                  BillingStatus.pending,
-                              selection: _billingSelection,
-                              isAccountant: _isAccountant,
-                              isEditMode: _billingEditMode,
-                              isDirty: _billingDirty,
-                              isSaving: _billingSaving,
-                              onEdit: _enterBillingEditMode,
-                              onCancel: _cancelBillingEdit,
-                              onSelect:
-                                  (s) => setState(() => _billingSelection = s),
-                              onSave: _saveBillingStatus,
-                            ),
-                            const SizedBox(height: 18),
-
+                            // const _DetailSectionTitle('Billing'),
+                            // const SizedBox(height: 10),
+                            // _BillingCard(
+                            //   savedStatus:
+                            //       widget.task.billingStatus ??
+                            //       BillingStatus.pending,
+                            //   selection: _billingSelection,
+                            //   isAccountant: _isAccountant,
+                            //   isEditMode: _billingEditMode,
+                            //   isDirty: _billingDirty,
+                            //   isSaving: _billingSaving,
+                            //   onEdit: _enterBillingEditMode,
+                            //   onCancel: _cancelBillingEdit,
+                            //   onSelect:
+                            //       (s) => setState(() => _billingSelection = s),
+                            //   onSave: _saveBillingStatus,
+                            // ),
+                            // const SizedBox(height: 18),
                             if (isWaitingPrinting)
                               PermissionGate(
                                 permission: UserPermission.schedulePrintAction,

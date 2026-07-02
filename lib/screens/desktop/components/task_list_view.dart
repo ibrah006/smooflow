@@ -2326,7 +2326,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             ? Opacity(
               opacity: 0.45,
               child: SelectionPill(
-                currentValue: t.priority,
+                initialValue: t.priority,
                 values: [
                   (TaskPriority.normal, _T.slate500, _T.slate100),
                   (TaskPriority.high, _T.amber, _T.amber50),
@@ -2335,7 +2335,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               ),
             )
             : SelectionPill(
-              currentValue: t.priority,
+              initialValue: t.priority,
               values: [
                 (TaskPriority.normal, _T.slate500, _T.slate100),
                 (TaskPriority.high, _T.amber, _T.amber50),

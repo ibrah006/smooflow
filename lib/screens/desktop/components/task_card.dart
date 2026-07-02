@@ -352,7 +352,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                         Row(
                           children: [
                             SelectionPill(
-                              currentValue:
+                              initialValue:
                                   widget.task?.priority ?? TaskPriority.normal,
                               values: [
                                 (TaskPriority.normal, _T.slate500, _T.slate100),
