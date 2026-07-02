@@ -810,6 +810,23 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           //   ),
                           // ),
                           _DetailMetaCell(
+                            label: 'Billing',
+                            child: SelectionPill(
+                              values: [
+                                (BillingStatus.pending, _T.amber, _T.amber50),
+                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
+                                (
+                                  BillingStatus.invoiced,
+                                  _T.indigo,
+                                  _T.indigo50,
+                                ),
+                                (BillingStatus.foc, _T.green, _T.green50),
+                                (BillingStatus.cancelled, _T.red, _T.red50),
+                              ],
+                              currentValue: widget.task.billingStatus,
+                            ),
+                          ),
+                          _DetailMetaCell(
                             label: 'Date',
                             child: Row(
                               children: [
@@ -865,23 +882,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             //       '—',
                             //       style: TextStyle(color: _T.slate400),
                             //     ),
-                          ),
-                          _DetailMetaCell(
-                            label: 'Billing',
-                            child: SelectionPill(
-                              values: [
-                                (BillingStatus.pending, _T.amber, _T.amber50),
-                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
-                                (
-                                  BillingStatus.invoiced,
-                                  _T.indigo,
-                                  _T.indigo50,
-                                ),
-                                (BillingStatus.foc, _T.green, _T.green50),
-                                (BillingStatus.cancelled, _T.red, _T.red50),
-                              ],
-                              currentValue: widget.task.billingStatus,
-                            ),
                           ),
                         ],
                       ),
