@@ -239,6 +239,15 @@ class Task {
       status == TaskStatus.finishing ||
       status == TaskStatus.installing;
 
+  bool get hasSharedRef {
+    if (printSpecs.length < 2) return true;
+
+    final firstRef = printSpecs.first.ref?.trim();
+    if (firstRef == null || firstRef.isEmpty) return false;
+
+    return printSpecs.every((spec) => spec.ref?.trim() == firstRef);
+  }
+
   // Setters (make sure only Task can modify these)
   set status(TaskStatus newStatus) {
     // _status = newStatus.replaceAll(RegExp(r"-"), " ");
