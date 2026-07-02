@@ -29,7 +29,7 @@ import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/print_specs.dart';
-import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/components/selection_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';

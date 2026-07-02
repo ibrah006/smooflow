@@ -16,7 +16,7 @@ import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/micro_widgets.dart';
 import 'package:smooflow/screens/desktop/components/priority_chip_row.dart';
-import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/components/selection_pill.dart';
 import 'package:smooflow/screens/desktop/components/project_chip_row.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 

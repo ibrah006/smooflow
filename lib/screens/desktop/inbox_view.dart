@@ -23,7 +23,7 @@ import 'package:smooflow/providers/inbox_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/detail_panel.dart';
-import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/components/selection_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:visibility_detector/visibility_detector.dart';

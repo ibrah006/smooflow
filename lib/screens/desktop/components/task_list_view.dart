@@ -36,7 +36,7 @@ import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
-import 'package:smooflow/screens/desktop/components/priority_pill.dart';
+import 'package:smooflow/screens/desktop/components/selection_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/enums/billing_status.dart';
