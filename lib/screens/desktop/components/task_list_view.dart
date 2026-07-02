@@ -28,6 +28,7 @@ import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -69,6 +70,8 @@ class _T {
   static const r = 6.0;
   static const rLg = 12.0;
   static const red50 = Color(0xFFFEE2E2);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber50 = Color(0xFFFEF3C7);
 
   static final shadowSm = BoxShadow(
     color: Colors.black.withOpacity(0.02),
@@ -2320,8 +2323,25 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
       'priority' =>
         isCompleted
-            ? Opacity(opacity: 0.45, child: PriorityPill(priority: t.priority))
-            : PriorityPill(priority: t.priority),
+            ? Opacity(
+              opacity: 0.45,
+              child: SelectionPill(
+                currentValue: t.priority,
+                values: [
+                  (TaskPriority.normal, _T.slate500, _T.slate100),
+                  (TaskPriority.high, _T.amber, _T.amber50),
+                  (TaskPriority.urgent, _T.red, _T.red50),
+                ],
+              ),
+            )
+            : SelectionPill(
+              currentValue: t.priority,
+              values: [
+                (TaskPriority.normal, _T.slate500, _T.slate100),
+                (TaskPriority.high, _T.amber, _T.amber50),
+                (TaskPriority.urgent, _T.red, _T.red50),
+              ],
+            ),
 
       'size' =>
         t.size != null && !t.size!.contains("null")

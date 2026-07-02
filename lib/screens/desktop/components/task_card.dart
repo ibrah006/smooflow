@@ -351,7 +351,15 @@ class _TaskCardState extends ConsumerState<TaskCard>
                         const SizedBox(height: 9),
                         Row(
                           children: [
-                            PriorityPill(priority: task.priority),
+                            SelectionPill(
+                              currentValue:
+                                  widget.task?.priority ?? TaskPriority.normal,
+                              values: [
+                                (TaskPriority.normal, _T.slate500, _T.slate100),
+                                (TaskPriority.high, _T.amber, _T.amber50),
+                                (TaskPriority.urgent, _T.red, _T.red50),
+                              ],
+                            ),
                             const SizedBox(width: 6),
                             if (member != null)
                               AvatarWidget(

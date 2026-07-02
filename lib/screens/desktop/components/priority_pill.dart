@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/enums/task_priority.dart';
+import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -45,31 +46,38 @@ class _T {
   static const rXl = 16.0;
 }
 
-class PriorityPill extends StatelessWidget {
-  final TaskPriority priority;
-  const PriorityPill({required this.priority});
+class SelectionPill<T> extends StatelessWidget {
+  // final TaskPriority priority;
+
+  final List<(T value, Color color, Color bg)> values;
+  final T currentValue;
+  const SelectionPill({
+    required this.currentValue,
+    required this.values,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final (text, color, bg) = switch (priority) {
-      TaskPriority.urgent => ('Urgent', _T.red, _T.red50),
-      TaskPriority.high => ('High', _T.amber, _T.amber50),
-      TaskPriority.normal => ('Normal', _T.slate500, _T.slate100),
-    };
+    final item = values.firstWhere((value) => value.$1 == currentValue);
+
+    var title = item.$1.toString().split('.').last;
+    title = title[0].capitalize() + title.substring(1);
+
     return Wrap(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
           decoration: BoxDecoration(
-            color: bg,
+            color: item.$3,
             borderRadius: BorderRadius.circular(99),
           ),
           child: Text(
-            text,
+            title,
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: item.$2,
             ),
           ),
         ),

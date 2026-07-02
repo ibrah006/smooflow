@@ -17,6 +17,7 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/billing_status.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
@@ -731,7 +732,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         physics: const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: 18),
                         crossAxisCount: 2,
-                        childAspectRatio: 2.8,
+                        childAspectRatio: 3.2,
                         crossAxisSpacing: 10,
                         children: [
                           _DetailMetaCell(
@@ -755,7 +756,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ),
                           _DetailMetaCell(
                             label: 'Priority',
-                            child: PriorityPill(priority: widget.task.priority),
+                            child: SelectionPill(
+                              currentValue: widget.task.priority,
+                              values: [
+                                (TaskPriority.normal, _T.slate500, _T.slate100),
+                                (TaskPriority.high, _T.amber, _T.amber50),
+                                (TaskPriority.urgent, _T.red, _T.red50),
+                              ],
+                            ),
                           ),
                           if (member != null)
                             _DetailMetaCell(
@@ -782,6 +790,25 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 ],
                               ),
                             ),
+                          // _DetailMetaCell(
+                          //   label: 'Date',
+                          //   child: Row(
+                          //     children: [
+                          //       GhostDateInput(
+                          //         initialValue: d,
+                          //         onChanged: _onTaskDateChange,
+                          //       ),
+                          //       if (isSoon && !isOverdue) ...[
+                          //         const SizedBox(width: 6),
+                          //         const _Badge(
+                          //           'Due soon',
+                          //           _T.amber,
+                          //           _T.amber50,
+                          //         ),
+                          //       ],
+                          //     ],
+                          //   ),
+                          // ),
                           _DetailMetaCell(
                             label: 'Date',
                             child: Row(
@@ -800,48 +827,61 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 ],
                               ],
                             ),
+                            // dueDate != null
+                            //     ? Row(
+                            //       children: [
+                            //         Text(
+                            //           fmtDate(dueDate),
+                            //           style: TextStyle(
+                            //             fontSize: 13,
+                            //             fontWeight: FontWeight.w500,
+                            //             color:
+                            //                 isOverdue
+                            //                     ? _T.red
+                            //                     : isSoon
+                            //                     ? _T.amber
+                            //                     : _T.ink3,
+                            //           ),
+                            //         ),
+                            //         if (isOverdue) ...[
+                            //           const SizedBox(width: 6),
+                            //           const _Badge(
+                            //             'Overdue',
+                            //             _T.red,
+                            //             _T.red50,
+                            //           ),
+                            //         ],
+                            //         if (isSoon && !isOverdue) ...[
+                            //           const SizedBox(width: 6),
+                            //           const _Badge(
+                            //             'Due soon',
+                            //             _T.amber,
+                            //             _T.amber50,
+                            //           ),
+                            //         ],
+                            //       ],
+                            //     )
+                            //     : const Text(
+                            //       '—',
+                            //       style: TextStyle(color: _T.slate400),
+                            //     ),
                           ),
                           _DetailMetaCell(
-                            label: 'Due Date',
-                            child:
-                                dueDate != null
-                                    ? Row(
-                                      children: [
-                                        Text(
-                                          fmtDate(dueDate),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color:
-                                                isOverdue
-                                                    ? _T.red
-                                                    : isSoon
-                                                    ? _T.amber
-                                                    : _T.ink3,
-                                          ),
-                                        ),
-                                        if (isOverdue) ...[
-                                          const SizedBox(width: 6),
-                                          const _Badge(
-                                            'Overdue',
-                                            _T.red,
-                                            _T.red50,
-                                          ),
-                                        ],
-                                        if (isSoon && !isOverdue) ...[
-                                          const SizedBox(width: 6),
-                                          const _Badge(
-                                            'Due soon',
-                                            _T.amber,
-                                            _T.amber50,
-                                          ),
-                                        ],
-                                      ],
-                                    )
-                                    : const Text(
-                                      '—',
-                                      style: TextStyle(color: _T.slate400),
-                                    ),
+                            label: 'Billing',
+                            child: SelectionPill(
+                              values: [
+                                (BillingStatus.pending, _T.amber, _T.amber50),
+                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
+                                (
+                                  BillingStatus.invoiced,
+                                  _T.indigo,
+                                  _T.indigo50,
+                                ),
+                                (BillingStatus.foc, _T.green, _T.green50),
+                                (BillingStatus.cancelled, _T.red, _T.red50),
+                              ],
+                              currentValue: widget.task.billingStatus,
+                            ),
                           ),
                         ],
                       ),
