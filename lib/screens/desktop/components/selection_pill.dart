@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
