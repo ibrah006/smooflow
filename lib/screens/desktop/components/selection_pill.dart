@@ -108,39 +108,49 @@ class _SelectionPillState<T> extends State<SelectionPill<T>> {
           offset: const Offset(0, 4), //[cite: 6]
           child: Material(
             color: Colors.transparent,
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Container(
-                width: 140, //[cite: 6]
-                padding: const EdgeInsets.all(4), //[cite: 6]
-                decoration: BoxDecoration(
-                  color: _T.white, //[cite: 6]
-                  borderRadius: BorderRadius.circular(_T.r), //[cite: 6]
-                  border: Border.all(color: _T.slate200), //[cite: 6]
-                  boxShadow: [
-                    BoxShadow(
-                      color: _T.ink.withOpacity(0.06), //[cite: 6]
-                      blurRadius: 12, //[cite: 6]
-                      offset: const Offset(0, 4), //[cite: 6]
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context); //[cite: 6]
+                  },
+                ),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    width: 140, //[cite: 6]
+                    padding: const EdgeInsets.all(4), //[cite: 6]
+                    decoration: BoxDecoration(
+                      color: _T.white, //[cite: 6]
+                      borderRadius: BorderRadius.circular(_T.r), //[cite: 6]
+                      border: Border.all(color: _T.slate200), //[cite: 6]
+                      boxShadow: [
+                        BoxShadow(
+                          color: _T.ink.withOpacity(0.06), //[cite: 6]
+                          blurRadius: 12, //[cite: 6]
+                          offset: const Offset(0, 4), //[cite: 6]
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children:
+                          widget.values.map((item) {
+                            final isSelected =
+                                item.$1 == currentValue; //[cite: 6]
+                            return _DropdownItemRow(
+                              title: _formatTitle(item.$1), //[cite: 6]
+                              color: item.$2, //[cite: 6]
+                              bg: item.$3, //[cite: 6]
+                              isSelected: isSelected, //[cite: 6]
+                              onTap: () => Navigator.pop(context, item.$1),
+                            );
+                          }).toList(),
+                    ),
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children:
-                      widget.values.map((item) {
-                        final isSelected = item.$1 == currentValue; //[cite: 6]
-                        return _DropdownItemRow(
-                          title: _formatTitle(item.$1), //[cite: 6]
-                          color: item.$2, //[cite: 6]
-                          bg: item.$3, //[cite: 6]
-                          isSelected: isSelected, //[cite: 6]
-                          onTap: () => Navigator.pop(context, item.$1),
-                        );
-                      }).toList(),
-                ),
-              ),
+              ],
             ),
           ),
         );
