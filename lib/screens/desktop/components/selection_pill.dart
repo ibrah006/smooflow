@@ -69,9 +69,18 @@ class _SelectionPillState<T> extends State<SelectionPill<T>> {
   }
 
   String _formatTitle(T val) {
-    var title = val.toString().split('.').last; //[cite: 6]
+    var title = val.toString().split('.').last;
+
     if (title.isEmpty) return '';
-    return title[0].toUpperCase() + title.substring(1); //[cite: 6]
+
+    // Insert spaces before capital letters
+    title = title.replaceAllMapped(
+      RegExp(r'([a-z])([A-Z])'),
+      (match) => '${match.group(1)} ${match.group(2)}',
+    );
+
+    // Capitalize the first letter
+    return title[0].toUpperCase() + title.substring(1);
   }
 
   void _toggleDropdown() {
