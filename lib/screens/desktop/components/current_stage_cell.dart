@@ -53,69 +53,62 @@ class _CurrentStageCellState extends State<CurrentStageCell> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: interactive ? widget.onAdvance : null,
-        child: Tooltip(
-          message:
-              interactive && nextLabel != null ? 'Advance to $nextLabel' : '',
-          preferBelow: false,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              horizontal: showHover ? 10 : 8,
-              vertical: 3,
-            ),
-            decoration: BoxDecoration(
-              color: showHover ? _T.blue.withOpacity(0.08) : si.bg,
-              borderRadius: BorderRadius.circular(99),
-              border:
-                  showHover
-                      ? Border.all(color: _T.blue.withOpacity(0.4))
-                      : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                StagePill(stageInfo: si),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 160),
-                  curve: Curves.easeOutCubic,
-                  child:
-                      showHover
-                          ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(width: 6),
-                              if (widget.isProgressing)
-                                const SizedBox(
-                                  width: 11,
-                                  height: 11,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: _T.blue,
-                                  ),
-                                )
-                              else ...[
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 12,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.symmetric(
+            horizontal: showHover ? 10 : 8,
+            vertical: 3,
+          ),
+          decoration: BoxDecoration(
+            color: showHover ? _T.blue.withOpacity(0.08) : si.bg,
+            borderRadius: BorderRadius.circular(99),
+            border:
+                showHover ? Border.all(color: _T.blue.withOpacity(0.4)) : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              StagePill(stageInfo: si),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOutCubic,
+                child:
+                    showHover
+                        ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 6),
+                            if (widget.isProgressing)
+                              const SizedBox(
+                                width: 11,
+                                height: 11,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                   color: _T.blue,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  nextLabel ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: _T.blue,
-                                  ),
+                              )
+                            else ...[
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 12,
+                                color: _T.blue,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                nextLabel ?? '',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.blue,
                                 ),
-                              ],
+                              ),
                             ],
-                          )
-                          : const SizedBox.shrink(),
-                ),
-              ],
-            ),
+                          ],
+                        )
+                        : const SizedBox.shrink(),
+              ),
+            ],
           ),
         ),
       ),

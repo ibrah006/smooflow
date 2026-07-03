@@ -25,6 +25,7 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/screens/desktop/components/current_stage_cell.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
@@ -739,21 +740,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                         children: [
                           _DetailMetaCell(
                             label: 'Current Stage',
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: si.bg,
-                                    borderRadius: BorderRadius.circular(99),
-                                  ),
-                                  child: StagePill(stageInfo: si),
-                                ),
-                              ],
+                            child: CurrentStageCell(
+                              stageInfo: si,
+                              next: next,
+                              ableToReinitialize: ableToReinitialize,
+                              canAdvance: progressBtnEnabled,
+                              isProgressing: _isProgressing,
+                              onAdvance:
+                                  () => _onAdvanceTask(progressBtnEnabled),
                             ),
                           ),
                           _DetailMetaCell(
