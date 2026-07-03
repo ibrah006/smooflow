@@ -92,7 +92,7 @@ class _T {
   static const white = Colors.white;
 
   static const topbarH = 60.0;
-  static const detailW = 520.0;
+  static const detailW = 535.0;
 
   static const r = 8.0;
   static const rLg = 12.0;
