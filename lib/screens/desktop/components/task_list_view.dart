@@ -2178,13 +2178,20 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
                 ],
               ),
             )
-            : SelectionPill(
-              initialValue: t.priority,
-              values: [
-                (TaskPriority.normal, _T.slate500, _T.slate100),
-                (TaskPriority.high, _T.amber, _T.amber50),
-                (TaskPriority.urgent, _T.red, _T.red50),
-              ],
+            : Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                children: [
+                  SelectionPill(
+                    initialValue: t.priority,
+                    values: [
+                      (TaskPriority.normal, _T.slate500, _T.slate100),
+                      (TaskPriority.high, _T.amber, _T.amber50),
+                      (TaskPriority.urgent, _T.red, _T.red50),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
       'size' =>
