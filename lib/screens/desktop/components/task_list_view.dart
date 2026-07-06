@@ -2154,11 +2154,14 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       'stage' =>
         isCompleted ? const _CompletedStagePill() : StagePill(stageInfo: s),
 
-      'date' => Text(
-        date,
-        overflow: TextOverflow.ellipsis,
-        style: completedBody(
-          const TextStyle(fontSize: 12.5, color: _T.slate500),
+      'date' => Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          date,
+          overflow: TextOverflow.ellipsis,
+          style: completedBody(
+            const TextStyle(fontSize: 12.5, color: _T.slate500),
+          ),
         ),
       ),
 
