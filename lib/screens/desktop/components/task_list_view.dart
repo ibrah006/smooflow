@@ -267,8 +267,8 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: false,
   defaultOn: true,
-  defaultWidth: 100,
-  minWidth: 76,
+  defaultWidth: 50,
+  minWidth: 30,
 );
 
 /// Looks up minWidth for any column id, including billing.
