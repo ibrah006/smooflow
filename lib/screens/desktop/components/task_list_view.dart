@@ -1,20 +1,47 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
 //
-// Task list view with RESIZABLE columns.
+// Task list view with RESIZABLE columns — now backed by the `material_table_view`
+// package instead of a hand-rolled InheritedNotifier + ListView.
 //
-// Architecture change from original:
-//   • ColumnWidthNotifier (InheritedNotifier) owns pixel widths for every col.
-//   • Header row renders columns at exact pixel widths from the notifier, with
-//     a _ResizeHandle drag-divider between each pair of adjacent visible cols.
-//   • Every _TaskRow reads the same notifier so all cells stay pixel-aligned
-//     with the headers at all times — no layout mismatch possible.
-//   • Show/hide toggles update the notifier (width → 0 or → default). No
-//     separate animation controller needed; the notifier drives everything.
-//   • The previous _AnimatedColRow is replaced by a simpler _ColRow widget
-//     that reads widths from ColumnWidthScope and clips/fades hidden cols.
+// pubspec.yaml:
+//   dependencies:
+//     material_table_view: ^7.0.0   # check pub.dev for the latest version
+//
+// Architecture change from the notifier-based version:
+//   • Column widths now live in a plain `Map<String, double>` on the State
+//     object (`_widths`), persisted the same way as before (SharedPreferences).
+//   • The table itself (header + virtualized rows + horizontal/vertical
+//     scrolling) is rendered by `TableView.builder` from material_table_view.
+//   • Columns are represented to the package as a flat `List<TableColumn>`.
+//     Because the package only understands "columns", the concepts that used
+//     to be separate widgets (leading/trailing row padding, the resize-handle
+//     gap between two data columns) are modelled as extra zero-content
+//     "slot" columns (`_ColSlot`) at the same indices as `columns`, so header
+//     and row cell builders can look up "what is at column index N" from one
+//     shared list.
+//   • Resizing is intentionally NOT done via the package's
+//     TableColumnControlHandlesPopupRoute. Instead we keep the original,
+//     simple drag-to-resize `_ResizeHandle` widget and just mutate `_widths`
+//     in `setState`. TableView.builder is fully declarative, so handing it a
+//     new `columns` list with an updated width on every frame of the drag is
+//     all that's needed — this avoids the package's popup-route API (which
+//     is oriented around an in-place "grab handle, resize or reorder" popup)
+//     while giving us the exact same drag feel as before.
+//   • IMPORTANT visual trade-off: material_table_view only allows
+//     Opacity / ClipRRect / non-transparent Material inside row widgets when
+//     NO column is frozen/sticky ("compositing restrictions", see package
+//     docs). The original design relies on Opacity (completed-row dimming)
+//     and rounded/clipped row backgrounds, so — to keep the look pixel
+//     identical — the billing column is a normal scrolling column here, NOT
+//     pinned via `freezePriority`/`sticky`. If you'd rather have billing
+//     pinned to the trailing edge like the old comment mentions, you can set
+//     `sticky: true, freezePriority: 1` on it, but you'll then need to drop
+//     the Opacity/rounded-corner tricks in `_TaskRow` (swap Opacity for
+//     color.withOpacity(...), and remove the ClipRRect/border-radius on the
+//     row container) to stay within the package's compositing rules.
 //   • All other behaviour (board view, connection indicator, column picker,
-//     notifications, completed-row styling, billing pinned col) is unchanged.
+//     notifications, completed-row styling, toolbar) is unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
@@ -22,6 +49,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_table_view/material_table_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/api/local_http.dart';
@@ -98,6 +126,8 @@ const double _kCellHPad = 8.0;
 const double _kResizeHandleWidth = 8.0;
 const double _kMinColWidth = 48.0;
 const double _kMaxColWidth = 480.0;
+const double _kRowHeight = 46.0;
+const double _kHeaderHeight = 39.0;
 
 const kNotificationDuration = Duration(seconds: 3);
 
@@ -241,62 +271,29 @@ Map<String, double> _defaultWidthMap() => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COLUMN WIDTH NOTIFIER
+// COLUMN SLOTS
+//
+// material_table_view only knows about a flat `List<TableColumn>`. We keep a
+// parallel `List<_ColSlot>` (same length, same order) so header/row cell
+// builders know what to draw at a given column index: a real data column, a
+// resize-handle gap between two data columns, or the fixed edge padding that
+// used to be the ListView/Padding horizontal inset.
 // ─────────────────────────────────────────────────────────────────────────────
+enum _SlotType { column, resizeGap, edgePadding }
 
-/// Holds current pixel widths for all columns.
-/// Hidden columns have width 0. The billing column is always visible.
-class _ColumnWidthNotifier extends ChangeNotifier {
-  final Map<String, double> _widths;
-  final Map<String, double> _defaults;
+class _ColSlot {
+  final _SlotType type;
+  final String? colId;
 
-  _ColumnWidthNotifier(Map<String, double> defaults)
-    : _widths = Map.from(defaults),
-      _defaults = Map.from(defaults);
-
-  double widthOf(String id) => _widths[id] ?? 0;
-
-  Map<String, double> snapshot() => Map.from(_widths);
-
-  void resize(String id, double delta, {double? maxAllowedWidth}) {
-    final w = (_widths[id] ?? 0) + delta;
-    // Ensure the upper limit is bound by both the screen edge and the global maximum constraint
-    final maxW = maxAllowedWidth ?? _kMaxColWidth;
-    _widths[id] = w.clamp(
-      _kMinColWidth,
-      maxW.clamp(_kMinColWidth, _kMaxColWidth),
-    );
-    notifyListeners();
-  }
-
-  void setVisible(String id, bool visible) {
-    _widths[id] = visible ? (_defaults[id] ?? 100) : 0;
-    notifyListeners();
-  }
-
-  void resetToDefaults(Set<String> visibleIds) {
-    for (final c in _kCols) {
-      _widths[c.id] = visibleIds.contains(c.id) ? (_defaults[c.id] ?? 100) : 0;
-    }
-    _widths[_kBillingCol.id] = _defaults[_kBillingCol.id] ?? 110;
-    notifyListeners();
-  }
-
-  void loadSaved(Map<String, double> saved) {
-    _widths.addAll(saved);
-    notifyListeners();
-  }
+  const _ColSlot.column(this.colId) : type = _SlotType.column;
+  const _ColSlot.resizeGap(this.colId) : type = _SlotType.resizeGap;
+  const _ColSlot.edgePadding() : type = _SlotType.edgePadding, colId = null;
 }
 
-/// InheritedNotifier — lets header + every task row share widths without prop drilling.
-class _WidthScope extends InheritedNotifier<_ColumnWidthNotifier> {
-  const _WidthScope({
-    required _ColumnWidthNotifier super.notifier,
-    required super.child,
-  });
-
-  static _ColumnWidthNotifier of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_WidthScope>()!.notifier!;
+class _BuiltColumns {
+  final List<TableColumn> columns;
+  final List<_ColSlot> slots;
+  const _BuiltColumns(this.columns, this.slots);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -331,17 +328,18 @@ class TaskListView extends ConsumerStatefulWidget {
 class _TaskListViewState extends ConsumerState<TaskListView> {
   Set<String> _visibleOptional = {};
   _ViewMode _viewMode = _ViewMode.list;
-  late final _ColumnWidthNotifier _widthNotifier;
+
+  /// Current pixel widths per column id. Hidden optional columns simply
+  /// don't appear in `_effectiveVisible`, so they're skipped when building
+  /// the `columns` list — no need for a width-of-zero convention any more.
+  Map<String, double> _widths = _defaultWidthMap();
 
   bool get _singleProject => widget.selectedProjectId != null;
-
-  // static const _kDetailCols = {'date', 'task'};
 
   int? lastNotifiedTaskId;
   DateTime? lastNotificationTime;
 
   Set<String> get _effectiveVisible {
-    // Always use the full set of mandatory and chosen optional columns
     final base = {..._kMandatoryIds, ..._visibleOptional};
     return _singleProject ? base.difference({'project'}) : base;
   }
@@ -358,21 +356,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   void initState() {
     super.initState();
     _visibleOptional = Set.from(_kDefaultOptionalOn);
-
-    // Build notifier with defaults; hide optional-off columns
-    final defaults = _defaultWidthMap();
-    for (final c in _kCols) {
-      if (!c.mandatory && !c.defaultOn) defaults[c.id] = 0;
-    }
-    _widthNotifier = _ColumnWidthNotifier(defaults);
-
+    _widths = _defaultWidthMap();
     _loadPrefs();
-  }
-
-  @override
-  void dispose() {
-    _widthNotifier.dispose();
-    super.dispose();
   }
 
   void _loadPrefs() {
@@ -395,15 +380,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       final map = (jsonDecode(rawW) as Map<String, dynamic>).map(
         (k, v) => MapEntry(k, (v as num).toDouble()),
       );
-      _widthNotifier.loadSaved(map);
-    } else {
-      // Apply visibility to notifier from freshly loaded prefs
-      for (final c in _kCols) {
-        if (!c.mandatory) {
-          _widthNotifier.setVisible(c.id, _visibleOptional.contains(c.id));
-        }
-      }
-      if (_singleProject) _widthNotifier.setVisible('project', false);
+      _widths = {..._widths, ...map};
     }
 
     if (mounted) setState(() {});
@@ -416,10 +393,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   Future<void> _saveWidths() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _kColWidthsKey,
-      jsonEncode(_widthNotifier.snapshot()),
-    );
+    await prefs.setString(_kColWidthsKey, jsonEncode(_widths));
   }
 
   Future<void> _saveViewMode() async {
@@ -434,10 +408,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     setState(() {
       if (_visibleOptional.contains(id)) {
         _visibleOptional.remove(id);
-        _widthNotifier.setVisible(id, false);
       } else {
         _visibleOptional.add(id);
-        _widthNotifier.setVisible(id, true);
+        // Make sure a freshly-shown column has a sane width.
+        _widths.putIfAbsent(
+          id,
+          () => _kCols.firstWhere((c) => c.id == id).defaultWidth,
+        );
       }
     });
     _saveColPrefs();
@@ -445,8 +422,10 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   }
 
   void _resetToDefaults() {
-    setState(() => _visibleOptional = Set.from(_kDefaultOptionalOn));
-    _widthNotifier.resetToDefaults(_effectiveVisible);
+    setState(() {
+      _visibleOptional = Set.from(_kDefaultOptionalOn);
+      _widths = _defaultWidthMap();
+    });
     _saveColPrefs();
     _saveWidths();
   }
@@ -457,26 +436,11 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     _saveViewMode();
   }
 
-  @override
-  void didUpdateWidget(TaskListView old) {
-    super.didUpdateWidget(old);
-    // If the project filter changed, show/hide project column
-    if (old.selectedProjectId != widget.selectedProjectId) {
-      _widthNotifier.setVisible('project', !_singleProject);
-    }
-    // If detail panel opened/closed, show/hide non-core columns
-    if (old.isDetailOpen != widget.isDetailOpen) {
-      _applyDetailMode();
-    }
-  }
-
-  void _applyDetailMode() {
-    // Always maintain standard visibility and keep the billing column visible
-    final effective = _effectiveVisible;
-    for (final c in _kCols) {
-      _widthNotifier.setVisible(c.id, effective.contains(c.id));
-    }
-    _widthNotifier.setVisible(_kBillingCol.id, true);
+  void _resizeColumn(String id, double delta) {
+    setState(() {
+      final w = (_widths[id] ?? 100) + delta;
+      _widths[id] = w.clamp(_kMinColWidth, _kMaxColWidth);
+    });
   }
 
   void _loadTasks() {
@@ -485,6 +449,41 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       filters['projectId'] = widget.selectedProjectId;
     }
     ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
+  }
+
+  /// Builds the flat column list (+ parallel slot list) that
+  /// `TableView.builder` and our cell builders share.
+  _BuiltColumns _buildColumns(Set<String> effective) {
+    final columns = <TableColumn>[];
+    final slots = <_ColSlot>[];
+
+    // Leading edge padding (used to be the ListView/Padding horizontal inset).
+    columns.add(const TableColumn(width: _kRowHPad));
+    slots.add(const _ColSlot.edgePadding());
+
+    final visibleCols = _kCols.where((c) => effective.contains(c.id)).toList();
+    for (var i = 0; i < visibleCols.length; i++) {
+      final c = visibleCols[i];
+      columns.add(TableColumn(width: _widths[c.id] ?? c.defaultWidth));
+      slots.add(_ColSlot.column(c.id));
+
+      if (!widget.isDetailOpen) {
+        columns.add(const TableColumn(width: _kResizeHandleWidth));
+        slots.add(_ColSlot.resizeGap(c.id));
+      }
+    }
+
+    // Billing column — always visible, always last data column.
+    columns.add(
+      TableColumn(width: _widths[_kBillingCol.id] ?? _kBillingCol.defaultWidth),
+    );
+    slots.add(_ColSlot.column(_kBillingCol.id));
+
+    // Trailing edge padding.
+    columns.add(const TableColumn(width: _kRowHPad));
+    slots.add(const _ColSlot.edgePadding());
+
+    return _BuiltColumns(columns, slots);
   }
 
   @override
@@ -525,198 +524,80 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       });
     });
 
-    final Project? _selectedProject =
+    final Project? selectedProject =
         widget.selectedProjectId != null
             ? ref.read(projectByIdProvider(widget.selectedProjectId!))
             : null;
 
-    return _WidthScope(
-      notifier: _widthNotifier,
-      child: Container(
-        color: _T.slate50,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ProjectHeader(
-              activeProject: _activeProject,
-              viewMode: _viewMode,
-              onViewModeChanged: _setViewMode,
-              connectionStatus: connectionStatus,
+    return Container(
+      color: _T.slate50,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ProjectHeader(
+            activeProject: _activeProject,
+            viewMode: _viewMode,
+            onViewModeChanged: _setViewMode,
+            connectionStatus: connectionStatus,
+          ),
+
+          if (_viewMode == _ViewMode.board)
+            Expanded(
+              child: BoardView(
+                tasks: tasks,
+                projects: widget.projects,
+                selectedTaskId: widget.selectedTaskId,
+                onTaskSelected: widget.onTaskSelected,
+                onAddTask: widget.onAddTask ?? () {},
+                addTaskFocusNode: widget.addTaskFocusNode ?? FocusNode(),
+                isAddingTask: widget.isAddingTask,
+                selectedProjectId: widget.selectedProjectId,
+              ),
+            )
+          else if (_viewMode == _ViewMode.overview)
+            Expanded(
+              child: DesktopProjectOverviewScreen(
+                selectedProjectId: widget.selectedProjectId,
+                project: selectedProject,
+              ),
+            )
+          else ...[
+            _Toolbar(
+              visibleOptional: _visibleOptional,
+              isDetailOpen: widget.isDetailOpen,
+              singleProject: _singleProject,
+              onToggle: _toggleColumn,
+              onReset: _resetToDefaults,
             ),
-
-            if (_viewMode == _ViewMode.board)
-              Expanded(
-                child: BoardView(
-                  tasks: tasks,
-                  projects: widget.projects,
-                  selectedTaskId: widget.selectedTaskId,
-                  onTaskSelected: widget.onTaskSelected,
-                  onAddTask: widget.onAddTask ?? () {},
-                  addTaskFocusNode: widget.addTaskFocusNode ?? FocusNode(),
-                  isAddingTask: widget.isAddingTask,
-                  selectedProjectId: widget.selectedProjectId,
-                ),
-              )
-            else if (_viewMode == _ViewMode.overview)
-              Expanded(
-                child: DesktopProjectOverviewScreen(
-                  selectedProjectId: widget.selectedProjectId,
-                  project: _selectedProject,
-                ),
-              )
-            else ...[
-              _Toolbar(
-                visibleOptional: _visibleOptional,
-                isDetailOpen: widget.isDetailOpen,
-                singleProject: _singleProject,
-                onToggle: _toggleColumn,
-                onReset: _resetToDefaults,
-              ),
-
-              // ── HORIZONTAL SCROLL CONTEXT FOR HEADERS & ROWS ──
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return AnimatedBuilder(
-                      animation: _widthNotifier,
-                      builder: (context, _) {
-                        // 1. Calculate the exact content width matching all columns + spacers
-                        double tableWidth = 0;
-                        for (final col in _kCols) {
-                          if (effective.contains(col.id)) {
-                            tableWidth += _widthNotifier.widthOf(col.id);
-                            tableWidth += _kResizeHandleWidth;
-                          }
-                        }
-                        tableWidth += _widthNotifier.widthOf(_kBillingCol.id);
-                        tableWidth +=
-                            2 * _kRowHPad; // Include list's horizontal padding
-
-                        // 2. Ensure layout expands to at least the available viewport width
-                        final scrollableWidth =
-                            tableWidth > constraints.maxWidth
-                                ? tableWidth
-                                : constraints.maxWidth;
-
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: scrollableWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // ── Column header row with resize handles ───────────
-                                Container(
-                                  color: _T.white,
-                                  child: Column(
-                                    children: [
-                                      _HeaderRow(
-                                        effectiveVisible: effective,
-                                        onResizeEnd: _saveWidths,
-                                        isDetailOpen: widget.isDetailOpen,
-                                        constraintsMaxWidth:
-                                            constraints
-                                                .maxWidth, // Pass the bounding constraint width here
-                                      ),
-                                      const Divider(
-                                        height: 1,
-                                        thickness: 1,
-                                        color: _T.slate200,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // ── Data rows ──────────────────────────────────────
-                                Expanded(
-                                  child:
-                                      isLoading && tasks.isEmpty
-                                          ? const Center(
-                                            child: CircularProgressIndicator(),
-                                          )
-                                          : error != null
-                                          ? _ErrorState(
-                                            error: error,
-                                            onRetry: () {
-                                              ref
-                                                  .read(
-                                                    taskNotifierProvider
-                                                        .notifier,
-                                                  )
-                                                  .clearError();
-                                              _loadTasks();
-                                            },
-                                          )
-                                          : tasks.isEmpty
-                                          ? _EmptyState()
-                                          : ListView.separated(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: _kRowHPad,
-                                              vertical: 8,
-                                            ),
-                                            itemCount: reversedTasks.length,
-                                            separatorBuilder:
-                                                (_, __) => const Divider(
-                                                  height: 1,
-                                                  thickness: 1,
-                                                  color: _T.slate100,
-                                                ),
-                                            itemBuilder: (_, i) {
-                                              final t = reversedTasks[i];
-                                              final p =
-                                                  widget.projects
-                                                      .cast<Project?>()
-                                                      .firstWhere(
-                                                        (pr) =>
-                                                            pr!.id ==
-                                                            t.projectId
-                                                                .toString(),
-                                                        orElse: () => null,
-                                                      ) ??
-                                                  widget.projects.firstOrNull;
-
-                                              Member? m;
-                                              try {
-                                                m = members.firstWhere(
-                                                  (mem) => t.assignees.contains(
-                                                    mem.id,
-                                                  ),
-                                                );
-                                              } catch (_) {
-                                                m = null;
-                                              }
-
-                                              return _TaskRow(
-                                                taskId: t.id,
-                                                project: p,
-                                                assignee: m,
-                                                effectiveVisible: effective,
-                                                isDetailOpen:
-                                                    widget.isDetailOpen,
-                                                isSelected:
-                                                    widget.selectedTaskId ==
-                                                    t.id,
-                                                onTap:
-                                                    () => widget.onTaskSelected(
-                                                      t.id,
-                                                      t.projectId,
-                                                    ),
-                                              );
-                                            },
-                                          ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+            Expanded(
+              child:
+                  isLoading && tasks.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : error != null
+                      ? _ErrorState(
+                        error: error,
+                        onRetry: () {
+                          ref.read(taskNotifierProvider.notifier).clearError();
+                          _loadTasks();
+                        },
+                      )
+                      : tasks.isEmpty
+                      ? _EmptyState()
+                      : _TaskTable(
+                        effective: effective,
+                        tasks: reversedTasks,
+                        projects: widget.projects,
+                        members: members,
+                        isDetailOpen: widget.isDetailOpen,
+                        selectedTaskId: widget.selectedTaskId,
+                        onTaskSelected: widget.onTaskSelected,
+                        buildColumns: _buildColumns,
+                        onResizeColumn: _resizeColumn,
+                        onResizeEnd: _saveWidths,
+                      ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -768,112 +649,151 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HEADER ROW — renders column labels + resize handles
+// TASK TABLE — wraps material_table_view's TableView.builder
 // ─────────────────────────────────────────────────────────────────────────────
-class _HeaderRow extends StatelessWidget {
-  final Set<String> effectiveVisible;
-  final VoidCallback? onResizeEnd;
+class _TaskTable extends ConsumerWidget {
+  final Set<String> effective;
+  final List<Task> tasks;
+  final List<Project> projects;
+  final List<Member> members;
   final bool isDetailOpen;
-  final double constraintsMaxWidth; // Add this line
+  final int? selectedTaskId;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
+  final _BuiltColumns Function(Set<String> effective) buildColumns;
+  final void Function(String colId, double delta) onResizeColumn;
+  final VoidCallback onResizeEnd;
 
-  const _HeaderRow({
-    required this.effectiveVisible,
-    this.onResizeEnd,
+  const _TaskTable({
+    required this.effective,
+    required this.tasks,
+    required this.projects,
+    required this.members,
     required this.isDetailOpen,
-    required this.constraintsMaxWidth, // Add this line
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+    required this.buildColumns,
+    required this.onResizeColumn,
+    required this.onResizeEnd,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final notifier = _WidthScope.of(context);
-    final allCols = [..._kCols, _kBillingCol];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final built = buildColumns(effective);
+    final columns = built.columns;
+    final slots = built.slots;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: _kRowHPad, vertical: 8),
-      child: AnimatedBuilder(
-        animation: notifier,
-        builder: (context, _) {
-          return Row(children: _buildHeaderCells(context, notifier, allCols));
+    return Container(
+      color: _T.white,
+      child: TableView.builder(
+        columns: columns,
+        rowCount: tasks.length,
+        rowHeight: _kRowHeight,
+        headerHeight: _kHeaderHeight,
+        headerBuilder:
+            (context, contentBuilder) => Column(
+              children: [
+                SizedBox(
+                  height: _kHeaderHeight - 1,
+                  child: contentBuilder(
+                    context,
+                    (context, column) => _headerCell(
+                      slots,
+                      column,
+                      isDetailOpen,
+                      onResizeColumn,
+                      onResizeEnd,
+                    ),
+                  ),
+                ),
+                const Divider(height: 1, thickness: 1, color: _T.slate200),
+              ],
+            ),
+        rowBuilder: (context, row, contentBuilder) {
+          final t = tasks[row];
+          final p =
+              projects.cast<Project?>().firstWhere(
+                (pr) => pr!.id == t.projectId.toString(),
+                orElse: () => null,
+              ) ??
+              projects.firstOrNull;
+
+          Member? m;
+          try {
+            m = members.firstWhere((mem) => t.assignees.contains(mem.id));
+          } catch (_) {
+            m = null;
+          }
+
+          return _TaskRow(
+            key: ValueKey(t.id),
+            taskId: t.id,
+            project: p,
+            assignee: m,
+            slots: slots,
+            isSelected: selectedTaskId == t.id,
+            onTap: () => onTaskSelected(t.id, t.projectId),
+            contentBuilder: contentBuilder,
+          );
         },
       ),
     );
   }
+}
 
-  List<Widget> _buildHeaderCells(
-    BuildContext context,
-    _ColumnWidthNotifier notifier,
-    List<_ColDef> allCols,
-  ) {
-    final result = <Widget>[];
-    final visibleCols =
-        allCols.where((c) {
-          if (c.id == 'billing') return true;
-          return effectiveVisible.contains(c.id);
-        }).toList();
+Widget _headerCell(
+  List<_ColSlot> slots,
+  int column,
+  bool isDetailOpen,
+  void Function(String colId, double delta) onResizeColumn,
+  VoidCallback onResizeEnd,
+) {
+  final slot = slots[column];
 
-    // Start with the initial padding offset
-    double accumulatedLeft = _kRowHPad;
+  switch (slot.type) {
+    case _SlotType.edgePadding:
+      return const SizedBox.shrink();
 
-    for (int i = 0; i < visibleCols.length; i++) {
-      final col = visibleCols[i];
-      final w = notifier.widthOf(col.id);
-      if (w < 1) continue;
+    case _SlotType.resizeGap:
+      if (isDetailOpen) return const SizedBox.shrink();
+      return _ResizeHandle(
+        colId: slot.colId!,
+        onResize: onResizeColumn,
+        onResizeEnd: onResizeEnd,
+      );
 
-      result.add(
-        SizedBox(
-          width: w,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
-            child: Text(
-              col.label,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-                color: _T.slate400,
-              ),
-            ),
+    case _SlotType.column:
+      final col = [
+        ..._kCols,
+        _kBillingCol,
+      ].firstWhere((c) => c.id == slot.colId);
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+        child: Text(
+          col.label,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.7,
+            color: _T.slate400,
           ),
         ),
       );
-
-      // Max width equals total screen space minus everything up to this column
-      final maxAllowedWidth = constraintsMaxWidth - accumulatedLeft;
-
-      accumulatedLeft += w;
-
-      if (!isDetailOpen && i < visibleCols.length - 1) {
-        result.add(
-          _ResizeHandle(
-            colId: col.id,
-            notifier: notifier,
-            onResizeEnd: onResizeEnd,
-            maxAllowedWidth: maxAllowedWidth, // Pass calculation here
-          ),
-        );
-        accumulatedLeft += _kResizeHandleWidth;
-      }
-    }
-
-    return result;
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RESIZE HANDLE
+// RESIZE HANDLE — plain drag handle, mutates parent state directly.
 // ─────────────────────────────────────────────────────────────────────────────
 class _ResizeHandle extends StatefulWidget {
   final String colId;
-  final _ColumnWidthNotifier notifier;
-  final VoidCallback? onResizeEnd;
-  final double maxAllowedWidth; // Add this line
+  final void Function(String colId, double delta) onResize;
+  final VoidCallback onResizeEnd;
 
   const _ResizeHandle({
     required this.colId,
-    required this.notifier,
-    this.onResizeEnd,
-    required this.maxAllowedWidth, // Add this line
+    required this.onResize,
+    required this.onResizeEnd,
   });
 
   @override
@@ -893,17 +813,11 @@ class _ResizeHandleState extends State<_ResizeHandle> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onHorizontalDragStart: (_) => setState(() => _dragging = true),
-        onHorizontalDragUpdate: (details) {
-          // Pass maxAllowedWidth to the resize trigger
-          widget.notifier.resize(
-            widget.colId,
-            details.delta.dx,
-            maxAllowedWidth: widget.maxAllowedWidth,
-          );
-        },
+        onHorizontalDragUpdate:
+            (details) => widget.onResize(widget.colId, details.delta.dx),
         onHorizontalDragEnd: (_) {
           setState(() => _dragging = false);
-          widget.onResizeEnd?.call();
+          widget.onResizeEnd();
         },
         child: SizedBox(
           width: _kResizeHandleWidth,
@@ -925,85 +839,6 @@ class _ResizeHandleState extends State<_ResizeHandle> {
         ),
       ),
     );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COLUMN ROW — shared by header and task rows
-// Reads widths from _WidthScope. No animation controller needed — the
-// notifier drives rebuilds, and AnimatedContainer handles smooth transitions.
-// ─────────────────────────────────────────────────────────────────────────────
-typedef _CellBuilder = Widget Function(_ColDef col);
-
-class _ColRow extends StatelessWidget {
-  final Set<String> effectiveVisible;
-  final _CellBuilder builder;
-  final bool includeBilling;
-  final bool isDetailOpen;
-
-  const _ColRow({
-    super.key,
-    required this.effectiveVisible,
-    required this.builder,
-    required this.isDetailOpen,
-    this.includeBilling = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final notifier = _WidthScope.of(context);
-    return AnimatedBuilder(
-      animation: notifier,
-      builder: (context, _) {
-        return Row(children: _buildCells(notifier));
-      },
-    );
-  }
-
-  List<Widget> _buildCells(_ColumnWidthNotifier notifier) {
-    final result = <Widget>[];
-    for (final col in _kCols) {
-      final w = notifier.widthOf(col.id);
-      final isVisible = effectiveVisible.contains(col.id);
-      if (!isVisible && w < 1) continue;
-
-      result.add(
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeInOut,
-          width: isVisible ? w : 0,
-          clipBehavior: Clip.hardEdge,
-          decoration: const BoxDecoration(),
-          child:
-              isVisible
-                  ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
-                    child: builder(col),
-                  )
-                  : const SizedBox.shrink(),
-        ),
-      );
-
-      // Spacer for the resize handle width — keeps cells aligned with header
-      if (col.id != _kBillingCol.id && !isDetailOpen) {
-        result.add(const SizedBox(width: _kResizeHandleWidth));
-      }
-    }
-
-    if (includeBilling) {
-      final bw = notifier.widthOf(_kBillingCol.id);
-      result.add(
-        SizedBox(
-          width: bw,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
-            child: builder(_kBillingCol),
-          ),
-        ),
-      );
-    }
-
-    return result;
   }
 }
 
@@ -2124,24 +1959,32 @@ class _SectionLabel extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
+//
+// Now receives the `contentBuilder` handed to us by TableView.builder's
+// rowBuilder, instead of doing its own column layout via _ColRow.
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskRow extends ConsumerStatefulWidget {
   final int taskId;
   final Project? project;
   final Member? assignee;
-  final Set<String> effectiveVisible;
+  final List<_ColSlot> slots;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isDetailOpen;
+  final Widget Function(
+    BuildContext context,
+    Widget Function(BuildContext context, int column) cellBuilder,
+  )
+  contentBuilder;
 
   const _TaskRow({
+    super.key,
     required this.taskId,
     required this.project,
     required this.assignee,
-    required this.effectiveVisible,
+    required this.slots,
     required this.isSelected,
     required this.onTap,
-    required this.isDetailOpen,
+    required this.contentBuilder,
   });
 
   @override
@@ -2185,45 +2028,31 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        decoration: BoxDecoration(
-          color: rowColor,
-          borderRadius: BorderRadius.circular(isCompleted ? 3 : _T.r),
-          border:
-              isCompleted
-                  ? Border(left: BorderSide(color: _completeMuted, width: 2.75))
-                  : null,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(_T.r),
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(_T.r),
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: 11,
-                bottom: 11,
-                left: isCompleted ? 0 : 3,
-              ),
-              child: _ColRow(
-                effectiveVisible: widget.effectiveVisible,
-                isDetailOpen: widget.isDetailOpen,
-                builder:
-                    (col) => Opacity(
-                      opacity: isCompleted ? 0.6 : 1.0,
-                      child: _cellFor(
-                        col,
-                        t,
-                        p,
-                        m,
-                        s,
-                        dateDisplay,
-                        isCompleted: isCompleted,
-                      ),
-                    ),
-              ),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          decoration: BoxDecoration(
+            color: rowColor,
+            border: Border(
+              bottom: const BorderSide(color: _T.slate100, width: 1),
+              left:
+                  isCompleted
+                      ? const BorderSide(color: _completeMuted, width: 2.75)
+                      : BorderSide.none,
+            ),
+          ),
+          child: widget.contentBuilder(
+            context,
+            (context, column) => _cellFor(
+              widget.slots[column],
+              t,
+              p,
+              m,
+              s,
+              dateDisplay,
+              isCompleted: isCompleted,
             ),
           ),
         ),
@@ -2232,7 +2061,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
   }
 
   Widget _cellFor(
-    _ColDef col,
+    _ColSlot slot,
     Task t,
     Project? p,
     Member? m,
@@ -2240,12 +2069,23 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     String date, {
     required bool isCompleted,
   }) {
+    if (slot.type == _SlotType.edgePadding ||
+        slot.type == _SlotType.resizeGap) {
+      return const SizedBox.shrink();
+    }
+
+    final colId = slot.colId!;
+
+    // NOTE: because a frozen/sticky column is NOT used here, Opacity is safe
+    // to use inside row cells. If you later pin the billing column via
+    // `sticky: true, freezePriority: ...`, replace these Opacity wrappers
+    // with `color.withOpacity(...)` on the relevant text/icon colors instead.
     TextStyle completedBody(TextStyle base) =>
         isCompleted
             ? base.copyWith(color: _completeText.withOpacity(0.55))
             : base;
 
-    return switch (col.id) {
+    final content = switch (colId) {
       'task' => Row(
         children: [
           Expanded(
@@ -2409,16 +2249,13 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         dimmed: isCompleted,
       ),
 
-      // if (t.lastMessageId != null) ...[
-      //       _MessageIndicator(
-      //         count: t.unreadCount > 0 ? t.unreadCount : t.messageCount,
-      //         dimmed: isCompleted,
-      //         unread: t.unreadCount > 0,
-      //       ),
-      //       const SizedBox(width: 2),
-      //     ],
       _ => const SizedBox.shrink(),
     };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+      child: Opacity(opacity: isCompleted ? 0.6 : 1.0, child: content),
+    );
   }
 }
 
