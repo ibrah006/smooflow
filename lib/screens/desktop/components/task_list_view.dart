@@ -2074,14 +2074,17 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
           ),
           child: widget.contentBuilder(
             context,
-            (context, column) => _cellFor(
-              widget.slots[column],
-              t,
-              p,
-              m,
-              s,
-              dateDisplay,
-              isCompleted: isCompleted,
+            (context, column) => Align(
+              alignment: Alignment.centerLeft,
+              child: _cellFor(
+                widget.slots[column],
+                t,
+                p,
+                m,
+                s,
+                dateDisplay,
+                isCompleted: isCompleted,
+              ),
             ),
           ),
         ),
@@ -2194,21 +2197,29 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         isCompleted
             ? Opacity(
               opacity: 0.45,
-              child: SelectionPill(
-                initialValue: t.priority,
-                values: [
-                  (TaskPriority.normal, _T.slate500, _T.slate100),
-                  (TaskPriority.high, _T.amber, _T.amber50),
-                  (TaskPriority.urgent, _T.red, _T.red50),
+              child: Wrap(
+                children: [
+                  SelectionPill(
+                    initialValue: t.priority,
+                    values: [
+                      (TaskPriority.normal, _T.slate500, _T.slate100),
+                      (TaskPriority.high, _T.amber, _T.amber50),
+                      (TaskPriority.urgent, _T.red, _T.red50),
+                    ],
+                  ),
                 ],
               ),
             )
-            : SelectionPill(
-              initialValue: t.priority,
-              values: [
-                (TaskPriority.normal, _T.slate500, _T.slate100),
-                (TaskPriority.high, _T.amber, _T.amber50),
-                (TaskPriority.urgent, _T.red, _T.red50),
+            : Wrap(
+              children: [
+                SelectionPill(
+                  initialValue: t.priority,
+                  values: [
+                    (TaskPriority.normal, _T.slate500, _T.slate100),
+                    (TaskPriority.high, _T.amber, _T.amber50),
+                    (TaskPriority.urgent, _T.red, _T.red50),
+                  ],
+                ),
               ],
             ),
 
