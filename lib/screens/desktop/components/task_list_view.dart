@@ -767,7 +767,7 @@ Widget _headerCell(
         _kBillingCol,
       ].firstWhere((c) => c.id == slot.colId);
       return Container(
-        alignment: Alignment.center,
+        alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
         child: Text(
           col.label,
