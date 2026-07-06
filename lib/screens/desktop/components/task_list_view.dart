@@ -127,7 +127,7 @@ const double _kResizeHandleWidth = 8.0;
 const double _kMinColWidth = 48.0;
 const double _kMaxColWidth = 480.0;
 const double _kRowHeight = 46.0;
-const double _kHeaderHeight = 39.0;
+const double _kHeaderHeight = 36.0;
 
 const kNotificationDuration = Duration(seconds: 3);
 
@@ -149,6 +149,12 @@ class _ColDef {
   final bool defaultOn;
   final double defaultWidth;
 
+  /// Per-column minimum drag-resize width. Falls back to `_kMinColWidth`
+  /// when not overridden — most columns are fine with that global floor,
+  /// but a few (task name, project) need a larger floor to stay legible,
+  /// and a few (qty) can safely go narrower.
+  final double minWidth;
+
   const _ColDef({
     required this.id,
     required this.label,
@@ -158,6 +164,7 @@ class _ColDef {
     required this.mandatory,
     required this.defaultOn,
     required this.defaultWidth,
+    this.minWidth = _kMinColWidth,
   });
 }
 
@@ -171,6 +178,7 @@ const _kCols = [
     mandatory: true,
     defaultOn: true,
     defaultWidth: 100,
+    minWidth: 72,
   ),
   _ColDef(
     id: 'project',
@@ -181,6 +189,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: true,
     defaultWidth: 130,
+    minWidth: 90,
   ),
   _ColDef(
     id: 'task',
@@ -191,6 +200,7 @@ const _kCols = [
     mandatory: true,
     defaultOn: true,
     defaultWidth: 240,
+    minWidth: 140,
   ),
   _ColDef(
     id: 'ref',
@@ -201,6 +211,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: true,
     defaultWidth: 160,
+    minWidth: 80,
   ),
   _ColDef(
     id: 'stage',
@@ -211,6 +222,7 @@ const _kCols = [
     mandatory: true,
     defaultOn: true,
     defaultWidth: 120,
+    minWidth: 84,
   ),
   _ColDef(
     id: 'priority',
@@ -221,6 +233,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: true,
     defaultWidth: 90,
+    minWidth: 72,
   ),
   _ColDef(
     id: 'size',
@@ -231,6 +244,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: false,
     defaultWidth: 120,
+    minWidth: 72,
   ),
   _ColDef(
     id: 'qty',
@@ -241,6 +255,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: false,
     defaultWidth: 64,
+    minWidth: 40,
   ),
 ];
 
@@ -253,7 +268,12 @@ const _kBillingCol = _ColDef(
   mandatory: false,
   defaultOn: true,
   defaultWidth: 100,
+  minWidth: 76,
 );
+
+/// Looks up minWidth for any column id, including billing.
+double _minWidthFor(String colId) =>
+    [..._kCols, _kBillingCol].firstWhere((c) => c.id == colId).minWidth;
 
 Set<String> get _kDefaultOptionalOn =>
     _kCols.where((c) => !c.mandatory && c.defaultOn).map((c) => c.id).toSet();
@@ -381,6 +401,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         (k, v) => MapEntry(k, (v as num).toDouble()),
       );
       _widths = {..._widths, ...map};
+      // Guard against stale/saved widths that predate a column's current
+      // minimum (e.g. min was raised in a later app version).
+      for (final id in _widths.keys.toList()) {
+        final min = _minWidthFor(id);
+        if (_widths[id]! < min) _widths[id] = min;
+      }
     }
 
     if (mounted) setState(() {});
@@ -410,11 +436,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
         _visibleOptional.remove(id);
       } else {
         _visibleOptional.add(id);
-        // Make sure a freshly-shown column has a sane width.
-        _widths.putIfAbsent(
-          id,
-          () => _kCols.firstWhere((c) => c.id == id).defaultWidth,
-        );
+        // Make sure a freshly-shown column has a sane, in-bounds width.
+        _widths.putIfAbsent(id, () {
+          final col = _kCols.firstWhere((c) => c.id == id);
+          return col.defaultWidth < col.minWidth
+              ? col.minWidth
+              : col.defaultWidth;
+        });
       }
     });
     _saveColPrefs();
@@ -439,7 +467,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   void _resizeColumn(String id, double delta) {
     setState(() {
       final w = (_widths[id] ?? 100) + delta;
-      _widths[id] = w.clamp(_kMinColWidth, _kMaxColWidth);
+      _widths[id] = w.clamp(_minWidthFor(id), _kMaxColWidth);
     });
   }
 
@@ -2154,14 +2182,11 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       'stage' =>
         isCompleted ? const _CompletedStagePill() : StagePill(stageInfo: s),
 
-      'date' => Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          date,
-          overflow: TextOverflow.ellipsis,
-          style: completedBody(
-            const TextStyle(fontSize: 12.5, color: _T.slate500),
-          ),
+      'date' => Text(
+        date,
+        overflow: TextOverflow.ellipsis,
+        style: completedBody(
+          const TextStyle(fontSize: 12.5, color: _T.slate500),
         ),
       ),
 
@@ -2178,20 +2203,13 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
                 ],
               ),
             )
-            : Align(
-              alignment: Alignment.centerLeft,
-              child: Wrap(
-                children: [
-                  SelectionPill(
-                    initialValue: t.priority,
-                    values: [
-                      (TaskPriority.normal, _T.slate500, _T.slate100),
-                      (TaskPriority.high, _T.amber, _T.amber50),
-                      (TaskPriority.urgent, _T.red, _T.red50),
-                    ],
-                  ),
-                ],
-              ),
+            : SelectionPill(
+              initialValue: t.priority,
+              values: [
+                (TaskPriority.normal, _T.slate500, _T.slate100),
+                (TaskPriority.high, _T.amber, _T.amber50),
+                (TaskPriority.urgent, _T.red, _T.red50),
+              ],
             ),
 
       'size' =>
