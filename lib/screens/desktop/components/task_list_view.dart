@@ -2733,14 +2733,8 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
   @override
   Widget build(BuildContext context) {
     // Generate clean human-readable name from enum value
-    final name = widget.status.name;
-    final statusLabel =
-        name.isEmpty
-            ? ''
-            : (name == 'pending'
-                ? 'Initialized'
-                : name[0].toUpperCase() +
-                    name.substring(1).replaceAll('_', ' '));
+    // final name = widget.status.name;
+    final statusLabel = widget.status.displayName;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),

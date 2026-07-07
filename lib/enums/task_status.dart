@@ -53,7 +53,7 @@ enum TaskStatus {
       case TaskStatus.revision:
         return TaskStatus.designing;
       // "No explicit next stage from beloe stages, should be set manually"
-      
+
       // case TaskStatus.clientApproved:
       //   return null;
       case TaskStatus.paused:
@@ -63,5 +63,27 @@ enum TaskStatus {
       case TaskStatus.completed:
         return null;
     }
+  }
+}
+
+extension TaskStatusExt on TaskStatus {
+  String get displayName {
+    final text = name;
+    if (name.isEmpty) return text;
+
+    final spaced =
+        text == 'pending'
+            ? "Initialized"
+            : text
+                .replaceAllMapped(
+                  RegExp(r'([a-z])([A-Z])'),
+                  (m) => '${m[1]} ${m[2]}',
+                )
+                .replaceAllMapped(
+                  RegExp(r'([A-Z]+)([A-Z][a-z])'),
+                  (m) => '${m[1]} ${m[2]}',
+                );
+
+    return spaced[0].toUpperCase() + spaced.substring(1);
   }
 }
