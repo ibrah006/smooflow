@@ -293,6 +293,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             updatedPrintSpecs: null,
             newPrintSpec: null,
             deletePrintSpecId: null,
+            priority: null,
           );
       widget.task.billingStatus = newStatus;
       if (mounted) {
@@ -461,6 +462,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             updatedPrintSpecs: null,
             newPrintSpec: null,
             deletePrintSpecId: null,
+            priority: null,
           );
     }
   }
@@ -487,6 +489,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             updatedPrintSpecs: null,
             newPrintSpec: null,
             deletePrintSpecId: null,
+            priority: null,
           );
     }
   }
@@ -524,6 +527,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           updatedPrintSpecs: updatedPrintSpecs,
           newPrintSpec: newPrintSpec,
           deletePrintSpecId: deletePrintSpecId,
+          priority: null,
         );
   }
 

@@ -2085,12 +2085,12 @@ class _SectionLabel extends StatelessWidget {
 // (anchored under the cell) to change the priority.
 // ─────────────────────────────────────────────────────────────────────────────
 class _PriorityDropdownCell extends ConsumerStatefulWidget {
-  final int taskId;
+  final Task task;
   final TaskPriority priority;
   final bool dimmed;
 
   const _PriorityDropdownCell({
-    required this.taskId,
+    required this.task,
     required this.priority,
     this.dimmed = false,
   });
@@ -2109,6 +2109,37 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
     TaskPriority.high,
     TaskPriority.normal,
   ];
+
+  Future<void> _savePriorityStatus(TaskPriority newPriority) async {
+    // setState(() {
+    //   _billingSaving = true;
+    // });
+
+    try {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            billingStatus: null,
+            ref: null,
+            quantity: null,
+            size: null,
+            name: null,
+            date: null,
+            updatedPrintSpecs: null,
+            newPrintSpec: null,
+            deletePrintSpecId: null,
+            priority: null,
+          );
+      widget.task.priority = newPriority;
+      setState(() {});
+      // if (mounted) {
+      //   setState(() => _billingEditMode = false);
+      // }
+    } finally {
+      // if (mounted) setState(() => _billingSaving = false);
+    }
+  }
 
   Future<void> _openMenu() async {
     final renderObject = _anchorKey.currentContext?.findRenderObject();
@@ -2303,6 +2334,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
             updatedPrintSpecs: null,
             newPrintSpec: null,
             deletePrintSpecId: null,
+            priority: null,
           );
       widget.task.billingStatus = newStatus;
       setState(() {});
@@ -2717,7 +2749,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       ),
 
       'priority' => _PriorityDropdownCell(
-        taskId: t.id,
+        task: t,
         priority: t.priority,
         dimmed: isCompleted,
       ),

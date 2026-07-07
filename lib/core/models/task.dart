@@ -224,6 +224,10 @@ class Task {
 
   TaskPriority get priority => _priority;
 
+  set priority(TaskPriority newPriority) {
+    _priority = newPriority;
+  }
+
   BillingStatus get billingStatus => _billingStatus;
 
   void addAssignee(String userId) {
