@@ -2402,6 +2402,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
     final color = widget.billing.color;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
@@ -2410,17 +2411,16 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
         onTap: _openMenu,
         child: Opacity(
           opacity: widget.dimmed ? 0.45 : 1.0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: color),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: color),
+                ),
+                child: Text(
                   widget.billing.displayName,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -2429,23 +2429,24 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
                     color: widget.billing.textColor,
                   ),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 120),
-                  child:
-                      _hovering
-                          ? Padding(
-                            key: ValueKey('chevron'),
-                            padding: EdgeInsets.only(left: 4),
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 14,
-                              color: widget.billing.textColor,
-                            ),
-                          )
-                          : const SizedBox(key: ValueKey('no-chevron')),
-                ),
-              ],
-            ),
+              ),
+              Spacer(),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 50),
+                child:
+                    _hovering
+                        ? Padding(
+                          key: ValueKey('chevron'),
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 14,
+                            color: widget.billing.textColor,
+                          ),
+                        )
+                        : const SizedBox(key: ValueKey('no-chevron')),
+              ),
+            ],
           ),
         ),
       ),
