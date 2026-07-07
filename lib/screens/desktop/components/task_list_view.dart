@@ -2737,7 +2737,10 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
     final statusLabel =
         name.isEmpty
             ? ''
-            : name[0].toUpperCase() + name.substring(1).replaceAll('_', ' ');
+            : (name == 'pending'
+                ? 'Initialized'
+                : name[0].toUpperCase() +
+                    name.substring(1).replaceAll('_', ' '));
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
