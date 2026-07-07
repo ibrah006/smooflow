@@ -2261,15 +2261,10 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
 // (anchored under the cell) to change the priority.
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillingDropdownCell extends ConsumerStatefulWidget {
-  final int taskId;
-  final BillingStatus billing;
+  final Task task;
   final bool dimmed;
 
-  const _BillingDropdownCell({
-    required this.taskId,
-    required this.billing,
-    this.dimmed = false,
-  });
+  const _BillingDropdownCell({required this.task, this.dimmed = false});
 
   @override
   ConsumerState<_BillingDropdownCell> createState() =>
@@ -2286,6 +2281,38 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
     BillingStatus.invoiced,
     BillingStatus.quoteGiven,
   ];
+
+  late BillingStatus billing;
+
+  Future<void> _saveBillingStatus(BillingStatus newStatus) async {
+    // setState(() {
+    //   _billingSaving = true;
+    // });
+
+    try {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task,
+            billingStatus: newStatus,
+            ref: null,
+            quantity: null,
+            size: null,
+            name: null,
+            date: null,
+            updatedPrintSpecs: null,
+            newPrintSpec: null,
+            deletePrintSpecId: null,
+          );
+      widget.task.billingStatus = newStatus;
+      setState(() {});
+      // if (mounted) {
+      //   setState(() => _billingEditMode = false);
+      // }
+    } finally {
+      // if (mounted) setState(() => _billingSaving = false);
+    }
+  }
 
   Future<void> _openMenu() async {
     final renderObject = _anchorKey.currentContext?.findRenderObject();
@@ -2331,7 +2358,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
               Spacer(),
               // An alignment-preserving structural layout block for selection feedback
               Opacity(
-                opacity: widget.billing == BillingStatus.pending ? 1.0 : 0.0,
+                opacity: billing == BillingStatus.pending ? 1.0 : 0.0,
                 child: const Padding(
                   padding: EdgeInsets.only(left: 10),
                   child: Icon(Icons.check_rounded, size: 15, color: _T.blue),
@@ -2341,11 +2368,14 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
           ),
         ),
         ..._options.map((b) {
-          final active = b == widget.billing;
+          final active = b == billing;
           final color = b.color;
           return PopupMenuItem<BillingStatus>(
             value: b,
             height: 40,
+            onTap: () {
+              _saveBillingStatus(b);
+            },
             child: Row(
               children: [
                 // Updated to mirror the main cell's color-dominant block appearance
@@ -2387,7 +2417,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
       ],
     );
 
-    if (selected != null && selected != widget.billing) {
+    if (selected != null && selected != billing) {
       // NOTE: adjust this call to match your actual task-update API.
       // ref
       //     .read(taskNotifierProvider.notifier)
@@ -2397,7 +2427,9 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.billing.color;
+    final color = billing.color;
+
+    billing = widget.task.billingStatus;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -2412,7 +2444,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
           child: Row(
             children: [
               SizedBox(width: _kCellHPad / 2),
-              if (widget.billing == BillingStatus.pending)
+              if (billing == BillingStatus.pending)
                 const Text(
                   '—',
                   style: TextStyle(fontSize: 12, color: _T.slate300),
@@ -2429,12 +2461,12 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
                     border: Border.all(color: color),
                   ),
                   child: Text(
-                    widget.billing.displayName,
+                    billing.displayName,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: widget.billing.textColor,
+                      color: billing.textColor,
                     ),
                   ),
                 ),
@@ -2446,7 +2478,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
                   child: Icon(
                     Icons.keyboard_arrow_down_rounded,
                     size: 14,
-                    color: widget.billing.textColor,
+                    color: billing.textColor,
                   ),
                 ),
               SizedBox(width: _kCellHPad),
@@ -2455,6 +2487,12 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
         ),
       ),
     );
+  }
+
+  @override
+  initState() {
+    super.initState();
+    billing = widget.task.billingStatus;
   }
 }
 
@@ -2745,11 +2783,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => _BillingDropdownCell(
-        taskId: t.id,
-        billing: t.billingStatus,
-        dimmed: isCompleted,
-      ),
+      'billing' => _BillingDropdownCell(task: t, dimmed: isCompleted),
 
       // _BillingStatusCell(
       //   status: t.billingStatus,
