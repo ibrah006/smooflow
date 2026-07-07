@@ -2120,7 +2120,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
       ancestor: overlay,
     );
     final bottomRight = renderObject.localToGlobal(
-      Offset(renderObject.size.width, renderObject.size.height + 4),
+      Offset(renderObject.size.width + 8, renderObject.size.height + 4),
       ancestor: overlay,
     );
 
