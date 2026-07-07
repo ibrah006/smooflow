@@ -2824,53 +2824,6 @@ class _CompletedStagePill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BILLING STATUS CELL
-// ─────────────────────────────────────────────────────────────────────────────
-class _BillingStatusCell extends StatelessWidget {
-  final BillingStatus? status;
-  final bool dimmed;
-
-  const _BillingStatusCell({required this.status, this.dimmed = false});
-
-  @override
-  Widget build(BuildContext context) {
-    if (status == null) {
-      return const Text(
-        '—',
-        style: TextStyle(fontSize: 13, color: _T.slate300),
-      );
-    }
-
-    final String label = switch (status!) {
-      BillingStatus.pending => '-',
-      BillingStatus.invoiced => 'Invoiced',
-      BillingStatus.foc => 'FOC',
-      BillingStatus.cancelled => 'Cancelled',
-      BillingStatus.quoteGiven => 'Quote',
-    };
-
-    return Opacity(
-      opacity: dimmed ? 0.5 : 1.0,
-      child:
-          status != BillingStatus.pending
-              ? Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              )
-              : const Text(
-                '—',
-                style: TextStyle(fontSize: 13, color: _T.slate300),
-              ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
