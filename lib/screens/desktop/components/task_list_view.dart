@@ -2138,37 +2138,52 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
         borderRadius: BorderRadius.circular(_T.r),
         side: const BorderSide(color: _T.slate200),
       ),
-      constraints: const BoxConstraints(minWidth: 150),
+      constraints: const BoxConstraints(minWidth: 140),
       items:
           _options.map((p) {
             final active = p == widget.priority;
             final color = _priorityColor(p);
             return PopupMenuItem<TaskPriority>(
               value: p,
-              height: 38,
+              height: 40,
               child: Row(
                 children: [
+                  // Updated to mirror the main cell's color-dominant block appearance
                   Container(
-                    width: 8,
-                    height: 8,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: color,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: color),
+                    ),
+                    child: Text(
+                      _priorityLabel(p),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                        color:
+                            Colors
+                                .black54, // Matches cell's signature dark text contrast
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    _priorityLabel(p),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                      color: _T.ink,
+                  Spacer(),
+                  // An alignment-preserving structural layout block for selection feedback
+                  Opacity(
+                    opacity: active ? 1.0 : 0.0,
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 15,
+                        color: _T.blue,
+                      ),
                     ),
                   ),
-                  if (active) ...[
-                    const Spacer(),
-                    const Icon(Icons.check_rounded, size: 15, color: _T.blue),
-                  ],
                 ],
               ),
             );
@@ -2209,7 +2224,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                 Text(
                   _priorityLabel(widget.priority),
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.black54,
