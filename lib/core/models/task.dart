@@ -23,7 +23,7 @@ class Task {
   List<int> workActivityLogs;
   int? _runs;
   double? _productionQuantity;
-  late final TaskPriority _priority;
+  late TaskPriority _priority;
   @Deprecated(
     "TASK NOW HAS ONE-MANY RELATION WITH STOCK_TRANSACTION. To be completely replaced by stock (out) transactionIds",
   )

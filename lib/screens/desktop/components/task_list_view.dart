@@ -2086,14 +2086,9 @@ class _SectionLabel extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _PriorityDropdownCell extends ConsumerStatefulWidget {
   final Task task;
-  final TaskPriority priority;
   final bool dimmed;
 
-  const _PriorityDropdownCell({
-    required this.task,
-    required this.priority,
-    this.dimmed = false,
-  });
+  const _PriorityDropdownCell({required this.task, this.dimmed = false});
 
   @override
   ConsumerState<_PriorityDropdownCell> createState() =>
@@ -2103,6 +2098,8 @@ class _PriorityDropdownCell extends ConsumerStatefulWidget {
 class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
   bool _hovering = false;
   final GlobalKey _anchorKey = GlobalKey();
+
+  late TaskPriority priority;
 
   static const _options = [
     TaskPriority.urgent,
@@ -2129,7 +2126,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
             updatedPrintSpecs: null,
             newPrintSpec: null,
             deletePrintSpecId: null,
-            priority: null,
+            priority: newPriority,
           );
       widget.task.priority = newPriority;
       setState(() {});
@@ -2172,11 +2169,14 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
       constraints: const BoxConstraints(minWidth: 140),
       items:
           _options.map((p) {
-            final active = p == widget.priority;
+            final active = p == priority;
             final color = _priorityColor(p);
             return PopupMenuItem<TaskPriority>(
               value: p,
               height: 40,
+              onTap: () {
+                _savePriorityStatus(p);
+              },
               child: Row(
                 children: [
                   // Updated to mirror the main cell's color-dominant block appearance
@@ -2221,7 +2221,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
           }).toList(),
     );
 
-    if (selected != null && selected != widget.priority) {
+    if (selected != null && selected != priority) {
       // NOTE: adjust this call to match your actual task-update API.
       // ref
       //     .read(taskNotifierProvider.notifier)
@@ -2231,7 +2231,9 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _priorityColor(widget.priority);
+    priority = widget.task.priority;
+
+    final color = _priorityColor(priority);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -2254,7 +2256,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                   border: Border.all(color: color),
                 ),
                 child: Text(
-                  _priorityLabel(widget.priority),
+                  _priorityLabel(priority),
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 12,
@@ -2280,6 +2282,12 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
         ),
       ),
     );
+  }
+
+  @override
+  initState() {
+    super.initState();
+    priority = widget.task.priority;
   }
 }
 
@@ -2748,11 +2756,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         ),
       ),
 
-      'priority' => _PriorityDropdownCell(
-        task: t,
-        priority: t.priority,
-        dimmed: isCompleted,
-      ),
+      'priority' => _PriorityDropdownCell(task: t, dimmed: isCompleted),
 
       'size' =>
         t.size != null && !t.size!.contains("null")

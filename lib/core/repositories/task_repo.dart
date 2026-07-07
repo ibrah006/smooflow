@@ -311,7 +311,7 @@ class TaskRepo {
             updatedPrintSpecs?.map((spec) => spec.toJson()).toList(),
         "newPrintSpec": newPrintSpec?.toCreateJson(),
         "deletePrintSpecId": deletePrintSpecId,
-        "priority": priority?.index,
+        "priority": priority != null ? priority.index + 1 : null,
       },
     );
 
