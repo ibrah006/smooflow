@@ -2138,29 +2138,20 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: color.withOpacity(0.4)),
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: color),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
                 Text(
                   _priorityLabel(widget.priority),
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
                   ),
                 ),
                 AnimatedSwitcher(
@@ -2173,7 +2164,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                             child: Icon(
                               Icons.keyboard_arrow_down_rounded,
                               size: 14,
-                              color: _T.slate500,
+                              color: Colors.black54,
                             ),
                           )
                           : const SizedBox(key: ValueKey('no-chevron')),
