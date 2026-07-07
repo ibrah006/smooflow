@@ -2335,7 +2335,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
                 TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _hovered ? _T.blue : _T.ink,
+                  color: _T.ink,
                 ),
               ),
             ),
