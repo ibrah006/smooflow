@@ -231,7 +231,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: true,
     defaultWidth: 180,
-    minWidth: 150,
+    minWidth: 135,
   ),
   _ColDef(
     id: 'task',
@@ -241,8 +241,8 @@ const _kCols = [
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true,
     defaultOn: true,
-    defaultWidth: 280,
-    minWidth: 240,
+    defaultWidth: 290,
+    minWidth: 255,
   ),
   _ColDef(
     id: 'ref',
