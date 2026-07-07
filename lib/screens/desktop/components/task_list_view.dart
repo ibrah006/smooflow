@@ -264,7 +264,7 @@ const _kCols = [
     mandatory: false,
     defaultOn: true,
     defaultWidth: 110,
-    minWidth: 95,
+    minWidth: 98,
   ),
   _ColDef(
     id: 'size',
