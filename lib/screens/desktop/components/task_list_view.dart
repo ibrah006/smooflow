@@ -230,8 +230,8 @@ const _kCols = [
     icon: Icons.folder_outlined,
     mandatory: false,
     defaultOn: true,
-    defaultWidth: 130,
-    minWidth: 90,
+    defaultWidth: 180,
+    minWidth: 150,
   ),
   _ColDef(
     id: 'task',
@@ -242,7 +242,7 @@ const _kCols = [
     mandatory: true,
     defaultOn: true,
     defaultWidth: 280,
-    minWidth: 230,
+    minWidth: 240,
   ),
   _ColDef(
     id: 'ref',
