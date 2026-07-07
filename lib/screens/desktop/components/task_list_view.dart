@@ -68,6 +68,22 @@ import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 
+abstract class _TableItem {}
+
+class _SectionHeaderItem extends _TableItem {
+  final TaskStatus status;
+  final bool isExpanded;
+  final int taskCount;
+
+  _SectionHeaderItem(this.status, this.isExpanded, this.taskCount);
+}
+
+class _TaskRowItem extends _TableItem {
+  final Task task;
+
+  _TaskRowItem(this.task);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -648,6 +664,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                         buildColumns: _buildColumns,
                         onResizeColumn: _resizeColumn,
                         onResizeEnd: _saveWidths,
+                        onAddTask:
+                            widget.onAddTask, // Added forwarding reference
                       ),
             ),
           ],
@@ -705,7 +723,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK TABLE — wraps material_table_view's TableView.builder
 // ─────────────────────────────────────────────────────────────────────────────
-class _TaskTable extends ConsumerWidget {
+class _TaskTable extends ConsumerStatefulWidget {
   final Set<String> effective;
   final List<Task> tasks;
   final List<Project> projects;
@@ -716,6 +734,7 @@ class _TaskTable extends ConsumerWidget {
   final _BuiltColumns Function(Set<String> effective) buildColumns;
   final void Function(String colId, double delta) onResizeColumn;
   final VoidCallback onResizeEnd;
+  final VoidCallback? onAddTask;
 
   const _TaskTable({
     required this.effective,
@@ -728,19 +747,45 @@ class _TaskTable extends ConsumerWidget {
     required this.buildColumns,
     required this.onResizeColumn,
     required this.onResizeEnd,
+    this.onAddTask,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final built = buildColumns(effective);
+  ConsumerState<_TaskTable> createState() => _TaskTableState();
+}
+
+class _TaskTableState extends ConsumerState<_TaskTable> {
+  final Set<TaskStatus> _collapsedStatuses = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final built = widget.buildColumns(widget.effective);
     final columns = built.columns;
     final slots = built.slots;
+
+    // Dynamically segregate tasks into sections based on task status
+    final List<_TableItem> tableItems = [];
+    for (final status in TaskStatus.values) {
+      final statusTasks =
+          widget.tasks.where((t) => t.status == status).toList();
+      final isCollapsed = _collapsedStatuses.contains(status);
+
+      tableItems.add(
+        _SectionHeaderItem(status, !isCollapsed, statusTasks.length),
+      );
+
+      if (!isCollapsed) {
+        for (final task in statusTasks) {
+          tableItems.add(_TaskRowItem(task));
+        }
+      }
+    }
 
     return Container(
       color: _T.white,
       child: TableView.builder(
         columns: columns,
-        rowCount: tasks.length,
+        rowCount: tableItems.length,
         rowHeight: _kRowHeight,
         headerHeight: _kHeaderHeight,
         headerBuilder:
@@ -753,9 +798,9 @@ class _TaskTable extends ConsumerWidget {
                     (context, column) => _headerCell(
                       slots,
                       column,
-                      isDetailOpen,
-                      onResizeColumn,
-                      onResizeEnd,
+                      widget.isDetailOpen,
+                      widget.onResizeColumn,
+                      widget.onResizeEnd,
                     ),
                   ),
                 ),
@@ -763,17 +808,41 @@ class _TaskTable extends ConsumerWidget {
               ],
             ),
         rowBuilder: (context, row, contentBuilder) {
-          final t = tasks[row];
+          final item = tableItems[row];
+
+          // Render Section Header Item
+          if (item is _SectionHeaderItem) {
+            return _StatusSectionHeader(
+              status: item.status,
+              isExpanded: item.isExpanded,
+              taskCount: item.taskCount,
+              onToggle: () {
+                setState(() {
+                  if (_collapsedStatuses.contains(item.status)) {
+                    _collapsedStatuses.remove(item.status);
+                  } else {
+                    _collapsedStatuses.add(item.status);
+                  }
+                });
+              },
+              onAddTask: widget.onAddTask,
+            );
+          }
+
+          // Render Normal Task Row Item
+          final t = (item as _TaskRowItem).task;
           final p =
-              projects.cast<Project?>().firstWhere(
+              widget.projects.cast<Project?>().firstWhere(
                 (pr) => pr!.id == t.projectId.toString(),
                 orElse: () => null,
               ) ??
-              projects.firstOrNull;
+              widget.projects.firstOrNull;
 
           Member? m;
           try {
-            m = members.firstWhere((mem) => t.assignees.contains(mem.id));
+            m = widget.members.firstWhere(
+              (mem) => t.assignees.contains(mem.id),
+            );
           } catch (_) {
             m = null;
           }
@@ -784,8 +853,8 @@ class _TaskTable extends ConsumerWidget {
             project: p,
             assignee: m,
             slots: slots,
-            isSelected: selectedTaskId == t.id,
-            onTap: () => onTaskSelected(t.id, t.projectId),
+            isSelected: widget.selectedTaskId == t.id,
+            onTap: () => widget.onTaskSelected(t.id, t.projectId),
             contentBuilder: contentBuilder,
           );
         },
@@ -2637,6 +2706,135 @@ class _EmptyState extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _StatusSectionHeader extends StatefulWidget {
+  final TaskStatus status;
+  final bool isExpanded;
+  final int taskCount;
+  final VoidCallback onToggle;
+  final VoidCallback? onAddTask;
+
+  const _StatusSectionHeader({
+    required this.status,
+    required this.isExpanded,
+    required this.taskCount,
+    required this.onToggle,
+    this.onAddTask,
+  });
+
+  @override
+  State<_StatusSectionHeader> createState() => _StatusSectionHeaderState();
+}
+
+class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Generate clean human-readable name from enum value
+    final name = widget.status.name;
+    final statusLabel =
+        name.isEmpty
+            ? ''
+            : name[0].toUpperCase() + name.substring(1).replaceAll('_', ' ');
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Container(
+        height: _kRowHeight,
+        decoration: const BoxDecoration(
+          color: _T.slate100,
+          border: Border(
+            bottom: BorderSide(color: _T.slate200, width: 1),
+            top: BorderSide(color: _T.slate200, width: 0.5),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
+        child: Row(
+          children: [
+            // Collapse / Expand interactive chevron button
+            GestureDetector(
+              onTap: widget.onToggle,
+              behavior: HitTestBehavior.opaque,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: AnimatedRotation(
+                    turns: widget.isExpanded ? 0.0 : -0.25,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: _T.slate600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            // Section Status Title
+            Text(
+              statusLabel,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _T.ink2,
+                letterSpacing: -0.1,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Dynamic task counter pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: _T.slate200,
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(
+                '${widget.taskCount}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: _T.slate500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Add action icon button appearing on hover
+            AnimatedOpacity(
+              opacity: _isHovered && widget.onAddTask != null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 150),
+              child: GestureDetector(
+                onTap: _isHovered ? widget.onAddTask : null,
+                child: MouseRegion(
+                  cursor:
+                      _isHovered
+                          ? SystemMouseCursors.click
+                          : SystemMouseCursors.basic,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: _T.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [_T.shadowSm],
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      size: 14,
+                      color: _T.blue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
