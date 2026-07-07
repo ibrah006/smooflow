@@ -4,6 +4,7 @@ import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -278,12 +279,15 @@ class TaskRepo {
     required List<PrintSpec>? updatedPrintSpecs,
     required PrintSpec? newPrintSpec,
     required int? deletePrintSpecId,
+    required TaskPriority? priority,
   }) async {
     if (billingStatus == task.billingStatus &&
         ref == task.ref &&
         quantity == task.quantity &&
         size == task.size &&
-        date == task.date) {
+        date == task.date &&
+        name == task.name &&
+        task.priority == priority) {
       // Abort update
       // Nothing to update
       return;
@@ -307,6 +311,7 @@ class TaskRepo {
             updatedPrintSpecs?.map((spec) => spec.toJson()).toList(),
         "newPrintSpec": newPrintSpec?.toCreateJson(),
         "deletePrintSpecId": deletePrintSpecId,
+        "priority": priority?.index,
       },
     );
 

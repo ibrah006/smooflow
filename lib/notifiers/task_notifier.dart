@@ -3,6 +3,7 @@ import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/enums/billing_status.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/models/work_activity_log.dart';
@@ -467,6 +468,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required List<PrintSpec>? updatedPrintSpecs,
     required PrintSpec? newPrintSpec,
     required int? deletePrintSpecId,
+    required TaskPriority? priority,
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {
@@ -496,7 +498,8 @@ class TaskNotifier extends StateNotifier<TaskState> {
         date == null &&
         updatedPrintSpecs == null &&
         newPrintSpec == null &&
-        deletePrintSpecId == null) {
+        deletePrintSpecId == null &&
+        priority == null) {
       // Nothing to update
       return;
     }
@@ -520,6 +523,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       updatedPrintSpecs: updatedPrintSpecs,
       newPrintSpec: newPrintSpec,
       deletePrintSpecId: deletePrintSpecId,
+      priority: priority,
     );
 
     if (localTaskNameChangeEventId != null) {
