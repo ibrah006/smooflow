@@ -241,8 +241,8 @@ const _kCols = [
     icon: Icons.drive_file_rename_outline_rounded,
     mandatory: true,
     defaultOn: true,
-    defaultWidth: 240,
-    minWidth: 140,
+    defaultWidth: 280,
+    minWidth: 230,
   ),
   _ColDef(
     id: 'ref',
@@ -252,8 +252,8 @@ const _kCols = [
     icon: Icons.tag_rounded,
     mandatory: false,
     defaultOn: true,
-    defaultWidth: 160,
-    minWidth: 80,
+    defaultWidth: 150,
+    minWidth: 140,
   ),
   _ColDef(
     id: 'priority',
@@ -263,8 +263,8 @@ const _kCols = [
     icon: Icons.flag_outlined,
     mandatory: false,
     defaultOn: true,
-    defaultWidth: 90,
-    minWidth: 72,
+    defaultWidth: 110,
+    minWidth: 95,
   ),
   _ColDef(
     id: 'size',
