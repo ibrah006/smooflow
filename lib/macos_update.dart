@@ -188,10 +188,10 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
           },
           releaseNotes: [
             ReleaseNote(
-              icon: Icons.bug_report_outlined,
-              title: "Bug fixes",
+              icon: Icons.list_alt_rounded,
+              title: "Task List Table",
               description:
-                  "Duplicate projects issue when a new project is created fixed.",
+                  "Task List Table now has a more interactive designa and is sectioned based on Task Status.",
             ),
           ],
         ),
