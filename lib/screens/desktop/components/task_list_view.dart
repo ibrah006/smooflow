@@ -256,17 +256,6 @@ const _kCols = [
     minWidth: 80,
   ),
   _ColDef(
-    id: 'stage',
-    label: 'STAGE',
-    pickerLabel: 'Stage',
-    description: 'Current pipeline stage pill',
-    icon: Icons.view_kanban_outlined,
-    mandatory: true,
-    defaultOn: true,
-    defaultWidth: 120,
-    minWidth: 84,
-  ),
-  _ColDef(
     id: 'priority',
     label: 'PRIORITY',
     pickerLabel: 'Priority',
@@ -446,6 +435,9 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       // Guard against stale/saved widths that predate a column's current
       // minimum (e.g. min was raised in a later app version).
       for (final id in _widths.keys.toList()) {
+        // Deprecated - no longer using this.
+        if (id == 'stage') continue;
+
         final min = _minWidthFor(id);
         if (_widths[id]! < min) _widths[id] = min;
       }
