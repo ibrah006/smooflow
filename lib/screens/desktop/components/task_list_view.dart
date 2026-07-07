@@ -2264,7 +2264,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: const Duration(milliseconds: 50),
           decoration: BoxDecoration(
             color: rowColor,
             border: Border(
