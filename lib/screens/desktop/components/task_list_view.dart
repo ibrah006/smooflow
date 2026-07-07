@@ -298,8 +298,8 @@ const _kBillingCol = _ColDef(
   icon: Icons.receipt_long_outlined,
   mandatory: false,
   defaultOn: true,
-  defaultWidth: 50,
-  minWidth: 30,
+  defaultWidth: 100,
+  minWidth: 100,
 );
 
 /// Looks up minWidth for any column id, including billing.
@@ -2255,6 +2255,205 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Billing DROPDOWN CELL
+//
+// Replaces the old SelectionPill-based priority cell. Shows the current
+// priority as a small colored pill; on hover a chevron appears on the far
+// right of the cell. Tapping anywhere in the cell opens a dropdown menu
+// (anchored under the cell) to change the priority.
+// ─────────────────────────────────────────────────────────────────────────────
+class _BillingDropdownCell extends ConsumerStatefulWidget {
+  final int taskId;
+  final BillingStatus billing;
+  final bool dimmed;
+
+  const _BillingDropdownCell({
+    required this.taskId,
+    required this.billing,
+    this.dimmed = false,
+  });
+
+  @override
+  ConsumerState<_BillingDropdownCell> createState() =>
+      _BillingDropdownCellState();
+}
+
+class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
+  bool _hovering = false;
+  final GlobalKey _anchorKey = GlobalKey();
+
+  static const _options = [
+    BillingStatus.cancelled,
+    BillingStatus.foc,
+    BillingStatus.invoiced,
+    BillingStatus.quoteGiven,
+  ];
+
+  Future<void> _openMenu() async {
+    final renderObject = _anchorKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final topLeft = renderObject.localToGlobal(
+      Offset(0, renderObject.size.height + 4),
+      ancestor: overlay,
+    );
+    final bottomRight = renderObject.localToGlobal(
+      Offset(renderObject.size.width + 8, renderObject.size.height + 4),
+      ancestor: overlay,
+    );
+
+    final selected = await showMenu<BillingStatus>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        topLeft.dx,
+        topLeft.dy,
+        overlay.size.width - bottomRight.dx,
+        0,
+      ),
+      color: _T.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_T.r),
+        side: const BorderSide(color: _T.slate200),
+      ),
+      constraints: const BoxConstraints(minWidth: 140),
+      items: [
+        PopupMenuItem<BillingStatus>(
+          value: BillingStatus.pending,
+          height: 40,
+          child: Row(
+            children: [
+              SizedBox(width: 5),
+              const Text(
+                '—',
+                style: TextStyle(fontSize: 15, color: _T.slate300),
+              ),
+              // Updated to mirror the main cell's color-dominant block appearance
+              Spacer(),
+              // An alignment-preserving structural layout block for selection feedback
+              Opacity(
+                opacity: widget.billing == BillingStatus.pending ? 1.0 : 0.0,
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 10),
+                  child: Icon(Icons.check_rounded, size: 15, color: _T.blue),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ..._options.map((b) {
+          final active = b == widget.billing;
+          final color = b.color;
+          return PopupMenuItem<BillingStatus>(
+            value: b,
+            height: 40,
+            child: Row(
+              children: [
+                // Updated to mirror the main cell's color-dominant block appearance
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: color),
+                  ),
+                  child: Text(
+                    b.displayName,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      color:
+                          Colors
+                              .black54, // Matches cell's signature dark text contrast
+                    ),
+                  ),
+                ),
+                Spacer(),
+                // An alignment-preserving structural layout block for selection feedback
+                Opacity(
+                  opacity: active ? 1.0 : 0.0,
+                  child: const Padding(
+                    padding: EdgeInsets.only(left: 10),
+                    child: Icon(Icons.check_rounded, size: 15, color: _T.blue),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    );
+
+    if (selected != null && selected != widget.billing) {
+      // NOTE: adjust this call to match your actual task-update API.
+      // ref
+      //     .read(taskNotifierProvider.notifier)
+      //     .updateTaskPriority(widget.taskId, selected);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.billing.color;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        key: _anchorKey,
+        behavior: HitTestBehavior.opaque,
+        onTap: _openMenu,
+        child: Opacity(
+          opacity: widget.dimmed ? 0.45 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: color),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.billing.displayName,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: widget.billing.textColor,
+                  ),
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 120),
+                  child:
+                      _hovering
+                          ? Padding(
+                            key: ValueKey('chevron'),
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 14,
+                              color: widget.billing.textColor,
+                            ),
+                          )
+                          : const SizedBox(key: ValueKey('no-chevron')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
 //
 // Now receives the `contentBuilder` handed to us by TableView.builder's
@@ -2541,11 +2740,16 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => _BillingStatusCell(
-        status: t.billingStatus,
+      'billing' => _BillingDropdownCell(
+        taskId: t.id,
+        billing: t.billingStatus,
         dimmed: isCompleted,
       ),
 
+      // _BillingStatusCell(
+      //   status: t.billingStatus,
+      //   dimmed: isCompleted,
+      // ),
       _ => const SizedBox.shrink(),
     };
 
