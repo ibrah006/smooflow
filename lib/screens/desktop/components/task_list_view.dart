@@ -2579,15 +2579,21 @@ class _BillingStatusCell extends StatelessWidget {
 
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
+      child:
+          status != BillingStatus.pending
+              ? Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+              : const Text(
+                '—',
+                style: TextStyle(fontSize: 13, color: _T.slate300),
+              ),
     );
   }
 }
