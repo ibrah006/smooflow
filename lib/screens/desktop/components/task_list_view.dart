@@ -2409,23 +2409,32 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
           opacity: widget.dimmed ? 0.45 : 1.0,
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(7),
-                  border: Border.all(color: color),
-                ),
-                child: Text(
-                  widget.billing.displayName,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: widget.billing.textColor,
+              if (widget.billing == BillingStatus.pending)
+                const Text(
+                  '—',
+                  style: TextStyle(fontSize: 12, color: _T.slate300),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: color),
+                  ),
+                  child: Text(
+                    widget.billing.displayName,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: widget.billing.textColor,
+                    ),
                   ),
                 ),
-              ),
               Spacer(),
               if (_hovering)
                 Padding(
