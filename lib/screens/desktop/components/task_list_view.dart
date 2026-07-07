@@ -2200,7 +2200,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(7),
               border: Border.all(color: color),
             ),
             child: Row(
