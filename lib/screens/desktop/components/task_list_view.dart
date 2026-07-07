@@ -2214,6 +2214,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
           opacity: widget.dimmed ? 0.45 : 1.0,
           child: Row(
             children: [
+              SizedBox(width: _kCellHPad / 2),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -2242,6 +2243,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                     color: Colors.black54,
                   ),
                 ),
+              SizedBox(width: _kCellHPad),
             ],
           ),
         ),
@@ -2409,6 +2411,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
           opacity: widget.dimmed ? 0.45 : 1.0,
           child: Row(
             children: [
+              SizedBox(width: _kCellHPad / 2),
               if (widget.billing == BillingStatus.pending)
                 const Text(
                   '—',
@@ -2446,6 +2449,7 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
                     color: widget.billing.textColor,
                   ),
                 ),
+              SizedBox(width: _kCellHPad),
             ],
           ),
         ),
@@ -2754,9 +2758,13 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       _ => const SizedBox.shrink(),
     };
 
+    final isPriorityOrBillingCell = colId == 'priority' || colId == 'billing';
+
     return Container(
       alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+      padding: EdgeInsets.symmetric(
+        horizontal: isPriorityOrBillingCell ? 0 : _kCellHPad,
+      ),
       width: double.infinity,
       height: _kRowHeight,
       decoration: const BoxDecoration(
