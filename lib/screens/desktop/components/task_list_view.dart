@@ -1,12 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // task_list_view.dart
 //
+// Latest implementation of the task list view notes:
+//
 // Task list view with RESIZABLE columns — now backed by the `material_table_view`
 // package instead of a hand-rolled InheritedNotifier + ListView.
-//
-// pubspec.yaml:
-//   dependencies:
-//     material_table_view: ^7.0.0   # check pub.dev for the latest version
 //
 // Architecture change from the notifier-based version:
 //   • Column widths now live in a plain `Map<String, double>` on the State
@@ -64,7 +62,6 @@ import 'package:smooflow/screens/desktop/admin_desktop_dashboard.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
-import 'package:smooflow/screens/desktop/components/selection_pill.dart';
 import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/enums/billing_status.dart';
@@ -101,6 +98,18 @@ class _T {
   static const green50 = Color(0xFFECFDF5);
   static const amber50 = Color(0xFFFEF3C7);
 
+  // Row hover styling
+  static const hoverBg = Color(0xFFF6F7F8);
+  static const hoverBorder = Color(0xFF94A3B8);
+
+  // Priority colors (highest → lowest)
+  static const priorityUrgent = Color(0xFFFF878A);
+  static const priorityHigh = Color(0xFFFEA06A);
+  static const priorityNormal = Color(0xFFF7BD51);
+
+  // Column divider
+  static const colDivider = Color(0xFFEDF0F3);
+
   static final shadowSm = BoxShadow(
     color: Colors.black.withOpacity(0.02),
     blurRadius: 2,
@@ -117,6 +126,23 @@ class _T {
     offset: const Offset(0, 4),
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRIORITY HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+Color _priorityColor(TaskPriority p) => switch (p) {
+  TaskPriority.urgent => _T.priorityUrgent,
+  TaskPriority.high => _T.priorityHigh,
+  TaskPriority.normal => _T.priorityNormal,
+  _ => _T.slate400,
+};
+
+String _priorityLabel(TaskPriority p) => switch (p) {
+  TaskPriority.urgent => 'Urgent',
+  TaskPriority.high => 'High',
+  TaskPriority.normal => 'Normal',
+  _ => p.name,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -797,6 +823,9 @@ Widget _headerCell(
       return Container(
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+        decoration: const BoxDecoration(
+          border: Border(right: BorderSide(color: _T.colDivider, width: 1)),
+        ),
         child: Text(
           col.label,
           overflow: TextOverflow.ellipsis,
@@ -1987,6 +2016,178 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PRIORITY DROPDOWN CELL
+//
+// Replaces the old SelectionPill-based priority cell. Shows the current
+// priority as a small colored pill; on hover a chevron appears on the far
+// right of the cell. Tapping anywhere in the cell opens a dropdown menu
+// (anchored under the cell) to change the priority.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PriorityDropdownCell extends ConsumerStatefulWidget {
+  final int taskId;
+  final TaskPriority priority;
+  final bool dimmed;
+
+  const _PriorityDropdownCell({
+    required this.taskId,
+    required this.priority,
+    this.dimmed = false,
+  });
+
+  @override
+  ConsumerState<_PriorityDropdownCell> createState() =>
+      _PriorityDropdownCellState();
+}
+
+class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
+  bool _hovering = false;
+  final GlobalKey _anchorKey = GlobalKey();
+
+  static const _options = [
+    TaskPriority.urgent,
+    TaskPriority.high,
+    TaskPriority.normal,
+  ];
+
+  Future<void> _openMenu() async {
+    final renderObject = _anchorKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final topLeft = renderObject.localToGlobal(
+      Offset(0, renderObject.size.height + 4),
+      ancestor: overlay,
+    );
+    final bottomRight = renderObject.localToGlobal(
+      Offset(renderObject.size.width, renderObject.size.height + 4),
+      ancestor: overlay,
+    );
+
+    final selected = await showMenu<TaskPriority>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        topLeft.dx,
+        topLeft.dy,
+        overlay.size.width - bottomRight.dx,
+        0,
+      ),
+      color: _T.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_T.r),
+        side: const BorderSide(color: _T.slate200),
+      ),
+      constraints: const BoxConstraints(minWidth: 150),
+      items:
+          _options.map((p) {
+            final active = p == widget.priority;
+            final color = _priorityColor(p);
+            return PopupMenuItem<TaskPriority>(
+              value: p,
+              height: 38,
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _priorityLabel(p),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      color: _T.ink,
+                    ),
+                  ),
+                  if (active) ...[
+                    const Spacer(),
+                    const Icon(Icons.check_rounded, size: 15, color: _T.blue),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+    );
+
+    if (selected != null && selected != widget.priority) {
+      // NOTE: adjust this call to match your actual task-update API.
+      // ref
+      //     .read(taskNotifierProvider.notifier)
+      //     .updateTaskPriority(widget.taskId, selected);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _priorityColor(widget.priority);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        key: _anchorKey,
+        behavior: HitTestBehavior.opaque,
+        onTap: _openMenu,
+        child: Opacity(
+          opacity: widget.dimmed ? 0.45 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: color.withOpacity(0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _priorityLabel(widget.priority),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 120),
+                  child:
+                      _hovering
+                          ? const Padding(
+                            key: ValueKey('chevron'),
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 14,
+                              color: _T.slate500,
+                            ),
+                          )
+                          : const SizedBox(key: ValueKey('no-chevron')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
 //
 // Now receives the `contentBuilder` handed to us by TableView.builder's
@@ -2051,8 +2252,10 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             : widget.isSelected
             ? _T.blue50
             : _hovered
-            ? _T.slate50
+            ? _T.hoverBg
             : _T.white;
+
+    final bool showHoverBorder = _hovered && !isCompleted && !widget.isSelected;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -2065,7 +2268,14 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
           decoration: BoxDecoration(
             color: rowColor,
             border: Border(
-              bottom: const BorderSide(color: _T.slate100, width: 1),
+              top:
+                  showHoverBorder
+                      ? const BorderSide(color: _T.hoverBorder, width: 1)
+                      : BorderSide.none,
+              bottom: BorderSide(
+                color: showHoverBorder ? _T.hoverBorder : _T.slate100,
+                width: showHoverBorder ? 1 : 1,
+              ),
               left:
                   isCompleted
                       ? const BorderSide(color: _completeMuted, width: 2.75)
@@ -2074,17 +2284,14 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
           ),
           child: widget.contentBuilder(
             context,
-            (context, column) => Align(
-              alignment: Alignment.centerLeft,
-              child: _cellFor(
-                widget.slots[column],
-                t,
-                p,
-                m,
-                s,
-                dateDisplay,
-                isCompleted: isCompleted,
-              ),
+            (context, column) => _cellFor(
+              widget.slots[column],
+              t,
+              p,
+              m,
+              s,
+              dateDisplay,
+              isCompleted: isCompleted,
             ),
           ),
         ),
@@ -2120,7 +2327,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     final content = switch (colId) {
       'task' => Row(
         children: [
-          Expanded(
+          Flexible(
             child: Text(
               t.name,
               overflow: TextOverflow.ellipsis,
@@ -2133,6 +2340,13 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               ),
             ),
           ),
+          if (t.messageCount > 0) ...[
+            const SizedBox(width: 6),
+            Opacity(
+              opacity: isCompleted ? 0.6 : 1.0,
+              child: _MessageIndicator(count: t.messageCount, unread: false),
+            ),
+          ],
         ],
       ),
 
@@ -2193,35 +2407,11 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         ),
       ),
 
-      'priority' =>
-        isCompleted
-            ? Opacity(
-              opacity: 0.45,
-              child: Wrap(
-                children: [
-                  SelectionPill(
-                    initialValue: t.priority,
-                    values: [
-                      (TaskPriority.normal, _T.slate500, _T.slate100),
-                      (TaskPriority.high, _T.amber, _T.amber50),
-                      (TaskPriority.urgent, _T.red, _T.red50),
-                    ],
-                  ),
-                ],
-              ),
-            )
-            : Wrap(
-              children: [
-                SelectionPill(
-                  initialValue: t.priority,
-                  values: [
-                    (TaskPriority.normal, _T.slate500, _T.slate100),
-                    (TaskPriority.high, _T.amber, _T.amber50),
-                    (TaskPriority.urgent, _T.red, _T.red50),
-                  ],
-                ),
-              ],
-            ),
+      'priority' => _PriorityDropdownCell(
+        taskId: t.id,
+        priority: t.priority,
+        dimmed: isCompleted,
+      ),
 
       'size' =>
         t.size != null && !t.size!.contains("null")
@@ -2292,8 +2482,14 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       _ => const SizedBox.shrink(),
     };
 
-    return Padding(
+    return Container(
+      alignment: Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: _kCellHPad),
+      width: double.infinity,
+      height: _kRowHeight,
+      decoration: const BoxDecoration(
+        border: Border(right: BorderSide(color: _T.colDivider, width: 1)),
+      ),
       child: Opacity(opacity: isCompleted ? 0.6 : 1.0, child: content),
     );
   }
@@ -2315,7 +2511,7 @@ class _MessageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = unread ? _T.blue : _T.ink3;
+    final color = unread ? _T.blue : _T.slate400;
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
       child: Tooltip(
@@ -2327,15 +2523,15 @@ class _MessageIndicator extends StatelessWidget {
               unread
                   ? Icons.mark_chat_unread
                   : Icons.chat_bubble_outline_rounded,
-              size: 11,
+              size: 12,
               color: color,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 3),
             Text(
               '$count',
               style: TextStyle(
                 fontSize: 10.5,
-                fontWeight: unread ? FontWeight.w800 : FontWeight.w700,
+                fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
                 color: color,
                 height: 1,
               ),
