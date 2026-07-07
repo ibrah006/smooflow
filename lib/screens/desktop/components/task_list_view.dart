@@ -68,22 +68,6 @@ import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 
-abstract class _TableItem {}
-
-class _SectionHeaderItem extends _TableItem {
-  final TaskStatus status;
-  final bool isExpanded;
-  final int taskCount;
-
-  _SectionHeaderItem(this.status, this.isExpanded, this.taskCount);
-}
-
-class _TaskRowItem extends _TableItem {
-  final Task task;
-
-  _TaskRowItem(this.task);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,6 +156,22 @@ const double _kRowHeight = 46.0;
 const double _kHeaderHeight = 36.0;
 
 const kNotificationDuration = Duration(seconds: 3);
+
+abstract class _TableItem {}
+
+class _SectionHeaderItem extends _TableItem {
+  final TaskStatus status;
+  final bool isExpanded;
+  final int taskCount;
+
+  _SectionHeaderItem(this.status, this.isExpanded, this.taskCount);
+}
+
+class _TaskRowItem extends _TableItem {
+  final Task task;
+
+  _TaskRowItem(this.task);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW MODE
