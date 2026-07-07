@@ -99,8 +99,8 @@ class _T {
   static const amber50 = Color(0xFFFEF3C7);
 
   // Row hover styling
-  static const hoverBg = Color(0xFFF6F7F8);
-  static const hoverBorder = Color(0xFF94A3B8);
+  static const hoverBg = Color.fromARGB(255, 250, 250, 251);
+  static const hoverBorder = Color.fromARGB(255, 189, 197, 207);
 
   // Priority colors (highest → lowest)
   static const priorityUrgent = Color(0xFFFF878A);
@@ -2270,11 +2270,11 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             border: Border(
               top:
                   showHoverBorder
-                      ? const BorderSide(color: _T.hoverBorder, width: 1)
+                      ? const BorderSide(color: _T.hoverBorder, width: .85)
                       : BorderSide.none,
               bottom: BorderSide(
                 color: showHoverBorder ? _T.hoverBorder : _T.slate100,
-                width: showHoverBorder ? 1 : 1,
+                width: showHoverBorder ? .85 : .85,
               ),
               left:
                   isCompleted
