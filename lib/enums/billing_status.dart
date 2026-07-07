@@ -12,7 +12,7 @@ enum BillingStatus {
       case BillingStatus.pending:
         return "Pending";
       case BillingStatus.quoteGiven:
-        return "Quote Given";
+        return "Quoted";
       case BillingStatus.invoiced:
         return "Invoiced";
       case BillingStatus.cancelled:

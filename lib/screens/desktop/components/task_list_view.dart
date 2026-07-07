@@ -2203,6 +2203,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
     final color = _priorityColor(widget.priority);
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
@@ -2211,17 +2212,16 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
         onTap: _openMenu,
         child: Opacity(
           opacity: widget.dimmed ? 0.45 : 1.0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: color),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: color),
+                ),
+                child: Text(
                   _priorityLabel(widget.priority),
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -2230,23 +2230,19 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                     color: Colors.black54,
                   ),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 120),
-                  child:
-                      _hovering
-                          ? const Padding(
-                            key: ValueKey('chevron'),
-                            padding: EdgeInsets.only(left: 4),
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 14,
-                              color: Colors.black54,
-                            ),
-                          )
-                          : const SizedBox(key: ValueKey('no-chevron')),
+              ),
+              Spacer(),
+              if (_hovering)
+                const Padding(
+                  key: ValueKey('chevron'),
+                  padding: EdgeInsets.only(left: 4),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 14,
+                    color: Colors.black54,
+                  ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -2431,21 +2427,16 @@ class _BillingDropdownCellState extends ConsumerState<_BillingDropdownCell> {
                 ),
               ),
               Spacer(),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 50),
-                child:
-                    _hovering
-                        ? Padding(
-                          key: ValueKey('chevron'),
-                          padding: EdgeInsets.only(left: 4),
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 14,
-                            color: widget.billing.textColor,
-                          ),
-                        )
-                        : const SizedBox(key: ValueKey('no-chevron')),
-              ),
+              if (_hovering)
+                Padding(
+                  key: ValueKey('chevron'),
+                  padding: EdgeInsets.only(left: 4),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 14,
+                    color: widget.billing.textColor,
+                  ),
+                ),
             ],
           ),
         ),
