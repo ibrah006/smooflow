@@ -2154,7 +2154,7 @@ class _PriorityDropdownCellState extends ConsumerState<_PriorityDropdownCell> {
                     color: Colors.black54,
                   ),
                 ),
-                AnimatedSwitcher(
+                AnimatedSize(
                   duration: const Duration(milliseconds: 120),
                   child:
                       _hovering
