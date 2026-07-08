@@ -267,44 +267,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     }
   }
 
-  // ── Billing actions ───────────────────────────────────────────────────────
-
-  void _enterBillingEditMode() => setState(() => _billingEditMode = true);
-
-  void _cancelBillingEdit() => setState(() {
-    // _billingSelection = widget.task.billingStatus ?? BillingStatus.pending;
-    _billingEditMode = false;
-  });
-
-  Future<void> _saveBillingStatus(BillingStatus newStatus) async {
-    setState(() {
-      _billingSaving = true;
-    });
-    try {
-      await ref
-          .read(taskNotifierProvider.notifier)
-          .update(
-            task: widget.task,
-            billingStatus: newStatus,
-            ref: null,
-            quantity: null,
-            size: null,
-            name: null,
-            date: null,
-            updatedPrintSpecs: null,
-            newPrintSpec: null,
-            deletePrintSpecId: null,
-            priority: null,
-          );
-      widget.task.billingStatus = newStatus;
-      if (mounted) {
-        setState(() => _billingEditMode = false);
-      }
-    } finally {
-      if (mounted) setState(() => _billingSaving = false);
-    }
-  }
-
   // ── Stage logic ───────────────────────────────────────────────────────────
 
   Future<void> approveDesignStage() async {

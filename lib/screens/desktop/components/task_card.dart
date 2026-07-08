@@ -351,7 +351,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                         const SizedBox(height: 9),
                         Row(
                           children: [
-                            SelectionPill(
+                            SelectionPill<TaskPriority>(
                               initialValue:
                                   widget.task?.priority ?? TaskPriority.normal,
                               values: [
@@ -359,6 +359,15 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 (TaskPriority.high, _T.amber, _T.amber50),
                                 (TaskPriority.urgent, _T.red, _T.red50),
                               ],
+                              onChanged: (newPriority) async {
+                                if (newPriority == null) return;
+                                await ref
+                                    .read(projectNotifierProvider.notifier)
+                                    .updateTaskPriority(
+                                      taskId: task.id,
+                                      newPriority: newPriority,
+                                    );
+                              },
                             ),
                             const SizedBox(width: 6),
                             if (member != null)
