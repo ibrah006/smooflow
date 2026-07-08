@@ -434,8 +434,6 @@ class _BillingDropdownCellState extends ConsumerState<BillingDropdownCell> {
 
     billing = widget.task.billingStatus;
 
-    print("billing: $billing");
-
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
