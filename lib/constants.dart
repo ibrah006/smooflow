@@ -28,6 +28,8 @@ final GlobalKey<ScaffoldMessengerState> kRootScaffoldMessengerKey =
 
 final kNavigatorKey = GlobalKey<NavigatorState>();
 
+const double kCellHPad = 8.0;
+
 List<InboxItem> get sampleInboxItems {
   final now = DateTime.now();
 
