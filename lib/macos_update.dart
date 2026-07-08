@@ -191,7 +191,7 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
               icon: Icons.list_alt_rounded,
               title: "Task List Table",
               description:
-                  "Task List Table now has a more interactive designa and is sectioned based on Task Status.",
+                  "Task List Table now has a more interactive design and is sectioned based on Task Status.",
             ),
             ReleaseNote(
               icon: Icons.priority_high_rounded,
