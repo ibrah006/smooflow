@@ -181,8 +181,8 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
     builder:
         (_) => MacOSAfterUpdateDialogContent(
           currentVersion: currentVersion,
-          featureVideoUrl: null,
-          // 'https://raw.githubusercontent.com/ibrah006/smooflow/main/screenshots/feature%20demos/1.1.1.mp4',
+          featureVideoUrl:
+              'https://raw.githubusercontent.com/ibrah006/smooflow/main/screenshots/feature%20demos/1.3.0.mp4',
           onDismiss: () {
             Navigator.of(context).pop();
           },
