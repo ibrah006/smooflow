@@ -133,16 +133,6 @@ class _CurrentStageCellState extends State<CurrentStageCell> {
                 ] else if (showLocked) ...[
                   Icon(Icons.lock_outline_rounded, size: 13, color: textColor),
                   const SizedBox(width: 6),
-                ] else ...[
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
                 ],
                 Text(
                   displayText,
