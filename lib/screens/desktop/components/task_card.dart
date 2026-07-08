@@ -231,6 +231,37 @@ class _TaskCardState extends ConsumerState<TaskCard>
 
   void _dismiss() => widget.onDismiss?.call();
 
+  Future<void> _savePriorityStatus(TaskPriority newPriority) async {
+    // setState(() {
+    //   _billingSaving = true;
+    // });
+
+    try {
+      await ref
+          .read(taskNotifierProvider.notifier)
+          .update(
+            task: widget.task!,
+            billingStatus: null,
+            ref: null,
+            quantity: null,
+            size: null,
+            name: null,
+            date: null,
+            updatedPrintSpecs: null,
+            newPrintSpec: null,
+            deletePrintSpecId: null,
+            priority: newPriority,
+          );
+      widget.task?.priority = newPriority;
+      setState(() {});
+      // if (mounted) {
+      //   setState(() => _billingEditMode = false);
+      // }
+    } finally {
+      // if (mounted) setState(() => _billingSaving = false);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -359,15 +390,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 (TaskPriority.high, _T.amber, _T.amber50),
                                 (TaskPriority.urgent, _T.red, _T.red50),
                               ],
-                              onChanged: (newPriority) async {
-                                if (newPriority == null) return;
-                                await ref
-                                    .read(projectNotifierProvider.notifier)
-                                    .updateTaskPriority(
-                                      taskId: task.id,
-                                      newPriority: newPriority,
-                                    );
-                              },
+                              onChanged: _savePriorityStatus,
                             ),
                             const SizedBox(width: 6),
                             if (member != null)
