@@ -197,7 +197,7 @@ class _SelectionPillState<T> extends State<SelectionPill<T>> {
         onEnter: (_) => setState(() => _isHovered = true), //[cite: 6]
         onExit: (_) => setState(() => _isHovered = false), //[cite: 6]
         child: GestureDetector(
-          onTap: _toggleDropdown, //[cite: 6]
+          onTap: widget.onChanged != null ? _toggleDropdown : null, //[cite: 6]
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150), //[cite: 6]
             padding: const EdgeInsets.symmetric(
@@ -225,29 +225,30 @@ class _SelectionPillState<T> extends State<SelectionPill<T>> {
                     color: item.$2, //[cite: 6]
                   ),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 180), //[cite: 6]
-                  curve: Curves.easeOutCubic, //[cite: 6]
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showIcon) ...[
-                        const SizedBox(width: 3), //[cite: 6]
-                        AnimatedRotation(
-                          turns: _isOpen ? 0.5 : 0.0, //[cite: 6]
-                          duration: const Duration(
-                            milliseconds: 180,
-                          ), //[cite: 6]
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 13, //[cite: 6]
-                            color: item.$2.withOpacity(0.8), //[cite: 6]
+                if (widget.onChanged != null)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 180), //[cite: 6]
+                    curve: Curves.easeOutCubic, //[cite: 6]
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showIcon) ...[
+                          const SizedBox(width: 3), //[cite: 6]
+                          AnimatedRotation(
+                            turns: _isOpen ? 0.5 : 0.0, //[cite: 6]
+                            duration: const Duration(
+                              milliseconds: 180,
+                            ), //[cite: 6]
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 13, //[cite: 6]
+                              color: item.$2.withOpacity(0.8), //[cite: 6]
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),

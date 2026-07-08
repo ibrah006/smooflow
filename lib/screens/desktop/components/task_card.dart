@@ -390,7 +390,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 (TaskPriority.high, _T.amber, _T.amber50),
                                 (TaskPriority.urgent, _T.red, _T.red50),
                               ],
-                              onChanged: _savePriorityStatus,
+                              // onChanged: _savePriorityStatus,
                             ),
                             const SizedBox(width: 6),
                             if (member != null)
