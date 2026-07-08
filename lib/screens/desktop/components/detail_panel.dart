@@ -813,12 +813,12 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             //     ),
                           ),
                           _DetailMetaCell(
-                            label: 'Billing',
-                            child: BillingDropdownCell(task: widget.task),
-                          ),
-                          _DetailMetaCell(
                             label: 'Priority',
                             child: PriorityDropdownCell(task: widget.task),
+                          ),
+                          _DetailMetaCell(
+                            label: 'Billing',
+                            child: BillingDropdownCell(task: widget.task),
                           ),
                           if (member != null)
                             _DetailMetaCell(
