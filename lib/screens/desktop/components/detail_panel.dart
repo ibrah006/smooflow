@@ -28,6 +28,7 @@ import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/current_stage_cell.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
 import 'package:smooflow/screens/desktop/components/delete_button.dart';
+import 'package:smooflow/screens/desktop/components/dropdown_cells.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/print_specs.dart';
 import 'package:smooflow/screens/desktop/components/selection_pill.dart';
@@ -813,32 +814,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                           ),
                           _DetailMetaCell(
                             label: 'Billing',
-                            child: SelectionPill<BillingStatus>(
-                              initialValue: widget.task.billingStatus,
-                              values: [
-                                (BillingStatus.pending, _T.amber, _T.amber50),
-                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
-                                (
-                                  BillingStatus.invoiced,
-                                  _T.indigo,
-                                  _T.indigo50,
-                                ),
-                                (BillingStatus.foc, _T.green, _T.green50),
-                                (BillingStatus.cancelled, _T.red, _T.red50),
-                              ],
-                              onChanged: _saveBillingStatus,
-                            ),
+                            child: BillingDropdownCell(task: widget.task),
                           ),
                           _DetailMetaCell(
                             label: 'Priority',
-                            child: SelectionPill(
-                              initialValue: widget.task.priority,
-                              values: [
-                                (TaskPriority.normal, _T.slate500, _T.slate100),
-                                (TaskPriority.high, _T.amber, _T.amber50),
-                                (TaskPriority.urgent, _T.red, _T.red50),
-                              ],
-                            ),
+                            child: PriorityDropdownCell(task: widget.task),
                           ),
                           if (member != null)
                             _DetailMetaCell(
