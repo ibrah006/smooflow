@@ -385,14 +385,17 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
                           widget.onUpdate(updatedItems, true);
                         } else {
+                          final newPrintSpec = PrintSpec.create(
+                            ref: val,
+                            size: "0×0 cm",
+                            quantity: 1,
+                          );
+                          _committedTransientIds.add(newPrintSpec.id);
+
                           widget.onUpdate(
                             null,
                             true,
-                            newPrintSpec: PrintSpec.create(
-                              ref: val,
-                              size: "0×0 cm",
-                              quantity: 1,
-                            ),
+                            newPrintSpec: newPrintSpec,
                           );
                         }
                       },
