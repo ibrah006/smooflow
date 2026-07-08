@@ -755,79 +755,6 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             ),
                           ),
                           _DetailMetaCell(
-                            label: 'Priority',
-                            child: SelectionPill(
-                              initialValue: widget.task.priority,
-                              values: [
-                                (TaskPriority.normal, _T.slate500, _T.slate100),
-                                (TaskPriority.high, _T.amber, _T.amber50),
-                                (TaskPriority.urgent, _T.red, _T.red50),
-                              ],
-                            ),
-                          ),
-                          if (member != null)
-                            _DetailMetaCell(
-                              label: 'Assignee',
-                              child: Row(
-                                children: [
-                                  AvatarWidget(
-                                    initials: member.initials,
-                                    color: member.color,
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      member.name,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: _T.ink3,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          // _DetailMetaCell(
-                          //   label: 'Date',
-                          //   child: Row(
-                          //     children: [
-                          //       GhostDateInput(
-                          //         initialValue: d,
-                          //         onChanged: _onTaskDateChange,
-                          //       ),
-                          //       if (isSoon && !isOverdue) ...[
-                          //         const SizedBox(width: 6),
-                          //         const _Badge(
-                          //           'Due soon',
-                          //           _T.amber,
-                          //           _T.amber50,
-                          //         ),
-                          //       ],
-                          //     ],
-                          //   ),
-                          // ),
-                          _DetailMetaCell(
-                            label: 'Billing',
-                            child: SelectionPill<BillingStatus>(
-                              initialValue: widget.task.billingStatus,
-                              values: [
-                                (BillingStatus.pending, _T.amber, _T.amber50),
-                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
-                                (
-                                  BillingStatus.invoiced,
-                                  _T.indigo,
-                                  _T.indigo50,
-                                ),
-                                (BillingStatus.foc, _T.green, _T.green50),
-                                (BillingStatus.cancelled, _T.red, _T.red50),
-                              ],
-                              onChanged: _saveBillingStatus,
-                            ),
-                          ),
-                          _DetailMetaCell(
                             label: 'Date',
                             child: Row(
                               children: [
@@ -884,6 +811,79 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             //       style: TextStyle(color: _T.slate400),
                             //     ),
                           ),
+                          _DetailMetaCell(
+                            label: 'Billing',
+                            child: SelectionPill<BillingStatus>(
+                              initialValue: widget.task.billingStatus,
+                              values: [
+                                (BillingStatus.pending, _T.amber, _T.amber50),
+                                (BillingStatus.quoteGiven, _T.blue, _T.blue50),
+                                (
+                                  BillingStatus.invoiced,
+                                  _T.indigo,
+                                  _T.indigo50,
+                                ),
+                                (BillingStatus.foc, _T.green, _T.green50),
+                                (BillingStatus.cancelled, _T.red, _T.red50),
+                              ],
+                              onChanged: _saveBillingStatus,
+                            ),
+                          ),
+                          _DetailMetaCell(
+                            label: 'Priority',
+                            child: SelectionPill(
+                              initialValue: widget.task.priority,
+                              values: [
+                                (TaskPriority.normal, _T.slate500, _T.slate100),
+                                (TaskPriority.high, _T.amber, _T.amber50),
+                                (TaskPriority.urgent, _T.red, _T.red50),
+                              ],
+                            ),
+                          ),
+                          if (member != null)
+                            _DetailMetaCell(
+                              label: 'Assignee',
+                              child: Row(
+                                children: [
+                                  AvatarWidget(
+                                    initials: member.initials,
+                                    color: member.color,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      member.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: _T.ink3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          // _DetailMetaCell(
+                          //   label: 'Date',
+                          //   child: Row(
+                          //     children: [
+                          //       GhostDateInput(
+                          //         initialValue: d,
+                          //         onChanged: _onTaskDateChange,
+                          //       ),
+                          //       if (isSoon && !isOverdue) ...[
+                          //         const SizedBox(width: 6),
+                          //         const _Badge(
+                          //           'Due soon',
+                          //           _T.amber,
+                          //           _T.amber50,
+                          //         ),
+                          //       ],
+                          //     ],
+                          //   ),
+                          // ),
                         ],
                       ),
 
