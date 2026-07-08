@@ -198,6 +198,12 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
               title: "Update Task Priority",
               description: "You can now update the priority of a task!",
             ),
+            ReleaseNote(
+              icon: Icons.bug_report_outlined,
+              title: "Bug When Initiating Print Spec Ref",
+              description:
+                  "Fixed reference not getting initialized with empty print specs in task.",
+            ),
           ],
         ),
   );
