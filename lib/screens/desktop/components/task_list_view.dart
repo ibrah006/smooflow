@@ -2682,32 +2682,33 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
             ),
             const SizedBox(width: 12),
             // Add action icon button appearing on hover
-            AnimatedOpacity(
-              opacity: _isHovered && widget.onAddTask != null ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 150),
-              child: GestureDetector(
-                onTap: _isHovered ? widget.onAddTask : null,
-                child: MouseRegion(
-                  cursor:
-                      _isHovered
-                          ? SystemMouseCursors.click
-                          : SystemMouseCursors.basic,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: _T.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [_T.shadowSm],
-                    ),
-                    child: const Icon(
-                      Icons.add_rounded,
-                      size: 14,
-                      color: _T.blue,
+            if (kDebugMode)
+              AnimatedOpacity(
+                opacity: _isHovered && widget.onAddTask != null ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 150),
+                child: GestureDetector(
+                  onTap: _isHovered ? widget.onAddTask : null,
+                  child: MouseRegion(
+                    cursor:
+                        _isHovered
+                            ? SystemMouseCursors.click
+                            : SystemMouseCursors.basic,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: _T.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [_T.shadowSm],
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 14,
+                        color: _T.blue,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
