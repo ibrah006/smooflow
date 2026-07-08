@@ -287,7 +287,9 @@ class TaskRepo {
         size == task.size &&
         date == task.date &&
         name == task.name &&
-        task.priority == priority) {
+        task.priority == priority &&
+        newPrintSpec == null &&
+        deletePrintSpecId == null) {
       // Abort update
       // Nothing to update
       return;

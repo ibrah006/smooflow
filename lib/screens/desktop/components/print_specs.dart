@@ -373,24 +373,24 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                       initialText:
                           _items.isNotEmpty ? (_items.first.ref ?? '') : '',
                       onSubmitted: (val) {
-                        for (int i = 0; i < _items.length; i++) {
-                          _items[i] = _items[i].copyWith(ref: val);
+                        late final List<PrintSpec> updatedItems;
+                        if (_items.isNotEmpty) {
+                          for (int i = 0; i < _items.length; i++) {
+                            _items[i] = _items[i].copyWith(ref: val);
+                          }
+                          updatedItems =
+                              _items
+                                  .map((item) => item.copyWith(ref: val))
+                                  .toList();
+                        } else {
+                          updatedItems = [
+                            PrintSpec.create(
+                              ref: val,
+                              size: "0×0 cm",
+                              quantity: 1,
+                            ),
+                          ];
                         }
-                        var updatedItems =
-                            _items
-                                .map((item) => item.copyWith(ref: val))
-                                .toList();
-
-                        updatedItems =
-                            updatedItems.isEmpty
-                                ? [
-                                  PrintSpec.create(
-                                    ref: val,
-                                    size: "0×0 cm",
-                                    quantity: 1,
-                                  ),
-                                ]
-                                : updatedItems;
 
                         widget.onUpdate(updatedItems, true);
                       },

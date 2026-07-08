@@ -170,6 +170,8 @@ class _GhostTextFieldState extends State<GhostTextField> {
       _lastSubmittedText = value;
       widget.onSubmitted.call(value);
     }
+
+    _focus.unfocus();
   }
 
   // ── Build ───────────────────────────────────────────────────────────────────
