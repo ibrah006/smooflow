@@ -38,14 +38,12 @@ Color _priorityColor(TaskPriority p) => switch (p) {
   TaskPriority.urgent => _T.priorityUrgent,
   TaskPriority.high => _T.priorityHigh,
   TaskPriority.normal => _T.priorityNormal,
-  _ => _T.slate400,
 };
 
 String _priorityLabel(TaskPriority p) => switch (p) {
   TaskPriority.urgent => 'Urgent',
   TaskPriority.high => 'High',
   TaskPriority.normal => 'Normal',
-  _ => p.name,
 };
 
 class PriorityDropdownCell extends ConsumerStatefulWidget {
