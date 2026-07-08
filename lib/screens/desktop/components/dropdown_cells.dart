@@ -210,7 +210,8 @@ class _PriorityDropdownCellState extends ConsumerState<PriorityDropdownCell> {
           child: Row(
             children: [
               SizedBox(width: kCellHPad / 2),
-              Container(
+              AnimatedContainer(
+                duration: Duration(milliseconds: 600),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: color,
@@ -433,6 +434,8 @@ class _BillingDropdownCellState extends ConsumerState<BillingDropdownCell> {
 
     billing = widget.task.billingStatus;
 
+    print("billing: $billing");
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
@@ -452,7 +455,8 @@ class _BillingDropdownCellState extends ConsumerState<BillingDropdownCell> {
                   style: TextStyle(fontSize: 12, color: _T.slate300),
                 )
               else
-                Container(
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 600),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
