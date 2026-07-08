@@ -2184,11 +2184,8 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     }
 
     final colId = slot.colId!;
+    final specs = t.printSpecs;
 
-    // NOTE: because a frozen/sticky column is NOT used here, Opacity is safe
-    // to use inside row cells. If you later pin the billing column via
-    // `sticky: true, freezePriority: ...`, replace these Opacity wrappers
-    // with `color.withOpacity(...)` on the relevant text/icon colors instead.
     TextStyle completedBody(TextStyle base) =>
         isCompleted
             ? base.copyWith(color: _completeText.withOpacity(0.55))
@@ -2247,24 +2244,106 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             )
             : const Text('—', style: TextStyle(color: _T.slate300)),
 
-      'ref' =>
-        t.ref != null && t.ref!.isNotEmpty
-            ? Text(
-              t.ref!,
-              overflow: TextOverflow.ellipsis,
-              style: completedBody(
-                const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: _T.ink3,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            )
-            : const Text(
+      'ref' => () {
+        // Rule 1: Empty print specs
+        if (specs.isEmpty) {
+          return const Text(
+            '—',
+            style: TextStyle(fontSize: 13, color: _T.slate300),
+          );
+        }
+
+        final firstRef = specs.first.ref;
+        final hasFirstRef = firstRef != null && firstRef.trim().isNotEmpty;
+        final totalCount = specs.length;
+
+        const refStyle = TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: _T.ink3,
+          fontFamily: 'monospace',
+        );
+
+        // Rule 2: Exactly one print spec
+        if (totalCount == 1) {
+          if (!hasFirstRef) {
+            return const Text(
               '—',
               style: TextStyle(fontSize: 13, color: _T.slate300),
-            ),
+            );
+          }
+          return Text(
+            firstRef!,
+            overflow: TextOverflow.ellipsis,
+            style: completedBody(refStyle),
+          );
+        }
+
+        // Check if all specs share the exact same reference string
+        final bool isSharedRef = specs.every((spec) => spec.ref == firstRef);
+
+        // Rule 3: Multiple print specs and shared reference
+        if (isSharedRef) {
+          if (!hasFirstRef) {
+            return const Text(
+              '—',
+              style: TextStyle(fontSize: 13, color: _T.slate300),
+            );
+          }
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  firstRef!,
+                  overflow: TextOverflow.ellipsis,
+                  style: completedBody(refStyle),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 1.5,
+                ),
+                decoration: BoxDecoration(
+                  color: _T.blue.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$totalCount',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _T.blue,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+        // Rule 4: Multiple print specs and NOT shared reference (or first ref is null)
+        else {
+          final prefixText = hasFirstRef ? firstRef! : '—';
+          final remainingCount = totalCount - 1;
+
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$prefixText',
+                  overflow: TextOverflow.ellipsis,
+                  style: completedBody(refStyle),
+                ),
+              ),
+              Text(
+                " & $remainingCount other${remainingCount > 1 ? 's' : ''}",
+                style: completedBody(refStyle).copyWith(color: _T.slate400),
+              ),
+            ],
+          );
+        }
+      }(),
 
       'stage' =>
         isCompleted ? const _CompletedStagePill() : StagePill(stageInfo: s),
@@ -2279,37 +2358,79 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
       'priority' => PriorityDropdownCell(task: t, dimmed: isCompleted),
 
-      'size' =>
-        t.size != null && !t.size!.contains("null")
-            ? Text(
-              t.size!,
-              overflow: TextOverflow.ellipsis,
-              style: completedBody(
-                const TextStyle(fontSize: 12.5, color: _T.ink3),
-              ),
-            )
-            : const Text(
-              '—',
-              style: TextStyle(fontSize: 13, color: _T.slate300),
-            ),
+      'size' => () {
+        if (specs.isEmpty) {
+          return const Text(
+            '—',
+            style: TextStyle(fontSize: 13, color: _T.slate300),
+          );
+        }
 
-      'qty' =>
-        t.quantity != null
-            ? Text(
-              '${t.quantity}',
-              overflow: TextOverflow.ellipsis,
-              style: completedBody(
-                const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: _T.ink3,
-                ),
-              ),
-            )
-            : const Text(
-              '—',
-              style: TextStyle(fontSize: 13, color: _T.slate300),
+        final validSizes =
+            specs
+                .where(
+                  (s) =>
+                      s.size != null &&
+                      !s.size!.contains("null") &&
+                      s.size!.trim().isNotEmpty,
+                )
+                .map((s) => s.size!)
+                .toList();
+
+        if (validSizes.isEmpty) {
+          return const Text(
+            '—',
+            style: TextStyle(fontSize: 13, color: _T.slate300),
+          );
+        }
+
+        final firstSize = validSizes.first;
+        final bool allSameSize = validSizes.every((size) => size == firstSize);
+
+        // Displays single size if identical, or first size with a modern count indicator if mixed
+        final displaySize =
+            allSameSize ? firstSize : '$firstSize (+${validSizes.length - 1})';
+
+        return Text(
+          displaySize,
+          overflow: TextOverflow.ellipsis,
+          style: completedBody(const TextStyle(fontSize: 12.5, color: _T.ink3)),
+        );
+      }(),
+
+      'qty' => () {
+        if (specs.isEmpty) {
+          return const Text(
+            '—',
+            style: TextStyle(fontSize: 13, color: _T.slate300),
+          );
+        }
+
+        // Sum aggregates total quantity across all inner sub-specifications
+        final totalQty = specs.fold<int>(
+          0,
+          (sum, spec) => sum + (spec.quantity ?? 0),
+        );
+
+        if (totalQty <= 0) {
+          return const Text(
+            '—',
+            style: TextStyle(fontSize: 13, color: _T.slate300),
+          );
+        }
+
+        return Text(
+          '$totalQty',
+          overflow: TextOverflow.ellipsis,
+          style: completedBody(
+            const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: _T.ink3,
             ),
+          ),
+        );
+      }(),
 
       'assignee' =>
         m != null
@@ -2342,10 +2463,6 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
       'billing' => BillingDropdownCell(task: t, dimmed: isCompleted),
 
-      // _BillingStatusCell(
-      //   status: t.billingStatus,
-      //   dimmed: isCompleted,
-      // ),
       _ => const SizedBox.shrink(),
     };
 
