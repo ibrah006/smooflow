@@ -193,6 +193,11 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
               description:
                   "Task List Table now has a more interactive designa and is sectioned based on Task Status.",
             ),
+            ReleaseNote(
+              icon: Icons.priority_high_rounded,
+              title: "Update Task Priority",
+              description: "You can now update the priority of a task!",
+            ),
           ],
         ),
   );
