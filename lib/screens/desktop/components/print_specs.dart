@@ -382,17 +382,19 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                               _items
                                   .map((item) => item.copyWith(ref: val))
                                   .toList();
+
+                          widget.onUpdate(updatedItems, true);
                         } else {
-                          updatedItems = [
-                            PrintSpec.create(
+                          widget.onUpdate(
+                            null,
+                            true,
+                            newPrintSpec: PrintSpec.create(
                               ref: val,
                               size: "0×0 cm",
                               quantity: 1,
                             ),
-                          ];
+                          );
                         }
-
-                        widget.onUpdate(updatedItems, true);
                       },
                       mode: GhostFieldMode.inline,
                       style: const TextStyle(
