@@ -19,58 +19,16 @@ import 'package:smooflow/providers/task_provider.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
   static const blue = Color(0xFF2563EB);
-  static const blue50 = Color(0xFFEFF6FF);
-  static const blue100 = Color(0xFFDBEAFE);
-  static const blue600 = Color(0xFF1D4ED8);
-  static const green = Color(0xFF10B981);
-  static const amber = Color(0xFFF59E0B);
-  static const red = Color(0xFFEF4444);
-  static const purple = Color(0xFF8B5CF6);
-  static const slate50 = Color(0xFFF8FAFC);
-  static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
-  static const slate500 = Color(0xFF64748B);
-  static const slate600 = Color(0xFF475569);
-  static const slate700 = Color(0xFF334155);
-  static const ink = Color(0xFF0F172A);
-  static const ink2 = Color(0xFF1E293B);
-  static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
   static const r = 6.0;
-  static const rLg = 12.0;
-  static const red50 = Color(0xFFFEE2E2);
-  static const green50 = Color(0xFFECFDF5);
-  static const amber50 = Color(0xFFFEF3C7);
-
-  // Row hover styling
-  static const hoverBg = Color.fromARGB(255, 250, 250, 251);
-  static const hoverBorder = Color.fromARGB(255, 189, 197, 207);
 
   // Priority colors (highest → lowest)
   static const priorityUrgent = Color(0xFFFF878A);
   static const priorityHigh = Color(0xFFFEA06A);
   static const priorityNormal = Color(0xFFF7BD51);
-
-  // Column divider
-  static const colDivider = Color(0xFFEDF0F3);
-
-  static final shadowSm = BoxShadow(
-    color: Colors.black.withOpacity(0.02),
-    blurRadius: 2,
-    offset: const Offset(0, 1),
-  );
-  static final shadowMd = BoxShadow(
-    color: Colors.black.withOpacity(0.04),
-    blurRadius: 6,
-    offset: const Offset(0, 2),
-  );
-  static final shadowLg = BoxShadow(
-    color: Colors.black.withOpacity(0.08),
-    blurRadius: 16,
-    offset: const Offset(0, 4),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
