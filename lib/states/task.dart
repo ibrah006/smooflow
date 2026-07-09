@@ -24,6 +24,14 @@ class TaskFilter {
 
   const TaskFilter({this.projectId, this.assigneeId, this.searchQuery});
 
+  TaskFilter copyWith({int? projectId, int? assigneeId, String? searchQuery}) {
+    return TaskFilter(
+      projectId: projectId ?? this.projectId,
+      assigneeId: assigneeId ?? this.assigneeId,
+      searchQuery: searchQuery ?? this.searchQuery,
+    );
+  }
+
   // CRITICAL: Value equality must be implemented so Riverpod knows
   // when two filter configurations are identical.
   @override
@@ -53,6 +61,11 @@ class FilteredTaskCacheState {
     required this.cachedTasks,
     this.isLoadingCounts = false,
   });
+
+  const FilteredTaskCacheState.empty()
+    : totalCounts = const {},
+      cachedTasks = const {},
+      isLoadingCounts = false;
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, int>? totalCounts,
@@ -112,6 +125,8 @@ class TaskState {
   Map<int, bool> _currentlyDeletingSpecs;
 
   Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
+
+  final FilteredTaskCacheState taskCache;
 
   void addCurrentlyDeletingSpec(int targetSpecId) {
     _currentlyDeletingSpecs[targetSpecId] = false;
@@ -208,13 +223,15 @@ class TaskState {
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
     Map<int, bool> currentlyDeletingSpecs = const {},
+    FilteredTaskCacheState taskCache = const FilteredTaskCacheState.empty(),
   }) : _error = error,
        _isLoading = isLoading,
        _tasks = tasks,
        _selectedTask = selectedTask,
        _connectionStatus = connectionStatus,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
-       _currentlyDeletingSpecs = currentlyDeletingSpecs;
+       _currentlyDeletingSpecs = currentlyDeletingSpecs,
+       this.taskCache = taskCache;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway = [];
 
@@ -330,6 +347,7 @@ class TaskState {
     ConnectionStatus? connectionStatus,
     Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
     Map<int, bool>? currentlyDeletingSpecs,
+    FilteredTaskCacheState? taskCache,
   }) {
     final List<Task> ts = tasks ?? _tasks;
     // if (tasks != null) {
@@ -357,6 +375,7 @@ class TaskState {
       currentlyDeletingSpecs: Map<int, bool>.from(
         currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       ),
+      taskCache: taskCache ?? this.taskCache,
     );
   }
 
