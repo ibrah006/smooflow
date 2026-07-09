@@ -13,15 +13,21 @@ class FilteredTaskCacheState {
     required this.cachedTasks,
     this.isLoadingCounts = false,
     List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
-  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway ?? [];
+    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
+  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway ?? [],
+       _currentlyCreatingSpecs = currentlyCreatingSpecs ?? {};
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
       cachedTasks = const {},
       isLoadingCounts = false,
-      _taskNameChangeEventsUnderway = const [];
+      _taskNameChangeEventsUnderway = const [],
+      _currentlyCreatingSpecs = const {};
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
+
+  /// { taskId: creating print specs for this task }
+  final Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, Map<int, int>>? totalCounts,
