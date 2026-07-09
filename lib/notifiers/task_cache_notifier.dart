@@ -18,6 +18,13 @@ class TaskCacheNotifier
   final TaskRepo _repo;
   late final TaskWebSocketClient _client;
 
+  Task? _activelyWorkingTask;
+  bool _loading = false;
+
+  bool get loading => _loading;
+  Task? get activeTask => _activelyWorkingTask;
+  ConnectionStatus get connectionStatus => state.connectionStatus;
+
   // final Ref ref;
   TaskCacheNotifier(
     this._repo,
@@ -101,13 +108,6 @@ class TaskCacheNotifier
     );
   }
 
-  Task? _activeTask;
-  bool _loading = false;
-
-  bool get loading => _loading;
-  Task? get activeTask => _activeTask;
-  ConnectionStatus get connectionStatus => state.connectionStatus;
-
   List<Task> get todaysProductionTasks {
     return state.tasks.where((task) {
       final startDate = task.productionStartTime;
@@ -135,10 +135,10 @@ class TaskCacheNotifier
     // required int taskId,
     // }
   ) async {
-    _activeTask = await _repo.fetchActiveTask();
+    _activelyWorkingTask = await _repo.fetchActiveTask();
     activeTaskInitialized = true;
 
-    return _activeTask;
+    return _activelyWorkingTask;
   }
 
   TaskStatus get getTaskStartStatus {
@@ -173,13 +173,13 @@ class TaskCacheNotifier
               t.workActivityLogs.add(workActivityLog.id);
               t.activityLogLastModified = DateTime.now();
               t.status = getTaskStartStatus;
-              _activeTask = t;
+              _activelyWorkingTask = t;
             }
             return t;
           }).toList(),
     );
 
-    if (_activeTask == null)
+    if (_activelyWorkingTask == null)
       throw "Task to activate not found in memory, unexpected exception";
 
     return workActivityLog;
@@ -192,20 +192,20 @@ class TaskCacheNotifier
   }) async {
     await _repo.endTask(status: status, isCompleted: isCompleted);
 
-    if (_activeTask != null) {
-      _activeTask!.status = status ?? _activeTask!.status;
-      _activeTask!.dateCompleted = isCompleted ? DateTime.now() : null;
+    if (_activelyWorkingTask != null) {
+      _activelyWorkingTask!.status = status ?? _activelyWorkingTask!.status;
+      _activelyWorkingTask!.dateCompleted = isCompleted ? DateTime.now() : null;
 
       // Replace in the list
       state = state.copyWith(
         tasks: [
           for (final t in state.tasks)
-            if (t.id == _activeTask!.id) _activeTask! else t,
+            if (t.id == _activelyWorkingTask!.id) _activelyWorkingTask! else t,
         ],
       );
     }
 
-    _activeTask = null;
+    _activelyWorkingTask = null;
   }
 
   Future<void> _assignPrinter({
