@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
+import 'package:smooflow/enums/task_status.dart';
 
 class TaskNameChangeEventUnderway {
   final int taskId;
@@ -13,6 +14,19 @@ class TaskNameChangeEventUnderway {
     required this.oldName,
     required this.newName,
     required this.localEventId,
+  });
+}
+
+// The state model now represents data bound strictly to this filter set
+class FilteredTaskCache {
+  final Map<TaskStatus, int> totalCounts;
+  final Map<TaskStatus, Map<int, Task>> cachedTasks;
+  final bool isLoadingCounts;
+
+  FilteredTaskCache({
+    required this.totalCounts,
+    required this.cachedTasks,
+    this.isLoadingCounts = false,
   });
 }
 
