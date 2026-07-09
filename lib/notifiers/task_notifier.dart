@@ -42,21 +42,17 @@ class TaskNotifier extends FamilyNotifier<TaskState, FilteredTaskCacheState> {
   Future<void> fetchMetadataCounts() async {
     // Set a loading state locally using current cache mappings
 
-    filteredTaskCache = filteredTaskCache.copyWith(isLoadingCounts: true);
+    arg = arg.copyWith(isLoadingCounts: true);
 
     // Using 'arg' to supply filter criteria to the backend call
-    final counts = await repository.getCounts(
-      projectId: arg.projectId, // <--- Accessing TaskFilter parameters
-      assigneeId: arg.assigneeId, // <--- Accessing TaskFilter parameters
-      searchQuery: arg.searchQuery, // <--- Accessing TaskFilter parameters
+    final counts = await _repo.getCounts(
+      projectId: arg.projectId,
+      assigneeId: arg.assigneeId,
+      searchQuery: arg.searchQuery,
     );
 
     // Update the state with the returned values
-    state = FilteredTaskCache(
-      totalCounts: counts,
-      cachedTasks: state.cachedTasks,
-      isLoadingCounts: false,
-    );
+    arg = arg.copyWith(totalCounts: counts, isLoadingCounts: false);
   }
 
   final TaskRepo _repo;
