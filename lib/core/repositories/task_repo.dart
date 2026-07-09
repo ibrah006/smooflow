@@ -23,7 +23,12 @@ class TaskRepo {
   }
 
   /// GET /tasks — fetch tasks
-  Future<List<Task>> fetchV2({String? projectId, TaskStatus? status}) async {
+  Future<List<Task>> fetchV2({
+    String? projectId,
+    TaskStatus? status,
+    int limit = 50,
+    int offset = 0,
+  }) async {
     final response = await ApiClient.http.get(
       '/tasks/v2/cached${projectId != null ? '?projectId=$projectId' : ''}${status != null ? '&status=${status.name}' : ''}',
     );

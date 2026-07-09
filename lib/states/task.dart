@@ -18,13 +18,17 @@ class TaskNameChangeEventUnderway {
 }
 
 class TaskFilter {
-  final int? projectId;
+  final String? projectId;
   final int? assigneeId;
   final String? searchQuery;
 
   const TaskFilter({this.projectId, this.assigneeId, this.searchQuery});
 
-  TaskFilter copyWith({int? projectId, int? assigneeId, String? searchQuery}) {
+  TaskFilter copyWith({
+    String? projectId,
+    int? assigneeId,
+    String? searchQuery,
+  }) {
     return TaskFilter(
       projectId: projectId ?? this.projectId,
       assigneeId: assigneeId ?? this.assigneeId,

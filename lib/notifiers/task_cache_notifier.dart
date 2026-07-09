@@ -13,7 +13,8 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
-class TaskCacheNotifier extends FamilyNotifier<TaskState, TaskFilter> {
+class TaskCacheNotifier
+    extends FamilyNotifier<FilteredTaskCacheState, TaskFilter> {
   // final Ref ref;
   TaskCacheNotifier(
     this._repo,
@@ -26,40 +27,76 @@ class TaskCacheNotifier extends FamilyNotifier<TaskState, TaskFilter> {
   bool mounted = true;
 
   @override
-  TaskState build(TaskFilter arg) {
-    // 'arg' is current active TaskFilter instance
-
-    ref.onDispose(() {
-      _client.dispose();
-
-      mounted = false;
-    });
-
-    // Initialize an empty cache structure specifically for this filter combination.
-    return TaskState();
+  FilteredTaskCacheState build(TaskFilter arg) {
+    // 1. 'arg' is passed directly into the build method here.
+    // 2. Initialize your default pristine state structure for this specific filter.
+    return FilteredTaskCacheState.empty();
   }
 
+  /// Example: Accessing 'arg' to query filtered parameters from your API
   Future<void> fetchMetadataCounts() async {
     // Set a loading state locally using current cache mappings
+    state = FilteredTaskCacheState(
+      totalCounts: state.totalCounts,
+      cachedTasks: state.cachedTasks,
+      isLoadingCounts: true,
+    );
 
-    // state = state.copyWith(
-    //   taskCache: state.taskCache.copyWith(isLoadingCounts: true),
-    // );
+    // Using 'arg' to supply filter criteria to the backend call
+    final counts = await _repo.getCounts(
+      projectId: arg.projectId, // <--- Accessing TaskFilter parameters
+      assigneeId: arg.assigneeId, // <--- Accessing TaskFilter parameters
+      searchQuery: arg.searchQuery, // <--- Accessing TaskFilter parameters
+    );
 
-    // // Supply filter criteria to the backend call
-    // final counts = await _repo.getCounts(
-    //   projectId: arg.projectId,
-    //   assigneeId: arg.assigneeId,
-    //   searchQuery: arg.searchQuery,
-    // );
+    // Update the state with the returned values
+    state = FilteredTaskCacheState(
+      totalCounts: counts,
+      cachedTasks: state.cachedTasks,
+      isLoadingCounts: false,
+    );
+  }
 
-    // // Update the state with the returned values
-    // state = state.copyWith(
-    //   taskCache: state.taskCache.copyWith(
-    //     totalCounts: counts,
-    //     isLoadingCounts: false,
-    //   ),
-    // );
+  Future<void> loadPage({
+    required TaskStatus status,
+    required int indexWithinStatus,
+  }) async {
+    const int pageSize = 50;
+    final int virtualPage = indexWithinStatus ~/ pageSize;
+    final int offset = virtualPage * pageSize;
+
+    // Check 'state' to see if this slot is already warm in memory
+    final statusMap =
+        state.cachedTasks[status]; // <--- Reading FilteredTaskCache
+    if (statusMap != null && statusMap.containsKey(offset)) {
+      return; // Already loaded! Short-circuit network request.
+    }
+
+    // Hit backend using specific filters tracked by 'arg'
+    final incomingTasks = await _repo.fetchV2(
+      status: status,
+      limit: pageSize,
+      offset: offset,
+      projectId:
+          arg.projectId, // <--- Safely available in background thread calls
+    );
+
+    // Deep copy and mutate the map structure safely
+    final Map<TaskStatus, Map<int, Task>> updatedCache = {
+      for (final entry in state.cachedTasks.entries)
+        entry.key: Map.of(entry.value),
+    };
+
+    final currentStatusMap = updatedCache.putIfAbsent(status, () => {});
+    for (int i = 0; i < incomingTasks.length; i++) {
+      currentStatusMap[offset + i] = incomingTasks[i];
+    }
+
+    // Trigger UI repaint by dispatching completely renewed state object
+    state = FilteredTaskCache(
+      totalCounts: state.totalCounts,
+      cachedTasks: updatedCache,
+    );
   }
 
   final TaskRepo _repo;
@@ -848,19 +885,6 @@ class TaskCacheNotifier extends FamilyNotifier<TaskState, TaskFilter> {
     );
   }
 
-  /// Load all tasks
-  Future<void> loadTasks({Map<String, dynamic>? filters}) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      _client.listTasks(filters: filters);
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to load tasks: $e',
-        isLoading: false,
-      );
-    }
-  }
-
   Future<void> delete(int id) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -874,12 +898,6 @@ class TaskCacheNotifier extends FamilyNotifier<TaskState, TaskFilter> {
         isLoading: false,
       );
     }
-  }
-
-  /// Refresh tasks
-  Future<void> refreshTasks() async {
-    state = state.copyWith(isLoading: true);
-    _client.refreshTasks();
   }
 
   /// Load a specific task
