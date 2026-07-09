@@ -17,6 +17,31 @@ class TaskNameChangeEventUnderway {
   });
 }
 
+class TaskFilter {
+  final int? projectId;
+  final int? assigneeId;
+  final String? searchQuery;
+
+  const TaskFilter({this.projectId, this.assigneeId, this.searchQuery});
+
+  // CRITICAL: Value equality must be implemented so Riverpod knows
+  // when two filter configurations are identical.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TaskFilter &&
+          runtimeType == other.runtimeType &&
+          projectId == other.projectId &&
+          assigneeId == other.assigneeId &&
+          searchQuery == other.searchQuery;
+
+  @override
+  int get hashCode => Object.hash(projectId, assigneeId, searchQuery);
+
+  // Convenient empty state helper
+  static const empty = TaskFilter();
+}
+
 // The state model now represents data bound strictly to this filter set
 class FilteredTaskCacheState {
   final Map<TaskStatus, int> totalCounts;
