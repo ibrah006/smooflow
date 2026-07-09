@@ -19,6 +19,13 @@ import 'package:smooflow/states/task.dart';
 
 final taskRepoProvider = Provider<TaskRepo>((ref) => TaskRepo());
 
+// final taskNotifierProvider =
+//     NotifierProvider.family<TaskNotifier, TaskState, TaskFilter>(() {
+//       return TaskNotifier(
+//         // repo, client
+//       );
+//     });
+
 final taskNotifierProvider = StateNotifierProvider<TaskNotifier, TaskState>((
   ref,
 ) {

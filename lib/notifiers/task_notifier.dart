@@ -13,53 +13,10 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
-class TaskNotifier extends FamilyNotifier<TaskState, TaskFilter> {
-  // final Ref ref;
-  TaskNotifier(
-    this._repo,
-    this._client,
-    // this.ref
-  ) : super() {
+class TaskNotifier extends StateNotifier<TaskState> {
+  final Ref ref;
+  TaskNotifier(this._repo, this._client, this.ref) : super(TaskState()) {
     _initializeSocket();
-  }
-
-  bool mounted = true;
-
-  @override
-  TaskState build(TaskFilter arg) {
-    // 'arg' is current active TaskFilter instance
-
-    ref.onDispose(() {
-      _client.dispose();
-
-      mounted = false;
-    });
-
-    // Initialize an empty cache structure specifically for this filter combination.
-    return TaskState();
-  }
-
-  Future<void> fetchMetadataCounts() async {
-    // Set a loading state locally using current cache mappings
-
-    // state = state.copyWith(
-    //   taskCache: state.taskCache.copyWith(isLoadingCounts: true),
-    // );
-
-    // // Supply filter criteria to the backend call
-    // final counts = await _repo.getCounts(
-    //   projectId: arg.projectId,
-    //   assigneeId: arg.assigneeId,
-    //   searchQuery: arg.searchQuery,
-    // );
-
-    // // Update the state with the returned values
-    // state = state.copyWith(
-    //   taskCache: state.taskCache.copyWith(
-    //     totalCounts: counts,
-    //     isLoadingCounts: false,
-    //   ),
-    // );
   }
 
   final TaskRepo _repo;
