@@ -22,6 +22,21 @@ class TaskRepo {
     return body.map((taskJson) => Task.fromJson(taskJson)).toList();
   }
 
+  /// GET /tasks — fetch tasks
+  Future<List<Task>> fetchV2({String? projectId, TaskStatus? status}) async {
+    final response = await ApiClient.http.get(
+      '/tasks/v2/cached${projectId != null ? '?projectId=$projectId' : ''}${status != null ? '&status=${status.name}' : ''}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load tasks: ${response.body}');
+    }
+
+    final Map body = jsonDecode(response.body);
+    return (body["tasks"] as List<dynamic>)
+        .map((taskJson) => Task.fromJson(taskJson))
+        .toList();
+  }
+
   Future<Task?> getTaskById({
     required int taskId,
     DateTime? updatedAt,

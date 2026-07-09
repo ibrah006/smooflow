@@ -52,7 +52,7 @@ class TaskFilter {
 
 // The state model now represents data bound strictly to this filter set
 class FilteredTaskCacheState {
-  final Map<TaskStatus, int> totalCounts;
+  final Map<TaskStatus, Map<int, int>> totalCounts;
   final Map<TaskStatus, Map<int, Task>> cachedTasks;
   final bool isLoadingCounts;
 
@@ -68,7 +68,7 @@ class FilteredTaskCacheState {
       isLoadingCounts = false;
 
   FilteredTaskCacheState copyWith({
-    Map<TaskStatus, int>? totalCounts,
+    Map<TaskStatus, Map<int, int>>? totalCounts,
     Map<TaskStatus, Map<int, Task>>? cachedTasks,
     bool? isLoadingCounts,
   }) {
