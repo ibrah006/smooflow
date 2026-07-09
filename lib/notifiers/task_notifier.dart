@@ -13,10 +13,30 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
-class TaskNotifier extends StateNotifier<TaskState> {
-  final Ref ref;
-  TaskNotifier(this._repo, this._client, this.ref) : super(TaskState()) {
+class TaskNotifier extends FamilyNotifier<TaskState, FilteredTaskCacheState> {
+  // final Ref ref;
+  TaskNotifier(
+    this._repo,
+    this._client,
+    // this.ref
+  ) : super() {
     _initializeSocket();
+  }
+
+  bool mounted = true;
+
+  @override
+  TaskState build(FilteredTaskCacheState filteredTaskCache) {
+    // 'filteredTaskCache' is current active TaskFilter instance
+
+    ref.onDispose(() {
+      _client.dispose();
+
+      mounted = false;
+    });
+
+    // Initialize an empty cache structure specifically for this filter combination.
+    return TaskState();
   }
 
   final TaskRepo _repo;
@@ -904,11 +924,11 @@ class TaskNotifier extends StateNotifier<TaskState> {
     state = state.copyWith(error: null);
   }
 
-  @override
-  void dispose() {
-    _client.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _client.dispose();
+  //   super.dispose();
+  // }
 }
 
 class TasksResponse {
