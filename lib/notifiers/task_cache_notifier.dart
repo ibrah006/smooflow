@@ -191,6 +191,19 @@ class TaskCacheNotifier
     _activelyWorkingTask = null;
   }
 
+  TaskStatus getTaskStatus(int taskId) {
+    try {
+    final task = state.cachedTasks.values
+        .expand((statusMap) => statusMap.values)
+        .firstWhere((task) => task.id == taskId);
+    
+    return task.status;
+    }catch(e) {
+      throw "Task with ID $taskId not found in memory";
+    }
+  }
+  
+  /// Assumes the task is already in memory
   Future<void> _assignPrinter({
     required Task task,
     required String printerId,
@@ -202,13 +215,21 @@ class TaskCacheNotifier
         ..printerId = printerId
         ..status = TaskStatus.printing;
     });
+    state = state;
   }
 
+  /// Assumes the task is already in memory
   Future<void> _unassignPrinter({
-    required int taskId,
+    required Task task,
     required TaskStatus status,
   }) async {
-    await _repo.unassignPrinter(taskId, status);
+    await _repo.unassignPrinter(task.id, status);
+
+    state.cachedTasks[task.status]?.update(task.id, (t) {
+      return t
+        ..printerId = printerId
+        ..status = TaskStatus.printing;
+    })
 
     state = state.copyWith(
       tasks:
