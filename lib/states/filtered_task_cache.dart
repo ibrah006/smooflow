@@ -1,4 +1,8 @@
 // The state model now represents data bound strictly to this filter set
+import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/states/task.dart';
+
 class FilteredTaskCacheState {
   final Map<TaskStatus, Map<int, int>> totalCounts;
   final Map<TaskStatus, Map<int, Task>> cachedTasks;
