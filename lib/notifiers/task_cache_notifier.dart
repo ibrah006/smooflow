@@ -108,23 +108,6 @@ class TaskCacheNotifier
     );
   }
 
-  List<Task> get todaysProductionTasks {
-    return state.tasks.where((task) {
-      final startDate = task.productionStartTime;
-      if (startDate != null) {
-        final today = DateTime.now();
-        final todayStart = DateTime(today.year, today.month, today.day);
-        final tomorrowStart = todayStart.add(Duration(days: 1));
-
-        if (startDate.isAfter(todayStart) &&
-            startDate.isBefore(tomorrowStart)) {
-          return true;
-        }
-      }
-      return false;
-    }).toList();
-  }
-
   bool activeTaskInitialized = false;
 
   /// Get user’s currently active task
