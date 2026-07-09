@@ -12,10 +12,10 @@ class FilteredTaskCacheState {
     required this.totalCounts,
     required this.cachedTasks,
     this.isLoadingCounts = false,
-    List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
-    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
-  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway ?? [],
-       _currentlyCreatingSpecs = currentlyCreatingSpecs ?? {};
+    List<TaskNameChangeEventUnderway> taskNameChangeEventsUnderway = const [],
+    Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
+  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
+       _currentlyCreatingSpecs = currentlyCreatingSpecs;
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
