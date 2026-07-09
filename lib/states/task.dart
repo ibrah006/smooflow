@@ -110,6 +110,27 @@ class FilteredTaskCacheState {
         .where((task) => task.id != taskId)
         .every((task) => task.name != newName);
   }
+
+  void addCurrentlyCreatingSpec(int taskId, int specLocalId) {
+    _currentlyCreatingSpecs[taskId] = [
+      ..._currentlyCreatingSpecs[taskId] ?? [],
+      // here newPrintSpec.id automatically returns temp local id
+      CreatingPrintSpecID(specLocalId),
+    ];
+  }
+
+  void removeCurrentlyCreatingSpec(int taskId, int specCreatedId) {
+    _currentlyCreatingSpecs[taskId]?.removeWhere(
+      (spec) => spec.createdId == specCreatedId,
+    );
+  }
+
+  bool isCurrentlyCreatingSpec(int taskId, int specLocalId) {
+    return _currentlyCreatingSpecs[taskId]?.any(
+          (spec) => spec.tempLocalId == specLocalId,
+        ) ??
+        false;
+  }
 }
 
 class TaskState {
