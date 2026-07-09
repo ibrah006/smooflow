@@ -13,9 +13,13 @@ import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/states/task.dart';
 
-class TaskNotifier extends StateNotifier<TaskState> {
-  final Ref ref;
-  TaskNotifier(this._repo, this._client, this.ref) : super(TaskState()) {
+class TaskNotifier extends FamilyNotifier<TaskState, TaskFilter> {
+  // final Ref ref;
+  TaskNotifier(
+    this._repo,
+    this._client,
+    // this.ref
+  ) : super() {
     _initializeSocket();
   }
 
@@ -25,11 +29,11 @@ class TaskNotifier extends StateNotifier<TaskState> {
   TaskState build(TaskFilter arg) {
     // 'arg' is current active TaskFilter instance
 
-    // ref.onDispose(() {
-    //   _client.dispose();
+    ref.onDispose(() {
+      _client.dispose();
 
-    //   mounted = false;
-    // });
+      mounted = false;
+    });
 
     // Initialize an empty cache structure specifically for this filter combination.
     return TaskState();
