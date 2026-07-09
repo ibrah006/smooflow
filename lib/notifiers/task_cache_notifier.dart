@@ -179,13 +179,10 @@ class TaskCacheNotifier
       _activelyWorkingTask!.status = status ?? _activelyWorkingTask!.status;
       _activelyWorkingTask!.dateCompleted = isCompleted ? DateTime.now() : null;
 
-      // Replace in the list
-      state = state.copyWith(
-        tasks: [
-          for (final t in state.tasks)
-            if (t.id == _activelyWorkingTask!.id) _activelyWorkingTask! else t,
-        ],
-      );
+      state.cachedTasks.update(_activelyWorkingTask!.status, (statusMap) {
+        statusMap[_activelyWorkingTask!.id] = _activelyWorkingTask!;
+        return statusMap;
+      });
     }
 
     _activelyWorkingTask = null;
