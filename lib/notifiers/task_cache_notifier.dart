@@ -77,8 +77,7 @@ class TaskCacheNotifier
       status: status,
       limit: pageSize,
       offset: offset,
-      projectId:
-          arg.projectId, // <--- Safely available in background thread calls
+      projectId: arg.projectId,
     );
 
     // Deep copy and mutate the map structure safely
