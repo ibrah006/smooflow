@@ -382,7 +382,7 @@ class TaskCacheNotifier
 
   // Returns stock out transaction, if committed
   Future<StockTransaction?> schedulePrint({
-    required int taskId,
+    required Task task,
     required String printerId,
     required String materialId,
     String progressStage = 'production',
@@ -391,7 +391,7 @@ class TaskCacheNotifier
     required String barcode,
   }) async {
     final stockOutTransaction = await _repo.schedulePrint(
-      taskId: taskId,
+      taskId: task.id,
       printerId: printerId,
       materialId: materialId,
       progressStage: progressStage,
@@ -400,22 +400,19 @@ class TaskCacheNotifier
       barcode: barcode,
     );
 
-    state = state.copyWith(
-      tasks:
-          state.tasks.map((task) {
-            if (task.id == taskId) {
-              task.printerId = printerId;
-              task.status = TaskStatus.printing;
-              task.materialId = materialId;
-              task.actualProductionStartTime = DateTime.now();
-              task.runs = runs;
-              task.productionQuantity = productionQuantity.toDouble();
-              // task.stockTransactionBarcode = barcode;
-              task.stockTransactionIds.add(stockOutTransaction!.id);
-            }
-            return task;
-          }).toList(),
-    );
+    state.cachedTasks.update(task.status, (tasks) {
+      tasks[task.id]!
+        ..printerId = printerId
+        ..status = TaskStatus.printing
+        ..materialId = materialId
+        ..actualProductionStartTime = DateTime.now()
+        ..runs = runs
+        ..productionQuantity = productionQuantity.toDouble()
+        // ..stockTransactionBarcode = barcode
+        ..stockTransactionIds.add(stockOutTransaction!.id);
+
+      return tasks;
+    });
 
     return stockOutTransaction;
   }
