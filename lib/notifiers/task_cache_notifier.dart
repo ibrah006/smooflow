@@ -192,21 +192,16 @@ class TaskCacheNotifier
   }
 
   Future<void> _assignPrinter({
-    required int taskId,
+    required Task task,
     required String printerId,
   }) async {
-    await _repo.assignPrinter(taskId, printerId);
+    await _repo.assignPrinter(task.id, printerId);
 
-    state = state.copyWith(
-      tasks:
-          state.tasks.map((task) {
-            if (task.id == taskId) {
-              task.printerId = printerId;
-              task.status = TaskStatus.printing;
-            }
-            return task;
-          }).toList(),
-    );
+    state.cachedTasks[task.status]?.update(task.id, (t) {
+      return t
+        ..printerId = printerId
+        ..status = TaskStatus.printing;
+    });
   }
 
   Future<void> _unassignPrinter({
