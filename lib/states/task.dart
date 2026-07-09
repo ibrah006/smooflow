@@ -18,12 +18,12 @@ class TaskNameChangeEventUnderway {
 }
 
 // The state model now represents data bound strictly to this filter set
-class FilteredTaskCache {
+class FilteredTaskCacheState {
   final Map<TaskStatus, int> totalCounts;
   final Map<TaskStatus, Map<int, Task>> cachedTasks;
   final bool isLoadingCounts;
 
-  FilteredTaskCache({
+  FilteredTaskCacheState({
     required this.totalCounts,
     required this.cachedTasks,
     this.isLoadingCounts = false,
