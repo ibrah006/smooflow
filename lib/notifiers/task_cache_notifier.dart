@@ -143,7 +143,7 @@ class TaskCacheNotifier
   }
 
   /// Start a task
-  Future<WorkActivityLog> startTask(int taskId) async {
+  Future<WorkActivityLog> startWorkingTask(int taskId) async {
     final workActivityLog = await _repo.startTask(taskId);
 
     // Update local state
@@ -169,7 +169,7 @@ class TaskCacheNotifier
   }
 
   /// End currently active task
-  Future<void> endActiveTask({
+  Future<void> endActivelyWorkingTask({
     TaskStatus? status,
     bool isCompleted = false,
   }) async {
