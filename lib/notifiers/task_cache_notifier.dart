@@ -253,8 +253,89 @@ class TaskCacheNotifier
     state = state;
   }
 
+  Future<Task?> getTaskById(int taskId) async {
+    try {
+      // 1. Fetch the absolute fresh entity from your database repository
+      final fetchedTask = await _repo.getTaskById(taskId: taskId);
+      if (fetchedTask == null) return null;
+
+      // 2. Clone the nested collections using map structures to maintain strict immutability rules
+      final updatedCachedTasks = state.cachedTasks.map((status, indexMap) {
+        return MapEntry(status, Map<int, Task>.from(indexMap));
+      });
+
+      final updatedTotalCounts = state.totalCounts.map((status, filterMap) {
+        return MapEntry(status, Map<int, int>.from(filterMap));
+      });
+
+      // Ensure our targets are initialized inside the copies
+      updatedCachedTasks.putIfAbsent(fetchedTask.status, () => {});
+      updatedTotalCounts.putIfAbsent(fetchedTask.status, () => {});
+
+      TaskStatus? detectedOldStatus;
+      int? detectedOldIndex;
+
+      // 3. Scan the index matrix across all status blocks to check if the item is warm in memory
+      for (final statusEntry in state.cachedTasks.entries) {
+        final status = statusEntry.key;
+        final indexMap = statusEntry.value;
+
+        for (final indexEntry in indexMap.entries) {
+          if (indexEntry.value.id == taskId) {
+            detectedOldStatus = status;
+            detectedOldIndex = indexEntry.key;
+            break;
+          }
+        }
+        if (detectedOldIndex != null) break;
+      }
+
+      bool stateDidMutate = false;
+
+      if (detectedOldIndex != null && detectedOldStatus != null) {
+        if (detectedOldStatus == fetchedTask.status) {
+          // SCENARIO 1: Warm Update (In-place swap)
+          // Completely idempotent. Overwrite the exact integer slot position.
+          updatedCachedTasks[detectedOldStatus]?[detectedOldIndex] =
+              fetchedTask;
+          stateDidMutate = true;
+        } else {
+          // SCENARIO 2: Column Move / Structural Status Shift
+          // The task changed columns. This modifies database row sequencing for both states.
+          // Purge memory ranges for both target columns to protect scroll alignment.
+          updatedCachedTasks[detectedOldStatus] = {};
+          updatedCachedTasks[fetchedTask.status] = {};
+
+          // Invalidate structural metric counts to force real-time window recalculation
+          updatedTotalCounts[detectedOldStatus] = {};
+          updatedTotalCounts[fetchedTask.status] = {};
+
+          stateDidMutate = true;
+        }
+      } else {
+        // SCENARIO 3: Cold Fetch
+        // The task isn't tracked in any current viewport windows.
+        // Do NOT insert at an arbitrary key position. Let the lazy scroll load it naturally later.
+      }
+
+      // 4. Update the notifier state if a structural layout mutation occurred
+      if (stateDidMutate) {
+        state = state.copyWith(
+          cachedTasks: updatedCachedTasks,
+          totalCounts: updatedTotalCounts,
+        );
+      }
+
+      // Always return the fresh dataset so detailing components can absorb updates instantly
+      return fetchedTask;
+    } catch (e, st) {
+      print('Error loading task by ID: $e\n$st');
+      rethrow;
+    }
+  }
+
   Future<void> progressStage({
-    required int taskId,
+    required Task task,
     required TaskStatus newStatus,
     String? printerId,
     bool isStageForward = true,
@@ -263,6 +344,8 @@ class TaskCacheNotifier
       throw "Printer ID must be provided when progressing task to printing status";
     }
 
+    final taskId = task.id;
+
     await _repo.progressStage(
       taskId,
       newStatus,
@@ -270,14 +353,13 @@ class TaskCacheNotifier
     );
 
     if (newStatus == TaskStatus.printing) {
-      await _assignPrinter(taskId: taskId, printerId: printerId!);
+      await _assignPrinter(task: task, printerId: printerId!);
 
       print("$taskId to printing status and assigned printer $printerId");
     } else {
       try {
-        final task = state.taskById(taskId);
-        if (task!.printerId != null && printerId == null) {
-          await _unassignPrinter(taskId: taskId, status: newStatus);
+        if (task.printerId != null && printerId == null) {
+          await _unassignPrinter(task: task, status: newStatus);
           print(
             "Progressed task $taskId to $newStatus status and unassigned printer",
           );
@@ -286,12 +368,15 @@ class TaskCacheNotifier
     }
 
     try {
-      state.tasks.firstWhere((task) => task.id == taskId).status = newStatus;
+      state.cachedTasks.update(task.status, (statusMap) {
+        statusMap[taskId] = task..status = newStatus;
+        return statusMap;
+      });
     } catch (e) {
       print(
         "Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state",
       );
-      await getTaskById(taskId, forceReload: true);
+      await getTaskById(taskId);
     }
   }
 
