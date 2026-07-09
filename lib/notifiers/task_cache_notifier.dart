@@ -433,7 +433,7 @@ class TaskCacheNotifier
   }) async {
     int? localTaskNameChangeEventId;
     if (name != null) {
-      final canUpdateName = _canUpdateName(taskId: task.id, newName: name);
+      final canUpdateName = state.canUpdateName(taskId: task.id, newName: name);
 
       if (canUpdateName) {
         // Add to the list of name change events underway to prevent other updates with the same name until this one is resolved
