@@ -920,8 +920,10 @@ class _DimensionInput extends StatelessWidget {
           child: _buildFormInputField(
             controller: widthCtrl,
             hintText: "0",
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+            ],
           ),
         ),
 
@@ -939,8 +941,10 @@ class _DimensionInput extends StatelessWidget {
           child: _buildFormInputField(
             controller: heightCtrl,
             hintText: "0",
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+            ],
           ),
         ),
 
