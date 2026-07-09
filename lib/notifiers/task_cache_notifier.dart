@@ -44,9 +44,9 @@ class TaskCacheNotifier
 
     // Using 'arg' to supply filter criteria to the backend call
     final counts = await _repo.getCounts(
-      projectId: arg.projectId, // <--- Accessing TaskFilter parameters
-      assigneeId: arg.assigneeId, // <--- Accessing TaskFilter parameters
-      searchQuery: arg.searchQuery, // <--- Accessing TaskFilter parameters
+      projectId: arg.projectId,
+      assigneeId: arg.assigneeId,
+      searchQuery: arg.searchQuery,
     );
 
     // Update the state with the returned values
