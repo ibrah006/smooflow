@@ -64,12 +64,16 @@ class FilteredTaskCacheState {
     required this.totalCounts,
     required this.cachedTasks,
     this.isLoadingCounts = false,
-  });
+    List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
+  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway ?? [];
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
       cachedTasks = const {},
-      isLoadingCounts = false;
+      isLoadingCounts = false,
+      _taskNameChangeEventsUnderway = const [];
+
+  final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, Map<int, int>>? totalCounts,
@@ -81,6 +85,30 @@ class FilteredTaskCacheState {
       cachedTasks: cachedTasks ?? this.cachedTasks,
       isLoadingCounts: isLoadingCounts ?? this.isLoadingCounts,
     );
+  }
+
+  /// @returns the local event id
+  int newNameChangeEvent({
+    required int taskId,
+    required String oldName,
+    required String newName,
+  }) {
+    final event = TaskNameChangeEventUnderway(
+      taskId: taskId,
+      oldName: oldName,
+      newName: newName,
+      localEventId: _taskNameChangeEventsUnderway.length + 1,
+    );
+    _taskNameChangeEventsUnderway.add(event);
+
+    return event.localEventId;
+  }
+
+  bool canUpdateName({required int taskId, required String newName}) {
+    return cachedTasks.values
+        .expand((statusMap) => statusMap.values)
+        .where((task) => task.id != taskId)
+        .every((task) => task.name != newName);
   }
 }
 
