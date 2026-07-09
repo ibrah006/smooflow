@@ -28,6 +28,18 @@ class FilteredTaskCacheState {
     required this.cachedTasks,
     this.isLoadingCounts = false,
   });
+
+  FilteredTaskCacheState copyWith({
+    Map<TaskStatus, int>? totalCounts,
+    Map<TaskStatus, Map<int, Task>>? cachedTasks,
+    bool? isLoadingCounts,
+  }) {
+    return FilteredTaskCacheState(
+      totalCounts: totalCounts ?? this.totalCounts,
+      cachedTasks: cachedTasks ?? this.cachedTasks,
+      isLoadingCounts: isLoadingCounts ?? this.isLoadingCounts,
+    );
+  }
 }
 
 class TaskState {
