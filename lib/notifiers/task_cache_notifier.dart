@@ -193,16 +193,16 @@ class TaskCacheNotifier
 
   TaskStatus getTaskStatus(int taskId) {
     try {
-    final task = state.cachedTasks.values
-        .expand((statusMap) => statusMap.values)
-        .firstWhere((task) => task.id == taskId);
-    
-    return task.status;
-    }catch(e) {
+      final task = state.cachedTasks.values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId);
+
+      return task.status;
+    } catch (e) {
       throw "Task with ID $taskId not found in memory";
     }
   }
-  
+
   /// Assumes the task is already in memory
   Future<void> _assignPrinter({
     required Task task,
@@ -210,11 +210,22 @@ class TaskCacheNotifier
   }) async {
     await _repo.assignPrinter(task.id, printerId);
 
-    state.cachedTasks[task.status]?.update(task.id, (t) {
-      return t
-        ..printerId = printerId
-        ..status = TaskStatus.printing;
-    });
+    try {
+      state.cachedTasks[task.status]?.update(task.id, (t) {
+        return t
+          ..printerId = printerId
+          ..status = TaskStatus.printing;
+      });
+    } catch (e) {
+      // Task status changed fallback
+      final taskStatus = getTaskStatus(task.id);
+
+      state.cachedTasks[taskStatus]?.update(task.id, (t) {
+        return t
+          ..printerId = printerId
+          ..status = TaskStatus.printing;
+      });
+    }
     state = state;
   }
 
@@ -225,22 +236,24 @@ class TaskCacheNotifier
   }) async {
     await _repo.unassignPrinter(task.id, status);
 
-    state.cachedTasks[task.status]?.update(task.id, (t) {
-      return t
-        ..printerId = printerId
-        ..status = TaskStatus.printing;
-    })
+    try {
+      state.cachedTasks[task.status]?.update(task.id, (t) {
+        return t
+          ..printerId = null
+          ..status = status;
+      });
+    } catch (e) {
+      // Task status changed fallback
+      final taskStatus = getTaskStatus(task.id);
 
-    state = state.copyWith(
-      tasks:
-          state.tasks.map((task) {
-            if (task.id == taskId) {
-              task.printerId = null;
-              task.status = status;
-            }
-            return task;
-          }).toList(),
-    );
+      state.cachedTasks[taskStatus]?.update(task.id, (t) {
+        return t
+          ..printerId = null
+          ..status = status;
+      });
+    }
+
+    state = state;
   }
 
   Future<void> progressStage({
