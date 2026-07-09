@@ -11,6 +11,7 @@ import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/states/filtered_task_cache.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskCacheNotifier
