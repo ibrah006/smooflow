@@ -26,8 +26,8 @@ class TaskNotifier extends FamilyNotifier<TaskState, FilteredTaskCacheState> {
   bool mounted = true;
 
   @override
-  TaskState build(FilteredTaskCacheState filteredTaskCache) {
-    // 'filteredTaskCache' is current active TaskFilter instance
+  TaskState build(FilteredTaskCacheState arg) {
+    // 'arg' is current active TaskFilter instance
 
     ref.onDispose(() {
       _client.dispose();
@@ -37,6 +37,26 @@ class TaskNotifier extends FamilyNotifier<TaskState, FilteredTaskCacheState> {
 
     // Initialize an empty cache structure specifically for this filter combination.
     return TaskState();
+  }
+
+  Future<void> fetchMetadataCounts() async {
+    // Set a loading state locally using current cache mappings
+
+    filteredTaskCache = filteredTaskCache.copyWith(isLoadingCounts: true);
+
+    // Using 'arg' to supply filter criteria to the backend call
+    final counts = await repository.getCounts(
+      projectId: arg.projectId, // <--- Accessing TaskFilter parameters
+      assigneeId: arg.assigneeId, // <--- Accessing TaskFilter parameters
+      searchQuery: arg.searchQuery, // <--- Accessing TaskFilter parameters
+    );
+
+    // Update the state with the returned values
+    state = FilteredTaskCache(
+      totalCounts: counts,
+      cachedTasks: state.cachedTasks,
+      isLoadingCounts: false,
+    );
   }
 
   final TaskRepo _repo;
