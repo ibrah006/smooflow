@@ -39,28 +39,28 @@ class TaskNotifier extends FamilyNotifier<TaskState, TaskFilter> {
     return TaskState();
   }
 
-  // Future<void> fetchMetadataCounts() async {
-  //   // Set a loading state locally using current cache mappings
+  Future<void> fetchMetadataCounts() async {
+    // Set a loading state locally using current cache mappings
 
-  //   state = state.copyWith(
-  //     taskCache: state.taskCache.copyWith(isLoadingCounts: true),
-  //   );
+    state = state.copyWith(
+      taskCache: state.taskCache.copyWith(isLoadingCounts: true),
+    );
 
-  //   // Using 'arg' to supply filter criteria to the backend call
-  //   final counts = await _repo.getCounts(
-  //     projectId: arg.projectId,
-  //     assigneeId: arg.assigneeId,
-  //     searchQuery: arg.searchQuery,
-  //   );
+    // Supply filter criteria to the backend call
+    final counts = await _repo.getCounts(
+      projectId: arg.projectId,
+      assigneeId: arg.assigneeId,
+      searchQuery: arg.searchQuery,
+    );
 
-  //   // Update the state with the returned values
-  //   state = state.copyWith(
-  //     taskCache: state.taskCache.copyWith(
-  //       totalCounts: counts,
-  //       isLoadingCounts: false,
-  //     ),
-  //   );
-  // }
+    // Update the state with the returned values
+    state = state.copyWith(
+      taskCache: state.taskCache.copyWith(
+        totalCounts: counts,
+        isLoadingCounts: false,
+      ),
+    );
+  }
 
   final TaskRepo _repo;
   late final TaskWebSocketClient _client;
