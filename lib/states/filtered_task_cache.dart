@@ -58,6 +58,12 @@ class FilteredTaskCacheState {
     return event.localEventId;
   }
 
+  void removeTaskNameChangeEvent(int localEventId) {
+    _taskNameChangeEventsUnderway.removeWhere(
+      (event) => event.localEventId == localEventId,
+    );
+  }
+
   bool canUpdateName({required int taskId, required String newName}) {
     return cachedTasks.values
         .expand((statusMap) => statusMap.values)
