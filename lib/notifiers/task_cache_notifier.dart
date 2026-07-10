@@ -149,19 +149,15 @@ class TaskCacheNotifier
 
     // Update local state
 
-    state.copyWith(
-      tasks:
-          state.tasks.map((t) {
-            if (t.id == taskId) {
-              // Update task state - add work activity log and update status
-              t.workActivityLogs.add(workActivityLog.id);
-              t.activityLogLastModified = DateTime.now();
-              t.status = getTaskStartStatus;
-              _activelyWorkingTask = t;
-            }
-            return t;
-          }).toList(),
-    );
+    final t =
+        state.cachedTasks.values
+            .expand((statusMap) => statusMap.values)
+            .firstWhere((task) => task.id == taskId)
+          ..workActivityLogs.add(workActivityLog.id)
+          ..activityLogLastModified = DateTime.now()
+          ..status = getTaskStartStatus;
+
+    _activelyWorkingTask = t;
 
     if (_activelyWorkingTask == null)
       throw "Task to activate not found in memory, unexpected exception";
