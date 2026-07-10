@@ -1,4 +1,5 @@
 // The state model now represents data bound strictly to this filter set
+import 'package:flutter/widgets.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -134,5 +135,56 @@ class FilteredTaskCacheState {
         }
       }
     }
+  }
+
+  /// ---- Task Messages State management  ----
+
+  // This function assumes as a task state update when a SINGLE new message comes in
+  FilteredTaskCacheState updateUnreadCount({
+    required int taskId,
+    required int messageId,
+    int? unreadCount,
+    int? incrementCount,
+  }) {
+    if (unreadCount == null && incrementCount == null) {
+      debugPrint(
+        "EITHER unreadCount OR incrementCount MUST BE PROVIDED to update the unread count of a task",
+      );
+      return this;
+    }
+
+    // DEBUG
+    if (incrementCount != null) {
+      print("[TaskState] called to increment unread count by $incrementCount");
+    } else {
+      print("[TaskState] called to update unread count to $unreadCount");
+    }
+
+    final task = taskById(taskId);
+
+    if (task != null) {
+      final updatedTasks = _tasks.map((task) {
+        if (task.id == taskId) {
+          if (unreadCount != null) {
+            task.unreadCount = unreadCount;
+          } else if (incrementCount != null) {
+            task.unreadCount += incrementCount;
+          }
+
+          task.messageCount += 1;
+          task.lastMessageId = messageId;
+
+          if (task.messageCount == 1) {
+            // first message
+            task.firstMessageId = messageId;
+          }
+        }
+        return task;
+      });
+
+      return this.copyWith(tasks: updatedTasks.toList());
+    }
+
+    return this;
   }
 }
