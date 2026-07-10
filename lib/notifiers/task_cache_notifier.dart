@@ -162,6 +162,8 @@ class TaskCacheNotifier
     if (_activelyWorkingTask == null)
       throw "Task to activate not found in memory, unexpected exception";
 
+    state = state;
+
     return workActivityLog;
   }
 
@@ -180,6 +182,8 @@ class TaskCacheNotifier
         statusMap[_activelyWorkingTask!.id] = _activelyWorkingTask!;
         return statusMap;
       });
+
+      state = state;
     }
 
     _activelyWorkingTask = null;
@@ -369,6 +373,8 @@ class TaskCacheNotifier
         statusMap[taskId] = task..status = newStatus;
         return statusMap;
       });
+
+      state = state;
     } catch (e) {
       print(
         "Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state",
@@ -410,6 +416,8 @@ class TaskCacheNotifier
 
       return tasks;
     });
+
+    state = state;
 
     return stockOutTransaction;
   }
@@ -496,37 +504,40 @@ class TaskCacheNotifier
   }
 
   Future<void> updateMessageReadStatus(WidgetRef ref, int taskId) async {
-    final task = state.taskById(taskId);
+    try {
+      // Checking to see if task exists in memory
+      // If not - throws an error
+      state.cachedTasks.values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId);
 
-    if (task?.unreadCount == 0) {
+      final lastMessageForTask = ref
+          .read(messageNotifierProvider)
+          .lastMessageForTask(taskId);
+
+      if (lastMessageForTask == null) {
+        // No messages for this task loaded in memory, so need to update read status
+        return null;
+      }
+
+      // Update local state first
+      state
+          .cachedTasks
+          .values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId)
+          .unreadCount = 0;
+
+      state = state;
+
+      await _repo.updateMessageReadStatus(
+        taskId: taskId,
+        lastSeenMessageId: lastMessageForTask.id,
+      );
+    } catch (e) {
       // No unread messages, no need to call the API
       return;
     }
-
-    final lastMessageForTask = ref
-        .read(messageNotifierProvider)
-        .lastMessageForTask(taskId);
-
-    if (lastMessageForTask == null) {
-      // No messages for this task loaded in memory, so need to update read status
-      return null;
-    }
-
-    // Update local state first
-    state = state.copyWith(
-      tasks:
-          state.tasks.map((task) {
-            if (task.id == taskId) {
-              task.unreadCount = 0;
-            }
-            return task;
-          }).toList(),
-    );
-
-    await _repo.updateMessageReadStatus(
-      taskId: taskId,
-      lastSeenMessageId: lastMessageForTask.id,
-    );
   }
 
   void updateUnreadCount({
