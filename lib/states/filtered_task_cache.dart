@@ -69,6 +69,24 @@ class FilteredTaskCacheState {
     );
   }
 
+  void initializeCurrentlyCreatingSpec(
+    int taskId,
+    int specLocalId,
+    int specCreatedId,
+  ) {
+    _currentlyCreatingSpecs[taskId] =
+        _currentlyCreatingSpecs[taskId]?.map((spec) {
+          if (spec.tempLocalId == specLocalId) {
+            spec.initializeId(specCreatedId);
+          }
+
+          return spec;
+        }).toList() ??
+        [];
+  }
+
+  /// ---- Get Local State ----
+
   TaskStatus getLocalTaskStatus(int taskId) {
     try {
       final task = cachedTasks.values
