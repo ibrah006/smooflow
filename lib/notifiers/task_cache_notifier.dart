@@ -590,6 +590,7 @@ class TaskCacheNotifier
       return;
     }
 
+    // task are now stored in a Map<TaskStatus, Map<int, Task>> (state.cachedTasks)
     final tasks = List<Task>.from(state.tasks);
 
     switch (event.type) {
@@ -598,7 +599,7 @@ class TaskCacheNotifier
           if (!tasks.contains(event.task)) {
             tasks.add(event.task!);
 
-            state = state.copyWith(tasks: tasks);
+            // state = state.copyWith(tasks: tasks);
             print('[TaskNotifier] Task created, new count: ${tasks.length}');
           }
         }
@@ -608,9 +609,9 @@ class TaskCacheNotifier
         break;
 
       case TaskChangeType.updated:
-        print(
-          "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
-        );
+        // print(
+        //   "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
+        // );
         state = state.copyWith(
           tasks:
               tasks.map((t) {
@@ -622,9 +623,9 @@ class TaskCacheNotifier
           currentlyCreatingSpecs: state.currentlyCreatingSpecs,
         );
 
-        print(
-          "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
-        );
+        // print(
+        //   "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
+        // );
 
         print('[Task Notifier] new task event changes: ${event.changes}');
 

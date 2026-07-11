@@ -18,10 +18,12 @@ class FilteredTaskCacheState {
     List<TaskNameChangeEventUnderway> taskNameChangeEventsUnderway = const [],
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
+    Task? selectedTask,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
        _currentlyDeletingSpecs = const {},
-       _connectionStatus = connectionStatus;
+       _connectionStatus = connectionStatus,
+       _selectedTask = selectedTask;
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
@@ -30,7 +32,8 @@ class FilteredTaskCacheState {
       _taskNameChangeEventsUnderway = const [],
       _currentlyCreatingSpecs = const {},
       _currentlyDeletingSpecs = const {},
-      _connectionStatus = ConnectionStatus.disconnected;
+      _connectionStatus = ConnectionStatus.disconnected,
+      _selectedTask = null;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
 
@@ -39,12 +42,13 @@ class FilteredTaskCacheState {
 
   /// { print_spec_id: true/false } -> true means the spec has been deleted, false means it is being deleted
   final Map<int, bool> _currentlyDeletingSpecs;
-
   Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
 
   final ConnectionStatus _connectionStatus;
-
   ConnectionStatus get connectionStatus => _connectionStatus;
+
+  final Task? _selectedTask;
+  Task? get selectedTask => _selectedTask;
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, Map<int, int>>? totalCounts,
