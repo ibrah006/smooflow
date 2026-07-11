@@ -564,17 +564,18 @@ class TaskCacheNotifier
     // Listen to task changes
     _client.taskChanges.listen((event) => _handleTaskChange(ref, event));
 
-    // Listen to task list updates
-    _client.taskList.listen((tasks) {
-      if (mounted) {
-        state = state.copyWith(tasks: tasks, isLoading: false, error: null);
-      }
-    });
+    /// Listen to task list updates
+    /// Suspended for now
+    // _client.taskList.listen((tasks) {
+    //   if (mounted) {
+    //     // state = state.copyWith(tasks: tasks, isLoading: false, error: null);
+    //   }
+    // });
 
     // Listen to errors
     _client.errors.listen((error) {
       if (mounted) {
-        state = state.copyWith(error: error, isLoading: false);
+        state = state.copyWith(error: error, isLoadingCounts: false);
       }
     });
   }

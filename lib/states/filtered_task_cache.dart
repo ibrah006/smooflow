@@ -13,6 +13,8 @@ class FilteredTaskCacheState {
   cachedTasks; // ✅ Normalized by Task ID Map<taskId, Task>
   final bool isLoadingCounts;
 
+  final String? error;
+
   FilteredTaskCacheState({
     required this.totalCounts,
     required this.cachedTasks,
@@ -22,6 +24,7 @@ class FilteredTaskCacheState {
     Map<int, bool>? currentlyDeletingSpecs, // ✅ FIXED: Accept deletion maps
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Task? selectedTask,
+    this.error,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
        _currentlyDeletingSpecs =
@@ -38,7 +41,8 @@ class FilteredTaskCacheState {
       _currentlyCreatingSpecs = const {},
       _currentlyDeletingSpecs = const {},
       _connectionStatus = ConnectionStatus.disconnected,
-      _selectedTask = null;
+      _selectedTask = null,
+      error = null;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
   List<TaskNameChangeEventUnderway> get taskNameChangeEventsUnderway =>
@@ -69,6 +73,7 @@ class FilteredTaskCacheState {
     Map<int, bool>? currentlyDeletingSpecs,
     ConnectionStatus? connectionStatus,
     Task? selectedTask,
+    String? error,
   }) {
     return FilteredTaskCacheState(
       totalCounts: totalCounts ?? this.totalCounts,
@@ -80,6 +85,7 @@ class FilteredTaskCacheState {
       currentlyDeletingSpecs: currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       connectionStatus: connectionStatus ?? _connectionStatus,
       selectedTask: selectedTask ?? _selectedTask,
+      error: error,
     );
   }
 
