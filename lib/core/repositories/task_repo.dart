@@ -359,4 +359,12 @@ class TaskRepo {
       throw jsonDecode(response.body)["message"];
     }
   }
+
+  Future<> getCounts({
+    String? projectId,
+    int? assigneeId,
+    String? searchQuery
+  }) {
+
+  }
 }
