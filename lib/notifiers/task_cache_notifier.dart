@@ -592,8 +592,7 @@ class TaskCacheNotifier
 
     // 0. PROJECT ISOLATION GUARD
     // If this notifier is filtered to a specific project, smoothly ignore events from other projects
-    // final String targetProjectId =
-    //     event.task?.projectId ?? (arg.projectId ?? "GLOBAL");
+    final String targetProjectId = event.task!.projectId;
     // REMOVED project isolation guard because the event.task.projectId metadata doesn't mean the task is filtered in our implementations
 
     // Deep copy maps to ensure strict Riverpod immutability rules and trigger UI repaints
