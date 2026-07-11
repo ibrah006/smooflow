@@ -50,6 +50,32 @@ class FilteredTaskCacheState {
     );
   }
 
+  TaskStatus getLocalTaskStatus(int taskId) {
+    try {
+      final task = cachedTasks.values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId);
+
+      return task.status;
+    } catch (e) {
+      throw "Task with ID $taskId not found in memory";
+    }
+  }
+
+  Task? getLocalTask(int taskId) {
+    try {
+      final task = cachedTasks.values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId);
+
+      return task;
+    } catch (e) {
+      throw "Task with ID $taskId not found in memory";
+    }
+  }
+
+  /// ---- Task Name change ----
+
   /// @returns the local event id
   int newNameChangeEvent({
     required int taskId,
@@ -160,7 +186,7 @@ class FilteredTaskCacheState {
       print("[TaskState] called to update unread count to $unreadCount");
     }
 
-    final task = taskById(taskId);
+    final task = getLocalTask(taskId);
 
     if (task != null) {
       final updatedTasks = _tasks.map((task) {

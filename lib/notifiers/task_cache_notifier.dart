@@ -189,18 +189,6 @@ class TaskCacheNotifier
     _activelyWorkingTask = null;
   }
 
-  TaskStatus getTaskStatus(int taskId) {
-    try {
-      final task = state.cachedTasks.values
-          .expand((statusMap) => statusMap.values)
-          .firstWhere((task) => task.id == taskId);
-
-      return task.status;
-    } catch (e) {
-      throw "Task with ID $taskId not found in memory";
-    }
-  }
-
   /// Assumes the task is already in memory
   Future<void> _assignPrinter({
     required Task task,
