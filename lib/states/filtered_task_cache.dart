@@ -39,6 +39,8 @@ class FilteredTaskCacheState {
 
   /// { taskId: creating print specs for this task }
   final Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
+  Map<int, List<CreatingPrintSpecID>> get currentlyCreatingSpecs =>
+      _currentlyCreatingSpecs;
 
   /// { print_spec_id: true/false } -> true means the spec has been deleted, false means it is being deleted
   final Map<int, bool> _currentlyDeletingSpecs;
