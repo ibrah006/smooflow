@@ -1,5 +1,6 @@
 // The state model now represents data bound strictly to this filter set
 import 'package:flutter/widgets.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
@@ -37,6 +38,14 @@ class FilteredTaskCacheState {
   final Map<int, bool> _currentlyDeletingSpecs;
 
   Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
+
+  ConnectionStatus _connectionStatus;
+
+  ConnectionStatus get connectionStatus => _connectionStatus;
+
+  set connectionStatus(ConnectionStatus value) {
+    _connectionStatus = value;
+  }
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, Map<int, int>>? totalCounts,

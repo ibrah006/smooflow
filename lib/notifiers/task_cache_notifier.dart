@@ -204,7 +204,7 @@ class TaskCacheNotifier
       });
     } catch (e) {
       // Task status changed fallback
-      final taskStatus = getTaskStatus(task.id);
+      final taskStatus = state.getLocalTaskStatus(task.id);
 
       state.cachedTasks[taskStatus]?.update(task.id, (t) {
         return t
@@ -230,7 +230,7 @@ class TaskCacheNotifier
       });
     } catch (e) {
       // Task status changed fallback
-      final taskStatus = getTaskStatus(task.id);
+      final taskStatus = state.getLocalTaskStatus(task.id);
 
       state.cachedTasks[taskStatus]?.update(task.id, (t) {
         return t
