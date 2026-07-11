@@ -590,55 +590,50 @@ class TaskCacheNotifier
       return;
     }
 
-    // Ensure we are working with deep copies to maintain Riverpod immutability
-    final updatedCachedTasks = state.cachedTasks.map((status, indexMap) {
-      return MapEntry(status, Map<int, Task>.from(indexMap));
+    // Deep copy maps to ensure strict Riverpod immutability rules and trigger downstream UI repaints
+    final updatedCachedTasks = state.cachedTasks.map((status, idMap) {
+      return MapEntry(status, Map<int, Task>.from(idMap));
     });
 
-    final updatedTotalCounts = state.totalCounts.map((status, filterMap) {
-      return MapEntry(status, Map<int, int>.from(filterMap));
+    final updatedTotalCounts = state.totalCounts.map((status, projMap) {
+      return MapEntry(status, Map<int, int>.from(projMap));
     });
 
-    // Helper to find exactly where a task currently lives in memory
+    // Highly optimized O(1) key verification per lane to find out if task is warm in memory
     TaskStatus? detectedOldStatus;
-    int? detectedOldIndex;
-
-    for (final statusEntry in state.cachedTasks.entries) {
-      for (final indexEntry in statusEntry.value.entries) {
-        if (indexEntry.value.id == event.taskId) {
-          detectedOldStatus = statusEntry.key;
-          detectedOldIndex = indexEntry.key;
-          break;
-        }
+    for (final entry in state.cachedTasks.entries) {
+      if (entry.value.containsKey(event.taskId)) {
+        detectedOldStatus = entry.key;
+        break;
       }
-      if (detectedOldIndex != null) break;
     }
 
     bool stateDidMutate = false;
+    Task? nextSelectedTask = state.selectedTask;
+
+    // Local helper lambda to safely increment/decrement counters seamlessly
+    void modifyCount(TaskStatus status, int projectId, int delta) {
+      updatedTotalCounts.putIfAbsent(status, () => {});
+      final currentCount = updatedTotalCounts[status]![projectId] ?? 0;
+      updatedTotalCounts[status]![projectId] = (currentCount + delta).clamp(
+        0,
+        999999,
+      );
+    }
 
     switch (event.type) {
       case TaskChangeType.created:
-        // RULE B: New Task Created
-        if (event.task != null && detectedOldIndex == null) {
+        // RULE B: Adjust Total Counters Immediately & Evict Cache Column
+        if (event.task != null && detectedOldStatus == null) {
           final targetStatus = event.task!.status;
 
-          updatedCachedTasks.putIfAbsent(targetStatus, () => {});
-          updatedTotalCounts.putIfAbsent(targetStatus, () => {});
+          modifyCount(targetStatus, targetProjectId, 1);
 
-          // 1. Adjust Total Counters Immediately
-          // Assumes project filter matches. If using complex project scopes, ensure event.task belongs here first.
-          final currentCount =
-              updatedTotalCounts[targetStatus]?[arg.projectId ?? -1] ?? 0;
-          updatedTotalCounts[targetStatus]![arg.projectId ?? -1] =
-              currentCount + 1;
-
-          // 2. Evict Affected Pages
-          // A new item usually pushes the sequence down. Clear the cache column to force realign.
+          // Clear active status lane completely so infinite scroller re-triggers fresh aligned database payload
           updatedCachedTasks[targetStatus] = {};
-
           stateDidMutate = true;
           print(
-            '[TaskNotifier] Task created. Count bumped. Evicted $targetStatus cache.',
+            '[TaskNotifier] Task created. Count bumped. Evicted $targetStatus lane.',
           );
         }
 
@@ -652,100 +647,85 @@ class TaskCacheNotifier
       case TaskChangeType.assigneeAdded:
       case TaskChangeType.assigneeRemoved:
       case TaskChangeType.nameUpdated:
-        // RULE A: Updates & Deletions are Sparse Mutations
-        if (detectedOldStatus != null && detectedOldIndex != null) {
-          final Task currentMemoryTask =
-              updatedCachedTasks[detectedOldStatus]![detectedOldIndex]!;
+        // RULE A: Updates are Sparse Mutations. If NOT found in memory, discard the payload.
+        if (detectedOldStatus != null) {
+          final currentMemoryTask =
+              updatedCachedTasks[detectedOldStatus]![event.taskId]!;
 
-          // Construct the new task object (either from payload or by applying partial changes)
-          final Task newTaskData =
+          // Re-assemble task target entity structure
+          final newTaskData =
               event.task != null
                   ? event.task!
                   : _applyChanges(currentMemoryTask, event.changes ?? {});
 
           if (detectedOldStatus == newTaskData.status) {
-            // SCENARIO 1: Warm Update (In-place swap)
-            updatedCachedTasks[detectedOldStatus]![detectedOldIndex] =
-                newTaskData;
+            // SCENARIO 1: Status Unchanged (Warm Update)
+            // Perfectly idempotent in-place map overwrite via ID key conversion
+            updatedCachedTasks[detectedOldStatus]![event.taskId!] = newTaskData;
             stateDidMutate = true;
             print(
-              '[TaskNotifier] In-place update for task at index $detectedOldIndex',
+              '[TaskNotifier] Idempotent in-place ID update completed for task ${event.taskId}',
             );
           } else {
-            // SCENARIO 2: Column Move / Structural Status Shift (RULE B)
-            updatedCachedTasks.putIfAbsent(newTaskData.status, () => {});
-            updatedTotalCounts.putIfAbsent(newTaskData.status, () => {});
+            // SCENARIO 2: Column Move / Structural Status Shift (RULE B & Idempotency Race Solver)
+            // Stale client state fallback protection: recalculate bounds for both targets
+            modifyCount(detectedOldStatus, targetProjectId, -1);
+            modifyCount(newTaskData.status, targetProjectId, 1);
 
-            // 1. Adjust Total Counters Immediately
-            final oldStatusCount =
-                updatedTotalCounts[detectedOldStatus]?[arg.projectId ?? -1] ??
-                0;
-            if (oldStatusCount > 0) {
-              updatedTotalCounts[detectedOldStatus]![arg.projectId ?? -1] =
-                  oldStatusCount - 1;
-            }
-
-            final newStatusCount =
-                updatedTotalCounts[newTaskData.status]?[arg.projectId ?? -1] ??
-                0;
-            updatedTotalCounts[newTaskData.status]![arg.projectId ?? -1] =
-                newStatusCount + 1;
-
-            // 2. Evict Affected Pages (Clear both lanes to prevent sequence corruption)
+            // Wipe out both lanes entirely to avoid layout fractures or visual duplicated lines
             updatedCachedTasks[detectedOldStatus] = {};
             updatedCachedTasks[newTaskData.status] = {};
-
             stateDidMutate = true;
-            print('[TaskNotifier] Task changed status. Evicted both lanes.');
+            print(
+              '[TaskNotifier] Status sync mismatch solved. Evicted lanes: $detectedOldStatus -> ${newTaskData.status}',
+            );
+          }
+
+          // Sync active viewing modal reference if this is the chosen node
+          if (state.selectedTask?.id == event.taskId) {
+            nextSelectedTask = newTaskData;
+            stateDidMutate = true;
           }
         } else {
-          // If NOT found in memory: Discard the payload. (Rule A)
           print(
-            '[TaskNotifier] Task ${event.taskId} NOT FOUND in state. Discarding payload.',
+            '[TaskNotifier] Task ${event.taskId} resides in a dead region. Safely discarding payload.',
           );
         }
 
-        // Side-effects not related to list memory (Metrics / Selected Task)
+        // Project specific metric hooks preserved from your original code base
         if (event.changes?["status"] != null &&
             event.task?.status == TaskStatus.completed) {
           ref
               .read(projectByIdProvider(event.task!.projectId))!
               .completedTasksCount++;
-        } else if (event.changes?["newPrintSpec"] != null) {
+        } else if (event.changes?["newPrintSpec"] != null &&
+            event.task != null) {
           state.initializeCurrentlyCreatingSpec(
-            event.taskId,
+            event.task!.id,
             event.changes!["newPrintSpec"]["tempLocalId"],
             event.changes!["newPrintSpec"]["id"],
           );
-          // Need to force an update here so the UI registers the initialized spec ID
           stateDidMutate = true;
-        }
-
-        if (state.selectedTask?.id == event.taskId && event.task != null) {
-          state = state.copyWith(selectedTask: event.task);
         }
         break;
 
       case TaskChangeType.deleted:
-        if (detectedOldStatus != null && detectedOldIndex != null) {
-          // RULE B: Adjust metrics and Evict
-          updatedTotalCounts.putIfAbsent(detectedOldStatus, () => {});
-          final currentCount =
-              updatedTotalCounts[detectedOldStatus]?[arg.projectId ?? -1] ?? 0;
+        // RULE A: Deletions are Sparse Mutations. Only act if tracked in memory.
+        if (detectedOldStatus != null) {
+          // RULE B: Adjust Total Counters Immediately & Evict Cache Column
+          modifyCount(detectedOldStatus, targetProjectId, -1);
 
-          if (currentCount > 0) {
-            updatedTotalCounts[detectedOldStatus]![arg.projectId ?? -1] =
-                currentCount - 1;
-          }
-
-          // Deletion shifts the sequence up. Evict the lane.
+          // Deletions shift the underlying database rows up. Purge lane to let infinite scroller realign sequences.
           updatedCachedTasks[detectedOldStatus] = {};
-
           stateDidMutate = true;
+          print(
+            '[TaskNotifier] Task deleted. Count reduced. Evicted $detectedOldStatus lane.',
+          );
         }
 
         if (state.selectedTask?.id == event.taskId) {
-          state = state.copyWith(selectedTask: null);
+          nextSelectedTask = null;
+          stateDidMutate = true;
         }
 
         if (event.task != null) {
@@ -772,6 +752,7 @@ class TaskCacheNotifier
       state = state.copyWith(
         cachedTasks: updatedCachedTasks,
         totalCounts: updatedTotalCounts,
+        selectedTask: nextSelectedTask,
       );
     }
   }

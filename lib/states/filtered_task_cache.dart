@@ -7,8 +7,10 @@ import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/states/task.dart';
 
 class FilteredTaskCacheState {
-  final Map<TaskStatus, Map<int, int>> totalCounts;
-  final Map<TaskStatus, Map<int, Task>> cachedTasks;
+  final Map<TaskStatus, Map<String, int>>
+  totalCounts; // ✅ FIXED: Changed inner key to String for Project IDs
+  final Map<TaskStatus, Map<int, Task>>
+  cachedTasks; // ✅ Normalized by Task ID Map<taskId, Task>
   final bool isLoadingCounts;
 
   FilteredTaskCacheState({
@@ -17,15 +19,14 @@ class FilteredTaskCacheState {
     this.isLoadingCounts = false,
     List<TaskNameChangeEventUnderway> taskNameChangeEventsUnderway = const [],
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
-    Map<int, bool>?
-    currentlyDeletingSpecs, // ✅ FIXED: Allow passing active deletions
+    Map<int, bool>? currentlyDeletingSpecs, // ✅ FIXED: Accept deletion maps
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Task? selectedTask,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
        _currentlyDeletingSpecs =
            currentlyDeletingSpecs ??
-           {}, // ✅ FIXED: Fallback to empty map instead of hardcoded const
+           {}, // ✅ FIXED: Fallback safely instead of clearing
        _connectionStatus = connectionStatus,
        _selectedTask = selectedTask;
 
@@ -40,6 +41,8 @@ class FilteredTaskCacheState {
       _selectedTask = null;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
+  List<TaskNameChangeEventUnderway> get taskNameChangeEventsUnderway =>
+      _taskNameChangeEventsUnderway;
 
   /// { taskId: creating print specs for this task }
   final Map<int, List<CreatingPrintSpecID>> _currentlyCreatingSpecs;
@@ -56,14 +59,16 @@ class FilteredTaskCacheState {
   final Task? _selectedTask;
   Task? get selectedTask => _selectedTask;
 
+  // ✅ FIXED: Restored all missing variables to prevent state drops on updates
   FilteredTaskCacheState copyWith({
-    Map<TaskStatus, Map<int, int>>? totalCounts,
+    Map<TaskStatus, Map<String, int>>? totalCounts,
     Map<TaskStatus, Map<int, Task>>? cachedTasks,
     bool? isLoadingCounts,
     List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
     Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
+    Map<int, bool>? currentlyDeletingSpecs,
     ConnectionStatus? connectionStatus,
-    Task? selectedTask, // ✅ FIXED: Added parameter
+    Task? selectedTask,
   }) {
     return FilteredTaskCacheState(
       totalCounts: totalCounts ?? this.totalCounts,
@@ -72,12 +77,9 @@ class FilteredTaskCacheState {
       taskNameChangeEventsUnderway:
           taskNameChangeEventsUnderway ?? _taskNameChangeEventsUnderway,
       currentlyCreatingSpecs: currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
-      currentlyDeletingSpecs:
-          _currentlyDeletingSpecs, // ✅ FIXED: Maintain tracking map reference
+      currentlyDeletingSpecs: currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       connectionStatus: connectionStatus ?? _connectionStatus,
-      selectedTask:
-          selectedTask ??
-          _selectedTask, // ✅ FIXED: Pass active selection forward
+      selectedTask: selectedTask ?? _selectedTask,
     );
   }
 
