@@ -254,7 +254,7 @@ class TaskCacheNotifier
       });
 
       final updatedTotalCounts = state.totalCounts.map((status, filterMap) {
-        return MapEntry(status, Map<int, int>.from(filterMap));
+        return MapEntry(status, Map<String, int>.from(filterMap));
       });
 
       // Ensure our targets are initialized inside the copies
