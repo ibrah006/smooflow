@@ -17,9 +17,11 @@ class FilteredTaskCacheState {
     this.isLoadingCounts = false,
     List<TaskNameChangeEventUnderway> taskNameChangeEventsUnderway = const [],
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
+    ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
-       _currentlyDeletingSpecs = const {};
+       _currentlyDeletingSpecs = const {},
+       _connectionStatus = connectionStatus;
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
@@ -27,7 +29,8 @@ class FilteredTaskCacheState {
       isLoadingCounts = false,
       _taskNameChangeEventsUnderway = const [],
       _currentlyCreatingSpecs = const {},
-      _currentlyDeletingSpecs = const {};
+      _currentlyDeletingSpecs = const {},
+      _connectionStatus = ConnectionStatus.disconnected;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
 
@@ -39,23 +42,26 @@ class FilteredTaskCacheState {
 
   Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
 
-  ConnectionStatus _connectionStatus;
+  final ConnectionStatus _connectionStatus;
 
   ConnectionStatus get connectionStatus => _connectionStatus;
-
-  set connectionStatus(ConnectionStatus value) {
-    _connectionStatus = value;
-  }
 
   FilteredTaskCacheState copyWith({
     Map<TaskStatus, Map<int, int>>? totalCounts,
     Map<TaskStatus, Map<int, Task>>? cachedTasks,
     bool? isLoadingCounts,
+    List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
+    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs = const {},
+    ConnectionStatus? connectionStatus,
   }) {
     return FilteredTaskCacheState(
       totalCounts: totalCounts ?? this.totalCounts,
       cachedTasks: cachedTasks ?? this.cachedTasks,
       isLoadingCounts: isLoadingCounts ?? this.isLoadingCounts,
+      taskNameChangeEventsUnderway:
+          taskNameChangeEventsUnderway ?? _taskNameChangeEventsUnderway,
+      currentlyCreatingSpecs: currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
+      connectionStatus: connectionStatus ?? _connectionStatus,
     );
   }
 
