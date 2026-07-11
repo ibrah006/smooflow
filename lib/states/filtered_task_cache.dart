@@ -198,26 +198,12 @@ class FilteredTaskCacheState {
     final task = getLocalTask(taskId);
 
     if (task != null) {
-      final updatedTasks = _tasks.map((task) {
-        if (task.id == taskId) {
-          if (unreadCount != null) {
-            task.unreadCount = unreadCount;
-          } else if (incrementCount != null) {
-            task.unreadCount += incrementCount;
-          }
-
-          task.messageCount += 1;
-          task.lastMessageId = messageId;
-
-          if (task.messageCount == 1) {
-            // first message
-            task.firstMessageId = messageId;
-          }
-        }
-        return task;
-      });
-
-      return this.copyWith(tasks: updatedTasks.toList());
+      getLocalTask(taskId)!
+        ..unreadCount = unreadCount ?? task.unreadCount + (incrementCount ?? 0)
+        ..messageCount += 1
+        ..lastMessageId = messageId
+        // TODO: Might have to check this
+        ..firstMessageId ??= messageId;
     }
 
     return this;

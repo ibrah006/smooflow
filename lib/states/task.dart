@@ -100,8 +100,6 @@ class TaskState {
 
   Map<int, bool> get currentlyDeletingSpecs => _currentlyDeletingSpecs;
 
-  final FilteredTaskCacheState taskCache;
-
   void addCurrentlyDeletingSpec(int targetSpecId) {
     _currentlyDeletingSpecs[targetSpecId] = false;
   }
@@ -197,15 +195,13 @@ class TaskState {
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
     Map<int, bool> currentlyDeletingSpecs = const {},
-    FilteredTaskCacheState taskCache = const FilteredTaskCacheState.empty(),
   }) : _error = error,
        _isLoading = isLoading,
        _tasks = tasks,
        _selectedTask = selectedTask,
        _connectionStatus = connectionStatus,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
-       _currentlyDeletingSpecs = currentlyDeletingSpecs,
-       this.taskCache = taskCache;
+       _currentlyDeletingSpecs = currentlyDeletingSpecs;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway = [];
 
@@ -321,7 +317,6 @@ class TaskState {
     ConnectionStatus? connectionStatus,
     Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
     Map<int, bool>? currentlyDeletingSpecs,
-    FilteredTaskCacheState? taskCache,
   }) {
     final List<Task> ts = tasks ?? _tasks;
     // if (tasks != null) {
@@ -349,7 +344,6 @@ class TaskState {
       currentlyDeletingSpecs: Map<int, bool>.from(
         currentlyDeletingSpecs ?? _currentlyDeletingSpecs,
       ),
-      taskCache: taskCache ?? this.taskCache,
     );
   }
 
