@@ -590,158 +590,189 @@ class TaskCacheNotifier
       return;
     }
 
-    // task are now stored in a Map<TaskStatus, Map<int, Task>> (state.cachedTasks)
-    final tasks = List<Task>.from(state.tasks);
+    // Ensure we are working with deep copies to maintain Riverpod immutability
+    final updatedCachedTasks = state.cachedTasks.map((status, indexMap) {
+      return MapEntry(status, Map<int, Task>.from(indexMap));
+    });
+
+    final updatedTotalCounts = state.totalCounts.map((status, filterMap) {
+      return MapEntry(status, Map<int, int>.from(filterMap));
+    });
+
+    // Helper to find exactly where a task currently lives in memory
+    TaskStatus? detectedOldStatus;
+    int? detectedOldIndex;
+
+    for (final statusEntry in state.cachedTasks.entries) {
+      for (final indexEntry in statusEntry.value.entries) {
+        if (indexEntry.value.id == event.taskId) {
+          detectedOldStatus = statusEntry.key;
+          detectedOldIndex = indexEntry.key;
+          break;
+        }
+      }
+      if (detectedOldIndex != null) break;
+    }
+
+    bool stateDidMutate = false;
 
     switch (event.type) {
       case TaskChangeType.created:
-        if (event.task != null && !tasks.any((t) => t.id == event.taskId)) {
-          if (!tasks.contains(event.task)) {
-            tasks.add(event.task!);
+        // RULE B: New Task Created
+        if (event.task != null && detectedOldIndex == null) {
+          final targetStatus = event.task!.status;
 
-            // state = state.copyWith(tasks: tasks);
-            print('[TaskNotifier] Task created, new count: ${tasks.length}');
-          }
+          updatedCachedTasks.putIfAbsent(targetStatus, () => {});
+          updatedTotalCounts.putIfAbsent(targetStatus, () => {});
+
+          // 1. Adjust Total Counters Immediately
+          // Assumes project filter matches. If using complex project scopes, ensure event.task belongs here first.
+          final currentCount =
+              updatedTotalCounts[targetStatus]?[arg.projectId ?? -1] ?? 0;
+          updatedTotalCounts[targetStatus]![arg.projectId ?? -1] =
+              currentCount + 1;
+
+          // 2. Evict Affected Pages
+          // A new item usually pushes the sequence down. Clear the cache column to force realign.
+          updatedCachedTasks[targetStatus] = {};
+
+          stateDidMutate = true;
+          print(
+            '[TaskNotifier] Task created. Count bumped. Evicted $targetStatus cache.',
+          );
         }
 
-        ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount++;
-
+        if (event.task != null) {
+          ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount++;
+        }
         break;
 
       case TaskChangeType.updated:
-        // print(
-        //   "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
-        // );
-        state = state.copyWith(
-          tasks:
-              tasks.map((t) {
-                if (t.id == event.taskId && event.task != null) {
-                  return event.task!;
-                }
-                return t;
-              }).toList(),
-          currentlyCreatingSpecs: state.currentlyCreatingSpecs,
-        );
+      case TaskChangeType.statusChanged:
+      case TaskChangeType.assigneeAdded:
+      case TaskChangeType.assigneeRemoved:
+      case TaskChangeType.nameUpdated:
+        // RULE A: Updates & Deletions are Sparse Mutations
+        if (detectedOldStatus != null && detectedOldIndex != null) {
+          final Task currentMemoryTask =
+              updatedCachedTasks[detectedOldStatus]![detectedOldIndex]!;
 
-        // print(
-        //   "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
-        // );
+          // Construct the new task object (either from payload or by applying partial changes)
+          final Task newTaskData =
+              event.task != null
+                  ? event.task!
+                  : _applyChanges(currentMemoryTask, event.changes ?? {});
 
-        print('[Task Notifier] new task event changes: ${event.changes}');
+          if (detectedOldStatus == newTaskData.status) {
+            // SCENARIO 1: Warm Update (In-place swap)
+            updatedCachedTasks[detectedOldStatus]![detectedOldIndex] =
+                newTaskData;
+            stateDidMutate = true;
+            print(
+              '[TaskNotifier] In-place update for task at index $detectedOldIndex',
+            );
+          } else {
+            // SCENARIO 2: Column Move / Structural Status Shift (RULE B)
+            updatedCachedTasks.putIfAbsent(newTaskData.status, () => {});
+            updatedTotalCounts.putIfAbsent(newTaskData.status, () => {});
 
-        // Check if task has just been marked as completed
-        if (
-        // This means that it's a status update event
-        event.changes?["status"] != null &&
-            // And that the new status is completed
-            event.task!.status == TaskStatus.completed) {
+            // 1. Adjust Total Counters Immediately
+            final oldStatusCount =
+                updatedTotalCounts[detectedOldStatus]?[arg.projectId ?? -1] ??
+                0;
+            if (oldStatusCount > 0) {
+              updatedTotalCounts[detectedOldStatus]![arg.projectId ?? -1] =
+                  oldStatusCount - 1;
+            }
+
+            final newStatusCount =
+                updatedTotalCounts[newTaskData.status]?[arg.projectId ?? -1] ??
+                0;
+            updatedTotalCounts[newTaskData.status]![arg.projectId ?? -1] =
+                newStatusCount + 1;
+
+            // 2. Evict Affected Pages (Clear both lanes to prevent sequence corruption)
+            updatedCachedTasks[detectedOldStatus] = {};
+            updatedCachedTasks[newTaskData.status] = {};
+
+            stateDidMutate = true;
+            print('[TaskNotifier] Task changed status. Evicted both lanes.');
+          }
+        } else {
+          // If NOT found in memory: Discard the payload. (Rule A)
+          print(
+            '[TaskNotifier] Task ${event.taskId} NOT FOUND in state. Discarding payload.',
+          );
+        }
+
+        // Side-effects not related to list memory (Metrics / Selected Task)
+        if (event.changes?["status"] != null &&
+            event.task?.status == TaskStatus.completed) {
           ref
               .read(projectByIdProvider(event.task!.projectId))!
               .completedTasksCount++;
         } else if (event.changes?["newPrintSpec"] != null) {
-          // This means that it's a new print spec event
-
           state.initializeCurrentlyCreatingSpec(
-            event.task!.id,
+            event.taskId,
             event.changes!["newPrintSpec"]["tempLocalId"],
             event.changes!["newPrintSpec"]["id"],
           );
-
-          // ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
-          //         .task!
-          //         .id] =
-          //     ref
-          //         .read(taskNotifierProvider)
-          //         .currentlyCreatingSpecs[event.taskId]
-          //         ?.map((spec) {
-          //           print(
-          //             "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
-          //           );
-          //           if (spec.tempLocalId ==
-          //               event.changes!["newPrintSpec"]["tempLocalId"]) {
-          //             spec.initializeId(event.changes!["newPrintSpec"]["id"]);
-          //           }
-
-          //           return spec;
-          //         })
-          //         .toList() ??
-          //     [];
+          // Need to force an update here so the UI registers the initialized spec ID
+          stateDidMutate = true;
         }
 
-        break;
-      case TaskChangeType.statusChanged:
-        final index = tasks.indexWhere((t) => t.id == event.taskId);
-        print(
-          '[TaskNotifier] Looking for task ${event.taskId}, found at index: $index',
-        );
-
-        // If task already exists in memory
-        if (index != -1) {
-          if (event.task != null) {
-            tasks[index] = event.task!;
-            print("event task: ${event.task?.toJson()}");
-            print(
-              '[TaskNotifier] Updated task at index $index with new object',
-            );
-          } else if (event.changes != null) {
-            // Partial update
-            tasks[index] = _applyChanges(tasks[index], event.changes!);
-            print(
-              '[TaskNotifier] Applied partial changes to task at index $index',
-            );
-          }
-          state = state.copyWith(tasks: tasks);
-        } else {
-          print(
-            '[TaskNotifier] Task ${event.taskId} NOT FOUND in state (count: ${tasks.length})',
-          );
-        }
-
-        // Update selected task if it's the one that changed
         if (state.selectedTask?.id == event.taskId && event.task != null) {
           state = state.copyWith(selectedTask: event.task);
         }
         break;
 
       case TaskChangeType.deleted:
-        tasks.removeWhere((t) => t.id == event.taskId);
-        state = state.copyWith(tasks: tasks);
+        if (detectedOldStatus != null && detectedOldIndex != null) {
+          // RULE B: Adjust metrics and Evict
+          updatedTotalCounts.putIfAbsent(detectedOldStatus, () => {});
+          final currentCount =
+              updatedTotalCounts[detectedOldStatus]?[arg.projectId ?? -1] ?? 0;
 
-        // Clear selected task if it was deleted
+          if (currentCount > 0) {
+            updatedTotalCounts[detectedOldStatus]![arg.projectId ?? -1] =
+                currentCount - 1;
+          }
+
+          // Deletion shifts the sequence up. Evict the lane.
+          updatedCachedTasks[detectedOldStatus] = {};
+
+          stateDidMutate = true;
+        }
+
         if (state.selectedTask?.id == event.taskId) {
           state = state.copyWith(selectedTask: null);
         }
 
-        ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount--;
-
-        break;
-
-      case TaskChangeType.assigneeAdded:
-        break;
-      case TaskChangeType.assigneeRemoved:
-        final index = tasks.indexWhere((t) => t.id == event.taskId);
-        if (index != -1 && event.task != null) {
-          tasks[index] = event.task!;
-          state = state.copyWith(tasks: tasks);
+        if (event.task != null) {
+          ref.read(projectByIdProvider(event.task!.projectId))!.tasksCount--;
         }
         break;
-      case TaskChangeType.nameUpdated:
-        final index = tasks.indexWhere((t) => t.id == event.taskId);
-        if (index != -1 && event.task != null) {
-          tasks[index] = event.task!;
-          state = state.copyWith(tasks: tasks);
-        }
-        break;
+
       case TaskChangeType.newProject:
         print("new project event, ${event.project!.name}");
         ref
             .read(projectNotifierProvider.notifier)
             .loadProjectToMemory(event.project!);
+        break;
+
       case TaskChangeType.deleteProject:
-        print("new project event, ${event.project!.name}");
+        print("delete project event, ${event.project!.name}");
         ref
             .read(projectNotifierProvider.notifier)
             .deleteProject(event.project!.id);
+        break;
+    }
+
+    if (stateDidMutate) {
+      state = state.copyWith(
+        cachedTasks: updatedCachedTasks,
+        totalCounts: updatedTotalCounts,
+      );
     }
   }
 

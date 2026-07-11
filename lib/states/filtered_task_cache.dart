@@ -17,11 +17,15 @@ class FilteredTaskCacheState {
     this.isLoadingCounts = false,
     List<TaskNameChangeEventUnderway> taskNameChangeEventsUnderway = const [],
     Map<int, List<CreatingPrintSpecID>> currentlyCreatingSpecs = const {},
+    Map<int, bool>?
+    currentlyDeletingSpecs, // ✅ FIXED: Allow passing active deletions
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Task? selectedTask,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
-       _currentlyDeletingSpecs = const {},
+       _currentlyDeletingSpecs =
+           currentlyDeletingSpecs ??
+           {}, // ✅ FIXED: Fallback to empty map instead of hardcoded const
        _connectionStatus = connectionStatus,
        _selectedTask = selectedTask;
 
@@ -57,8 +61,9 @@ class FilteredTaskCacheState {
     Map<TaskStatus, Map<int, Task>>? cachedTasks,
     bool? isLoadingCounts,
     List<TaskNameChangeEventUnderway>? taskNameChangeEventsUnderway,
-    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs = const {},
+    Map<int, List<CreatingPrintSpecID>>? currentlyCreatingSpecs,
     ConnectionStatus? connectionStatus,
+    Task? selectedTask, // ✅ FIXED: Added parameter
   }) {
     return FilteredTaskCacheState(
       totalCounts: totalCounts ?? this.totalCounts,
@@ -67,7 +72,12 @@ class FilteredTaskCacheState {
       taskNameChangeEventsUnderway:
           taskNameChangeEventsUnderway ?? _taskNameChangeEventsUnderway,
       currentlyCreatingSpecs: currentlyCreatingSpecs ?? _currentlyCreatingSpecs,
+      currentlyDeletingSpecs:
+          _currentlyDeletingSpecs, // ✅ FIXED: Maintain tracking map reference
       connectionStatus: connectionStatus ?? _connectionStatus,
+      selectedTask:
+          selectedTask ??
+          _selectedTask, // ✅ FIXED: Pass active selection forward
     );
   }
 
