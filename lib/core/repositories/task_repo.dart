@@ -360,11 +360,25 @@ class TaskRepo {
     }
   }
 
-  Future<> getCounts({
+  Future<Map<TaskStatus, Map<String, int>>> getCounts({
     String? projectId,
     int? assigneeId,
-    String? searchQuery
-  }) {
+    String? searchQuery,
+  }) async {
+    final response = await ApiClient.http.get("/tasks/v2/counts");
 
+    final body = jsonDecode(response.body) as Map;
+
+    if (response.statusCode != 200) {
+      throw body["error"];
+    }
+
+    final result = Map<TaskStatus, Map<String, int>>.fromEntries(
+      body.entries.map(
+        (e) => MapEntry(TaskStatus.values.byName(e.key), e.value),
+      ),
+    );
+
+    return result;
   }
 }
