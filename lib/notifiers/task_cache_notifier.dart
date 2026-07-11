@@ -785,30 +785,36 @@ class TaskCacheNotifier
   }
 
   Future<void> delete(int id) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoadingCounts: true, error: null);
     try {
       await _repo.delete(id);
 
-      state.tasks.removeWhere((task) => task.id == id);
-      state = state.copyWith(isLoading: false);
+      // Remove task from state
+      state.cachedTasks.forEach((status, tasks) {
+        if (tasks.remove(id) != null) {
+          return;
+        }
+      });
+
+      state = state.copyWith(isLoadingCounts: false);
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to delete task: $e',
-        isLoading: false,
+        isLoadingCounts: false,
       );
     }
   }
 
   /// Load a specific task
   Future<void> loadTask(int taskId) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoadingCounts: true, error: null);
     try {
       _client.subscribeToTask(taskId);
       _client.getTask(taskId);
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to load task: $e',
-        isLoading: false,
+        isLoadingCounts: false,
       );
     }
   }
