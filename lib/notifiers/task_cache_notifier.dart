@@ -590,16 +590,25 @@ class TaskCacheNotifier
       return;
     }
 
-    // Deep copy maps to ensure strict Riverpod immutability rules and trigger downstream UI repaints
+    // 0. PROJECT ISOLATION GUARD
+    // If this notifier is filtered to a specific project, smoothly ignore events from other projects
+    // final String targetProjectId =
+    //     event.task?.projectId ?? (arg.projectId ?? "GLOBAL");
+    // REMOVED project isolation guard because the event.task.projectId metadata doesn't mean the task is filtered in our implementations
+
+    // Deep copy maps to ensure strict Riverpod immutability rules and trigger UI repaints
     final updatedCachedTasks = state.cachedTasks.map((status, idMap) {
       return MapEntry(status, Map<int, Task>.from(idMap));
     });
 
     final updatedTotalCounts = state.totalCounts.map((status, projMap) {
-      return MapEntry(status, Map<int, int>.from(projMap));
+      return MapEntry(
+        status,
+        Map<String, int>.from(projMap),
+      ); // ✅ FIXED: inner map typed to String project ID
     });
 
-    // Highly optimized O(1) key verification per lane to find out if task is warm in memory
+    // Highly optimized O(1) key check per status lane to see if the task is actively loaded in memory
     TaskStatus? detectedOldStatus;
     for (final entry in state.cachedTasks.entries) {
       if (entry.value.containsKey(event.taskId)) {
@@ -611,8 +620,8 @@ class TaskCacheNotifier
     bool stateDidMutate = false;
     Task? nextSelectedTask = state.selectedTask;
 
-    // Local helper lambda to safely increment/decrement counters seamlessly
-    void modifyCount(TaskStatus status, int projectId, int delta) {
+    // ✅ FIXED: String projectId mapping tracker with clamp protection to prevent integer underflows
+    void modifyCount(TaskStatus status, String projectId, int delta) {
       updatedTotalCounts.putIfAbsent(status, () => {});
       final currentCount = updatedTotalCounts[status]![projectId] ?? 0;
       updatedTotalCounts[status]![projectId] = (currentCount + delta).clamp(
@@ -623,13 +632,13 @@ class TaskCacheNotifier
 
     switch (event.type) {
       case TaskChangeType.created:
-        // RULE B: Adjust Total Counters Immediately & Evict Cache Column
+        // RULE B: New Task Created -> Adjust Counters & Purge Column
         if (event.task != null && detectedOldStatus == null) {
           final targetStatus = event.task!.status;
 
           modifyCount(targetStatus, targetProjectId, 1);
 
-          // Clear active status lane completely so infinite scroller re-triggers fresh aligned database payload
+          // Clear active status lane completely so infinite scroller pulls fresh realigned payload bounds
           updatedCachedTasks[targetStatus] = {};
           stateDidMutate = true;
           print(
@@ -652,7 +661,7 @@ class TaskCacheNotifier
           final currentMemoryTask =
               updatedCachedTasks[detectedOldStatus]![event.taskId]!;
 
-          // Re-assemble task target entity structure
+          // Re-assemble the new task data object
           final newTaskData =
               event.task != null
                   ? event.task!
@@ -668,11 +677,11 @@ class TaskCacheNotifier
             );
           } else {
             // SCENARIO 2: Column Move / Structural Status Shift (RULE B & Idempotency Race Solver)
-            // Stale client state fallback protection: recalculate bounds for both targets
+            // Recalculate bounds cleanly across both targets to avoid visual duplicated line fragments
             modifyCount(detectedOldStatus, targetProjectId, -1);
             modifyCount(newTaskData.status, targetProjectId, 1);
 
-            // Wipe out both lanes entirely to avoid layout fractures or visual duplicated lines
+            // Wipe out both lanes entirely so infinite viewports sync atomic alignments cleanly
             updatedCachedTasks[detectedOldStatus] = {};
             updatedCachedTasks[newTaskData.status] = {};
             stateDidMutate = true;
@@ -688,11 +697,11 @@ class TaskCacheNotifier
           }
         } else {
           print(
-            '[TaskNotifier] Task ${event.taskId} resides in a dead region. Safely discarding payload.',
+            '[TaskNotifier] Task ${event.taskId} resides in an unrendered dead region. Discarding payload.',
           );
         }
 
-        // Project specific metric hooks preserved from your original code base
+        // Side-effects not related to list memory (Metrics / Selected Task)
         if (event.changes?["status"] != null &&
             event.task?.status == TaskStatus.completed) {
           ref
@@ -715,7 +724,7 @@ class TaskCacheNotifier
           // RULE B: Adjust Total Counters Immediately & Evict Cache Column
           modifyCount(detectedOldStatus, targetProjectId, -1);
 
-          // Deletions shift the underlying database rows up. Purge lane to let infinite scroller realign sequences.
+          // Deletions shift underlying records. Purge lane to let scroller fetch new clean offsets.
           updatedCachedTasks[detectedOldStatus] = {};
           stateDidMutate = true;
           print(
