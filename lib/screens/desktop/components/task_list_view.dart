@@ -555,8 +555,20 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             .reversed
             .toList();
 
-    final reversedTasks = tasks.reversed.toList();
     final effective = _effectiveVisible;
+
+    // DEBUG: Check
+    // var tasksCount = 0;
+    // ref
+    //     .watch(
+    //       taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
+    //     )
+    //     .cachedTasks
+    //     .forEach((status, statusTasks) {
+    //       tasksCount += statusTasks.length;
+    //     });
+
+    // print("tasks count cached: $tasksCount");
 
     ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
       previous,
