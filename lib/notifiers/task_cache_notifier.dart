@@ -11,12 +11,13 @@ import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/states/filtered_task_cache.dart';
 import 'package:smooflow/states/task.dart';
 
 class TaskCacheNotifier
     extends FamilyNotifier<FilteredTaskCacheState, TaskFilter> {
-  final TaskRepo _repo;
+  late final TaskRepo _repo;
   late final TaskWebSocketClient _client;
 
   Task? _activelyWorkingTask;
@@ -27,11 +28,9 @@ class TaskCacheNotifier
   ConnectionStatus get connectionStatus => state.connectionStatus;
 
   // final Ref ref;
-  TaskCacheNotifier(
-    this._repo,
-    this._client,
-    // this.ref
-  ) : super() {
+  TaskCacheNotifier() : super() {
+    _repo = ref.watch(taskRepoProvider);
+    _client = ref.watch(taskWebSocketClientProvider);
     _initializeSocket();
   }
 
