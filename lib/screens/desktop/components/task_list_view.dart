@@ -538,22 +538,26 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   @override
   Widget build(BuildContext context) {
     final members = ref.watch(memberNotifierProvider).members;
-    final taskState = ref.watch(taskNotifierProvider);
-    final allTasks = taskState.tasks;
-    final isLoading = taskState.isLoading;
+    final taskState = ref.watch(
+      taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
+    );
+    // final allTasks = ref.watch(taskNotifierProvider).tasks;
+    final isLoading = taskState.isLoadingCounts;
     final error = taskState.error;
     final connectionStatus = ref.watch(taskConnectionStatusProvider);
 
-    final tasks =
-        (widget.selectedProjectId != null
-                ? allTasks
-                    .where(
-                      (t) => t.projectId.toString() == widget.selectedProjectId,
-                    )
-                    .toList()
-                : allTasks)
-            .reversed
-            .toList();
+    // Applied for the selected filter
+    var serverTaskCount = 0;
+    taskState.totalCounts.forEach((status, projectTasks) {
+      if (widget.selectedProjectId != null) {
+        serverTaskCount += projectTasks[widget.selectedProjectId] ?? 0;
+      } else {
+        serverTaskCount +=
+            projectTasks.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+      }
+    });
+
+    final isTasksEmpty = serverTaskCount == 0;
 
     final effective = _effectiveVisible;
 
@@ -634,7 +638,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
             ),
             Expanded(
               child:
-                  isLoading && tasks.isEmpty
+                  isLoading && isTasksEmpty
                       ? const Center(child: CircularProgressIndicator())
                       : error != null
                       ? _ErrorState(
@@ -644,7 +648,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                           _loadTasks();
                         },
                       )
-                      : tasks.isEmpty
+                      : isTasksEmpty
                       ? _EmptyState()
                       : _TaskTable(
                         effective: effective,
