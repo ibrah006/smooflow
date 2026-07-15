@@ -245,7 +245,7 @@ class _BoardViewState extends ConsumerState<BoardView> {
     final totalCounts = ref.watch(
       taskCacheProvider(widget.filter).select((s) => s.totalCounts),
     );
-    final activeProjectId = widget.selectedProjectId ?? 'GLOBAL';
+    final activeProjectId = widget.selectedProjectId;
 
     // 2. Map total layout bounds allocations dynamically using metrics matrix
     final Map<TaskStatus, int> taskCounts = {
@@ -304,7 +304,18 @@ class _BoardViewState extends ConsumerState<BoardView> {
                         return true;
                       })
                       .map((si) {
-                        final totalCount = taskCounts[si.stage] ?? 0;
+                        late final int serverTaskCount;
+                        if (activeProjectId == null) {
+                          serverTaskCount =
+                              totalCounts[si.stage]?.values.fold(
+                                0,
+                                (a, b) => (a ?? 0) + b,
+                              ) ??
+                              0;
+                        } else {
+                          serverTaskCount =
+                              totalCounts[si.stage]?[activeProjectId] ?? 0;
+                        }
                         final isFirst = kStages.indexOf(si) == 0;
 
                         return Align(
@@ -312,7 +323,7 @@ class _BoardViewState extends ConsumerState<BoardView> {
                           child: _KanbanLane(
                             stageInfo: si,
                             totalCount:
-                                totalCount, // ✅ CHANGED: Pass layout total dimension bounds
+                                serverTaskCount, // ✅ CHANGED: Pass layout total dimension bounds
                             filter:
                                 widget
                                     .filter, // ✅ CHANGED: Pass active filter pipeline
