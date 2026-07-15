@@ -48,6 +48,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_table_view/material_table_view.dart';
+import 'package:material_table_view/table_view_typedefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/constants.dart';
@@ -58,6 +59,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/board_view.dart';
 import 'package:smooflow/screens/desktop/components/notification_toast.dart';
@@ -66,6 +68,7 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 import 'package:smooflow/screens/desktop/components/dropdown_cells.dart';
+import 'package:smooflow/states/task.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
@@ -138,20 +141,23 @@ const double _kHeaderHeight = 36.0;
 
 const kNotificationDuration = Duration(seconds: 3);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// VIRTUAL SCROLL COORD STRUCTS
+// ─────────────────────────────────────────────────────────────────────────────
 abstract class _TableItem {}
 
 class _SectionHeaderItem extends _TableItem {
   final TaskStatus status;
   final bool isExpanded;
-  final int taskCount;
-
-  _SectionHeaderItem(this.status, this.isExpanded, this.taskCount);
+  final int totalCount;
+  _SectionHeaderItem(this.status, this.isExpanded, this.totalCount);
 }
 
-class _TaskRowItem extends _TableItem {
-  final Task task;
-
-  _TaskRowItem(this.task);
+class _TaskRowPlaceholderItem extends _TableItem {
+  final TaskStatus status;
+  final int
+  indexWithinStatus; // 0-indexed offset coordinate inside this specific column lane
+  _TaskRowPlaceholderItem(this.status, this.indexWithinStatus);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -628,7 +634,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       ? _EmptyState()
                       : _TaskTable(
                         effective: effective,
-                        tasks: reversedTasks,
+                        // tasks: reversedTasks,
+                        filter: TaskFilter(projectId: widget.selectedProjectId),
                         projects: widget.projects,
                         members: members,
                         isDetailOpen: widget.isDetailOpen,
@@ -699,7 +706,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskTable extends ConsumerStatefulWidget {
   final Set<String> effective;
-  final List<Task> tasks;
+  final TaskFilter
+  filter; // ✅ CHANGED: Swap flat List<Task> with the current TaskFilter context
   final List<Project> projects;
   final List<Member> members;
   final bool isDetailOpen;
@@ -713,7 +721,7 @@ class _TaskTable extends ConsumerStatefulWidget {
 
   const _TaskTable({
     required this.effective,
-    required this.tasks,
+    required this.filter,
     required this.projects,
     required this.members,
     required this.isDetailOpen,
@@ -739,20 +747,27 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
     final columns = built.columns;
     final slots = built.slots;
 
-    // Dynamically segregate tasks into sections based on task status
+    // 1. Monitor server aggregation metrics from the cache provider state slice
+    final totalCounts = ref.watch(
+      taskCacheProvider(widget.filter).select((s) => s.totalCounts),
+    );
+
+    final activeProjectId = widget.selectedProject ?? 'GLOBAL';
+
+    // 2. Build the structural table map purely using layout tokens
     final List<_TableItem> tableItems = [];
+
     for (final status in TaskStatus.values) {
-      final statusTasks =
-          widget.tasks.where((t) => t.status == status).toList();
+      // Pull total rows allocated on the server for this status lane
+      final int serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
       final isCollapsed = _collapsedStatuses.contains(status);
 
-      tableItems.add(
-        _SectionHeaderItem(status, !isCollapsed, statusTasks.length),
-      );
+      tableItems.add(_SectionHeaderItem(status, !isCollapsed, serverRowCount));
 
       if (!isCollapsed) {
-        for (final task in statusTasks) {
-          tableItems.add(_TaskRowItem(task));
+        // Allocate empty placeholder row indices based on total server dimensions
+        for (int i = 0; i < serverRowCount; i++) {
+          tableItems.add(_TaskRowPlaceholderItem(status, i));
         }
       }
     }
@@ -786,12 +801,12 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
         rowBuilder: (context, row, contentBuilder) {
           final item = tableItems[row];
 
-          // Render Section Header Item
+          // Render Section Header Item (Remains fully synchronous)
           if (item is _SectionHeaderItem) {
             return _StatusSectionHeader(
               status: item.status,
               isExpanded: item.isExpanded,
-              taskCount: item.taskCount,
+              taskCount: item.totalCount,
               onToggle: () {
                 setState(() {
                   if (_collapsedStatuses.contains(item.status)) {
@@ -805,8 +820,39 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
             );
           }
 
-          // Render Normal Task Row Item
-          final t = (item as _TaskRowItem).task;
+          // Render Lazy-Loaded / Paginated Task Row
+          final placeholder = item as _TaskRowPlaceholderItem;
+          final status = placeholder.status;
+          final indexWithinStatus = placeholder.indexWithinStatus;
+
+          // 3. Trigger network page request gracefully after layout pass completes
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref
+                  .read(taskCacheProvider(widget.filter).notifier)
+                  .loadPage(
+                    status: status,
+                    indexWithinStatus: indexWithinStatus,
+                  );
+            }
+          });
+
+          // 4. Safely watch this specific structural slot coordinate inside the cache
+          final Task? t = ref.watch(
+            taskCacheProvider(
+              widget.filter,
+            ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
+          );
+
+          // 5. Render standard Shimmer placeholder while network page downloads
+          if (t == null) {
+            return _ShimmerTaskRow(
+              slots: slots,
+              contentBuilder: contentBuilder,
+            );
+          }
+
+          // 6. Normal Data Hydration (Once cache hits warm data state)
           final p =
               widget.projects.cast<Project?>().firstWhere(
                 (pr) => pr!.id == t.projectId.toString(),
@@ -836,6 +882,40 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
         },
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHIMMER ROW PLACEHOLDER CELL ASSEMBLY
+// ─────────────────────────────────────────────────────────────────────────────
+class _ShimmerTaskRow extends StatelessWidget {
+  final List<_ColSlot> slots;
+  final TableRowContentBuilder contentBuilder;
+
+  const _ShimmerTaskRow({required this.slots, required this.contentBuilder});
+
+  @override
+  Widget build(BuildContext context) {
+    return contentBuilder(context, (context, column) {
+      final slot = slots[column];
+      if (slot.type != _SlotType.column) return const SizedBox.shrink();
+
+      return Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: kCellHPad),
+        decoration: const BoxDecoration(
+          border: Border(right: BorderSide(color: _T.colDivider, width: 1)),
+        ),
+        child: Container(
+          height: 12,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      );
+    });
   }
 }
 

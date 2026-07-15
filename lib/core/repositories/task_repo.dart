@@ -373,11 +373,16 @@ class TaskRepo {
       throw body["error"];
     }
 
-    final result = Map<TaskStatus, Map<String, int>>.fromEntries(
-      body.entries.map(
-        (e) => MapEntry(TaskStatus.values.byName(e.key), e.value),
-      ),
-    );
+    final result = <TaskStatus, Map<String, int>>{};
+
+    (body as Map<String, dynamic>).forEach((key, value) {
+      try {
+        final status = TaskStatus.values.byName(key);
+        result[status] = Map<String, int>.from(value as Map);
+      } on ArgumentError {
+        // Suppresses and ignores unrecognized TaskStatus keys
+      }
+    });
 
     return result;
   }

@@ -35,6 +35,8 @@ class TaskCacheNotifier
     _client = ref.watch(taskWebSocketClientProvider);
     _initializeSocket();
 
+    Future.microtask(() => fetchMetadataCounts());
+
     // 2. Return your initial state setup
     return const FilteredTaskCacheState.empty();
   }
@@ -87,6 +89,8 @@ class TaskCacheNotifier
       return; // Already loaded! Short-circuit network request.
     }
 
+    print("[loadPage] through here, project id :${arg.projectId}");
+
     // Hit backend using specific filters tracked by 'arg'
     final incomingTasks = await _repo.fetchV2(
       status: status,
@@ -94,6 +98,8 @@ class TaskCacheNotifier
       offset: offset,
       projectId: arg.projectId,
     );
+
+    print("[loadPage] incomingTasks: ${incomingTasks.length}");
 
     // Deep copy and mutate the map structure safely
     final Map<TaskStatus, Map<int, Task>> updatedCache = {
