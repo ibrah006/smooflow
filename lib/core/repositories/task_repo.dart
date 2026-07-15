@@ -30,9 +30,10 @@ class TaskRepo {
     int offset = 0,
   }) async {
     final response = await ApiClient.http.get(
-      '/tasks/v2/cached${projectId != null ? '?projectId=$projectId' : ''}${status != null ? '&status=${status.name}' : ''}',
+      '/tasks/v2/cached?${projectId != null ? 'projectId=$projectId' : ''}${status != null ? '&status=${status.name}' : ''}',
     );
     if (response.statusCode != 200) {
+      print("status code: ${response.statusCode}");
       throw Exception('Failed to load tasks: ${response.body}');
     }
 

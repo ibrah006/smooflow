@@ -752,14 +752,22 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
       taskCacheProvider(widget.filter).select((s) => s.totalCounts),
     );
 
-    final activeProjectId = widget.selectedProject ?? 'GLOBAL';
+    final activeProjectId = widget.selectedProject ?? null;
 
     // 2. Build the structural table map purely using layout tokens
     final List<_TableItem> tableItems = [];
 
     for (final status in TaskStatus.values) {
       // Pull total rows allocated on the server for this status lane
-      final int serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+
+      late final int serverRowCount;
+      if (activeProjectId == null) {
+        serverRowCount =
+            totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+      } else {
+        serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+      }
+
       final isCollapsed = _collapsedStatuses.contains(status);
 
       tableItems.add(_SectionHeaderItem(status, !isCollapsed, serverRowCount));
