@@ -639,6 +639,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                         onResizeEnd: _saveWidths,
                         onAddTask:
                             widget.onAddTask, // Added forwarding reference
+                        selectedProject: widget.selectedProjectId,
                       ),
             ),
           ],
@@ -708,6 +709,7 @@ class _TaskTable extends ConsumerStatefulWidget {
   final void Function(String colId, double delta) onResizeColumn;
   final VoidCallback onResizeEnd;
   final VoidCallback? onAddTask;
+  final String? selectedProject;
 
   const _TaskTable({
     required this.effective,
@@ -721,6 +723,7 @@ class _TaskTable extends ConsumerStatefulWidget {
     required this.onResizeColumn,
     required this.onResizeEnd,
     this.onAddTask,
+    required this.selectedProject,
   });
 
   @override

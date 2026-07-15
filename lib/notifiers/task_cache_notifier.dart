@@ -27,21 +27,26 @@ class TaskCacheNotifier
   Task? get activeTask => _activelyWorkingTask;
   ConnectionStatus get connectionStatus => state.connectionStatus;
 
-  // final Ref ref;
-  TaskCacheNotifier() : super() {
+  @override
+  FilteredTaskCacheState build(TaskFilter arg) {
+    // 1. Trigger the socket/listeners here.
+    // `ref` and `_element` are completely initialized and safe to use at this point.
     _repo = ref.watch(taskRepoProvider);
     _client = ref.watch(taskWebSocketClientProvider);
     _initializeSocket();
+
+    // 2. Return your initial state setup
+    return const FilteredTaskCacheState.empty();
   }
+
+  // final Ref ref;
+  // TaskCacheNotifier() : super() {
+  // _repo = ref.watch(taskRepoProvider);
+  // _client = ref.watch(taskWebSocketClientProvider);
+  //   _initializeSocket();
+  // }
 
   bool mounted = true;
-
-  @override
-  FilteredTaskCacheState build(TaskFilter arg) {
-    // 1. 'arg' is passed directly into the build method here.
-    // 2. Initialize your default pristine state structure for this specific filter.
-    return FilteredTaskCacheState.empty();
-  }
 
   /// Example: Accessing 'arg' to query filtered parameters from your API
   Future<void> fetchMetadataCounts() async {
@@ -561,7 +566,7 @@ class TaskCacheNotifier
     });
 
     // Listen to task changes
-    _client.taskChanges.listen((event) => _handleTaskChange(ref, event));
+    _client.taskChanges.listen((event) => _handleTaskChange(event));
 
     /// Listen to task list updates
     /// Suspended for now
@@ -580,7 +585,7 @@ class TaskCacheNotifier
   }
 
   /// Handle task change events from WebSocket
-  void _handleTaskChange(Ref ref, TaskChangeEvent event) {
+  void _handleTaskChange(TaskChangeEvent event) {
     print(
       '[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted',
     );
