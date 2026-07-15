@@ -545,13 +545,15 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     final connectionStatus = ref.watch(taskConnectionStatusProvider);
 
     final tasks =
-        widget.selectedProjectId != null
-            ? allTasks
-                .where(
-                  (t) => t.projectId.toString() == widget.selectedProjectId,
-                )
-                .toList()
-            : allTasks;
+        (widget.selectedProjectId != null
+                ? allTasks
+                    .where(
+                      (t) => t.projectId.toString() == widget.selectedProjectId,
+                    )
+                    .toList()
+                : allTasks)
+            .reversed
+            .toList();
 
     final reversedTasks = tasks.reversed.toList();
     final effective = _effectiveVisible;
@@ -593,7 +595,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
           if (_viewMode == _ViewMode.board)
             Expanded(
               child: BoardView(
-                tasks: tasks,
+                filter: TaskFilter(projectId: widget.selectedProjectId),
                 projects: widget.projects,
                 selectedTaskId: widget.selectedTaskId,
                 onTaskSelected: widget.onTaskSelected,

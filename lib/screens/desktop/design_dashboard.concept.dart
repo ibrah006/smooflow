@@ -18,6 +18,7 @@ import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
+import 'package:smooflow/states/task.dart' as task_state;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -328,7 +329,8 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
                                           hasActiveFilters: false,
                                         )
                                         : BoardView(
-                                          tasks: _visibleTasks,
+                                          // tasks: _visibleTasks,
+                                          filter: task_state.TaskFilter.empty,
                                           projects: _projects,
                                           selectedTaskId: _selectedTaskId,
                                           onTaskSelected: _selectTask,

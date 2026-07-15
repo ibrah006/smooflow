@@ -14,9 +14,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/screens/desktop/components/task_card.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
+import 'package:smooflow/states/task.dart';
 
 // ── Private SharedPreferences Keys ───────────────────────────────────────────
 const String _kHideEmptyKey = 'board_view_hide_empty';
@@ -104,10 +106,12 @@ const _kGroups = <_StageGroup>[
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BOARD VIEW
+// BOARD VIEW — Migrated to Paginated Task Cache Notifier
 // ─────────────────────────────────────────────────────────────────────────────
-class BoardView extends StatefulWidget {
-  final List<Task> tasks;
+class BoardView extends ConsumerStatefulWidget {
+  // ✅ CHANGED: Now extends ConsumerStatefulWidget
+  final TaskFilter
+  filter; // ✅ CHANGED: Swapped flat List<Task> for the core Filter state key
   final List<Project> projects;
   final int? selectedTaskId;
   final Function(int taskId, String detailPanelProjectId) onTaskSelected;
@@ -118,7 +122,7 @@ class BoardView extends StatefulWidget {
 
   const BoardView({
     super.key,
-    required this.tasks,
+    required this.filter,
     required this.projects,
     required this.selectedTaskId,
     required this.onTaskSelected,
@@ -129,13 +133,14 @@ class BoardView extends StatefulWidget {
   });
 
   @override
-  State<BoardView> createState() => _BoardViewState();
+  ConsumerState<BoardView> createState() => _BoardViewState();
 }
 
-class _BoardViewState extends State<BoardView> {
+class _BoardViewState extends ConsumerState<BoardView> {
   final Set<TaskStatus> _hidden = {};
   final Set<int> _expandedGroups = {};
   bool _hideEmpty = false;
+  int _previousTotalTaskCount = 0;
 
   // Controller to handle horizontal lane scrolling
   late final ScrollController _horizontalController;
@@ -153,28 +158,8 @@ class _BoardViewState extends State<BoardView> {
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(BoardView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Detect if a new task has been created/added to the list
-    if (widget.tasks.length > oldWidget.tasks.length) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_horizontalController.hasClients) {
-          // Bring the horizontal offset back to 0 so the first lanes are visible
-          _horizontalController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutCubic,
-          );
-        }
-      });
-    }
-  }
-
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-
     final savedHideEmpty = prefs.getBool(_kHideEmptyKey) ?? false;
 
     final savedHiddenStr = prefs.getStringList(_kHiddenStatusesKey) ?? [];
@@ -256,15 +241,39 @@ class _BoardViewState extends State<BoardView> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Read the server totals count matrix slice directly from cache state
+    final totalCounts = ref.watch(
+      taskCacheProvider(widget.filter).select((s) => s.totalCounts),
+    );
+    final activeProjectId = widget.selectedProjectId ?? 'GLOBAL';
+
+    // 2. Map total layout bounds allocations dynamically using metrics matrix
     final Map<TaskStatus, int> taskCounts = {
       for (final si in kStages)
-        si.stage: widget.tasks.where((t) => t.status == si.stage).length,
+        si.stage: totalCounts[si.stage]?[activeProjectId] ?? 0,
     };
+
+    // Animate lane offset if aggregate task counter registers a newly populated entry
+    final currentTotalCount = taskCounts.values.fold<int>(
+      0,
+      (sum, val) => sum + val,
+    );
+    if (currentTotalCount > _previousTotalTaskCount) {
+      _previousTotalTaskCount = currentTotalCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_horizontalController.hasClients) {
+          _horizontalController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Filter bar ───────────────────────────────────────────────────────
         _FilterBar(
           groups: _kGroups,
           groupFullyOn: _groupFullyOn,
@@ -277,8 +286,6 @@ class _BoardViewState extends State<BoardView> {
           onToggleExpand: _toggleExpand,
           onToggleHideEmpty: _toggleHideEmpty,
         ),
-
-        // ── Lane scroll ──────────────────────────────────────────────────────
         Expanded(
           child: Container(
             color: _T.slate50,
@@ -297,19 +304,18 @@ class _BoardViewState extends State<BoardView> {
                         return true;
                       })
                       .map((si) {
-                        final stageTasks =
-                            widget.tasks
-                                .where((t) => t.status == si.stage)
-                                .toList();
+                        final totalCount = taskCounts[si.stage] ?? 0;
                         final isFirst = kStages.indexOf(si) == 0;
 
-                        // Wrap inside Align to let the child wrap its content
-                        // height instead of stretching to full viewport height.
                         return Align(
                           alignment: Alignment.topCenter,
                           child: _KanbanLane(
                             stageInfo: si,
-                            tasks: stageTasks,
+                            totalCount:
+                                totalCount, // ✅ CHANGED: Pass layout total dimension bounds
+                            filter:
+                                widget
+                                    .filter, // ✅ CHANGED: Pass active filter pipeline
                             projects: widget.projects,
                             selectedTaskId: widget.selectedTaskId,
                             onTaskSelected: widget.onTaskSelected,
@@ -862,11 +868,14 @@ class _StageChipState extends State<_StageChip> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KANBAN LANE
+// KANBAN LANE — Virtualized Paginated Scroll Implementation
 // ─────────────────────────────────────────────────────────────────────────────
 class _KanbanLane extends ConsumerStatefulWidget {
   final DesignStageInfo stageInfo;
-  final List<Task> tasks;
+  final int
+  totalCount; // ✅ CHANGED: Driven by absolute server metric boundary length
+  final TaskFilter
+  filter; // ✅ CHANGED: Receives active filter sandboxing parameters
   final List<Project> projects;
   final int? selectedTaskId;
   final Function(int taskId, String detailPanelProjectId) onTaskSelected;
@@ -878,7 +887,8 @@ class _KanbanLane extends ConsumerStatefulWidget {
 
   _KanbanLane({
     required this.stageInfo,
-    required this.tasks,
+    required this.totalCount,
+    required this.filter,
     required this.projects,
     required this.selectedTaskId,
     required this.onTaskSelected,
@@ -893,7 +903,6 @@ class _KanbanLane extends ConsumerStatefulWidget {
 }
 
 class _KanbanLaneState extends ConsumerState<_KanbanLane> {
-  // Controller to handle vertical scrolling inside this specific lane
   late final ScrollController _verticalController;
 
   @override
@@ -909,62 +918,9 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
   }
 
   @override
-  void didUpdateWidget(_KanbanLane oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Detect if a new task was added to this lane specifically
-    if (widget.tasks.length > oldWidget.tasks.length) {
-      // Isolate the newly added task item
-      final oldIds = oldWidget.tasks.map((t) => t.id).toSet();
-      final newCreatedTask = widget.tasks.firstWhere(
-        (t) => !oldIds.contains(t.id),
-        orElse: () => widget.tasks.last,
-      );
-      final index = widget.tasks.indexOf(newCreatedTask);
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_verticalController.hasClients) {
-          if (index == 0) {
-            // Task was prepended at the top
-            _verticalController.animateTo(
-              0.0,
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-            );
-          } else if (index == widget.tasks.length - 1) {
-            // Task was appended at the very bottom
-            _verticalController.animateTo(
-              _verticalController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-            );
-          } else {
-            // Task was added somewhere in the middle (estimate location based on relative index)
-            final targetOffset =
-                _verticalController.position.maxScrollExtent *
-                (index / (widget.tasks.length - 1));
-            _verticalController.animateTo(
-              targetOffset,
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-            );
-          }
-        }
-      });
-    }
-  }
-
-  void onAddTask() {
-    widget.addTaskFocusNode?.requestFocus();
-    setState(() => widget.isAddingTask = true);
-  }
-
-  void onDismiss() => setState(() => widget.isAddingTask = false);
-  void onCreated(Task task) => setState(() => widget.isAddingTask = false);
-
-  @override
   Widget build(BuildContext context) {
-    final isApproved = widget.stageInfo.stage == TaskStatus.clientApproved;
+    final status = widget.stageInfo.stage;
+    final isApproved = status == TaskStatus.clientApproved;
 
     return Container(
       width: 260,
@@ -989,8 +945,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(_T.rLg),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min, // shrink-wrap header + inner items list
+          mainAxisSize: MainAxisSize.min,
           children: [
             // ── Lane header ──────────────────────────────────────────────────
             Container(
@@ -1000,7 +955,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
               ),
               child: Row(
                 children: [
-                  // Colored status dot
                   Container(
                     width: 6,
                     height: 6,
@@ -1010,8 +964,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                       shape: BoxShape.circle,
                     ),
                   ),
-
-                  // Stage label
                   Expanded(
                     child: Row(
                       children: [
@@ -1030,7 +982,6 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
                               color: _T.ink,
-                              letterSpacing: 0.0,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1038,10 +989,8 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
-                  // Task count badge
+                  // Total count derived synchronously from layout metric tokens
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
@@ -1052,7 +1001,7 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      '${widget.tasks.length}',
+                      '${widget.totalCount}',
                       style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
@@ -1064,41 +1013,116 @@ class _KanbanLaneState extends ConsumerState<_KanbanLane> {
               ),
             ),
 
-            // ── Task list ────────────────────────────────────────────────────
+            // ── Task list — Refactored to Virtualized Builder ────────────────
             Flexible(
-              // Changed from Expanded to Flexible to wrap content height dynamically
-              child: ListView(
-                shrinkWrap:
-                    true, // Sizes ListView height strictly to item bounds
-                controller: _verticalController,
-                padding: const EdgeInsets.all(10),
-                children: [
-                  if (widget.tasks.isEmpty)
-                    _LaneEmpty()
-                  else
-                    ...widget.tasks.map((t) {
-                      final proj =
-                          widget.projects.cast<Project?>().firstWhere(
-                            (p) => p!.id == t.projectId,
-                            orElse: () => null,
-                          ) ??
-                          widget.projects.first;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 7),
-                        child: TaskCard(
-                          task: t,
-                          project: proj,
-                          isSelected: widget.selectedTaskId == t.id,
-                          onTap: () => widget.onTaskSelected(t.id, t.projectId),
-                          selectedProjectId: widget.selectedProjectId,
-                        ),
-                      );
-                    }),
-                ],
-              ),
+              child:
+                  widget.totalCount == 0
+                      ? _LaneEmpty()
+                      : ListView.builder(
+                        shrinkWrap: true,
+                        controller: _verticalController,
+                        padding: const EdgeInsets.all(10),
+                        itemCount:
+                            widget.totalCount, // Explicit structural row limit
+                        itemBuilder: (context, index) {
+                          // 1. Safe Post-Frame Network Dispatch Loop
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              ref
+                                  .read(
+                                    taskCacheProvider(widget.filter).notifier,
+                                  )
+                                  .loadPage(
+                                    status: status,
+                                    indexWithinStatus:
+                                        index, // Passes target index context
+                                  );
+                            }
+                          });
+
+                          // 2. Isolated Micro-Selector Watching This Row Pointer Coordinate
+                          final Task? t = ref.watch(
+                            taskCacheProvider(widget.filter).select(
+                              (state) => state.cachedTasks[status]?[index],
+                            ),
+                          );
+
+                          // 3. Render Shimmer Card when network page block downloads
+                          if (t == null) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 7),
+                              child: _ShimmerTaskCard(),
+                            );
+                          }
+
+                          // 4. Standard Data Hydration Pass
+                          final proj =
+                              widget.projects.cast<Project?>().firstWhere(
+                                (p) => p!.id == t.projectId,
+                                orElse: () => null,
+                              ) ??
+                              widget.projects.first;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 7),
+                            child: TaskCard(
+                              task: t,
+                              project: proj,
+                              isSelected: widget.selectedTaskId == t.id,
+                              onTap:
+                                  () =>
+                                      widget.onTaskSelected(t.id, t.projectId),
+                              selectedProjectId: widget.selectedProjectId,
+                            ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KANBAN SHIMMER PLACEHOLDER CARD
+// ─────────────────────────────────────────────────────────────────────────────
+class _ShimmerTaskCard extends StatelessWidget {
+  const _ShimmerTaskCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _T.white,
+        border: Border.all(color: _T.slate200),
+        borderRadius: BorderRadius.circular(_T.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 12,
+            width: 140,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            height: 10,
+            width: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
       ),
     );
   }
