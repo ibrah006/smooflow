@@ -670,7 +670,7 @@ class TaskCacheNotifier
           // Task cached, replace it with updated
           if (task != null) {
             state.cachedTasks[detectedOldStatus!]![event.taskId!] = event.task!;
-            state = state;
+            stateDidMutate = true;
           }
 
           print(
