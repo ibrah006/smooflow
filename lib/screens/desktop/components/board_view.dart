@@ -1145,8 +1145,8 @@ class _ShimmerTaskCard extends StatelessWidget {
 class _LaneEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 28),
-    child: Column(
+    padding: EdgeInsets.symmetric(vertical: 33),
+    child: Wrap(
       children: [
         Icon(Icons.inbox_outlined, size: 20, color: _T.slate300),
         SizedBox(height: 6),
