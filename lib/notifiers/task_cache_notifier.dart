@@ -48,8 +48,6 @@ class TaskCacheNotifier
   //   _initializeSocket();
   // }
 
-  bool mounted = true;
-
   /// Example: Accessing 'arg' to query filtered parameters from your API
   Future<void> fetchMetadataCounts() async {
     // Set a loading state locally using current cache mappings
@@ -109,7 +107,7 @@ class TaskCacheNotifier
     }
 
     // Trigger UI repaint by dispatching completely renewed state object
-    state = FilteredTaskCacheState(
+    state = state.copyWith(
       totalCounts: state.totalCounts,
       cachedTasks: updatedCache,
     );
@@ -450,7 +448,7 @@ class TaskCacheNotifier
     }
 
     print(
-      "[TaskNotifier] update called with - billingStatus: $billingStatus, ref: $ref, quantity: $quantity, size: $size, name: $name, date: $date",
+      "[TaskCacheNotifier] update called with - billingStatus: $billingStatus, ref: $ref, quantity: $quantity, size: $size, name: $name, date: $date",
     );
 
     if (billingStatus == null &&
@@ -565,9 +563,7 @@ class TaskCacheNotifier
   void _initialize() {
     // Listen to connection status
     _client.connectionStatus.listen((status) {
-      if (mounted) {
-        state = state.copyWith(connectionStatus: status);
-      }
+      state = state.copyWith(connectionStatus: status);
     });
 
     // Listen to task changes
@@ -583,22 +579,20 @@ class TaskCacheNotifier
 
     // Listen to errors
     _client.errors.listen((error) {
-      if (mounted) {
-        state = state.copyWith(error: error, isLoadingCounts: false);
-      }
+      state = state.copyWith(error: error, isLoadingCounts: false);
     });
   }
 
   /// Handle task change events from WebSocket
   void _handleTaskChange(TaskChangeEvent event) {
     print(
-      '[TaskNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}, mounted: $mounted',
+      '[TaskCacheNotifier] _handleTaskChange: ${event.type}, taskId: ${event.taskId}',
     );
 
-    if (!mounted) {
-      print('[TaskNotifier] Notifier not mounted, ignoring change');
-      return;
-    }
+    // if (!mounted) {
+    //   print('[TaskCacheNotifier] Notifier not mounted, ignoring change');
+    //   return;
+    // }
 
     // 0. PROJECT ISOLATION GUARD
     // If this notifier is filtered to a specific project, smoothly ignore events from other projects
@@ -617,14 +611,32 @@ class TaskCacheNotifier
       ); // ✅ FIXED: inner map typed to String project ID
     });
 
+    final localTask = state.getLocalTask(event.taskId!);
+    final localTaskIndex =
+        localTask != null
+            ? state.cachedTasks[localTask.status]!.values.toList().indexWhere(
+              (tsk) => tsk.id == localTask!.id,
+            )
+            : null;
+
     // Highly optimized O(1) key check per status lane to see if the task is actively loaded in memory
-    TaskStatus? detectedOldStatus;
-    for (final entry in state.cachedTasks.entries) {
-      if (entry.value.containsKey(event.taskId)) {
-        detectedOldStatus = entry.key;
-        break;
-      }
-    }
+    (
+      TaskStatus detectedOldStatus,
+      // Task index within its status;
+      int taskIndex,
+    )?
+    localTaskDetails =
+        localTask != null ? (localTask.status, localTaskIndex!) : null;
+
+    // for (final entry in state.cachedTasks.entries) {
+    //   print('[TaskCacheNotifier] for entry.value.keys: ${entry.value.keys}');
+    //   if (entry.value.containsKey(event.taskId)) {
+    //     localTask = (entry.key, entry.value[event.taskId]);
+    //     // detectedOldStatus = entry.key;
+    //     break;
+    //   }
+    // }
+    // print("detected old status for event: ${detectedOldStatus}");
 
     bool stateDidMutate = false;
     Task? nextSelectedTask = state.selectedTask;
@@ -642,7 +654,7 @@ class TaskCacheNotifier
     switch (event.type) {
       case TaskChangeType.created:
         // RULE B: New Task Created -> Adjust Counters & Purge Column
-        if (event.task != null && detectedOldStatus == null) {
+        if (event.task != null && localTaskDetails == null) {
           final targetStatus = event.task!.status;
 
           modifyCount(targetStatus, targetProjectId, 1);
@@ -651,7 +663,7 @@ class TaskCacheNotifier
           updatedCachedTasks[targetStatus] = {};
           stateDidMutate = true;
           print(
-            '[TaskNotifier] Task created. Count bumped. Evicted $targetStatus lane.',
+            '[TaskCacheNotifier] Task created. Count bumped. Evicted $targetStatus lane.',
           );
         }
 
@@ -663,21 +675,80 @@ class TaskCacheNotifier
       case TaskChangeType.updated:
         if (event.task != null) {
           print(
-            "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
+            "[TaskCacheNotifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
           );
-          final task = state.cachedTasks[detectedOldStatus]?[event.taskId];
 
-          // Task cached, replace it with updated
-          if (task != null) {
-            state.cachedTasks[detectedOldStatus!]![event.taskId!] = event.task!;
+          // The task is cached, replace it with the updated task
+          if (localTaskDetails != null) {
+            final detectedOldStatus = localTaskDetails.$1;
+
+            if (localTaskDetails == event.task!.status) {
+              // state.cachedTasks[detectedOldStatus]![event.taskId!] =
+              //     event.task!;
+              updatedCachedTasks[detectedOldStatus]![event.taskId!] =
+                  event.task!;
+            } else {
+              print(
+                "[TaskCacheNotifier] old status before modifying count: ${updatedTotalCounts[detectedOldStatus]}",
+              );
+              // SCENARIO 2: Column Move / Structural Status Shift (RULE B & Idempotency Race Solver)
+              // Recalculate bounds cleanly across both targets to avoid visual duplicated line fragments
+              modifyCount(detectedOldStatus, targetProjectId, -1);
+              modifyCount(event.task!.status, targetProjectId, 1);
+              print(
+                "[TaskCacheNotifier] old status after modifying count: ${updatedTotalCounts[detectedOldStatus]}",
+              );
+
+              // Wipe out both lanes entirely so infinite viewports sync atomic alignments cleanly
+              updatedCachedTasks[detectedOldStatus]?.removeWhere(
+                (i, t) => t.id == event.taskId,
+              );
+              updatedCachedTasks.putIfAbsent(event.task!.status, () => {});
+
+              final statusTasks = updatedCachedTasks[event.task!.status]!;
+
+              final taskEvent = event.task!;
+
+              // Task's new status updated tasks entries
+              final List<Task> updatedStatusTasks = [];
+              bool hasAddedTaskToNewStatus = false;
+              for (final taskEntry in statusTasks.entries) {
+                final t = taskEntry.value;
+                final i = taskEntry.key;
+
+                if (taskEvent.id < t.id) {
+                  updatedStatusTasks.insert(i, taskEvent);
+                  // Add the remaining of the status's tasks
+                  updatedStatusTasks.addAll(
+                    statusTasks.values.toList().sublist(i + 1),
+                  );
+                  hasAddedTaskToNewStatus = true;
+                  break;
+                }
+                updatedStatusTasks.add(t);
+              }
+
+              if (!hasAddedTaskToNewStatus) {
+                updatedStatusTasks.add(event.task!);
+              }
+              updatedCachedTasks[event.task!.status] =
+                  updatedStatusTasks.asMap();
+              // [event.taskId!] =
+              //     event.task!;
+
+              print(
+                '[TaskCacheNotifier] Status sync mismatch solved. Evicted lanes: $detectedOldStatus -> ${event.task!.status}',
+              );
+            }
+
             stateDidMutate = true;
           }
 
           print(
-            "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
+            "[TaskCacheNotifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
           );
 
-          print('[Task Notifier] new task event changes: ${event.changes}');
+          print('[TaskCacheNotifier] new task event changes: ${event.changes}');
 
           // Check if task has just been marked as completed
           if (
@@ -705,7 +776,7 @@ class TaskCacheNotifier
             //         .currentlyCreatingSpecs[event.taskId]
             //         ?.map((spec) {
             //           print(
-            //             "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
+            //             "[TaskCacheNotifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
             //           );
             //           if (spec.tempLocalId ==
             //               event.changes!["newPrintSpec"]["tempLocalId"]) {
@@ -725,7 +796,9 @@ class TaskCacheNotifier
       case TaskChangeType.assigneeRemoved:
       case TaskChangeType.nameUpdated:
         // RULE A: Updates are Sparse Mutations. If NOT found in memory, discard the payload.
-        if (detectedOldStatus != null) {
+        if (localTaskDetails != null) {
+          final detectedOldStatus = localTaskDetails.$1;
+
           final currentMemoryTask =
               updatedCachedTasks[detectedOldStatus]![event.taskId]!;
 
@@ -741,20 +814,7 @@ class TaskCacheNotifier
             updatedCachedTasks[detectedOldStatus]![event.taskId!] = newTaskData;
             stateDidMutate = true;
             print(
-              '[TaskNotifier] Idempotent in-place ID update completed for task ${event.taskId}',
-            );
-          } else {
-            // SCENARIO 2: Column Move / Structural Status Shift (RULE B & Idempotency Race Solver)
-            // Recalculate bounds cleanly across both targets to avoid visual duplicated line fragments
-            modifyCount(detectedOldStatus, targetProjectId, -1);
-            modifyCount(newTaskData.status, targetProjectId, 1);
-
-            // Wipe out both lanes entirely so infinite viewports sync atomic alignments cleanly
-            updatedCachedTasks[detectedOldStatus] = {};
-            updatedCachedTasks[newTaskData.status] = {};
-            stateDidMutate = true;
-            print(
-              '[TaskNotifier] Status sync mismatch solved. Evicted lanes: $detectedOldStatus -> ${newTaskData.status}',
+              '[TaskCacheNotifier] Idempotent in-place ID update completed for task ${event.taskId}',
             );
           }
 
@@ -765,7 +825,7 @@ class TaskCacheNotifier
           }
         } else {
           print(
-            '[TaskNotifier] Task ${event.taskId} resides in an unrendered dead region. Discarding payload.',
+            '[TaskCacheNotifier] Task ${event.taskId} resides in an unrendered dead region. Discarding payload.',
           );
         }
 
@@ -788,7 +848,8 @@ class TaskCacheNotifier
 
       case TaskChangeType.deleted:
         // RULE A: Deletions are Sparse Mutations. Only act if tracked in memory.
-        if (detectedOldStatus != null) {
+        if (localTaskDetails != null) {
+          final detectedOldStatus = localTaskDetails.$1;
           // RULE B: Adjust Total Counters Immediately & Evict Cache Column
           modifyCount(detectedOldStatus, targetProjectId, -1);
 
@@ -796,7 +857,7 @@ class TaskCacheNotifier
           updatedCachedTasks[detectedOldStatus] = {};
           stateDidMutate = true;
           print(
-            '[TaskNotifier] Task deleted. Count reduced. Evicted $detectedOldStatus lane.',
+            '[TaskCacheNotifier] Task deleted. Count reduced. Evicted $detectedOldStatus lane.',
           );
         }
 
