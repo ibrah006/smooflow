@@ -661,6 +661,65 @@ class TaskCacheNotifier
         break;
 
       case TaskChangeType.updated:
+        if (event.task != null) {
+          print(
+            "[Task Notifier] BEFORE currently creating specs: ${state.currentlyCreatingSpecs}",
+          );
+          final task = state.cachedTasks[detectedOldStatus]?[event.taskId];
+
+          // Task cached, replace it with updated
+          if (task != null) {
+            state.cachedTasks[detectedOldStatus!]![event.taskId!] = event.task!;
+            state = state;
+          }
+
+          print(
+            "[Task Notifier] AFTER currently creating specs: ${state.currentlyCreatingSpecs}",
+          );
+
+          print('[Task Notifier] new task event changes: ${event.changes}');
+
+          // Check if task has just been marked as completed
+          if (
+          // This means that it's a status update event
+          event.changes?["status"] != null &&
+              // And that the new status is completed
+              event.task!.status == TaskStatus.completed) {
+            ref
+                .read(projectByIdProvider(event.task!.projectId))!
+                .completedTasksCount++;
+          } else if (event.changes?["newPrintSpec"] != null) {
+            // This means that it's a new print spec event
+
+            state.initializeCurrentlyCreatingSpec(
+              event.task!.id,
+              event.changes!["newPrintSpec"]["tempLocalId"],
+              event.changes!["newPrintSpec"]["id"],
+            );
+
+            // ref.read(taskNotifierProvider).currentlyCreatingSpecs[event
+            //         .task!
+            //         .id] =
+            //     ref
+            //         .read(taskNotifierProvider)
+            //         .currentlyCreatingSpecs[event.taskId]
+            //         ?.map((spec) {
+            //           print(
+            //             "[Task Notifier] new print spec tempLocalId: ${event.changes!["newPrintSpec"]["tempLocalId"]}",
+            //           );
+            //           if (spec.tempLocalId ==
+            //               event.changes!["newPrintSpec"]["tempLocalId"]) {
+            //             spec.initializeId(event.changes!["newPrintSpec"]["id"]);
+            //           }
+
+            //           return spec;
+            //         })
+            //         .toList() ??
+            //     [];
+          }
+        }
+
+        break;
       case TaskChangeType.statusChanged:
       case TaskChangeType.assigneeAdded:
       case TaskChangeType.assigneeRemoved:

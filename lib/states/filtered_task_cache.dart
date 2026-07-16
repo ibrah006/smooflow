@@ -132,6 +132,24 @@ class FilteredTaskCacheState {
     }
   }
 
+  /// Updates the task in memory if it already exists, otherwise, ignores
+  /// returns true if updated
+  bool updateLocalTask(Task updatedTask) {
+    for (final entry in cachedTasks.entries) {
+      final tasks = entry.value;
+
+      if (tasks.containsKey(updatedTask.id)) {
+        tasks.remove(updatedTask.id);
+
+        cachedTasks[updatedTask.status]?[updatedTask.id] = updatedTask;
+        return true;
+      }
+    }
+
+    // Task wasn't cached, so do nothing.
+    return false;
+  }
+
   /// ---- Task Name change ----
 
   /// @returns the local event id
