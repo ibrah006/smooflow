@@ -538,26 +538,27 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   @override
   Widget build(BuildContext context) {
     final members = ref.watch(memberNotifierProvider).members;
-    final taskState = ref.watch(
-      taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
-    );
-    // final allTasks = ref.watch(taskNotifierProvider).tasks;
-    final isLoading = taskState.isLoadingCounts;
+    // final taskState = ref.watch(
+    //   taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
+    // );
+    final taskState = ref.watch(taskNotifierProvider);
+    final allTasks = ref.watch(taskNotifierProvider).tasks;
+    final isLoading = taskState.isLoading;
     final error = taskState.error;
     final connectionStatus = ref.watch(taskConnectionStatusProvider);
 
     // Applied for the selected filter
-    var serverTaskCount = 0;
-    taskState.totalCounts.forEach((status, projectTasks) {
-      if (widget.selectedProjectId != null) {
-        serverTaskCount += projectTasks[widget.selectedProjectId] ?? 0;
-      } else {
-        serverTaskCount +=
-            projectTasks.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
-      }
-    });
+    // var serverTaskCount = 0;
+    // taskState.totalCounts.forEach((status, projectTasks) {
+    //   if (widget.selectedProjectId != null) {
+    //     serverTaskCount += projectTasks[widget.selectedProjectId] ?? 0;
+    //   } else {
+    //     serverTaskCount +=
+    //         projectTasks.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+    //   }
+    // });
 
-    final isTasksEmpty = serverTaskCount == 0;
+    final isTasksEmpty = allTasks.isEmpty; //serverTaskCount == 0;
 
     final effective = _effectiveVisible;
 
@@ -923,7 +924,15 @@ class _ShimmerTaskRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return contentBuilder(context, (context, column) {
-      final slot = slots[column];
+      // Temporary fix for column coming in as: -1 or slots.length
+      late final _ColSlot slot;
+      if (column >= slots.length) {
+        slot = slots.last;
+      } else if (column < 0) {
+        slot = slots.first;
+      } else {
+        slot = slots[column];
+      }
       if (slot.type != _SlotType.column) return const SizedBox.shrink();
 
       return Container(
@@ -952,7 +961,14 @@ Widget _headerCell(
   void Function(String colId, double delta) onResizeColumn,
   VoidCallback onResizeEnd,
 ) {
-  final slot = slots[column];
+  late final _ColSlot slot;
+  if (column >= slots.length) {
+    slot = slots.last;
+  } else if (column < 0) {
+    slot = slots.first;
+  } else {
+    slot = slots[column];
+  }
 
   switch (slot.type) {
     case _SlotType.edgePadding:
