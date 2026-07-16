@@ -250,6 +250,9 @@ class TaskCacheNotifier
 
   Future<Task?> getTaskById(int taskId) async {
     try {
+      final t = state.getLocalTask(taskId);
+      if (t != null) return t;
+
       // 1. Fetch the absolute fresh entity from your database repository
       final fetchedTask = await _repo.getTaskById(taskId: taskId);
       if (fetchedTask == null) return null;

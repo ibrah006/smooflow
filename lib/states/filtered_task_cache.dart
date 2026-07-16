@@ -127,7 +127,8 @@ class FilteredTaskCacheState {
 
       return task;
     } catch (e) {
-      throw "Task with ID $taskId not found in memory";
+      // throw "Task with ID $taskId not found in memory";
+      return null;
     }
   }
 
