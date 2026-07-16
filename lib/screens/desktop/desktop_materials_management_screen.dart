@@ -25,7 +25,8 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/extensions/stock_transaction_list_ext.dart';
 import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
+// import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/action_buttons.dart';
 import 'package:smooflow/screens/desktop/components/dialog_buttons.dart';
 import 'package:smooflow/screens/desktop/components/field_label.dart';
@@ -34,6 +35,7 @@ import 'package:smooflow/screens/desktop/components/notification_toast.dart';
 import 'package:smooflow/screens/desktop/components/smoofield.dart';
 import 'package:smooflow/screens/desktop/components/stock_pill.dart';
 import 'package:smooflow/screens/desktop/helpers/fmt_transaction_note.dart';
+import 'package:smooflow/states/task.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 
@@ -2086,7 +2088,9 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
   void initState() {
     super.initState();
     if (widget.txn.taskId != null) {
-      _taskFuture = ref.read(taskByIdProvider(widget.txn.taskId!));
+      _taskFuture = ref
+          .read(taskCacheProvider(TaskFilter.empty).notifier)
+          .getTaskById(widget.txn.taskId!);
       _taskFuture!.then((task) {
         if (task != null && mounted) {
           setState(() {

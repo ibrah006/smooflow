@@ -246,7 +246,7 @@ class FilteredTaskCacheState {
     final task = getLocalTask(taskId);
 
     if (task != null) {
-      getLocalTask(taskId)!
+      task
         ..unreadCount = unreadCount ?? task.unreadCount + (incrementCount ?? 0)
         ..messageCount += 1
         ..lastMessageId = messageId
