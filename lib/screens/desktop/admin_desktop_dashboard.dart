@@ -37,7 +37,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
+// import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
 import 'package:smooflow/screens/desktop/components/dashboard_skeleton.dart';
@@ -220,7 +220,7 @@ class _AdminDesktopDashboardScreenState
     Future.microtask(() async {
       // Load in message notifier provider and task notifier provider so that even, not being in task list view, our state is up to date
       ref.read(messageNotifierProvider.notifier);
-      ref.read(taskNotifierProvider.notifier);
+      // ref.read(taskNotifierProvider.notifier);
 
       try {
         await Future.wait([
@@ -387,19 +387,18 @@ class _AdminDesktopDashboardScreenState
   @override
   Widget build(BuildContext context) {
     // TODO: Not very performance efficient
-    ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
-      previous,
-      next,
-    ) {
-      next.whenData((event) {
-        // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
-        Future.delayed(Duration(seconds: 5)).then((value) {
-          if (mounted) setState(() {});
-        });
-      });
-    });
+    // ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
+    //   previous,
+    //   next,
+    // ) {
+    //   next.whenData((event) {
+    //     // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
+    //     Future.delayed(Duration(seconds: 5)).then((value) {
+    //       if (mounted) setState(() {});
+    //     });
+    //   });
+    // });
 
-    ;
     return GestureDetector(
       onTap: () {
         _addTaskFocusNode.unfocus();
@@ -615,18 +614,12 @@ class _AdminDesktopDashboardScreenState
   }
 
   void _showTaskModal() {
-    final nextId =
-        (_tasks.isEmpty
-            ? 0
-            : _tasks.map((t) => t.id).reduce((a, b) => a > b ? a : b)) +
-        1;
     showDialog(
       context: context,
       builder:
           (_) => TaskModal(
             projects: _projects,
             preselectedProjectId: _selectedProjectId,
-            nextId: nextId,
           ),
     );
     setState(() {});
