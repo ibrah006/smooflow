@@ -705,14 +705,14 @@ class TaskCacheNotifier
               );
               updatedCachedTasks.putIfAbsent(event.task!.status, () => {});
 
-              final statusTasks = updatedCachedTasks[event.task!.status]!;
+              final newStatusTasks = updatedCachedTasks[event.task!.status]!;
 
               final taskEvent = event.task!;
 
               // Task's new status updated tasks entries
               final List<Task> updatedStatusTasks = [];
               bool hasAddedTaskToNewStatus = false;
-              for (final taskEntry in statusTasks.entries) {
+              for (final taskEntry in newStatusTasks.entries) {
                 final t = taskEntry.value;
                 final i = taskEntry.key;
 
@@ -720,7 +720,7 @@ class TaskCacheNotifier
                   updatedStatusTasks.insert(i, taskEvent);
                   // Add the remaining of the status's tasks
                   updatedStatusTasks.addAll(
-                    statusTasks.values.toList().sublist(i + 1),
+                    newStatusTasks.values.toList().sublist(i),
                   );
                   hasAddedTaskToNewStatus = true;
                   break;
@@ -730,7 +730,9 @@ class TaskCacheNotifier
 
               if (!hasAddedTaskToNewStatus) {
                 updatedStatusTasks.add(event.task!);
+                hasAddedTaskToNewStatus = true;
               }
+
               updatedCachedTasks[event.task!.status] =
                   updatedStatusTasks.asMap();
               // [event.taskId!] =
