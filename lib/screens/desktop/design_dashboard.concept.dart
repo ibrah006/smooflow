@@ -396,7 +396,6 @@ class _DesignDashboardScreenState extends ConsumerState<DesignDashboardScreen> {
           (_) => TaskModal(
             projects: _projects,
             preselectedProjectId: _selectedProjectId,
-            nextId: nextId,
           ),
     );
 
