@@ -37,6 +37,7 @@ import 'package:smooflow/providers/material_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
 // import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/accounts_management_screen.dart';
 import 'package:smooflow/screens/desktop/clients_page.dart';
@@ -58,6 +59,7 @@ import 'package:smooflow/screens/desktop/manage_members_page.dart';
 import 'package:smooflow/screens/desktop/desktop_projects_screen.dart';
 import 'package:smooflow/screens/desktop/settings_page.dart';
 import 'package:smooflow/screens/printers_management_screen.dart';
+import 'package:smooflow/states/task.dart';
 
 const sidebarW = 220.0;
 
@@ -169,13 +171,13 @@ class _AdminDesktopDashboardScreenState
     detailPanelProjectId = null;
   });
 
-  Task? get _selectedTask =>
-      _selectedTaskId == null
-          ? null
-          : _tasks.cast<Task?>().firstWhere(
-            (t) => t!.id == _selectedTaskId,
-            orElse: () => null,
-          );
+  Task? get _selectedTask {
+    return _selectedTaskId == null
+        ? null
+        : ref
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(_selectedTaskId!);
+  }
 
   Future<void> _advanceTask(Task advancedTask) async {
     // final next = advancedTask.status;
@@ -189,11 +191,8 @@ class _AdminDesktopDashboardScreenState
     setState(() {});
   }
 
-  List<Task> get _pipelineTasks => ref.watch(taskNotifierProvider).tasks;
-
   List<Project> get _projects => ref.watch(projectNotifierProvider);
   List<Member> get _members => ref.watch(memberNotifierProvider).members;
-  List<Task> get _tasks => ref.watch(taskNotifierProvider).tasks;
 
   // List<Task> get _visibleTasks => _tasks.where((t) {
   //   if (_selectedProjectId != null && t.projectId != _selectedProjectId) return false;
@@ -415,7 +414,6 @@ class _AdminDesktopDashboardScreenState
                 currentView: _view,
                 selectedProjectId: _selectedProjectId,
                 projects: _projects,
-                tasks: _pipelineTasks,
                 members: _members,
                 isLoading: _isInitLoading,
                 isCollapsed: _isSidebarCollapsed,
