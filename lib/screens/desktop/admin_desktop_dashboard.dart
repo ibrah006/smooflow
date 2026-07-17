@@ -686,6 +686,34 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
     }
   }
 
+  int get allTaskCounts {
+    int count = 0;
+    final totalCounts =
+        ref.watch(taskCacheProvider(TaskFilter.empty)).totalCounts;
+
+    for (final statusCounts in totalCounts.entries) {
+      for (final projectCounts in statusCounts.value.entries) {
+        count += projectCounts.value;
+      }
+    }
+
+    return count;
+  }
+
+  int projectTaskCounts(String projectId) {
+    int count = 0;
+    final totalCounts =
+        ref.watch(taskCacheProvider(TaskFilter.empty)).totalCounts;
+
+    for (final statusCounts in totalCounts.entries) {
+      if (statusCounts.value.containsKey(projectId)) {
+        count += statusCounts.value[projectId]!;
+      }
+    }
+
+    return count;
+  }
+
   @override
   Widget build(BuildContext context) {
     final pinnedProjectsList =
@@ -826,8 +854,8 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                           widget.currentView == _AdminView.list &&
                           widget.selectedProjectId == null,
                       badgeWidget:
-                          widget.tasks.isNotEmpty
-                              ? Text(widget.tasks.length.toString())
+                          allTaskCounts > 0
+                              ? Text(allTaskCounts.toString())
                               : null,
                       onTap: () {
                         widget.onProjectSelected(null);
@@ -980,10 +1008,7 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                         padding: EdgeInsets.zero,
                         children:
                             pinnedProjectsList.map((p) {
-                              final cnt =
-                                  widget.tasks
-                                      .where((t) => t.projectId == p.id)
-                                      .length;
+                              final cnt = projectTaskCounts(p.id);
                               final isActive =
                                   widget.selectedProjectId == p.id &&
                                   widget.currentView == _AdminView.list;
