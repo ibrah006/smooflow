@@ -628,7 +628,6 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
   final List<Project> projects;
-  final List<Task> tasks;
   final List<Member> members;
   final ValueChanged<_AdminView> onViewChanged;
   final ValueChanged<String?> onProjectSelected;
@@ -643,7 +642,6 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.currentView,
     required this.selectedProjectId,
     required this.projects,
-    required this.tasks,
     required this.members,
     required this.onViewChanged,
     required this.onProjectSelected,
