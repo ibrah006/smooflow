@@ -774,6 +774,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
     // 2. Build the structural table map purely using layout tokens
     final List<_TableItem> tableItems = [];
 
+    int totalServerTaskCount = 0;
     for (final status in TaskStatus.values) {
       // Pull total rows allocated on the server for this status lane
 
@@ -792,10 +793,16 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
 
       if (!isCollapsed) {
         // Allocate empty placeholder row indices based on total server dimensions
+        totalServerTaskCount += serverRowCount;
         for (int i = 0; i < serverRowCount; i++) {
           tableItems.add(_TaskRowPlaceholderItem(status, i));
         }
       }
+    }
+
+    // Proper handling of task table empty state
+    if (totalServerTaskCount == 0) {
+      return _EmptyState();
     }
 
     return Container(
