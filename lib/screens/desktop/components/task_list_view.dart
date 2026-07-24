@@ -649,8 +649,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                           _loadTasks();
                         },
                       )
-                      : isTasksEmpty
-                      ? _EmptyState()
                       : _TaskTable(
                         effective: effective,
                         // tasks: reversedTasks,
@@ -779,6 +777,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
     for (final status in TaskStatus.values) {
       // Pull total rows allocated on the server for this status lane
 
+      // server row count for the [status]
       late final int serverRowCount;
       if (activeProjectId == null) {
         serverRowCount =
@@ -828,7 +827,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
         rowBuilder: (context, row, contentBuilder) {
           final item = tableItems[row];
 
-          // Render Section Header Item (Remains fully synchronous)
+          // Render Section Header Item
           if (item is _SectionHeaderItem) {
             return _StatusSectionHeader(
               status: item.status,
@@ -847,64 +846,18 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
             );
           }
 
-          // Render Lazy-Loaded / Paginated Task Row
+          // Render Paginated Row (Delegated to dedicated ConsumerWidget)
           final placeholder = item as _TaskRowPlaceholderItem;
-          final status = placeholder.status;
-          final indexWithinStatus = placeholder.indexWithinStatus;
 
-          // 3. Trigger network page request gracefully after layout pass completes
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            print("mounted: ${mounted}");
-            if (mounted) {
-              ref
-                  .read(taskCacheProvider(widget.filter).notifier)
-                  .loadPage(
-                    status: status,
-                    indexWithinStatus: indexWithinStatus,
-                  );
-            }
-          });
-
-          // 4. Safely watch this specific structural slot coordinate inside the cache
-          final Task? t = ref.watch(
-            taskCacheProvider(
-              widget.filter,
-            ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
-          );
-
-          // 5. Render standard Shimmer placeholder while network page downloads
-          if (t == null) {
-            return _ShimmerTaskRow(
-              slots: slots,
-              contentBuilder: contentBuilder,
-            );
-          }
-
-          // 6. Normal Data Hydration (Once cache hits warm data state)
-          final p =
-              widget.projects.cast<Project?>().firstWhere(
-                (pr) => pr!.id == t.projectId.toString(),
-                orElse: () => null,
-              ) ??
-              widget.projects.firstOrNull;
-
-          Member? m;
-          try {
-            m = widget.members.firstWhere(
-              (mem) => t.assignees.contains(mem.id),
-            );
-          } catch (_) {
-            m = null;
-          }
-
-          return _TaskRow(
-            key: ValueKey(t.id),
-            taskId: t.id,
-            project: p,
-            assignee: m,
+          return _PaginatedTaskRow(
+            status: placeholder.status,
+            indexWithinStatus: placeholder.indexWithinStatus,
+            filter: widget.filter,
+            projects: widget.projects,
+            members: widget.members,
+            selectedTaskId: widget.selectedTaskId,
+            onTaskSelected: widget.onTaskSelected,
             slots: slots,
-            isSelected: widget.selectedTaskId == t.id,
-            onTap: () => widget.onTaskSelected(t.id, t.projectId),
             contentBuilder: contentBuilder,
           );
         },
@@ -2186,6 +2139,81 @@ class _SectionLabel extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK ROW
 //
+
+class _PaginatedTaskRow extends ConsumerWidget {
+  final TaskStatus status;
+  final int indexWithinStatus;
+  final TaskFilter filter;
+  final List<Project> projects;
+  final List<Member> members;
+  final int? selectedTaskId;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
+  final List<_ColSlot> slots;
+  final TableRowContentBuilder contentBuilder;
+
+  const _PaginatedTaskRow({
+    required this.status,
+    required this.indexWithinStatus,
+    required this.filter,
+    required this.projects,
+    required this.members,
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+    required this.slots,
+    required this.contentBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Properly watch ONLY this specific slot in Riverpod's dependency tree
+    final task = ref.watch(
+      taskCacheProvider(
+        filter,
+      ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
+    );
+
+    // 2. Trigger lazy page download if data isn't in cache yet
+    if (task == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          ref
+              .read(taskCacheProvider(filter).notifier)
+              .loadPage(status: status, indexWithinStatus: indexWithinStatus);
+        }
+      });
+
+      return _ShimmerTaskRow(slots: slots, contentBuilder: contentBuilder);
+    }
+
+    // 3. Hydrate task row once cached data arrives
+    final p =
+        projects.cast<Project?>().firstWhere(
+          (pr) => pr!.id == task.projectId.toString(),
+          orElse: () => null,
+        ) ??
+        projects.firstOrNull;
+
+    Member? m;
+    try {
+      m = members.firstWhere((mem) => task.assignees.contains(mem.id));
+    } catch (_) {
+      m = null;
+    }
+
+    return _TaskRow(
+      key: ValueKey(task.id),
+      taskId: task.id,
+      project: p,
+      assignee: m,
+      slots: slots,
+      isSelected: selectedTaskId == task.id,
+      onTap: () => onTaskSelected(task.id, task.projectId),
+      contentBuilder: contentBuilder,
+      task: task,
+    );
+  }
+}
+
 // Now receives the `contentBuilder` handed to us by TableView.builder's
 // rowBuilder, instead of doing its own column layout via _ColRow.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2201,6 +2229,7 @@ class _TaskRow extends ConsumerStatefulWidget {
     Widget Function(BuildContext context, int column) cellBuilder,
   )
   contentBuilder;
+  final Task task;
 
   const _TaskRow({
     super.key,
@@ -2211,6 +2240,7 @@ class _TaskRow extends ConsumerStatefulWidget {
     required this.isSelected,
     required this.onTap,
     required this.contentBuilder,
+    required this.task,
   });
 
   @override
@@ -2226,14 +2256,13 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
   @override
   Widget build(BuildContext context) {
-    final t = ref.watch(taskByIdProviderSimple(widget.taskId))!;
     final p = widget.project;
     final m = widget.assignee;
     final now = DateTime.now();
-    final s = stageInfo(t.status);
-    final d = t.date ?? t.createdAt;
+    final s = stageInfo(widget.task.status);
+    final d = widget.task.date ?? widget.task.createdAt;
 
-    final isCompleted = t.status == TaskStatus.completed;
+    final isCompleted = widget.task.status == TaskStatus.completed;
 
     final dateFormatted = fmtDate(d);
     final dateParts = dateFormatted.split(' ');
@@ -2282,7 +2311,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             context,
             (context, column) => _cellFor(
               widget.slots[column],
-              t,
+              widget.task,
               p,
               m,
               s,
@@ -2310,7 +2339,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     }
 
     final colId = slot.colId!;
-    final specs = t.printSpecs;
+    final specs = widget.task.printSpecs;
 
     TextStyle completedBody(TextStyle base) =>
         isCompleted
@@ -2322,7 +2351,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         children: [
           Flexible(
             child: Text(
-              t.name,
+              widget.task.name,
               overflow: TextOverflow.ellipsis,
               style: completedBody(
                 TextStyle(
@@ -2333,11 +2362,14 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               ),
             ),
           ),
-          if (t.messageCount > 0) ...[
+          if (widget.task.messageCount > 0) ...[
             const SizedBox(width: 6),
             Opacity(
               opacity: isCompleted ? 0.6 : 1.0,
-              child: _MessageIndicator(count: t.messageCount, unread: false),
+              child: _MessageIndicator(
+                count: widget.task.messageCount,
+                unread: false,
+              ),
             ),
           ],
         ],
