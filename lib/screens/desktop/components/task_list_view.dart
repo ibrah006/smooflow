@@ -545,7 +545,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     final allTasks = ref.watch(taskNotifierProvider).tasks;
     final isLoading = taskState.isLoading;
     final error = taskState.error;
-    final connectionStatus = ref.watch(taskConnectionStatusProvider);
+    final connectionStatus = ref.watch(taskCacheConnectionStatusProvider);
 
     // Applied for the selected filter
     // var serverTaskCount = 0;
@@ -854,6 +854,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
 
           // 3. Trigger network page request gracefully after layout pass completes
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            print("mounted: ${mounted}");
             if (mounted) {
               ref
                   .read(taskCacheProvider(widget.filter).notifier)

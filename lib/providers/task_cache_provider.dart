@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/change_events/task_change_event.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/states/filtered_task_cache.dart';
@@ -63,5 +64,21 @@ final selectedTaskProvider = Provider.family<Task?, TaskFilter>((ref, filter) {
 final isCacheLoadingProvider = Provider.family<bool, TaskFilter>((ref, filter) {
   return ref.watch(
     taskCacheProvider(filter).select((state) => state.isLoadingCounts),
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WEBSOCKET PROVIDERS (integrated into taskCacheProvider)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Connection status stream provider
+final taskCacheConnectionStatusProvider = StreamProvider<ConnectionStatus>((
+  ref,
+) {
+  final notifier = ref.watch(taskCacheProvider(TaskFilter.empty).notifier);
+  // Create a stream from the TaskNotifier's connection status changes
+  return Stream.periodic(
+    Duration(milliseconds: 500),
+    (_) => notifier.connectionStatus,
   );
 });
