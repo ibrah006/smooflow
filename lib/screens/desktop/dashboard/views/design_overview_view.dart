@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/dashboard/design_overview.dart';
+import 'package:smooflow/screens/desktop/dashboard/components/dashboard_components.dart';
 import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
-import 'package:smooflow/screens/desktop/dashboard/widgets/dashboard_widgets.dart';
 
 class DesignOverviewView extends StatelessWidget {
   final DesignOverview data;
