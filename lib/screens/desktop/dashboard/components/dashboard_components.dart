@@ -1,183 +1,56 @@
 // lib/screens/desktop/dashboard/widgets/dashboard_widgets.dart
 //
-// Shared building blocks used across all role dashboards. Keeping these
-// generic means each role screen focuses purely on data composition, not
-// re-implementing card chrome.
+// Every recipe here is copied from task_list_view.dart, not reinvented:
+//   - counter pill        -> _StatusSectionHeader's task-count chip
+//   - empty state          -> _EmptyState (icon-in-box + title + subtitle)
+//   - error state           -> _ErrorState (same shape, red variant)
+//   - hover-reveal button   -> _StatusSectionHeader's add-task button
+//   - chevron               -> AnimatedRotation 0 / -0.25turns, 200ms
+//   - soft badge/chip       -> color.withOpacity(0.1) bg + 0.3 border
+//   - card surface          -> white, slate200 border, shadowSm/Md, r/rLg
+//   - row height rhythm     -> _kRowHeight (46) reused for list rows
 
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/dashboard/dashboard_models.dart';
 import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
 
-// ── Page scaffold pieces ──────────────────────────────────────────────────
+const double kDashRowHeight = 46.0;
 
-/// Section eyebrow + title row used above every card group.
-class DashboardSectionHeader extends StatelessWidget {
+// ── Section header (eyebrow-free — matches task list's direct title style) ─
+
+/// Section title row. task_list_view doesn't use uppercase eyebrows for its
+/// section headers (status pills use sentence case, w700, ink2, -0.1 letter
+/// spacing) — matching that instead of inventing an eyebrow convention.
+class DashSectionHeader extends StatelessWidget {
   final String title;
-  final String? trailingLabel;
-  final VoidCallback? onTrailingTap;
+  final int? count;
+  final Color? accent;
 
-  const DashboardSectionHeader({
+  const DashSectionHeader({
     super.key,
     required this.title,
-    this.trailingLabel,
-    this.onTrailingTap,
+    this.count,
+    this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: DashboardTokens.space12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title.toUpperCase(), style: DashboardTokens.sectionEyebrow),
-          if (trailingLabel != null)
-            InkWell(
-              onTap: onTrailingTap,
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Text(
-                  trailingLabel!,
-                  style: DashboardTokens.bodySm.copyWith(
-                    color: DashboardTokens.info,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Generic card container with consistent chrome.
-class DashboardCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const DashboardCard({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(DashboardTokens.space20),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: DashboardTokens.surface,
-        borderRadius: BorderRadius.circular(DashboardTokens.radiusMd),
-        border: Border.all(color: DashboardTokens.border),
-        boxShadow: DashboardTokens.cardShadow,
-      ),
-      child: child,
-    );
-  }
-}
-
-/// Empty-state placeholder, used inside any card/list that has no data.
-/// Written as direction, not apology — tells the viewer what the absence means.
-class DashboardEmptyState extends StatelessWidget {
-  final String message;
-  final IconData icon;
-
-  const DashboardEmptyState({
-    super.key,
-    required this.message,
-    this.icon = Icons.check_circle_outline,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: DashboardTokens.space24),
-      child: Column(
-        children: [
-          Icon(icon, size: 28, color: DashboardTokens.textTertiary),
-          const SizedBox(height: DashboardTokens.space8),
           Text(
-            message,
-            style: DashboardTokens.bodySm,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── KPI stat card ────────────────────────────────────────────────────────
-
-class KpiStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? accentColor;
-  final IconData? icon;
-  final String? deltaLabel;
-  final bool deltaPositive;
-
-  const KpiStat({
-    super.key,
-    required this.label,
-    required this.value,
-    this.accentColor,
-    this.icon,
-    this.deltaLabel,
-    this.deltaPositive = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = accentColor ?? DashboardTokens.textPrimary;
-    return DashboardCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: DashboardTokens.caption),
-              if (icon != null)
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 14, color: accent),
-                ),
-            ],
-          ),
-          const SizedBox(height: DashboardTokens.space12),
-          Text(value, style: DashboardTokens.kpiNumber),
-          if (deltaLabel != null) ...[
-            const SizedBox(height: DashboardTokens.space4),
-            Row(
-              children: [
-                Icon(
-                  deltaPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                  size: 12,
-                  color:
-                      deltaPositive
-                          ? DashboardTokens.success
-                          : DashboardTokens.danger,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  deltaLabel!,
-                  style: DashboardTokens.bodySm.copyWith(
-                    color:
-                        deltaPositive
-                            ? DashboardTokens.success
-                            : DashboardTokens.danger,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: DashTheme.ink2,
+              letterSpacing: -0.1,
             ),
+          ),
+          if (count != null) ...[
+            const SizedBox(width: 8),
+            DashCounterPill(count: count!, accent: accent),
           ],
         ],
       ),
@@ -185,24 +58,277 @@ class KpiStat extends StatelessWidget {
   }
 }
 
-// ── Pipeline strip — the dashboard's signature element ──────────────────
+/// The exact counter-pill recipe from _StatusSectionHeader: rounded-99,
+/// slate200 bg, slate500 w700 10px text. Optionally tinted by an accent.
+class DashCounterPill extends StatelessWidget {
+  final int count;
+  final Color? accent;
+
+  const DashCounterPill({super.key, required this.count, this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final tinted = accent != null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: tinted ? DashTheme.accentSoft(accent!) : DashTheme.slate200,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        '$count',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: tinted ? accent : DashTheme.slate500,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Card surface ─────────────────────────────────────────────────────────
+
+class DashCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final bool elevated;
+
+  const DashCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(18),
+    this.elevated = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: DashTheme.white,
+        borderRadius: BorderRadius.circular(DashTheme.rLg),
+        border: Border.all(color: DashTheme.slate200),
+        boxShadow: [elevated ? DashTheme.shadowMd : DashTheme.shadowSm],
+      ),
+      child: child,
+    );
+  }
+}
+
+// ── Empty / error states — copied from _EmptyState / _ErrorState ─────────
+
+class DashEmptyState extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color? tint;
+
+  const DashEmptyState({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.icon = Icons.inbox_outlined,
+    this.tint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = tint ?? DashTheme.slate400;
+    final bgColor =
+        tint != null ? DashTheme.accentSoft(tint!) : DashTheme.slate100;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 24, color: iconColor),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: DashTheme.ink3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 13, color: DashTheme.slate400),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DashErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const DashErrorState({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: DashTheme.red50,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 28,
+              color: DashTheme.red,
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Failed to load dashboard',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: DashTheme.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 13, color: DashTheme.slate500),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DashTheme.blue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── KPI tile ─────────────────────────────────────────────────────────────
 //
-// Renders the job pipeline as a connected horizontal band of segments,
-// each sized by its share of tasks and colored by status. This echoes the
-// physical reality of a print job moving through stages, and doubles as
-// a tappable filter. Used by Admin (full pipeline) and reused in a
-// truncated form by Design/Production for their slice of it.
+// Not present verbatim in task_list_view (it has no KPI concept), so this
+// is new — but built strictly from existing tokens: card surface recipe,
+// soft-badge icon chip, ink/slate type scale, tight negative letter-spacing
+// on the big number to match the title's -0.1..-0.3 convention.
+
+class DashKpiTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color accent;
+  final bool alert;
+
+  const DashKpiTile({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.accent,
+    this.alert = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = alert ? DashTheme.red : accent;
+    return DashCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: DashTheme.accentSoft(color),
+                  borderRadius: BorderRadius.circular(DashTheme.r),
+                ),
+                child: Icon(icon, size: 15, color: color),
+              ),
+              if (alert)
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: DashTheme.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+              height: 1.05,
+              color: DashTheme.ink,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: DashTheme.slate500,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Pipeline strip — signature element, built from status colors + pills ──
 
 class PipelineStrip extends StatelessWidget {
   final List<TaskStatusCount> statusCounts;
   final void Function(String status)? onSegmentTap;
-  final double height;
 
   const PipelineStrip({
     super.key,
     required this.statusCounts,
     this.onSegmentTap,
-    this.height = 40,
   });
 
   @override
@@ -212,23 +338,23 @@ class PipelineStrip extends StatelessWidget {
 
     if (total == 0 || nonEmpty.isEmpty) {
       return Container(
-        height: height,
+        height: 38,
         decoration: BoxDecoration(
-          color: DashboardTokens.surfaceSunken,
-          borderRadius: BorderRadius.circular(DashboardTokens.radiusSm),
+          color: DashTheme.slate100,
+          borderRadius: BorderRadius.circular(DashTheme.r),
         ),
         alignment: Alignment.center,
-        child: Text(
+        child: const Text(
           'No active tasks in the pipeline',
-          style: DashboardTokens.bodySm,
+          style: TextStyle(fontSize: 12, color: DashTheme.slate400),
         ),
       );
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(DashboardTokens.radiusSm),
+      borderRadius: BorderRadius.circular(DashTheme.r),
       child: SizedBox(
-        height: height,
+        height: 38,
         child: Row(
           children:
               nonEmpty.map((s) {
@@ -246,7 +372,7 @@ class PipelineStrip extends StatelessWidget {
                         color: taskStatusColor(s.status),
                         alignment: Alignment.center,
                         child:
-                            flex > 60
+                            flex > 55
                                 ? Text(
                                   '${s.count}',
                                   style: const TextStyle(
@@ -267,26 +393,24 @@ class PipelineStrip extends StatelessWidget {
   }
 }
 
-/// Legend row shown beneath the pipeline strip.
 class PipelineLegend extends StatelessWidget {
   final List<TaskStatusCount> statusCounts;
-
   const PipelineLegend({super.key, required this.statusCounts});
 
   @override
   Widget build(BuildContext context) {
     final nonEmpty = statusCounts.where((s) => s.count > 0).toList();
     return Wrap(
-      spacing: DashboardTokens.space16,
-      runSpacing: DashboardTokens.space8,
+      spacing: 14,
+      runSpacing: 8,
       children:
           nonEmpty.map((s) {
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   decoration: BoxDecoration(
                     color: taskStatusColor(s.status),
                     shape: BoxShape.circle,
@@ -295,7 +419,11 @@ class PipelineLegend extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${taskStatusDisplayName(s.status)} · ${s.count}',
-                  style: DashboardTokens.bodySm,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: DashTheme.slate500,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             );
@@ -304,104 +432,32 @@ class PipelineLegend extends StatelessWidget {
   }
 }
 
-// ── Task row (compact, list-friendly) ────────────────────────────────────
+// ── Task row ──────────────────────────────────────────────────────────────
+//
+// Built at kDashRowHeight (46 — same rhythm as _kRowHeight), hover-tinted
+// with the app's exact hoverBg/hoverBorder, status dot instead of a full
+// column, due-date chip using the same soft-badge recipe.
 
-class TaskRow extends StatelessWidget {
+class DashTaskRow extends StatefulWidget {
   final TaskSummary task;
   final VoidCallback? onTap;
   final bool showPrinter;
-  final bool showDueDate;
   final Widget? trailing;
 
-  const TaskRow({
+  const DashTaskRow({
     super.key,
     required this.task,
     this.onTap,
     this.showPrinter = false,
-    this.showDueDate = true,
     this.trailing,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final overdue =
-        task.dueDate != null &&
-        DateTime.now().isAfter(task.dueDate!) &&
-        task.status != 'completed';
+  State<DashTaskRow> createState() => _DashTaskRowState();
+}
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(DashboardTokens.radiusSm),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DashboardTokens.space12,
-          vertical: DashboardTokens.space8,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              margin: const EdgeInsets.only(right: DashboardTokens.space12),
-              decoration: BoxDecoration(
-                color: taskStatusColor(task.status),
-                shape: BoxShape.circle,
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.name,
-                    style: DashboardTokens.bodyMd.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    task.projectName,
-                    style: DashboardTokens.caption,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (showPrinter && task.printerName != null) ...[
-              Icon(
-                Icons.print_outlined,
-                size: 13,
-                color: DashboardTokens.textTertiary,
-              ),
-              const SizedBox(width: 4),
-              Text(task.printerName!, style: DashboardTokens.caption),
-              const SizedBox(width: DashboardTokens.space16),
-            ],
-            if (task.unreadCount > 0) ...[
-              _UnreadPill(count: task.unreadCount),
-              const SizedBox(width: DashboardTokens.space12),
-            ],
-            if (showDueDate && task.dueDate != null)
-              Text(
-                _formatDueDate(task.dueDate!),
-                style: DashboardTokens.bodySm.copyWith(
-                  color:
-                      overdue
-                          ? DashboardTokens.danger
-                          : DashboardTokens.textSecondary,
-                  fontWeight: overdue ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            if (trailing != null) ...[
-              const SizedBox(width: DashboardTokens.space12),
-              trailing!,
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+class _DashTaskRowState extends State<DashTaskRow> {
+  bool _hovered = false;
 
   String _formatDueDate(DateTime date) {
     final now = DateTime.now();
@@ -418,49 +474,167 @@ class TaskRow extends StatelessWidget {
     if (diff <= 7) return 'In ${diff}d';
     return '${date.day}/${date.month}/${date.year.toString().substring(2)}';
   }
-}
-
-class _UnreadPill extends StatelessWidget {
-  final int count;
-  const _UnreadPill({required this.count});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: DashboardTokens.info,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$count',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
+    final task = widget.task;
+    final overdue =
+        task.dueDate != null &&
+        DateTime.now().isAfter(task.dueDate!) &&
+        task.status != 'completed';
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor:
+          widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: kDashRowHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: _hovered ? DashTheme.hoverBg : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(color: DashTheme.colDivider, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 11),
+                decoration: BoxDecoration(
+                  color: taskStatusColor(task.status),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      task.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: DashTheme.ink3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      task.projectName,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: DashTheme.slate400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.showPrinter && task.printerName != null) ...[
+                const Icon(
+                  Icons.print_outlined,
+                  size: 13,
+                  color: DashTheme.slate400,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  task.printerName!,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: DashTheme.slate500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 14),
+              ],
+              if (task.unreadCount > 0) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: DashTheme.blue,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '${task.unreadCount}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (task.dueDate != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: overdue ? DashTheme.red50 : DashTheme.slate100,
+                    borderRadius: BorderRadius.circular(99),
+                    border:
+                        overdue
+                            ? Border.all(color: DashTheme.red.withOpacity(0.3))
+                            : null,
+                  ),
+                  child: Text(
+                    _formatDueDate(task.dueDate!),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: overdue ? DashTheme.red : DashTheme.slate500,
+                    ),
+                  ),
+                ),
+              if (widget.trailing != null) ...[
+                const SizedBox(width: 12),
+                widget.trailing!,
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// A vertically-stacked list of tasks inside a card, with a header count
-/// and an empty state fallback.
-class TaskListCard extends StatelessWidget {
+/// Card wrapping a titled list of task rows, with the counter-pill header
+/// and empty state baked in.
+class DashTaskListCard extends StatelessWidget {
   final String title;
   final List<TaskSummary> tasks;
-  final String emptyMessage;
+  final String emptyTitle;
+  final String emptySubtitle;
+  final IconData emptyIcon;
   final bool showPrinter;
   final int maxVisible;
+  final Color? accent;
   final void Function(TaskSummary)? onTaskTap;
 
-  const TaskListCard({
+  const DashTaskListCard({
     super.key,
     required this.title,
     required this.tasks,
-    this.emptyMessage = 'Nothing here right now',
+    this.emptyTitle = 'Nothing here',
+    this.emptySubtitle = 'This list is clear for now',
+    this.emptyIcon = Icons.inbox_outlined,
     this.showPrinter = false,
     this.maxVisible = 6,
+    this.accent,
     this.onTaskTap,
   });
 
@@ -469,29 +643,40 @@ class TaskListCard extends StatelessWidget {
     final visible = tasks.take(maxVisible).toList();
     final overflow = tasks.length - visible.length;
 
-    return DashboardCard(
-      padding: const EdgeInsets.symmetric(vertical: DashboardTokens.space16),
+    return DashCard(
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DashboardTokens.space16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: DashboardTokens.cardTitle),
-                Text('${tasks.length}', style: DashboardTokens.caption),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: DashTheme.ink2,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DashCounterPill(count: tasks.length, accent: accent),
               ],
             ),
           ),
-          const SizedBox(height: DashboardTokens.space8),
+          const SizedBox(height: 6),
           if (visible.isEmpty)
-            DashboardEmptyState(message: emptyMessage)
+            DashEmptyState(
+              title: emptyTitle,
+              subtitle: emptySubtitle,
+              icon: emptyIcon,
+              tint: accent,
+            )
           else ...[
             ...visible.map(
-              (t) => TaskRow(
+              (t) => DashTaskRow(
                 task: t,
                 showPrinter: showPrinter,
                 onTap: onTaskTap != null ? () => onTaskTap!(t) : null,
@@ -499,11 +684,15 @@ class TaskListCard extends StatelessWidget {
             ),
             if (overflow > 0)
               Padding(
-                padding: const EdgeInsets.only(
-                  left: DashboardTokens.space16,
-                  top: DashboardTokens.space4,
+                padding: const EdgeInsets.only(left: 14, top: 8),
+                child: Text(
+                  '+ $overflow more',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: DashTheme.slate400,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                child: Text('+ $overflow more', style: DashboardTokens.bodySm),
               ),
           ],
         ],
@@ -512,117 +701,191 @@ class TaskListCard extends StatelessWidget {
   }
 }
 
-// ── Status group (collapsible-style section, non-collapsible in dashboard) ─
+// ── Status group section — collapsible header matching _StatusSectionHeader ─
 
-class StatusGroupList extends StatelessWidget {
+class DashStatusGroupSection extends StatefulWidget {
+  final StatusGroup<TaskSummary> group;
+  final void Function(TaskSummary)? onTaskTap;
+  final bool initiallyExpanded;
+
+  const DashStatusGroupSection({
+    super.key,
+    required this.group,
+    this.onTaskTap,
+    this.initiallyExpanded = true,
+  });
+
+  @override
+  State<DashStatusGroupSection> createState() => _DashStatusGroupSectionState();
+}
+
+class _DashStatusGroupSectionState extends State<DashStatusGroupSection> {
+  late bool _expanded = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = taskStatusColor(widget.group.status);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DashCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              behavior: HitTestBehavior.opaque,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Container(
+                  height: kDashRowHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: DashTheme.slate50,
+                    borderRadius: BorderRadius.vertical(
+                      top: const Radius.circular(DashTheme.rLg),
+                      bottom:
+                          _expanded
+                              ? Radius.zero
+                              : const Radius.circular(DashTheme.rLg),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: _expanded ? 0.0 : -0.25,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: DashTheme.slate600,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        taskStatusDisplayName(widget.group.status),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: DashTheme.ink2,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      DashCounterPill(
+                        count: widget.group.items.length,
+                        accent: color,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 180),
+              crossFadeState:
+                  _expanded
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
+              firstChild: Column(
+                children:
+                    widget.group.items
+                        .map(
+                          (t) => DashTaskRow(
+                            task: t,
+                            onTap:
+                                widget.onTaskTap != null
+                                    ? () => widget.onTaskTap!(t)
+                                    : null,
+                          ),
+                        )
+                        .toList(),
+              ),
+              secondChild: const SizedBox(width: double.infinity, height: 0),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DashStatusGroupList extends StatelessWidget {
   final List<StatusGroup<TaskSummary>> groups;
-  final String emptyMessage;
+  final String emptyTitle;
+  final String emptySubtitle;
   final void Function(TaskSummary)? onTaskTap;
 
-  const StatusGroupList({
+  const DashStatusGroupList({
     super.key,
     required this.groups,
-    this.emptyMessage = 'No tasks in this stage right now',
+    this.emptyTitle = 'Nothing queued',
+    this.emptySubtitle = 'No tasks in this stage right now',
     this.onTaskTap,
   });
 
   @override
   Widget build(BuildContext context) {
     if (groups.isEmpty) {
-      return DashboardCard(child: DashboardEmptyState(message: emptyMessage));
+      return DashCard(
+        child: DashEmptyState(title: emptyTitle, subtitle: emptySubtitle),
+      );
     }
-
     return Column(
       children:
-          groups.map((group) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: DashboardTokens.space16),
-              child: DashboardCard(
-                padding: const EdgeInsets.symmetric(
-                  vertical: DashboardTokens.space16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: DashboardTokens.space16,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: taskStatusColor(group.status),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: DashboardTokens.space8),
-                          Text(
-                            taskStatusDisplayName(group.status),
-                            style: DashboardTokens.cardTitle,
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${group.items.length}',
-                            style: DashboardTokens.caption,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: DashboardTokens.space8),
-                    ...group.items.map(
-                      (t) => TaskRow(
-                        task: t,
-                        onTap: onTaskTap != null ? () => onTaskTap!(t) : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+          groups
+              .map(
+                (g) => DashStatusGroupSection(group: g, onTaskTap: onTaskTap),
+              )
+              .toList(),
     );
   }
 }
 
-// ── Printer chip / status grid item ──────────────────────────────────────
+// ── Printer tile ──────────────────────────────────────────────────────────
 
-class PrinterTile extends StatelessWidget {
+class DashPrinterTile extends StatelessWidget {
   final PrinterSummary printer;
   final VoidCallback? onTap;
 
-  const PrinterTile({super.key, required this.printer, this.onTap});
+  const DashPrinterTile({super.key, required this.printer, this.onTap});
 
   Color get _statusColor {
     switch (printer.status) {
       case 'active':
-        return printer.currentTaskId != null
-            ? DashboardTokens.info
-            : DashboardTokens.success;
+        return printer.currentTaskId != null ? DashTheme.blue : DashTheme.green;
       case 'maintenance':
-        return DashboardTokens.warning;
+        return DashTheme.amber;
       case 'offline':
-        return DashboardTokens.textTertiary;
+        return DashTheme.slate400;
       case 'error':
-        return DashboardTokens.danger;
+        return DashTheme.red;
       default:
-        return DashboardTokens.textTertiary;
+        return DashTheme.slate400;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = _statusColor;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(DashboardTokens.radiusMd),
+      borderRadius: BorderRadius.circular(DashTheme.rLg),
       child: Container(
-        padding: const EdgeInsets.all(DashboardTokens.space16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: DashboardTokens.surface,
-          borderRadius: BorderRadius.circular(DashboardTokens.radiusMd),
-          border: Border.all(color: DashboardTokens.border),
+          color: DashTheme.white,
+          borderRadius: BorderRadius.circular(DashTheme.rLg),
+          border: Border.all(color: DashTheme.slate200),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,58 +894,133 @@ class PrinterTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: 8,
-                  height: 8,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: _statusColor,
-                    shape: BoxShape.circle,
+                    color: DashTheme.accentSoft(color),
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(color: DashTheme.accentBorder(color)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        printer.statusLabel,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(printer.statusLabel, style: DashboardTokens.caption),
               ],
             ),
-            const SizedBox(height: DashboardTokens.space8),
+            const SizedBox(height: 10),
             Text(
               printer.nickname,
-              style: DashboardTokens.cardTitle,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: DashTheme.ink2,
+                letterSpacing: -0.1,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               printer.name,
-              style: DashboardTokens.caption,
+              style: const TextStyle(
+                fontSize: 11,
+                color: DashTheme.slate400,
+                fontWeight: FontWeight.w500,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: DashboardTokens.space12),
+            const SizedBox(height: 12),
             if (printer.currentTaskName != null) ...[
               Text(
-                'Running',
-                style: DashboardTokens.caption.copyWith(
-                  color: DashboardTokens.info,
+                'RUNNING',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: DashTheme.blue,
+                  letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 printer.currentTaskName!,
-                style: DashboardTokens.bodySm.copyWith(
-                  fontWeight: FontWeight.w500,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: DashTheme.ink3,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
-            ] else ...[
-              Spacer(),
+            ] else
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(3),
                 child: LinearProgressIndicator(
                   value: (printer.utilizationPct / 100).clamp(0, 1),
                   minHeight: 4,
-                  backgroundColor: DashboardTokens.surfaceSunken,
-                  valueColor: AlwaysStoppedAnimation(_statusColor),
+                  backgroundColor: DashTheme.slate100,
+                  valueColor: AlwaysStoppedAnimation(color),
                 ),
               ),
-            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Soft label chip — for "AWAITING CLIENT", "MISSING SPEC" style tags ────
+
+class DashLabelChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData? icon;
+
+  const DashLabelChip({
+    super.key,
+    required this.label,
+    required this.color,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }
