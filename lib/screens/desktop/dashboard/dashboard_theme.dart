@@ -1,38 +1,84 @@
 // lib/screens/desktop/dashboard/dashboard_theme.dart
 //
-// Design tokens for the overview dashboard. Centralizing these keeps every
-// role-specific screen visually consistent while letting each role carry
-// its own accent identity.
+// This does NOT invent a parallel token system. It reuses `_T` — the same
+// slate/blue/semantic palette, the same two radii (r=6, rLg=12), the same
+// three-tier shadow system — already established in task_list_view.dart,
+// and only adds what's genuinely new: four role-identity accent colors,
+// following the exact "color + color.withOpacity(0.1) bg + 0.3 border"
+// recipe _T's badges already use.
+//
+// If `_T` is later made non-private/shared (e.g. moved to its own file and
+// exported), swap this file's copy for that import instead of keeping two
+// definitions in sync by hand.
 
 import 'package:flutter/material.dart';
 
-class DashboardTokens {
-  DashboardTokens._();
+class DashTheme {
+  DashTheme._();
 
-  // ── Base neutrals (shared across all roles) ─────────────────────────────
-  static const Color canvas = Color(0xFFF7F8FA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSunken = Color(0xFFF1F3F6);
-  static const Color border = Color(0xFFE4E7EC);
-  static const Color textPrimary = Color(0xFF1A1F29);
-  static const Color textSecondary = Color(0xFF667085);
-  static const Color textTertiary = Color(0xFF98A2B3);
+  // ── Reused verbatim from task_list_view.dart's _T ──────────────────────
+  static const blue = Color(0xFF2563EB);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue600 = Color(0xFF1D4ED8);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
 
-  // ── Semantic status colors (shared) ─────────────────────────────────────
-  static const Color success = Color(0xFF12B76A);
-  static const Color warning = Color(0xFFF79009);
-  static const Color danger = Color(0xFFF04438);
-  static const Color info = Color(0xFF2E90FA);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
+  static const slate700 = Color(0xFF334155);
 
-  // ── Role accent identities ──────────────────────────────────────────────
-  // Each role dashboard is tinted so the room "feels" different at a glance —
-  // Admin: command-center indigo. Design: creative violet.
-  // Production: printer-floor amber. Accounts: ledger emerald.
-  static const Color adminAccent = Color(0xFF4F46E5);
-  static const Color designAccent = Color(0xFF9333EA);
-  static const Color productionAccent = Color(0xFFE8720C);
-  static const Color accountsAccent = Color(0xFF059669);
-  static const Color minimalAccent = Color(0xFF475467);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
+
+  static const r = 6.0;
+  static const rLg = 12.0;
+
+  static const hoverBg = Color.fromARGB(255, 250, 250, 251);
+  static const hoverBorder = Color.fromARGB(255, 189, 197, 207);
+
+  static const priorityUrgent = Color(0xFFFF878A);
+  static const priorityHigh = Color(0xFFFEA06A);
+  static const priorityNormal = Color(0xFFF7BD51);
+
+  static const colDivider = Color(0xFFEDF0F3);
+
+  static final shadowSm = BoxShadow(
+    color: Colors.black.withOpacity(0.02),
+    blurRadius: 2,
+    offset: const Offset(0, 1),
+  );
+  static final shadowMd = BoxShadow(
+    color: Colors.black.withOpacity(0.04),
+    blurRadius: 6,
+    offset: const Offset(0, 2),
+  );
+  static final shadowLg = BoxShadow(
+    color: Colors.black.withOpacity(0.08),
+    blurRadius: 16,
+    offset: const Offset(0, 4),
+  );
+
+  // ── New: role identity accents ──────────────────────────────────────────
+  // Same recipe as _T's semantic colors (solid + .1 bg + .3 border), just
+  // one new hue per role so each dashboard reads as "home" at a glance.
+  static const adminAccent = Color(0xFF4F46E5); // indigo — command center
+  static const designAccent = Color(0xFF9333EA); // violet — creative
+  static const productionAccent = Color(0xFFE8720C); // amber-orange — floor
+  static const accountsAccent = green; // reuse existing green, ledger-coded
+  static const minimalAccent = slate500;
 
   static Color accentFor(String role) {
     switch (role.toLowerCase()) {
@@ -49,105 +95,27 @@ class DashboardTokens {
     }
   }
 
-  static Color accentSoftFor(String role) => accentFor(role).withOpacity(0.10);
-
-  // ── Spacing scale ────────────────────────────────────────────────────────
-  static const double space2 = 2;
-  static const double space4 = 4;
-  static const double space8 = 8;
-  static const double space12 = 12;
-  static const double space16 = 16;
-  static const double space20 = 20;
-  static const double space24 = 24;
-  static const double space32 = 32;
-  static const double space40 = 40;
-
-  // ── Radii ────────────────────────────────────────────────────────────────
-  static const double radiusSm = 8;
-  static const double radiusMd = 12;
-  static const double radiusLg = 16;
-
-  // ── Type scale ───────────────────────────────────────────────────────────
-  static const TextStyle kpiNumber = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
-    height: 1.1,
-    color: textPrimary,
-  );
-
-  static const TextStyle kpiNumberSm = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.3,
-    height: 1.1,
-    color: textPrimary,
-  );
-
-  static const TextStyle sectionEyebrow = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.8,
-    color: textTertiary,
-  );
-
-  static const TextStyle cardTitle = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: textPrimary,
-  );
-
-  static const TextStyle bodyMd = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: textPrimary,
-  );
-
-  static const TextStyle bodySm = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    color: textSecondary,
-  );
-
-  static const TextStyle caption = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
-    color: textTertiary,
-  );
-
-  static const TextStyle pageTitle = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.3,
-    color: textPrimary,
-  );
-
-  // ── Shadows ──────────────────────────────────────────────────────────────
-  static List<BoxShadow> cardShadow = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.04),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
-    ),
-  ];
+  static Color accentSoft(Color c) => c.withOpacity(0.1);
+  static Color accentBorder(Color c) => c.withOpacity(0.3);
 }
 
-/// Status color mapping for TaskStatus (frontend enum) — used for pipeline
-/// strip segments, badges, and status dots throughout the dashboard.
+/// Status color mapping for TaskStatus — matches how the task list view
+/// would color these if it exposed a shared version. Kept centralized here
+/// so the pipeline strip / status chips / task rows all agree.
 Color taskStatusColor(String status) {
   switch (status) {
     case 'pending':
-      return const Color(0xFF98A2B3);
+      return DashTheme.slate400;
     case 'designing':
-      return const Color(0xFF9333EA);
+      return DashTheme.purple;
     case 'waitingApproval':
-      return const Color(0xFFF79009);
+      return DashTheme.amber;
     case 'clientApproved':
       return const Color(0xFF7C3AED);
     case 'waitingPrinting':
       return const Color(0xFFF97316);
     case 'printing':
-      return const Color(0xFFE8720C);
+      return DashTheme.productionAccent;
     case 'printingCompleted':
       return const Color(0xFFEA580C);
     case 'finishing':
@@ -165,20 +133,19 @@ Color taskStatusColor(String status) {
     case 'installing':
       return const Color(0xFF0D9488);
     case 'completed':
-      return const Color(0xFF12B76A);
+      return DashTheme.green;
     case 'blocked':
-      return const Color(0xFFF04438);
+      return DashTheme.red;
     case 'paused':
-      return const Color(0xFF98A2B3);
+      return DashTheme.slate400;
     case 'revision':
-      return const Color(0xFFF04438);
+      return DashTheme.red;
     default:
-      return const Color(0xFF98A2B3);
+      return DashTheme.slate400;
   }
 }
 
-/// Converts camelCase TaskStatus enum values to display labels,
-/// mirroring the frontend TaskStatusExt.displayName logic.
+/// Mirrors TaskStatusExt.displayName from the frontend enum.
 String taskStatusDisplayName(String status) {
   if (status == 'pending') return 'Initialized';
   if (status.isEmpty) return status;
