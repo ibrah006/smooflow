@@ -47,6 +47,7 @@ import 'package:smooflow/screens/desktop/components/project_modal.dart';
 import 'package:smooflow/screens/desktop/components/task_list_view.dart';
 import 'package:smooflow/screens/desktop/components/task_modal.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
+import 'package:smooflow/screens/desktop/dashboard/overview_page.dart';
 import 'package:smooflow/screens/desktop/data/design_stage_info.dart';
 import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart';
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
@@ -495,7 +496,7 @@ class _AdminDesktopDashboardScreenState
                                         _view == _AdminView.overview
                                             ? (_isInitLoading
                                                 ? const OverviewSkeleton()
-                                                : HomeView())
+                                                : OverviewPage())
                                             : _view == _AdminView.inbox
                                             ? InboxView()
                                             : _view == _AdminView.list
