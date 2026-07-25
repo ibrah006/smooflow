@@ -669,7 +669,8 @@ class PrinterTile extends StatelessWidget {
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
-            ] else
+            ] else ...[
+              Spacer(),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
@@ -679,6 +680,7 @@ class PrinterTile extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation(_statusColor),
                 ),
               ),
+            ],
           ],
         ),
       ),
