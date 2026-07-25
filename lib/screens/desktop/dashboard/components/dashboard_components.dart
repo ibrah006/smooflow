@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/dashboard/dashboard_models.dart';
-import 'package:smooflow/screens/desktop/dashboard/theme/dashboard_theme.dart';
+import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
 
 // ── Page scaffold pieces ──────────────────────────────────────────────────
 
