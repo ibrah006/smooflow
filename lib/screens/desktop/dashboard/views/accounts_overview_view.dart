@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/dashboard/accounts_overview.dart';
-import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
 import 'package:smooflow/screens/desktop/dashboard/components/dashboard_components.dart';
+import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
 
 class AccountsOverviewView extends StatelessWidget {
   final AccountsOverview data;
@@ -13,81 +13,82 @@ class AccountsOverviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = DashboardTokens.accountsAccent;
+    final accent = DashTheme.accountsAccent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── KPI row ──────────────────────────────────────────────────────
         Row(
           children: [
             Expanded(
-              child: KpiStat(
-                label: 'OUTSTANDING',
+              child: DashKpiTile(
+                label: 'Outstanding',
                 value: _money(data.invoices.totalAmountDue),
                 icon: Icons.receipt_long_outlined,
-                accentColor:
-                    data.invoices.totalAmountDue > 0
-                        ? DashboardTokens.danger
-                        : accent,
+                accent: accent,
+                alert: data.invoices.totalAmountDue > 0,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'OVERDUE INVOICES',
+              child: DashKpiTile(
+                label: 'Overdue invoices',
                 value: '${data.invoices.overdue.length}',
                 icon: Icons.error_outline,
-                accentColor:
-                    data.invoices.overdue.isNotEmpty
-                        ? DashboardTokens.warning
-                        : accent,
+                accent: accent,
+                alert: data.invoices.overdue.isNotEmpty,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'COLLECTED THIS MONTH',
+              child: DashKpiTile(
+                label: 'Collected this month',
                 value: _money(data.payments.thisMonthTotal),
                 icon: Icons.payments_outlined,
-                accentColor: DashboardTokens.success,
+                accent: DashTheme.green,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'QUOTES PENDING',
+              child: DashKpiTile(
+                label: 'Quotes pending',
                 value: '${data.quotations.totalPendingCount}',
                 icon: Icons.description_outlined,
-                accentColor: accent,
+                accent: accent,
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── Invoice status breakdown ────────────────────────────────────
-        const DashboardSectionHeader(title: 'Invoices by Status'),
-        DashboardCard(
+        const DashSectionHeader(title: 'Invoices by Status'),
+        DashCard(
           child:
               data.invoices.statusCounts.isEmpty
-                  ? const DashboardEmptyState(message: 'No invoices yet')
+                  ? const DashEmptyState(
+                    title: 'No invoices yet',
+                    subtitle: 'Invoices you create will appear here',
+                    icon: Icons.receipt_outlined,
+                  )
                   : Column(
                     children:
                         data.invoices.statusCounts.map((s) {
+                          final maxVal = data.invoices.statusCounts
+                              .map((e) => e.count)
+                              .reduce((a, b) => a > b ? a : b);
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: DashboardTokens.space8,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 7),
                             child: Row(
                               children: [
                                 SizedBox(
-                                  width: 130,
+                                  width: 120,
                                   child: Text(
                                     s.displayStatus,
-                                    style: DashboardTokens.bodyMd.copyWith(
-                                      fontWeight: FontWeight.w500,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: DashTheme.ink3,
                                     ),
                                   ),
                                 ),
@@ -95,40 +96,37 @@ class AccountsOverviewView extends StatelessWidget {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(3),
                                     child: LinearProgressIndicator(
-                                      value:
-                                          data.invoices.statusCounts.isEmpty
-                                              ? 0
-                                              : s.count /
-                                                  data.invoices.statusCounts
-                                                      .map((e) => e.count)
-                                                      .reduce(
-                                                        (a, b) => a > b ? a : b,
-                                                      ),
+                                      value: s.count / maxVal,
                                       minHeight: 6,
-                                      backgroundColor:
-                                          DashboardTokens.surfaceSunken,
+                                      backgroundColor: DashTheme.slate100,
                                       valueColor: AlwaysStoppedAnimation(
                                         _statusColor(s.status),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: DashboardTokens.space16),
+                                const SizedBox(width: 14),
                                 SizedBox(
-                                  width: 40,
+                                  width: 34,
                                   child: Text(
                                     '${s.count}',
-                                    style: DashboardTokens.bodySm,
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: DashTheme.slate400,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                     textAlign: TextAlign.end,
                                   ),
                                 ),
-                                const SizedBox(width: DashboardTokens.space12),
+                                const SizedBox(width: 10),
                                 SizedBox(
-                                  width: 90,
+                                  width: 84,
                                   child: Text(
                                     _money(s.totalAmount),
-                                    style: DashboardTokens.bodySm.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: DashTheme.ink2,
                                     ),
                                     textAlign: TextAlign.end,
                                   ),
@@ -140,31 +138,29 @@ class AccountsOverviewView extends StatelessWidget {
                   ),
         ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── Two-column: Overdue + Recent invoices ────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: _OverdueInvoicesSection(data: data)),
-            const SizedBox(width: DashboardTokens.space24),
+            const SizedBox(width: 20),
             Expanded(child: _RecentInvoicesSection(data: data)),
           ],
         ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── Two column: Payments by method + Quotations ──────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: _PaymentsByMethodSection(data: data)),
-            const SizedBox(width: DashboardTokens.space24),
+            const SizedBox(width: 20),
             Expanded(child: _QuotationsSection(data: data)),
           ],
         ),
 
-        const SizedBox(height: DashboardTokens.space24),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -172,17 +168,17 @@ class AccountsOverviewView extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'paid':
-        return DashboardTokens.success;
+        return DashTheme.green;
       case 'overdue':
-        return DashboardTokens.danger;
+        return DashTheme.red;
       case 'partially_paid':
-        return DashboardTokens.warning;
+        return DashTheme.amber;
       case 'sent':
-        return DashboardTokens.info;
+        return DashTheme.blue;
       case 'cancelled':
-        return DashboardTokens.textTertiary;
+        return DashTheme.slate400;
       default:
-        return DashboardTokens.accountsAccent;
+        return DashTheme.accountsAccent;
     }
   }
 }
@@ -196,15 +192,18 @@ class _OverdueInvoicesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Overdue Invoices'),
-        DashboardCard(
-          padding: const EdgeInsets.symmetric(
-            vertical: DashboardTokens.space12,
-          ),
+        DashSectionHeader(
+          title: 'Overdue Invoices',
+          count: data.invoices.overdue.length,
+          accent: DashTheme.red,
+        ),
+        DashCard(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child:
               data.invoices.overdue.isEmpty
-                  ? const DashboardEmptyState(
-                    message: 'No overdue invoices — nice work',
+                  ? const DashEmptyState(
+                    title: 'Nothing overdue',
+                    subtitle: 'All invoices are within terms',
                     icon: Icons.thumb_up_outlined,
                   )
                   : Column(
@@ -212,8 +211,8 @@ class _OverdueInvoicesSection extends StatelessWidget {
                         data.invoices.overdue.take(6).map((inv) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: DashboardTokens.space16,
-                              vertical: DashboardTokens.space8,
+                              horizontal: 14,
+                              vertical: 8,
                             ),
                             child: Row(
                               children: [
@@ -224,13 +223,20 @@ class _OverdueInvoicesSection extends StatelessWidget {
                                     children: [
                                       Text(
                                         inv.invoiceNumber,
-                                        style: DashboardTokens.bodyMd.copyWith(
-                                          fontWeight: FontWeight.w600,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: DashTheme.ink3,
                                         ),
                                       ),
+                                      const SizedBox(height: 1),
                                       Text(
                                         inv.clientName,
-                                        style: DashboardTokens.caption,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: DashTheme.slate400,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -240,14 +246,18 @@ class _OverdueInvoicesSection extends StatelessWidget {
                                   children: [
                                     Text(
                                       '\$${inv.amountDue.toStringAsFixed(2)}',
-                                      style: DashboardTokens.bodyMd.copyWith(
-                                        fontWeight: FontWeight.w600,
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: DashTheme.ink2,
                                       ),
                                     ),
                                     Text(
                                       '${inv.daysOverdue}d overdue',
-                                      style: DashboardTokens.caption.copyWith(
-                                        color: DashboardTokens.danger,
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        color: DashTheme.red,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ],
@@ -272,23 +282,23 @@ class _RecentInvoicesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Recently Issued'),
-        DashboardCard(
-          padding: const EdgeInsets.symmetric(
-            vertical: DashboardTokens.space12,
-          ),
+        const DashSectionHeader(title: 'Recently Issued'),
+        DashCard(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child:
               data.invoices.recentlyIssued.isEmpty
-                  ? const DashboardEmptyState(
-                    message: 'No invoices issued recently',
+                  ? const DashEmptyState(
+                    title: 'Nothing issued recently',
+                    subtitle: 'New invoices will show up here',
+                    icon: Icons.description_outlined,
                   )
                   : Column(
                     children:
                         data.invoices.recentlyIssued.take(6).map((inv) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: DashboardTokens.space16,
-                              vertical: DashboardTokens.space8,
+                              horizontal: 14,
+                              vertical: 8,
                             ),
                             child: Row(
                               children: [
@@ -299,21 +309,30 @@ class _RecentInvoicesSection extends StatelessWidget {
                                     children: [
                                       Text(
                                         inv.invoiceNumber,
-                                        style: DashboardTokens.bodyMd.copyWith(
-                                          fontWeight: FontWeight.w600,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: DashTheme.ink3,
                                         ),
                                       ),
+                                      const SizedBox(height: 1),
                                       Text(
                                         inv.clientName,
-                                        style: DashboardTokens.caption,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: DashTheme.slate400,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 Text(
                                   '\$${inv.totalAmount.toStringAsFixed(2)}',
-                                  style: DashboardTokens.bodyMd.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: DashTheme.ink2,
                                   ),
                                 ),
                               ],
@@ -336,31 +355,37 @@ class _PaymentsByMethodSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Payments This Month'),
-        DashboardCard(
+        const DashSectionHeader(title: 'Payments This Month'),
+        DashCard(
           child:
               data.payments.byMethod.isEmpty
-                  ? const DashboardEmptyState(
-                    message: 'No payments recorded yet this month',
+                  ? const DashEmptyState(
+                    title: 'No payments yet',
+                    subtitle: 'Payments recorded this month will appear here',
+                    icon: Icons.payments_outlined,
                   )
                   : Column(
                     children:
                         data.payments.byMethod.map((p) {
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: DashboardTokens.space8,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 7),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   p.displayMethod,
-                                  style: DashboardTokens.bodyMd,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: DashTheme.ink3,
+                                  ),
                                 ),
                                 Text(
                                   '\$${p.total.toStringAsFixed(2)}',
-                                  style: DashboardTokens.bodyMd.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: DashTheme.ink2,
                                   ),
                                 ),
                               ],
@@ -380,117 +405,111 @@ class _QuotationsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasAny =
+        data.quotations.pendingResponse.isNotEmpty ||
+        data.quotations.recentlyAccepted.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Quotations'),
-        DashboardCard(
-          padding: const EdgeInsets.symmetric(
-            vertical: DashboardTokens.space12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (data.quotations.pendingResponse.isEmpty &&
-                  data.quotations.recentlyAccepted.isEmpty)
-                const DashboardEmptyState(
-                  message: 'No quotations awaiting action',
-                )
-              else ...[
-                if (data.quotations.pendingResponse.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DashboardTokens.space16,
-                    ),
-                    child: Text(
-                      'Pending response',
-                      style: DashboardTokens.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: DashboardTokens.space4),
-                  ...data.quotations.pendingResponse
-                      .take(4)
-                      .map(
-                        (q) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DashboardTokens.space16,
-                            vertical: DashboardTokens.space4,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${q.number} — ${q.clientName}',
-                                  style: DashboardTokens.bodyMd,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                '${q.daysSinceSent}d',
-                                style: DashboardTokens.bodySm.copyWith(
-                                  color:
-                                      q.isStale
-                                          ? DashboardTokens.warning
-                                          : DashboardTokens.textSecondary,
-                                  fontWeight:
-                                      q.isStale
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
+        const DashSectionHeader(title: 'Quotations'),
+        DashCard(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child:
+              !hasAny
+                  ? const DashEmptyState(
+                    title: 'Nothing pending',
+                    subtitle: 'No quotations awaiting action',
+                    icon: Icons.description_outlined,
+                  )
+                  : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (data.quotations.pendingResponse.isNotEmpty) ...[
+                        const DashLabelChip(
+                          label: 'PENDING RESPONSE',
+                          color: DashTheme.amber,
                         ),
-                      ),
-                ],
-                if (data.quotations.recentlyAccepted.isNotEmpty) ...[
-                  const SizedBox(height: DashboardTokens.space8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DashboardTokens.space16,
-                    ),
-                    child: Text(
-                      'Recently accepted',
-                      style: DashboardTokens.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: DashboardTokens.space4),
-                  ...data.quotations.recentlyAccepted
-                      .take(4)
-                      .map(
-                        (q) => Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DashboardTokens.space16,
-                            vertical: DashboardTokens.space4,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${q.number} — ${q.clientName}',
-                                  style: DashboardTokens.bodyMd,
-                                  overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 6),
+                        ...data.quotations.pendingResponse
+                            .take(4)
+                            .map(
+                              (q) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 5,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${q.number} — ${q.clientName}',
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          color: DashTheme.ink3,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${q.daysSinceSent}d',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            q.isStale
+                                                ? DashTheme.amber
+                                                : DashTheme.slate400,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Text(
-                                '\$${q.total.toStringAsFixed(2)}',
-                                style: DashboardTokens.bodySm.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: DashboardTokens.success,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                      ],
+                      if (data.quotations.recentlyAccepted.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const DashLabelChip(
+                          label: 'RECENTLY ACCEPTED',
+                          color: DashTheme.green,
                         ),
-                      ),
-                ],
-              ],
-            ],
-          ),
+                        const SizedBox(height: 6),
+                        ...data.quotations.recentlyAccepted
+                            .take(4)
+                            .map(
+                              (q) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 5,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${q.number} — ${q.clientName}',
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          color: DashTheme.ink3,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${q.total.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: DashTheme.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                      ],
+                    ],
+                  ),
         ),
       ],
     );
