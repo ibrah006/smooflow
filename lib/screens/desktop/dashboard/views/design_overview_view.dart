@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/dashboard/design_overview.dart';
 import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
-import 'package:smooflow/screens/desktop/dashboard/components/dashboard_components.dart';
+import 'package:smooflow/screens/desktop/dashboard/widgets/dashboard_widgets.dart';
 
 class DesignOverviewView extends StatelessWidget {
   final DesignOverview data;
@@ -11,67 +11,66 @@ class DesignOverviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = DashboardTokens.designAccent;
+    final accent = DashTheme.designAccent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── KPI row ──────────────────────────────────────────────────────
         Row(
           children: [
             Expanded(
-              child: KpiStat(
-                label: 'IN MY QUEUE',
+              child: DashKpiTile(
+                label: 'In my queue',
                 value: '${data.myQueue.allTasksCount}',
                 icon: Icons.brush_outlined,
-                accentColor: accent,
+                accent: accent,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'NEEDS REVISION',
+              child: DashKpiTile(
+                label: 'Needs revision',
                 value: '${data.myQueue.revisionTasks.length}',
                 icon: Icons.replay_outlined,
-                accentColor:
-                    data.myQueue.revisionTasks.isNotEmpty
-                        ? DashboardTokens.danger
-                        : accent,
+                accent: accent,
+                alert: data.myQueue.revisionTasks.isNotEmpty,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'READY TO HAND OFF',
+              child: DashKpiTile(
+                label: 'Ready to hand off',
                 value: '${data.handoff.readyForPrintCount}',
                 icon: Icons.local_shipping_outlined,
-                accentColor: DashboardTokens.success,
+                accent: DashTheme.green,
               ),
             ),
-            const SizedBox(width: DashboardTokens.space16),
+            const SizedBox(width: 14),
             Expanded(
-              child: KpiStat(
-                label: 'UNREAD MESSAGES',
+              child: DashKpiTile(
+                label: 'Unread messages',
                 value: '${data.messages.totalUnreadCount}',
                 icon: Icons.mark_chat_unread_outlined,
-                accentColor:
-                    data.messages.totalUnreadCount > 0
-                        ? DashboardTokens.info
-                        : accent,
+                accent: accent,
+                alert: data.messages.totalUnreadCount > 0,
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── My queue, grouped by status ──────────────────────────────────
-        const DashboardSectionHeader(title: 'My Queue'),
+        DashSectionHeader(
+          title: 'My Queue',
+          count: data.myQueue.allTasksCount,
+          accent: accent,
+        ),
         if (data.myQueue.statusGroups.isEmpty &&
             data.myQueue.revisionTasks.isEmpty)
-          const DashboardCard(
-            child: DashboardEmptyState(
-              message: 'Nothing in your queue — new work will show up here',
+          const DashCard(
+            child: DashEmptyState(
+              title: 'Queue is clear',
+              subtitle: 'New work assigned to you will show up here',
               icon: Icons.self_improvement_outlined,
             ),
           )
@@ -80,78 +79,86 @@ class DesignOverviewView extends StatelessWidget {
             children: [
               if (data.myQueue.revisionTasks.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: DashboardTokens.space16,
-                  ),
-                  child: DashboardCard(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: DashboardTokens.space16,
-                    ),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DashCard(
+                    padding: EdgeInsets.zero,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DashboardTokens.space16,
+                        Container(
+                          height: kDashRowHeight,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: DashTheme.red50,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(DashTheme.rLg),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.replay_outlined,
-                                size: 16,
-                                color: DashboardTokens.danger,
+                                size: 15,
+                                color: DashTheme.red,
                               ),
-                              const SizedBox(width: DashboardTokens.space8),
+                              const SizedBox(width: 8),
                               Text(
                                 'Revision',
-                                style: DashboardTokens.cardTitle.copyWith(
-                                  color: DashboardTokens.danger,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: DashTheme.red.withOpacity(0.9),
+                                  letterSpacing: -0.1,
                                 ),
                               ),
-                              const Spacer(),
-                              Text(
-                                '${data.myQueue.revisionTasks.length}',
-                                style: DashboardTokens.caption,
+                              const SizedBox(width: 8),
+                              DashCounterPill(
+                                count: data.myQueue.revisionTasks.length,
+                                accent: DashTheme.red,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: DashboardTokens.space8),
                         ...data.myQueue.revisionTasks.map(
-                          (t) => TaskRow(task: t),
+                          (t) => DashTaskRow(task: t),
                         ),
                       ],
                     ),
                   ),
                 ),
-              StatusGroupList(groups: data.myQueue.statusGroups),
+              DashStatusGroupList(
+                groups: data.myQueue.statusGroups,
+                emptyTitle: 'Nothing queued',
+                emptySubtitle: 'No tasks in this stage right now',
+              ),
             ],
           ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── Two column: Handoff readiness + Attention ────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: _HandoffSection(data: data)),
-            const SizedBox(width: DashboardTokens.space24),
+            const SizedBox(width: 20),
             Expanded(child: _AttentionSection(data: data)),
           ],
         ),
 
-        const SizedBox(height: DashboardTokens.space32),
+        const SizedBox(height: 26),
 
-        // ── Upcoming deadlines ────────────────────────────────────────────
-        const DashboardSectionHeader(title: 'Upcoming Deadlines'),
-        TaskListCard(
+        const DashSectionHeader(title: 'Upcoming Deadlines'),
+        DashTaskListCard(
           title: 'Next 7 days',
           tasks: data.upcomingDeadlines,
-          emptyMessage: 'No deadlines coming up',
+          emptyTitle: 'Nothing due soon',
+          emptySubtitle: 'You\'re clear for the next 7 days',
+          emptyIcon: Icons.event_available_outlined,
+          accent: accent,
           maxVisible: 8,
         ),
 
-        const SizedBox(height: DashboardTokens.space24),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -163,84 +170,48 @@ class _HandoffSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasPending = data.handoff.hasPendingWork;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Handoff Readiness'),
-        DashboardCard(
-          padding: const EdgeInsets.symmetric(
-            vertical: DashboardTokens.space12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (data.handoff.missingSpecTasks.isEmpty &&
-                  data.handoff.multiSpecTasks.isEmpty)
-                const DashboardEmptyState(
-                  message: 'All approved work is print-ready',
-                  icon: Icons.task_alt_outlined,
-                )
-              else ...[
-                if (data.handoff.missingSpecTasks.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DashboardTokens.space16,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 14,
-                          color: DashboardTokens.warning,
+        const DashSectionHeader(title: 'Handoff Readiness'),
+        DashCard(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child:
+              !hasPending
+                  ? const DashEmptyState(
+                    title: 'Print-ready',
+                    subtitle: 'All approved work has complete specs',
+                    icon: Icons.task_alt_outlined,
+                  )
+                  : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (data.handoff.missingSpecTasks.isNotEmpty) ...[
+                        DashLabelChip(
+                          label: 'MISSING PRINT SPEC',
+                          color: DashTheme.amber,
+                          icon: Icons.error_outline,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Missing print spec',
-                          style: DashboardTokens.caption.copyWith(
-                            color: DashboardTokens.warning,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        const SizedBox(height: 4),
+                        ...data.handoff.missingSpecTasks
+                            .take(4)
+                            .map((t) => DashTaskRow(task: t)),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: DashboardTokens.space4),
-                  ...data.handoff.missingSpecTasks
-                      .take(4)
-                      .map((t) => TaskRow(task: t)),
-                ],
-                if (data.handoff.multiSpecTasks.isNotEmpty) ...[
-                  const SizedBox(height: DashboardTokens.space8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DashboardTokens.space16,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.layers_outlined,
-                          size: 14,
-                          color: DashboardTokens.info,
+                      if (data.handoff.multiSpecTasks.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        DashLabelChip(
+                          label: 'MULTI-STAGE — REVIEW',
+                          color: DashTheme.blue,
+                          icon: Icons.layers_outlined,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Multi-stage — review before handoff',
-                          style: DashboardTokens.caption.copyWith(
-                            color: DashboardTokens.info,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        const SizedBox(height: 4),
+                        ...data.handoff.multiSpecTasks
+                            .take(4)
+                            .map((t) => DashTaskRow(task: t)),
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: DashboardTokens.space4),
-                  ...data.handoff.multiSpecTasks
-                      .take(4)
-                      .map((t) => TaskRow(task: t)),
-                ],
-              ],
-            ],
-          ),
         ),
       ],
     );
@@ -256,54 +227,39 @@ class _AttentionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const DashboardSectionHeader(title: 'Attention Needed'),
-        DashboardCard(
-          padding: const EdgeInsets.symmetric(
-            vertical: DashboardTokens.space12,
-          ),
+        const DashSectionHeader(title: 'Attention Needed'),
+        DashCard(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child:
               !data.attention.hasIssues
-                  ? const DashboardEmptyState(
-                    message: 'Nothing stalled or blocked — clear runway',
+                  ? const DashEmptyState(
+                    title: 'Clear runway',
+                    subtitle: 'Nothing stalled or blocked right now',
                     icon: Icons.check_circle_outline,
                   )
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (data.attention.stalledApprovalTasks.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DashboardTokens.space16,
-                          ),
-                          child: Text(
-                            'Awaiting client response',
-                            style: DashboardTokens.caption.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                        DashLabelChip(
+                          label: 'AWAITING CLIENT RESPONSE',
+                          color: DashTheme.amber,
                         ),
-                        const SizedBox(height: DashboardTokens.space4),
+                        const SizedBox(height: 4),
                         ...data.attention.stalledApprovalTasks
                             .take(4)
-                            .map((t) => TaskRow(task: t)),
+                            .map((t) => DashTaskRow(task: t)),
                       ],
                       if (data.attention.blockedOrPausedTasks.isNotEmpty) ...[
-                        const SizedBox(height: DashboardTokens.space8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DashboardTokens.space16,
-                          ),
-                          child: Text(
-                            'Blocked or paused',
-                            style: DashboardTokens.caption.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                        const SizedBox(height: 8),
+                        DashLabelChip(
+                          label: 'BLOCKED OR PAUSED',
+                          color: DashTheme.red,
                         ),
-                        const SizedBox(height: DashboardTokens.space4),
+                        const SizedBox(height: 4),
                         ...data.attention.blockedOrPausedTasks
                             .take(4)
-                            .map((t) => TaskRow(task: t)),
+                            .map((t) => DashTaskRow(task: t)),
                       ],
                     ],
                   ),
