@@ -161,7 +161,7 @@ class _PrinterFleetSection extends StatelessWidget {
               crossAxisCount: 3,
               mainAxisSpacing: 14,
               crossAxisSpacing: 14,
-              childAspectRatio: 1.5,
+              childAspectRatio: 1.3,
             ),
             itemCount: data.printers.fleet.length,
             itemBuilder:

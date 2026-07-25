@@ -970,7 +970,8 @@ class DashPrinterTile extends StatelessWidget {
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
-            ] else
+            ] else ...[
+              Spacer(),
               ClipRRect(
                 borderRadius: BorderRadius.circular(3),
                 child: LinearProgressIndicator(
@@ -980,6 +981,7 @@ class DashPrinterTile extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation(color),
                 ),
               ),
+            ],
           ],
         ),
       ),
