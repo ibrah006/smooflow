@@ -68,6 +68,7 @@ import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/project_overview_screen.concept.dart';
 import 'package:smooflow/screens/desktop/components/dropdown_cells.dart';
+import 'package:smooflow/screens/desktop/task/task_filter_button.dart';
 import 'package:smooflow/states/task.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -377,6 +378,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   int? lastNotifiedTaskId;
   DateTime? lastNotificationTime;
 
+  TaskFilterState _taskFilterState = TaskFilterState();
+
   Set<String> get _effectiveVisible {
     final base = {..._kMandatoryIds, ..._visibleOptional};
     return _singleProject ? base.difference({'project'}) : base;
@@ -498,6 +501,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
       filters['projectId'] = widget.selectedProjectId;
     }
     ref.read(taskNotifierProvider.notifier).loadTasks(filters: filters);
+  }
+
+  void _onTaskFilterChange(TaskFilterState newState) {
+    setState(() {
+      _taskFilterState = newState;
+    });
   }
 
   /// Builds the flat column list (+ parallel slot list) that
@@ -636,6 +645,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
               singleProject: _singleProject,
               onToggle: _toggleColumn,
               onReset: _resetToDefaults,
+              onTaskFilterChange: _onTaskFilterChange,
+              taskFilterState: _taskFilterState,
             ),
             Expanded(
               child:
@@ -1385,6 +1396,8 @@ class _Toolbar extends StatelessWidget {
   final bool singleProject;
   final void Function(String) onToggle;
   final VoidCallback onReset;
+  final Function(TaskFilterState) onTaskFilterChange;
+  final TaskFilterState taskFilterState;
 
   const _Toolbar({
     required this.visibleOptional,
@@ -1392,6 +1405,8 @@ class _Toolbar extends StatelessWidget {
     required this.singleProject,
     required this.onToggle,
     required this.onReset,
+    required this.onTaskFilterChange,
+    required this.taskFilterState,
   });
 
   @override
@@ -1442,13 +1457,16 @@ class _Toolbar extends StatelessWidget {
                 ],
               ),
             )
-          else
+          else ...[
+            // TaskFilterButton(filter: TaskFilterState(), onFilter: (filter) {}),
+            // SizedBox(width: 10),
             _ColumnPickerButton(
               visibleOptional: visibleOptional,
               singleProject: singleProject,
               onToggle: onToggle,
               onReset: onReset,
             ),
+          ],
         ],
       ),
     );
