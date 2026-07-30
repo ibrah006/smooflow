@@ -4,7 +4,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/states/filtered_task_cache.dart';
 import 'package:smooflow/notifiers/task_cache_notifier.dart';
-import 'package:smooflow/states/task.dart'; // Adjust import paths
+import 'package:smooflow/states/task.dart';
 
 /// 1. The Root Family Cache Provider
 /// Governs the base notifier state instance tied to specific filter arguments.
