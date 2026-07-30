@@ -33,22 +33,54 @@ class _T {
   );
 }
 
-/// Active filter state: selected statuses and priorities.
+/// Active filter state.
+///
+/// `statuses` still holds every raw status string (including 'blocked' and
+/// 'revision') so downstream filtering logic that already reads
+/// `filter.statuses` keeps working unchanged. `overdueOnly` and
+/// `incompleteOnly` are separate booleans because "overdue" (due-date based)
+/// and "incomplete" (not yet delivered) aren't statuses in their own right.
 class TaskFilterState {
   final Set<String> statuses; // empty = show all
   final Set<int> priorities; // empty = show all (0=normal, 1=high, 2=urgent)
+  final bool overdueOnly;
+  final bool incompleteOnly;
 
-  const TaskFilterState({Set<String>? statuses, Set<int>? priorities})
-    : statuses = statuses ?? const {},
-      priorities = priorities ?? const {};
+  const TaskFilterState({
+    Set<String>? statuses,
+    Set<int>? priorities,
+    this.overdueOnly = false,
+    this.incompleteOnly = false,
+  }) : statuses = statuses ?? const {},
+       priorities = priorities ?? const {};
 
-  bool get isActive => statuses.isNotEmpty || priorities.isNotEmpty;
+  bool get isActive =>
+      statuses.isNotEmpty ||
+      priorities.isNotEmpty ||
+      overdueOnly ||
+      incompleteOnly;
 
-  TaskFilterState copyWith({Set<String>? statuses, Set<int>? priorities}) =>
-      TaskFilterState(
-        statuses: statuses ?? this.statuses,
-        priorities: priorities ?? this.priorities,
-      );
+  /// Total number of independently-toggled filters, used for the badge count.
+  int get activeCount =>
+      statuses.length +
+      priorities.length +
+      (overdueOnly ? 1 : 0) +
+      (incompleteOnly ? 1 : 0);
+
+  bool get isBlocked => statuses.contains('blocked');
+  bool get isRevision => statuses.contains('revision');
+
+  TaskFilterState copyWith({
+    Set<String>? statuses,
+    Set<int>? priorities,
+    bool? overdueOnly,
+    bool? incompleteOnly,
+  }) => TaskFilterState(
+    statuses: statuses ?? this.statuses,
+    priorities: priorities ?? this.priorities,
+    overdueOnly: overdueOnly ?? this.overdueOnly,
+    incompleteOnly: incompleteOnly ?? this.incompleteOnly,
+  );
 
   TaskFilterState toggleStatus(String status) {
     final updated = Set<String>.from(statuses);
@@ -69,6 +101,15 @@ class TaskFilterState {
     }
     return copyWith(priorities: updated);
   }
+
+  TaskFilterState toggleOverdue() => copyWith(overdueOnly: !overdueOnly);
+
+  TaskFilterState toggleIncomplete() =>
+      copyWith(incompleteOnly: !incompleteOnly);
+
+  TaskFilterState toggleBlocked() => toggleStatus('blocked');
+
+  TaskFilterState toggleRevision() => toggleStatus('revision');
 
   TaskFilterState reset() => const TaskFilterState();
 }
@@ -150,6 +191,11 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
     _overlay = null;
   }
 
+  void _updateOverlayFilter(TaskFilterState updated) {
+    _overlayFilter = updated;
+    _overlay?.markNeedsBuild();
+  }
+
   OverlayEntry _buildOverlay() => OverlayEntry(
     builder:
         (_) => Stack(
@@ -176,8 +222,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                     ),
                 child: _TaskFilterPanel(
                   filter: _overlayFilter,
-                  onFilterChange:
-                      (updated) => setState(() => _overlayFilter = updated),
+                  onFilterChange: _updateOverlayFilter,
                   onApply: (filter) {
                     widget.onFilter(filter);
                     _close();
@@ -249,7 +294,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      '${widget.filter.statuses.length + widget.filter.priorities.length}',
+                      '${widget.filter.activeCount}',
                       style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
@@ -277,8 +322,18 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
   }
 }
 
-/// Filter panel — status and priority toggles, reset button.
-class _TaskFilterPanel extends StatelessWidget {
+/// Filter panel.
+///
+/// Layout, top to bottom:
+///   1. Header ("Filter tasks" + Reset)
+///   2. Quick filters — the common, single-tap cases (Overdue, Incomplete,
+///      Blocked, In Revision) as recognizable icon cards.
+///   3. Priority — a compact row of severity chips.
+///   4. Status (advanced) — collapsed by default, grouped by phase, for the
+///      rare case someone wants to filter to a specific pipeline step.
+///   5. Footer — Clear all / Apply, so edits are previewed and only take
+///      effect on Apply (nothing changes on the board until you commit).
+class _TaskFilterPanel extends StatefulWidget {
   final TaskFilterState filter;
   final void Function(TaskFilterState) onFilterChange;
   final void Function(TaskFilterState) onApply;
@@ -291,7 +346,14 @@ class _TaskFilterPanel extends StatelessWidget {
     required this.onReset,
   });
 
-  // Task statuses (design scope: up to waitingPrinting)
+  @override
+  State<_TaskFilterPanel> createState() => _TaskFilterPanelState();
+}
+
+class _TaskFilterPanelState extends State<_TaskFilterPanel> {
+  bool _statusExpanded = false;
+
+  // Design-phase statuses.
   static const List<(String, String)> designStatusOptions = [
     ('pending', 'Initialized'),
     ('designing', 'Designing'),
@@ -300,7 +362,7 @@ class _TaskFilterPanel extends StatelessWidget {
     ('waitingPrinting', 'Waiting Printing'),
   ];
 
-  // Production statuses
+  // Production-phase statuses.
   static const List<(String, String)> productionStatusOptions = [
     ('printing', 'Printing'),
     ('printingCompleted', 'Printing Completed'),
@@ -311,23 +373,10 @@ class _TaskFilterPanel extends StatelessWidget {
     ('delivered', 'Delivered'),
   ];
 
-  // All statuses
-  static const List<(String, String)> allStatusOptions = [
-    ('pending', 'Initialized'),
-    ('designing', 'Designing'),
-    ('waitingApproval', 'Waiting Approval'),
-    ('clientApproved', 'Client Approved'),
-    ('waitingPrinting', 'Waiting Printing'),
-    ('printing', 'Printing'),
-    ('printingCompleted', 'Printing Completed'),
-    ('finishing', 'Finishing'),
-    ('productionCompleted', 'Production Completed'),
-    ('waitingDelivery', 'Waiting Delivery'),
-    ('delivery', 'Delivery'),
-    ('delivered', 'Delivered'),
-    ('blocked', 'Blocked'),
+  // Everything else. 'blocked' and 'revision' are deliberately excluded here
+  // — they already have dedicated quick-filter cards above.
+  static const List<(String, String)> otherStatusOptions = [
     ('paused', 'Paused'),
-    ('revision', 'Revision'),
   ];
 
   static const List<(int, String)> priorityOptions = [
@@ -338,12 +387,14 @@ class _TaskFilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final filter = widget.filter;
+
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(_T.rLg),
       child: Container(
-        width: 340,
-        constraints: const BoxConstraints(maxHeight: 600),
+        width: 368,
+        constraints: const BoxConstraints(maxHeight: 620),
         decoration: BoxDecoration(
           color: _T.white,
           borderRadius: BorderRadius.circular(_T.rLg),
@@ -354,6 +405,7 @@ class _TaskFilterPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
               decoration: const BoxDecoration(
@@ -374,7 +426,7 @@ class _TaskFilterPanel extends StatelessWidget {
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
-                        onTap: onReset,
+                        onTap: widget.onReset,
                         child: const Text(
                           'Reset',
                           style: TextStyle(
@@ -388,49 +440,86 @@ class _TaskFilterPanel extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Scrollable body
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'STATUS',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: _T.slate500,
-                        letterSpacing: 0.3,
-                      ),
+                    _sectionLabel('QUICK FILTERS'),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _QuickFilterCard(
+                            icon: Icons.schedule_rounded,
+                            label: 'Overdue',
+                            caption: 'Past due date',
+                            accent: _T.red,
+                            accentTint: _T.red50,
+                            selected: filter.overdueOnly,
+                            onTap:
+                                () => widget.onFilterChange(
+                                  filter.toggleOverdue(),
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _QuickFilterCard(
+                            icon: Icons.pending_actions_rounded,
+                            label: 'Incomplete',
+                            caption: 'Not yet delivered',
+                            accent: _T.blue,
+                            accentTint: _T.blue50,
+                            selected: filter.incompleteOnly,
+                            onTap:
+                                () => widget.onFilterChange(
+                                  filter.toggleIncomplete(),
+                                ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          allStatusOptions.map((entry) {
-                            final (status, label) = entry;
-                            final selected = filter.statuses.contains(status);
-                            return _FilterToggleChip(
-                              label: label,
-                              selected: selected,
-                              onTap:
-                                  () => onFilterChange(
-                                    filter.toggleStatus(status),
-                                  ),
-                            );
-                          }).toList(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _QuickFilterCard(
+                            icon: Icons.block_rounded,
+                            label: 'Blocked',
+                            caption: 'Needs attention',
+                            accent: _T.red,
+                            accentTint: _T.red50,
+                            selected: filter.isBlocked,
+                            onTap:
+                                () => widget.onFilterChange(
+                                  filter.toggleBlocked(),
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _QuickFilterCard(
+                            icon: Icons.rate_review_rounded,
+                            label: 'In Revision',
+                            caption: 'Being reworked',
+                            accent: _T.amber,
+                            accentTint: _T.amber.withOpacity(0.12),
+                            selected: filter.isRevision,
+                            onTap:
+                                () => widget.onFilterChange(
+                                  filter.toggleRevision(),
+                                ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'PRIORITY',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: _T.slate500,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
+
+                    const SizedBox(height: 18),
+                    _sectionLabel('PRIORITY'),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -438,21 +527,146 @@ class _TaskFilterPanel extends StatelessWidget {
                       children:
                           priorityOptions.map((entry) {
                             final (priority, label) = entry;
-                            final selected = filter.priorities.contains(
-                              priority,
-                            );
-                            return _FilterToggleChip(
+                            return _PriorityChip(
                               label: label,
-                              selected: selected,
+                              priority: priority,
+                              selected: filter.priorities.contains(priority),
                               onTap:
-                                  () => onFilterChange(
+                                  () => widget.onFilterChange(
                                     filter.togglePriority(priority),
                                   ),
                             );
                           }).toList(),
                     ),
+
+                    const SizedBox(height: 14),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap:
+                            () => setState(
+                              () => _statusExpanded = !_statusExpanded,
+                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Text(
+                                _statusExpanded
+                                    ? 'Hide status filters'
+                                    : 'More status filters',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _T.slate500,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              AnimatedRotation(
+                                turns: _statusExpanded ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 160),
+                                child: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 16,
+                                  color: _T.slate400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 180),
+                      crossFadeState:
+                          _statusExpanded
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                      firstChild: Padding(
+                        padding: const EdgeInsets.only(top: 6, bottom: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _statusGroup(
+                              'Design Phase',
+                              designStatusOptions,
+                              filter,
+                            ),
+                            const SizedBox(height: 14),
+                            _statusGroup(
+                              'Production Phase',
+                              productionStatusOptions,
+                              filter,
+                            ),
+                            const SizedBox(height: 14),
+                            _statusGroup('Other', otherStatusOptions, filter),
+                          ],
+                        ),
+                      ),
+                      secondChild: const SizedBox.shrink(),
+                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
+              ),
+            ),
+
+            // Footer
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _T.slate100)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (filter.isActive)
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: widget.onReset,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'Clear all',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: _T.slate500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => widget.onApply(filter),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _T.blue,
+                          borderRadius: BorderRadius.circular(_T.r),
+                        ),
+                        child: Text(
+                          filter.isActive
+                              ? 'Apply filters (${filter.activeCount})'
+                              : 'Apply filters',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -460,9 +674,222 @@ class _TaskFilterPanel extends StatelessWidget {
       ),
     );
   }
+
+  Widget _sectionLabel(String text) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 10.5,
+      fontWeight: FontWeight.w700,
+      color: _T.slate500,
+      letterSpacing: 0.3,
+    ),
+  );
+
+  Widget _statusGroup(
+    String title,
+    List<(String, String)> options,
+    TaskFilterState filter,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: _T.slate400,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              options.map((entry) {
+                final (status, label) = entry;
+                final selected = filter.statuses.contains(status);
+                return _FilterToggleChip(
+                  label: label,
+                  selected: selected,
+                  onTap:
+                      () => widget.onFilterChange(filter.toggleStatus(status)),
+                );
+              }).toList(),
+        ),
+      ],
+    );
+  }
 }
 
-/// A single filter toggle chip — soft-badge recipe.
+/// A recognizable, tappable "quick filter" card — icon in a tinted circle,
+/// a label, a short caption, and a trailing check when active. Sized for a
+/// two-column desktop grid.
+class _QuickFilterCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String caption;
+  final Color accent;
+  final Color accentTint;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _QuickFilterCard({
+    required this.icon,
+    required this.label,
+    required this.caption,
+    required this.accent,
+    required this.accentTint,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: selected ? accentTint : _T.white,
+            borderRadius: BorderRadius.circular(_T.rLg),
+            border: Border.all(
+              color: selected ? accent.withOpacity(0.35) : _T.slate200,
+              width: selected ? 1.2 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: selected ? accent.withOpacity(0.16) : _T.slate100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  size: 14,
+                  color: selected ? accent : _T.slate400,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? _T.ink : _T.ink3,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: _T.slate400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 120),
+                opacity: selected ? 1 : 0,
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 15,
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Priority chip with a small severity dot (grey/amber/red) so priority
+/// reads at a glance without needing to parse the label.
+class _PriorityChip extends StatelessWidget {
+  final String label;
+  final int priority;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PriorityChip({
+    required this.label,
+    required this.priority,
+    required this.selected,
+    required this.onTap,
+  });
+
+  Color get _dotColor => switch (priority) {
+    2 => _T.red,
+    1 => _T.amber,
+    _ => _T.slate400,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? _T.blue : _T.slate100,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(
+              color: selected ? _T.blue.withOpacity(0.3) : _T.slate200,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : _dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : _T.ink3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A single filter toggle chip — soft-badge recipe. Used for the granular,
+/// grouped status lists under "More status filters".
 class _FilterToggleChip extends StatelessWidget {
   final String label;
   final bool selected;

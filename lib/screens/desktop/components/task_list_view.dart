@@ -1458,8 +1458,8 @@ class _Toolbar extends StatelessWidget {
               ),
             )
           else ...[
-            // TaskFilterButton(filter: TaskFilterState(), onFilter: (filter) {}),
-            // SizedBox(width: 10),
+            TaskFilterButton(filter: taskFilterState, onFilter: (filter) {}),
+            SizedBox(width: 10),
             _ColumnPickerButton(
               visibleOptional: visibleOptional,
               singleProject: singleProject,
