@@ -166,6 +166,9 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
 
   @override
   Widget build(BuildContext context) {
+    TaskFilter _appliedFilter =
+        ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: MouseRegion(
@@ -313,7 +316,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final filter = ref.read(taskCacheProvider(TaskFilter.empty)).filterApplied;
+    final filter = ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
     ;
 
     return Material(
