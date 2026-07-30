@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
+import 'package:smooflow/states/task.dart';
 
 class _T {
   static const blue = Color(0xFF2563EB);
@@ -33,104 +36,23 @@ class _T {
   );
 }
 
-/// Active filter state.
-///
-/// `statuses` still holds every raw status string (including 'blocked' and
-/// 'revision') so downstream filtering logic that already reads
-/// `filter.statuses` keeps working unchanged. `overdueOnly` and
-/// `incompleteOnly` are separate booleans because "overdue" (due-date based)
-/// and "incomplete" (not yet delivered) aren't statuses in their own right.
-class TaskFilterState {
-  final Set<String> statuses; // empty = show all
-  final Set<int> priorities; // empty = show all (0=normal, 1=high, 2=urgent)
-  final bool overdueOnly;
-  final bool incompleteOnly;
-
-  const TaskFilterState({
-    Set<String>? statuses,
-    Set<int>? priorities,
-    this.overdueOnly = false,
-    this.incompleteOnly = false,
-  }) : statuses = statuses ?? const {},
-       priorities = priorities ?? const {};
-
-  bool get isActive =>
-      statuses.isNotEmpty ||
-      priorities.isNotEmpty ||
-      overdueOnly ||
-      incompleteOnly;
-
-  /// Total number of independently-toggled filters, used for the badge count.
-  int get activeCount =>
-      statuses.length +
-      priorities.length +
-      (overdueOnly ? 1 : 0) +
-      (incompleteOnly ? 1 : 0);
-
-  bool get isBlocked => statuses.contains('blocked');
-  bool get isRevision => statuses.contains('revision');
-
-  TaskFilterState copyWith({
-    Set<String>? statuses,
-    Set<int>? priorities,
-    bool? overdueOnly,
-    bool? incompleteOnly,
-  }) => TaskFilterState(
-    statuses: statuses ?? this.statuses,
-    priorities: priorities ?? this.priorities,
-    overdueOnly: overdueOnly ?? this.overdueOnly,
-    incompleteOnly: incompleteOnly ?? this.incompleteOnly,
-  );
-
-  TaskFilterState toggleStatus(String status) {
-    final updated = Set<String>.from(statuses);
-    if (updated.contains(status)) {
-      updated.remove(status);
-    } else {
-      updated.add(status);
-    }
-    return copyWith(statuses: updated);
-  }
-
-  TaskFilterState togglePriority(int priority) {
-    final updated = Set<int>.from(priorities);
-    if (updated.contains(priority)) {
-      updated.remove(priority);
-    } else {
-      updated.add(priority);
-    }
-    return copyWith(priorities: updated);
-  }
-
-  TaskFilterState toggleOverdue() => copyWith(overdueOnly: !overdueOnly);
-
-  TaskFilterState toggleIncomplete() =>
-      copyWith(incompleteOnly: !incompleteOnly);
-
-  TaskFilterState toggleBlocked() => toggleStatus('blocked');
-
-  TaskFilterState toggleRevision() => toggleStatus('revision');
-
-  TaskFilterState reset() => const TaskFilterState();
-}
-
 /// Filter button matching _ColumnPickerButton's chrome and animations.
-class TaskFilterButton extends StatefulWidget {
-  final TaskFilterState filter;
-  final void Function(TaskFilterState) onFilter;
-
-  const TaskFilterButton({required this.filter, required this.onFilter});
+class TaskFilterButton extends ConsumerStatefulWidget {
+  const TaskFilterButton();
 
   @override
-  State<TaskFilterButton> createState() => _TaskFilterButtonState();
+  ConsumerState<TaskFilterButton> createState() => _TaskFilterButtonState();
 }
 
-class _TaskFilterButtonState extends State<TaskFilterButton>
+class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
     with SingleTickerProviderStateMixin {
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
-  late TaskFilterState _overlayFilter;
+  late TaskFilter _overlayFilter;
+
+  TaskFilter get _appliedFilter =>
+      ref.read(taskCacheProvider(TaskFilter.empty)).filterApplied;
 
   late final AnimationController _ac = AnimationController(
     vsync: this,
@@ -149,13 +71,13 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
   @override
   void initState() {
     super.initState();
-    _overlayFilter = widget.filter;
+    _overlayFilter = _appliedFilter;
   }
 
   @override
   void didUpdateWidget(TaskFilterButton old) {
     super.didUpdateWidget(old);
-    _overlayFilter = widget.filter;
+    _overlayFilter = _appliedFilter;
     if (_open) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => mounted ? _overlay?.markNeedsBuild() : null,
@@ -173,7 +95,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
   void _toggle() => _open ? _close() : _show();
 
   void _show() {
-    _overlayFilter = widget.filter;
+    _overlayFilter = _appliedFilter;
     setState(() => _open = true);
     _overlay = _buildOverlay();
     Overlay.of(context).insert(_overlay!);
@@ -191,7 +113,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
     _overlay = null;
   }
 
-  void _updateOverlayFilter(TaskFilterState updated) {
+  void _updateOverlayFilter(TaskFilter updated) {
     _overlayFilter = updated;
     _overlay?.markNeedsBuild();
   }
@@ -224,11 +146,15 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                   filter: _overlayFilter,
                   onFilterChange: _updateOverlayFilter,
                   onApply: (filter) {
-                    widget.onFilter(filter);
+                    ref
+                        .read(taskCacheProvider(TaskFilter.empty).notifier)
+                        .applyNewFilter(filter);
                     _close();
                   },
                   onReset: () {
-                    widget.onFilter(const TaskFilterState());
+                    ref
+                        .read(taskCacheProvider(TaskFilter.empty).notifier)
+                        .applyNewFilter(TaskFilter.empty);
                     _close();
                   },
                 ),
@@ -253,12 +179,12 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
               color:
                   _open
                       ? _T.slate100
-                      : (widget.filter.isActive ? _T.blue50 : _T.white),
+                      : (_appliedFilter.isActive ? _T.blue50 : _T.white),
               border: Border.all(
                 color:
                     _open
                         ? _T.slate300
-                        : (widget.filter.isActive
+                        : (_appliedFilter.isActive
                             ? _T.blue.withOpacity(0.3)
                             : _T.slate200),
               ),
@@ -271,7 +197,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                   Icons.tune_outlined,
                   size: 14,
                   color:
-                      _open || widget.filter.isActive ? _T.blue : _T.slate400,
+                      _open || _appliedFilter.isActive ? _T.blue : _T.slate400,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -279,10 +205,10 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _open || widget.filter.isActive ? _T.blue : _T.ink3,
+                    color: _open || _appliedFilter.isActive ? _T.blue : _T.ink3,
                   ),
                 ),
-                if (widget.filter.isActive) ...[
+                if (_appliedFilter.isActive) ...[
                   const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -294,7 +220,7 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      '${widget.filter.activeCount}',
+                      '${_appliedFilter.activeCount}',
                       style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
@@ -333,10 +259,10 @@ class _TaskFilterButtonState extends State<TaskFilterButton>
 ///      rare case someone wants to filter to a specific pipeline step.
 ///   5. Footer — Clear all / Apply, so edits are previewed and only take
 ///      effect on Apply (nothing changes on the board until you commit).
-class _TaskFilterPanel extends StatefulWidget {
-  final TaskFilterState filter;
-  final void Function(TaskFilterState) onFilterChange;
-  final void Function(TaskFilterState) onApply;
+class _TaskFilterPanel extends ConsumerStatefulWidget {
+  final TaskFilter filter;
+  final void Function(TaskFilter) onFilterChange;
+  final void Function(TaskFilter) onApply;
   final VoidCallback onReset;
 
   const _TaskFilterPanel({
@@ -347,10 +273,10 @@ class _TaskFilterPanel extends StatefulWidget {
   });
 
   @override
-  State<_TaskFilterPanel> createState() => _TaskFilterPanelState();
+  ConsumerState<_TaskFilterPanel> createState() => _TaskFilterPanelState();
 }
 
-class _TaskFilterPanelState extends State<_TaskFilterPanel> {
+class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
   bool _statusExpanded = false;
 
   // Design-phase statuses.
@@ -387,7 +313,8 @@ class _TaskFilterPanelState extends State<_TaskFilterPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final filter = widget.filter;
+    final filter = ref.read(taskCacheProvider(TaskFilter.empty)).filterApplied;
+    ;
 
     return Material(
       color: Colors.transparent,
@@ -688,7 +615,7 @@ class _TaskFilterPanelState extends State<_TaskFilterPanel> {
   Widget _statusGroup(
     String title,
     List<(String, String)> options,
-    TaskFilterState filter,
+    TaskFilter filter,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

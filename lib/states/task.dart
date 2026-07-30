@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
@@ -21,37 +22,115 @@ class TaskFilter {
   final String? projectId;
   final int? assigneeId;
   final String? searchQuery;
+  final Set<String> statuses; // empty = show all
+  final Set<int> priorities; // empty = show all (0=normal, 1=high, 2=urgent)
+  final bool overdueOnly;
+  final bool incompleteOnly;
 
-  const TaskFilter({this.projectId, this.assigneeId, this.searchQuery});
+  const TaskFilter({
+    this.projectId,
+    this.assigneeId,
+    this.searchQuery,
+    Set<String>? statuses,
+    Set<int>? priorities,
+    this.overdueOnly = false,
+    this.incompleteOnly = false,
+  }) : statuses = statuses ?? const {},
+       priorities = priorities ?? const {};
+
+  // Convenient empty state helper
+  static const empty = TaskFilter();
+
+  /// Returns true if any filter, selection, or search query is applied.
+  bool get isActive => activeCount > 0;
+
+  /// Total number of independently applied filter rules, used for badge counts.
+  int get activeCount =>
+      (projectId != null ? 1 : 0) +
+      (assigneeId != null ? 1 : 0) +
+      (searchQuery != null && searchQuery!.isNotEmpty ? 1 : 0) +
+      statuses.length +
+      priorities.length +
+      (overdueOnly ? 1 : 0) +
+      (incompleteOnly ? 1 : 0);
+
+  bool get isBlocked => statuses.contains('blocked');
+  bool get isRevision => statuses.contains('revision');
 
   TaskFilter copyWith({
     String? projectId,
     int? assigneeId,
     String? searchQuery,
+    Set<String>? statuses,
+    Set<int>? priorities,
+    bool? overdueOnly,
+    bool? incompleteOnly,
   }) {
     return TaskFilter(
       projectId: projectId ?? this.projectId,
       assigneeId: assigneeId ?? this.assigneeId,
       searchQuery: searchQuery ?? this.searchQuery,
+      statuses: statuses ?? this.statuses,
+      priorities: priorities ?? this.priorities,
+      overdueOnly: overdueOnly ?? this.overdueOnly,
+      incompleteOnly: incompleteOnly ?? this.incompleteOnly,
     );
   }
 
+  TaskFilter toggleStatus(String status) {
+    final updated = Set<String>.from(statuses);
+    if (updated.contains(status)) {
+      updated.remove(status);
+    } else {
+      updated.add(status);
+    }
+    return copyWith(statuses: updated);
+  }
+
+  TaskFilter togglePriority(int priority) {
+    final updated = Set<int>.from(priorities);
+    if (updated.contains(priority)) {
+      updated.remove(priority);
+    } else {
+      updated.add(priority);
+    }
+    return copyWith(priorities: updated);
+  }
+
+  TaskFilter toggleOverdue() => copyWith(overdueOnly: !overdueOnly);
+  TaskFilter toggleIncomplete() => copyWith(incompleteOnly: !incompleteOnly);
+  TaskFilter toggleBlocked() => toggleStatus('blocked');
+  TaskFilter toggleRevision() => toggleStatus('revision');
+
+  TaskFilter reset() => const TaskFilter();
+
   // CRITICAL: Value equality must be implemented so Riverpod knows
-  // when two filter configurations are identical.
+  // when two filter configurations are identical (using setEquals for Set fields).
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TaskFilter &&
-          runtimeType == other.runtimeType &&
-          projectId == other.projectId &&
-          assigneeId == other.assigneeId &&
-          searchQuery == other.searchQuery;
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is TaskFilter &&
+        other.runtimeType == runtimeType &&
+        other.projectId == projectId &&
+        other.assigneeId == assigneeId &&
+        other.searchQuery == searchQuery &&
+        setEquals(other.statuses, statuses) &&
+        setEquals(other.priorities, priorities) &&
+        other.overdueOnly == overdueOnly &&
+        other.incompleteOnly == incompleteOnly;
+  }
 
   @override
-  int get hashCode => Object.hash(projectId, assigneeId, searchQuery);
-
-  // Convenient empty state helper
-  static const empty = TaskFilter();
+  int get hashCode => Object.hash(
+    projectId,
+    assigneeId,
+    searchQuery,
+    Object.hashAll(statuses),
+    Object.hashAll(priorities),
+    overdueOnly,
+    incompleteOnly,
+  );
 }
 
 class TaskState {

@@ -15,6 +15,10 @@ class FilteredTaskCacheState {
 
   final String? error;
 
+  final TaskFilter _filterApplied;
+
+  TaskFilter get filterApplied => _filterApplied;
+
   FilteredTaskCacheState({
     required this.totalCounts,
     required this.cachedTasks,
@@ -25,13 +29,15 @@ class FilteredTaskCacheState {
     ConnectionStatus connectionStatus = ConnectionStatus.disconnected,
     Task? selectedTask,
     this.error,
+    TaskFilter? filterApplied,
   }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
        _currentlyDeletingSpecs =
            currentlyDeletingSpecs ??
            {}, // ✅ FIXED: Fallback safely instead of clearing
        _connectionStatus = connectionStatus,
-       _selectedTask = selectedTask;
+       _selectedTask = selectedTask,
+       _filterApplied = filterApplied ?? TaskFilter.empty;
 
   const FilteredTaskCacheState.empty()
     : totalCounts = const {},
@@ -42,7 +48,8 @@ class FilteredTaskCacheState {
       _currentlyDeletingSpecs = const {},
       _connectionStatus = ConnectionStatus.disconnected,
       _selectedTask = null,
-      error = null;
+      error = null,
+      _filterApplied = TaskFilter.empty;
 
   final List<TaskNameChangeEventUnderway> _taskNameChangeEventsUnderway;
   List<TaskNameChangeEventUnderway> get taskNameChangeEventsUnderway =>
@@ -74,6 +81,7 @@ class FilteredTaskCacheState {
     ConnectionStatus? connectionStatus,
     Task? selectedTask,
     String? error,
+    TaskFilter? filterApplied,
   }) {
     return FilteredTaskCacheState(
       totalCounts: totalCounts ?? this.totalCounts,
@@ -86,6 +94,7 @@ class FilteredTaskCacheState {
       connectionStatus: connectionStatus ?? _connectionStatus,
       selectedTask: selectedTask ?? _selectedTask,
       error: error,
+      filterApplied: filterApplied ?? _filterApplied,
     );
   }
 

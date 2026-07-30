@@ -48,6 +48,10 @@ class TaskCacheNotifier
   //   _initializeSocket();
   // }
 
+  void applyNewFilter(TaskFilter newFilter) {
+    state = state.copyWith(filterApplied: newFilter);
+  }
+
   /// Example: Accessing 'arg' to query filtered parameters from your API
   Future<void> fetchMetadataCounts() async {
     // Set a loading state locally using current cache mappings
