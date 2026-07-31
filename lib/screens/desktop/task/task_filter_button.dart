@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/states/task.dart';
 
@@ -74,16 +75,16 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
     _overlayFilter = _appliedFilter;
   }
 
-  @override
-  void didUpdateWidget(TaskFilterButton old) {
-    super.didUpdateWidget(old);
-    _overlayFilter = _appliedFilter;
-    if (_open) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => mounted ? _overlay?.markNeedsBuild() : null,
-      );
-    }
-  }
+  // @override
+  // void didUpdateWidget(TaskFilterButton old) {
+  //   super.didUpdateWidget(old);
+  //   _overlayFilter = _appliedFilter;
+  //   if (_open) {
+  //     WidgetsBinding.instance.addPostFrameCallback(
+  //       (_) => mounted ? _overlay?.markNeedsBuild() : null,
+  //     );
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -320,11 +321,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final filter = ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
-
-    final filterNotifier = ref.read(
-      taskCacheProvider(TaskFilter.empty).notifier,
-    );
+    final filter = widget.filter;
 
     return Material(
       color: Colors.transparent,
@@ -399,7 +396,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             selected: filter.overdueOnly,
                             onTap: () {
                               final newFilter = filter.toggleOverdue();
-                              filterNotifier.applyNewFilter(newFilter);
+                              // filterNotifier.applyNewFilter(newFilter);
                               widget.onFilterChange(newFilter);
                             },
                           ),
@@ -415,7 +412,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             selected: filter.incompleteOnly,
                             onTap: () {
                               final newFilter = filter.toggleIncomplete();
-                              filterNotifier.applyNewFilter(newFilter);
+                              // filterNotifier.applyNewFilter(newFilter);
                               widget.onFilterChange(newFilter);
                             },
                           ),
@@ -435,7 +432,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             selected: filter.isBlocked,
                             onTap: () {
                               final newFilter = filter.toggleBlocked();
-                              filterNotifier.applyNewFilter(newFilter);
+                              // filterNotifier.applyNewFilter(newFilter);
                               widget.onFilterChange(newFilter);
                             },
                           ),
@@ -451,7 +448,7 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             selected: filter.isRevision,
                             onTap: () {
                               final newFilter = filter.toggleRevision();
-                              filterNotifier.applyNewFilter(newFilter);
+                              // filterNotifier.applyNewFilter(newFilter);
                               widget.onFilterChange(filter.toggleRevision());
                             },
                           ),
@@ -476,10 +473,8 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                                 final newFilter = filter.togglePriority(
                                   priority,
                                 );
-                                filterNotifier.applyNewFilter(newFilter);
-                                widget.onFilterChange(
-                                  filter.togglePriority(priority),
-                                );
+                                // filterNotifier.applyNewFilter(newFilter);
+                                widget.onFilterChange(newFilter);
                               },
                             );
                           }).toList(),
