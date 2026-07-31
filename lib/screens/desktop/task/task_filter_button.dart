@@ -169,6 +169,10 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
     TaskFilter _appliedFilter =
         ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
 
+    print(
+      "[task filter button], filter applied, overdue: ${_appliedFilter.overdueOnly}",
+    );
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: MouseRegion(
@@ -317,7 +321,10 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
-    ;
+
+    final filterNotifier = ref.read(
+      taskCacheProvider(TaskFilter.empty).notifier,
+    );
 
     return Material(
       color: Colors.transparent,
@@ -390,10 +397,11 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             accent: _T.red,
                             accentTint: _T.red50,
                             selected: filter.overdueOnly,
-                            onTap:
-                                () => widget.onFilterChange(
-                                  filter.toggleOverdue(),
-                                ),
+                            onTap: () {
+                              final newFilter = filter.toggleOverdue();
+                              filterNotifier.applyNewFilter(newFilter);
+                              widget.onFilterChange(newFilter);
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -405,10 +413,11 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             accent: _T.blue,
                             accentTint: _T.blue50,
                             selected: filter.incompleteOnly,
-                            onTap:
-                                () => widget.onFilterChange(
-                                  filter.toggleIncomplete(),
-                                ),
+                            onTap: () {
+                              final newFilter = filter.toggleIncomplete();
+                              filterNotifier.applyNewFilter(newFilter);
+                              widget.onFilterChange(newFilter);
+                            },
                           ),
                         ),
                       ],
@@ -424,10 +433,11 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             accent: _T.red,
                             accentTint: _T.red50,
                             selected: filter.isBlocked,
-                            onTap:
-                                () => widget.onFilterChange(
-                                  filter.toggleBlocked(),
-                                ),
+                            onTap: () {
+                              final newFilter = filter.toggleBlocked();
+                              filterNotifier.applyNewFilter(newFilter);
+                              widget.onFilterChange(newFilter);
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -439,10 +449,11 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                             accent: _T.amber,
                             accentTint: _T.amber.withOpacity(0.12),
                             selected: filter.isRevision,
-                            onTap:
-                                () => widget.onFilterChange(
-                                  filter.toggleRevision(),
-                                ),
+                            onTap: () {
+                              final newFilter = filter.toggleRevision();
+                              filterNotifier.applyNewFilter(newFilter);
+                              widget.onFilterChange(filter.toggleRevision());
+                            },
                           ),
                         ),
                       ],
@@ -461,10 +472,15 @@ class _TaskFilterPanelState extends ConsumerState<_TaskFilterPanel> {
                               label: label,
                               priority: priority,
                               selected: filter.priorities.contains(priority),
-                              onTap:
-                                  () => widget.onFilterChange(
-                                    filter.togglePriority(priority),
-                                  ),
+                              onTap: () {
+                                final newFilter = filter.togglePriority(
+                                  priority,
+                                );
+                                filterNotifier.applyNewFilter(newFilter);
+                                widget.onFilterChange(
+                                  filter.togglePriority(priority),
+                                );
+                              },
                             );
                           }).toList(),
                     ),
