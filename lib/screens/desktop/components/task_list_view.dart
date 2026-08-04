@@ -563,6 +563,37 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
     final effective = _effectiveVisible;
 
+    // ── Effective TaskFilter ────────────────────────────────────────────
+    // `TaskFilterButton` always commits the advanced panel (statuses,
+    // priorities, overdue/incomplete, search, assignee) onto the ONE fixed
+    // family instance keyed by `TaskFilter.empty` — it's used purely as a
+    // shared settings slot, decoupled from whichever project is selected.
+    // Here we read that applied filter back out and merge it with the
+    // currently selected project to get the TaskFilter that should actually
+    // drive data loading.
+    //
+    // Because `taskCacheProvider` is a `.family` with full value-equality on
+    // `TaskFilter` (see `TaskFilter.==`), handing this merged filter to
+    // `taskCacheProvider(...)` transparently gives us a fresh, distinct
+    // `TaskCacheNotifier` instance whenever any filter field changes — no
+    // manual cache invalidation needed. `fetchMetadataCounts()` and
+    // `loadPage()` fire against the new `arg` exactly like they already do
+    // today when only `projectId` changes, so the existing offset-based
+    // pagination keeps working unmodified; it's simply now scoped to a
+    // narrower, filtered result set.
+    final appliedFilter = ref.watch(
+      taskCacheProvider(TaskFilter.empty).select((s) => s.filterApplied),
+    );
+    final effectiveFilter = TaskFilter(
+      projectId: widget.selectedProjectId,
+      assigneeId: appliedFilter.assigneeId,
+      searchQuery: appliedFilter.searchQuery,
+      statuses: appliedFilter.statuses,
+      priorities: appliedFilter.priorities,
+      overdueOnly: appliedFilter.overdueOnly,
+      incompleteOnly: appliedFilter.incompleteOnly,
+    );
+
     // DEBUG: Check
     // var tasksCount = 0;
     // ref
@@ -613,7 +644,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
           if (_viewMode == _ViewMode.board)
             Expanded(
               child: BoardView(
-                filter: TaskFilter(projectId: widget.selectedProjectId),
+                filter: effectiveFilter,
                 projects: widget.projects,
                 selectedTaskId: widget.selectedTaskId,
                 onTaskSelected: widget.onTaskSelected,
@@ -653,7 +684,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                       : _TaskTable(
                         effective: effective,
                         // tasks: reversedTasks,
-                        filter: TaskFilter(projectId: widget.selectedProjectId),
+                        filter: effectiveFilter,
                         projects: widget.projects,
                         members: members,
                         isDetailOpen: widget.isDetailOpen,
@@ -764,6 +795,23 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
     final built = widget.buildColumns(widget.effective);
     final columns = built.columns;
     final slots = built.slots;
+
+    // `widget.filter` is the *effective* filter now (project scope merged
+    // with whatever the user applied via TaskFilterButton — statuses,
+    // priorities, overdue/incomplete, search, assignee). Everything below
+    // reads/loads off `taskCacheProvider(widget.filter)`, so the moment the
+    // applied filter changes, this whole table is talking to a fresh cache
+    // instance scoped to that filter — counts, pagination offsets, and
+    // cached tasks are already filtered, no extra client-side filtering
+    // needed here.
+    //
+    // NOTE (open item): server-side filtering only takes effect once
+    // `TaskRepo.getCounts` / `TaskRepo.fetchV2` are extended to accept and
+    // honor `statuses`, `priorities`, `overdueOnly`, `incompleteOnly` (see
+    // `TaskCacheNotifier.fetchMetadataCounts` / `.loadPage`). Until then the
+    // family-key swap still works correctly for `projectId`/`assigneeId`/
+    // `searchQuery` (already wired), it just won't narrow results by the
+    // remaining advanced fields server-side.
 
     // 1. Monitor server aggregation metrics from the cache provider state slice
     final totalCounts = ref.watch(

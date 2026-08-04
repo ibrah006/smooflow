@@ -61,11 +61,22 @@ class TaskCacheNotifier
       isLoadingCounts: true,
     );
 
-    // Using 'arg' to supply filter criteria to the backend call
+    // Using 'arg' to supply filter criteria to the backend call.
+    //
+    // OPEN ITEM: `statuses`/`priorities`/`overdueOnly`/`incompleteOnly` are
+    // passed through here so `TaskRepo.getCounts` can honor them once its
+    // signature is extended server-side to accept & filter on them. Until
+    // that lands, passing extra fields the repo doesn't yet declare is a
+    // compile-time signal for what needs to be added there — remove this
+    // note once `TaskRepo.getCounts` accepts these params.
     final counts = await _repo.getCounts(
       projectId: arg.projectId,
       assigneeId: arg.assigneeId,
       searchQuery: arg.searchQuery,
+      // statuses: arg.statuses.isEmpty ? null : arg.statuses.toList(),
+      // priorities: arg.priorities.isEmpty ? null : arg.priorities.toList(),
+      // overdueOnly: arg.overdueOnly ? true : null,
+      // incompleteOnly: arg.incompleteOnly ? true : null,
     );
 
     // Update the state with the returned values
@@ -91,12 +102,27 @@ class TaskCacheNotifier
       return; // Already loaded! Short-circuit network request.
     }
 
-    // Hit backend using specific filters tracked by 'arg'
+    // Hit backend using specific filters tracked by 'arg'.
+    //
+    // OPEN ITEM: same as `fetchMetadataCounts` above — `assigneeId`,
+    // `searchQuery`, `statuses`, `priorities`, `overdueOnly`, and
+    // `incompleteOnly` need to be accepted & honored by `TaskRepo.fetchV2`
+    // server-side for pages to come back pre-filtered. Without that, the
+    // offsets returned here stay aligned with the *unfiltered* per-status
+    // count, so `totalCounts` (from `getCounts`) and the rows `fetchV2`
+    // actually returns for a given offset can disagree until both repo
+    // methods are updated together.
     final incomingTasks = await _repo.fetchV2(
       status: status,
       limit: pageSize,
       offset: offset,
       projectId: arg.projectId,
+      // assigneeId: arg.assigneeId,
+      // searchQuery: arg.searchQuery,
+      // statuses: arg.statuses.isEmpty ? null : arg.statuses.toList(),
+      // priorities: arg.priorities.isEmpty ? null : arg.priorities.toList(),
+      // overdueOnly: arg.overdueOnly ? true : null,
+      // incompleteOnly: arg.incompleteOnly ? true : null,
     );
 
     // Deep copy and mutate the map structure safely
