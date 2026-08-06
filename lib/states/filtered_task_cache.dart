@@ -15,8 +15,10 @@ class FilteredTaskCacheState {
 
   final String? error;
 
+  @deprecated
   final TaskFilter _filterApplied;
 
+  @deprecated
   TaskFilter get filterApplied => _filterApplied;
 
   FilteredTaskCacheState({
