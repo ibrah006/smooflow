@@ -832,7 +832,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
     for (final status in TaskStatus.values) {
       // Pull total rows allocated on the server for this status lane
 
-      // server row count for the [status]
+      // server row count for the [status] and for the filter applied
       late final int serverRowCount;
       if (activeProjectId == null) {
         serverRowCount =
@@ -1501,11 +1501,13 @@ class _Toolbar extends StatelessWidget {
               ),
             )
           else ...[
-            TaskFilterButton(
-              appliedFilter: appliedFilter,
-              onFilterChange: onFilterChange,
-            ),
-            SizedBox(width: 10),
+            if (kDebugMode) ...[
+              TaskFilterButton(
+                appliedFilter: appliedFilter,
+                onFilterChange: onFilterChange,
+              ),
+              SizedBox(width: 10),
+            ],
             _ColumnPickerButton(
               visibleOptional: visibleOptional,
               singleProject: singleProject,
