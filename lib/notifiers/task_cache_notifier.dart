@@ -48,6 +48,7 @@ class TaskCacheNotifier
   //   _initializeSocket();
   // }
 
+  @deprecated
   void applyNewFilter(TaskFilter newFilter) {
     state = state.copyWith(filterApplied: newFilter);
   }
