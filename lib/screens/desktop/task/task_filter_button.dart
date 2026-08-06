@@ -164,8 +164,7 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
 
   @override
   Widget build(BuildContext context) {
-    TaskFilter _appliedFilter =
-        ref.watch(taskCacheProvider(TaskFilter.empty)).filterApplied;
+    TaskFilter _appliedFilter = widget.appliedFilter;
 
     print(
       "[task filter button], filter applied, overdue: ${_appliedFilter.overdueOnly}",

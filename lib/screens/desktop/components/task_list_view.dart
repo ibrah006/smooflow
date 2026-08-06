@@ -583,17 +583,14 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     // today when only `projectId` changes, so the existing offset-based
     // pagination keeps working unmodified; it's simply now scoped to a
     // narrower, filtered result set.
-    final appliedFilter = ref.watch(
-      taskCacheProvider(TaskFilter.empty).select((s) => s.filterApplied),
-    );
     final effectiveFilter = TaskFilter(
       projectId: widget.selectedProjectId,
-      assigneeId: appliedFilter.assigneeId,
-      searchQuery: appliedFilter.searchQuery,
-      statuses: appliedFilter.statuses,
-      priorities: appliedFilter.priorities,
-      overdueOnly: appliedFilter.overdueOnly,
-      incompleteOnly: appliedFilter.incompleteOnly,
+      assigneeId: _appliedFilter.assigneeId,
+      searchQuery: _appliedFilter.searchQuery,
+      statuses: _appliedFilter.statuses,
+      priorities: _appliedFilter.priorities,
+      overdueOnly: _appliedFilter.overdueOnly,
+      incompleteOnly: _appliedFilter.incompleteOnly,
     );
 
     // DEBUG: Check
@@ -670,6 +667,12 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
               singleProject: _singleProject,
               onToggle: _toggleColumn,
               onReset: _resetToDefaults,
+              appliedFilter: _appliedFilter,
+              onFilterChange: (newFilter) {
+                setState(() {
+                  _appliedFilter = newFilter;
+                });
+              },
             ),
             Expanded(
               child:
@@ -1436,6 +1439,8 @@ class _Toolbar extends StatelessWidget {
   final bool singleProject;
   final void Function(String) onToggle;
   final VoidCallback onReset;
+  final TaskFilter appliedFilter;
+  final void Function(TaskFilter) onFilterChange;
 
   const _Toolbar({
     required this.visibleOptional,
@@ -1443,6 +1448,8 @@ class _Toolbar extends StatelessWidget {
     required this.singleProject,
     required this.onToggle,
     required this.onReset,
+    required this.appliedFilter,
+    required this.onFilterChange,
   });
 
   @override
@@ -1494,7 +1501,10 @@ class _Toolbar extends StatelessWidget {
               ),
             )
           else ...[
-            TaskFilterButton(),
+            TaskFilterButton(
+              appliedFilter: appliedFilter,
+              onFilterChange: onFilterChange,
+            ),
             SizedBox(width: 10),
             _ColumnPickerButton(
               visibleOptional: visibleOptional,
