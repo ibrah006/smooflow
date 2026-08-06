@@ -378,6 +378,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
   int? lastNotifiedTaskId;
   DateTime? lastNotificationTime;
 
+  TaskFilter _appliedFilter = TaskFilter.empty;
+
   Set<String> get _effectiveVisible {
     final base = {..._kMandatoryIds, ..._visibleOptional};
     return _singleProject ? base.difference({'project'}) : base;

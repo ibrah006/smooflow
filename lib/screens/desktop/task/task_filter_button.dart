@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/states/task.dart';
 
@@ -39,7 +38,12 @@ class _T {
 
 /// Filter button matching _ColumnPickerButton's chrome and animations.
 class TaskFilterButton extends ConsumerStatefulWidget {
-  const TaskFilterButton();
+  final TaskFilter appliedFilter;
+  final void Function(TaskFilter) onFilterChange;
+  const TaskFilterButton({
+    required this.appliedFilter,
+    required this.onFilterChange,
+  });
 
   @override
   ConsumerState<TaskFilterButton> createState() => _TaskFilterButtonState();
@@ -51,9 +55,6 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
   OverlayEntry? _overlay;
   bool _open = false;
   late TaskFilter _overlayFilter;
-
-  TaskFilter get _appliedFilter =>
-      ref.read(taskCacheProvider(TaskFilter.empty)).filterApplied;
 
   late final AnimationController _ac = AnimationController(
     vsync: this,
@@ -72,7 +73,7 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
   @override
   void initState() {
     super.initState();
-    _overlayFilter = _appliedFilter;
+    _overlayFilter = widget.appliedFilter;
   }
 
   // @override
@@ -96,7 +97,7 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
   void _toggle() => _open ? _close() : _show();
 
   void _show() {
-    _overlayFilter = _appliedFilter;
+    _overlayFilter = widget.appliedFilter;
     setState(() => _open = true);
     _overlay = _buildOverlay();
     Overlay.of(context).insert(_overlay!);
@@ -147,15 +148,11 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
                   filter: _overlayFilter,
                   onFilterChange: _updateOverlayFilter,
                   onApply: (filter) {
-                    ref
-                        .read(taskCacheProvider(TaskFilter.empty).notifier)
-                        .applyNewFilter(filter);
+                    widget.onFilterChange(filter);
                     _close();
                   },
                   onReset: () {
-                    ref
-                        .read(taskCacheProvider(TaskFilter.empty).notifier)
-                        .applyNewFilter(TaskFilter.empty);
+                    widget.onFilterChange(TaskFilter.empty);
                     _close();
                   },
                 ),
