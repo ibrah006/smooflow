@@ -1088,13 +1088,15 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
         minStockLevel: double.tryParse(_minStockCtrl.text.trim()) ?? 0.0,
       );
 
-      // TODO: implement the actual update logic here
+      print("updated material name: ${updatedMaterial.name}");
+
+      // Update the material
       await ref
           .read(materialNotifierProvider.notifier)
           .updateMaterial(widget.material.id, {
             'name': updatedMaterial.name,
             'description': updatedMaterial.description,
-            'measureType': updatedMaterial.measureType.toString(),
+            'measureType': updatedMaterial.measureType.name,
             'minStockLevel': updatedMaterial.minStockLevel,
           });
 
