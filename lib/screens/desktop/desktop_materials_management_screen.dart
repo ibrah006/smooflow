@@ -883,7 +883,7 @@ class _Topbar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // MATERIAL LIST TILE
 // ─────────────────────────────────────────────────────────────────────────────
-class _MaterialListTile extends StatefulWidget {
+class _MaterialListTile extends ConsumerStatefulWidget {
   final MaterialModel material;
   final bool isSelected;
   final VoidCallback onTap;
@@ -895,14 +895,20 @@ class _MaterialListTile extends StatefulWidget {
     required this.onQuickReceive,
   });
   @override
-  State<_MaterialListTile> createState() => _MaterialListTileState();
+  ConsumerState<_MaterialListTile> createState() => _MaterialListTileState();
 }
 
-class _MaterialListTileState extends State<_MaterialListTile> {
+class _MaterialListTileState extends ConsumerState<_MaterialListTile> {
   bool _hovered = false;
   @override
   Widget build(BuildContext context) {
-    final m = widget.material;
+    final m = ref
+        .watch(materialNotifierProvider)
+        .materials
+        .firstWhere(
+          (mat) => mat.id == widget.material.id,
+          orElse: () => widget.material,
+        );
     final selected = widget.isSelected;
     final Color stockColor;
     final Color stockBg;
