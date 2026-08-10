@@ -1091,18 +1091,21 @@ class _EditPanelState extends ConsumerState<_EditPanel> {
       print("updated material name: ${updatedMaterial.name}");
 
       // Update the material
-      await ref
-          .read(materialNotifierProvider.notifier)
-          .updateMaterial(widget.material.id, {
-            'name': updatedMaterial.name,
-            'description': updatedMaterial.description,
-            'measureType': updatedMaterial.measureType.name,
-            'minStockLevel': updatedMaterial.minStockLevel,
-          });
+      await ref.read(materialNotifierProvider.notifier).updateMaterial(
+        widget.material.id,
+        {
+          'name': updatedMaterial.name,
+          'description': updatedMaterial.description,
+          'measureType': updatedMaterial.measureType.name,
+          // TODO: re-enable this
+          // 'minStockLevel': updatedMaterial.minStockLevel,
+        },
+      );
 
       _snack('Material updated', isError: false);
       widget.onSaved();
     } catch (e) {
+      print("Error updating material: $e");
       _snack('Failed to update material', isError: true);
       setState(() => _saving = false);
     }

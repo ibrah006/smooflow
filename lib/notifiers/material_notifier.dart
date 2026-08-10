@@ -84,18 +84,18 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
   // Update material
   Future<void> updateMaterial(String id, Map<String, dynamic> data) async {
     state = state.copyWith(isLoading: true);
-    // try {
-    final updatedMaterial = await _repo.updateMaterial(id, data);
-    print(
-      "[MaterialNotifier().updateMaterial] updated material: ${updatedMaterial.toJson()}",
-    );
-    final updatedList =
-        state.materials.map((m) => m.id == id ? updatedMaterial : m).toList();
-    state = state.copyWith(materials: updatedList, isLoading: false);
-    // } catch (e) {
-    //   print("[MaterialNotifier().updateMaterial] error caught: $e");
-    //   state = state.copyWith(isLoading: false, errorMessage: e.toString());
-    // }
+    try {
+      final updatedMaterial = await _repo.updateMaterial(id, data);
+      print(
+        "[MaterialNotifier().updateMaterial] updated material: ${updatedMaterial.toJson()}",
+      );
+      final updatedList =
+          state.materials.map((m) => m.id == id ? updatedMaterial : m).toList();
+      state = state.copyWith(materials: updatedList, isLoading: false);
+    } catch (e) {
+      print("[MaterialNotifier().updateMaterial] error caught: $e");
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
   }
 
   // Delete material
