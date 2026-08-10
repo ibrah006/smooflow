@@ -60,6 +60,7 @@ class _T {
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
   static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
   static const ink = Color(0xFF0F172A);
   static const ink3 = Color(0xFF334155);
   static const white = Colors.white;
@@ -88,6 +89,7 @@ class _ManageMaterialsScreenState
     extends ConsumerState<DesktopMaterialsManagementScreen> {
   MaterialModel? _selected;
   bool _showCreate = false;
+  bool _isEditing = false;
 
   final _searchCtrl = TextEditingController();
   String _filter = 'All';
@@ -109,20 +111,28 @@ class _ManageMaterialsScreenState
   void _selectMaterial(MaterialModel m) => setState(() {
     _selected = m;
     _showCreate = false;
+    _isEditing = false;
   });
 
   void _openCreate() => setState(() {
     _selected = null;
     _showCreate = true;
+    _isEditing = false;
   });
 
   void _closePanel() => setState(() {
     _selected = null;
     _showCreate = false;
+    _isEditing = false;
   });
 
   void _onSaved() {
     _closePanel();
+    ref.read(materialNotifierProvider.notifier).fetchMaterials();
+  }
+
+  void _onEditSaved() {
+    setState(() => _isEditing = false); // Return to detail view
     ref.read(materialNotifierProvider.notifier).fetchMaterials();
   }
 
@@ -160,6 +170,80 @@ class _ManageMaterialsScreenState
                 color: _T.green,
               );
             },
+          ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: _T.red,
+                  size: 22,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Delete Material',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Are you sure you want to delete "${_selected?.name}"? This action cannot be undone.',
+              style: const TextStyle(fontSize: 14, color: _T.slate600),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: _T.slate500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _T.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close dialog
+                  final id = _selected!.id;
+                  _closePanel(); // Close edit panel
+
+                  // Assuming your notifier has a deleteMaterial method
+                  await ref
+                      .read(materialNotifierProvider.notifier)
+                      .deleteMaterial(id);
+                  ref.read(materialNotifierProvider.notifier).fetchMaterials();
+                  _snack('Material deleted successfully', isError: false);
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
     );
   }
@@ -395,17 +479,34 @@ class _ManageMaterialsScreenState
                                 onClose: _closePanel,
                                 onSaved: _onSaved,
                               )
-                              : _DetailPanel(
-                                key: ValueKey(_selected!.id),
-                                material: _selected!,
-                                onClose: _closePanel,
-                                onUpdate: () {
-                                  ref
-                                      .read(materialNotifierProvider.notifier)
-                                      .fetchMaterials();
-                                  setState(() {});
-                                },
-                              ))
+                              : (_isEditing
+                                  // 👈 Inject the Edit Panel here
+                                  ? _EditPanel(
+                                    key: ValueKey('edit_${_selected!.id}'),
+                                    material: _selected!,
+                                    onClose:
+                                        () =>
+                                            setState(() => _isEditing = false),
+                                    onSaved: _onEditSaved,
+                                    onDelete: _showDeleteDialog,
+                                  )
+                                  // 👈 Fallback to Detail Panel
+                                  : _DetailPanel(
+                                    key: ValueKey(_selected!.id),
+                                    material: _selected!,
+                                    onClose: _closePanel,
+                                    // Make sure your _DetailPanel accepts this callback
+                                    onEdit:
+                                        () => setState(() => _isEditing = true),
+                                    onUpdate: () {
+                                      ref
+                                          .read(
+                                            materialNotifierProvider.notifier,
+                                          )
+                                          .fetchMaterials();
+                                      setState(() {});
+                                    },
+                                  )))
                           : const _IdlePane(),
                 ),
               ],
@@ -917,16 +1018,518 @@ class _MaterialListTileState extends State<_MaterialListTile> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// EDIT PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+class _EditPanel extends ConsumerStatefulWidget {
+  final MaterialModel material;
+  final VoidCallback onClose, onSaved;
+  final VoidCallback? onDelete; // Optional callback for when deletion succeeds
+
+  const _EditPanel({
+    super.key,
+    required this.material,
+    required this.onClose,
+    required this.onSaved,
+    this.onDelete,
+  });
+
+  @override
+  ConsumerState<_EditPanel> createState() => _EditPanelState();
+}
+
+class _EditPanelState extends ConsumerState<_EditPanel> {
+  late TextEditingController _nameCtrl;
+  late TextEditingController _descCtrl;
+  late TextEditingController _minStockCtrl;
+  late MeasureType? _measureType;
+
+  bool _submitted = false;
+  bool _saving = false;
+
+  bool get _nameOk => _nameCtrl.text.trim().isNotEmpty;
+  bool get _typeOk => _measureType != null;
+  bool get _formOk => _nameOk && _typeOk;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill existing data
+    _nameCtrl = TextEditingController(text: widget.material.name);
+    _descCtrl = TextEditingController(text: widget.material.description ?? '');
+    _minStockCtrl = TextEditingController(
+      text: widget.material.minStockLevel.toString(),
+    );
+    _measureType = widget.material.measureType;
+
+    for (final c in [_nameCtrl, _descCtrl, _minStockCtrl]) {
+      c.addListener(() => setState(() {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _minStockCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _submitted = true);
+    if (!_formOk) return;
+    setState(() => _saving = true);
+
+    try {
+      final updatedMaterial = widget.material.copyWith(
+        name: _nameCtrl.text.trim(),
+        description:
+            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        measureType: _measureType!,
+        minStockLevel: double.tryParse(_minStockCtrl.text.trim()) ?? 0.0,
+      );
+
+      // TODO: implement the actual update logic here
+      await ref
+          .read(materialNotifierProvider.notifier)
+          .updateMaterial(widget.material.id, {
+            'name': updatedMaterial.name,
+            'description': updatedMaterial.description,
+            'measureType': updatedMaterial.measureType.toString(),
+            'minStockLevel': updatedMaterial.minStockLevel,
+          });
+
+      _snack('Material updated', isError: false);
+      widget.onSaved();
+    } catch (e) {
+      _snack('Failed to update material', isError: true);
+      setState(() => _saving = false);
+    }
+  }
+
+  void _snack(String msg, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 15,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Check if the material has batches (StockIn transactions)
+    final allTxns = ref
+        .watch(materialNotifierProvider)
+        .byMaterial(widget.material.id);
+    final hasBatches = allTxns.any((t) => t.type == TransactionType.stockIn);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: _T.slate50,
+        border: Border(left: BorderSide(color: _T.slate200)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Topbar ─────────────────────────────────────────────────────────
+          Container(
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: const BoxDecoration(
+              color: _T.white,
+              border: Border(bottom: BorderSide(color: _T.slate200)),
+            ),
+            child: Row(
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(_T.r),
+                  child: InkWell(
+                    onTap: widget.onClose,
+                    borderRadius: BorderRadius.circular(_T.r),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: _T.slate100,
+                        borderRadius: BorderRadius.circular(_T.r),
+                        border: Border.all(color: _T.slate200),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 17,
+                        color: _T.ink3,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _T.blue50,
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(color: _T.blue.withOpacity(0.2)),
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: _T.blue,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Edit Material',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _T.ink,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    Text(
+                      widget.material.name,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // ── Scrollable Body ────────────────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Details Section ──────────────────────────────────────
+                    _SectionCard(
+                      icon: Icons.layers_outlined,
+                      iconColor: _T.purple,
+                      iconBg: _T.purple50,
+                      title: 'Material Details',
+                      subtitle: 'Update name, type, and description',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SmooField(
+                            controller: _nameCtrl,
+                            label: 'Material Name',
+                            hint: 'e.g. Vinyl Roll 3.2m',
+                            icon: Icons.layers_outlined,
+                            required: true,
+                            error:
+                                _submitted && !_nameOk
+                                    ? 'Name is required'
+                                    : null,
+                          ),
+                          const SizedBox(height: 16),
+                          FieldLabel.required('Measure Type'),
+                          const SizedBox(height: 9),
+                          _MeasureTypePicker(
+                            selected: _measureType,
+                            showError: _submitted && !_typeOk,
+                            onSelect: (t) => setState(() => _measureType = t),
+                          ),
+
+                          // ── Measure Type Warning Banner ──
+                          if (_measureType != widget.material.measureType) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFFBEB), // Amber 50
+                                borderRadius: BorderRadius.circular(_T.r),
+                                border: Border.all(
+                                  color: _T.amber.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 16,
+                                    color: _T.amber.withOpacity(0.8),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Changing the measure type of an existing material can cause discrepancies in historical inventory records and active jobs. Proceed with caution.',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: _T.ink3.withOpacity(0.8),
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 16),
+                          SmooField(
+                            controller: _descCtrl,
+                            label: 'Description',
+                            hint: 'Optional notes about this material',
+                            icon: Icons.notes_rounded,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Thresholds Section ───────────────────────────────────
+                    _SectionCard(
+                      icon: Icons.warning_amber_outlined,
+                      iconColor: _T.amber,
+                      iconBg: _T.amber50,
+                      title: 'Stock Thresholds',
+                      subtitle: 'Configure low stock alerts',
+                      child: _NumField(
+                        controller: _minStockCtrl,
+                        label: 'Minimum Stock Level',
+                        hint: 'e.g. 10',
+                        required: false,
+                        suffix: _measureType?.name.replaceAll('_', ' '),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ── "Are you looking for..." Helper Card ─────────────────
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _T.white,
+                        borderRadius: BorderRadius.circular(_T.rLg),
+                        border: Border.all(color: _T.slate200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _T.slate50,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: _T.slate200),
+                            ),
+                            child: const Icon(
+                              Icons.lightbulb_outline_rounded,
+                              size: 16,
+                              color: _T.slate500,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Are you looking to delete this material?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: _T.ink3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  hasBatches
+                                      // Consider this: This material cannot be deleted because it contains inventory batches. Please write-off all batches first.
+                                      ? 'This material cannot be deleted because it contains inventory batches.'
+                                      : 'This material has no active batches and can be safely removed.',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color:
+                                        hasBatches ? _T.slate500 : _T.slate400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          OutlinedButton.icon(
+                            onPressed:
+                                hasBatches
+                                    ? null
+                                    : () {
+                                      // Trigger your delete flow / confirmation dialog here
+                                      widget.onDelete?.call();
+                                    },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _T.red,
+                              disabledForegroundColor: _T.slate300,
+                              side: BorderSide(
+                                color:
+                                    hasBatches
+                                        ? _T.slate200
+                                        : _T.red.withOpacity(0.3),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(_T.r),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 15,
+                            ),
+                            label: const Text(
+                              'Delete',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Footer ─────────────────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            decoration: const BoxDecoration(
+              color: _T.white,
+              border: Border(top: BorderSide(color: _T.slate200)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : widget.onClose,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _T.slate500,
+                      side: const BorderSide(color: _T.slate200),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _T.blue,
+                      disabledBackgroundColor: _T.slate200,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    icon:
+                        _saving
+                            ? const SizedBox(
+                              width: 15,
+                              height: 15,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Icon(Icons.save_rounded, size: 17),
+                    label: Text(
+                      _saving ? 'Saving…' : 'Save Changes',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 class _DetailPanel extends ConsumerStatefulWidget {
   final MaterialModel material;
-  final VoidCallback onClose, onUpdate;
+  final VoidCallback onClose;
+  final VoidCallback onUpdate;
+  final VoidCallback onEdit;
+
   const _DetailPanel({
     super.key,
     required this.material,
     required this.onClose,
     required this.onUpdate,
+    required this.onEdit,
   });
   @override
   ConsumerState<_DetailPanel> createState() => _DetailPanelState();
@@ -1103,7 +1706,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Top bar ──────────────────────────────────────────────────────
+          // ── Topbar ──────────────────────────────────────────────────────
           Container(
             height: 58,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1161,6 +1764,30 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed:
+                      widget.onEdit, // Fires the callback to switch panels
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _T.ink,
+                    side: const BorderSide(color: _T.slate200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 0,
+                    ),
+                    minimumSize: const Size(
+                      0,
+                      34,
+                    ), // Matches close button height
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text(
+                    'Edit',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
                 // Write-off ghost button
