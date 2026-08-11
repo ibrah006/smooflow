@@ -56,6 +56,7 @@ import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -151,7 +152,14 @@ class _SectionHeaderItem extends _TableItem {
   final TaskStatus status;
   final bool isExpanded;
   final int totalCount;
-  _SectionHeaderItem(this.status, this.isExpanded, this.totalCount);
+  final bool isProminent;
+
+  _SectionHeaderItem(
+    this.status,
+    this.isExpanded,
+    this.totalCount, {
+    this.isProminent = false,
+  });
 }
 
 class _TaskRowPlaceholderItem extends _TableItem {
@@ -827,32 +835,63 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
 
     // 2. Build the structural table map purely using layout tokens
     final List<_TableItem> tableItems = [];
-
     int totalServerTaskCount = 0;
-    for (final status in TaskStatus.values) {
-      // Pull total rows allocated on the server for this status lane
 
-      // server row count for the [status] and for the filter applied
-      late final int serverRowCount;
-      if (activeProjectId == null) {
-        serverRowCount =
-            totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
-      } else {
-        serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
-      }
+    // statuses that are in "Production" phase
+    final productionStatuses = [
+      TaskStatus.waitingPrinting,
+      TaskStatus.printing,
+      TaskStatus.printingCompleted,
+      TaskStatus.finishing,
+      TaskStatus.productionCompleted,
+      TaskStatus.waitingDelivery,
+    ];
 
-      final isCollapsed = _collapsedStatuses.contains(status);
+    // All other statuses fallback to the secondary list
+    final otherStatuses =
+        TaskStatus.values
+            .where((s) => !productionStatuses.contains(s))
+            .toList();
 
-      tableItems.add(_SectionHeaderItem(status, !isCollapsed, serverRowCount));
+    // Helper to generate section rows
+    void buildSections(List<TaskStatus> statuses, {required bool isProminent}) {
+      for (final status in statuses) {
+        late final int serverRowCount;
+        if (activeProjectId == null) {
+          serverRowCount =
+              totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+        } else {
+          serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+        }
 
-      if (!isCollapsed) {
-        // Allocate empty placeholder row indices based on total server dimensions
-        totalServerTaskCount += serverRowCount;
-        for (int i = 0; i < serverRowCount; i++) {
-          tableItems.add(_TaskRowPlaceholderItem(status, i));
+        // Optional: Auto-collapse non-prominent sections by default by seeding _collapsedStatuses
+        final isCollapsed = _collapsedStatuses.contains(status);
+
+        tableItems.add(
+          _SectionHeaderItem(
+            status,
+            !isCollapsed,
+            serverRowCount,
+            isProminent: isProminent,
+          ),
+        );
+
+        if (!isCollapsed) {
+          totalServerTaskCount += serverRowCount;
+          for (int i = 0; i < serverRowCount; i++) {
+            tableItems.add(_TaskRowPlaceholderItem(status, i));
+          }
         }
       }
     }
+
+    // ----- PERMISSION GATE ------ //
+    // Process Production first (prominent), then others (less prominent)
+    if (LoginService.currentUser!.role == 'production')
+      buildSections(productionStatuses, isProminent: true);
+    buildSections(otherStatuses, isProminent: false);
+    if (LoginService.currentUser!.role != 'production')
+      buildSections(productionStatuses, isProminent: false);
 
     // Proper handling of task table empty state
     if (totalServerTaskCount == 0) {
@@ -894,6 +933,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
               status: item.status,
               isExpanded: item.isExpanded,
               taskCount: item.totalCount,
+              isProminent: item.isProminent,
               onToggle: () {
                 setState(() {
                   if (_collapsedStatuses.contains(item.status)) {
@@ -2824,6 +2864,7 @@ class _StatusSectionHeader extends StatefulWidget {
   final TaskStatus status;
   final bool isExpanded;
   final int taskCount;
+  final bool isProminent;
   final VoidCallback onToggle;
   final VoidCallback? onAddTask;
 
@@ -2831,6 +2872,7 @@ class _StatusSectionHeader extends StatefulWidget {
     required this.status,
     required this.isExpanded,
     required this.taskCount,
+    this.isProminent = false,
     required this.onToggle,
     this.onAddTask,
   });
@@ -2853,8 +2895,8 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
       onExit: (_) => setState(() => _isHovered = false),
       child: Container(
         height: _kRowHeight,
-        decoration: const BoxDecoration(
-          color: _T.slate100,
+        decoration: BoxDecoration(
+          color: widget.isProminent ? _T.blue50 : _T.slate50,
           border: Border(
             bottom: BorderSide(color: _T.slate200, width: 1),
             top: BorderSide(color: _T.slate200, width: 0.5),
