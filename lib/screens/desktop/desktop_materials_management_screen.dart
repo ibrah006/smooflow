@@ -2847,20 +2847,6 @@ class _ConsumptionEmptyState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSUMPTION ROW — redesigned
-//
-// Layout:
-//   ┌──────────────────────────────────────────────────────────────┐
-//   │ [red icon]  −12 rm            [project chip]  [task chip]   │
-//   │             Task name here                    dd/mm/yyyy     │
-//   └──────────────────────────────────────────────────────────────┘
-//
-// Task name is the primary identifier — shown large and bold.
-// Project is a colored dot + name chip (same pattern as task cards).
-// Date/time is muted, right-aligned.
-// Quantity is prominent in red on the leading left.
-// ─────────────────────────────────────────────────────────────────────────────
 class _ConsumptionRow extends ConsumerStatefulWidget {
   final StockTransaction txn;
   final String unit;
@@ -2993,7 +2979,7 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                             );
                           }
                           return _TaskProjectLine(
-                            taskName: task.name,
+                            task: task,
                             projectFuture: _projectFuture,
                           );
                         },
@@ -3002,7 +2988,10 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
                         widget.txn.notes!.isNotEmpty)
                       Text(
                         fmtTransactionNote(widget.txn.notes!)!,
-                        style: TextStyle(fontSize: 12, color: _T.slate500),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _T.slate500,
+                        ),
                       )
                     else
                       const Text(
@@ -3034,20 +3023,12 @@ class _ConsumptionRowState extends ConsumerState<_ConsumptionRow> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK + PROJECT LINE — stacked layout
-//
-// Task name sits on its own full-width line so it never truncates against the
-// project name. Project chip sits below as a subordinate metadata line.
-// This handles any combination of long/short names gracefully.
-//
-// Structure:
-//   Task name (full width, up to 2 lines, w600 ink3)
-//   [● Project Name]  (small chip, left-aligned, below the task name)
 // ─────────────────────────────────────────────────────────────────────────────
 class _TaskProjectLine extends StatelessWidget {
-  final String taskName;
+  final Task task;
   final Future<Project?>? projectFuture;
 
-  const _TaskProjectLine({required this.taskName, required this.projectFuture});
+  const _TaskProjectLine({required this.task, required this.projectFuture});
 
   @override
   Widget build(BuildContext context) {
@@ -3055,17 +3036,12 @@ class _TaskProjectLine extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Task name — full width, wraps to 2 lines if needed
-        Text(
-          taskName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: _T.ink3,
-            height: 1.35,
-          ),
+        // Interactive Task Title Link
+        _TaskLink(
+          taskName: task.name,
+          onTap: () {
+            // TODO: Navigate to task detail (e.g. task.id)
+          },
         ),
 
         // Project chip — below the task name, left-aligned
@@ -3077,7 +3053,12 @@ class _TaskProjectLine extends StatelessWidget {
               if (!snap.hasData) return _InlineSkeletonChip();
               final proj = snap.data;
               if (proj == null) return const SizedBox.shrink();
-              return _ProjectChip(project: proj);
+              return _ProjectChip(
+                project: proj,
+                onTap: () {
+                  // TODO: Navigate to project detail (e.g. proj.id)
+                },
+              );
             },
           ),
         ],
@@ -3087,45 +3068,106 @@ class _TaskProjectLine extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROJECT CHIP
-//
-// Colored dot + project name. Matches the pattern used on task cards in the
-// board view and detail panel summary rows.
+// TASK LINK (Interactive Title)
 // ─────────────────────────────────────────────────────────────────────────────
-class _ProjectChip extends StatelessWidget {
-  final Project project;
-  const _ProjectChip({required this.project});
+class _TaskLink extends StatefulWidget {
+  final String taskName;
+  final VoidCallback? onTap;
+
+  const _TaskLink({required this.taskName, this.onTap});
+
+  @override
+  State<_TaskLink> createState() => _TaskLinkState();
+}
+
+class _TaskLinkState extends State<_TaskLink> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(7, 3, 8, 3),
-      decoration: BoxDecoration(
-        color: _T.slate100,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _T.slate200),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 100),
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: _hovered ? _T.blue : _T.ink3,
+            decoration:
+                _hovered ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: _T.blue,
+            height: 1.35,
+          ),
+          child: Text(
+            widget.taskName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: project.color,
-              shape: BoxShape.circle,
-            ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CHIP (Interactive)
+// ─────────────────────────────────────────────────────────────────────────────
+class _ProjectChip extends StatefulWidget {
+  final Project project;
+  final VoidCallback? onTap;
+
+  const _ProjectChip({required this.project, this.onTap});
+
+  @override
+  State<_ProjectChip> createState() => _ProjectChipState();
+}
+
+class _ProjectChipState extends State<_ProjectChip> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.fromLTRB(7, 3, 8, 3),
+          decoration: BoxDecoration(
+            color: _hovered ? _T.slate200 : _T.slate100,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: _hovered ? _T.slate300 : _T.slate200),
           ),
-          const SizedBox(width: 5),
-          Text(
-            project.name,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: _T.slate500,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: widget.project.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                widget.project.name,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: _hovered ? _T.ink3 : _T.slate500,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
