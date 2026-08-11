@@ -383,6 +383,21 @@ class _AdminDesktopDashboardScreenState
     );
   }
 
+  void onViewChanged(_AdminView v) {
+    setState(() {
+      _view = v;
+      _showCreateTaskOverlay = false;
+    });
+    _closeDetail();
+  }
+
+  void onProjectSelected(String? id) => setState(() {
+    _selectedProjectId = id;
+    // Switch to list view when a project is selected so the
+    // user immediately sees filtered results.
+    if (_view == _AdminView.overview) _view = _AdminView.list;
+  });
+
   @override
   Widget build(BuildContext context) {
     // TODO: Not very performance efficient
@@ -423,25 +438,13 @@ class _AdminDesktopDashboardScreenState
                       () => _isSidebarCollapsed = !_isSidebarCollapsed,
                     ),
                 pinnedProjectIds: _pinnedProjectIds,
-                onViewChanged: (v) {
-                  setState(() {
-                    _view = v;
-                    _showCreateTaskOverlay = false;
-                  });
-                  _closeDetail();
-                },
+                onViewChanged: onViewChanged,
                 onLoadProjects: (value) {
                   setState(() {
                     _pinnedProjectIds = value;
                   });
                 },
-                onProjectSelected:
-                    (id) => setState(() {
-                      _selectedProjectId = id;
-                      // Switch to list view when a project is selected so the
-                      // user immediately sees filtered results.
-                      if (_view == _AdminView.overview) _view = _AdminView.list;
-                    }),
+                onProjectSelected: onProjectSelected,
               ),
 
               // ── Main content ────────────────────────────────────────
