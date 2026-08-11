@@ -2004,7 +2004,6 @@ class _BatchInventoryPanelState extends State<_BatchInventoryPanel> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Spacer(),
                               // Ghost-style Toggle
                               if (widget.batches.isNotEmpty)
                                 MouseRegion(
