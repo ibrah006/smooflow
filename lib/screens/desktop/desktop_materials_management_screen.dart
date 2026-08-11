@@ -1580,6 +1580,9 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
     );
   }
 
+  void _onSelectBatch(StockTransaction? b) =>
+      setState(() => _selectedBatch = (_selectedBatch?.id == b?.id) ? null : b);
+
   @override
   void initState() {
     super.initState();
@@ -1838,12 +1841,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     selectedBatchId: _selectedBatch?.id,
                     selectedBatchBarcode: _selectedBatch?.barcode!,
                     remaining: (b) => b.quantity - (b.consumed ?? 0),
-                    onSelect:
-                        (b) => setState(
-                          () =>
-                              _selectedBatch =
-                                  (_selectedBatch?.id == b.id) ? null : b,
-                        ),
+                    onSelect: _onSelectBatch,
                     // kpi: _KpiChip(
                     //   label: 'Remaining',
                     //   value: '${fmtStock(totalRemaining)} ${m.unitShort}',
@@ -1933,7 +1931,7 @@ class _BatchInventoryPanel extends StatefulWidget {
   final String unit;
   final String? selectedBatchId;
   final double Function(StockTransaction) remaining;
-  final ValueChanged<StockTransaction> onSelect;
+  final ValueChanged<StockTransaction?> onSelect;
   final Widget? kpi;
   final String? selectedBatchBarcode;
 
@@ -2012,9 +2010,31 @@ class _BatchInventoryPanelState extends State<_BatchInventoryPanel> {
                                   cursor: SystemMouseCursors.click,
                                   child: GestureDetector(
                                     onTap:
-                                        () => setState(
-                                          () => _showDepleted = !_showDepleted,
-                                        ),
+                                        () => setState(() {
+                                          _showDepleted = !_showDepleted;
+                                          // If show depleted is turned off - show only available batches
+                                          if (!_showDepleted) {
+                                            // TODO: if selected batch is depleted, then close the batch detail panel
+                                            if (widget.selectedBatchId !=
+                                                null) {
+                                              final selectedBatch = widget
+                                                  .batches
+                                                  .firstWhere(
+                                                    (b) =>
+                                                        b.id ==
+                                                        widget.selectedBatchId,
+                                                  );
+
+                                              final rem = widget.remaining(
+                                                selectedBatch,
+                                              );
+
+                                              // Close the batch detail panel
+                                              if (rem <= 0)
+                                                widget.onSelect(null);
+                                            }
+                                          }
+                                        }),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 6,
