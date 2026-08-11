@@ -438,6 +438,16 @@ class _ManageMaterialsScreenState
     final outOfStock = all.where((m) => m.isCriticalStock).length;
     final showPanel = _selected != null || _showCreate;
 
+    if (_selected != null) {
+      _selected = ref
+          .watch(materialNotifierProvider)
+          .materials
+          .firstWhere(
+            (mat) => mat.id == _selected!.id,
+            orElse: () => _selected!,
+          );
+    }
+
     return Scaffold(
       backgroundColor: _T.slate50,
       body: Column(
@@ -902,13 +912,7 @@ class _MaterialListTileState extends ConsumerState<_MaterialListTile> {
   bool _hovered = false;
   @override
   Widget build(BuildContext context) {
-    final m = ref
-        .watch(materialNotifierProvider)
-        .materials
-        .firstWhere(
-          (mat) => mat.id == widget.material.id,
-          orElse: () => widget.material,
-        );
+    final m = widget.material;
     final selected = widget.isSelected;
     final Color stockColor;
     final Color stockBg;
