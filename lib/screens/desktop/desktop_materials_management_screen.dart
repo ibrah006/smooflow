@@ -73,11 +73,14 @@ class _T {
 // ROOT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 class DesktopMaterialsManagementScreen extends ConsumerStatefulWidget {
-  final VoidCallback? onNavigateToReports; // 👈 Add this property here
+  final VoidCallback? onNavigateToReports;
+  // Callback used to navigate to a specific project
+  final Function(String?) onNavigateToProject;
 
   const DesktopMaterialsManagementScreen({
     super.key,
-    this.onNavigateToReports, // 👈 Hook it up here
+    this.onNavigateToReports,
+    required this.onNavigateToProject,
   });
 
   @override
@@ -3053,12 +3056,7 @@ class _TaskProjectLine extends StatelessWidget {
               if (!snap.hasData) return _InlineSkeletonChip();
               final proj = snap.data;
               if (proj == null) return const SizedBox.shrink();
-              return _ProjectChip(
-                project: proj,
-                onTap: () {
-                  // TODO: Navigate to project detail (e.g. proj.id)
-                },
-              );
+              return _ProjectChip(project: proj);
             },
           ),
         ],
@@ -3118,9 +3116,8 @@ class _TaskLinkState extends State<_TaskLink> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProjectChip extends StatefulWidget {
   final Project project;
-  final VoidCallback? onTap;
 
-  const _ProjectChip({required this.project, this.onTap});
+  const _ProjectChip({required this.project});
 
   @override
   State<_ProjectChip> createState() => _ProjectChipState();
@@ -3136,7 +3133,9 @@ class _ProjectChipState extends State<_ProjectChip> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () {
+          // TODO: navigate to project detail using the onNavigateToProject callback
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.fromLTRB(7, 3, 8, 3),

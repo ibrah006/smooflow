@@ -532,6 +532,14 @@ class _AdminDesktopDashboardScreenState
                                                 );
                                                 _closeDetail();
                                               },
+                                              onNavigateToProject: (projectId) {
+                                                if (projectId == null) return;
+
+                                                onViewChanged(
+                                                  _AdminView.projects,
+                                                );
+                                                onProjectSelected(projectId);
+                                              },
                                             )
                                             : _view == _AdminView.reports
                                             ? DesktopReportsScreen()
