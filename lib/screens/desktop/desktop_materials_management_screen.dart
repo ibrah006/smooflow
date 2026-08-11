@@ -1837,11 +1837,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     unit: m.unitShort,
                     selectedBatchId: _selectedBatch?.id,
                     selectedBatchBarcode: _selectedBatch?.barcode!,
-                    remaining:
-                        (b) => (b.quantity - consumptions.totalQuantity).clamp(
-                          0.0,
-                          double.infinity,
-                        ),
+                    remaining: (b) => b.quantity - (b.consumed ?? 0),
                     onSelect:
                         (b) => setState(
                           () =>
@@ -1931,7 +1927,7 @@ class _KpiChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // BATCH INVENTORY PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-class _BatchInventoryPanel extends StatelessWidget {
+class _BatchInventoryPanel extends StatefulWidget {
   final List<StockTransaction> batches;
   final List<StockTransaction> allTxns;
   final String unit;
@@ -1952,8 +1948,15 @@ class _BatchInventoryPanel extends StatelessWidget {
     required this.selectedBatchBarcode,
   });
 
+  @override
+  State<_BatchInventoryPanel> createState() => _BatchInventoryPanelState();
+}
+
+class _BatchInventoryPanelState extends State<_BatchInventoryPanel> {
+  bool _showDepleted = false;
+
   double usedQuantityInBatch(String batchBarcode) =>
-      allTxns
+      widget.allTxns
           .where(
             (txn) =>
                 txn.barcode == batchBarcode &&
@@ -1964,6 +1967,14 @@ class _BatchInventoryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Filter batches based on the toggle state
+    final filteredBatches =
+        widget.batches.where((b) {
+          if (_showDepleted) return true;
+          final rem = widget.remaining(b);
+          return rem > 0;
+        }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1983,17 +1994,82 @@ class _BatchInventoryPanel extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Inventory Batches',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: _T.ink,
-                              letterSpacing: -0.1,
-                            ),
+                          Row(
+                            children: [
+                              const Text(
+                                'Inventory Batches',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.ink,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Ghost-style Toggle
+                              if (widget.batches.isNotEmpty)
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap:
+                                        () => setState(
+                                          () => _showDepleted = !_showDepleted,
+                                        ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            _showDepleted
+                                                ? _T.slate100
+                                                : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color:
+                                              _showDepleted
+                                                  ? _T.slate200
+                                                  : Colors.transparent,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _showDepleted
+                                                ? Icons.visibility_off_outlined
+                                                : Icons.visibility_outlined,
+                                            size: 13,
+                                            color:
+                                                _showDepleted
+                                                    ? _T.slate500
+                                                    : _T.slate400,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _showDepleted
+                                                ? 'Hide depleted'
+                                                : 'Show depleted',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  _showDepleted
+                                                      ? _T.slate600
+                                                      : _T.slate400,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            '${batches.length} batch${batches.length == 1 ? '' : 'es'} · FIFO order',
+                            '${filteredBatches.length} batch${filteredBatches.length == 1 ? '' : 'es'} · FIFO order',
                             style: const TextStyle(
                               fontSize: 10.5,
                               color: _T.slate400,
@@ -2005,12 +2081,13 @@ class _BatchInventoryPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              Align(alignment: Alignment.centerRight, child: kpi),
+              Align(alignment: Alignment.centerRight, child: widget.kpi),
             ],
           ),
         ),
 
-        if (batches.isEmpty)
+        // Empty States
+        if (widget.batches.isEmpty)
           Expanded(
             child: Center(
               child: Column(
@@ -2035,6 +2112,43 @@ class _BatchInventoryPanel extends StatelessWidget {
               ),
             ),
           )
+        else if (filteredBatches.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 26,
+                    color: _T.slate300,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'All batches are depleted',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _T.slate400,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () => setState(() => _showDepleted = true),
+                    icon: const Icon(Icons.visibility_outlined, size: 14),
+                    label: const Text('Show depleted batches'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _T.slate500,
+                      textStyle: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
         else
           Expanded(
             child: Column(
@@ -2048,7 +2162,7 @@ class _BatchInventoryPanel extends StatelessWidget {
                     border: Border(bottom: BorderSide(color: _T.slate100)),
                   ),
                   child: Row(
-                    children: [
+                    children: const [
                       Expanded(flex: 2, child: _ColHdr('BARCODE')),
                       Expanded(flex: 2, child: _ColHdr('RECEIVED')),
                       Expanded(flex: 2, child: _ColHdr('QTY IN')),
@@ -2059,24 +2173,24 @@ class _BatchInventoryPanel extends StatelessWidget {
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
-                    itemCount: batches.length,
+                    itemCount: filteredBatches.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 3),
                     itemBuilder: (_, i) {
-                      final b = batches[i];
-                      final rem = remaining(b);
+                      final b = filteredBatches[i];
+                      final rem = widget.remaining(b);
                       final consumed = usedQuantityInBatch(b.barcode!);
-                      final isSelected = selectedBatchId == b.id;
+                      final isSelected = widget.selectedBatchId == b.id;
                       final isEmpty = rem <= 0;
 
                       return _BatchRow(
                         batch: b,
-                        unit: unit,
+                        unit: widget.unit,
                         consumed: consumed,
                         remaining: rem,
                         fifoRank: i + 1,
                         isSelected: isSelected,
                         isEmpty: isEmpty,
-                        onTap: () => onSelect(b),
+                        onTap: () => widget.onSelect(b),
                       );
                     },
                   ),
@@ -2139,23 +2253,6 @@ class _BatchRowState extends State<_BatchRow> {
         '${dt.day.toString().padLeft(2, '0')}/'
         '${dt.month.toString().padLeft(2, '0')}/${dt.year}';
 
-    final Color pillColor;
-    final Color pillBg;
-    final String pillLabel;
-    if (widget.isEmpty) {
-      pillColor = _T.slate400;
-      pillBg = _T.slate100;
-      pillLabel = 'Depleted';
-    } else if (widget.remaining < b.quantity * 0.25) {
-      pillColor = _T.amber;
-      pillBg = _T.amber50;
-      pillLabel = 'Low';
-    } else {
-      pillColor = _T.green;
-      pillBg = _T.green50;
-      pillLabel = 'Available';
-    }
-
     final sel = widget.isSelected;
 
     return MouseRegion(
@@ -2183,85 +2280,123 @@ class _BatchRowState extends State<_BatchRow> {
           child: Stack(
             alignment: Alignment.centerRight,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        if (b.barcode != null)
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  b.barcode!.length > 14
-                                      ? '${b.barcode!.substring(0, 14)}…'
-                                      : b.barcode!,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: _T.ink3,
-                                    fontFamily: 'monospace',
+              // Dim the row text elements slightly if depleted so they look inactive
+              Opacity(
+                opacity: widget.isEmpty && !sel && !_hovered ? 0.6 : 1.0,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (b.barcode != null)
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    b.barcode!.length > 14
+                                        ? '${b.barcode!.substring(0, 14)}…'
+                                        : b.barcode!,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: _T.ink3,
+                                      fontFamily: 'monospace',
+                                    ),
                                   ),
                                 ),
+                              ],
+                            )
+                          else
+                            Text(
+                              'Batch #${widget.fifoRank}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _T.slate500,
                               ),
-                            ],
-                          )
-                        else
-                          Text(
-                            'Batch #${widget.fifoRank}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _T.slate500,
                             ),
-                          ),
-                        if (b.notes != null)
-                          Text(
-                            b.notes!,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: _T.slate400,
+                          if (b.notes != null)
+                            Text(
+                              b.notes!,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: _T.slate400,
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      dateStr,
-                      style: const TextStyle(fontSize: 11, color: _T.slate500),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${fmtStock(b.quantity)} ${widget.unit}',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: _T.ink3,
+                        ],
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      widget.consumed > 0
-                          ? '${fmtStock(widget.consumed)} ${widget.unit}'
-                          : '—',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: widget.consumed > 0 ? _T.red : _T.slate300,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _T.slate500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+
+                    // Conditionally render the Qty/Consumed columns OR a Depleted Badge
+                    if (widget.remaining <= 0)
+                      Expanded(
+                        flex: 4, // Spans both QTY and CONSUMED columns
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _T.slate100,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: _T.slate200),
+                            ),
+                            child: const Text(
+                              'DEPLETED',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: _T.slate400,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else ...[
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          '${fmtStock(b.quantity)} ${widget.unit}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink3,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          widget.consumed > 0
+                              ? '${fmtStock(widget.consumed)} ${widget.unit}'
+                              : '—',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: widget.consumed > 0 ? _T.red : _T.slate300,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(width: 4),
               AnimatedOpacity(
