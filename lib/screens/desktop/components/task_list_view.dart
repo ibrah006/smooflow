@@ -56,7 +56,6 @@ import 'package:smooflow/core/api/local_http.dart';
 import 'package:smooflow/core/models/member.dart';
 import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
-import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
@@ -152,14 +151,7 @@ class _SectionHeaderItem extends _TableItem {
   final TaskStatus status;
   final bool isExpanded;
   final int totalCount;
-  final bool isProminent;
-
-  _SectionHeaderItem(
-    this.status,
-    this.isExpanded,
-    this.totalCount, {
-    this.isProminent = false,
-  });
+  _SectionHeaderItem(this.status, this.isExpanded, this.totalCount);
 }
 
 class _TaskRowPlaceholderItem extends _TableItem {
@@ -169,10 +161,50 @@ class _TaskRowPlaceholderItem extends _TableItem {
   _TaskRowPlaceholderItem(this.status, this.indexWithinStatus);
 }
 
+/// Separates the prominent production-phase sections from every other
+/// (de-emphasized) status section. Only ever inserted in the Production
+/// view.
+class _GroupDividerItem extends _TableItem {
+  final String label;
+  _GroupDividerItem(this.label);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // VIEW MODE
 // ─────────────────────────────────────────────────────────────────────────────
-enum _ViewMode { list, board, overview }
+enum _ViewMode { list, board, overview, production }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCTION-PHASE STATUSES
+//
+// The statuses that represent the physical production pipeline (printing →
+// finishing), as distinct from pre-production (design/approval) and
+// post-production (delivery/installation) phases. These drive the
+// "Production" view: their sections render first, expanded by default, and
+// visually prominent (blue accent). Every other status is grouped below a
+// divider, collapsed by default, and rendered muted — still fully visible
+// and one click away, just de-emphasized.
+// ─────────────────────────────────────────────────────────────────────────────
+const List<TaskStatus> _kProductionStatuses = [
+  TaskStatus.waitingPrinting,
+  TaskStatus.printing,
+  TaskStatus.printingCompleted,
+  TaskStatus.finishing,
+  TaskStatus.productionCompleted,
+];
+
+final Set<TaskStatus> _kProductionStatusSet = _kProductionStatuses.toSet();
+
+/// Status render order for the Production view: production-phase statuses
+/// first (in pipeline order), then every remaining status in its normal
+/// enum order.
+List<TaskStatus> _productionOrderedStatuses() => [
+  ..._kProductionStatuses,
+  ...TaskStatus.values.where((s) => !_kProductionStatusSet.contains(s)),
+];
+
+/// Visual emphasis level for a status section header / its rows.
+enum _SectionEmphasis { normal, production, muted }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLUMN DEFINITIONS
@@ -420,7 +452,11 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
     // View mode
     final vm = LocalHttp.prefs.getString(_kViewModeKey);
     if (vm != null) {
-      _viewMode = vm == 'board' ? _ViewMode.board : _ViewMode.list;
+      _viewMode = switch (vm) {
+        'board' => _ViewMode.board,
+        'production' => _ViewMode.production,
+        _ => _ViewMode.list,
+      };
     }
 
     // Column widths
@@ -456,10 +492,11 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   Future<void> _saveViewMode() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _kViewModeKey,
-      _viewMode == _ViewMode.board ? 'board' : 'list',
-    );
+    await prefs.setString(_kViewModeKey, switch (_viewMode) {
+      _ViewMode.board => 'board',
+      _ViewMode.production => 'production',
+      _ => 'list',
+    });
   }
 
   void _toggleColumn(String id) {
@@ -709,6 +746,7 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                         onAddTask:
                             widget.onAddTask, // Added forwarding reference
                         selectedProject: widget.selectedProjectId,
+                        isProductionView: _viewMode == _ViewMode.production,
                       ),
             ),
           ],
@@ -780,6 +818,7 @@ class _TaskTable extends ConsumerStatefulWidget {
   final VoidCallback onResizeEnd;
   final VoidCallback? onAddTask;
   final String? selectedProject;
+  final bool isProductionView;
 
   const _TaskTable({
     required this.effective,
@@ -794,6 +833,7 @@ class _TaskTable extends ConsumerStatefulWidget {
     required this.onResizeEnd,
     this.onAddTask,
     required this.selectedProject,
+    this.isProductionView = false,
   });
 
   @override
@@ -801,7 +841,39 @@ class _TaskTable extends ConsumerStatefulWidget {
 }
 
 class _TaskTableState extends ConsumerState<_TaskTable> {
-  final Set<TaskStatus> _collapsedStatuses = {};
+  // Statuses whose collapsed state has been manually flipped away from the
+  // current view's default (see `_isCollapsed`). Kept separate from the
+  // default so switching between List ⇄ Production doesn't have to know
+  // which statuses "should" be collapsed — it just recomputes defaults and
+  // this set flips whichever ones the user touched.
+  final Set<TaskStatus> _toggledStatuses = {};
+
+  @override
+  void didUpdateWidget(covariant _TaskTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Defaults differ between List and Production (see `_isCollapsed`), so
+    // carrying manual toggles across a mode switch would misapply them to
+    // the other mode's defaults — simplest correct behaviour is to reset.
+    if (oldWidget.isProductionView != widget.isProductionView) {
+      _toggledStatuses.clear();
+    }
+  }
+
+  /// Default-collapsed in the current view, before any manual toggling.
+  bool _defaultCollapsed(TaskStatus status) =>
+      widget.isProductionView && !_kProductionStatusSet.contains(status);
+
+  bool _isCollapsed(TaskStatus status) {
+    final isDefault = _defaultCollapsed(status);
+    return _toggledStatuses.contains(status) ? !isDefault : isDefault;
+  }
+
+  _SectionEmphasis _emphasisFor(TaskStatus status) {
+    if (!widget.isProductionView) return _SectionEmphasis.normal;
+    return _kProductionStatusSet.contains(status)
+        ? _SectionEmphasis.production
+        : _SectionEmphasis.muted;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -835,63 +907,50 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
 
     // 2. Build the structural table map purely using layout tokens
     final List<_TableItem> tableItems = [];
+
+    final orderedStatuses =
+        widget.isProductionView
+            ? _productionOrderedStatuses()
+            : TaskStatus.values;
+
     int totalServerTaskCount = 0;
+    bool dividerInserted = false;
+    for (final status in orderedStatuses) {
+      // In the Production view, drop a divider right before the first
+      // non-production section so the pipeline group reads as visually
+      // distinct from everything below it.
+      if (widget.isProductionView &&
+          !dividerInserted &&
+          !_kProductionStatusSet.contains(status)) {
+        tableItems.add(_GroupDividerItem('OTHER STAGES'));
+        dividerInserted = true;
+      }
 
-    // statuses that are in "Production" phase
-    final productionStatuses = [
-      TaskStatus.waitingPrinting,
-      TaskStatus.printing,
-      TaskStatus.printingCompleted,
-      TaskStatus.finishing,
-      TaskStatus.productionCompleted,
-      TaskStatus.waitingDelivery,
-    ];
+      // Pull total rows allocated on the server for this status lane
 
-    // All other statuses fallback to the secondary list
-    final otherStatuses =
-        TaskStatus.values
-            .where((s) => !productionStatuses.contains(s))
-            .toList();
+      // server row count for the [status] and for the filter applied
+      late final int serverRowCount;
+      if (activeProjectId == null) {
+        serverRowCount =
+            totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+      } else {
+        serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+      }
 
-    // Helper to generate section rows
-    void buildSections(List<TaskStatus> statuses, {required bool isProminent}) {
-      for (final status in statuses) {
-        late final int serverRowCount;
-        if (activeProjectId == null) {
-          serverRowCount =
-              totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
-        } else {
-          serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+      final isCollapsed = _isCollapsed(status);
+
+      tableItems.add(_SectionHeaderItem(status, !isCollapsed, serverRowCount));
+
+      if (!isCollapsed) {
+        // Allocate empty placeholder row indices based on total server dimensions
+        totalServerTaskCount += serverRowCount;
+        for (int i = 0; i < serverRowCount; i++) {
+          tableItems.add(_TaskRowPlaceholderItem(status, i));
         }
-
-        // Optional: Auto-collapse non-prominent sections by default by seeding _collapsedStatuses
-        final isCollapsed = _collapsedStatuses.contains(status);
-
-        tableItems.add(
-          _SectionHeaderItem(
-            status,
-            !isCollapsed,
-            serverRowCount,
-            isProminent: isProminent,
-          ),
-        );
-
-        if (!isCollapsed) {
-          totalServerTaskCount += serverRowCount;
-          for (int i = 0; i < serverRowCount; i++) {
-            tableItems.add(_TaskRowPlaceholderItem(status, i));
-          }
-        }
+      } else {
+        totalServerTaskCount += serverRowCount;
       }
     }
-
-    // ----- PERMISSION GATE ------ //
-    // Process Production first (prominent), then others (less prominent)
-    if (LoginService.currentUser!.role == 'production')
-      buildSections(productionStatuses, isProminent: true);
-    buildSections(otherStatuses, isProminent: false);
-    if (LoginService.currentUser!.role != 'production')
-      buildSections(productionStatuses, isProminent: false);
 
     // Proper handling of task table empty state
     if (totalServerTaskCount == 0) {
@@ -927,19 +986,24 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
         rowBuilder: (context, row, contentBuilder) {
           final item = tableItems[row];
 
+          // Render the divider separating production sections from the rest
+          if (item is _GroupDividerItem) {
+            return _GroupDivider(label: item.label);
+          }
+
           // Render Section Header Item
           if (item is _SectionHeaderItem) {
             return _StatusSectionHeader(
               status: item.status,
               isExpanded: item.isExpanded,
               taskCount: item.totalCount,
-              isProminent: item.isProminent,
+              emphasis: _emphasisFor(item.status),
               onToggle: () {
                 setState(() {
-                  if (_collapsedStatuses.contains(item.status)) {
-                    _collapsedStatuses.remove(item.status);
+                  if (_toggledStatuses.contains(item.status)) {
+                    _toggledStatuses.remove(item.status);
                   } else {
-                    _collapsedStatuses.add(item.status);
+                    _toggledStatuses.add(item.status);
                   }
                 });
               },
@@ -960,6 +1024,7 @@ class _TaskTableState extends ConsumerState<_TaskTable> {
             onTaskSelected: widget.onTaskSelected,
             slots: slots,
             contentBuilder: contentBuilder,
+            muted: _emphasisFor(placeholder.status) == _SectionEmphasis.muted,
           );
         },
       ),
@@ -1392,6 +1457,13 @@ class _ViewToggle extends StatelessWidget {
           label: 'List',
           isActive: current == _ViewMode.list,
           onTap: () => onChange(_ViewMode.list),
+        ),
+        const SizedBox(width: 2),
+        _ToggleTab(
+          icon: Icons.precision_manufacturing_outlined,
+          label: 'Production',
+          isActive: current == _ViewMode.production,
+          onTap: () => onChange(_ViewMode.production),
         ),
         const SizedBox(width: 2),
         _ToggleTab(
@@ -2263,6 +2335,7 @@ class _PaginatedTaskRow extends ConsumerWidget {
   final Function(int taskId, String detailPanelProjectId) onTaskSelected;
   final List<_ColSlot> slots;
   final TableRowContentBuilder contentBuilder;
+  final bool muted;
 
   const _PaginatedTaskRow({
     required this.status,
@@ -2274,6 +2347,7 @@ class _PaginatedTaskRow extends ConsumerWidget {
     required this.onTaskSelected,
     required this.slots,
     required this.contentBuilder,
+    this.muted = false,
   });
 
   @override
@@ -2323,6 +2397,7 @@ class _PaginatedTaskRow extends ConsumerWidget {
       onTap: () => onTaskSelected(task.id, task.projectId),
       contentBuilder: contentBuilder,
       task: task,
+      muted: muted,
     );
   }
 }
@@ -2343,6 +2418,7 @@ class _TaskRow extends ConsumerStatefulWidget {
   )
   contentBuilder;
   final Task task;
+  final bool muted;
 
   const _TaskRow({
     super.key,
@@ -2354,6 +2430,7 @@ class _TaskRow extends ConsumerStatefulWidget {
     required this.onTap,
     required this.contentBuilder,
     required this.task,
+    this.muted = false,
   });
 
   @override
@@ -2391,6 +2468,8 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
             ? _T.blue50
             : _hovered
             ? _T.hoverBg
+            : widget.muted
+            ? _T.slate50
             : _T.white;
 
     final bool showHoverBorder = _hovered && !isCompleted && !widget.isSelected;
@@ -2430,6 +2509,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               s,
               dateDisplay,
               isCompleted: isCompleted,
+              muted: widget.muted,
             ),
           ),
         ),
@@ -2445,6 +2525,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     dynamic s,
     String date, {
     required bool isCompleted,
+    bool muted = false,
   }) {
     if (slot.type == _SlotType.edgePadding ||
         slot.type == _SlotType.resizeGap) {
@@ -2454,10 +2535,17 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
     final colId = slot.colId!;
     final specs = widget.task.printSpecs;
 
+    // Completed rows get a distinct green-tinted dimming; muted (de-
+    // emphasized, non-production-in-Production-view) rows get a plain
+    // opacity fade on top of whatever color the cell already uses.
     TextStyle completedBody(TextStyle base) =>
         isCompleted
             ? base.copyWith(color: _completeText.withOpacity(0.55))
+            : muted
+            ? base.copyWith(color: (base.color ?? _T.ink3).withOpacity(0.6))
             : base;
+
+    final bool dimmed = isCompleted || muted;
 
     final content = switch (colId) {
       'task' => Row(
@@ -2617,7 +2705,12 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       }(),
 
       'stage' =>
-        isCompleted ? const _CompletedStagePill() : StagePill(stageInfo: s),
+        isCompleted
+            ? const _CompletedStagePill()
+            : Opacity(
+              opacity: muted ? 0.65 : 1.0,
+              child: StagePill(stageInfo: s),
+            ),
 
       'date' => Text(
         date,
@@ -2627,7 +2720,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
         ),
       ),
 
-      'priority' => PriorityDropdownCell(task: t, dimmed: isCompleted),
+      'priority' => PriorityDropdownCell(task: t, dimmed: dimmed),
 
       'size' => () {
         if (specs.isEmpty) {
@@ -2732,7 +2825,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
               style: TextStyle(fontSize: 13, color: _T.slate300),
             ),
 
-      'billing' => BillingDropdownCell(task: t, dimmed: isCompleted),
+      'billing' => BillingDropdownCell(task: t, dimmed: dimmed),
 
       _ => const SizedBox.shrink(),
     };
@@ -2749,7 +2842,10 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       decoration: const BoxDecoration(
         border: Border(right: BorderSide(color: _T.colDivider, width: 1)),
       ),
-      child: Opacity(opacity: isCompleted ? 0.6 : 1.0, child: content),
+      child: Opacity(
+        opacity: isCompleted ? 0.6 : (muted ? 0.88 : 1.0),
+        child: content,
+      ),
     );
   }
 }
@@ -2860,11 +2956,54 @@ class _EmptyState extends StatelessWidget {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUP DIVIDER — separates the prominent production sections from the
+// muted, collapsed-by-default sections in the Production view.
+// ─────────────────────────────────────────────────────────────────────────────
+class _GroupDivider extends StatelessWidget {
+  final String label;
+
+  const _GroupDivider({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: _kRowHeight,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
+      decoration: const BoxDecoration(
+        color: _T.slate50,
+        border: Border(
+          bottom: BorderSide(color: _T.slate200, width: 1),
+          top: BorderSide(color: _T.slate200, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Container(height: 1, color: _T.slate200)),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: _T.slate400,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Container(height: 1, color: _T.slate200)),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusSectionHeader extends StatefulWidget {
   final TaskStatus status;
   final bool isExpanded;
   final int taskCount;
-  final bool isProminent;
+  final _SectionEmphasis emphasis;
   final VoidCallback onToggle;
   final VoidCallback? onAddTask;
 
@@ -2872,7 +3011,7 @@ class _StatusSectionHeader extends StatefulWidget {
     required this.status,
     required this.isExpanded,
     required this.taskCount,
-    this.isProminent = false,
+    this.emphasis = _SectionEmphasis.normal,
     required this.onToggle,
     this.onAddTask,
   });
@@ -2890,16 +3029,38 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
     // final name = widget.status.name;
     final statusLabel = widget.status.displayName;
 
+    final isProduction = widget.emphasis == _SectionEmphasis.production;
+    final isMuted = widget.emphasis == _SectionEmphasis.muted;
+
+    final Color bg =
+        isProduction ? _T.blue50 : (isMuted ? _T.slate50 : _T.slate100);
+    final Color borderColor = isProduction ? _T.blue100 : _T.slate200;
+    final Color titleColor =
+        isProduction ? _T.blue600 : (isMuted ? _T.slate400 : _T.ink2);
+    final double titleSize = isMuted ? 12 : 13;
+    final FontWeight titleWeight =
+        isProduction ? FontWeight.w800 : FontWeight.w700;
+    final Color chevronColor =
+        isProduction ? _T.blue600 : (isMuted ? _T.slate400 : _T.slate600);
+    final Color pillBg =
+        isProduction ? _T.blue100 : (isMuted ? _T.slate100 : _T.slate200);
+    final Color pillText =
+        isProduction ? _T.blue600 : (isMuted ? _T.slate400 : _T.slate500);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: Container(
         height: _kRowHeight,
         decoration: BoxDecoration(
-          color: widget.isProminent ? _T.blue50 : _T.slate50,
+          color: bg,
           border: Border(
-            bottom: BorderSide(color: _T.slate200, width: 1),
-            top: BorderSide(color: _T.slate200, width: 0.5),
+            bottom: BorderSide(color: borderColor, width: 1),
+            top: BorderSide(color: borderColor, width: 0.5),
+            left:
+                isProduction
+                    ? BorderSide(color: _T.blue, width: 2.75)
+                    : BorderSide.none,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: _kRowHPad),
@@ -2916,10 +3077,10 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
                   child: AnimatedRotation(
                     turns: widget.isExpanded ? 0.0 : -0.25,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      size: 18,
-                      color: _T.slate600,
+                      size: isMuted ? 16 : 18,
+                      color: chevronColor,
                     ),
                   ),
                 ),
@@ -2929,10 +3090,10 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
             // Section Status Title
             Text(
               statusLabel,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _T.ink2,
+              style: TextStyle(
+                fontSize: titleSize,
+                fontWeight: titleWeight,
+                color: titleColor,
                 letterSpacing: -0.1,
               ),
             ),
@@ -2941,18 +3102,22 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
               decoration: BoxDecoration(
-                color: _T.slate200,
+                color: pillBg,
                 borderRadius: BorderRadius.circular(99),
               ),
               child: Text(
                 '${widget.taskCount}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: _T.slate500,
+                  color: pillText,
                 ),
               ),
             ),
+            if (isProduction) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.bolt_rounded, size: 13, color: _T.blue600),
+            ],
             const SizedBox(width: 12),
             // Add action icon button appearing on hover
             if (kDebugMode)
