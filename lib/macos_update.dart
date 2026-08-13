@@ -199,10 +199,10 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
               description: "You can now update the priority of a task!",
             ),
             ReleaseNote(
-              icon: Icons.bug_report_outlined,
-              title: "Bug When Initiating Print Spec Ref",
+              icon: Icons.description,
+              title: "Save Print Spec References in Task Autocomplete",
               description:
-                  "Fixed reference not getting initialized with empty print specs in task.",
+                  "When creating a task, previously used print spec references are now preserved and shown in the autocomplete dropdown for quicker selection.",
             ),
           ],
         ),
