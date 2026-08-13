@@ -1138,9 +1138,11 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
     if (_focusNode.hasFocus) {
       _refreshSuggestions(_controller.text);
     } else {
-      // Small delay so a tap on a suggestion registers before we tear
-      // the overlay down.
-      Future.delayed(const Duration(milliseconds: 150), _removeOverlay);
+      // Small delay so a tap on a suggestion registers before tearing down.
+      // Added a mounted check to prevent memory leak exceptions on disposal.
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _removeOverlay();
+      });
     }
   }
 
@@ -1226,8 +1228,9 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
     return CompositedTransformTarget(
       link: _link,
       child: GhostTextField(
-        key: widget.key,
-        controller: _controller, // <- add once GhostTextField supports it
+        controller: _controller,
+        focusNode:
+            _focusNode, // FIX 1: Pass focusNode so focus change listeners trigger
         initialText: widget.initialText,
         hint: widget.hint,
         style: widget.style,
@@ -1235,8 +1238,7 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
         inlineMinWidth: widget.inlineMinWidth,
         onEditingComplete: widget.onEditingComplete,
         onChanged: (v) {
-          // <- add once GhostTextField supports it
-          _controller.text = v;
+          // FIX 2: Removed `_controller.text = v;` which was resetting cursor/selection state
           _refreshSuggestions(v);
         },
         onSubmitted: _commit,
