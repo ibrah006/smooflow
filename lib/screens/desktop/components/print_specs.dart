@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
+import 'package:smooflow/core/services/print_ref_history.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 
@@ -365,8 +366,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: GhostTextField(
-                      onEditingComplete: _notifyChange,
+                    child: RefAutocompleteField(
                       key: ValueKey(
                         'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
                       ),
@@ -399,7 +399,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                           );
                         }
                       },
-                      mode: GhostFieldMode.inline,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -407,6 +406,48 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                         color: _T.ink3,
                       ),
                     ),
+                    // GhostTextField(
+                    //   onEditingComplete: _notifyChange,
+                    //   key: ValueKey(
+                    //     'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
+                    //   ),
+                    //   initialText:
+                    //       _items.isNotEmpty ? (_items.first.ref ?? '') : '',
+                    //   onSubmitted: (val) {
+                    //     late final List<PrintSpec> updatedItems;
+                    //     if (_items.isNotEmpty) {
+                    //       for (int i = 0; i < _items.length; i++) {
+                    //         _items[i] = _items[i].copyWith(ref: val);
+                    //       }
+                    //       updatedItems =
+                    //           _items
+                    //               .map((item) => item.copyWith(ref: val))
+                    //               .toList();
+
+                    //       widget.onUpdate(updatedItems, true);
+                    //     } else {
+                    //       final newPrintSpec = PrintSpec.create(
+                    //         ref: val,
+                    //         size: "0×0 cm",
+                    //         quantity: 1,
+                    //       );
+                    //       _committedTransientIds.add(newPrintSpec.id);
+
+                    //       widget.onUpdate(
+                    //         null,
+                    //         true,
+                    //         newPrintSpec: newPrintSpec,
+                    //       );
+                    //     }
+                    //   },
+                    //   mode: GhostFieldMode.inline,
+                    //   style: const TextStyle(
+                    //     fontSize: 13,
+                    //     fontWeight: FontWeight.w600,
+                    //     fontFamily: 'monospace',
+                    //     color: _T.ink3,
+                    //   ),
+                    // ),
                   ),
                 ],
               ),
@@ -1028,6 +1069,177 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Drop-in replacement for a `GhostTextField` used on a print-spec "ref"
+/// field. Shows a small dropdown of previously-used refs, filtered live as
+/// the user types, and records whatever gets submitted so it's suggested
+/// next time.
+///
+/// REQUIRES two small additions to `GhostTextField` (not shown here, since
+/// I don't have its source) — both optional, so nothing else calling it
+/// breaks:
+///   1. `TextEditingController? controller` — if provided, use it instead
+///      of creating an internal one.
+///   2. `ValueChanged<String>? onChanged` — call it from the underlying
+///      TextField's onChanged.
+class RefAutocompleteField extends StatefulWidget {
+  final String initialText;
+  final String? hint;
+  final TextStyle style;
+  final GhostFieldMode mode;
+  final double inlineMinWidth;
+  final ValueChanged<String> onSubmitted;
+  final VoidCallback? onEditingComplete;
+
+  const RefAutocompleteField({
+    super.key,
+    required this.initialText,
+    required this.onSubmitted,
+    this.hint,
+    required this.style,
+    this.mode = GhostFieldMode.inline,
+    this.inlineMinWidth = 20.0,
+    this.onEditingComplete,
+  });
+
+  @override
+  State<RefAutocompleteField> createState() => _RefAutocompleteFieldState();
+}
+
+class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
+  final LayerLink _link = LayerLink();
+  final FocusNode _focusNode = FocusNode();
+  late final TextEditingController _controller;
+
+  OverlayEntry? _overlayEntry;
+  List<String> _suggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (_focusNode.hasFocus) {
+      _refreshSuggestions(_controller.text);
+    } else {
+      // Small delay so a tap on a suggestion registers before we tear
+      // the overlay down.
+      Future.delayed(const Duration(milliseconds: 150), _removeOverlay);
+    }
+  }
+
+  Future<void> _refreshSuggestions(String query) async {
+    final results = await RefHistoryStore.instance.getSuggestions(query: query);
+    if (!mounted) return;
+    setState(() => _suggestions = results);
+    if (results.isEmpty) {
+      _removeOverlay();
+    } else {
+      _showOverlay();
+    }
+  }
+
+  void _showOverlay() {
+    _removeOverlay();
+    final overlay = Overlay.of(context);
+    _overlayEntry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            width: 180,
+            child: CompositedTransformFollower(
+              link: _link,
+              showWhenUnlinked: false,
+              offset: const Offset(0, 26),
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: _suggestions.length,
+                    itemBuilder: (context, index) {
+                      final suggestion = _suggestions[index];
+                      return InkWell(
+                        onTap: () => _selectSuggestion(suggestion),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            suggestion,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+    overlay.insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _selectSuggestion(String value) {
+    _controller.text = value;
+    _removeOverlay();
+    _commit(value);
+    _focusNode.unfocus();
+  }
+
+  void _commit(String value) {
+    RefHistoryStore.instance.recordRef(value);
+    widget.onSubmitted(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _link,
+      child: GhostTextField(
+        key: widget.key,
+        controller: _controller, // <- add once GhostTextField supports it
+        initialText: widget.initialText,
+        hint: widget.hint,
+        style: widget.style,
+        mode: widget.mode,
+        inlineMinWidth: widget.inlineMinWidth,
+        onEditingComplete: widget.onEditingComplete,
+        onChanged: (v) {
+          // <- add once GhostTextField supports it
+          _controller.text = v;
+          _refreshSuggestions(v);
+        },
+        onSubmitted: _commit,
       ),
     );
   }

@@ -60,6 +60,18 @@ class GhostTextField extends StatefulWidget {
   /// and scrolls horizontally. Defaults to 500.0.
   final double inlineMaxWidth;
 
+  /// Optional external controller. If omitted, GhostTextField creates and
+  /// owns its own (existing behavior, unchanged). Pass one in when a parent
+  /// needs to programmatically set the field's text — e.g. filling in an
+  /// autocomplete suggestion.
+  final TextEditingController? controller;
+
+  /// Optional external focus node. If omitted, GhostTextField creates and
+  /// owns its own (existing behavior, unchanged). Pass one in when a parent
+  /// needs to intercept key events (e.g. arrow-key navigation in a
+  /// suggestions dropdown).
+  final FocusNode? focusNode;
+
   const GhostTextField({
     super.key,
     required this.initialText,
@@ -74,6 +86,8 @@ class GhostTextField extends StatefulWidget {
     this.inlineMaxWidth = 80.0,
     this.isDecimalOnlyField = false,
     this.hPadding,
+    this.controller,
+    this.focusNode,
   });
 
   @override
@@ -82,7 +96,9 @@ class GhostTextField extends StatefulWidget {
 
 class _GhostTextFieldState extends State<GhostTextField> {
   late final TextEditingController _controller;
-  final _focus = FocusNode();
+  late final FocusNode _focus;
+  bool _ownsController = false;
+  bool _ownsFocusNode = false;
   bool _hovered = false;
   bool _focused = false;
 
@@ -91,14 +107,18 @@ class _GhostTextFieldState extends State<GhostTextField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialText);
+    _controller =
+        widget.controller ?? TextEditingController(text: widget.initialText);
+    _ownsController = widget.controller == null;
+    _focus = widget.focusNode ?? FocusNode();
+    _ownsFocusNode = widget.focusNode == null;
     _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _focus.dispose();
+    if (_ownsController) _controller.dispose();
+    if (_ownsFocusNode) _focus.dispose();
     super.dispose();
   }
 
@@ -256,14 +276,6 @@ class _GhostTextFieldState extends State<GhostTextField> {
 //
 // Uses IntrinsicWidth so the container hugs the text content width.
 // ConstrainedBox enforces the min/max limits.
-//
-// IntrinsicWidth works by doing a two-pass layout:
-//   1. Measure the unconstrained intrinsic width of the child (the text).
-//   2. Constrain the child to exactly that width.
-// This makes the container grow and shrink with every keystroke.
-//
-// Important: IntrinsicWidth is slightly more expensive than a fixed-width
-// widget, but for a single editable label it's entirely negligible.
 // ─────────────────────────────────────────────────────────────────────────────
 class _InlineWrapper extends StatelessWidget {
   final double minWidth;
