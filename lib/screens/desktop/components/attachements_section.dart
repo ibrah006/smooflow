@@ -276,28 +276,28 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.onRefresh != null)
-          Align(
-            alignment: Alignment.centerRight,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: _refresh,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: AnimatedRotation(
-                    turns: _refreshing ? 1 : 0,
-                    duration: const Duration(milliseconds: 500),
-                    child: Icon(
-                      Icons.refresh_rounded,
-                      size: 15,
-                      color: _refreshing ? _T.blue : _T.slate400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // if (widget.onRefresh != null)
+        //   Align(
+        //     alignment: Alignment.centerRight,
+        //     child: MouseRegion(
+        //       cursor: SystemMouseCursors.click,
+        //       child: GestureDetector(
+        //         onTap: _refresh,
+        //         child: Padding(
+        //           padding: const EdgeInsets.only(bottom: 6),
+        //           child: AnimatedRotation(
+        //             turns: _refreshing ? 1 : 0,
+        //             duration: const Duration(milliseconds: 500),
+        //             child: Icon(
+        //               Icons.refresh_rounded,
+        //               size: 15,
+        //               color: _refreshing ? _T.blue : _T.slate400,
+        //             ),
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -446,6 +446,7 @@ class _AddTileState extends State<_AddTile> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(height: 9),
               Icon(
                 Icons.add_rounded,
                 size: 18,
@@ -457,6 +458,14 @@ class _AddTileState extends State<_AddTile> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
+                  color: _hovered ? _T.blue : _T.slate400,
+                ),
+              ),
+              Text(
+                '3MB max',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
                   color: _hovered ? _T.blue : _T.slate400,
                 ),
               ),
