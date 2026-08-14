@@ -406,28 +406,30 @@ class _ImagePreviewBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Image.network(
-        url,
-        fit: BoxFit.contain,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const SizedBox(
-            height: 200,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          );
-        },
-        errorBuilder:
-            (_, __, ___) => const SizedBox(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Image.network(
+          url,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return const SizedBox(
               height: 200,
-              child: Center(
-                child: Text(
-                  'Couldn\'t load image',
-                  style: TextStyle(color: _T.slate400, fontSize: 12),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            );
+          },
+          errorBuilder:
+              (_, __, ___) => const SizedBox(
+                height: 200,
+                child: Center(
+                  child: Text(
+                    'Couldn\'t load image',
+                    style: TextStyle(color: _T.slate400, fontSize: 12),
+                  ),
                 ),
               ),
-            ),
+        ),
       ),
     );
   }
