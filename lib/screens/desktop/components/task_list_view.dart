@@ -1660,30 +1660,39 @@ class _ColumnPickerButtonState extends State<_ColumnPickerButton>
   bool _open = false;
   late Set<String> _overlayVisible;
 
-  late final AnimationController _ac = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 190),
-  );
-  late final Animation<double> _fade = CurvedAnimation(
-    parent: _ac,
-    curve: Curves.easeOut,
-    reverseCurve: Curves.easeIn,
-  );
-  late final Animation<Offset> _slide = Tween<Offset>(
-    begin: const Offset(0, -0.05),
-    end: Offset.zero,
-  ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
+  late final AnimationController _ac;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
 
   @override
   void initState() {
     super.initState();
+
     _overlayVisible = Set.from(widget.visibleOptional);
+
+    _ac = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 190),
+    );
+
+    _fade = CurvedAnimation(
+      parent: _ac,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOutCubic));
   }
 
   @override
   void didUpdateWidget(_ColumnPickerButton old) {
     super.didUpdateWidget(old);
+
     _overlayVisible = Set.from(widget.visibleOptional);
+
     if (_open) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => mounted ? _overlay?.markNeedsBuild() : null,
