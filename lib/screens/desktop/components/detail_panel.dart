@@ -7,6 +7,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mime/mime.dart';
+import 'package:smooflow/screens/desktop/components/attachements_section.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:smooflow/components/discussion_forms.dart';
 import 'package:smooflow/components/permission_gate.dart';
 import 'package:smooflow/core/app_routes.dart';
@@ -19,11 +22,11 @@ import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/billing_status.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/enums/user_permission.dart';
+import 'package:smooflow/providers/attachment_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
-import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/current_stage_cell.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
@@ -252,6 +255,20 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             .read(messageNotifierProvider.notifier)
             .getMessageById(widget.task.lastMessageId!);
       });
+    }
+
+    _loadAttachments();
+  }
+
+  Future<void> _loadAttachments() async {
+    try {
+      final result = await ref
+          .read(attachmentRepositoryProvider)
+          .list(widget.task.id);
+      if (mounted) setState(() => _attachments = result);
+    } catch (_) {
+      // Non-fatal — attachments just won't populate; the section still
+      // renders empty and the user can retry by reopening the panel.
     }
   }
 
@@ -501,36 +518,53 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   // ── Attachments ────────────────────────────────────────────────────────────
   Future<void> _onUploadAttachments(List<String> filePaths) async {
-    // Optimistically add each file as a local "uploading" draft so the UI
-    // responds immediately, then swap each one for the real record once the
-    // backend confirms it — same shape as PrintSpecsEditor's draft flow.
-    final drafts = <TaskAttachment>[];
+    final repo = ref.read(attachmentRepositoryProvider);
+
+    // Each file uploads independently so one failure doesn't block the rest,
+    // and each gets its own optimistic draft card immediately.
     for (final path in filePaths) {
       final file = File(path);
       final fileName = path.split(Platform.pathSeparator).last;
+      final sizeBytes = await file.length();
+      final draftId = _nextDraftAttachmentId--;
+
       final draft = TaskAttachment(
-        id: _nextDraftAttachmentId--,
+        id: draftId,
         fileName: fileName,
-        sizeBytes: await file.length(),
-        mimeType:
-            'application/octet-stream', // OPEN ITEM: derive real mime type
+        sizeBytes: sizeBytes,
+        mimeType: lookupMimeType(path) ?? 'application/octet-stream',
         uploadedByName: LoginService.currentUser?.name ?? 'You',
         uploadedAt: DateTime.now(),
         uploadProgress: 0,
       );
-      drafts.add(draft);
+
+      setState(() => _attachments = [..._attachments, draft]);
+
+      try {
+        final uploaded = await repo.uploadFile(widget.task.id, path);
+        if (!mounted) return;
+        setState(() {
+          _attachments =
+              _attachments.map((a) => a.id == draftId ? uploaded : a).toList();
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _attachments =
+              _attachments
+                  .map(
+                    (a) =>
+                        a.id == draftId
+                            ? a.copyWith(
+                              isFailed: true,
+                              clearUploadProgress: true,
+                            )
+                            : a,
+                  )
+                  .toList();
+        });
+      }
     }
-
-    setState(() => _attachments = [..._attachments, ...drafts]);
-
-    // OPEN ITEM: for each draft —
-    //   1. request a presigned upload URL from the backend
-    //      (POST /tasks/:id/attachments/presign)
-    //   2. PUT the file bytes to that URL, updating uploadProgress as it goes
-    //   3. POST /tasks/:id/attachments to confirm and get back the real
-    //      Attachment (id, url), then replace the draft in _attachments
-    //   4. on failure, setState the draft's isFailed = true instead of
-    //      removing it, so the user can see/retry rather than it vanishing
   }
 
   Future<void> _onDeleteAttachment(TaskAttachment attachment) async {
@@ -539,13 +573,24 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       _attachments = _attachments.where((a) => a.id != attachment.id).toList();
     });
 
-    // OPEN ITEM: DELETE /tasks/:id/attachments/:attachmentId
-    // If the call fails, restore the optimistic removal:
-    // if (!success) setState(() => _attachments = previous);
+    // Still-uploading/failed draft — nothing persisted server-side yet.
+    if (attachment.id < 0) return;
+
+    try {
+      await ref
+          .read(attachmentRepositoryProvider)
+          .delete(widget.task.id, attachment.id);
+    } catch (_) {
+      if (mounted) setState(() => _attachments = previous);
+    }
   }
 
-  void _onOpenAttachment(TaskAttachment attachment) {
-    // OPEN ITEM: launch attachment.url via url_launcher once URLs are real.
+  void _onOpenAttachment(TaskAttachment attachment) async {
+    if (attachment.url == null) return;
+    final uri = Uri.parse(attachment.url!);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _onAdvanceTask(bool canAdvance, {TaskStatus? newStage}) async {
