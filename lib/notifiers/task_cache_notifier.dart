@@ -743,19 +743,25 @@ class TaskCacheNotifier
               // Task's new status updated tasks entries
               final List<Task> updatedStatusTasks = [];
               bool hasAddedTaskToNewStatus = false;
+
+              print("task entries: ${newStatusTasks.entries}");
               for (final taskEntry in newStatusTasks.entries) {
                 final t = taskEntry.value;
-                final i = taskEntry.key;
 
                 if (taskEvent.id < t.id) {
-                  updatedStatusTasks.insert(i, taskEvent);
-                  // Add the remaining of the status's tasks
-                  updatedStatusTasks.addAll(
-                    newStatusTasks.values.toList().sublist(i),
+                  updatedStatusTasks.insert(
+                    updatedStatusTasks.length,
+                    taskEvent,
                   );
+
+                  updatedStatusTasks.addAll(
+                    newStatusTasks.values.skip(updatedStatusTasks.length - 1),
+                  );
+
                   hasAddedTaskToNewStatus = true;
                   break;
                 }
+
                 updatedStatusTasks.add(t);
               }
 
