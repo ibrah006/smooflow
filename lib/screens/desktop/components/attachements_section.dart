@@ -443,7 +443,7 @@ class _AttachmentCardState extends State<_AttachmentCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 116,
+          height: 118,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
