@@ -1007,6 +1007,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                               onUpload: _onUploadAttachments,
                               onDelete: _onDeleteAttachment,
                               onOpen: _onOpenAttachment,
+                              onRefresh: _loadAttachments,
                             ),
                           ],
                         ),

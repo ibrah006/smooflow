@@ -146,12 +146,16 @@ class AttachmentsSection extends StatefulWidget {
   /// url_launcher once attachment URLs are real.
   final void Function(TaskAttachment attachment)? onOpen;
 
+  /// Optional — shows a refresh icon that re-fetches attachments from the server.
+  final Future<void> Function()? onRefresh;
+
   const AttachmentsSection({
     super.key,
     required this.attachments,
     required this.onUpload,
     required this.onDelete,
     this.onOpen,
+    this.onRefresh,
   });
 
   @override
@@ -161,6 +165,7 @@ class AttachmentsSection extends StatefulWidget {
 class _AttachmentsSectionState extends State<AttachmentsSection> {
   bool _dragging = false;
   bool _picking = false;
+  bool _refreshing = false;
 
   Future<void> _pickFiles() async {
     if (_picking) return;
@@ -231,6 +236,16 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return _content();
   }
 
+  Future<void> _refresh() async {
+    if (_refreshing || widget.onRefresh == null) return;
+    setState(() => _refreshing = true);
+    try {
+      await widget.onRefresh!();
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
   Widget _content() {
     if (widget.attachments.isEmpty) {
       return _EmptyDropZone(
@@ -240,24 +255,51 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       );
     }
 
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _AddTile(busy: _picking, onTap: _pickFiles),
-        ...widget.attachments.map(
-          (a) => _AttachmentCard(
-            key: ValueKey(a.id),
-            attachment: a,
-            onTap: () {
-              if (a.kind == AttachmentKind.image) {
-                _previewImage(a);
-              } else {
-                widget.onOpen?.call(a);
-              }
-            },
-            onDelete: () => widget.onDelete(a),
+        if (widget.onRefresh != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: _refresh,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: AnimatedRotation(
+                    turns: _refreshing ? 1 : 0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      size: 15,
+                      color: _refreshing ? _T.blue : _T.slate400,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _AddTile(busy: _picking, onTap: _pickFiles),
+            ...widget.attachments.map(
+              (a) => _AttachmentCard(
+                key: ValueKey(a.id),
+                attachment: a,
+                onTap: () {
+                  if (a.kind == AttachmentKind.image) {
+                    _previewImage(a);
+                  } else {
+                    widget.onOpen?.call(a);
+                  }
+                },
+                onDelete: () => widget.onDelete(a),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -443,7 +485,7 @@ class _AttachmentCardState extends State<_AttachmentCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 118,
+          height: 116,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
