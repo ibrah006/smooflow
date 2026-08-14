@@ -2,7 +2,7 @@
 // DETAIL PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 import 'dart:async';
-import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +17,13 @@ import 'package:smooflow/core/models/project.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/enums/billing_status.dart';
-import 'package:smooflow/enums/task_priority.dart';
 import 'package:smooflow/enums/task_status.dart';
 import 'package:smooflow/enums/user_permission.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/current_stage_cell.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
@@ -31,8 +31,6 @@ import 'package:smooflow/screens/desktop/components/delete_button.dart';
 import 'package:smooflow/screens/desktop/components/dropdown_cells.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:smooflow/screens/desktop/components/print_specs.dart';
-import 'package:smooflow/screens/desktop/components/selection_pill.dart';
-import 'package:smooflow/screens/desktop/components/stage_pill.dart';
 import 'package:smooflow/screens/desktop/constants.dart';
 import 'package:smooflow/screens/desktop/helpers/dashboard_helpers.dart';
 
@@ -223,6 +221,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   bool _isDiscussionOpen = false;
   bool _footerHovered = false;
+
+  // ── Attachments state ─────────────────────────────────────────────────────
+  // OPEN ITEM: source from widget.task.attachments once the Task model and
+  // backend endpoint exist; local-only for now, same optimistic-draft
+  // pattern (negative ids) used in PrintSpecsEditor.
+  List<TaskAttachment> _attachments = [];
+  int _nextDraftAttachmentId = -1;
 
   // bool get _isAccountant =>
   //     LoginService.currentUser?.role == 'accountant' ||
@@ -492,6 +497,55 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           deletePrintSpecId: deletePrintSpecId,
           priority: null,
         );
+  }
+
+  // ── Attachments ────────────────────────────────────────────────────────────
+  Future<void> _onUploadAttachments(List<String> filePaths) async {
+    // Optimistically add each file as a local "uploading" draft so the UI
+    // responds immediately, then swap each one for the real record once the
+    // backend confirms it — same shape as PrintSpecsEditor's draft flow.
+    final drafts = <TaskAttachment>[];
+    for (final path in filePaths) {
+      final file = File(path);
+      final fileName = path.split(Platform.pathSeparator).last;
+      final draft = TaskAttachment(
+        id: _nextDraftAttachmentId--,
+        fileName: fileName,
+        sizeBytes: await file.length(),
+        mimeType:
+            'application/octet-stream', // OPEN ITEM: derive real mime type
+        uploadedByName: LoginService.currentUser?.name ?? 'You',
+        uploadedAt: DateTime.now(),
+        uploadProgress: 0,
+      );
+      drafts.add(draft);
+    }
+
+    setState(() => _attachments = [..._attachments, ...drafts]);
+
+    // OPEN ITEM: for each draft —
+    //   1. request a presigned upload URL from the backend
+    //      (POST /tasks/:id/attachments/presign)
+    //   2. PUT the file bytes to that URL, updating uploadProgress as it goes
+    //   3. POST /tasks/:id/attachments to confirm and get back the real
+    //      Attachment (id, url), then replace the draft in _attachments
+    //   4. on failure, setState the draft's isFailed = true instead of
+    //      removing it, so the user can see/retry rather than it vanishing
+  }
+
+  Future<void> _onDeleteAttachment(TaskAttachment attachment) async {
+    final previous = _attachments;
+    setState(() {
+      _attachments = _attachments.where((a) => a.id != attachment.id).toList();
+    });
+
+    // OPEN ITEM: DELETE /tasks/:id/attachments/:attachmentId
+    // If the call fails, restore the optimistic removal:
+    // if (!success) setState(() => _attachments = previous);
+  }
+
+  void _onOpenAttachment(TaskAttachment attachment) {
+    // OPEN ITEM: launch attachment.url via url_launcher once URLs are real.
   }
 
   Future<void> _onAdvanceTask(bool canAdvance, {TaskStatus? newStage}) async {
@@ -899,6 +953,16 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                 ),
                               ),
                             ],
+
+                            const SizedBox(height: 18),
+                            const _DetailSectionTitle('Attachments'),
+                            const SizedBox(height: 8),
+                            AttachmentsSection(
+                              attachments: _attachments,
+                              onUpload: _onUploadAttachments,
+                              onDelete: _onDeleteAttachment,
+                              onOpen: _onOpenAttachment,
+                            ),
                           ],
                         ),
                       ),
