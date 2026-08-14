@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 // OPEN ITEM: add `desktop_drop` to pubspec.yaml for native OS drag-and-drop
 // support (`flutter pub add desktop_drop`). Uncomment the import + DropTarget
 // wrapper below once added. Click-to-browse works without it.
@@ -39,16 +40,36 @@ class _T {
 // ─────────────────────────────────────────────────────────────────────────────
 enum AttachmentKind { image, pdf, document, spreadsheet, archive, other }
 
+const Set<String> _kTextPreviewExtensions = {
+  'txt',
+  'csv',
+  'json',
+  'log',
+  'md',
+  'yaml',
+  'yml',
+  'xml',
+};
+
 AttachmentKind attachmentKindFor(String fileName, String mimeType) {
   final ext =
       fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
   if (mimeType.startsWith('image/')) return AttachmentKind.image;
   if (mimeType == 'application/pdf' || ext == 'pdf') return AttachmentKind.pdf;
-  if (['doc', 'docx', 'txt', 'rtf'].contains(ext))
+  if (['doc', 'docx', 'txt', 'rtf'].contains(ext)) {
     return AttachmentKind.document;
+  }
   if (['xls', 'xlsx', 'csv'].contains(ext)) return AttachmentKind.spreadsheet;
   if (['zip', 'rar', '7z'].contains(ext)) return AttachmentKind.archive;
   return AttachmentKind.other;
+}
+
+/// Plain-text-ish files small enough to render inline rather than shelling
+/// out to the browser — .txt, .csv, .json, .log, .md, .yaml, .xml.
+bool isTextPreviewable(String fileName, String mimeType) {
+  final ext =
+      fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
+  return mimeType.startsWith('text/') || _kTextPreviewExtensions.contains(ext);
 }
 
 /// Local view model for a task attachment. Once the backend/API is wired
@@ -81,6 +102,7 @@ class TaskAttachment {
 
   AttachmentKind get kind => attachmentKindFor(fileName, mimeType);
   bool get isUploading => uploadProgress != null && !isFailed;
+  bool get isTextPreview => isTextPreviewable(fileName, mimeType);
 
   TaskAttachment copyWith({
     String? url,
@@ -133,17 +155,13 @@ class AttachmentsSection extends StatefulWidget {
   final List<TaskAttachment> attachments;
 
   /// Called with local file paths once the user picks or drops files.
-  /// OPEN ITEM: wire this to request a presigned upload URL from the
-  /// backend, PUT the file to it, then confirm the Attachment row.
   final Future<void> Function(List<String> filePaths) onUpload;
 
-  /// OPEN ITEM: wire to DELETE /attachments/:id (and remove from remote
-  /// storage) once the backend exists.
+  /// Wired to DELETE /attachments/:id.
   final Future<void> Function(TaskAttachment attachment) onDelete;
 
-  /// Called when a non-image attachment is tapped (download/open in
-  /// browser). Images are previewed in-place. OPEN ITEM: hook up
-  /// url_launcher once attachment URLs are real.
+  /// Called for attachments that aren't previewed in-app (video, pdf, docx,
+  /// etc.) — typically opens in the browser via url_launcher.
   final void Function(TaskAttachment attachment)? onOpen;
 
   /// Optional — shows a refresh icon that re-fetches attachments from the server.
@@ -167,7 +185,6 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
 
   bool _dragging = false;
   bool _picking = false;
-  bool _refreshing = false;
 
   Future<void> _pickFiles() async {
     if (_picking) return;
@@ -203,39 +220,107 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     }
   }
 
-  void _previewImage(TaskAttachment a) {
+  // ── Preview dispatch ───────────────────────────────────────────────────────
+  void _openAttachment(TaskAttachment a) {
     if (a.url == null) return;
+    if (a.kind == AttachmentKind.image) {
+      _showPreviewDialog(a, _ImagePreviewBody(url: a.url!));
+    } else if (a.isTextPreview) {
+      _showPreviewDialog(a, _TextPreviewBody(url: a.url!));
+    } else {
+      // Anything the app can't render inline (video, pdf, docx, ...) falls
+      // through to the same browser-open flow already used elsewhere.
+      widget.onOpen?.call(a);
+    }
+  }
+
+  void _showPreviewDialog(TaskAttachment a, Widget body) {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.75),
       builder:
           (_) => Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: Colors.white,
             insetPadding: const EdgeInsets.all(48),
-            child: Stack(
-              alignment: Alignment.topRight,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 900,
-                    maxHeight: 700,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.rLg),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 900,
+                maxHeight: 700,
+                minWidth: 420,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Header: filename + download + close ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            a.fileName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _T.ink,
+                            ),
+                          ),
+                        ),
+                        _HeaderIconButton(
+                          icon: Icons.download_outlined,
+                          tooltip: 'Save to…',
+                          onTap: () => _downloadAttachment(a),
+                        ),
+                        const SizedBox(width: 4),
+                        _HeaderIconButton(
+                          icon: Icons.close_rounded,
+                          tooltip: 'Close',
+                          onTap: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(_T.rLg),
-                    child: Image.network(a.url!, fit: BoxFit.contain),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-              ],
+                  const Divider(height: 1, color: _T.slate200),
+                  Flexible(child: body),
+                ],
+              ),
             ),
           ),
     );
+  }
+
+  // ── Download to a user-chosen location ─────────────────────────────────────
+  Future<void> _downloadAttachment(TaskAttachment a) async {
+    if (a.url == null) return;
+    try {
+      final savePath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save file',
+        fileName: a.fileName,
+      );
+      if (savePath == null) return; // user cancelled
+
+      final res = await http.get(Uri.parse(a.url!));
+      if (res.statusCode != 200)
+        throw Exception('Download failed (${res.statusCode})');
+      await File(savePath).writeAsBytes(res.bodyBytes);
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Saved to $savePath')));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Couldn\'t save the file — try again.')),
+        );
+      }
+    }
   }
 
   @override
@@ -254,16 +339,6 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return _content();
   }
 
-  Future<void> _refresh() async {
-    if (_refreshing || widget.onRefresh == null) return;
-    setState(() => _refreshing = true);
-    try {
-      await widget.onRefresh!();
-    } finally {
-      if (mounted) setState(() => _refreshing = false);
-    }
-  }
-
   Widget _content() {
     if (widget.attachments.isEmpty) {
       return _EmptyDropZone(
@@ -273,53 +348,153 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: [
-        // if (widget.onRefresh != null)
-        //   Align(
-        //     alignment: Alignment.centerRight,
-        //     child: MouseRegion(
-        //       cursor: SystemMouseCursors.click,
-        //       child: GestureDetector(
-        //         onTap: _refresh,
-        //         child: Padding(
-        //           padding: const EdgeInsets.only(bottom: 6),
-        //           child: AnimatedRotation(
-        //             turns: _refreshing ? 1 : 0,
-        //             duration: const Duration(milliseconds: 500),
-        //             child: Icon(
-        //               Icons.refresh_rounded,
-        //               size: 15,
-        //               color: _refreshing ? _T.blue : _T.slate400,
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _AddTile(busy: _picking, onTap: _pickFiles),
-            ...widget.attachments.map(
-              (a) => _AttachmentCard(
-                key: ValueKey(a.id),
-                attachment: a,
-                onTap: () {
-                  if (a.kind == AttachmentKind.image) {
-                    _previewImage(a);
-                  } else {
-                    widget.onOpen?.call(a);
-                  }
-                },
-                onDelete: () => widget.onDelete(a),
-              ),
-            ),
-          ],
+        _AddTile(busy: _picking, onTap: _pickFiles),
+        ...widget.attachments.map(
+          (a) => _AttachmentCard(
+            key: ValueKey(a.id),
+            attachment: a,
+            onTap: () => _openAttachment(a),
+            onDelete: () => widget.onDelete(a),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Icon(icon, size: 17, color: _T.slate500),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMAGE PREVIEW BODY
+// ─────────────────────────────────────────────────────────────────────────────
+class _ImagePreviewBody extends StatelessWidget {
+  final String url;
+
+  const _ImagePreviewBody({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Image.network(
+        url,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        },
+        errorBuilder:
+            (_, __, ___) => const SizedBox(
+              height: 200,
+              child: Center(
+                child: Text(
+                  'Couldn\'t load image',
+                  style: TextStyle(color: _T.slate400, fontSize: 12),
+                ),
+              ),
+            ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEXT PREVIEW BODY — fetches and renders small text-ish files inline
+// ─────────────────────────────────────────────────────────────────────────────
+class _TextPreviewBody extends StatefulWidget {
+  final String url;
+
+  const _TextPreviewBody({required this.url});
+
+  @override
+  State<_TextPreviewBody> createState() => _TextPreviewBodyState();
+}
+
+class _TextPreviewBodyState extends State<_TextPreviewBody> {
+  late final Future<String> _future = _fetch();
+
+  Future<String> _fetch() async {
+    final res = await http.get(Uri.parse(widget.url));
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load (${res.statusCode})');
+    }
+    return res.body;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        if (snapshot.hasError) {
+          return const SizedBox(
+            height: 200,
+            child: Center(
+              child: Text(
+                'Couldn\'t load file preview',
+                style: TextStyle(color: _T.slate400, fontSize: 12),
+              ),
+            ),
+          );
+        }
+        return Container(
+          width: double.infinity,
+          color: _T.slate50,
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              snapshot.data ?? '',
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'monospace',
+                color: _T.ink3,
+                height: 1.5,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
