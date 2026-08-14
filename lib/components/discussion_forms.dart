@@ -44,8 +44,10 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/repositories/task_repo.dart';
 import 'package:smooflow/core/services/login_service.dart';
 import 'package:smooflow/providers/message_provider.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
+import 'package:smooflow/states/task.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -559,7 +561,11 @@ class _DiscussionSheetState extends ConsumerState<DiscussionSheet>
   bool _isLoadingMessages = true;
 
   Future<void> initializeMessages() async {
-    final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
+    final task =
+        ref
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(widget.taskId)!;
+    // final task = ref.read(taskByIdProviderSimple(widget.taskId))!;
 
     await Future.microtask(() async {
       if (!_scroll.hasClients) return;

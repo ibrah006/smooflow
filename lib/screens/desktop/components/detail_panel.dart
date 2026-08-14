@@ -1000,7 +1000,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             ],
 
                             const SizedBox(height: 18),
-                            const _DetailSectionTitle('Attachments'),
+                            _DetailSectionTitle(
+                              'Attachments',
+                              trailingIcon: Icons.refresh_rounded,
+                              onTrailingIconTap: _loadAttachments,
+                            ),
                             const SizedBox(height: 8),
                             AttachmentsSection(
                               attachments: _attachments,
@@ -2693,18 +2697,70 @@ class _StageBackRowState extends State<_StageBackRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED SMALL COMPONENTS  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
-class _DetailSectionTitle extends StatelessWidget {
+class _DetailSectionTitle extends StatefulWidget {
   final String text;
-  const _DetailSectionTitle(this.text);
+  final IconData? trailingIcon;
+  final Function()? onTrailingIconTap;
+  const _DetailSectionTitle(
+    this.text, {
+    this.trailingIcon,
+    this.onTrailingIconTap,
+  });
+
   @override
-  Widget build(BuildContext context) => Text(
-    text.toUpperCase(),
-    style: const TextStyle(
-      fontSize: 9.5,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 1.0,
-      color: _T.slate400,
-    ),
+  State<_DetailSectionTitle> createState() => _DetailSectionTitleState();
+}
+
+class _DetailSectionTitleState extends State<_DetailSectionTitle> {
+  bool _refreshing = false;
+
+  Future<void> _refresh() async {
+    if (_refreshing || widget.onTrailingIconTap == null) return;
+    setState(() => _refreshing = true);
+    try {
+      await widget.onTrailingIconTap!();
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        widget.text.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: _T.slate400,
+        ),
+      ),
+      if (widget.trailingIcon != null) ...[
+        Align(
+          alignment: Alignment.centerRight,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: _refresh,
+              child: Padding(
+                padding: EdgeInsets.all(3),
+                child: AnimatedRotation(
+                  turns: _refreshing ? 1 : 0,
+                  duration: const Duration(milliseconds: 500),
+                  child: Icon(
+                    Icons.refresh_rounded,
+                    size: 15,
+                    color: _refreshing ? _T.blue : _T.slate400,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ],
   );
 }
 
