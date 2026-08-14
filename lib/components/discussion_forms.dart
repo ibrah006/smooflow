@@ -1100,7 +1100,10 @@ class _MessageListState extends ConsumerState<_MessageList>
   Future<void> getMessagesAfter(Message message) async {
     if (_isLoadingMessagesAfter) return;
 
-    final task = ref.read(taskByIdProviderSimple(message.taskId))!;
+    final task =
+        ref
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(message.taskId)!;
 
     if (task.lastMessageId == null || message.id >= task.lastMessageId!) {
       return;
@@ -1122,7 +1125,10 @@ class _MessageListState extends ConsumerState<_MessageList>
   Future<void> getMessagesBefore(Message message) async {
     if (_isLoadingMessagesBefore) return;
 
-    final task = ref.read(taskByIdProviderSimple(message.taskId))!;
+    final task =
+        ref
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(message.taskId)!;
 
     if (task.firstMessageId == null || message.id <= task.firstMessageId!) {
       return;
