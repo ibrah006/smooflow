@@ -163,6 +163,8 @@ class AttachmentsSection extends StatefulWidget {
 }
 
 class _AttachmentsSectionState extends State<AttachmentsSection> {
+  static const int _maxBytes = 3 * 1024 * 1024; // 3MB per file
+
   bool _dragging = false;
   bool _picking = false;
   bool _refreshing = false;
@@ -173,11 +175,27 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
-        withData: false, // desktop: gives us usable file paths
+        withData: false,
       );
-      final paths =
-          result?.files.map((f) => f.path).whereType<String>().toList();
-      if (paths != null && paths.isNotEmpty) {
+      final files = result?.files ?? [];
+
+      final tooBig = files.where((f) => f.size > _maxBytes).toList();
+      final ok = files.where((f) => f.size <= _maxBytes).toList();
+
+      if (tooBig.isNotEmpty && mounted) {
+        final names = tooBig.map((f) => f.name).join(', ');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Skipped (over 3MB): $names',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+      }
+
+      final paths = ok.map((f) => f.path).whereType<String>().toList();
+      if (paths.isNotEmpty) {
         await widget.onUpload(paths);
       }
     } finally {
@@ -258,28 +276,28 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // if (widget.onRefresh != null)
-        //   Align(
-        //     alignment: Alignment.centerRight,
-        //     child: MouseRegion(
-        //       cursor: SystemMouseCursors.click,
-        //       child: GestureDetector(
-        //         onTap: _refresh,
-        //         child: Padding(
-        //           padding: const EdgeInsets.only(bottom: 6),
-        //           child: AnimatedRotation(
-        //             turns: _refreshing ? 1 : 0,
-        //             duration: const Duration(milliseconds: 500),
-        //             child: Icon(
-        //               Icons.refresh_rounded,
-        //               size: 15,
-        //               color: _refreshing ? _T.blue : _T.slate400,
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
+        if (widget.onRefresh != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: _refresh,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: AnimatedRotation(
+                    turns: _refreshing ? 1 : 0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      size: 15,
+                      color: _refreshing ? _T.blue : _T.slate400,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -417,7 +435,7 @@ class _AddTileState extends State<_AddTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 118,
+          height: 116,
           decoration: BoxDecoration(
             color: _hovered ? _T.blue50 : _T.slate50,
             borderRadius: BorderRadius.circular(_T.r),
@@ -485,7 +503,7 @@ class _AttachmentCardState extends State<_AttachmentCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 118,
+          height: 116,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
