@@ -397,7 +397,8 @@ class _EmptyDropZoneState extends State<_EmptyDropZone> {
               ),
               const SizedBox(height: 3),
               const Text(
-                'Reference images, design proofs, and other task files',
+                'Reference images, design proofs, and other task files\n(max 3MB each)',
+                textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: _T.slate400),
               ),
             ],
