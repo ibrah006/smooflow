@@ -1086,6 +1086,9 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
 ///      of creating an internal one.
 ///   2. `ValueChanged<String>? onChanged` — call it from the underlying
 ///      TextField's onChanged.
+/// the user types, and records whatever gets submitted so it's suggested
+/// next time. Hovering a suggestion reveals an "x" to remove it from the
+/// saved history.
 class RefAutocompleteField extends StatefulWidget {
   final String initialText;
   final String? hint;
@@ -1138,8 +1141,8 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
     if (_focusNode.hasFocus) {
       _refreshSuggestions(_controller.text);
     } else {
-      // Small delay so a tap on a suggestion registers before tearing down.
-      // Added a mounted check to prevent memory leak exceptions on disposal.
+      // Small delay so a tap on a suggestion (or its delete icon) registers
+      // before tearing the overlay down.
       Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted) _removeOverlay();
       });
@@ -1158,12 +1161,14 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
   }
 
   void _showOverlay() {
-    _removeOverlay();
+    // Rebuilding the overlay entry (rather than mutating one in place) keeps
+    // this in sync whenever _suggestions changes, e.g. after a delete.
+    _overlayEntry?.remove();
     final overlay = Overlay.of(context);
     _overlayEntry = OverlayEntry(
       builder:
           (context) => Positioned(
-            width: 180,
+            width: 200,
             child: CompositedTransformFollower(
               link: _link,
               showWhenUnlinked: false,
@@ -1173,28 +1178,17 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.white,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 180),
+                  constraints: const BoxConstraints(maxHeight: 200),
                   child: ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: _suggestions.length,
                     itemBuilder: (context, index) {
                       final suggestion = _suggestions[index];
-                      return InkWell(
-                        onTap: () => _selectSuggestion(suggestion),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          child: Text(
-                            suggestion,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ),
+                      return _SuggestionTile(
+                        label: suggestion,
+                        onSelect: () => _selectSuggestion(suggestion),
+                        onDelete: () => _deleteSuggestion(suggestion),
                       );
                     },
                   ),
@@ -1218,6 +1212,13 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
     _focusNode.unfocus();
   }
 
+  Future<void> _deleteSuggestion(String value) async {
+    await RefHistoryStore.instance.removeRef(value);
+    // Keep focus on the field and just refresh the list underneath — deleting
+    // a suggestion shouldn't close the dropdown or touch what's typed.
+    await _refreshSuggestions(_controller.text);
+  }
+
   void _commit(String value) {
     RefHistoryStore.instance.recordRef(value);
     widget.onSubmitted(value);
@@ -1229,19 +1230,83 @@ class _RefAutocompleteFieldState extends State<RefAutocompleteField> {
       link: _link,
       child: GhostTextField(
         controller: _controller,
-        focusNode:
-            _focusNode, // FIX 1: Pass focusNode so focus change listeners trigger
+        focusNode: _focusNode,
         initialText: widget.initialText,
         hint: widget.hint,
         style: widget.style,
         mode: widget.mode,
         inlineMinWidth: widget.inlineMinWidth,
         onEditingComplete: widget.onEditingComplete,
-        onChanged: (v) {
-          // FIX 2: Removed `_controller.text = v;` which was resetting cursor/selection state
-          _refreshSuggestions(v);
-        },
+        onChanged: _refreshSuggestions,
         onSubmitted: _commit,
+      ),
+    );
+  }
+}
+
+/// A single suggestion row. Tracks its own hover state so the delete icon
+/// only appears for the row the mouse is over.
+class _SuggestionTile extends StatefulWidget {
+  final String label;
+  final VoidCallback onSelect;
+  final VoidCallback onDelete;
+
+  const _SuggestionTile({
+    required this.label,
+    required this.onSelect,
+    required this.onDelete,
+  });
+
+  @override
+  State<_SuggestionTile> createState() => _SuggestionTileState();
+}
+
+class _SuggestionTileState extends State<_SuggestionTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        onTap: widget.onSelect,
+        child: Container(
+          color: _hovered ? const Color(0xFFF1F5F9) : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+              if (_hovered)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    // Handle onTapDown rather than onTap: the field's own
+                    // focus-loss/dismiss logic can otherwise race a plain
+                    // tap and remove the overlay before onTap fires.
+                    onTapDown: (_) => widget.onDelete(),
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 6),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 13,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
