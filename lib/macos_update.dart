@@ -188,10 +188,10 @@ _showAfterUpdateReleaseNotes(context, String currentVersion) {
           },
           releaseNotes: [
             ReleaseNote(
-              icon: Icons.list_alt_rounded,
-              title: "Task List Table",
+              icon: Icons.file_open_outlined,
+              title: "Task Attachments Are Here!",
               description:
-                  "Task List Table now has a more interactive design and is sectioned based on Task Status.",
+                  "You can now upload and attach files directly to tasks, making it easier to keep all relevant files and references together.",
             ),
             ReleaseNote(
               icon: Icons.priority_high_rounded,
