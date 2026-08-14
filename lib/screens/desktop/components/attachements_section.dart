@@ -435,7 +435,7 @@ class _AddTileState extends State<_AddTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 116,
+          height: 118,
           decoration: BoxDecoration(
             color: _hovered ? _T.blue50 : _T.slate50,
             borderRadius: BorderRadius.circular(_T.r),
@@ -503,7 +503,7 @@ class _AttachmentCardState extends State<_AttachmentCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: 132,
-          height: 116,
+          height: 118,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
