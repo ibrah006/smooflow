@@ -428,7 +428,7 @@ class _AdminDesktopDashboardScreenState
           drawer:
               isMobile
                   ? Drawer(
-                    width: 260,
+                    width: 273,
                     backgroundColor: _T.ink,
                     child: SafeArea(
                       child: _AdminSidebar(
@@ -458,77 +458,74 @@ class _AdminDesktopDashboardScreenState
                     ),
                   )
                   : null,
-          body: SafeArea(
-            child: Focus(
-              autofocus: true,
-              onKeyEvent: _handleKey,
-              child:
-                  isMobile
-                      ? Column(
-                        children: [
-                          FadeTransition(
-                            opacity: _fade(0),
-                            child: _AdminTopbar(
-                              currentView: _view,
-                              selectedProjectId: _selectedProjectId,
-                              detailPanelProjectId: detailPanelProjectId,
-                              isMobile: true,
-                              onMenuTap:
-                                  () => _scaffoldKey.currentState?.openDrawer(),
-                              onCreateNewTask: () {
-                                setState(() => _showCreateTaskOverlay = true);
-                              },
-                            ),
-                          ),
-                          Expanded(child: _buildMainContent(isMobile)),
-                        ],
-                      )
-                      : Row(
-                        children: [
-                          _AdminSidebar(
+          body: Focus(
+            autofocus: true,
+            onKeyEvent: _handleKey,
+            child:
+                isMobile
+                    ? Column(
+                      children: [
+                        FadeTransition(
+                          opacity: _fade(0),
+                          child: _AdminTopbar(
                             currentView: _view,
                             selectedProjectId: _selectedProjectId,
-                            projects: _projects,
-                            members: _members,
-                            isLoading: _isInitLoading,
-                            isCollapsed: _isSidebarCollapsed,
-                            togglePinProject: _togglePinProject,
-                            onToggleCollapse:
-                                () => setState(
-                                  () =>
-                                      _isSidebarCollapsed =
-                                          !_isSidebarCollapsed,
-                                ),
-                            pinnedProjectIds: _pinnedProjectIds,
-                            onViewChanged: onViewChanged,
-                            onLoadProjects: (value) {
-                              setState(() => _pinnedProjectIds = value);
+                            detailPanelProjectId: detailPanelProjectId,
+                            isMobile: true,
+                            onMenuTap:
+                                () => _scaffoldKey.currentState?.openDrawer(),
+                            onCreateNewTask: () {
+                              setState(() => _showCreateTaskOverlay = true);
                             },
-                            onProjectSelected: onProjectSelected,
                           ),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                FadeTransition(
-                                  opacity: _fade(0),
-                                  child: _AdminTopbar(
-                                    currentView: _view,
-                                    selectedProjectId: _selectedProjectId,
-                                    detailPanelProjectId: detailPanelProjectId,
-                                    onCreateNewTask: () {
-                                      setState(
-                                        () => _showCreateTaskOverlay = true,
-                                      );
-                                    },
-                                  ),
+                        ),
+                        Expanded(child: _buildMainContent(isMobile)),
+                      ],
+                    )
+                    : Row(
+                      children: [
+                        _AdminSidebar(
+                          currentView: _view,
+                          selectedProjectId: _selectedProjectId,
+                          projects: _projects,
+                          members: _members,
+                          isLoading: _isInitLoading,
+                          isCollapsed: _isSidebarCollapsed,
+                          togglePinProject: _togglePinProject,
+                          onToggleCollapse:
+                              () => setState(
+                                () =>
+                                    _isSidebarCollapsed = !_isSidebarCollapsed,
+                              ),
+                          pinnedProjectIds: _pinnedProjectIds,
+                          onViewChanged: onViewChanged,
+                          onLoadProjects: (value) {
+                            setState(() => _pinnedProjectIds = value);
+                          },
+                          onProjectSelected: onProjectSelected,
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              FadeTransition(
+                                opacity: _fade(0),
+                                child: _AdminTopbar(
+                                  currentView: _view,
+                                  selectedProjectId: _selectedProjectId,
+                                  detailPanelProjectId: detailPanelProjectId,
+                                  onCreateNewTask: () {
+                                    setState(
+                                      () => _showCreateTaskOverlay = true,
+                                    );
+                                  },
                                 ),
-                                Expanded(child: _buildMainContent(isMobile)),
-                              ],
-                            ),
+                              ),
+                              Expanded(child: _buildMainContent(isMobile)),
+                            ],
                           ),
-                        ],
-                      ),
-            ),
+                        ),
+                      ],
+                    ),
           ),
         ),
       ),
@@ -1648,12 +1645,16 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
     final user = LoginService.currentUser;
 
     return Container(
-      height: _T.topbarH,
+      height:
+          _T.topbarH +
+          (widget.isMobile ? MediaQuery.paddingOf(context).top : 0),
       decoration: const BoxDecoration(
         color: _T.white,
         border: Border(bottom: BorderSide(color: _T.slate100)),
       ),
-      padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 12 : 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.isMobile ? 12 : 20,
+      ).copyWith(top: widget.isMobile ? MediaQuery.paddingOf(context).top : 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

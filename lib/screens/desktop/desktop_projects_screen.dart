@@ -273,124 +273,140 @@ class _Topbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
+    final otherFilters = [
+      Container(
+        width: 240,
+        height: 36,
+        decoration: BoxDecoration(
+          color: _T.slate50,
+          borderRadius: BorderRadius.circular(_T.r),
+          border: Border.all(color: _T.slate200),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(CupertinoIcons.search, size: 16, color: _T.slate400),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                onChanged: onSearchChanged,
+                style: const TextStyle(fontSize: 13, color: _T.ink),
+                decoration: const InputDecoration(
+                  hintText: 'Search operations or client...',
+                  hintStyle: TextStyle(color: _T.slate400, fontSize: 13),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 12),
+      Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_T.r),
+          border: Border.all(color: _T.slate200),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: selectedPriority,
+            hint: const Text(
+              'Priority',
+              style: TextStyle(fontSize: 13, color: _T.slate500),
+            ),
+            icon: const Icon(Icons.arrow_drop_down, color: _T.slate400),
+            style: const TextStyle(fontSize: 13, color: _T.ink),
+            onChanged: onPriorityChanged,
+            items:
+                ['Low', 'Normal', 'High']
+                    .map(
+                      (String val) => DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(val),
+                      ),
+                    )
+                    .toList(),
+          ),
+        ),
+      ),
+    ];
+
+    final filters = [
+      Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: _T.slate100,
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        child: Row(
+          children: [
+            _FilterTab(
+              label: 'Incomplete',
+              isActive: currentFilter == ProjectFilter.incomplete,
+              onTap: () => onFilterChanged(ProjectFilter.incomplete),
+            ),
+            _FilterTab(
+              label: 'All Files',
+              isActive: currentFilter == ProjectFilter.all,
+              onTap: () => onFilterChanged(ProjectFilter.all),
+            ),
+            _FilterTab(
+              label: 'Completed',
+              isActive: currentFilter == ProjectFilter.completed,
+              onTap: () => onFilterChanged(ProjectFilter.completed),
+            ),
+          ],
+        ),
+      ),
+      const Spacer(),
+      if (!isMobile) ...otherFilters,
+    ];
+
     return Container(
-      height: 68,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      height: isMobile ? 115 : 68,
+      padding: EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(
         color: _T.white,
         border: Border(bottom: BorderSide(color: _T.slate200)),
       ),
       child: Row(
         children: [
-          const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Projects Matrix',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _T.ink,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              Text(
-                'Production execution and client delivery timelines',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: _T.slate400,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 32),
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: _T.slate100,
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            child: Row(
+          Expanded(
+            child: Column(
+              mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _FilterTab(
-                  label: 'Incomplete',
-                  isActive: currentFilter == ProjectFilter.incomplete,
-                  onTap: () => onFilterChanged(ProjectFilter.incomplete),
-                ),
-                _FilterTab(
-                  label: 'All Files',
-                  isActive: currentFilter == ProjectFilter.all,
-                  onTap: () => onFilterChanged(ProjectFilter.all),
-                ),
-                _FilterTab(
-                  label: 'Completed',
-                  isActive: currentFilter == ProjectFilter.completed,
-                  onTap: () => onFilterChanged(ProjectFilter.completed),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          Container(
-            width: 240,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _T.slate50,
-              borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(color: _T.slate200),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                const Icon(CupertinoIcons.search, size: 16, color: _T.slate400),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    onChanged: onSearchChanged,
-                    style: const TextStyle(fontSize: 13, color: _T.ink),
-                    decoration: const InputDecoration(
-                      hintText: 'Search operations or client...',
-                      hintStyle: TextStyle(color: _T.slate400, fontSize: 13),
-                      border: InputBorder.none,
-                      isDense: true,
+                if (!isMobile) ...[
+                  Text(
+                    'Projects Matrix',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _T.ink,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                ),
+                  Text(
+                    'Production execution and client delivery timelines',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _T.slate400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                if (isMobile) Row(children: filters),
+                if (isMobile) Row(children: otherFilters),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(color: _T.slate200),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedPriority,
-                hint: const Text(
-                  'Priority',
-                  style: TextStyle(fontSize: 13, color: _T.slate500),
-                ),
-                icon: const Icon(Icons.arrow_drop_down, color: _T.slate400),
-                style: const TextStyle(fontSize: 13, color: _T.ink),
-                onChanged: onPriorityChanged,
-                items:
-                    ['Low', 'Normal', 'High']
-                        .map(
-                          (String val) => DropdownMenuItem<String>(
-                            value: val,
-                            child: Text(val),
-                          ),
-                        )
-                        .toList(),
-              ),
-            ),
-          ),
+          if (!isMobile) ...[const SizedBox(width: 32), ...filters],
         ],
       ),
     );
