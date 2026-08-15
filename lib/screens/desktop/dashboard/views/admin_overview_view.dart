@@ -55,6 +55,7 @@ class AdminOverviewView extends StatelessWidget {
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               childAspectRatio: 1.4,
+              padding: EdgeInsets.all(0),
               children: kpiTiles,
             )
             : Row(
