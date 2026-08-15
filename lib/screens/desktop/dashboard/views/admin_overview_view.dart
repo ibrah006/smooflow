@@ -12,52 +12,59 @@ class AdminOverviewView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = DashTheme.adminAccent;
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
+    final kpiTiles = [
+      DashKpiTile(
+        label: 'Active tasks',
+        value: '${data.pipeline.totalTasks}',
+        icon: Icons.dashboard_customize_outlined,
+        accent: accent,
+      ),
+      DashKpiTile(
+        label: 'Overdue',
+        value: '${data.pipeline.overdueTaskCount}',
+        icon: Icons.schedule_outlined,
+        accent: accent,
+        alert: data.pipeline.overdueTaskCount > 0,
+      ),
+      DashKpiTile(
+        label: 'Needs attention',
+        value: '${data.pipeline.totalAttention}',
+        icon: Icons.flag_outlined,
+        accent: accent,
+        alert: data.pipeline.totalAttention > 0,
+      ),
+      DashKpiTile(
+        label: 'Printers active',
+        value: '${data.printers.activeCount}/${data.printers.totalPrinters}',
+        icon: Icons.print_outlined,
+        accent: accent,
+      ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: DashKpiTile(
-                label: 'Active tasks',
-                value: '${data.pipeline.totalTasks}',
-                icon: Icons.dashboard_customize_outlined,
-                accent: accent,
-              ),
+        // ── KPI row: 4-across on desktop, 2x2 grid on mobile ──
+        isMobile
+            ? GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.5,
+              children: kpiTiles,
+            )
+            : Row(
+              children: [
+                for (int i = 0; i < kpiTiles.length; i++) ...[
+                  Expanded(child: kpiTiles[i]),
+                  if (i != kpiTiles.length - 1) const SizedBox(width: 14),
+                ],
+              ],
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: DashKpiTile(
-                label: 'Overdue',
-                value: '${data.pipeline.overdueTaskCount}',
-                icon: Icons.schedule_outlined,
-                accent: accent,
-                alert: data.pipeline.overdueTaskCount > 0,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: DashKpiTile(
-                label: 'Needs attention',
-                value: '${data.pipeline.totalAttention}',
-                icon: Icons.flag_outlined,
-                accent: accent,
-                alert: data.pipeline.totalAttention > 0,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: DashKpiTile(
-                label: 'Printers active',
-                value:
-                    '${data.printers.activeCount}/${data.printers.totalPrinters}',
-                icon: Icons.print_outlined,
-                accent: accent,
-              ),
-            ),
-          ],
-        ),
 
         const SizedBox(height: 26),
 
@@ -101,25 +108,45 @@ class AdminOverviewView extends StatelessWidget {
 
         const SizedBox(height: 26),
 
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 3, child: _PrinterFleetSection(data: data)),
-            const SizedBox(width: 20),
-            Expanded(flex: 2, child: _ProjectsAtRiskSection(data: data)),
-          ],
-        ),
+        // ── Printer fleet + projects at risk: side-by-side on desktop, stacked on mobile ──
+        isMobile
+            ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PrinterFleetSection(data: data),
+                const SizedBox(height: 26),
+                _ProjectsAtRiskSection(data: data),
+              ],
+            )
+            : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 3, child: _PrinterFleetSection(data: data)),
+                const SizedBox(width: 20),
+                Expanded(flex: 2, child: _ProjectsAtRiskSection(data: data)),
+              ],
+            ),
 
         const SizedBox(height: 26),
 
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _MaterialsSection(data: data)),
-            const SizedBox(width: 20),
-            Expanded(child: _TeamWorkloadSection(data: data)),
-          ],
-        ),
+        // ── Materials + team workload: side-by-side on desktop, stacked on mobile ──
+        isMobile
+            ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _MaterialsSection(data: data),
+                const SizedBox(height: 26),
+                _TeamWorkloadSection(data: data),
+              ],
+            )
+            : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _MaterialsSection(data: data)),
+                const SizedBox(width: 20),
+                Expanded(child: _TeamWorkloadSection(data: data)),
+              ],
+            ),
 
         const SizedBox(height: 26),
 
@@ -138,6 +165,8 @@ class _PrinterFleetSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -157,11 +186,11 @@ class _PrinterFleetSection extends StatelessWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isMobile ? 1 : 3,
               mainAxisSpacing: 14,
               crossAxisSpacing: 14,
-              childAspectRatio: 1.3,
+              childAspectRatio: isMobile ? 2.4 : 1.3,
             ),
             itemCount: data.printers.fleet.length,
             itemBuilder:
@@ -462,6 +491,8 @@ class _TopClientsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
     if (data.topClients.isEmpty) {
       return const DashCard(
         child: DashEmptyState(
@@ -472,44 +503,53 @@ class _TopClientsSection extends StatelessWidget {
       );
     }
 
-    return Wrap(
-      spacing: 14,
-      runSpacing: 14,
-      children:
-          data.topClients.take(8).map((c) {
-            return Container(
-              width: 190,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: DashTheme.white,
-                borderRadius: BorderRadius.circular(DashTheme.rLg),
-                border: Border.all(color: DashTheme.slate200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    c.name,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: DashTheme.ink2,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+    final cards =
+        data.topClients.take(8).map((c) {
+          return Container(
+            width: isMobile ? double.infinity : 190,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: DashTheme.white,
+              borderRadius: BorderRadius.circular(DashTheme.rLg),
+              border: Border.all(color: DashTheme.slate200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  c.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: DashTheme.ink2,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${c.activeProjectCount} active project${c.activeProjectCount == 1 ? '' : 's'}',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: DashTheme.slate400,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${c.activeProjectCount} active project${c.activeProjectCount == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: DashTheme.slate400,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
-            );
-          }).toList(),
-    );
+                ),
+              ],
+            ),
+          );
+        }).toList();
+
+    // Fixed-width cards wrap nicely on desktop; on mobile, a single
+    // full-width column reads better than cramped multi-column wrapping.
+    return isMobile
+        ? Column(
+          children: [
+            for (int i = 0; i < cards.length; i++) ...[
+              cards[i],
+              if (i != cards.length - 1) const SizedBox(height: 10),
+            ],
+          ],
+        )
+        : Wrap(spacing: 14, runSpacing: 14, children: cards);
   }
 }
