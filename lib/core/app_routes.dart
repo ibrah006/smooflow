@@ -23,7 +23,6 @@ import 'package:smooflow/screens/desktop/project_details_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_start_print_job.dart';
 import 'package:smooflow/screens/desktop/task_details_screen.dart';
 import 'package:smooflow/screens/desktop_material_list_screen.dart';
-import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/join_organization_screen.dart';
 import 'package:smooflow/screens/login_screen.dart';
 import 'package:smooflow/screens/materials_stock_screen.dart';
@@ -211,18 +210,18 @@ class AppRoutes {
           // Mobile Home
 
           // debug
-          // routeName = AppRoutes.productionDashboard;
+          routeName = AppRoutes.adminDesktopDashboardScreen;
 
-          if (role == 'admin') {
-            routeName = AppRoutes.admin;
-          } else if (role == 'production' || role == 'production-head') {
-            routeName = AppRoutes.productionDashboard;
-          } else if (role == "design") {
-            // routeName = AppRoutes.designDashboard;
-            // No home route for design on mobile
-          } else {
-            routeName = AppRoutes.viewerHomeMobile;
-          }
+          // if (role == 'admin') {
+          //   routeName = AppRoutes.admin;
+          // } else if (role == 'production' || role == 'production-head') {
+          //   routeName = AppRoutes.productionDashboard;
+          // } else if (role == "design") {
+          //   // routeName = AppRoutes.designDashboard;
+          //   // No home route for design on mobile
+          // } else {
+          //   routeName = AppRoutes.viewerHomeMobile;
+          // }
 
           // // route = AppRoutes.admin;
         }

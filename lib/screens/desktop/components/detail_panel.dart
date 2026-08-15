@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mime/mime.dart';
+import 'package:smooflow/constants.dart';
 import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:smooflow/components/discussion_forms.dart';
@@ -679,17 +680,21 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 : 155.0)
             : 45.0;
 
-    return Container(
-      width: kDetailWidth,
-      decoration: const BoxDecoration(
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
+    final content = Container(
+      width: isMobile ? double.infinity : kDetailWidth,
+      decoration: BoxDecoration(
         color: _T.white,
-        border: Border(left: BorderSide(color: _T.slate200)),
+        border:
+            isMobile
+                ? null
+                : const Border(left: BorderSide(color: _T.slate200)),
       ),
       child: Stack(
         children: [
           Column(
             children: [
-              // ── Top bar ───────────────────────────────────────────────────────
               Container(
                 height: _T.topbarH,
                 decoration: const BoxDecoration(
@@ -702,19 +707,26 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         onTap: widget.onClose,
-                        child: Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: _T.slate200),
-                            borderRadius: BorderRadius.circular(_T.r),
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 13,
-                            color: _T.slate400,
-                          ),
-                        ),
+                        child:
+                            isMobile
+                                ? const Icon(
+                                  Icons.arrow_back_rounded,
+                                  size: 20,
+                                  color: _T.ink3,
+                                )
+                                : Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: _T.slate200),
+                                    borderRadius: BorderRadius.circular(_T.r),
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 13,
+                                    color: _T.slate400,
+                                  ),
+                                ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1078,6 +1090,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         ],
       ),
     );
+
+    return isMobile ? SafeArea(child: content) : content;
   }
 }
 

@@ -158,6 +158,14 @@ class _AdminDesktopDashboardScreenState
 
   List<String> _pinnedProjectIds = [];
 
+  // NEW — lets the topbar hamburger open the drawer without a Builder,
+  // and lets sidebar nav taps close it again on mobile.
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _closeDrawerIfMobile(bool isMobile) {
+    if (isMobile) _scaffoldKey.currentState?.closeDrawer();
+  }
+
   void _selectTask(int taskId, String projectId) async {
     // if (id == _selectedTaskId) return; // already selected
     setState(() {
@@ -400,224 +408,288 @@ class _AdminDesktopDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Not very performance efficient
-    // ref.listen<AsyncValue<TaskChangeEvent>>(taskChangesStreamProvider, (
-    //   previous,
-    //   next,
-    // ) {
-    //   next.whenData((event) {
-    //     // TODO: RIELIABALLY FIX THIS IN THE NEXT PATCH RELEASE
-    //     Future.delayed(Duration(seconds: 5)).then((value) {
-    //       if (mounted) setState(() {});
-    //     });
-    //   });
-    // });
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
 
     return GestureDetector(
       onTap: () {
         _addTaskFocusNode.unfocus();
         setState(() => _isAddingTask = false);
       },
-      child: Scaffold(
-        body: Focus(
-          autofocus: true,
-          onKeyEvent: _handleKey,
-          child: Row(
-            children: [
-              // ── Sidebar ─────────────────────────────────────────────
-              _AdminSidebar(
-                currentView: _view,
-                selectedProjectId: _selectedProjectId,
-                projects: _projects,
-                members: _members,
-                isLoading: _isInitLoading,
-                isCollapsed: _isSidebarCollapsed,
-                togglePinProject: _togglePinProject,
-                onToggleCollapse:
-                    () => setState(
-                      () => _isSidebarCollapsed = !_isSidebarCollapsed,
-                    ),
-                pinnedProjectIds: _pinnedProjectIds,
-                onViewChanged: onViewChanged,
-                onLoadProjects: (value) {
-                  setState(() {
-                    _pinnedProjectIds = value;
-                  });
-                },
-                onProjectSelected: onProjectSelected,
-              ),
-
-              // ── Main content ────────────────────────────────────────
-              Expanded(
-                child: Column(
-                  children: [
-                    FadeTransition(
-                      opacity: _fade(0),
-                      child: _AdminTopbar(
+      child: PopScope(
+        // On mobile, physical/gesture back closes the detail panel first
+        // instead of leaving the screen — mirrors the ESC handling below.
+        canPop: !(isMobile && _selectedTaskId != null),
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (isMobile && _selectedTaskId != null) _closeDetail();
+        },
+        child: Scaffold(
+          key: _scaffoldKey,
+          drawer:
+              isMobile
+                  ? Drawer(
+                    width: 260,
+                    backgroundColor: _T.ink,
+                    child: SafeArea(
+                      child: _AdminSidebar(
                         currentView: _view,
                         selectedProjectId: _selectedProjectId,
-                        detailPanelProjectId: detailPanelProjectId,
-                        // ── UPDATE TRIGGER HERE ────────────────────────
-                        onCreateNewTask: () {
-                          setState(() {
-                            _showCreateTaskOverlay = true;
-                          });
+                        projects: _projects,
+                        members: _members,
+                        isLoading: _isInitLoading,
+                        isCollapsed: false,
+                        isMobile: true,
+                        togglePinProject: _togglePinProject,
+                        onToggleCollapse:
+                            () {}, // no-op — hidden in drawer mode
+                        pinnedProjectIds: _pinnedProjectIds,
+                        onViewChanged: (v) {
+                          onViewChanged(v);
+                          _closeDrawerIfMobile(isMobile);
                         },
-                        // ───────────────────────────────────────────────
+                        onLoadProjects: (value) {
+                          setState(() => _pinnedProjectIds = value);
+                        },
+                        onProjectSelected: (id) {
+                          onProjectSelected(id);
+                          _closeDrawerIfMobile(isMobile);
+                        },
                       ),
                     ),
-                    Expanded(
-                      // ── WRAP BODY IN A STACK TO RETAIN STATE ─────────
-                      child: Stack(
+                  )
+                  : null,
+          body: SafeArea(
+            child: Focus(
+              autofocus: true,
+              onKeyEvent: _handleKey,
+              child:
+                  isMobile
+                      ? Column(
                         children: [
-                          // Layer 0: The actual workspace views & details panel
-                          Row(
-                            children: [
-                              Expanded(
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 250),
-                                  switchInCurve: Curves.easeInOutCubic,
-                                  switchOutCurve: Curves.easeInOutCubic,
-                                  transitionBuilder: (
-                                    Widget child,
-                                    Animation<double> animation,
-                                  ) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(0.01, 0.0),
-                                          end: Offset.zero,
-                                        ).animate(animation),
-                                        child: child,
-                                      ),
-                                    );
-                                  },
-                                  child: KeyedSubtree(
-                                    key: ValueKey<_AdminView>(_view),
-                                    child:
-                                        _view == _AdminView.overview
-                                            ? (_isInitLoading
-                                                ? const OverviewSkeleton()
-                                                : OverviewPage())
-                                            : _view == _AdminView.inbox
-                                            ? InboxView()
-                                            : _view == _AdminView.list
-                                            ? TaskListView(
-                                              projects: _projects,
-                                              selectedProjectId:
-                                                  _selectedProjectId,
-                                              selectedTaskId: _selectedTaskId,
-                                              onTaskSelected: _selectTask,
-                                              isDetailOpen:
-                                                  _selectedTaskId != null,
-                                              onAddTask: _showTaskModal,
-                                              addTaskFocusNode:
-                                                  _addTaskFocusNode,
-                                              isAddingTask: _isAddingTask,
-                                            )
-                                            : _view == _AdminView.clients
-                                            ? ClientsPage()
-                                            : _view == _AdminView.team
-                                            ? ManageMembersPage()
-                                            : _view == _AdminView.printers
-                                            ? DesktopPrinterManagementScreen()
-                                            : _view == _AdminView.inventory
-                                            ? DesktopMaterialsManagementScreen(
-                                              onNavigateToReports: () {
-                                                setState(
-                                                  () =>
-                                                      _view =
-                                                          _AdminView.reports,
-                                                );
-                                                _closeDetail();
-                                              },
-                                              onNavigateToProject: (projectId) {
-                                                if (projectId == null) return;
-
-                                                onViewChanged(
-                                                  _AdminView.projects,
-                                                );
-                                                onProjectSelected(projectId);
-                                              },
-                                            )
-                                            : _view == _AdminView.reports
-                                            ? DesktopReportsScreen()
-                                            : _view == _AdminView.accounts
-                                            ? AccountsManagementScreen()
-                                            : _view == _AdminView.projects
-                                            ? DesktopProjectsScreen(
-                                              initialProjects: _projects,
-                                              onProjectSelected: (id) {
-                                                setState(() {
-                                                  _selectedProjectId = id;
-                                                  _view = _AdminView.list;
-                                                });
-                                              },
-                                              onTogglePinProject:
-                                                  _togglePinProject,
-                                            )
-                                            : const SettingsPage(), // Replaced fallback case
+                          FadeTransition(
+                            opacity: _fade(0),
+                            child: _AdminTopbar(
+                              currentView: _view,
+                              selectedProjectId: _selectedProjectId,
+                              detailPanelProjectId: detailPanelProjectId,
+                              isMobile: true,
+                              onMenuTap:
+                                  () => _scaffoldKey.currentState?.openDrawer(),
+                              onCreateNewTask: () {
+                                setState(() => _showCreateTaskOverlay = true);
+                              },
+                            ),
+                          ),
+                          Expanded(child: _buildMainContent(isMobile)),
+                        ],
+                      )
+                      : Row(
+                        children: [
+                          _AdminSidebar(
+                            currentView: _view,
+                            selectedProjectId: _selectedProjectId,
+                            projects: _projects,
+                            members: _members,
+                            isLoading: _isInitLoading,
+                            isCollapsed: _isSidebarCollapsed,
+                            togglePinProject: _togglePinProject,
+                            onToggleCollapse:
+                                () => setState(
+                                  () =>
+                                      _isSidebarCollapsed =
+                                          !_isSidebarCollapsed,
+                                ),
+                            pinnedProjectIds: _pinnedProjectIds,
+                            onViewChanged: onViewChanged,
+                            onLoadProjects: (value) {
+                              setState(() => _pinnedProjectIds = value);
+                            },
+                            onProjectSelected: onProjectSelected,
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                FadeTransition(
+                                  opacity: _fade(0),
+                                  child: _AdminTopbar(
+                                    currentView: _view,
+                                    selectedProjectId: _selectedProjectId,
+                                    detailPanelProjectId: detailPanelProjectId,
+                                    onCreateNewTask: () {
+                                      setState(
+                                        () => _showCreateTaskOverlay = true,
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
-
-                              // Detail panel
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                curve: Curves.easeInOut,
-                                width: _selectedTaskId != null ? _T.detailW : 0,
-                                child:
-                                    _selectedTaskId != null
-                                        ? DetailPanel(
-                                          key: ValueKey(_selectedTaskId),
-                                          task: _selectedTask!,
-                                          onClose: _closeDetail,
-                                          onAdvance:
-                                              () =>
-                                                  _advanceTask(_selectedTask!),
-                                        )
-                                        : const SizedBox.shrink(),
-                              ),
-                            ],
-                          ),
-
-                          // Layer 1: Elegant Overlay for Creating Tasks ───
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child:
-                                _showCreateTaskOverlay
-                                    ? Container(
-                                      key: const ValueKey(
-                                        'create_task_overlay',
-                                      ),
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).scaffoldBackgroundColor, // Prevents underlying text bleed-through
-                                      child: DesignCreateTaskScreen(
-                                        initialProject:
-                                            _selectedProjectId ??
-                                            detailPanelProjectId,
-                                        onClose: () {
-                                          // ── HANDLE CANCEL BACK TO PREVIOUS STATE ──
-                                          setState(() {
-                                            _showCreateTaskOverlay = false;
-                                          });
-                                        },
-                                      ),
-                                    )
-                                    : const SizedBox.shrink(),
+                                Expanded(child: _buildMainContent(isMobile)),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // MAIN CONTENT — the workspace view switcher + detail panel + create-task
+  // overlay. Extracted unchanged from the old build() so desktop behaviour
+  // is identical; the only new branch is how the detail panel is laid out.
+  // ─────────────────────────────────────────────────────────────────────
+  Widget _buildMainContent(bool isMobile) {
+    return Stack(
+      children: [
+        // Layer 0: workspace views (+ side-by-side detail panel on desktop)
+        Row(
+          children: [
+            Expanded(child: _buildWorkspaceSwitcher()),
+
+            // Desktop-only inline detail panel. On mobile the panel is
+            // rendered as a full-screen overlay in Layer 1 below instead,
+            // so nothing is reserved here.
+            if (!isMobile)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                width: _selectedTaskId != null ? _T.detailW : 0,
+                child:
+                    _selectedTaskId != null
+                        ? DetailPanel(
+                          key: ValueKey(_selectedTaskId),
+                          task: _selectedTask!,
+                          onClose: _closeDetail,
+                          onAdvance: () => _advanceTask(_selectedTask!),
+                        )
+                        : const SizedBox.shrink(),
+              ),
+          ],
+        ),
+
+        // Layer 1: create-task overlay — unchanged
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child:
+              _showCreateTaskOverlay
+                  ? Container(
+                    key: const ValueKey('create_task_overlay'),
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    child: DesignCreateTaskScreen(
+                      initialProject:
+                          _selectedProjectId ?? detailPanelProjectId,
+                      onClose: () {
+                        setState(() => _showCreateTaskOverlay = false);
+                      },
+                    ),
+                  )
+                  : const SizedBox.shrink(),
+        ),
+
+        // Layer 2 (NEW): mobile full-screen detail panel, slides in from
+        // the right over the whole content area (list included).
+        if (isMobile)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            transitionBuilder:
+                (child, anim) => SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+            child:
+                _selectedTaskId != null
+                    ? DetailPanel(
+                      key: ValueKey('mobile_detail_$_selectedTaskId'),
+                      task: _selectedTask!,
+                      onClose: _closeDetail,
+                      onAdvance: () => _advanceTask(_selectedTask!),
+                    )
+                    : const SizedBox.shrink(),
+          ),
+      ],
+    );
+  }
+
+  // The AnimatedSwitcher + KeyedSubtree ternary that picks OverviewPage /
+  // InboxView / TaskListView / etc — copied verbatim from the old build(),
+  // just pulled into its own method so both the mobile Column and desktop
+  // Row branches share it.
+  Widget _buildWorkspaceSwitcher() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeInOutCubic,
+      switchOutCurve: Curves.easeInOutCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.01, 0.0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<_AdminView>(_view),
+        child:
+            _view == _AdminView.overview
+                ? (_isInitLoading ? const OverviewSkeleton() : OverviewPage())
+                : _view == _AdminView.inbox
+                ? InboxView()
+                : _view == _AdminView.list
+                ? TaskListView(
+                  projects: _projects,
+                  selectedProjectId: _selectedProjectId,
+                  selectedTaskId: _selectedTaskId,
+                  onTaskSelected: _selectTask,
+                  isDetailOpen: _selectedTaskId != null,
+                  onAddTask: _showTaskModal,
+                  addTaskFocusNode: _addTaskFocusNode,
+                  isAddingTask: _isAddingTask,
+                )
+                : _view == _AdminView.clients
+                ? ClientsPage()
+                : _view == _AdminView.team
+                ? ManageMembersPage()
+                : _view == _AdminView.printers
+                ? DesktopPrinterManagementScreen()
+                : _view == _AdminView.inventory
+                ? DesktopMaterialsManagementScreen(
+                  onNavigateToReports: () {
+                    setState(() => _view = _AdminView.reports);
+                    _closeDetail();
+                  },
+                  onNavigateToProject: (projectId) {
+                    if (projectId == null) return;
+                    onViewChanged(_AdminView.projects);
+                    onProjectSelected(projectId);
+                  },
+                )
+                : _view == _AdminView.reports
+                ? DesktopReportsScreen()
+                : _view == _AdminView.accounts
+                ? AccountsManagementScreen()
+                : _view == _AdminView.projects
+                ? DesktopProjectsScreen(
+                  initialProjects: _projects,
+                  onProjectSelected: (id) {
+                    setState(() {
+                      _selectedProjectId = id;
+                      _view = _AdminView.list;
+                    });
+                  },
+                  onTogglePinProject: _togglePinProject,
+                )
+                : const SettingsPage(),
       ),
     );
   }
@@ -648,6 +720,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
   final ValueChanged<List<String>> onLoadProjects;
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
+  final bool isMobile;
 
   const _AdminSidebar({
     required this.currentView,
@@ -662,6 +735,7 @@ class _AdminSidebar extends ConsumerStatefulWidget {
     required this.onLoadProjects,
     required this.isCollapsed,
     required this.onToggleCollapse,
+    this.isMobile = false,
   });
 
   @override
@@ -776,35 +850,50 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   ),
                 ],
 
-                // Premium Toggle Button
-                MouseRegion(
-                  onEnter: (_) => setState(() => _isLogoHovered = true),
-                  onExit: (_) => setState(() => _isLogoHovered = false),
-                  child: Padding(
-                    padding: EdgeInsets.all(6.5),
-                    child: AnimatedCrossFade(
-                      duration: Duration(milliseconds: 110),
-                      crossFadeState:
-                          _isLogoHovered || !widget.isCollapsed
-                              ? CrossFadeState.showFirst
-                              : CrossFadeState.showSecond,
-                      firstChild: IconButton(
-                        onPressed: widget.onToggleCollapse,
-                        splashRadius: 16,
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
-                          widget.isCollapsed
-                              ? Icons.menu_open_rounded
-                              : Icons.menu_rounded,
-                          size: 18,
-                          color: Colors.white.withOpacity(0.5),
+                // NEW: no collapse control in drawer mode — replaced with
+                // a close button so the drawer has an obvious dismiss target
+                // beyond tap-scrim/swipe.
+                if (widget.isMobile)
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    splashRadius: 16,
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  )
+                else
+                  MouseRegion(
+                    onEnter: (_) => setState(() => _isLogoHovered = true),
+                    onExit: (_) => setState(() => _isLogoHovered = false),
+                    child: Padding(
+                      padding: EdgeInsets.all(6.5),
+                      child: AnimatedCrossFade(
+                        duration: Duration(milliseconds: 110),
+                        crossFadeState:
+                            _isLogoHovered || !widget.isCollapsed
+                                ? CrossFadeState.showFirst
+                                : CrossFadeState.showSecond,
+                        firstChild: IconButton(
+                          onPressed: widget.onToggleCollapse,
+                          splashRadius: 16,
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            widget.isCollapsed
+                                ? Icons.menu_open_rounded
+                                : Icons.menu_rounded,
+                            size: 18,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
                         ),
+                        secondChild: Logo(size: 25),
                       ),
-                      secondChild: Logo(size: 25),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1463,14 +1552,18 @@ class _DottedBorderPainter extends CustomPainter {
 class _AdminTopbar extends ConsumerStatefulWidget {
   final _AdminView currentView;
   final String? selectedProjectId;
-  // The project's task that's open in the detail panel
   final String? detailPanelProjectId;
   final Function() onCreateNewTask;
+  final bool isMobile; // NEW
+  final VoidCallback? onMenuTap; // NEW — opens the drawer
+
   const _AdminTopbar({
     required this.currentView,
     this.selectedProjectId,
     required this.detailPanelProjectId,
     required this.onCreateNewTask,
+    this.isMobile = false,
+    this.onMenuTap,
   });
 
   @override
@@ -1560,33 +1653,77 @@ class _AdminTopbarState extends ConsumerState<_AdminTopbar> {
         color: _T.white,
         border: Border(bottom: BorderSide(color: _T.slate100)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 12 : 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── Left: greeting or section breadcrumb ───────────────────────────
+          if (widget.isMobile) ...[
+            IconButton(
+              onPressed: widget.onMenuTap,
+              splashRadius: 20,
+              icon: const Icon(Icons.menu_rounded, color: _T.ink3, size: 22),
+            ),
+            const SizedBox(width: 4),
+          ],
+
+          // Greeting shrinks to just the breadcrumb/section label on
+          // mobile — the date chip and "Good morning, Name" don't fit
+          // comfortably next to a hamburger + action buttons.
           if (widget.currentView == _AdminView.overview)
-            _GreetingSection(greeting: greeting, user: user, now: now)
+            widget.isMobile
+                ? const Text(
+                  'Overview',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                )
+                : _GreetingSection(greeting: greeting, user: user, now: now)
           else
             _BreadcrumbSection(meta: _sectionMeta()),
 
           const Spacer(),
 
-          // ── Right: create + user ───────────────────────────────────────────
-          _OutlinedSecondaryButton(
-            label: "New Project",
-            icon: Icons.folder_open_rounded,
-            onTap: _showProjectModal,
-          ),
-          const SizedBox(width: 8),
+          // "New Project" is a secondary action — drop it on mobile to
+          // keep the bar from wrapping; still reachable from the
+          // Projects page itself.
+          if (!widget.isMobile) ...[
+            _OutlinedSecondaryButton(
+              label: "New Project",
+              icon: Icons.folder_open_rounded,
+              onTap: _showProjectModal,
+            ),
+            const SizedBox(width: 8),
+          ],
 
-          // Explicit primary callout
-          _PrimaryButton(
-            label: "New Task",
-            icon: Icons.add_rounded,
-            onTap: widget.onCreateNewTask,
-          ),
-          const SizedBox(width: 12),
+          widget.isMobile
+              ? MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: widget.onCreateNewTask,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _T.blue,
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              )
+              : _PrimaryButton(
+                label: "New Task",
+                icon: Icons.add_rounded,
+                onTap: widget.onCreateNewTask,
+              ),
+
+          const SizedBox(width: 10),
           if (user != null)
             UserMenuChip(
               onLogout: () async {

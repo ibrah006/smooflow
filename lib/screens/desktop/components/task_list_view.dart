@@ -585,6 +585,8 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   @override
   Widget build(BuildContext context) {
+    print("[TaskListView] active project: ${_activeProject}");
+
     final members = ref.watch(memberNotifierProvider).members;
     // final taskState = ref.watch(
     //   taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
@@ -730,6 +732,13 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
                           ref.read(taskNotifierProvider.notifier).clearError();
                           _loadTasks();
                         },
+                      )
+                      : MediaQuery.sizeOf(context).width <= kMobileBreakpoint
+                      ? _MobileTaskList(
+                        filter: effectiveFilter,
+                        projects: widget.projects,
+                        selectedTaskId: widget.selectedTaskId,
+                        onTaskSelected: widget.onTaskSelected,
                       )
                       : _TaskTable(
                         effective: effective,
@@ -1207,6 +1216,8 @@ class _ProjectHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFiltered = activeProject != null;
 
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -1236,24 +1247,26 @@ class _ProjectHeader extends StatelessWidget {
                 letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _T.blue50,
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: _T.blue.withOpacity(0.2)),
-              ),
-              child: const Text(
-                'Filtered',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _T.blue,
-                  letterSpacing: 0.3,
+            if (!isMobile) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _T.blue50,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: _T.blue.withOpacity(0.2)),
+                ),
+                child: const Text(
+                  'Filtered',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _T.blue,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
-            ),
+            ],
           ] else ...[
             Container(
               padding: const EdgeInsets.all(6),
@@ -1566,6 +1579,8 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
     return Container(
       height: 40,
       decoration: const BoxDecoration(
@@ -1620,12 +1635,13 @@ class _Toolbar extends StatelessWidget {
               ),
               SizedBox(width: 10),
             ],
-            _ColumnPickerButton(
-              visibleOptional: visibleOptional,
-              singleProject: singleProject,
-              onToggle: onToggle,
-              onReset: onReset,
-            ),
+            if (!isMobile)
+              _ColumnPickerButton(
+                visibleOptional: visibleOptional,
+                singleProject: singleProject,
+                onToggle: onToggle,
+                onReset: onReset,
+              ),
           ],
         ],
       ),
@@ -3168,3 +3184,402 @@ class _StatusSectionHeaderState extends State<_StatusSectionHeader> {
 // ─────────────────────────────────────────────────────────────────────────────
 bool _setsEqual(Set<String> a, Set<String> b) =>
     a.length == b.length && a.containsAll(b);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE VERSION
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE TASK LIST — status-grouped, collapsible, simplified columns:
+// date · name · comment count · attachment count. No column picker.
+// ─────────────────────────────────────────────────────────────────────────────
+class _MobileTaskList extends ConsumerStatefulWidget {
+  final TaskFilter filter;
+  final List<Project> projects;
+  final int? selectedTaskId;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
+
+  const _MobileTaskList({
+    required this.filter,
+    required this.projects,
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+  });
+
+  @override
+  ConsumerState<_MobileTaskList> createState() => _MobileTaskListState();
+}
+
+class _MobileTaskListState extends ConsumerState<_MobileTaskList> {
+  // Collapsed by default except pending/in-progress-ish statuses — keep it
+  // simple: everything expanded on first load, same as desktop List view.
+  final Set<TaskStatus> _collapsed = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final totalCounts = ref.watch(
+      taskCacheProvider(widget.filter).select((s) => s.totalCounts),
+    );
+
+    // mirror desktop's _TaskTable: scope counts to the selected
+    // project when one is active, otherwise sum across all projects.
+    final activeProjectId = widget.filter.projectId;
+
+    final List<_TableItem> items = [];
+    int total = 0;
+
+    for (final status in TaskStatus.values) {
+      final int serverRowCount;
+      if (activeProjectId == null) {
+        serverRowCount =
+            totalCounts[status]?.values.fold(0, (a, b) => (a ?? 0) + b) ?? 0;
+      } else {
+        serverRowCount = totalCounts[status]?[activeProjectId] ?? 0;
+      }
+
+      final isCollapsed = _collapsed.contains(status);
+
+      items.add(_SectionHeaderItem(status, !isCollapsed, serverRowCount));
+      total += serverRowCount;
+
+      if (!isCollapsed) {
+        for (int i = 0; i < serverRowCount; i++) {
+          items.add(_TaskRowPlaceholderItem(status, i));
+        }
+      }
+    }
+
+    if (total == 0) return _EmptyState();
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 24),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        if (item is _SectionHeaderItem) {
+          return _MobileSectionHeader(
+            status: item.status,
+            isExpanded: item.isExpanded,
+            taskCount: item.totalCount,
+            onToggle: () {
+              setState(() {
+                _collapsed.contains(item.status)
+                    ? _collapsed.remove(item.status)
+                    : _collapsed.add(item.status);
+              });
+            },
+          );
+        }
+
+        final placeholder = item as _TaskRowPlaceholderItem;
+        return _MobilePaginatedTaskCard(
+          status: placeholder.status,
+          indexWithinStatus: placeholder.indexWithinStatus,
+          filter: widget.filter,
+          projects: widget.projects,
+          selectedTaskId: widget.selectedTaskId,
+          onTaskSelected: widget.onTaskSelected,
+        );
+      },
+    );
+  }
+}
+
+class _MobileSectionHeader extends StatelessWidget {
+  final TaskStatus status;
+  final bool isExpanded;
+  final int taskCount;
+  final VoidCallback onToggle;
+
+  const _MobileSectionHeader({
+    required this.status,
+    required this.isExpanded,
+    required this.taskCount,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 44,
+        color: _T.slate100,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            AnimatedRotation(
+              turns: isExpanded ? 0.0 : -0.25,
+              duration: const Duration(milliseconds: 180),
+              child: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: _T.slate600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              status.displayName,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _T.ink2,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: _T.slate200,
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(
+                '$taskCount',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: _T.slate500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MobilePaginatedTaskCard extends ConsumerWidget {
+  final TaskStatus status;
+  final int indexWithinStatus;
+  final TaskFilter filter;
+  final List<Project> projects;
+  final int? selectedTaskId;
+  final Function(int taskId, String detailPanelProjectId) onTaskSelected;
+
+  const _MobilePaginatedTaskCard({
+    required this.status,
+    required this.indexWithinStatus,
+    required this.filter,
+    required this.projects,
+    required this.selectedTaskId,
+    required this.onTaskSelected,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final task = ref.watch(
+      taskCacheProvider(
+        filter,
+      ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
+    );
+
+    if (task == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          ref
+              .read(taskCacheProvider(filter).notifier)
+              .loadPage(status: status, indexWithinStatus: indexWithinStatus);
+        }
+      });
+      return const _MobileShimmerCard();
+    }
+
+    final p =
+        projects.cast<Project?>().firstWhere(
+          (pr) => pr!.id == task.projectId.toString(),
+          orElse: () => null,
+        ) ??
+        projects.firstOrNull;
+
+    return _MobileTaskCard(
+      key: ValueKey(task.id),
+      task: task,
+      project: p,
+      isSelected: selectedTaskId == task.id,
+      onTap: () => onTaskSelected(task.id, task.projectId),
+    );
+  }
+}
+
+class _MobileTaskCard extends StatelessWidget {
+  final Task task;
+  final Project? project;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MobileTaskCard({
+    super.key,
+    required this.task,
+    required this.project,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompleted = task.status == TaskStatus.completed;
+    final d = task.date ?? task.createdAt;
+
+    // OPEN ITEM: Task doesn't currently carry an attachment count — either
+    // add `attachmentCount` to the Task model (cheap server-side COUNT
+    // alongside messageCount) or omit the paperclip badge until it does.
+    // Fetching attachments per row here would be a per-card network call
+    // and doesn't scale — avoid it.
+    // TODO: get the actual attachment count from the server and display it here
+    final attachmentCount = 0; // int? — add to Task model
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? _T.blue50 : _T.white,
+          border: const Border(
+            bottom: BorderSide(color: _T.slate100, width: 1),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isCompleted)
+              Container(
+                width: 3,
+                height: 34,
+                margin: const EdgeInsets.only(right: 10, top: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )
+            else if (project != null)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 10, top: 6),
+                decoration: BoxDecoration(
+                  color: project!.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: isCompleted ? _T.slate400 : _T.ink,
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
+                      decorationColor: _T.slate300,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        fmtDate(d),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: _T.slate400,
+                        ),
+                      ),
+                      if (project != null) ...[
+                        const SizedBox(width: 8),
+                        Text('·', style: const TextStyle(color: _T.slate300)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            project!.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: _T.slate400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (task.messageCount > 0)
+                  _MobileCountChip(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    count: task.messageCount,
+                  ),
+                if (attachmentCount != null && attachmentCount > 0) ...[
+                  const SizedBox(height: 4),
+                  _MobileCountChip(
+                    icon: Icons.attach_file_rounded,
+                    count: attachmentCount,
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileCountChip extends StatelessWidget {
+  final IconData icon;
+  final int count;
+
+  const _MobileCountChip({required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: _T.slate400),
+        const SizedBox(width: 3),
+        Text(
+          '$count',
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: _T.slate400,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileShimmerCard extends StatelessWidget {
+  const _MobileShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _T.slate100, width: 1)),
+      ),
+      child: Container(
+        height: 14,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    );
+  }
+}

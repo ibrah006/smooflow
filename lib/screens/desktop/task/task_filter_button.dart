@@ -165,10 +165,6 @@ class _TaskFilterButtonState extends ConsumerState<TaskFilterButton>
   Widget build(BuildContext context) {
     TaskFilter _appliedFilter = widget.appliedFilter;
 
-    print(
-      "[task filter button], filter applied, overdue: ${_appliedFilter.overdueOnly}",
-    );
-
     return CompositedTransformTarget(
       link: _layerLink,
       child: MouseRegion(
