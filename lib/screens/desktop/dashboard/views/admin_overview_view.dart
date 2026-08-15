@@ -186,6 +186,7 @@ class _PrinterFleetSection extends StatelessWidget {
         else
           GridView.builder(
             shrinkWrap: true,
+            padding: EdgeInsets.all(0),
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: isMobile ? 1 : 3,
