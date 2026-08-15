@@ -16,6 +16,11 @@ import 'package:smooflow/screens/desktop/dashboard/dashboard_theme.dart';
 
 const double kDashRowHeight = 46.0;
 
+// ADJUST: move into DashTheme if a shared breakpoint constant already
+// exists elsewhere in the app — kept here for now so this file works
+// standalone.
+const double kMobileBreakpoint = 700.0;
+
 // ── Section header (eyebrow-free — matches task list's direct title style) ─
 
 /// Section title row. task_list_view doesn't use uppercase eyebrows for its
@@ -269,6 +274,7 @@ class DashKpiTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -306,6 +312,7 @@ class DashKpiTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
@@ -437,6 +444,11 @@ class PipelineLegend extends StatelessWidget {
 // Built at kDashRowHeight (46 — same rhythm as _kRowHeight), hover-tinted
 // with the app's exact hoverBg/hoverBorder, status dot instead of a full
 // column, due-date chip using the same soft-badge recipe.
+//
+// On mobile widths the trailing cluster (printer name, unread badge,
+// due-date chip) is the first thing to get tight, so the printer label
+// collapses to icon-only and the row grows slightly to give the two text
+// lines breathing room instead of clipping.
 
 class DashTaskRow extends StatefulWidget {
   final TaskSummary task;
@@ -478,6 +490,7 @@ class _DashTaskRowState extends State<DashTaskRow> {
   @override
   Widget build(BuildContext context) {
     final task = widget.task;
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
     final overdue =
         task.dueDate != null &&
         DateTime.now().isAfter(task.dueDate!) &&
@@ -493,8 +506,13 @@ class _DashTaskRowState extends State<DashTaskRow> {
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
-          height: kDashRowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          constraints: BoxConstraints(
+            minHeight: isMobile ? kDashRowHeight + 6 : kDashRowHeight,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: isMobile ? 6 : 0,
+          ),
           decoration: BoxDecoration(
             color: _hovered ? DashTheme.hoverBg : Colors.transparent,
             border: Border(
@@ -516,6 +534,7 @@ class _DashTaskRowState extends State<DashTaskRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       task.name,
@@ -545,16 +564,21 @@ class _DashTaskRowState extends State<DashTaskRow> {
                   size: 13,
                   color: DashTheme.slate400,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  task.printerName!,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: DashTheme.slate500,
-                    fontWeight: FontWeight.w500,
+                // Printer name text takes real estate that's scarce on
+                // mobile — keep the icon as a compact affordance and drop
+                // the label rather than truncating it further.
+                if (!isMobile) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    task.printerName!,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: DashTheme.slate500,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
+                ],
+                const SizedBox(width: 10),
               ],
               if (task.unreadCount > 0) ...[
                 Container(
@@ -575,7 +599,7 @@ class _DashTaskRowState extends State<DashTaskRow> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
               ],
               if (task.dueDate != null)
                 Container(
@@ -971,7 +995,7 @@ class DashPrinterTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ] else ...[
-              Spacer(),
+              const Spacer(),
               ClipRRect(
                 borderRadius: BorderRadius.circular(3),
                 child: LinearProgressIndicator(
