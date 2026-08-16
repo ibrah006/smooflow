@@ -1091,7 +1091,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       ),
     );
 
-    return isMobile ? SafeArea(child: content) : content;
+    return isMobile ? content : content;
   }
 }
 
