@@ -2101,307 +2101,342 @@ class _DetailFooterState extends State<_DetailFooter> {
   Widget build(BuildContext context) {
     final isLocked = widget.next == TaskStatus.printing;
 
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
+
     return MouseRegion(
       onEnter: (_) async {
         _setHovered(true);
       },
       onExit: (_) => _setHovered(false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          color: _T.slate50,
-          border: Border(
-            top: BorderSide(
-              color: _hovered ? _T.slate300 : _T.slate200,
-              width: _hovered ? 1.5 : 1.0,
+      child: GestureDetector(
+        onTap: () {
+          if (isMobile) {
+            _setHovered(!_hovered);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: _T.slate50,
+            border: Border(
+              top: BorderSide(
+                color: _hovered ? _T.slate300 : _T.slate200,
+                width: _hovered ? 1.5 : 1.0,
+              ),
             ),
+            boxShadow:
+                _hovered
+                    ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ]
+                    : null,
           ),
-          boxShadow:
-              _hovered
-                  ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, -4),
-                    ),
-                  ]
-                  : null,
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: _hovered ? 14 : 10,
-        ),
-        child: Column(
-          children: [
-            if (widget.task.status != TaskStatus.completed)
-              (isLocked
-                  ? AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.lock_outline,
-                          size: _hovered ? 15 : 14,
-                          color: _T.slate400,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Handed off to production'
-                            '${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
-                            style: TextStyle(
-                              fontSize: _hovered ? 13 : 12.5,
-                              color: _T.slate400,
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: _hovered ? 14 : 10,
+          ).copyWith(bottom: isMobile ? 30 : (_hovered ? 14 : 10)),
+          child: Column(
+            children: [
+              if (widget.task.status != TaskStatus.completed)
+                (isLocked
+                    ? AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lock_outline,
+                            size: _hovered ? 15 : 14,
+                            color: _T.slate400,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Handed off to production'
+                              '${LoginService.currentUser!.isAdmin ? '' : ' — design locked'}',
+                              style: TextStyle(
+                                fontSize: _hovered ? 13 : 12.5,
+                                color: _T.slate400,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                  : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Compact header when not hovered
-                      if (!_hovered)
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color:
-                                    widget.ableToReinitialize
-                                        ? _T.slate400
-                                        : widget.next ==
-                                            TaskStatus.clientApproved
-                                        ? _T.green
-                                        : _T.blue,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                widget.next == TaskStatus.clientApproved
-                                    ? 'Ready to confirm client approval'
-                                    : widget.ableToReinitialize
-                                    ? 'Ready to re-initialize'
-                                    : 'Ready to advance to "${stageInfo(widget.next!).label}"',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _T.slate500,
+                        ],
+                      ),
+                    )
+                    : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Compact header when not hovered
+                        if (!_hovered)
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color:
+                                      widget.ableToReinitialize
+                                          ? _T.slate400
+                                          : widget.next ==
+                                              TaskStatus.clientApproved
+                                          ? _T.green
+                                          : _T.blue,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                            ),
-                            const Icon(
-                              Icons.expand_less_rounded,
-                              size: 18,
-                              color: _T.slate400,
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.next == TaskStatus.clientApproved
+                                      ? 'Ready to confirm client approval'
+                                      : widget.ableToReinitialize
+                                      ? 'Ready to re-initialize'
+                                      : 'Ready to advance to "${stageInfo(widget.next!).label}"',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _T.slate500,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.expand_less_rounded,
+                                size: 18,
+                                color: _T.slate400,
+                              ),
+                            ],
+                          ),
 
-                      // Expanded controls when hovered
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        child:
-                            _hovered
-                                ? Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    const Text(
-                                      'ADVANCE STAGE',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.0,
-                                        color: _T.slate400,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 9),
-                                    MouseRegion(
-                                      cursor: SystemMouseCursors.click,
-                                      child: GestureDetector(
-                                        key: widget.advanceButtonKey,
-                                        onTap:
-                                            widget.isProgressing
-                                                ? null
-                                                : widget.onAdvanceTap,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 11,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                widget.isProgressing
-                                                    ? Colors.grey.shade100
-                                                    : widget.ableToReinitialize
-                                                    ? _T.slate400
-                                                    : widget.next ==
-                                                        TaskStatus
-                                                            .clientApproved
-                                                    ? _T.green
-                                                    : _T.blue,
-                                            borderRadius: BorderRadius.circular(
-                                              _T.r,
+                        // Expanded controls when hovered
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          child:
+                              _hovered
+                                  ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'ADVANCE STAGE',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 1.0,
+                                              color: _T.slate400,
                                             ),
-                                            boxShadow:
-                                                widget.isProgressing
-                                                    ? null
-                                                    : widget.progressBtnEnabled
-                                                    ? [
-                                                      BoxShadow(
-                                                        color: (widget
-                                                                    .ableToReinitialize
-                                                                ? _T.slate400
-                                                                : widget.next ==
-                                                                    TaskStatus
-                                                                        .clientApproved
-                                                                ? _T.green
-                                                                : _T.blue)
-                                                            .withOpacity(0.28),
-                                                        blurRadius: 8,
-                                                        offset: const Offset(
-                                                          0,
-                                                          2,
-                                                        ),
-                                                      ),
-                                                    ]
-                                                    : null,
                                           ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              if (widget.isProgressing)
-                                                SizedBox(
-                                                  width: 20,
-                                                  height: 20,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2.75,
-                                                        color:
-                                                            Colors
+                                          if (isMobile)
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _hovered = false;
+                                                });
+                                                widget.onHoverChange(false);
+                                              },
+                                              child: const Icon(
+                                                Icons.expand_more_rounded,
+                                                size: 16,
+                                                color: _T.slate400,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 9),
+                                      MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: GestureDetector(
+                                          key: widget.advanceButtonKey,
+                                          onTap:
+                                              widget.isProgressing
+                                                  ? null
+                                                  : widget.onAdvanceTap,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 11,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  widget.isProgressing
+                                                      ? Colors.grey.shade100
+                                                      : widget
+                                                          .ableToReinitialize
+                                                      ? _T.slate400
+                                                      : widget.next ==
+                                                          TaskStatus
+                                                              .clientApproved
+                                                      ? _T.green
+                                                      : _T.blue,
+                                              borderRadius:
+                                                  BorderRadius.circular(_T.r),
+                                              boxShadow:
+                                                  widget.isProgressing
+                                                      ? null
+                                                      : widget
+                                                          .progressBtnEnabled
+                                                      ? [
+                                                        BoxShadow(
+                                                          color: (widget
+                                                                      .ableToReinitialize
+                                                                  ? _T.slate400
+                                                                  : widget.next ==
+                                                                      TaskStatus
+                                                                          .clientApproved
+                                                                  ? _T.green
+                                                                  : _T.blue)
+                                                              .withOpacity(
+                                                                0.28,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ]
+                                                      : null,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                if (widget.isProgressing)
+                                                  SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2.75,
+                                                          color:
+                                                              Colors
+                                                                  .grey
+                                                                  .shade400,
+                                                        ),
+                                                  )
+                                                else
+                                                  Icon(
+                                                    widget.progressBtnEnabled
+                                                        ? Icons.check
+                                                        : Icons.arrow_forward,
+                                                    size: 15,
+                                                    color:
+                                                        widget.progressBtnEnabled
+                                                            ? Colors.white
+                                                            : Colors
                                                                 .grey
                                                                 .shade400,
-                                                      ),
-                                                )
-                                              else
-                                                Icon(
-                                                  widget.progressBtnEnabled
-                                                      ? Icons.check
-                                                      : Icons.arrow_forward,
-                                                  size: 15,
-                                                  color:
-                                                      widget.progressBtnEnabled
-                                                          ? Colors.white
-                                                          : Colors
-                                                              .grey
-                                                              .shade400,
+                                                  ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  widget.isProgressing
+                                                      ? 'Progressing'
+                                                      : widget.next ==
+                                                          TaskStatus
+                                                              .clientApproved
+                                                      ? 'Confirm Client Approval'
+                                                      : widget
+                                                          .ableToReinitialize
+                                                      ? 'Re-initialize Task'
+                                                      : 'Move to "${stageInfo(widget.next!).label}"',
+                                                  style: TextStyle(
+                                                    fontSize: 13.5,
+                                                    fontWeight: FontWeight.w700,
+                                                    color:
+                                                        widget.isProgressing
+                                                            ? Colors
+                                                                .grey
+                                                                .shade400
+                                                            : widget
+                                                                .progressBtnEnabled
+                                                            ? Colors.white
+                                                            : Colors
+                                                                .grey
+                                                                .shade400,
+                                                  ),
                                                 ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                widget.isProgressing
-                                                    ? 'Progressing'
-                                                    : widget.next ==
-                                                        TaskStatus
-                                                            .clientApproved
-                                                    ? 'Confirm Client Approval'
-                                                    : widget.ableToReinitialize
-                                                    ? 'Re-initialize Task'
-                                                    : 'Move to "${stageInfo(widget.next!).label}"',
-                                                style: TextStyle(
-                                                  fontSize: 13.5,
-                                                  fontWeight: FontWeight.w700,
-                                                  color:
-                                                      widget.isProgressing
-                                                          ? Colors.grey.shade400
-                                                          : widget
-                                                              .progressBtnEnabled
-                                                          ? Colors.white
-                                                          : Colors
-                                                              .grey
-                                                              .shade400,
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                )
-                                : const SizedBox.shrink(),
-                      ),
-                    ],
-                  )),
-
-            // Stage back button (only shown when hovered)
-            if (widget.canStageBack && _hovered) ...[
-              const SizedBox(height: 1),
-              if (widget.task.status != TaskStatus.completed)
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Divider(color: _T.slate200, height: 20),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        'or',
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: _T.slate400,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      child: Divider(color: _T.slate200, height: 20),
-                    ),
-                  ],
-                ),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  key: widget.stageBackButtonKey,
-                  onTap: widget.onStageBackTap,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: _T.slate200),
-                      borderRadius: BorderRadius.circular(_T.r),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.arrow_back_rounded,
-                          size: 12,
-                          color: _T.slate500,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Stage back',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: _T.slate500,
-                          ),
+                                    ],
+                                  )
+                                  : const SizedBox.shrink(),
                         ),
                       ],
+                    )),
+
+              // Stage back button (only shown when hovered)
+              if (widget.canStageBack && _hovered) ...[
+                const SizedBox(height: 1),
+                if (widget.task.status != TaskStatus.completed)
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(color: _T.slate200, height: 20),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'or',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: _T.slate400,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Divider(color: _T.slate200, height: 20),
+                      ),
+                    ],
+                  ),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    key: widget.stageBackButtonKey,
+                    onTap: widget.onStageBackTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.arrow_back_rounded,
+                            size: 12,
+                            color: _T.slate500,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Stage back',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _T.slate500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
