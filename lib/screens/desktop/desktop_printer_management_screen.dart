@@ -34,55 +34,77 @@ import 'package:smooflow/providers/printer_provider.dart';
 // TOKENS  — identical to create_task_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
 class _T {
-  static const blue      = Color(0xFF2563EB);
-  static const blueHover = Color(0xFF1D4ED8);
-  static const blue100   = Color(0xFFDBEAFE);
-  static const blue50    = Color(0xFFEFF6FF);
-  static const green     = Color(0xFF10B981);
-  static const green50   = Color(0xFFECFDF5);
-  static const amber     = Color(0xFFF59E0B);
-  static const amber50   = Color(0xFFFEF3C7);
-  static const red       = Color(0xFFEF4444);
-  static const red50     = Color(0xFFFEE2E2);
-  static const purple    = Color(0xFF8B5CF6);
-  static const purple50  = Color(0xFFF3E8FF);
-  static const slate50   = Color(0xFFF8FAFC);
-  static const slate100  = Color(0xFFF1F5F9);
-  static const slate200  = Color(0xFFE2E8F0);
-  static const slate300  = Color(0xFFCBD5E1);
-  static const slate400  = Color(0xFF94A3B8);
-  static const slate500  = Color(0xFF64748B);
-  static const ink       = Color(0xFF0F172A);
-  static const ink2      = Color(0xFF1E293B);
-  static const ink3      = Color(0xFF334155);
-  static const white     = Colors.white;
-  static const r         = 8.0;
-  static const rLg       = 12.0;
-  static const rXl       = 16.0;
+  static const blue = Color(0xFF2563EB);
+  static const blue600 = Color(0xFF1D4ED8);
+  static const blue100 = Color(0xFFDBEAFE);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const green = Color(0xFF10B981);
+  static const green50 = Color(0xFFECFDF5);
+  static const amber = Color(0xFFF59E0B);
+  static const amber50 = Color(0xFFFEF3C7);
+  static const red = Color(0xFFEF4444);
+  static const red50 = Color(0xFFFEE2E2);
+  static const purple = Color(0xFF8B5CF6);
+  static const purple50 = Color(0xFFF3E8FF);
+  static const slate50 = Color(0xFFF8FAFC);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
+  static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
+  static const white = Colors.white;
+
+  // Radii — matches task_list_view.dart's scale exactly (r for controls /
+  // inputs / small chips, rLg for cards). No 8 or 16 in the app's radius
+  // scale, so card corners use rLg rather than an rXl one-off.
+  static const r = 6.0;
+  static const rLg = 12.0;
+
+  // Three-tier shadow recipe — identical to task_list_view.dart's _T so
+  // elevation reads the same across screens.
+  static final shadowSm = BoxShadow(
+    color: Colors.black.withOpacity(0.02),
+    blurRadius: 2,
+    offset: const Offset(0, 1),
+  );
+  static final shadowMd = BoxShadow(
+    color: Colors.black.withOpacity(0.04),
+    blurRadius: 6,
+    offset: const Offset(0, 2),
+  );
+  static final shadowLg = BoxShadow(
+    color: Colors.black.withOpacity(0.08),
+    blurRadius: 16,
+    offset: const Offset(0, 4),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATUS HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
-Color     _sColor(PrinterStatus s) => switch (s) {
-  PrinterStatus.active      => _T.green,
+Color _sColor(PrinterStatus s) => switch (s) {
+  PrinterStatus.active => _T.green,
   PrinterStatus.maintenance => _T.amber,
-  _                         => _T.slate400,
+  _ => _T.slate400,
 };
-Color     _sBg(PrinterStatus s) => switch (s) {
-  PrinterStatus.active      => _T.green50,
+Color _sBg(PrinterStatus s) => switch (s) {
+  PrinterStatus.active => _T.green50,
   PrinterStatus.maintenance => _T.amber50,
-  _                         => _T.slate100,
+  _ => _T.slate100,
 };
-IconData  _sIcon(PrinterStatus s) => switch (s) {
-  PrinterStatus.active      => Icons.check_circle_outline_rounded,
+IconData _sIcon(PrinterStatus s) => switch (s) {
+  PrinterStatus.active => Icons.check_circle_outline_rounded,
   PrinterStatus.maintenance => Icons.build_outlined,
-  _                         => Icons.power_off_outlined,
+  _ => Icons.power_off_outlined,
 };
-String    _sLabel(PrinterStatus s) => switch (s) {
-  PrinterStatus.active      => 'Active',
+String _sLabel(PrinterStatus s) => switch (s) {
+  PrinterStatus.active => 'Active',
   PrinterStatus.maintenance => 'Maintenance',
-  _                         => 'Offline',
+  _ => 'Offline',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,145 +121,174 @@ class DesktopPrinterManagementScreen extends ConsumerStatefulWidget {
 class _DesktopManagePrintersScreenState
     extends ConsumerState<DesktopPrinterManagementScreen> {
   Printer? _selected;
-  bool     _showCreate = false;
+  bool _showCreate = false;
   bool _loading = true;
 
   final _searchCtrl = TextEditingController();
   String get _q => _searchCtrl.text.trim().toLowerCase();
 
   @override
-  void dispose() { _searchCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
-  void _selectPrinter(Printer p) =>
-      setState(() { _selected = p; _showCreate = false; });
+  void _selectPrinter(Printer p) => setState(() {
+    _selected = p;
+    _showCreate = false;
+  });
 
-  void _openCreate() =>
-      setState(() { _selected = null; _showCreate = true; });
+  void _openCreate() => setState(() {
+    _selected = null;
+    _showCreate = true;
+  });
 
-  void _closePanel() =>
-      setState(() { _selected = null; _showCreate = false; });
+  void _closePanel() => setState(() {
+    _selected = null;
+    _showCreate = false;
+  });
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() async {
-    setState(() => _loading = true);                          
+      setState(() => _loading = true);
       await ref.read(printerNotifierProvider.notifier).fetchPrinters();
-      if (mounted) setState(() => _loading = false);          
+      if (mounted) setState(() => _loading = false);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final all      = ref.watch(printerNotifierProvider).printers;
-    final filtered = _q.isEmpty
-        ? all
-        : all.where((p) =>
-            p.name.toLowerCase().contains(_q) ||
-            p.nickname.toLowerCase().contains(_q)).toList();
+    final all = ref.watch(printerNotifierProvider).printers;
+    final filtered =
+        _q.isEmpty
+            ? all
+            : all
+                .where(
+                  (p) =>
+                      p.name.toLowerCase().contains(_q) ||
+                      p.nickname.toLowerCase().contains(_q),
+                )
+                .toList();
 
     final showPanel = _selected != null || _showCreate;
 
     return Scaffold(
       backgroundColor: _T.slate50,
-      body: Column(children: [
-        _Topbar(onAdd: _openCreate),
-        Expanded(child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            // ── LEFT: printer list ───────────────────────────────────────
-            SizedBox(
-              width: 380,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: _T.white,
-                  border: Border(right: BorderSide(color: _T.slate200)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-
-                    // List subheader
-                    Container(
-                      height: 52,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: _T.slate200)),
-                      ),
-                      child: Row(children: [
-                        Text(
-                          '${all.length} Printer${all.length == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            fontSize:   12.5,
-                            fontWeight: FontWeight.w700,
-                            color:      _T.ink3,
+      body: Column(
+        children: [
+          _Topbar(onAdd: _openCreate),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── LEFT: printer list ───────────────────────────────────────
+                SizedBox(
+                  width: 380,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: _T.white,
+                      border: Border(right: BorderSide(color: _T.slate200)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // List subheader
+                        Container(
+                          height: 52,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: _T.slate200),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                '${all.length} Printer${all.length == 1 ? '' : 's'}',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.ink3,
+                                ),
+                              ),
+                              const Spacer(),
+                              // Free / busy count pills
+                              _MiniPill(
+                                label:
+                                    '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
+                                color: _T.green,
+                              ),
+                              const SizedBox(width: 6),
+                              _MiniPill(
+                                label:
+                                    '${all.where((p) => p.isBusy).length} busy',
+                                color: _T.blue,
+                              ),
+                            ],
                           ),
                         ),
-                        const Spacer(),
-                        // Free / busy count pills
-                        _MiniPill(
-                          label: '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
-                          color: _T.green, bg: _T.green50,
-                        ),
-                        const SizedBox(width: 6),
-                        _MiniPill(
-                          label: '${all.where((p) => p.isBusy).length} busy',
-                          color: _T.blue, bg: _T.blue50,
-                        ),
-                      ]),
-                    ),
 
-                    // Search
-                    Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                      child: _SearchBar(
-                        controller: _searchCtrl,
-                        onChanged:  (_) => setState(() {}),
-                      ),
-                    ),
+                        // Search
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                          child: _SearchBar(
+                            controller: _searchCtrl,
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
 
-                    // Rows
-                    Expanded(
-                      child: _loading
-                          ? _PrinterListSkeleton()
-                          : filtered.isEmpty
-                              ? _EmptyListState(hasSearch: _q.isNotEmpty)
-                              : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                                  itemCount: filtered.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 4),
-                                  itemBuilder: (_, i) {
-                                    final p = filtered[i];
-                                    return _PrinterListTile(
-                                      printer:    p,
-                                      isSelected: _selected?.id == p.id,
-                                      onTap: () => _selectPrinter(p),
-                                    );
-                                  },
-                                ),
+                        // Rows
+                        Expanded(
+                          child:
+                              _loading
+                                  ? _PrinterListSkeleton()
+                                  : filtered.isEmpty
+                                  ? _EmptyListState(hasSearch: _q.isNotEmpty)
+                                  : ListView.separated(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      4,
+                                      16,
+                                      16,
+                                    ),
+                                    itemCount: filtered.length,
+                                    separatorBuilder:
+                                        (_, __) => const SizedBox(height: 4),
+                                    itemBuilder: (_, i) {
+                                      final p = filtered[i];
+                                      return _PrinterListTile(
+                                        printer: p,
+                                        isSelected: _selected?.id == p.id,
+                                        onTap: () => _selectPrinter(p),
+                                      );
+                                    },
+                                  ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
 
-            // ── RIGHT: form or idle pane ─────────────────────────────────
-            Expanded(
-              child: showPanel
-                  ? _FormPanel(
-                      key:       ValueKey(_selected?.id ?? 'new'),
-                      printer:   _selected,
-                      onClose:   _closePanel,
-                      onSaved:   _closePanel,
-                      onDeleted: _closePanel,
-                    )
-                  : const _IdlePane(),
+                // ── RIGHT: form or idle pane ─────────────────────────────────
+                Expanded(
+                  child:
+                      showPanel
+                          ? _FormPanel(
+                            key: ValueKey(_selected?.id ?? 'new'),
+                            printer: _selected,
+                            onClose: _closePanel,
+                            onSaved: _closePanel,
+                            onDeleted: _closePanel,
+                          )
+                          : const _IdlePane(),
+                ),
+              ],
             ),
-          ],
-        )),
-      ]),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -254,56 +305,70 @@ class _Topbar extends StatelessWidget {
     height: 58,
     padding: const EdgeInsets.symmetric(horizontal: 20),
     decoration: const BoxDecoration(
-      color:  _T.white,
+      color: _T.white,
       border: Border(bottom: BorderSide(color: _T.slate200)),
     ),
-    child: Row(children: [
-
-      // Icon badge
-      Container(
-        width: 32, height: 32,
-        // decoration: BoxDecoration(
-        //   color:        _T.ink.withOpacity(.1),
-        //   borderRadius: BorderRadius.circular(9),
-        //   border:       Border.all(color: _T.ink.withOpacity(0.2)),
-        // ),
-        child: const Icon(Icons.print_rounded, size: 27, color: _T.ink),
-      ),
-      const SizedBox(width: 12),
-
-      // Dual-line title
-      const Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Manage Printers',
-              style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700,
-                color: _T.ink, letterSpacing: -0.2)),
-          Text('Configure and add production printers',
-              style: TextStyle(
-                fontSize: 10.5, color: _T.slate400,
-                fontWeight: FontWeight.w500)),
-        ],
-      ),
-
-      const Spacer(),
-
-      // Add printer CTA
-      FilledButton.icon(
-        onPressed: onAdd,
-        style: FilledButton.styleFrom(
-          backgroundColor: _T.blue,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r)),
-          textStyle: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700),
+    child: Row(
+      children: [
+        // Icon badge
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: const Icon(Icons.print_rounded, size: 16, color: _T.slate600),
         ),
-        icon:  const Icon(Icons.add_rounded, size: 16),
-        label: const Text('Add Printer'),
-      ),
-    ]),
+        const SizedBox(width: 12),
+
+        // Dual-line title
+        const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Manage Printers',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: _T.ink,
+                letterSpacing: -0.2,
+              ),
+            ),
+            Text(
+              'Configure and add production printers',
+              style: TextStyle(
+                fontSize: 10.5,
+                color: _T.slate400,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+
+        const Spacer(),
+
+        // Add printer CTA
+        FilledButton.icon(
+          onPressed: onAdd,
+          style: FilledButton.styleFrom(
+            backgroundColor: _T.blue,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.r),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          icon: const Icon(Icons.add_rounded, size: 16),
+          label: const Text('Add Printer'),
+        ),
+      ],
+    ),
   );
 }
 
@@ -311,8 +376,8 @@ class _Topbar extends StatelessWidget {
 // PRINTER LIST TILE
 // ─────────────────────────────────────────────────────────────────────────────
 class _PrinterListTile extends StatefulWidget {
-  final Printer  printer;
-  final bool     isSelected;
+  final Printer printer;
+  final bool isSelected;
   final VoidCallback onTap;
   const _PrinterListTile({
     required this.printer,
@@ -328,90 +393,97 @@ class _PrinterListTileState extends State<_PrinterListTile> {
 
   @override
   Widget build(BuildContext context) {
-    final p        = widget.printer;
+    final p = widget.printer;
     final selected = widget.isSelected;
 
     final Color dotColor;
-    final Color dotBg;
     final String statusText;
     if (p.isBusy) {
-      dotColor = _T.blue; dotBg = _T.blue50; statusText = 'Busy';
+      dotColor = _T.blue;
+      statusText = 'Busy';
     } else {
       dotColor = _sColor(p.status);
-      dotBg    = _sBg(p.status);
       statusText = _sLabel(p.status);
     }
 
     return MouseRegion(
-      cursor:  SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
-            color: selected
-                  ? _T.blue50
-                  : _hovered ? _T.slate50 : Colors.transparent,
+            color:
+                selected
+                    ? _T.blue50
+                    : _hovered
+                    ? _T.slate50
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 130),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_T.r),
-              border: Border.all(
-                color: selected
-                    ? _T.blue.withOpacity(0.35)
-                    : _hovered ? _T.slate200 : _T.slate200,
-                width: selected ? 1.5 : 1,
-              ),
+            border: Border.all(
+              color: selected ? _T.blue.withOpacity(0.35) : _T.slate200,
+              width: selected ? 1.5 : 1,
             ),
-            child: Row(children: [
+          ),
+          child: Row(
+            children: [
               // Icon
               Container(
-                width: 36, height: 36,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: selected
-                      ? _T.blue.withOpacity(0.10)
-                      : _T.slate100,
+                  color: selected ? _T.blue.withOpacity(0.10) : _T.slate100,
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(Icons.print_outlined,
-                    size: 17,
-                    color: selected ? _T.blue : _T.slate500),
+                child: Icon(
+                  Icons.print_outlined,
+                  size: 17,
+                  color: selected ? _T.blue : _T.slate500,
+                ),
               ),
               const SizedBox(width: 12),
-          
+
               // Name + nickname
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize:   13,
-                          fontWeight: FontWeight.w600,
-                          color:      selected ? _T.blue : _T.ink,
-                        )),
-                    Text(p.nickname,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11.5, color: _T.slate400)),
+                    Text(
+                      p.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? _T.blue : _T.ink,
+                      ),
+                    ),
+                    Text(
+                      p.nickname,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: _T.slate400,
+                      ),
+                    ),
                   ],
                 ),
               ),
-          
+
               // Status pill
-              _StatusPill(label: statusText, color: dotColor, bg: dotBg),
-          
+              _StatusPill(label: statusText, color: dotColor),
+
               if (selected) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 16, color: _T.blue),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: _T.blue,
+                ),
               ],
-            ]),
+            ],
           ),
         ),
       ),
@@ -427,28 +499,35 @@ class _IdlePane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 56, height: 56,
-        decoration: BoxDecoration(
-          color:        _T.slate100,
-          borderRadius: BorderRadius.circular(14),
-          border:       Border.all(color: _T.slate200),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: const Icon(Icons.print_outlined, size: 26, color: _T.slate400),
         ),
-        child: const Icon(Icons.print_outlined,
-            size: 26, color: _T.slate400),
-      ),
-      const SizedBox(height: 14),
-      const Text('Select a printer to view details',
+        const SizedBox(height: 14),
+        const Text(
+          'Select a printer to view details',
           style: TextStyle(
-            fontSize:   13.5,
+            fontSize: 13.5,
             fontWeight: FontWeight.w600,
-            color:      _T.slate400,
-          )),
-      const SizedBox(height: 4),
-      const Text('or click Add Printer to create a new one',
-          style: TextStyle(fontSize: 12, color: _T.slate300)),
-    ]),
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'or click Add Printer to create a new one',
+          style: TextStyle(fontSize: 12, color: _T.slate300),
+        ),
+      ],
+    ),
   );
 }
 
@@ -456,7 +535,7 @@ class _IdlePane extends StatelessWidget {
 // FORM PANEL  — create or edit, right-hand side
 // ─────────────────────────────────────────────────────────────────────────────
 class _FormPanel extends ConsumerStatefulWidget {
-  final Printer?     printer;
+  final Printer? printer;
   final VoidCallback onClose, onSaved, onDeleted;
 
   const _FormPanel({
@@ -476,22 +555,22 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
   late TextEditingController _nickCtrl;
   late TextEditingController _locCtrl;
 
-  PrinterStatus _status    = PrinterStatus.active;
-  bool          _submitted = false;
-  bool          _saving    = false;
+  PrinterStatus _status = PrinterStatus.active;
+  bool _submitted = false;
+  bool _saving = false;
 
   bool get _isEditing => widget.printer != null;
-  bool get _nameOk    => _nameCtrl.text.trim().isNotEmpty;
-  bool get _nickOk    => _nickCtrl.text.trim().isNotEmpty;
-  bool get _formOk    => _nameOk && _nickOk;
+  bool get _nameOk => _nameCtrl.text.trim().isNotEmpty;
+  bool get _nickOk => _nickCtrl.text.trim().isNotEmpty;
+  bool get _formOk => _nameOk && _nickOk;
 
   @override
   void initState() {
     super.initState();
 
-    _nameCtrl = TextEditingController(text: widget.printer?.name     ?? '');
+    _nameCtrl = TextEditingController(text: widget.printer?.name ?? '');
     _nickCtrl = TextEditingController(text: widget.printer?.nickname ?? '');
-    _locCtrl  = TextEditingController(text: widget.printer?.location ?? '');
+    _locCtrl = TextEditingController(text: widget.printer?.location ?? '');
     if (_isEditing) _status = widget.printer!.status;
     for (final c in [_nameCtrl, _nickCtrl, _locCtrl]) {
       c.addListener(() => setState(() {}));
@@ -500,7 +579,9 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _nickCtrl.dispose(); _locCtrl.dispose();
+    _nameCtrl.dispose();
+    _nickCtrl.dispose();
+    _locCtrl.dispose();
     super.dispose();
   }
 
@@ -514,13 +595,15 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
     if (_isEditing) {
       try {
-        await ref.read(printerNotifierProvider.notifier).updatePrinter(
-          widget.printer!.id,
-          name:     _nameCtrl.text,
-          nickname: _nickCtrl.text,
-          location: _locCtrl.text,
-          status:   _status,
-        );
+        await ref
+            .read(printerNotifierProvider.notifier)
+            .updatePrinter(
+              widget.printer!.id,
+              name: _nameCtrl.text,
+              nickname: _nickCtrl.text,
+              location: _locCtrl.text,
+              status: _status,
+            );
       } catch (e) {
         _snack('Failed to update printer. Please try again.', isError: true);
         setState(() => _saving = false);
@@ -532,11 +615,13 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
       return;
     }
 
-    await ref.read(printerNotifierProvider.notifier).createPrinter(
-      name:     _nameCtrl.text,
-      nickname: _nickCtrl.text,
-      location: _locCtrl.text,
-    );
+    await ref
+        .read(printerNotifierProvider.notifier)
+        .createPrinter(
+          name: _nameCtrl.text,
+          nickname: _nickCtrl.text,
+          location: _locCtrl.text,
+        );
     _snack('Printer added', isError: false);
     setState(() => _saving = false);
     widget.onSaved();
@@ -544,42 +629,55 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
   void _confirmDelete() {
     showDialog<void>(
-      context:      context,
+      context: context,
       barrierColor: Colors.black.withOpacity(0.35),
-      builder: (_) => _DeleteDialog(
-        printerName: widget.printer?.name ?? 'this printer',
-        onConfirm: () {
-          Navigator.of(context).pop();
-          // TODO: await ref.read(printerNotifierProvider.notifier)
-          //           .deletePrinter(widget.printer!.id);
-          _snack('Printer deleted', isError: false);
-          widget.onDeleted();
-        },
-      ),
+      builder:
+          (_) => _DeleteDialog(
+            printerName: widget.printer?.name ?? 'this printer',
+            onConfirm: () {
+              Navigator.of(context).pop();
+              // TODO: await ref.read(printerNotifierProvider.notifier)
+              //           .deletePrinter(widget.printer!.id);
+              _snack('Printer deleted', isError: false);
+              widget.onDeleted();
+            },
+          ),
     );
   }
 
   void _snack(String msg, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(
-          isError
-              ? Icons.error_outline_rounded
-              : Icons.check_circle_outline_rounded,
-          size: 15, color: Colors.white,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 15,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(msg,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500))),
-      ]),
-      backgroundColor: _T.ink,
-      behavior:        SnackBarBehavior.floating,
-      margin:          const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_T.r)),
-      duration: const Duration(seconds: 4),
-    ));
+        backgroundColor: _T.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -588,114 +686,121 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color:  _T.slate50,
+        color: _T.slate50,
         border: Border(left: BorderSide(color: _T.slate200)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
           // ── Panel topbar — mirrors the screen topbar height & style ────
           Container(
             height: 58,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: const BoxDecoration(
-              color:  _T.white,
+              color: _T.white,
               border: Border(bottom: BorderSide(color: _T.slate200)),
             ),
-            child: Row(children: [
-              // Close
-              Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(_T.r),
-                child: InkWell(
-                  onTap:        widget.onClose,
-                  borderRadius: BorderRadius.circular(_T.r),
-                  child: Container(
-                    width: 34, height: 34,
-                    decoration: BoxDecoration(
-                      color:        _T.slate100,
-                      borderRadius: BorderRadius.circular(_T.r),
-                      border:       Border.all(color: _T.slate200),
-                    ),
-                    child: const Icon(Icons.close_rounded,
-                        size: 17, color: _T.ink3),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Dual-line title
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _isEditing
-                          ? _nameCtrl.text.isNotEmpty
-                              ? _nameCtrl.text
-                              : 'Printer Details'
-                          : 'New Printer',
-                      style: const TextStyle(
-                        fontSize:   15,
-                        fontWeight: FontWeight.w700,
-                        color:      _T.ink,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    Text(
-                      _isEditing
-                          ? 'Edit printer settings'
-                          : 'Configure and add to fleet',
-                      style: const TextStyle(
-                        fontSize:   10.5,
-                        color:      _T.slate400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Live status badge (edit only)
-              if (_isEditing) ...[
-                _StatusPill(
-                  label:  widget.printer!.isBusy
-                      ? 'Busy'
-                      : _sLabel(widget.printer!.status),
-                  color:  widget.printer!.isBusy
-                      ? _T.blue
-                      : _sColor(widget.printer!.status),
-                  bg:     widget.printer!.isBusy
-                      ? _T.blue50
-                      : _sBg(widget.printer!.status),
-                ),
-                const SizedBox(width: 12),
-              ],
-
-              // Delete (edit only)
-              if (_isEditing)
+            child: Row(
+              children: [
+                // Close
                 Material(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(_T.r),
                   child: InkWell(
-                    onTap:        _confirmDelete,
+                    onTap: widget.onClose,
                     borderRadius: BorderRadius.circular(_T.r),
                     child: Container(
-                      width: 34, height: 34,
+                      width: 34,
+                      height: 34,
                       decoration: BoxDecoration(
-                        color:        _T.red50,
+                        color: _T.slate100,
                         borderRadius: BorderRadius.circular(_T.r),
-                        border: Border.all(
-                            color: _T.red.withOpacity(0.25)),
+                        border: Border.all(color: _T.slate200),
                       ),
-                      child: const Icon(Icons.delete_outline_rounded,
-                          size: 17, color: _T.red),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 17,
+                        color: _T.ink3,
+                      ),
                     ),
                   ),
                 ),
-            ]),
+                const SizedBox(width: 14),
+
+                // Dual-line title
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isEditing
+                            ? _nameCtrl.text.isNotEmpty
+                                ? _nameCtrl.text
+                                : 'Printer Details'
+                            : 'New Printer',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      Text(
+                        _isEditing
+                            ? 'Edit printer settings'
+                            : 'Configure and add to fleet',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: _T.slate400,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Live status badge (edit only)
+                if (_isEditing) ...[
+                  _StatusPill(
+                    label:
+                        widget.printer!.isBusy
+                            ? 'Busy'
+                            : _sLabel(widget.printer!.status),
+                    color:
+                        widget.printer!.isBusy
+                            ? _T.blue
+                            : _sColor(widget.printer!.status),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+
+                // Delete (edit only)
+                if (_isEditing)
+                  Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(_T.r),
+                    child: InkWell(
+                      onTap: _confirmDelete,
+                      borderRadius: BorderRadius.circular(_T.r),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: _T.red50,
+                          borderRadius: BorderRadius.circular(_T.r),
+                          border: Border.all(color: _T.red.withOpacity(0.25)),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 17,
+                          color: _T.red,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
 
           // ── Scrollable form ────────────────────────────────────────────
@@ -707,14 +812,13 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     // Page heading
                     Text(
                       _isEditing ? 'Printer Details' : 'New Printer',
                       style: const TextStyle(
-                        fontSize:   22,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color:      _T.ink,
+                        color: _T.ink,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -724,79 +828,89 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
                           ? 'Update status or review printer information.'
                           : 'Fill in the printer details below. Required fields are marked *.',
                       style: const TextStyle(
-                          fontSize: 13, color: _T.slate400,
-                          fontWeight: FontWeight.w400),
+                        fontSize: 13,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 24),
 
                     // ── Section 1: Printer Details ─────────────────────
                     _SectionCard(
-                      icon:      Icons.print_outlined,
+                      icon: Icons.print_outlined,
                       iconColor: _T.blue,
-                      iconBg:    _T.blue50,
-                      title:     'Printer Details',
-                      subtitle:  'Model name, nickname and location',
+                      iconBg: _T.blue50,
+                      title: 'Printer Details',
+                      subtitle: 'Model name, nickname and location',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _SmooField(
                             controller: _nameCtrl,
-                            label:      'Printer Name',
-                            hint:       'e.g. Epson SureColor P8000',
-                            icon:       Icons.print_outlined,
-                            required:   true,
-                            readOnly:   _isEditing,
-                            error: _submitted && !_nameOk
-                                ? 'Printer name is required'
-                                : null,
+                            label: 'Printer Name',
+                            hint: 'e.g. Epson SureColor P8000',
+                            icon: Icons.print_outlined,
+                            required: true,
+                            readOnly: _isEditing,
+                            error:
+                                _submitted && !_nameOk
+                                    ? 'Printer name is required'
+                                    : null,
                           ),
                           const SizedBox(height: 16),
                           _SmooField(
                             controller: _nickCtrl,
-                            label:      'Nickname',
-                            hint:       'e.g. Large Format A',
-                            icon:       Icons.label_outline_rounded,
-                            required:   true,
-                            readOnly:   _isEditing,
-                            error: _submitted && !_nickOk
-                                ? 'Nickname is required'
-                                : null,
+                            label: 'Nickname',
+                            hint: 'e.g. Large Format A',
+                            icon: Icons.label_outline_rounded,
+                            required: true,
+                            readOnly: _isEditing,
+                            error:
+                                _submitted && !_nickOk
+                                    ? 'Nickname is required'
+                                    : null,
                           ),
                           const SizedBox(height: 16),
                           _SmooField(
                             controller: _locCtrl,
-                            label:      'Location',
-                            hint:       'e.g. Section A',
-                            icon:       Icons.location_on_outlined,
-                            required:   false,
-                            readOnly:   _isEditing,
+                            label: 'Location',
+                            hint: 'e.g. Section A',
+                            icon: Icons.location_on_outlined,
+                            required: false,
+                            readOnly: _isEditing,
                           ),
                           // Read-only stats in edit mode
                           if (_isEditing) ...[
                             const SizedBox(height: 16),
-                            Row(children: [
-                              Expanded(
-                                child: _StatCell(
-                                  label: 'Jobs Completed',
-                                  value: widget.printer!.totalJobsCompleted
-                                      .toString(),
-                                  icon:  Icons.check_circle_outline_rounded,
-                                  color: _T.green,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCell(
+                                    label: 'Jobs Completed',
+                                    value:
+                                        widget.printer!.totalJobsCompleted
+                                            .toString(),
+                                    icon: Icons.check_circle_outline_rounded,
+                                    color: _T.green,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _StatCell(
-                                  label: 'Current Task',
-                                  value: widget.printer!.currentJobId
-                                          ?.toString() ?? '—',
-                                  icon:  Icons.assignment_outlined,
-                                  color: widget.printer!.isBusy
-                                      ? _T.blue
-                                      : _T.slate400,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _StatCell(
+                                    label: 'Current Task',
+                                    value:
+                                        widget.printer!.currentJobId
+                                            ?.toString() ??
+                                        '—',
+                                    icon: Icons.assignment_outlined,
+                                    color:
+                                        widget.printer!.isBusy
+                                            ? _T.blue
+                                            : _T.slate400,
+                                  ),
                                 ),
-                              ),
-                            ]),
+                              ],
+                            ),
                           ],
                         ],
                       ),
@@ -805,39 +919,47 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 
                     // ── Section 2: Operational Status ──────────────────
                     _SectionCard(
-                      icon:      _sIcon(_status),
+                      icon: _sIcon(_status),
                       iconColor: _sColor(_status),
-                      iconBg:    _sBg(_status),
-                      title:     'Operational Status',
-                      subtitle:  'Set the current state of this printer',
-                      child: Column(children: [
-                        _StatusOptionTile(
-                          status:  PrinterStatus.active,
-                          current: _status,
-                          label:   'Active',
-                          sub:     'Ready to receive print jobs',
-                          onTap: () => setState(
-                              () => _status = PrinterStatus.active),
-                        ),
-                        const SizedBox(height: 10),
-                        _StatusOptionTile(
-                          status:  PrinterStatus.maintenance,
-                          current: _status,
-                          label:   'Maintenance',
-                          sub:     'Under service — not accepting jobs',
-                          onTap: () => setState(
-                              () => _status = PrinterStatus.maintenance),
-                        ),
-                        const SizedBox(height: 10),
-                        _StatusOptionTile(
-                          status:  PrinterStatus.offline,
-                          current: _status,
-                          label:   'Offline',
-                          sub:     'Powered off or unreachable',
-                          onTap: () => setState(
-                              () => _status = PrinterStatus.offline),
-                        ),
-                      ]),
+                      iconBg: _sBg(_status),
+                      title: 'Operational Status',
+                      subtitle: 'Set the current state of this printer',
+                      child: Column(
+                        children: [
+                          _StatusOptionTile(
+                            status: PrinterStatus.active,
+                            current: _status,
+                            label: 'Active',
+                            sub: 'Ready to receive print jobs',
+                            onTap:
+                                () => setState(
+                                  () => _status = PrinterStatus.active,
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          _StatusOptionTile(
+                            status: PrinterStatus.maintenance,
+                            current: _status,
+                            label: 'Maintenance',
+                            sub: 'Under service — not accepting jobs',
+                            onTap:
+                                () => setState(
+                                  () => _status = PrinterStatus.maintenance,
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          _StatusOptionTile(
+                            status: PrinterStatus.offline,
+                            current: _status,
+                            label: 'Offline',
+                            sub: 'Powered off or unreachable',
+                            onTap:
+                                () => setState(
+                                  () => _status = PrinterStatus.offline,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -849,57 +971,73 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
             decoration: const BoxDecoration(
-              color:  _T.white,
+              color: _T.white,
               border: Border(top: BorderSide(color: _T.slate200)),
             ),
-            child: Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _saving ? null : widget.onClose,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _T.slate500,
-                    side: const BorderSide(color: _T.slate200),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r)),
-                  ),
-                  child: const Text('Cancel',
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : widget.onClose,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _T.slate500,
+                      side: const BorderSide(color: _T.slate200),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
                       style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _savePrinter,
-                  style: FilledButton.styleFrom(
-                    backgroundColor:         _T.blue,
-                    disabledBackgroundColor: _T.slate200,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r)),
-                  ),
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 15, height: 15,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: Colors.white))
-                      : Icon(
-                          _isEditing
-                              ? Icons.check_rounded
-                              : Icons.add_rounded,
-                          size: 17),
-                  label: Text(
-                    _saving
-                        ? (_isEditing ? 'Saving…' : 'Adding…')
-                        : (_isEditing ? 'Save Changes' : 'Add Printer'),
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _savePrinter,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _T.blue,
+                      disabledBackgroundColor: _T.slate200,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    icon:
+                        _saving
+                            ? const SizedBox(
+                              width: 15,
+                              height: 15,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Icon(
+                              _isEditing
+                                  ? Icons.check_rounded
+                                  : Icons.add_rounded,
+                              size: 17,
+                            ),
+                    label: Text(
+                      _saving
+                          ? (_isEditing ? 'Saving…' : 'Adding…')
+                          : (_isEditing ? 'Save Changes' : 'Add Printer'),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -913,74 +1051,79 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SectionCard extends StatelessWidget {
   final IconData icon;
-  final Color    iconColor, iconBg;
-  final String   title, subtitle;
-  final Widget   child;
+  final Color iconColor, iconBg;
+  final String title, subtitle;
+  final Widget child;
 
   const _SectionCard({
-    required this.icon,      required this.iconColor, required this.iconBg,
-    required this.title,     required this.subtitle,  required this.child,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    required this.subtitle,
+    required this.child,
   });
 
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: _T.white,
-      borderRadius: BorderRadius.circular(_T.rXl),
+      borderRadius: BorderRadius.circular(_T.rLg),
       border: Border.all(color: _T.slate200),
-      boxShadow: [
-        BoxShadow(
-          color:      Colors.black.withOpacity(0.03),
-          blurRadius: 14,
-          offset:     const Offset(0, 3),
-        ),
-      ],
+      boxShadow: [_T.shadowMd],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-          child: Row(children: [
-            Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(
-                color:        iconBg,
-                borderRadius: BorderRadius.circular(9),
-                border:       Border.all(color: iconColor.withOpacity(0.2)),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: iconColor.withOpacity(0.2)),
+                ),
+                child: Icon(icon, size: 16, color: iconColor),
               ),
-              child: Icon(icon, size: 16, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
                       style: const TextStyle(
-                        fontSize:   14,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color:      _T.ink,
+                        color: _T.ink,
                         letterSpacing: -0.2,
-                      )),
-                  Text(subtitle,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
                       style: const TextStyle(
-                        fontSize:   11.5,
-                        color:      _T.slate400,
-                        fontWeight: FontWeight.w400,
-                      )),
-                ],
+                        fontSize: 11.5,
+                        color: _T.slate400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child:   Divider(height: 1, color: _T.slate100),
+          child: Divider(height: 1, color: _T.slate100),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child:   child,
+          child: child,
         ),
       ],
     ),
@@ -993,11 +1136,11 @@ class _SectionCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SmooField extends StatefulWidget {
   final TextEditingController controller;
-  final String                label, hint;
-  final IconData              icon;
-  final bool                  required;
-  final bool                  readOnly;
-  final String?               error;
+  final String label, hint;
+  final IconData icon;
+  final bool required;
+  final bool readOnly;
+  final String? error;
 
   const _SmooField({
     required this.controller,
@@ -1014,8 +1157,8 @@ class _SmooField extends StatefulWidget {
 }
 
 class _SmooFieldState extends State<_SmooField> {
-  final _focus   = FocusNode();
-  bool  _focused = false;
+  final _focus = FocusNode();
+  bool _focused = false;
 
   @override
   void initState() {
@@ -1024,7 +1167,10 @@ class _SmooFieldState extends State<_SmooField> {
   }
 
   @override
-  void dispose() { _focus.dispose(); super.dispose(); }
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1036,31 +1182,33 @@ class _SmooFieldState extends State<_SmooField> {
           _FieldLabel(widget.label),
           const SizedBox(height: 7),
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             decoration: BoxDecoration(
-              color:        _T.slate50,
+              color: _T.slate50,
               borderRadius: BorderRadius.circular(_T.r),
-              border:       Border.all(color: _T.slate200),
+              border: Border.all(color: _T.slate200),
             ),
-            child: Row(children: [
-              Icon(widget.icon, size: 16, color: _T.slate400),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  widget.controller.text.isNotEmpty
-                      ? widget.controller.text
-                      : widget.hint,
-                  style: TextStyle(
-                    fontSize:   13,
-                    fontWeight: FontWeight.w500,
-                    color: widget.controller.text.isNotEmpty
-                        ? _T.ink3
-                        : _T.slate300,
+            child: Row(
+              children: [
+                Icon(widget.icon, size: 16, color: _T.slate400),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.controller.text.isNotEmpty
+                        ? widget.controller.text
+                        : widget.hint,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          widget.controller.text.isNotEmpty
+                              ? _T.ink3
+                              : _T.slate300,
+                    ),
                   ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           ),
         ],
       );
@@ -1081,39 +1229,51 @@ class _SmooFieldState extends State<_SmooField> {
             color: _focused ? _T.white : _T.slate50,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
-              color: hasError
-                  ? _T.red
-                  : (_focused ? _T.blue : _T.slate200),
+              color: hasError ? _T.red : (_focused ? _T.blue : _T.slate200),
               width: (_focused || hasError) ? 1.5 : 1,
             ),
           ),
           child: TextField(
             controller: widget.controller,
-            focusNode:  _focus,
+            focusNode: _focus,
             style: const TextStyle(
-                fontSize: 13, color: _T.ink, fontWeight: FontWeight.w500),
+              fontSize: 13,
+              color: _T.ink,
+              fontWeight: FontWeight.w500,
+            ),
             decoration: InputDecoration(
-              hintText:  widget.hint,
+              hintText: widget.hint,
               hintStyle: const TextStyle(fontSize: 13, color: _T.slate300),
               prefixIcon: Icon(widget.icon, size: 16, color: _T.slate400),
-              border:         InputBorder.none,
+              border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                  vertical: 13, horizontal: 12),
+                vertical: 13,
+                horizontal: 12,
+              ),
             ),
           ),
         ),
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 5),
-            child: Row(children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 11, color: _T.red),
-              const SizedBox(width: 4),
-              Text(widget.error!,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 11,
+                  color: _T.red,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.error!,
                   style: const TextStyle(
-                      fontSize: 11, color: _T.red,
-                      fontWeight: FontWeight.w500)),
-            ]),
+                    fontSize: 11,
+                    color: _T.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );
@@ -1125,21 +1285,23 @@ class _SmooFieldState extends State<_SmooField> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatusOptionTile extends StatelessWidget {
   final PrinterStatus status, current;
-  final String        label, sub;
-  final VoidCallback  onTap;
+  final String label, sub;
+  final VoidCallback onTap;
 
   const _StatusOptionTile({
-    required this.status, required this.current,
-    required this.label,  required this.sub,
+    required this.status,
+    required this.current,
+    required this.label,
+    required this.sub,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final active = status == current;
-    final color  = _sColor(status);
-    final bg     = _sBg(status);
-    final icon   = _sIcon(status);
+    final color = _sColor(status);
+    final bg = _sBg(status);
+    final icon = _sIcon(status);
 
     return GestureDetector(
       onTap: onTap,
@@ -1153,55 +1315,61 @@ class _StatusOptionTile extends StatelessWidget {
             color: active ? color.withOpacity(0.5) : _T.slate200,
             width: active ? 1.5 : 1,
           ),
-          boxShadow: active
-              ? [BoxShadow(
-                  color:      color.withOpacity(0.10),
-                  blurRadius: 10,
-                  offset:     const Offset(0, 3))]
-              : null,
+          boxShadow:
+              active
+                  ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                  : null,
         ),
-        child: Row(children: [
-          // Coloured icon badge
-          Container(
-            width: 34, height: 34,
-            decoration: BoxDecoration(
-              color: active
-                  ? color.withOpacity(0.15)
-                  : _T.slate100,
-              borderRadius: BorderRadius.circular(9),
+        child: Row(
+          children: [
+            // Coloured icon badge
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: active ? color.withOpacity(0.15) : _T.slate100,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, size: 16, color: active ? color : _T.slate400),
             ),
-            child: Icon(icon, size: 16,
-                color: active ? color : _T.slate400),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Label + sub
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
+            // Label + sub
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
                     style: TextStyle(
-                      fontSize:   13,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color:      active ? color : _T.ink3,
-                    )),
-                const SizedBox(height: 2),
-                Text(sub,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: _T.slate400)),
-              ],
+                      color: active ? color : _T.ink3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: const TextStyle(fontSize: 11.5, color: _T.slate400),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Check icon
-          AnimatedOpacity(
-            opacity:  active ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 150),
-            child: Icon(Icons.check_circle_rounded,
-                size: 20, color: color),
-          ),
-        ]),
+            // Check icon
+            AnimatedOpacity(
+              opacity: active ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 150),
+              child: Icon(Icons.check_circle_rounded, size: 20, color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1211,51 +1379,63 @@ class _StatusOptionTile extends StatelessWidget {
 // STAT CELL — compact read-only metric box (edit mode only)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatCell extends StatelessWidget {
-  final String   label, value;
+  final String label, value;
   final IconData icon;
-  final Color    color;
+  final Color color;
   const _StatCell({
-    required this.label, required this.value,
-    required this.icon,  required this.color,
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color:        _T.slate50,
+      color: _T.slate50,
       borderRadius: BorderRadius.circular(_T.r),
-      border:       Border.all(color: _T.slate200),
+      border: Border.all(color: _T.slate200),
     ),
-    child: Row(children: [
-      Container(
-        width: 30, height: 30,
-        decoration: BoxDecoration(
-          color:        color.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(7),
+    child: Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, size: 14, color: color),
         ),
-        child: Icon(icon, size: 14, color: color),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
-              style: const TextStyle(
-                fontSize:      10,
-                fontWeight:    FontWeight.w600,
-                color:         _T.slate400,
-                letterSpacing: 0.3,
-              )),
-          const SizedBox(height: 2),
-          Text(value,
-              style: const TextStyle(
-                fontSize:   14,
-                fontWeight: FontWeight.w700,
-                color:      _T.ink3,
-              )),
-        ]),
-      ),
-    ]),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: _T.slate400,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -1263,10 +1443,9 @@ class _StatCell extends StatelessWidget {
 // DELETE DIALOG — desktop centered dialog (not bottom sheet)
 // ─────────────────────────────────────────────────────────────────────────────
 class _DeleteDialog extends StatelessWidget {
-  final String       printerName;
+  final String printerName;
   final VoidCallback onConfirm;
-  const _DeleteDialog({
-    required this.printerName, required this.onConfirm});
+  const _DeleteDialog({required this.printerName, required this.onConfirm});
 
   @override
   Widget build(BuildContext context) => Dialog(
@@ -1274,16 +1453,10 @@ class _DeleteDialog extends StatelessWidget {
     child: Container(
       width: 400,
       decoration: BoxDecoration(
-        color:        _T.white,
-        borderRadius: BorderRadius.circular(_T.rXl),
-        border:       Border.all(color: _T.slate200),
-        boxShadow: [
-          BoxShadow(
-            color:      Colors.black.withOpacity(0.10),
-            blurRadius: 24,
-            offset:     const Offset(0, 8),
-          ),
-        ],
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.rLg),
+        border: Border.all(color: _T.slate200),
+        boxShadow: [_T.shadowLg],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1291,123 +1464,153 @@ class _DeleteDialog extends StatelessWidget {
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
-            child: Row(children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color:  _T.red50,
-                  shape:  BoxShape.circle,
-                  border: Border.all(color: _T.red.withOpacity(0.2)),
-                ),
-                child: const Icon(Icons.delete_outline_rounded,
-                    size: 18, color: _T.red),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Delete Printer',
-                        style: TextStyle(
-                          fontSize:   16,
-                          fontWeight: FontWeight.w700,
-                          color:      _T.ink,
-                        )),
-                    Text('This action cannot be undone',
-                        style: TextStyle(
-                            fontSize: 12, color: _T.slate400)),
-                  ],
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(_T.r),
-                child: InkWell(
-                  onTap:        () => Navigator.of(context).pop(),
-                  borderRadius: BorderRadius.circular(_T.r),
-                  child: Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      border:       Border.all(color: _T.slate200),
-                      borderRadius: BorderRadius.circular(_T.r),
-                    ),
-                    child: const Icon(Icons.close_rounded,
-                        size: 15, color: _T.slate400),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _T.red50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _T.red.withOpacity(0.2)),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: _T.red,
                   ),
                 ),
-              ),
-            ]),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Delete Printer',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink,
+                        ),
+                      ),
+                      Text(
+                        'This action cannot be undone',
+                        style: TextStyle(fontSize: 12, color: _T.slate400),
+                      ),
+                    ],
+                  ),
+                ),
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(_T.r),
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(_T.r),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: _T.slate200),
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 15,
+                        color: _T.slate400,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child:   Divider(height: 1, color: _T.slate100),
+            child: Divider(height: 1, color: _T.slate100),
           ),
 
           // Printer name chip
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
-              width:   double.infinity,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color:        _T.slate50,
+                color: _T.slate50,
                 borderRadius: BorderRadius.circular(_T.r),
-                border:       Border.all(color: _T.slate200),
+                border: Border.all(color: _T.slate200),
               ),
-              child: Row(children: [
-                const Icon(Icons.print_outlined,
-                    size: 15, color: _T.slate400),
-                const SizedBox(width: 10),
-                Text(printerName,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.print_outlined,
+                    size: 15,
+                    color: _T.slate400,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    printerName,
                     style: const TextStyle(
-                      fontSize:   13,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color:      _T.ink3,
-                    )),
-              ]),
+                      color: _T.ink3,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           // Buttons
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _T.slate500,
-                    side: const BorderSide(color: _T.slate200),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r)),
-                  ),
-                  child: const Text('Cancel',
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _T.slate500,
+                      side: const BorderSide(color: _T.slate200),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
                       style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: onConfirm,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _T.red,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_T.r)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  icon:  const Icon(Icons.delete_outline_rounded,
-                      size: 17),
-                  label: const Text('Delete Printer',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700)),
                 ),
-              ),
-            ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: onConfirm,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _T.red,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                    label: const Text(
+                      'Delete Printer',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1419,83 +1622,110 @@ class _DeleteDialog extends StatelessWidget {
 // SHARED SMALL COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Status pill — dot + label
+// Status pill — dot + label. Soft-badge recipe: color.withOpacity(0.1) bg +
+// 0.3 border, matching _ConnectionIndicator in task_list_view.dart.
 class _StatusPill extends StatelessWidget {
   final String label;
-  final Color  color, bg;
-  const _StatusPill({required this.label, required this.color, required this.bg});
+  final Color color;
+  const _StatusPill({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
-        color: bg, borderRadius: BorderRadius.circular(99)),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-          width: 5, height: 5,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 5),
-      Text(label,
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(99),
+      border: Border.all(color: color.withOpacity(0.3)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 5,
+          height: 5,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
           style: TextStyle(
-            fontSize:   11,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
-            color:      color,
-          )),
-    ]),
+            color: color,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
-// Mini count pill used in the list subheader
+// Mini count pill used in the list subheader — same soft-badge recipe.
 class _MiniPill extends StatelessWidget {
   final String label;
-  final Color  color, bg;
-  const _MiniPill({required this.label, required this.color, required this.bg});
+  final Color color;
+  const _MiniPill({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-        color: bg, borderRadius: BorderRadius.circular(99)),
-    child: Text(label,
-        style: TextStyle(
-          fontSize:   10.5,
-          fontWeight: FontWeight.w700,
-          color:      color,
-        )),
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(99),
+      border: Border.all(color: color.withOpacity(0.3)),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 10.5,
+        fontWeight: FontWeight.w700,
+        color: color,
+      ),
+    ),
   );
 }
 
 // Search bar
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
-  final ValueChanged<String>  onChanged;
+  final ValueChanged<String> onChanged;
   const _SearchBar({required this.controller, required this.onChanged});
 
   @override
   Widget build(BuildContext context) => Container(
     height: 36,
     decoration: BoxDecoration(
-      color:        _T.slate50,
+      color: _T.slate50,
       borderRadius: BorderRadius.circular(_T.r),
-      border:       Border.all(color: _T.slate200),
+      border: Border.all(color: _T.slate200),
     ),
     child: TextField(
       controller: controller,
-      onChanged:  onChanged,
+      onChanged: onChanged,
       style: const TextStyle(fontSize: 13, color: _T.ink),
       decoration: InputDecoration(
-        hintText:  'Search printers…',
+        hintText: 'Search printers…',
         hintStyle: const TextStyle(fontSize: 13, color: _T.slate300),
-        prefixIcon: const Icon(Icons.search_rounded,
-            size: 15, color: _T.slate400),
-        suffixIcon: controller.text.isNotEmpty
-            ? GestureDetector(
-                onTap: () { controller.clear(); onChanged(''); },
-                child: const Icon(Icons.close_rounded,
-                    size: 14, color: _T.slate400))
-            : null,
-        border:         InputBorder.none,
-        isDense:        true,
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          size: 15,
+          color: _T.slate400,
+        ),
+        suffixIcon:
+            controller.text.isNotEmpty
+                ? GestureDetector(
+                  onTap: () {
+                    controller.clear();
+                    onChanged('');
+                  },
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: _T.slate400,
+                  ),
+                )
+                : null,
+        border: InputBorder.none,
+        isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 9),
       ),
     ),
@@ -1509,83 +1739,88 @@ class _EmptyListState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(
-        hasSearch
-            ? Icons.search_off_rounded
-            : Icons.print_disabled_outlined,
-        size:  28,
-        color: _T.slate300,
-      ),
-      const SizedBox(height: 10),
-      Text(
-        hasSearch ? 'No results' : 'No printers yet',
-        style: const TextStyle(
-          fontSize:   13,
-          fontWeight: FontWeight.w600,
-          color:      _T.slate400,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          hasSearch ? Icons.search_off_rounded : Icons.print_disabled_outlined,
+          size: 28,
+          color: _T.slate300,
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        hasSearch
-            ? 'Try a different search'
-            : 'Click Add Printer to get started',
-        style: const TextStyle(fontSize: 12, color: _T.slate300),
-      ),
-    ]),
+        const SizedBox(height: 10),
+        Text(
+          hasSearch ? 'No results' : 'No printers yet',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          hasSearch
+              ? 'Try a different search'
+              : 'Click Add Printer to get started',
+          style: const TextStyle(fontSize: 12, color: _T.slate300),
+        ),
+      ],
+    ),
   );
 }
 
 // Field label — verbatim from create_task_screen.dart
 class _FieldLabel extends StatelessWidget {
-  final String  text;
-  final bool    optional;
-  final bool    isRequired;
+  final String text;
+  final bool optional;
+  final bool isRequired;
   final String? optionalNote;
 
   const _FieldLabel(this.text, {this.optional = false, this.optionalNote})
-      : isRequired = false;
+    : isRequired = false;
 
   const _FieldLabel.required(this.text)
-      : optional     = false,
-        isRequired   = true,
-        optionalNote = null;
+    : optional = false,
+      isRequired = true,
+      optionalNote = null;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      Text(text,
-          style: const TextStyle(
-            fontSize:   12,
-            fontWeight: FontWeight.w600,
-            color:      _T.ink3,
-          )),
+      Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: _T.ink3,
+        ),
+      ),
       if (isRequired) ...[
         const SizedBox(width: 3),
-        const Text('*',
-            style: TextStyle(
-              color:      _T.red,
-              fontSize:   13,
-              fontWeight: FontWeight.w700,
-            )),
+        const Text(
+          '*',
+          style: TextStyle(
+            color: _T.red,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
       if (optional) ...[
         const SizedBox(width: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
           decoration: BoxDecoration(
-            color:        _T.slate100,
+            color: _T.slate100,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             optionalNote ?? 'Optional',
             style: const TextStyle(
-              fontSize:      9.5,
-              fontWeight:    FontWeight.w600,
-              color:         _T.slate400,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: _T.slate400,
               letterSpacing: 0.2,
             ),
           ),
@@ -1606,20 +1841,23 @@ class _PrinterListSkeleton extends StatefulWidget {
 class _PrinterListSkeletonState extends State<_PrinterListSkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double>   _anim;
+  late final Animation<double> _anim;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 1100),
     )..repeat(reverse: true);
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -1628,61 +1866,66 @@ class _PrinterListSkeletonState extends State<_PrinterListSkeleton>
       final shimmer = Color.lerp(_T.slate100, _T.slate200, _anim.value)!;
       final shimmerDark = Color.lerp(_T.slate200, _T.slate300, _anim.value)!;
       return ListView.separated(
-        padding:          const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        itemCount:        6,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        itemCount: 6,
         separatorBuilder: (_, __) => const SizedBox(height: 4),
-        itemBuilder: (_, __) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color:        _T.white,
-            borderRadius: BorderRadius.circular(_T.r),
-            border:       Border.all(color: _T.slate200),
-          ),
-          child: Row(children: [
-            // Icon placeholder
-            Container(
-              width: 36, height: 36,
+        itemBuilder:
+            (_, __) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color:        shimmer,
-                borderRadius: BorderRadius.circular(9),
+                color: _T.white,
+                borderRadius: BorderRadius.circular(_T.r),
+                border: Border.all(color: _T.slate200),
               ),
-            ),
-            const SizedBox(width: 12),
-            // Name + nickname placeholders
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
+                  // Icon placeholder
                   Container(
-                    height: 11,
-                    width:  130,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color:        shimmerDark,
-                      borderRadius: BorderRadius.circular(4),
+                      color: shimmer,
+                      borderRadius: BorderRadius.circular(9),
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(width: 12),
+                  // Name + nickname placeholders
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 11,
+                          width: 130,
+                          decoration: BoxDecoration(
+                            color: shimmerDark,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Container(
+                          height: 9,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            color: shimmer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Status pill placeholder
                   Container(
-                    height: 9,
-                    width:  80,
+                    height: 22,
+                    width: 52,
                     decoration: BoxDecoration(
-                      color:        shimmer,
-                      borderRadius: BorderRadius.circular(4),
+                      color: shimmer,
+                      borderRadius: BorderRadius.circular(99),
                     ),
                   ),
                 ],
               ),
             ),
-            // Status pill placeholder
-            Container(
-              height: 22, width: 52,
-              decoration: BoxDecoration(
-                color:        shimmer,
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ]),
-        ),
       );
     },
   );
