@@ -44,7 +44,6 @@ import 'package:smooflow/screens/desktop/helpers/fmt_stock.dart';
 class _T {
   static const blue = Color(0xFF2563EB);
   static const blueHover = Color(0xFF1D4ED8);
-  static const blue100 = Color(0xFFDBEAFE);
   static const blue50 = Color(0xFFEFF6FF);
   static const green = Color(0xFF10B981);
   static const green50 = Color(0xFFECFDF5);
