@@ -585,8 +585,6 @@ class _TaskListViewState extends ConsumerState<TaskListView> {
 
   @override
   Widget build(BuildContext context) {
-    print("[TaskListView] active project: ${_activeProject}");
-
     final members = ref.watch(memberNotifierProvider).members;
     final taskState = ref.watch(
       taskCacheProvider(TaskFilter(projectId: widget.selectedProjectId)),
@@ -2384,20 +2382,13 @@ class _PaginatedTaskRow extends ConsumerWidget {
       ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
     );
 
-    print("[paginated task row] task: ${task}");
-
     // 2. Trigger lazy page download if data isn't in cache yet
     if (task == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
-          print("[PaginatedTaskRow] task filter: ${filter.toString()}");
           ref
               .read(taskCacheProvider(filter).notifier)
               .loadPage(status: status, indexWithinStatus: indexWithinStatus);
-
-          print(
-            "[PaginatedTaskRow] tasks cached: ${ref.read(taskCacheProvider(filter)).cachedTasks}",
-          );
         }
       });
 
