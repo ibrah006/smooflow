@@ -24,6 +24,7 @@
 //   Zero logic changes; only presentation layer is new.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -419,7 +420,8 @@ class _Topbar extends StatelessWidget {
 
         const Spacer(),
 
-        _ViewToggle(current: viewMode, onChange: onViewModeChange),
+        if (kDebugMode)
+          _ViewToggle(current: viewMode, onChange: onViewModeChange),
         const SizedBox(width: 12),
 
         // Add printer CTA
