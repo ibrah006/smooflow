@@ -84,6 +84,11 @@ class _T {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VIEW MODE
+// ─────────────────────────────────────────────────────────────────────────────
+enum _ViewMode { list, floorPlan }
+
+// ─────────────────────────────────────────────────────────────────────────────
 // STATUS HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 Color _sColor(PrinterStatus s) => switch (s) {
@@ -123,6 +128,7 @@ class _DesktopManagePrintersScreenState
   Printer? _selected;
   bool _showCreate = false;
   bool _loading = true;
+  _ViewMode _viewMode = _ViewMode.list;
 
   final _searchCtrl = TextEditingController();
   String get _q => _searchCtrl.text.trim().toLowerCase();
@@ -178,117 +184,174 @@ class _DesktopManagePrintersScreenState
       backgroundColor: _T.slate50,
       body: Column(
         children: [
-          _Topbar(onAdd: _openCreate),
+          _Topbar(
+            onAdd: _openCreate,
+            viewMode: _viewMode,
+            onViewModeChange: (m) => setState(() => _viewMode = m),
+          ),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child:
+                _viewMode == _ViewMode.floorPlan
+                    ? _buildFloorPlanBody(showPanel)
+                    : _buildListBody(all, filtered, showPanel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── List mode — original master-detail split ─────────────────────────────
+  Widget _buildListBody(
+    List<Printer> all,
+    List<Printer> filtered,
+    bool showPanel,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── LEFT: printer list ───────────────────────────────────────
+        SizedBox(
+          width: 380,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: _T.white,
+              border: Border(right: BorderSide(color: _T.slate200)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── LEFT: printer list ───────────────────────────────────────
-                SizedBox(
-                  width: 380,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: _T.white,
-                      border: Border(right: BorderSide(color: _T.slate200)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // List subheader
-                        Container(
-                          height: 52,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: _T.slate200),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${all.length} Printer${all.length == 1 ? '' : 's'}',
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _T.ink3,
-                                ),
-                              ),
-                              const Spacer(),
-                              // Free / busy count pills
-                              _MiniPill(
-                                label:
-                                    '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
-                                color: _T.green,
-                              ),
-                              const SizedBox(width: 6),
-                              _MiniPill(
-                                label:
-                                    '${all.where((p) => p.isBusy).length} busy',
-                                color: _T.blue,
-                              ),
-                            ],
-                          ),
+                // List subheader
+                Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: _T.slate200)),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${all.length} Printer${all.length == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: _T.ink3,
                         ),
-
-                        // Search
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                          child: _SearchBar(
-                            controller: _searchCtrl,
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-
-                        // Rows
-                        Expanded(
-                          child:
-                              _loading
-                                  ? _PrinterListSkeleton()
-                                  : filtered.isEmpty
-                                  ? _EmptyListState(hasSearch: _q.isNotEmpty)
-                                  : ListView.separated(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      16,
-                                      4,
-                                      16,
-                                      16,
-                                    ),
-                                    itemCount: filtered.length,
-                                    separatorBuilder:
-                                        (_, __) => const SizedBox(height: 4),
-                                    itemBuilder: (_, i) {
-                                      final p = filtered[i];
-                                      return _PrinterListTile(
-                                        printer: p,
-                                        isSelected: _selected?.id == p.id,
-                                        onTap: () => _selectPrinter(p),
-                                      );
-                                    },
-                                  ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const Spacer(),
+                      // Free / busy count pills
+                      _MiniPill(
+                        label:
+                            '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
+                        color: _T.green,
+                      ),
+                      const SizedBox(width: 6),
+                      _MiniPill(
+                        label: '${all.where((p) => p.isBusy).length} busy',
+                        color: _T.blue,
+                      ),
+                    ],
                   ),
                 ),
 
-                // ── RIGHT: form or idle pane ─────────────────────────────────
+                // Search
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  child: _SearchBar(
+                    controller: _searchCtrl,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+
+                // Rows
                 Expanded(
                   child:
-                      showPanel
-                          ? _FormPanel(
-                            key: ValueKey(_selected?.id ?? 'new'),
-                            printer: _selected,
-                            onClose: _closePanel,
-                            onSaved: _closePanel,
-                            onDeleted: _closePanel,
-                          )
-                          : const _IdlePane(),
+                      _loading
+                          ? _PrinterListSkeleton()
+                          : filtered.isEmpty
+                          ? _EmptyListState(hasSearch: _q.isNotEmpty)
+                          : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            itemCount: filtered.length,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(height: 4),
+                            itemBuilder: (_, i) {
+                              final p = filtered[i];
+                              return _PrinterListTile(
+                                printer: p,
+                                isSelected: _selected?.id == p.id,
+                                onTap: () => _selectPrinter(p),
+                              );
+                            },
+                          ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+
+        // ── RIGHT: form or idle pane ─────────────────────────────────
+        Expanded(
+          child:
+              showPanel
+                  ? _FormPanel(
+                    key: ValueKey(_selected?.id ?? 'new'),
+                    printer: _selected,
+                    onClose: _closePanel,
+                    onSaved: _closePanel,
+                    onDeleted: _closePanel,
+                  )
+                  : const _IdlePane(),
+        ),
+      ],
+    );
+  }
+
+  // ── Floor plan mode ───────────────────────────────────────────────────────
+  // Canvas takes the full width until a printer is selected, then a fixed
+  // detail panel opens on the right — same _FormPanel used by list mode, so
+  // clicking any printer opens details the same intuitive way regardless of
+  // which view you're in.
+  Widget _buildFloorPlanBody(bool showPanel) {
+    final all = ref.watch(printerNotifierProvider).printers;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child:
+              _loading
+                  ? const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  )
+                  : _FloorPlanView(
+                    printers: all,
+                    selectedId: _selected?.id,
+                    onSelect: _selectPrinter,
+                  ),
+        ),
+        if (showPanel)
+          SizedBox(
+            width: 420,
+            child: Container(
+              decoration: const BoxDecoration(
+                border: Border(left: BorderSide(color: _T.slate200)),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: _FormPanel(
+                  key: ValueKey(_selected?.id ?? 'new'),
+                  printer: _selected,
+                  onClose: _closePanel,
+                  onSaved: _closePanel,
+                  onDeleted: _closePanel,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -298,7 +361,13 @@ class _DesktopManagePrintersScreenState
 // ─────────────────────────────────────────────────────────────────────────────
 class _Topbar extends StatelessWidget {
   final VoidCallback onAdd;
-  const _Topbar({required this.onAdd});
+  final _ViewMode viewMode;
+  final ValueChanged<_ViewMode> onViewModeChange;
+  const _Topbar({
+    required this.onAdd,
+    required this.viewMode,
+    required this.onViewModeChange,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -350,6 +419,9 @@ class _Topbar extends StatelessWidget {
 
         const Spacer(),
 
+        _ViewToggle(current: viewMode, onChange: onViewModeChange),
+        const SizedBox(width: 12),
+
         // Add printer CTA
         FilledButton.icon(
           onPressed: onAdd,
@@ -368,6 +440,83 @@ class _Topbar extends StatelessWidget {
           label: const Text('Add Printer'),
         ),
       ],
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW TOGGLE — List / Floor Plan segmented control
+// ─────────────────────────────────────────────────────────────────────────────
+class _ViewToggle extends StatelessWidget {
+  final _ViewMode current;
+  final ValueChanged<_ViewMode> onChange;
+  const _ViewToggle({required this.current, required this.onChange});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(3),
+    decoration: BoxDecoration(
+      color: _T.slate100,
+      borderRadius: BorderRadius.circular(_T.r + 2),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ToggleTab(
+          icon: Icons.list_alt_outlined,
+          label: 'List',
+          isActive: current == _ViewMode.list,
+          onTap: () => onChange(_ViewMode.list),
+        ),
+        _ToggleTab(
+          icon: Icons.grid_view_rounded,
+          label: 'Floor Plan',
+          isActive: current == _ViewMode.floorPlan,
+          onTap: () => onChange(_ViewMode.floorPlan),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ToggleTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  const _ToggleTab({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: isActive ? _T.white : Colors.transparent,
+        borderRadius: BorderRadius.circular(_T.r),
+        boxShadow: isActive ? [_T.shadowSm] : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: isActive ? _T.blue : _T.slate500),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isActive ? _T.ink : _T.slate500,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -529,6 +678,396 @@ class _IdlePane extends StatelessWidget {
       ],
     ),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOOR PLAN VIEW
+//
+// A free-form canvas where each printer is a draggable card positioned by
+// normalized (0..1) `floorX`/`floorY` coordinates. Printers without a saved
+// position sit in the "unplaced" tray above the canvas — drag one down onto
+// the floor to place it (uses Draggable/DragTarget, since that crosses a
+// widget boundary). Repositioning an already-placed card is a simpler
+// self-contained pan-and-drop within the canvas.
+//
+// Tapping any card (placed or not) calls `onSelect`, which opens the exact
+// same _FormPanel used by list mode — reusing one detail affordance instead
+// of inventing a second interaction pattern.
+// ─────────────────────────────────────────────────────────────────────────────
+const double _kFloorCardW = 168;
+const double _kFloorCardH = 72;
+
+class _FloorPlanView extends ConsumerStatefulWidget {
+  final List<Printer> printers;
+  final String? selectedId;
+  final ValueChanged<Printer> onSelect;
+  const _FloorPlanView({
+    required this.printers,
+    required this.selectedId,
+    required this.onSelect,
+  });
+
+  @override
+  ConsumerState<_FloorPlanView> createState() => _FloorPlanViewState();
+}
+
+class _FloorPlanViewState extends ConsumerState<_FloorPlanView> {
+  final _canvasKey = GlobalKey();
+
+  // Repositioning state for an already-placed card being dragged within
+  // the canvas (tray → canvas placement is handled by Draggable instead).
+  String? _draggingId;
+  Offset? _dragTopLeft; // canvas-local px, top-left of the card
+
+  void _persistPosition(String printerId, Offset topLeftPx, Size canvasSize) {
+    final fx = ((topLeftPx.dx + _kFloorCardW / 2) / canvasSize.width).clamp(
+      0.0,
+      1.0,
+    );
+    final fy = ((topLeftPx.dy + _kFloorCardH / 2) / canvasSize.height).clamp(
+      0.0,
+      1.0,
+    );
+    ref
+        .read(printerNotifierProvider.notifier)
+        .updatePrinterPosition(printerId, floorX: fx, floorY: fy);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unplaced = widget.printers.where((p) => !p.hasFloorPosition).toList();
+    final placed = widget.printers.where((p) => p.hasFloorPosition).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (unplaced.isNotEmpty) _UnplacedTray(printers: unplaced),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              unplaced.isNotEmpty ? 12 : 20,
+              20,
+              20,
+            ),
+            child: DragTarget<Printer>(
+              onAcceptWithDetails: (details) {
+                final box =
+                    _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+                if (box == null) return;
+                final local = box.globalToLocal(details.offset);
+                _persistPosition(details.data.id, local, box.size);
+              },
+              builder: (context, candidateData, rejectedData) {
+                final isHovering = candidateData.isNotEmpty;
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final canvasSize = Size(
+                      constraints.maxWidth,
+                      constraints.maxHeight,
+                    );
+                    return Container(
+                      key: _canvasKey,
+                      width: double.infinity,
+                      height: double.infinity,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: isHovering ? _T.blue50 : _T.white,
+                        borderRadius: BorderRadius.circular(_T.rLg),
+                        border: Border.all(
+                          color:
+                              isHovering
+                                  ? _T.blue.withOpacity(0.4)
+                                  : _T.slate200,
+                          width: isHovering ? 1.5 : 1,
+                        ),
+                        boxShadow: [_T.shadowSm],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(painter: _FloorGridPainter()),
+                          ),
+                          if (placed.isEmpty) const _EmptyFloorHint(),
+                          for (final p in placed)
+                            _buildPlacedCard(p, canvasSize),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlacedCard(Printer p, Size canvasSize) {
+    final isDraggingThis = _draggingId == p.id;
+    final basePos = Offset(
+      p.floorX! * canvasSize.width - _kFloorCardW / 2,
+      p.floorY! * canvasSize.height - _kFloorCardH / 2,
+    );
+    final pos =
+        isDraggingThis && _dragTopLeft != null ? _dragTopLeft! : basePos;
+
+    return Positioned(
+      left: pos.dx.clamp(0.0, canvasSize.width - _kFloorCardW),
+      top: pos.dy.clamp(0.0, canvasSize.height - _kFloorCardH),
+      child: GestureDetector(
+        onTap: () => widget.onSelect(p),
+        onPanStart:
+            (_) => setState(() {
+              _draggingId = p.id;
+              _dragTopLeft = basePos;
+            }),
+        onPanUpdate:
+            (details) => setState(() {
+              _dragTopLeft = (_dragTopLeft ?? basePos) + details.delta;
+            }),
+        onPanEnd: (_) {
+          final finalPos = _dragTopLeft ?? basePos;
+          setState(() {
+            _draggingId = null;
+            _dragTopLeft = null;
+          });
+          _persistPosition(p.id, finalPos, canvasSize);
+        },
+        child: MouseRegion(
+          cursor: SystemMouseCursors.grab,
+          child: _PrinterFloorCard(
+            printer: p,
+            isSelected: p.id == widget.selectedId,
+            isDragging: isDraggingThis,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Horizontal shelf of printers that haven't been placed on the floor yet.
+class _UnplacedTray extends StatelessWidget {
+  final List<Printer> printers;
+  const _UnplacedTray({required this.printers});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: _T.amber50,
+      borderRadius: BorderRadius.circular(_T.rLg),
+      border: Border.all(color: _T.amber.withOpacity(0.3)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, size: 13, color: _T.amber),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                '${printers.length} printer${printers.length == 1 ? '' : 's'} '
+                'not placed yet — drag onto the floor below',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: _kFloorCardH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: printers.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final p = printers[i];
+              return Draggable<Printer>(
+                data: p,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: _PrinterFloorCard(printer: p, isDragging: true),
+                ),
+                childWhenDragging: Opacity(
+                  opacity: 0.35,
+                  child: _PrinterFloorCard(printer: p),
+                ),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: _PrinterFloorCard(printer: p),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Compact preview card — status + current job + nickname. Uses the model's
+// own statusColor/statusIcon/statusLabel getters (they already fold in
+// busy-state) rather than this screen's _sColor/_sIcon helpers.
+class _PrinterFloorCard extends StatelessWidget {
+  final Printer printer;
+  final bool isSelected;
+  final bool isDragging;
+  const _PrinterFloorCard({
+    required this.printer,
+    this.isSelected = false,
+    this.isDragging = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = printer;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      width: _kFloorCardW,
+      height: _kFloorCardH,
+      padding: const EdgeInsets.all(10),
+      transformAlignment: Alignment.center,
+      transform:
+          isDragging ? (Matrix4.identity()..scale(1.04)) : Matrix4.identity(),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(
+          color: isSelected ? _T.blue : _T.slate200,
+          width: isSelected ? 1.5 : 1,
+        ),
+        boxShadow: [isDragging ? _T.shadowLg : _T.shadowSm],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: p.statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(p.statusIcon, size: 12, color: p.statusColor),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  p.nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: p.statusColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  p.isBusy ? 'Job #${p.currentJobId}' : p.statusLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: p.statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFloorHint extends StatelessWidget {
+  const _EmptyFloorHint();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: _T.slate100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _T.slate200),
+          ),
+          child: const Icon(
+            Icons.grid_view_rounded,
+            size: 22,
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'No printers placed yet',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _T.slate400,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Drag a printer from above onto the floor',
+          style: TextStyle(fontSize: 12, color: _T.slate300),
+        ),
+      ],
+    ),
+  );
+}
+
+// Faint grid texture suggesting floor tiles.
+class _FloorGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = _T.slate100
+          ..strokeWidth = 1;
+    const gap = 28.0;
+    for (double x = 0; x < size.width; x += gap) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += gap) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloorGridPainter oldDelegate) => false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

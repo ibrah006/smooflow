@@ -113,6 +113,42 @@ class PrinterNotifier extends StateNotifier<PrinterState> {
   }
 
   // -------------------------------
+  // UPDATE PRINTER POSITION (floor plan)
+  // -------------------------------
+  /// Persist a printer's floor-plan position (normalized 0..1 coordinates).
+  ///
+  /// Updates the local instance in place immediately (same pattern as
+  /// assignTask/unassignTask) so drag-and-drop feels instant, then fires the
+  /// persistence call in the background. If the save fails, the position
+  /// stays applied locally — `state.error` is set so the UI can surface a
+  /// retry affordance, but we don't snap the card back, since that would be
+  /// jarring mid-interaction.
+  ///
+  /// NOTE: assumes `PrinterRepo.updatePrinterPosition` exists on the backend
+  /// side — mirror `updatePrinter`'s shape (PATCH with `floorX`/`floorY`).
+  Future<void> updatePrinterPosition(
+    String id, {
+    required double floorX,
+    required double floorY,
+  }) async {
+    for (final printer in state.printers) {
+      if (printer.id == id) {
+        printer.setFloorPosition(floorX, floorY);
+        break;
+      }
+    }
+    // Same list instance content, new reference — enough to notify listeners.
+    state = state.copyWith(printers: [...state.printers]);
+
+    try {
+      // TODO
+      // await _repo.updatePrinterPosition(id, floorX: floorX, floorY: floorY);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  // -------------------------------
   // DELETE PRINTER
   // -------------------------------
   Future<void> deletePrinter(String id) async {

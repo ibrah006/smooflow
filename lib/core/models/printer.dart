@@ -35,6 +35,27 @@ class Printer {
 
   PrinterStatus get status => _status;
 
+  // ── Floor-plan position ──────────────────────────────────────────────────
+  // Normalized (0..1) coordinates within the floor-plan canvas — fractional
+  // rather than raw pixels so layout is independent of the canvas' actual
+  // rendered size. Null means the printer hasn't been placed on the floor
+  // plan yet (it shows up in the "unplaced" tray instead).
+  double? _floorX;
+  double? _floorY;
+
+  double? get floorX => _floorX;
+  double? get floorY => _floorY;
+
+  bool get hasFloorPosition => _floorX != null && _floorY != null;
+
+  /// Update this printer's floor-plan position. Mutates in place, matching
+  /// the assignJob/unassignJob pattern used elsewhere on this model — the
+  /// notifier updates the existing instance rather than replacing it.
+  void setFloorPosition(double x, double y) {
+    _floorX = x;
+    _floorY = y;
+  }
+
   final double? maxWidth;
   final double? printSpeed;
   final DateTime createdAt;
@@ -73,8 +94,13 @@ class Printer {
     required this.createdAt,
     int? currentJobId,
     required this.workMinutes,
-    required this.totalJobsCompleted
-  }) : _currentJobId = currentJobId, _status = status;
+    required this.totalJobsCompleted,
+    double? floorX,
+    double? floorY,
+  }) : _currentJobId = currentJobId,
+       _status = status,
+       _floorX = floorX,
+       _floorY = floorY;
 
   factory Printer.fromJson(Map<String, dynamic> json) {
     return Printer(
@@ -88,16 +114,22 @@ class Printer {
       createdAt: DateTime.parse(json['createdAt']),
       currentJobId: json['currentTaskId'],
       workMinutes: json['workMinutes'],
-      totalJobsCompleted: (json['tasks'] as List?)?.length?? 0,
+      totalJobsCompleted: (json['tasks'] as List?)?.length ?? 0,
+      // NOTE: assumes the backend adds `floorX`/`floorY` (normalized 0..1
+      // doubles) to the printer payload. Absent/null until a position is
+      // saved, which is expected — see hasFloorPosition.
+      floorX: (json['floorX'] as num?)?.toDouble(),
+      floorY: (json['floorY'] as num?)?.toDouble(),
     );
   }
 
-  bool get isActive=> status == PrinterStatus.active;
-  bool get isBusy=> currentJobId!=null;
+  bool get isActive => status == PrinterStatus.active;
+  bool get isBusy => currentJobId != null;
 
   bool get isAvailable => isActive && !isBusy;
 
-  String get statusName=> "${status.name[0].toUpperCase()}${status.name.substring(1)}";
+  String get statusName =>
+      "${status.name[0].toUpperCase()}${status.name.substring(1)}";
 
   Map<String, dynamic> toJson() {
     // DO NOT PASS IN workMinutes - the value is updated only from server
@@ -110,6 +142,8 @@ class Printer {
       'maxWidth': maxWidth,
       'printSpeed': printSpeed,
       'createdAt': createdAt.toIso8601String(),
+      'floorX': floorX,
+      'floorY': floorY,
     };
   }
 
