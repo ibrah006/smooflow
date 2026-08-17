@@ -126,11 +126,15 @@ class TaskCacheNotifier
       // incompleteOnly: arg.incompleteOnly ? true : null,
     );
 
+    print("incoming tasks: ${incomingTasks.map((task) => task.id)}");
+
     // Deep copy and mutate the map structure safely
     final Map<TaskStatus, Map<int, Task>> updatedCache = {
       for (final entry in state.cachedTasks.entries)
         entry.key: Map.of(entry.value),
     };
+
+    print("updatedCache: ${updatedCache}");
 
     final currentStatusMap = updatedCache.putIfAbsent(status, () => {});
     for (int i = 0; i < incomingTasks.length; i++) {
@@ -142,6 +146,8 @@ class TaskCacheNotifier
       totalCounts: state.totalCounts,
       cachedTasks: updatedCache,
     );
+
+    print("[loadPage] tasks cached: ${state.cachedTasks}");
   }
 
   bool activeTaskInitialized = false;

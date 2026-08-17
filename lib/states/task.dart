@@ -131,6 +131,23 @@ class TaskFilter {
     overdueOnly,
     incompleteOnly,
   );
+
+  @override
+  String toString() {
+    return 'TaskFilter('
+        'projectId: $projectId, '
+        'assigneeId: $assigneeId, '
+        'searchQuery: $searchQuery, '
+        'statuses: $statuses, '
+        'priorities: $priorities, '
+        'overdueOnly: $overdueOnly, '
+        'incompleteOnly: $incompleteOnly, '
+        'isActive: $isActive, '
+        'activeCount: $activeCount, '
+        'isBlocked: $isBlocked, '
+        'isRevision: $isRevision'
+        ')';
+  }
 }
 
 class TaskState {

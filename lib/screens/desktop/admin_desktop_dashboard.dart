@@ -183,7 +183,13 @@ class _AdminDesktopDashboardScreenState
     return _selectedTaskId == null
         ? null
         : ref
-            .read(taskCacheProvider(TaskFilter.empty))
+            .read(
+              taskCacheProvider(
+                _selectedProjectId == null
+                    ? TaskFilter.empty
+                    : TaskFilter(projectId: detailPanelProjectId),
+              ),
+            )
             .getLocalTask(_selectedTaskId!);
   }
 
