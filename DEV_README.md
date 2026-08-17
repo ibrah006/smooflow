@@ -62,6 +62,10 @@ fastforge release --name prod --jobs windows-release
 ```bash
 dart run auto_updater:sign_update dist/1.0.0/smooflow-1.0.0-windows-setup.exe
 ```
+if using fvm:
+```bash
+fvm dart run auto_updater:sign_update dist/1.0.0/smooflow-1.0.0-windows-setup.exe
+```
 
 ---
 
