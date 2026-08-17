@@ -146,8 +146,6 @@ class TaskCacheNotifier
       totalCounts: state.totalCounts,
       cachedTasks: updatedCache,
     );
-
-    print("[loadPage] tasks cached: ${state.cachedTasks}");
   }
 
   bool activeTaskInitialized = false;
