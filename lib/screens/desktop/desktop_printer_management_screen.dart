@@ -570,7 +570,7 @@ class _PrinterListTileState extends State<_PrinterListTile> {
                     ? _T.blue50
                     : _hovered
                     ? _T.slate50
-                    : Colors.transparent,
+                    : Colors.white,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
               color: selected ? _T.blue.withOpacity(0.35) : _T.slate200,
