@@ -134,8 +134,6 @@ class TaskCacheNotifier
         entry.key: Map.of(entry.value),
     };
 
-    print("updatedCache: ${updatedCache}");
-
     final currentStatusMap = updatedCache.putIfAbsent(status, () => {});
     for (int i = 0; i < incomingTasks.length; i++) {
       currentStatusMap[offset + i] = incomingTasks[i];
