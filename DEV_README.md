@@ -33,9 +33,21 @@ arch -x86_64 flutter build macos --release
 
 ### Build Release Setup
 
-#### Make sure `openssl` is installed
+#### Make sure `openssl` and Inno Setup 6 are installed
 ```bash
 choco install openssl
+```
+Add Inno Setup 6 to path:
+```bash
+$env:INNO_SETUP_PATH = "C:\Users\[USER]\AppData\Local\Programs\Inno Setup 6"
+```
+Or to add permanentally:
+```bash
+[Environment]::SetEnvironmentVariable(                                   
+    "INNO_SETUP_PATH",                            
+    "C:\Users\[USER]\AppData\Local\Programs\Inno Setup 6\ISCC.exe",
+    "User"   
+)
 ```
 
 Generate key files: <b>dsa_priv.pem, dsa_pub.pem</b>
