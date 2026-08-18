@@ -24,12 +24,14 @@
 //   Zero logic changes; only presentation layer is new.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/printer.dart';
 import 'package:smooflow/providers/printer_provider.dart';
+// NOTE: assumed location of kMobileBreakpoint — adjust if it lives
+// elsewhere in your codebase.
+import 'package:smooflow/screens/desktop/dashboard/components/dashboard_components.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS  — identical to create_task_screen.dart
@@ -180,6 +182,7 @@ class _DesktopManagePrintersScreenState
                 .toList();
 
     final showPanel = _selected != null || _showCreate;
+    final isMobile = MediaQuery.sizeOf(context).width <= kMobileBreakpoint;
 
     return Scaffold(
       backgroundColor: _T.slate50,
@@ -189,106 +192,132 @@ class _DesktopManagePrintersScreenState
             onAdd: _openCreate,
             viewMode: _viewMode,
             onViewModeChange: (m) => setState(() => _viewMode = m),
+            isMobile: isMobile,
           ),
           Expanded(
             child:
                 _viewMode == _ViewMode.floorPlan
-                    ? _buildFloorPlanBody(showPanel)
-                    : _buildListBody(all, filtered, showPanel),
+                    ? _buildFloorPlanBody(showPanel, isMobile)
+                    : _buildListBody(all, filtered, showPanel, isMobile),
           ),
         ],
       ),
     );
   }
 
-  // ── List mode — original master-detail split ─────────────────────────────
+  // ── List mode ──────────────────────────────────────────────────────────
+  // Desktop: side-by-side master-detail (380px list + flexible panel).
+  // Mobile: single column — the list fills the screen until a printer is
+  // selected or "Add Printer" is tapped, then the panel takes over full
+  // screen (its close button reads as "back" on mobile — see _FormPanel).
   Widget _buildListBody(
     List<Printer> all,
     List<Printer> filtered,
     bool showPanel,
+    bool isMobile,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── LEFT: printer list ───────────────────────────────────────
-        SizedBox(
-          width: 380,
-          child: Container(
+    final list = Container(
+      decoration: BoxDecoration(
+        color: _T.white,
+        border:
+            isMobile
+                ? null
+                : const Border(right: BorderSide(color: _T.slate200)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // List subheader
+          Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: const BoxDecoration(
-              color: _T.white,
-              border: Border(right: BorderSide(color: _T.slate200)),
+              border: Border(bottom: BorderSide(color: _T.slate200)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Row(
               children: [
-                // List subheader
-                Container(
-                  height: 52,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: _T.slate200)),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${all.length} Printer${all.length == 1 ? '' : 's'}',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: _T.ink3,
-                        ),
-                      ),
-                      const Spacer(),
-                      // Free / busy count pills
-                      _MiniPill(
-                        label:
-                            '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
-                        color: _T.green,
-                      ),
-                      const SizedBox(width: 6),
-                      _MiniPill(
-                        label: '${all.where((p) => p.isBusy).length} busy',
-                        color: _T.blue,
-                      ),
-                    ],
+                Text(
+                  '${all.length} Printer${all.length == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: _T.ink3,
                   ),
                 ),
-
-                // Search
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                  child: _SearchBar(
-                    controller: _searchCtrl,
-                    onChanged: (_) => setState(() {}),
-                  ),
+                const Spacer(),
+                // Free / busy count pills
+                _MiniPill(
+                  label:
+                      '${all.where((p) => p.status == PrinterStatus.active && !p.isBusy).length} free',
+                  color: _T.green,
                 ),
-
-                // Rows
-                Expanded(
-                  child:
-                      _loading
-                          ? _PrinterListSkeleton()
-                          : filtered.isEmpty
-                          ? _EmptyListState(hasSearch: _q.isNotEmpty)
-                          : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                            itemCount: filtered.length,
-                            separatorBuilder:
-                                (_, __) => const SizedBox(height: 4),
-                            itemBuilder: (_, i) {
-                              final p = filtered[i];
-                              return _PrinterListTile(
-                                printer: p,
-                                isSelected: _selected?.id == p.id,
-                                onTap: () => _selectPrinter(p),
-                              );
-                            },
-                          ),
+                const SizedBox(width: 6),
+                _MiniPill(
+                  label: '${all.where((p) => p.isBusy).length} busy',
+                  color: _T.blue,
                 ),
               ],
             ),
           ),
-        ),
+
+          // Search
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: _SearchBar(
+              controller: _searchCtrl,
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+
+          // Rows
+          Expanded(
+            child:
+                _loading
+                    ? _PrinterListSkeleton()
+                    : filtered.isEmpty
+                    ? _EmptyListState(hasSearch: _q.isNotEmpty)
+                    : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 4),
+                      itemBuilder: (_, i) {
+                        final p = filtered[i];
+                        return _PrinterListTile(
+                          printer: p,
+                          isSelected: _selected?.id == p.id,
+                          onTap: () => _selectPrinter(p),
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      // Single column: swap the whole body between list and panel instead
+      // of splitting the screen — there isn't room for both at once.
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 150),
+        child:
+            showPanel
+                ? _FormPanel(
+                  key: ValueKey(_selected?.id ?? 'new'),
+                  printer: _selected,
+                  onClose: _closePanel,
+                  onSaved: _closePanel,
+                  onDeleted: _closePanel,
+                  isMobile: true,
+                )
+                : KeyedSubtree(key: const ValueKey('list'), child: list),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── LEFT: printer list ───────────────────────────────────────
+        SizedBox(width: 380, child: list),
 
         // ── RIGHT: form or idle pane ─────────────────────────────────
         Expanded(
@@ -308,31 +337,51 @@ class _DesktopManagePrintersScreenState
   }
 
   // ── Floor plan mode ───────────────────────────────────────────────────────
-  // Canvas takes the full width until a printer is selected, then a fixed
-  // detail panel opens on the right — same _FormPanel used by list mode, so
-  // clicking any printer opens details the same intuitive way regardless of
-  // which view you're in.
-  Widget _buildFloorPlanBody(bool showPanel) {
+  // Desktop: canvas takes the full width until a printer is selected, then a
+  // fixed 420px detail panel opens on the right.
+  // Mobile: canvas always fills the screen; the detail panel opens as a
+  // full-screen overlay on top of it instead of squeezing a side column
+  // into a narrow screen.
+  Widget _buildFloorPlanBody(bool showPanel, bool isMobile) {
     final all = ref.watch(printerNotifierProvider).printers;
+    final canvas =
+        _loading
+            ? const Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            )
+            : _FloorPlanView(
+              printers: all,
+              selectedId: _selected?.id,
+              onSelect: _selectPrinter,
+            );
+
+    if (isMobile) {
+      return Stack(
+        children: [
+          canvas,
+          if (showPanel)
+            Positioned.fill(
+              child: _FormPanel(
+                key: ValueKey(_selected?.id ?? 'new'),
+                printer: _selected,
+                onClose: _closePanel,
+                onSaved: _closePanel,
+                onDeleted: _closePanel,
+                isMobile: true,
+              ),
+            ),
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child:
-              _loading
-                  ? const Center(
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    ),
-                  )
-                  : _FloorPlanView(
-                    printers: all,
-                    selectedId: _selected?.id,
-                    onSelect: _selectPrinter,
-                  ),
-        ),
+        Expanded(child: canvas),
         if (showPanel)
           SizedBox(
             width: 420,
@@ -364,16 +413,18 @@ class _Topbar extends StatelessWidget {
   final VoidCallback onAdd;
   final _ViewMode viewMode;
   final ValueChanged<_ViewMode> onViewModeChange;
+  final bool isMobile;
   const _Topbar({
     required this.onAdd,
     required this.viewMode,
     required this.onViewModeChange,
+    this.isMobile = false,
   });
 
   @override
   Widget build(BuildContext context) => Container(
     height: 58,
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20),
     decoration: const BoxDecoration(
       color: _T.white,
       border: Border(bottom: BorderSide(color: _T.slate200)),
@@ -391,56 +442,79 @@ class _Topbar extends StatelessWidget {
           ),
           child: const Icon(Icons.print_rounded, size: 16, color: _T.slate600),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
 
-        // Dual-line title
-        const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Manage Printers',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: _T.ink,
-                letterSpacing: -0.2,
+        // Title — subtitle drops off on mobile to save vertical room
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Manage Printers',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                  letterSpacing: -0.2,
+                ),
               ),
-            ),
-            Text(
-              'Configure and add production printers',
-              style: TextStyle(
-                fontSize: 10.5,
-                color: _T.slate400,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-
-        const Spacer(),
-
-        if (kDebugMode)
-          _ViewToggle(current: viewMode, onChange: onViewModeChange),
-        const SizedBox(width: 12),
-
-        // Add printer CTA
-        FilledButton.icon(
-          onPressed: onAdd,
-          style: FilledButton.styleFrom(
-            backgroundColor: _T.blue,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_T.r),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+              if (!isMobile)
+                const Text(
+                  'Configure and add production printers',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: _T.slate400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
           ),
-          icon: const Icon(Icons.add_rounded, size: 16),
-          label: const Text('Add Printer'),
         ),
+
+        const SizedBox(width: 8),
+
+        _ViewToggle(
+          current: viewMode,
+          onChange: onViewModeChange,
+          compact: isMobile,
+        ),
+        SizedBox(width: isMobile ? 8 : 12),
+
+        // Add printer CTA — icon-only chip on mobile, labeled button on desktop
+        if (isMobile)
+          Material(
+            color: _T.blue,
+            borderRadius: BorderRadius.circular(_T.r),
+            child: InkWell(
+              onTap: onAdd,
+              borderRadius: BorderRadius.circular(_T.r),
+              child: const SizedBox(
+                width: 34,
+                height: 34,
+                child: Icon(Icons.add_rounded, size: 18, color: _T.white),
+              ),
+            ),
+          )
+        else
+          FilledButton.icon(
+            onPressed: onAdd,
+            style: FilledButton.styleFrom(
+              backgroundColor: _T.blue,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_T.r),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: const Text('Add Printer'),
+          ),
       ],
     ),
   );
@@ -452,7 +526,12 @@ class _Topbar extends StatelessWidget {
 class _ViewToggle extends StatelessWidget {
   final _ViewMode current;
   final ValueChanged<_ViewMode> onChange;
-  const _ViewToggle({required this.current, required this.onChange});
+  final bool compact;
+  const _ViewToggle({
+    required this.current,
+    required this.onChange,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -468,12 +547,14 @@ class _ViewToggle extends StatelessWidget {
           icon: Icons.list_alt_outlined,
           label: 'List',
           isActive: current == _ViewMode.list,
+          compact: compact,
           onTap: () => onChange(_ViewMode.list),
         ),
         _ToggleTab(
           icon: Icons.grid_view_rounded,
           label: 'Floor Plan',
           isActive: current == _ViewMode.floorPlan,
+          compact: compact,
           onTap: () => onChange(_ViewMode.floorPlan),
         ),
       ],
@@ -485,42 +566,57 @@ class _ToggleTab extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final bool compact;
   final VoidCallback onTap;
   const _ToggleTab({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: isActive ? _T.white : Colors.transparent,
-        borderRadius: BorderRadius.circular(_T.r),
-        boxShadow: isActive ? [_T.shadowSm] : null,
+  Widget build(BuildContext context) {
+    final tab = GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding:
+            compact
+                ? const EdgeInsets.all(7)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? _T.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(_T.r),
+          boxShadow: isActive ? [_T.shadowSm] : null,
+        ),
+        child:
+            compact
+                ? Icon(icon, size: 15, color: isActive ? _T.blue : _T.slate500)
+                : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 14,
+                      color: isActive ? _T.blue : _T.slate500,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isActive ? _T.ink : _T.slate500,
+                      ),
+                    ),
+                  ],
+                ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: isActive ? _T.blue : _T.slate500),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isActive ? _T.ink : _T.slate500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+    return compact ? Tooltip(message: label, child: tab) : tab;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -572,7 +668,7 @@ class _PrinterListTileState extends State<_PrinterListTile> {
                     ? _T.blue50
                     : _hovered
                     ? _T.slate50
-                    : Colors.white,
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(_T.r),
             border: Border.all(
               color: selected ? _T.blue.withOpacity(0.35) : _T.slate200,
@@ -1078,6 +1174,7 @@ class _FloorGridPainter extends CustomPainter {
 class _FormPanel extends ConsumerStatefulWidget {
   final Printer? printer;
   final VoidCallback onClose, onSaved, onDeleted;
+  final bool isMobile;
 
   const _FormPanel({
     super.key,
@@ -1085,6 +1182,7 @@ class _FormPanel extends ConsumerStatefulWidget {
     required this.onClose,
     required this.onSaved,
     required this.onDeleted,
+    this.isMobile = false,
   });
 
   @override
@@ -1258,8 +1356,10 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
                         borderRadius: BorderRadius.circular(_T.r),
                         border: Border.all(color: _T.slate200),
                       ),
-                      child: const Icon(
-                        Icons.close_rounded,
+                      child: Icon(
+                        widget.isMobile
+                            ? Icons.arrow_back_rounded
+                            : Icons.close_rounded,
                         size: 17,
                         color: _T.ink3,
                       ),
@@ -1347,7 +1447,12 @@ class _FormPanelState extends ConsumerState<_FormPanel> {
           // ── Scrollable form ────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 40),
+              padding: EdgeInsets.fromLTRB(
+                widget.isMobile ? 16 : 28,
+                widget.isMobile ? 16 : 28,
+                widget.isMobile ? 16 : 28,
+                40,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 680),
                 child: Column(
