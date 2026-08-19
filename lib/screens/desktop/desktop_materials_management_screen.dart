@@ -600,36 +600,36 @@ class _MaterialListPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Stat chips ────────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _T.slate200)),
-            ),
-            child: Row(
-              children: [
-                _StatChip(
-                  value: '$totalMaterials',
-                  label: 'Total',
-                  color: _T.slate500,
-                  bg: _T.slate100,
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  value: '$lowStock',
-                  label: 'Low stock',
-                  color: _T.amber,
-                  bg: _T.amber50,
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  value: '$outOfStock',
-                  label: 'Out of stock',
-                  color: _T.red,
-                  bg: _T.red50,
-                ),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          //   decoration: const BoxDecoration(
+          //     border: Border(bottom: BorderSide(color: _T.slate200)),
+          //   ),
+          //   child: Row(
+          //     children: [
+          //       _StatChip(
+          //         value: '$totalMaterials',
+          //         label: 'Total',
+          //         color: _T.slate500,
+          //         bg: _T.slate100,
+          //       ),
+          //       const SizedBox(width: 8),
+          //       _StatChip(
+          //         value: '$lowStock',
+          //         label: 'Low stock',
+          //         color: _T.amber,
+          //         bg: _T.amber50,
+          //       ),
+          //       const SizedBox(width: 8),
+          //       _StatChip(
+          //         value: '$outOfStock',
+          //         label: 'Out of stock',
+          //         color: _T.red,
+          //         bg: _T.red50,
+          //       ),
+          //     ],
+          //   ),
+          // ),
           // ── Search + filters ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
