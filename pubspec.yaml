@@ -82,6 +82,7 @@ dependencies:
   visibility_detector: ^0.4.0+2
   timeago: ^3.7.1
   material_table_view: ^5.5.1
+  flutter_ocr_native: ^0.3.3
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,8 @@
+// print_specs.dart
+import 'dart:io';
+import 'dart:math';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/print_spec.dart';
@@ -5,6 +10,7 @@ import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/print_ref_history.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
+import 'package:flutter_ocr_native/flutter_ocr_native.dart';
 
 class _T {
   static const blue = Color(0xFF2563EB);
@@ -218,6 +224,43 @@ class _PrinterRowState extends State<PrinterRow> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SPEC SHEETS — frontend-only mock pipeline (upload → extracting → done/failed)
+// ─────────────────────────────────────────────────────────────────────────────
+enum SpecSheetStatus { uploading, extracting, completed, failed }
+
+/// Color assigned per sheet so the badge on the sheet thumbnail and the "Sx"
+/// chip on each extracted row visually pair up. Cycled by upload order.
+const List<Color> _kSheetColors = [
+  _T.blue,
+  _T.purple,
+  _T.teal,
+  _T.amber,
+  _T.indigo,
+  _T.green,
+];
+
+/// Local-only view model for an uploaded spec sheet image. No backend entity
+/// exists yet — this never leaves the widget tree. Replace `_processSpecSheet`
+/// with a real upload + extraction API call once that endpoint exists.
+class SpecSheetDraft {
+  final int id;
+  final String fileName;
+  final String localPath;
+  final Color color;
+  SpecSheetStatus status;
+  List<int> extractedSpecIds;
+
+  SpecSheetDraft({
+    required this.id,
+    required this.fileName,
+    required this.localPath,
+    required this.color,
+    this.status = SpecSheetStatus.uploading,
+    List<int>? extractedSpecIds,
+  }) : extractedSpecIds = extractedSpecIds ?? [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // NEW CORPORATE INLINE MULTI-SIZE EDITOR
 // ─────────────────────────────────────────────────────────────────────────────
 class PrintSpecsEditor extends ConsumerStatefulWidget {
@@ -243,10 +286,23 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   // Tracks transient local item IDs that have fired an API request to prevent duplicate creation
   final Set<int> _committedTransientIds = {};
 
+  // ── Spec sheets state ─────────────────────────────────────────────────────
+  List<SpecSheetDraft> _specSheets = [];
+  int _nextSheetId = -1;
+  bool _pickingSheet = false;
+
+  final _ocrReader = OcrReader();
+
   @override
   void initState() {
     super.initState();
     _initSpecs();
+  }
+
+  @override
+  void dispose() {
+    _ocrReader.dispose();
+    super.dispose();
   }
 
   @override
@@ -259,6 +315,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   void _initSpecs() {
     _committedTransientIds.clear();
+    _specSheets = [];
     try {
       _items = List.from(widget.task.printSpecs);
 
@@ -274,6 +331,298 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   void _notifyChange() {
     widget.onUpdate(_items, _sharedRef);
+  }
+
+  // ── Spec sheet upload + mock extraction ───────────────────────────────────
+  Future<void> _pickSpecSheets() async {
+    if (_pickingSheet) return;
+    setState(() => _pickingSheet = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.image,
+      );
+      final files = result?.files ?? [];
+      for (final f in files) {
+        final path = f.path;
+        if (path == null) continue;
+        final sheet = SpecSheetDraft(
+          id: _nextSheetId--,
+          fileName: f.name,
+          localPath: path,
+          color: _kSheetColors[_specSheets.length % _kSheetColors.length],
+        );
+        setState(() => _specSheets = [..._specSheets, sheet]);
+        _processSpecSheet(sheet);
+      }
+    } finally {
+      if (mounted) setState(() => _pickingSheet = false);
+    }
+  }
+
+  // OPEN ITEM: mock pipeline only — replace the two delays + random outcome
+  // below with a real upload call followed by an extraction API call once
+  // the backend supports it. UI states (uploading/extracting/done/failed)
+  // are already wired to whatever this method sets on `sheet.status`.
+  Future<void> _processSpecSheet(SpecSheetDraft sheet) async {
+    setState(() => sheet.status = SpecSheetStatus.extracting);
+
+    try {
+      // Works across Android, iOS, macOS, and Windows
+      final OcrResult result = await _ocrReader.readFromPath(sheet.localPath);
+
+      if (!mounted) return;
+
+      final extracted = _parseSizesFromOcr(result.text, sheet.id);
+
+      if (extracted.isEmpty) {
+        setState(() => sheet.status = SpecSheetStatus.completed);
+        print("[_processSpecSheet] empty extraction");
+        return;
+      }
+
+      setState(() {
+        sheet.status = SpecSheetStatus.completed;
+        sheet.extractedSpecIds = extracted.map((e) => e.id).toList();
+        _items = [..._items, ...extracted];
+      });
+    } catch (e) {
+      print("[_processSpecSheet] extraction failed, error: $e");
+      if (mounted) {
+        setState(() => sheet.status = SpecSheetStatus.failed);
+      }
+    }
+  }
+
+  List<PrintSpec> _parseSizesFromOcr(String fullText, int sheetId) {
+    final List<PrintSpec> specs = [];
+
+    // Matches dimensions like "60x90 cm", "210×297 mm", "30 x 40 in", "120 * 80 cm"
+    final sizeRegExp = RegExp(
+      r'(\d+(?:\.\d+)?)\s*[xX×*]\s*(\d+(?:\.\d+)?)\s*(cm|mm|in|inch|inches|m|ft)?',
+      caseSensitive: false,
+    );
+
+    final matches = sizeRegExp.allMatches(fullText);
+
+    for (final match in matches) {
+      final width = match.group(1);
+      final height = match.group(2);
+      final unit = match.group(3) ?? 'cm'; // Default fallback unit
+
+      final formattedSize = '$width×$height ${unit.toLowerCase()}';
+
+      specs.add(
+        PrintSpec.create(
+          ref: _sharedRef && _items.isNotEmpty ? _items.first.ref : '',
+          size: formattedSize,
+          quantity: 1,
+          sourceSheetId: sheetId,
+        ),
+      );
+    }
+
+    return specs;
+  }
+
+  void _retrySheet(SpecSheetDraft sheet) {
+    setState(() => sheet.status = SpecSheetStatus.uploading);
+    _processSpecSheet(sheet);
+  }
+
+  void _deleteSpecSheet(SpecSheetDraft sheet) {
+    setState(() {
+      _specSheets = _specSheets.where((s) => s.id != sheet.id).toList();
+      _items = _items.where((i) => i.sourceSheetId != sheet.id).toList();
+    });
+  }
+
+  List<PrintSpec> _mockExtractSizes(int sheetId) {
+    final rand = Random();
+    final count = 1 + rand.nextInt(3);
+    const commonSizes = [
+      ('60', '90', 'cm'),
+      ('100', '200', 'cm'),
+      ('45', '60', 'cm'),
+      ('120', '80', 'cm'),
+      ('210', '297', 'mm'),
+      ('30', '40', 'in'),
+    ];
+    return List.generate(count, (i) {
+      final s = commonSizes[rand.nextInt(commonSizes.length)];
+      return PrintSpec.create(
+        ref: _sharedRef && _items.isNotEmpty ? _items.first.ref : '',
+        size: '${s.$1}×${s.$2} ${s.$3}',
+        quantity: 1 + rand.nextInt(5),
+        sourceSheetId: sheetId,
+      );
+    });
+  }
+
+  void _showSheetPreview(SpecSheetDraft sheet) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.75),
+      builder:
+          (_) => Dialog(
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.all(48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.rLg),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 700,
+                maxHeight: 640,
+                minWidth: 320,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            sheet.fileName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _T.ink,
+                            ),
+                          ),
+                        ),
+                        if (sheet.status == SpecSheetStatus.completed)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: sheet.color.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(99),
+                                border: Border.all(
+                                  color: sheet.color.withOpacity(0.4),
+                                ),
+                              ),
+                              child: Text(
+                                '${sheet.extractedSpecIds.length} sizes found',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: sheet.color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 16,
+                                color: _T.slate500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: _T.slate200),
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Image.file(
+                        File(sheet.localPath),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildSpecSheetsSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'SPEC SHEETS',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color: _T.slate400,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: _T.indigo50,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: const Text(
+                  'BETA',
+                  style: TextStyle(
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: _T.indigo,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Upload a spec sheet or reference photo — sizes are pulled out automatically.',
+            style: TextStyle(fontSize: 10.5, color: _T.slate400),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ..._specSheets.asMap().entries.map((e) {
+                final index = e.key;
+                final sheet = e.value;
+                return _SpecSheetThumb(
+                  key: ValueKey(sheet.id),
+                  sheet: sheet,
+                  sheetIndex: index + 1,
+                  onDelete: () => _deleteSpecSheet(sheet),
+                  onTap:
+                      () =>
+                          sheet.status == SpecSheetStatus.failed
+                              ? _retrySheet(sheet)
+                              : _showSheetPreview(sheet),
+                );
+              }),
+              _AddSpecSheetTile(busy: _pickingSheet, onTap: _pickSpecSheets),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: _T.slate200),
+        ],
+      ),
+    );
   }
 
   @override
@@ -301,6 +650,9 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSpecSheetsSection(),
+          const SizedBox(height: 2),
+
           // ── Shared Ref Toggle ──
           MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -406,48 +758,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                         color: _T.ink3,
                       ),
                     ),
-                    // GhostTextField(
-                    //   onEditingComplete: _notifyChange,
-                    //   key: ValueKey(
-                    //     'master_ref_${_items.isNotEmpty ? _items.first.id : ''}',
-                    //   ),
-                    //   initialText:
-                    //       _items.isNotEmpty ? (_items.first.ref ?? '') : '',
-                    //   onSubmitted: (val) {
-                    //     late final List<PrintSpec> updatedItems;
-                    //     if (_items.isNotEmpty) {
-                    //       for (int i = 0; i < _items.length; i++) {
-                    //         _items[i] = _items[i].copyWith(ref: val);
-                    //       }
-                    //       updatedItems =
-                    //           _items
-                    //               .map((item) => item.copyWith(ref: val))
-                    //               .toList();
-
-                    //       widget.onUpdate(updatedItems, true);
-                    //     } else {
-                    //       final newPrintSpec = PrintSpec.create(
-                    //         ref: val,
-                    //         size: "0×0 cm",
-                    //         quantity: 1,
-                    //       );
-                    //       _committedTransientIds.add(newPrintSpec.id);
-
-                    //       widget.onUpdate(
-                    //         null,
-                    //         true,
-                    //         newPrintSpec: newPrintSpec,
-                    //       );
-                    //     }
-                    //   },
-                    //   mode: GhostFieldMode.inline,
-                    //   style: const TextStyle(
-                    //     fontSize: 13,
-                    //     fontWeight: FontWeight.w600,
-                    //     fontFamily: 'monospace',
-                    //     color: _T.ink3,
-                    //   ),
-                    // ),
                   ),
                 ],
               ),
@@ -460,7 +770,11 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                const SizedBox(
+                  width: 28 + 9.5,
+                ), // aligns with the source-sheet chip column
                 if (!_sharedRef)
                   const Expanded(
                     flex: 3,
@@ -499,7 +813,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   ),
                 ),
                 // Expanded spacer to account for the animated trailing actions
-                const SizedBox(width: 56),
+                // const SizedBox(width: 56),
               ],
             ),
           ),
@@ -533,11 +847,25 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
               // pass
             }
 
+            SpecSheetDraft? sourceSheet;
+            int? sheetIdx;
+            if (item.sourceSheetId != null) {
+              for (int i = 0; i < _specSheets.length; i++) {
+                if (_specSheets[i].id == item.sourceSheetId) {
+                  sourceSheet = _specSheets[i];
+                  sheetIdx = i + 1;
+                  break;
+                }
+              }
+            }
+
             return _SpecRowInline(
               key: ValueKey(item.id),
               taskId: widget.task.id,
               item: item,
               sharedRef: _sharedRef,
+              sourceSheet: sourceSheet,
+              sheetIndex: sheetIdx,
               onChanged: (updatedItem) {
                 setState(() {
                   _items[index] = updatedItem;
@@ -650,7 +978,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                     ),
                     const SizedBox(width: 6),
                     const Text(
-                      'Add another size',
+                      'Add size manually',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -668,12 +996,316 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC SHEET THUMBNAIL + ADD TILE
+// ─────────────────────────────────────────────────────────────────────────────
+class _SpecSheetThumb extends StatefulWidget {
+  final SpecSheetDraft sheet;
+  final int sheetIndex;
+  final VoidCallback onDelete;
+  final VoidCallback onTap;
+
+  const _SpecSheetThumb({
+    super.key,
+    required this.sheet,
+    required this.sheetIndex,
+    required this.onDelete,
+    required this.onTap,
+  });
+
+  @override
+  State<_SpecSheetThumb> createState() => _SpecSheetThumbState();
+}
+
+class _SpecSheetThumbState extends State<_SpecSheetThumb> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final sheet = widget.sheet;
+    final busy =
+        sheet.status == SpecSheetStatus.uploading ||
+        sheet.status == SpecSheetStatus.extracting;
+    final failed = sheet.status == SpecSheetStatus.failed;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: busy ? null : widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: 104,
+          height: 96,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color:
+                  failed
+                      ? _T.red.withOpacity(0.5)
+                      : (_hovered
+                          ? sheet.color.withOpacity(0.6)
+                          : sheet.color.withOpacity(0.35)),
+              width: 1.4,
+            ),
+            boxShadow:
+                _hovered
+                    ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : null,
+          ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(_T.r - 1),
+                child: SizedBox.expand(
+                  child: Image.file(
+                    File(sheet.localPath),
+                    fit: BoxFit.cover,
+                    errorBuilder:
+                        (_, __, ___) => Container(
+                          color: _T.slate100,
+                          child: const Icon(
+                            Icons.image_outlined,
+                            color: _T.slate400,
+                          ),
+                        ),
+                  ),
+                ),
+              ),
+
+              if (busy || failed)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(_T.r - 1),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (busy)
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          else
+                            const Icon(
+                              Icons.refresh_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          const SizedBox(height: 5),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              failed
+                                  ? 'Failed — tap to retry'
+                                  : (sheet.status == SpecSheetStatus.uploading
+                                      ? 'Uploading…'
+                                      : 'Extracting sizes…'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (!busy)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(_T.r - 1),
+                      ),
+                    ),
+                    child: Text(
+                      sheet.fileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Sheet index chip — matches the "Sx" tag on extracted rows
+              Positioned(
+                top: 5,
+                left: 5,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: sheet.color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    'S${widget.sheetIndex}',
+                    style: const TextStyle(
+                      fontSize: 7.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              if (sheet.status == SpecSheetStatus.completed)
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: sheet.color.withOpacity(0.5)),
+                    ),
+                    child: Text(
+                      '${sheet.extractedSpecIds.length} size${sheet.extractedSpecIds.length == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w800,
+                        color: sheet.color,
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (_hovered && !busy)
+                Positioned(
+                  bottom: 5,
+                  right: 5,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: widget.onDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 11,
+                          color: _T.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddSpecSheetTile extends StatefulWidget {
+  final bool busy;
+  final VoidCallback onTap;
+  const _AddSpecSheetTile({required this.busy, required this.onTap});
+
+  @override
+  State<_AddSpecSheetTile> createState() => _AddSpecSheetTileState();
+}
+
+class _AddSpecSheetTileState extends State<_AddSpecSheetTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.busy ? null : widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: 104,
+          height: 96,
+          decoration: BoxDecoration(
+            color: _hovered ? _T.blue50 : _T.slate50,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(
+              color: _hovered ? _T.blue.withOpacity(0.35) : _T.slate200,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                widget.busy
+                    ? Icons.hourglass_empty_rounded
+                    : Icons.document_scanner_outlined,
+                size: 18,
+                color: _hovered ? _T.blue : _T.slate400,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.busy ? 'Opening…' : 'Add spec sheet',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: _hovered ? _T.blue : _T.slate500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SpecRowInline extends ConsumerStatefulWidget {
   final PrintSpec item;
   final bool sharedRef;
   final ValueChanged<PrintSpec> onChanged;
   final VoidCallback onDelete;
   final int taskId;
+  final SpecSheetDraft? sourceSheet;
+  final int? sheetIndex;
 
   _SpecRowInline({
     super.key,
@@ -682,6 +1314,8 @@ class _SpecRowInline extends ConsumerStatefulWidget {
     required this.onChanged,
     required this.onDelete,
     required this.taskId,
+    this.sourceSheet,
+    this.sheetIndex,
   });
 
   @override
@@ -763,6 +1397,33 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
     );
   }
 
+  Widget _buildSourceChip() {
+    if (widget.sourceSheet == null)
+      return const SizedBox(width: 16, height: 16);
+    final sheet = widget.sourceSheet!;
+    return Tooltip(
+      message: 'Extracted from ${sheet.fileName}',
+      child: Container(
+        width: 16,
+        height: 16,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: sheet.color.withOpacity(0.15),
+          shape: BoxShape.circle,
+          border: Border.all(color: sheet.color.withOpacity(0.5)),
+        ),
+        child: Text(
+          'S${widget.sheetIndex}',
+          style: TextStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.w800,
+            color: sheet.color,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCurrentlyCreating = ref
@@ -806,6 +1467,9 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
                   opacity: isLocked ? 0.5 : 1.0,
                   child: Row(
                     children: [
+                      SizedBox(width: 22, child: _buildSourceChip()),
+                      const SizedBox(width: 6),
+
                       // Internal Item Ref (Hidden if shared)
                       if (!widget.sharedRef)
                         Expanded(

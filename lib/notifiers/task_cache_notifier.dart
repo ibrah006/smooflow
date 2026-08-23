@@ -126,8 +126,6 @@ class TaskCacheNotifier
       // incompleteOnly: arg.incompleteOnly ? true : null,
     );
 
-    print("incoming tasks: ${incomingTasks.map((task) => task.id)}");
-
     // Deep copy and mutate the map structure safely
     final Map<TaskStatus, Map<int, Task>> updatedCache = {
       for (final entry in state.cachedTasks.entries)
