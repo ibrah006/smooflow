@@ -53,6 +53,7 @@ import 'package:smooflow/screens/desktop/design_create_task_screen.concept.dart'
 import 'package:smooflow/screens/desktop/desktop_materials_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_printer_management_screen.dart';
 import 'package:smooflow/screens/desktop/desktop_reports_screen.dart';
+import 'package:smooflow/screens/desktop/employee_management_screen.dart';
 import 'package:smooflow/screens/desktop/home_view.dart';
 import 'package:smooflow/screens/desktop/inbox_view.dart';
 import 'package:smooflow/screens/desktop/manage_members_page.dart';
@@ -662,7 +663,7 @@ class _AdminDesktopDashboardScreenState
                 : _view == _AdminView.clients
                 ? ClientsPage()
                 : _view == _AdminView.team
-                ? ManageMembersPage()
+                ? EmployeeManagementScreen()
                 : _view == _AdminView.printers
                 ? DesktopPrinterManagementScreen()
                 : _view == _AdminView.inventory
@@ -1217,13 +1218,14 @@ class _AdminSidebarState extends ConsumerState<_AdminSidebar> {
                   isActive: widget.currentView == _AdminView.clients,
                   onTap: () => widget.onViewChanged(_AdminView.clients),
                 ),
-                _SidebarNavItem(
-                  icon: Icons.people_outline_rounded,
-                  label: 'Manage Team',
-                  isCollapsed: widget.isCollapsed,
-                  isActive: widget.currentView == _AdminView.team,
-                  onTap: () => widget.onViewChanged(_AdminView.team),
-                ),
+                if (kDebugMode)
+                  _SidebarNavItem(
+                    icon: Icons.people_outline_rounded,
+                    label: 'Manage Team',
+                    isCollapsed: widget.isCollapsed,
+                    isActive: widget.currentView == _AdminView.team,
+                    onTap: () => widget.onViewChanged(_AdminView.team),
+                  ),
                 _SidebarNavItem(
                   icon: Icons.settings_rounded,
                   label: 'Settings',
