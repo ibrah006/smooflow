@@ -1,3 +1,9 @@
+## Generate the .freezed.dart and .g.dart files for models
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
 ## Create Installers
 
 ### Macos
