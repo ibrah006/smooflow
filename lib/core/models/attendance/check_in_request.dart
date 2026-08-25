@@ -4,7 +4,7 @@ part 'check_in_request.freezed.dart';
 part 'check_in_request.g.dart';
 
 @freezed
-class CheckInRequest with _$CheckInRequest {
+abstract class CheckInRequest with _$CheckInRequest {
   const factory CheckInRequest({
     required String employeeId,
     DateTime? timestamp,

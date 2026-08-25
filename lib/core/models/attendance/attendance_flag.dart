@@ -4,7 +4,7 @@ part 'attendance_flag.freezed.dart';
 part 'attendance_flag.g.dart';
 
 @freezed
-class AttendanceFlag with _$AttendanceFlag {
+abstract class AttendanceFlag with _$AttendanceFlag {
   const factory AttendanceFlag({
     required String id,
     required String employeeId,

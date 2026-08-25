@@ -4,7 +4,9 @@ part 'public_holiday.freezed.dart';
 part 'public_holiday.g.dart';
 
 @freezed
-class PublicHoliday with _$PublicHoliday {
+abstract class PublicHoliday with _$PublicHoliday {
+  const PublicHoliday._();
+
   const factory PublicHoliday({
     required String id,
     required String name,

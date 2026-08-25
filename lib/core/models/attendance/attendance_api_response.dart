@@ -4,7 +4,7 @@ part 'attendance_api_response.freezed.dart';
 part 'attendance_api_response.g.dart';
 
 @Freezed(genericArgumentFactories: true)
-class AttendanceApiResponse<T> with _$AttendanceApiResponse<T> {
+abstract class AttendanceApiResponse<T> with _$AttendanceApiResponse<T> {
   const factory AttendanceApiResponse({
     required bool success,
     T? data,

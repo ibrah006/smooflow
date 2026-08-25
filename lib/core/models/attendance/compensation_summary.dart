@@ -4,7 +4,7 @@ part 'compensation_summary.freezed.dart';
 part 'compensation_summary.g.dart';
 
 @freezed
-class CompensationSummary with _$CompensationSummary {
+abstract class CompensationSummary with _$CompensationSummary {
   const factory CompensationSummary({
     required double overtimeHours,
     required double overtimeAmount,

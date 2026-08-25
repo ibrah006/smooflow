@@ -4,7 +4,9 @@ part 'shift.freezed.dart';
 part 'shift.g.dart';
 
 @freezed
-class Shift with _$Shift {
+abstract class Shift with _$Shift {
+  const Shift._();
+
   const factory Shift({
     required String id,
     required String employeeId,
@@ -22,8 +24,8 @@ class Shift with _$Shift {
     DateTime? managerApprovedAt,
     @Default(false) bool isHolidayWorked,
     String? holidayId,
-    @Default(DateTime.now) DateTime createdAt,
-    @Default(DateTime.now) DateTime updatedAt,
+    required DateTime createdAt,
+    required DateTime updatedAt,
   }) = _Shift;
 
   factory Shift.fromJson(Map<String, dynamic> json) => _$ShiftFromJson(json);

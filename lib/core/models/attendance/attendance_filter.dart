@@ -6,7 +6,7 @@ part 'attendance_filter.freezed.dart';
 part 'attendance_filter.g.dart';
 
 @freezed
-class AttendanceFilter with _$AttendanceFilter {
+abstract class AttendanceFilter with _$AttendanceFilter {
   const factory AttendanceFilter({
     String? employeeId,
     DateTime? startDate,

@@ -6,7 +6,9 @@ part 'weekly_attendance_metrics.freezed.dart';
 part 'weekly_attendance_metrics.g.dart';
 
 @freezed
-class WeeklyAttendanceMetrics with _$WeeklyAttendanceMetrics {
+abstract class WeeklyAttendanceMetrics with _$WeeklyAttendanceMetrics {
+  const WeeklyAttendanceMetrics._();
+
   const factory WeeklyAttendanceMetrics({
     required String id,
     required String employeeId,
