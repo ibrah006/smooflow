@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/core/models/employee_with_attendance.dart';
+import 'package:smooflow/core/repositories/attendance_repo.dart';
+import 'package:smooflow/core/repositories/employee_repo.dart';
 import 'package:smooflow/screens/desktop/employee_managment_modals.dart';
 
 // Design constants aligned with Smooflow
@@ -62,7 +65,6 @@ class EmployeeManagementScreen extends ConsumerStatefulWidget {
 class _EmployeeManagementScreenState
     extends ConsumerState<EmployeeManagementScreen> {
   late TextEditingController _searchController;
-  late TextEditingController _filterDepartmentController;
   String _sortColumn = 'name';
   bool _sortAscending = true;
   String _selectedStatus = 'all'; // 'all', 'active', 'inactive'
@@ -73,18 +75,26 @@ class _EmployeeManagementScreenState
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _filterDepartmentController = TextEditingController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _filterDepartmentController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final filteredEmployees = ref.watch(
+      filteredEmployeesProvider(
+        FilteredEmployeesParams(
+          search: _searchController.text,
+          status: _selectedStatus,
+          department: _selectedDepartment,
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: _T.bgSecondary,
       body: SafeArea(
@@ -117,8 +127,19 @@ class _EmployeeManagementScreenState
                           const SizedBox(height: 24),
                         ],
 
-                        // Employees Table
-                        _buildEmployeesTable(context),
+                        // Employees Table or Loading/Error State
+                        filteredEmployees.when(
+                          data:
+                              (employees) => Column(
+                                children: [
+                                  _buildEmployeesTable(context, employees),
+                                ],
+                              ),
+                          loading: () => _buildLoadingState(),
+                          error:
+                              (error, st) =>
+                                  _buildErrorState(context, error, st),
+                        ),
                       ],
                     ),
                   ),
@@ -163,15 +184,12 @@ class _EmployeeManagementScreenState
             // Action buttons
             Row(
               children: [
-                // Export button
                 _buildIconButton(
                   icon: Icons.download_outlined,
                   tooltip: 'Export',
                   onPressed: () => _showExportDialog(context),
                 ),
                 const SizedBox(width: 12),
-
-                // Add new employee button
                 _buildPrimaryButton(
                   label: 'Add Employee',
                   icon: Icons.add_rounded,
@@ -454,7 +472,6 @@ class _EmployeeManagementScreenState
             ),
           ),
           const SizedBox(width: 24),
-          // Clear filters button
           Align(
             alignment: Alignment.bottomCenter,
             child: TextButton(
@@ -479,7 +496,13 @@ class _EmployeeManagementScreenState
     );
   }
 
-  Widget _buildEmployeesTable(BuildContext context) {
+  Widget _buildEmployeesTable(
+    BuildContext context,
+    List<EmployeeWithAttendance> employees,
+  ) {
+    // Sort employees
+    final sortedEmployees = _sortEmployees(employees);
+
     return Container(
       decoration: BoxDecoration(
         color: _T.bgPrimary,
@@ -497,16 +520,19 @@ class _EmployeeManagementScreenState
         children: [
           // Table header
           _buildTableHeader(context),
-
-          // Divider
           Divider(height: 1, color: _T.borderLight, thickness: 1),
 
           // Table rows
-          _buildTableRows(context),
+          ...sortedEmployees.asMap().entries.map((entry) {
+            final index = entry.key;
+            final employee = entry.value;
+            final isEven = index % 2 == 0;
+            return _buildTableRow(context, employee, isEven);
+          }).toList(),
 
-          // Footer / Pagination
+          // Footer
           Divider(height: 1, color: _T.borderLight, thickness: 1),
-          _buildTableFooter(context),
+          _buildTableFooter(context, sortedEmployees.length),
         ],
       ),
     );
@@ -568,7 +594,7 @@ class _EmployeeManagementScreenState
 
           // Actions
           SizedBox(
-            width: 80,
+            width: 100,
             child: Text(
               'Actions',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -624,44 +650,38 @@ class _EmployeeManagementScreenState
     );
   }
 
-  Widget _buildTableRows(BuildContext context) {
-    // OPEN ITEM: Replace with actual employee data from provider
-    final mockEmployees = _getMockEmployees();
+  List<EmployeeWithAttendance> _sortEmployees(
+    List<EmployeeWithAttendance> employees,
+  ) {
+    final sorted = [...employees];
 
-    // Filter employees
-    final filtered =
-        mockEmployees.where((emp) {
-          final matchesSearch =
-              _searchController.text.isEmpty ||
-              emp.name.toLowerCase().contains(
-                _searchController.text.toLowerCase(),
-              ) ||
-              emp.email.toLowerCase().contains(
-                _searchController.text.toLowerCase(),
-              );
+    sorted.sort((a, b) {
+      int comparison = 0;
 
-          final matchesStatus =
-              _selectedStatus == 'all' ||
-              (_selectedStatus == 'active' && emp.isActive) ||
-              (_selectedStatus == 'inactive' && !emp.isActive);
+      switch (_sortColumn) {
+        case 'name':
+          comparison = a.name.compareTo(b.name);
+          break;
+        case 'email':
+          comparison = a.email.compareTo(b.email);
+          break;
+        case 'department':
+          comparison = a.department.compareTo(b.department);
+          break;
+        case 'role':
+          comparison = a.role.compareTo(b.role);
+          break;
+        case 'status':
+          comparison = a.isActive ? 1 : -1;
+          break;
+        default:
+          comparison = 0;
+      }
 
-          final matchesDepartment =
-              _selectedDepartment == 'all' ||
-              emp.department.toLowerCase() == _selectedDepartment.toLowerCase();
+      return _sortAscending ? comparison : -comparison;
+    });
 
-          return matchesSearch && matchesStatus && matchesDepartment;
-        }).toList();
-
-    return Column(
-      children:
-          filtered.asMap().entries.map((entry) {
-            final index = entry.key;
-            final employee = entry.value;
-            final isEven = index % 2 == 0;
-
-            return _buildTableRow(context, employee, isEven);
-          }).toList(),
-    );
+    return sorted;
   }
 
   Widget _buildTableRow(
@@ -670,9 +690,6 @@ class _EmployeeManagementScreenState
     bool isEven,
   ) {
     return MouseRegion(
-      onEnter: (_) {
-        setState(() {});
-      },
       child: Container(
         color: isEven ? Colors.transparent : _T.bgTertiary.withOpacity(0.5),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
@@ -800,7 +817,7 @@ class _EmployeeManagementScreenState
 
             // Actions
             SizedBox(
-              width: 80,
+              width: 100,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -821,9 +838,9 @@ class _EmployeeManagementScreenState
                   ),
                   const SizedBox(width: 8),
                   _buildIconButton(
-                    icon: Icons.more_vert_rounded,
-                    tooltip: 'More',
-                    onPressed: () => _showEmployeeMenu(context, employee),
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: 'Delete',
+                    onPressed: () => _showDeleteConfirmation(context, employee),
                     size: 18,
                     padding: 6,
                   ),
@@ -971,14 +988,14 @@ class _EmployeeManagementScreenState
     );
   }
 
-  Widget _buildTableFooter(BuildContext context) {
+  Widget _buildTableFooter(BuildContext context, int totalCount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Showing 1-10 of 42 employees',
+            'Showing $totalCount ${totalCount == 1 ? 'employee' : 'employees'}',
             style: TextStyle(color: _T.textSecondary, fontSize: 13),
           ),
           Row(
@@ -991,34 +1008,23 @@ class _EmployeeManagementScreenState
                 padding: 8,
               ),
               const SizedBox(width: 8),
-              // Page numbers (simplified)
-              ...List.generate(3, (i) {
-                final pageNum = i + 1;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: pageNum == 1 ? _T.accentBlue : Colors.transparent,
-                      borderRadius: BorderRadius.circular(_rSmall),
-                      border:
-                          pageNum == 1
-                              ? null
-                              : Border.all(color: _T.borderLight),
-                    ),
-                    child: Text(
-                      '$pageNum',
-                      style: TextStyle(
-                        color: pageNum == 1 ? _T.textInverse : _T.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _T.accentBlue,
+                  borderRadius: BorderRadius.circular(_rSmall),
+                ),
+                child: Text(
+                  '1',
+                  style: TextStyle(
+                    color: _T.textInverse,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
                   ),
-                );
-              }).toList(),
+                ),
+              ),
               const SizedBox(width: 8),
               _buildIconButton(
                 icon: Icons.navigate_next_rounded,
@@ -1034,8 +1040,103 @@ class _EmployeeManagementScreenState
     );
   }
 
+  Widget _buildLoadingState() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.bgPrimary,
+        border: Border.all(color: _T.borderLight),
+        borderRadius: BorderRadius.circular(_rLarge),
+      ),
+      padding: const EdgeInsets.all(40),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildErrorState(
+    BuildContext context,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.bgPrimary,
+        border: Border.all(color: _T.borderLight),
+        borderRadius: BorderRadius.circular(_rLarge),
+      ),
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 48, color: _T.statusInactive),
+          const SizedBox(height: 16),
+          Text(
+            'Error loading employees',
+            style: TextStyle(
+              color: _T.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error.toString(),
+            style: TextStyle(color: _T.textSecondary, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              ref.invalidate(employeesProvider);
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accentBlue,
+              foregroundColor: _T.textInverse,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.bgPrimary,
+        border: Border.all(color: _T.borderLight),
+        borderRadius: BorderRadius.circular(_rLarge),
+      ),
+      padding: const EdgeInsets.all(60),
+      child: Column(
+        children: [
+          Icon(Icons.people_outline, size: 64, color: _T.textTertiary),
+          const SizedBox(height: 16),
+          Text(
+            'No employees found',
+            style: TextStyle(
+              color: _T.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your filters or add your first employee',
+            style: TextStyle(color: _T.textSecondary, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          _buildPrimaryButton(
+            label: 'Add Employee',
+            icon: Icons.add_rounded,
+            onPressed: () => _showEmployeeModal(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ============================================
-  // HELPER METHODS
+  // HELPER METHODS & DIALOGS
   // ============================================
 
   Widget _buildPrimaryButton({
@@ -1134,9 +1235,24 @@ class _EmployeeManagementScreenState
     BuildContext context, [
     EmployeeWithAttendance? employee,
   ]) {
-    showDialog(
-      context: context,
-      builder: (context) => EmployeeFormModal(employee: employee),
+    // OPEN ITEM: Import and show EmployeeFormModal from employee_management_modals.dart
+    // showDialog(
+    //   context: context,
+    //   builder: (context) => EmployeeFormModal(employee: employee),
+    // ).then((result) {
+    //   if (result == true) {
+    //     ref.invalidate(employeesProvider);
+    //   }
+    // });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          employee != null
+              ? 'Edit mode - Import EmployeeFormModal'
+              : 'Add mode - Import EmployeeFormModal',
+        ),
+      ),
     );
   }
 
@@ -1144,110 +1260,71 @@ class _EmployeeManagementScreenState
     BuildContext context,
     EmployeeWithAttendance employee,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => EmployeeDetailsModal(employee: employee),
+    // OPEN ITEM: Import and show EmployeeDetailsModal from employee_management_modals.dart
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('View details for ${employee.name}')),
     );
   }
 
-  void _showEmployeeMenu(
+  void _showDeleteConfirmation(
     BuildContext context,
     EmployeeWithAttendance employee,
   ) {
-    // OPEN ITEM: Implement context menu
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: _T.bgPrimary,
+            title: Text(
+              'Delete Employee?',
+              style: TextStyle(
+                color: _T.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to delete ${employee.name}? This action cannot be undone.',
+              style: TextStyle(color: _T.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: _T.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _deleteEmployee(employee);
+                },
+                child: Text(
+                  'Delete',
+                  style: TextStyle(color: _T.statusInactive),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _deleteEmployee(EmployeeWithAttendance employee) {
+    // OPEN ITEM: Call delete API
+    // ref.read(deleteEmployeeProvider(employee.id));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Deleted ${employee.name}'),
+        backgroundColor: _T.statusActive,
+      ),
+    );
   }
 
   void _showExportDialog(BuildContext context) {
-    // OPEN ITEM: Implement export dialog
-  }
-
-  List<EmployeeWithAttendance> _getMockEmployees() {
-    return [
-      EmployeeWithAttendance(
-        id: 'EMP001',
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@smooflow.com',
-        role: 'Design Lead',
-        department: 'Design',
-        hourlyRate: 45.0,
-        salaryType: 'salary',
-        isActive: true,
-        lastCheckIn: DateTime.now().subtract(const Duration(hours: 3)),
-        lastCheckOut: null,
-        weeklyHoursThreshold: 40,
-        consecutiveDaysWorked: 4,
-        currentWeekOvertime: 0,
-        weekendDaysWorked: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 365)),
-      ),
-      EmployeeWithAttendance(
-        id: 'EMP002',
-        name: 'Marcus Chen',
-        email: 'marcus.chen@smooflow.com',
-        role: 'Developer',
-        department: 'Tech',
-        hourlyRate: 55.0,
-        salaryType: 'hourly',
-        isActive: true,
-        lastCheckIn: DateTime.now().subtract(const Duration(hours: 6)),
-        lastCheckOut: DateTime.now().subtract(const Duration(hours: 1)),
-        weeklyHoursThreshold: 40,
-        consecutiveDaysWorked: 5,
-        currentWeekOvertime: 2.5,
-        weekendDaysWorked: 1,
-        createdAt: DateTime.now().subtract(const Duration(days: 200)),
-      ),
-      EmployeeWithAttendance(
-        id: 'EMP003',
-        name: 'Aya Patel',
-        email: 'aya.patel@smooflow.com',
-        role: 'Account Manager',
-        department: 'Sales',
-        hourlyRate: 35.0,
-        salaryType: 'salary',
-        isActive: true,
-        lastCheckIn: null,
-        lastCheckOut: DateTime.now().subtract(const Duration(hours: 22)),
-        weeklyHoursThreshold: 40,
-        consecutiveDaysWorked: 0,
-        currentWeekOvertime: 0,
-        weekendDaysWorked: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 150)),
-      ),
-      EmployeeWithAttendance(
-        id: 'EMP004',
-        name: 'James Wilson',
-        email: 'james.wilson@smooflow.com',
-        role: 'Operations Manager',
-        department: 'Operations',
-        hourlyRate: 50.0,
-        salaryType: 'salary',
-        isActive: false,
-        lastCheckIn: DateTime.now().subtract(const Duration(days: 7)),
-        lastCheckOut: DateTime.now().subtract(const Duration(days: 7)),
-        weeklyHoursThreshold: 40,
-        consecutiveDaysWorked: 0,
-        currentWeekOvertime: 0,
-        weekendDaysWorked: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 500)),
-      ),
-      EmployeeWithAttendance(
-        id: 'EMP005',
-        name: 'Zainab Al-Rashid',
-        email: 'zainab.rashid@smooflow.com',
-        role: 'Designer',
-        department: 'Design',
-        hourlyRate: 40.0,
-        salaryType: 'hourly',
-        isActive: true,
-        lastCheckIn: DateTime.now().subtract(const Duration(hours: 2)),
-        lastCheckOut: null,
-        weeklyHoursThreshold: 40,
-        consecutiveDaysWorked: 3,
-        currentWeekOvertime: 0,
-        weekendDaysWorked: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 100)),
-      ),
-    ];
+    // OPEN ITEM: Implement export to CSV/PDF
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Export functionality coming soon')),
+    );
   }
 }

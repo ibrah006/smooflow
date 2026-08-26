@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smooflow/core/models/employee_with_attendance.dart';
 
 // Design constants
 const double _rSmall = 4;
@@ -26,51 +27,6 @@ class _T {
   static const statusActive = Color(0xFF10B981);
   static const statusInactive = Color(0xFFEF4444);
 }
-
-// Import the model from employee_management_screen.dart
-// For now, using inline copy
-
-class EmployeeWithAttendance {
-  final String id;
-  final String name;
-  final String email;
-  final String role;
-  final String department;
-  final double hourlyRate;
-  final String salaryType;
-  final bool isActive;
-  final DateTime? lastCheckIn;
-  final DateTime? lastCheckOut;
-  final int? weeklyHoursThreshold;
-  final int? consecutiveDaysWorked;
-  final double? currentWeekOvertime;
-  final int? weekendDaysWorked;
-  final DateTime createdAt;
-
-  EmployeeWithAttendance({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.role,
-    required this.department,
-    required this.hourlyRate,
-    required this.salaryType,
-    required this.isActive,
-    this.lastCheckIn,
-    this.lastCheckOut,
-    this.weeklyHoursThreshold,
-    this.consecutiveDaysWorked,
-    this.currentWeekOvertime,
-    this.weekendDaysWorked,
-    required this.createdAt,
-  });
-
-  bool get isCurrentlyCheckedIn => lastCheckIn != null && lastCheckOut == null;
-}
-
-// ============================================
-// EMPLOYEE FORM MODAL (Add / Edit)
-// ============================================
 
 class EmployeeFormModal extends StatefulWidget {
   final EmployeeWithAttendance? employee;

@@ -6,6 +6,9 @@ import 'package:smooflow/core/models/attendance/attendance_flag.dart';
 import 'package:smooflow/core/models/attendance/public_holiday.dart';
 import 'package:smooflow/core/models/attendance/shift.dart';
 import 'package:smooflow/core/models/attendance/weekly_attendance_metrics.dart';
+import 'package:smooflow/core/models/employee_with_attendance.dart';
+import 'package:smooflow/core/repositories/employee_repo.dart';
+import 'package:smooflow/screens/desktop/employee_managment_modals.dart';
 
 // ============================================
 // REPOSITORY
