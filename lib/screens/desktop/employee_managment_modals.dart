@@ -753,7 +753,6 @@ class EmployeeDetailsModal extends StatelessWidget {
                   OutlinedButton(
                     onPressed: Navigator.of(context).pop,
                     style: OutlinedButton.styleFrom(
-                      maximumSize: Size.fromHeight(32),
                       side: const BorderSide(color: _T.slate200),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(_T.r),

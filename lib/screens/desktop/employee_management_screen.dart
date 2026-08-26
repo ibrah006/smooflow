@@ -1150,8 +1150,9 @@ class _EmployeeManagementScreenState
     BuildContext context,
     EmployeeWithAttendance employee,
   ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View details for ${employee.name}')),
+    showDialog(
+      context: context,
+      builder: (context) => EmployeeDetailsModal(employee: employee),
     );
   }
 
