@@ -37,12 +37,9 @@ final createEmployeeProvider =
       data,
     ) async {
       final repo = ref.watch(employeeRepositoryProvider);
-      // OPEN ITEM: Implement API call to create employee
-      // final employee = await repo.createEmployee(data);
-      // ref.invalidate(employeesProvider); // Refresh employee list
-      // return employee;
-
-      throw UnimplementedError('Create employee not implemented');
+      final employee = await repo.createEmployee(data);
+      ref.invalidate(employeesProvider); // Refresh employee list
+      return employee;
     });
 
 // Update employee
