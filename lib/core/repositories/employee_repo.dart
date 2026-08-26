@@ -4,9 +4,6 @@ import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/models/employee_with_attendance.dart';
 import 'package:smooflow/core/repositories/attendance_repo.dart';
 
-// Assuming EmployeeWithAttendance model is defined in your project
-// import '../models/employee_with_attendance.dart';
-
 class EmployeeRepository {
   final Dio dio;
   final String baseUrl;
