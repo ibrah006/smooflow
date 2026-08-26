@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/api/api_client.dart';
 import 'package:smooflow/core/models/employee_with_attendance.dart';
 import 'package:smooflow/core/repositories/attendance_repo.dart';
+import 'package:smooflow/providers/dio_provider.dart';
 
 class EmployeeRepository {
   final Dio dio;

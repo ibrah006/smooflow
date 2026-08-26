@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/attendance/attendance_flag.dart';
 import 'package:smooflow/core/models/attendance/shift.dart';
 import 'package:smooflow/core/repositories/attendance_repo.dart';
+import 'package:smooflow/providers/attendance_provider.dart';
 
 const double _kRowHeight = 46;
 const double _rSmall = 6;
