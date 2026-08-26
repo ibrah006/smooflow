@@ -6,53 +6,40 @@ import 'package:smooflow/core/repositories/attendance_repo.dart';
 import 'package:smooflow/core/repositories/employee_repo.dart';
 import 'package:smooflow/screens/desktop/employee_managment_modals.dart';
 
-// Design constants aligned with Smooflow
-const double _kMaxWidth = 1400;
-const double _kSidebarWidth = 280;
-const double _kTableRowHeight = 52;
-const double _rSmall = 4;
-const double _rMedium = 6;
-const double _rLarge = 8;
-const double _rXL = 12;
-
-// Color palette (Smooflow)
+// Modern Compact SaaS Design Tokens
 class _T {
-  // Background colors
-  static const bgPrimary = Color(0xFFFFFFFF);
-  static const bgSecondary = Color(0xFFF8F9FB);
-  static const bgTertiary = Color(0xF5F7FA);
-  static const bgHover = Color(0xFFF0F2F5);
+  static const canvasBg = Color(0xFFF8FAFC);
+  static const surfaceBg = Color(0xFFFFFFFF);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
 
-  // Text colors
-  static const textPrimary = Color(0xFF1A1A1A);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textTertiary = Color(0xFF9CA3AF);
-  static const textInverse = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
 
-  // Border colors
-  static const borderLight = Color(0xFFE5E7EB);
-  static const borderMedium = Color(0xFFD1D5DB);
+  static const primary = Color(0xFF2563EB);
+  static const primaryBg = Color(0xFFEFF6FF);
+  static const primaryBorder = Color(0xFFDBEAFE);
 
-  // Status colors
-  static const statusActive = Color(0xFF10B981);
-  static const statusInactive = Color(0xFFEF4444);
-  static const statusPending = Color(0xFFF59E0B);
-  static const statusWarning = Color(0xFFDC2626);
+  static const green = Color(0xFF10B981);
+  static const greenBg = Color(0xFFF0FDF4);
+  static const red = Color(0xFFEF4444);
+  static const redBg = Color(0xFFFEE2E2);
+  static const amber = Color(0xFFF59E0B);
+  static const amberBg = Color(0xFFFEF3C7);
+  static const orange = Color(0xFFF97316);
 
-  // Accent colors
-  static const accentBlue = Color(0xFF3B82F6);
-  static const accentGreen = Color(0xFF10B981);
-  static const accentOrange = Color(0xFFF97316);
+  static const double r = 6.0;
+  static const double rLg = 12.0;
+  static const double rPill = 99.0;
 
-  // Shadows
-  static const shadowSm = Color(0x0A000000);
-  static const shadowMd = Color(0x0F000000);
-  static const shadowLg = Color(0x1A000000);
+  static const double kHeaderHeight = 56.0;
+  static const double kSubToolbarHeight = 40.0;
+  static const double kTableHeaderHeight = 36.0;
+  static const double kTableRowHeight = 46.0;
 }
-
-// ============================================
-// EMPLOYEES MANAGEMENT SCREEN
-// ============================================
 
 class EmployeeManagementScreen extends ConsumerStatefulWidget {
   const EmployeeManagementScreen({Key? key}) : super(key: key);
@@ -67,9 +54,10 @@ class _EmployeeManagementScreenState
   late TextEditingController _searchController;
   String _sortColumn = 'name';
   bool _sortAscending = true;
-  String _selectedStatus = 'all'; // 'all', 'active', 'inactive'
+  String _selectedStatus = 'all';
   String _selectedDepartment = 'all';
   bool _showFilters = false;
+  int? _hoveredRowIndex;
 
   @override
   void initState() {
@@ -96,276 +84,199 @@ class _EmployeeManagementScreenState
     );
 
     return Scaffold(
-      backgroundColor: _T.bgSecondary,
+      backgroundColor: _T.canvasBg,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: Container(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: _kMaxWidth),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 24,
+        child: Column(
+          children: [
+            _buildPageHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSubToolbar(context),
+                    if (_showFilters) ...[
+                      const SizedBox(height: 12),
+                      _buildAdvancedFilters(context),
+                    ],
+                    const SizedBox(height: 12),
+                    filteredEmployees.when(
+                      data:
+                          (employees) =>
+                              _buildEmployeesTable(context, employees),
+                      loading: () => _buildLoadingState(),
+                      error:
+                          (error, st) => _buildErrorState(context, error, st),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        _buildHeader(context),
-                        const SizedBox(height: 32),
-
-                        // Search & Filter Bar
-                        _buildSearchAndFilterBar(context),
-                        const SizedBox(height: 24),
-
-                        // Advanced Filters (Collapsible)
-                        if (_showFilters) ...[
-                          _buildAdvancedFilters(context),
-                          const SizedBox(height: 24),
-                        ],
-
-                        // Employees Table or Loading/Error State
-                        filteredEmployees.when(
-                          data:
-                              (employees) => Column(
-                                children: [
-                                  _buildEmployeesTable(context, employees),
-                                ],
-                              ),
-                          loading: () => _buildLoadingState(),
-                          error:
-                              (error, st) =>
-                                  _buildErrorState(context, error, st),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Employees',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: _T.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 28,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Manage and track your team',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _T.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            // Action buttons
-            Row(
-              children: [
-                _buildIconButton(
-                  icon: Icons.download_outlined,
-                  tooltip: 'Export',
-                  onPressed: () => _showExportDialog(context),
-                ),
-                const SizedBox(width: 12),
-                _buildPrimaryButton(
-                  label: 'Add Employee',
-                  icon: Icons.add_rounded,
-                  onPressed: () => _showEmployeeModal(context),
-                ),
-              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSearchAndFilterBar(BuildContext context) {
+  Widget _buildPageHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: _T.kHeaderHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: _T.surfaceBg,
+        border: Border(bottom: BorderSide(color: _T.slate200, width: 1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, color: _T.primary, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Employee Directory',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: _T.ink,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _T.slate100,
+                  borderRadius: BorderRadius.circular(_T.rPill),
+                ),
+                child: const Text(
+                  'Management',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _T.slate400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildSecondaryIconButton(
+                icon: Icons.file_download_outlined,
+                tooltip: 'Export Data',
+                onPressed: () => _showExportDialog(context),
+              ),
+              const SizedBox(width: 8),
+              _buildPrimaryButton(
+                label: 'Add Employee',
+                icon: Icons.add,
+                onPressed: () => _showEmployeeModal(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubToolbar(BuildContext context) {
+    return Container(
+      height: _T.kSubToolbarHeight + 8,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
       ),
       child: Row(
         children: [
-          // Search field
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by name, email, or ID...',
-                hintStyle: TextStyle(color: _T.textTertiary),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 12, right: 8),
-                  child: Icon(
-                    Icons.search_rounded,
-                    color: _T.textTertiary,
-                    size: 20,
+            child: SizedBox(
+              height: 32,
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: _T.ink,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search employees by name, email, or ID...',
+                  hintStyle: const TextStyle(color: _T.slate400, fontSize: 12),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: _T.slate400,
+                    size: 16,
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                  filled: true,
+                  fillColor: _T.slate100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                onChanged: (_) => setState(() {}),
               ),
-              onChanged: (value) => setState(() {}),
             ),
           ),
-          const SizedBox(width: 12),
-
-          // Status filter dropdown
-          DropdownButton<String>(
+          const SizedBox(width: 8),
+          _buildCompactDropdown<String>(
             value: _selectedStatus,
-            underline: SizedBox.shrink(),
-            items: [
-              DropdownMenuItem(
-                value: 'all',
-                child: Text(
-                  'All Status',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'active',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _T.statusActive,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Active',
-                      style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'inactive',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _T.statusInactive,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Inactive',
-                      style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
+            items: const [
+              DropdownMenuItem(value: 'all', child: Text('All Statuses')),
+              DropdownMenuItem(value: 'active', child: Text('Active')),
+              DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
             ],
-            onChanged: (value) {
-              setState(() => _selectedStatus = value ?? 'all');
-            },
+            onChanged: (v) => setState(() => _selectedStatus = v ?? 'all'),
           ),
-          const SizedBox(width: 12),
-
-          // Department filter dropdown
-          DropdownButton<String>(
+          const SizedBox(width: 8),
+          _buildCompactDropdown<String>(
             value: _selectedDepartment,
-            underline: SizedBox.shrink(),
-            items: [
-              DropdownMenuItem(
-                value: 'all',
-                child: Text(
-                  'All Departments',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'operations',
-                child: Text(
-                  'Operations',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'design',
-                child: Text(
-                  'Design',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'tech',
-                child: Text(
-                  'Tech',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
-              DropdownMenuItem(
-                value: 'sales',
-                child: Text(
-                  'Sales',
-                  style: TextStyle(color: _T.textPrimary, fontSize: 14),
-                ),
-              ),
+            items: const [
+              DropdownMenuItem(value: 'all', child: Text('All Departments')),
+              DropdownMenuItem(value: 'operations', child: Text('Operations')),
+              DropdownMenuItem(value: 'design', child: Text('Design')),
+              DropdownMenuItem(value: 'tech', child: Text('Tech')),
+              DropdownMenuItem(value: 'sales', child: Text('Sales')),
             ],
-            onChanged: (value) {
-              setState(() => _selectedDepartment = value ?? 'all');
-            },
+            onChanged: (v) => setState(() => _selectedDepartment = v ?? 'all'),
           ),
-          const SizedBox(width: 12),
-
-          // Advanced filters toggle
-          Tooltip(
-            message: 'Advanced filters',
-            child: Material(
-              color: Colors.transparent,
-              child: Ink(
+          const SizedBox(width: 8),
+          Material(
+            color: _showFilters ? _T.primaryBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(_T.r),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(_T.r),
+              onTap: () => setState(() => _showFilters = !_showFilters),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  border: Border.all(color: _T.borderLight),
-                  borderRadius: BorderRadius.circular(_rMedium),
-                ),
-                child: InkWell(
-                  onTap: () => setState(() => _showFilters = !_showFilters),
-                  borderRadius: BorderRadius.circular(_rMedium),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      _showFilters ? Icons.tune_rounded : Icons.tune_outlined,
-                      color: _T.textSecondary,
-                      size: 20,
-                    ),
+                  border: Border.all(
+                    color: _showFilters ? _T.primaryBorder : _T.slate200,
                   ),
+                  borderRadius: BorderRadius.circular(_T.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                      size: 14,
+                      color: _showFilters ? _T.primary : _T.ink3,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _showFilters ? _T.primary : _T.ink3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -377,11 +288,11 @@ class _EmployeeManagementScreenState
 
   Widget _buildAdvancedFilters(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
       ),
       child: Row(
         children: [
@@ -389,22 +300,31 @@ class _EmployeeManagementScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Employment Type',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _T.textPrimary,
+                const Text(
+                  'EMPLOYMENT TYPE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _T.slate400,
+                    letterSpacing: 0.7,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children:
                       ['Hourly', 'Salary'].map((type) {
                         return Padding(
-                          padding: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.only(right: 6),
                           child: FilterChip(
-                            label: Text(type),
-                            onSelected: (selected) {},
+                            label: Text(
+                              type,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                            ),
+                            onSelected: (_) {},
                           ),
                         );
                       }).toList(),
@@ -412,56 +332,62 @@ class _EmployeeManagementScreenState
               ],
             ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Hire Date Range',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _T.textPrimary,
+                const Text(
+                  'HIRE DATE RANGE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _T.slate400,
+                    letterSpacing: 0.7,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'From',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(_rMedium),
-                            borderSide: BorderSide(
-                              color: _T.borderLight,
-                              width: 1,
+                      child: SizedBox(
+                        height: 30,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'From',
+                            hintStyle: const TextStyle(
+                              fontSize: 11,
+                              color: _T.slate400,
                             ),
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                              borderSide: const BorderSide(color: _T.slate200),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'To',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(_rMedium),
-                            borderSide: BorderSide(
-                              color: _T.borderLight,
-                              width: 1,
+                      child: SizedBox(
+                        height: 30,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'To',
+                            hintStyle: const TextStyle(
+                              fontSize: 11,
+                              color: _T.slate400,
                             ),
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_T.r),
+                              borderSide: const BorderSide(color: _T.slate200),
+                            ),
                           ),
                         ),
                       ),
@@ -471,10 +397,11 @@ class _EmployeeManagementScreenState
               ],
             ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 16),
           Align(
             alignment: Alignment.bottomCenter,
             child: TextButton(
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
               onPressed:
                   () => setState(() {
                     _searchController.clear();
@@ -482,11 +409,12 @@ class _EmployeeManagementScreenState
                     _selectedDepartment = 'all';
                     _showFilters = false;
                   }),
-              child: Text(
-                'Clear All',
+              child: const Text(
+                'Reset Filters',
                 style: TextStyle(
-                  color: _T.accentBlue,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  color: _T.red,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -500,38 +428,41 @@ class _EmployeeManagementScreenState
     BuildContext context,
     List<EmployeeWithAttendance> employees,
   ) {
-    // Sort employees
     final sortedEmployees = _sortEmployees(employees);
+
+    if (sortedEmployees.isEmpty) {
+      return _buildEmptyState(context);
+    }
 
     return Container(
       decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
-        boxShadow: [
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+        boxShadow: const [
           BoxShadow(
-            color: _T.shadowSm,
-            blurRadius: 1,
-            offset: const Offset(0, 1),
+            color: Color.fromRGBO(15, 23, 42, 0.03),
+            blurRadius: 6,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Table header
           _buildTableHeader(context),
-          Divider(height: 1, color: _T.borderLight, thickness: 1),
-
-          // Table rows
-          ...sortedEmployees.asMap().entries.map((entry) {
-            final index = entry.key;
-            final employee = entry.value;
-            final isEven = index % 2 == 0;
-            return _buildTableRow(context, employee, isEven);
-          }).toList(),
-
-          // Footer
-          Divider(height: 1, color: _T.borderLight, thickness: 1),
+          const Divider(height: 1, color: _T.slate200, thickness: 1),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedEmployees.length,
+            separatorBuilder:
+                (_, __) => const Divider(height: 1, color: _T.slate200),
+            itemBuilder: (context, index) {
+              final employee = sortedEmployees[index];
+              return _buildTableRow(context, employee, index);
+            },
+          ),
+          const Divider(height: 1, color: _T.slate200, thickness: 1),
           _buildTableFooter(context, sortedEmployees.length),
         ],
       ),
@@ -540,66 +471,37 @@ class _EmployeeManagementScreenState
 
   Widget _buildTableHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      color: _T.bgTertiary,
-      height: _kTableRowHeight,
+      height: _T.kTableHeaderHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      color: _T.slate100,
       child: Row(
         children: [
-          // Checkbox for select all
-          SizedBox(
-            width: 24,
+          const SizedBox(
+            width: 20,
             child: Checkbox(
               value: false,
-              onChanged: (value) {},
+              onChanged: null,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ),
-          const SizedBox(width: 16),
-
-          // Name column
-          Expanded(flex: 2, child: _buildColumnHeader('Name', 'name', context)),
-
-          // Email column
-          Expanded(
-            flex: 2,
-            child: _buildColumnHeader('Email', 'email', context),
-          ),
-
-          // Department column
-          Expanded(
-            flex: 1,
-            child: _buildColumnHeader('Department', 'department', context),
-          ),
-
-          // Role column
-          Expanded(flex: 1, child: _buildColumnHeader('Role', 'role', context)),
-
-          // Status column
-          Expanded(
-            flex: 1,
-            child: _buildColumnHeader('Status', 'status', context),
-          ),
-
-          // Current Shift column
-          Expanded(
-            flex: 1,
-            child: _buildColumnHeader('Current Shift', 'shift', context),
-          ),
-
-          // This Week column
-          Expanded(
-            flex: 1,
-            child: _buildColumnHeader('This Week', 'week', context),
-          ),
-
-          // Actions
-          SizedBox(
-            width: 100,
+          const SizedBox(width: 12),
+          Expanded(flex: 2, child: _buildColumnHeader('NAME', 'name')),
+          Expanded(flex: 2, child: _buildColumnHeader('EMAIL', 'email')),
+          Expanded(flex: 1, child: _buildColumnHeader('DEPT', 'department')),
+          Expanded(flex: 1, child: _buildColumnHeader('ROLE', 'role')),
+          Expanded(flex: 1, child: _buildColumnHeader('STATUS', 'status')),
+          Expanded(flex: 1, child: _buildColumnHeader('SHIFT', 'shift')),
+          Expanded(flex: 1, child: _buildColumnHeader('THIS WEEK', 'week')),
+          const SizedBox(
+            width: 90,
             child: Text(
-              'Actions',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: _T.textSecondary,
+              'ACTIONS',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _T.slate400,
+                letterSpacing: 0.75,
               ),
             ),
           ),
@@ -608,14 +510,9 @@ class _EmployeeManagementScreenState
     );
   }
 
-  Widget _buildColumnHeader(
-    String label,
-    String columnName,
-    BuildContext context,
-  ) {
+  Widget _buildColumnHeader(String label, String columnName) {
     final isActive = _sortColumn == columnName;
-
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         setState(() {
           if (_sortColumn == columnName) {
@@ -630,19 +527,19 @@ class _EmployeeManagementScreenState
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: isActive ? _T.textPrimary : _T.textSecondary,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: isActive ? _T.primary : _T.slate400,
+              letterSpacing: 0.75,
             ),
           ),
           if (isActive) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 2),
             Icon(
-              _sortAscending
-                  ? Icons.arrow_upward_rounded
-                  : Icons.arrow_downward_rounded,
+              _sortAscending ? Icons.arrow_drop_up : Icons.arrow_drop_down,
               size: 14,
-              color: _T.textPrimary,
+              color: _T.primary,
             ),
           ],
         ],
@@ -650,85 +547,64 @@ class _EmployeeManagementScreenState
     );
   }
 
-  List<EmployeeWithAttendance> _sortEmployees(
-    List<EmployeeWithAttendance> employees,
-  ) {
-    final sorted = [...employees];
-
-    sorted.sort((a, b) {
-      int comparison = 0;
-
-      switch (_sortColumn) {
-        case 'name':
-          comparison = a.name.compareTo(b.name);
-          break;
-        case 'email':
-          comparison = a.email.compareTo(b.email);
-          break;
-        case 'department':
-          comparison = a.department.compareTo(b.department);
-          break;
-        case 'role':
-          comparison = a.role.compareTo(b.role);
-          break;
-        case 'status':
-          comparison = a.isActive ? 1 : -1;
-          break;
-        default:
-          comparison = 0;
-      }
-
-      return _sortAscending ? comparison : -comparison;
-    });
-
-    return sorted;
-  }
-
   Widget _buildTableRow(
     BuildContext context,
     EmployeeWithAttendance employee,
-    bool isEven,
+    int index,
   ) {
+    final isHovered = _hoveredRowIndex == index;
+
     return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredRowIndex = index),
+      onExit: (_) => setState(() => _hoveredRowIndex = null),
       child: Container(
-        color: isEven ? Colors.transparent : _T.bgTertiary.withOpacity(0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-        height: _kTableRowHeight,
+        height: _T.kTableRowHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isHovered ? const Color(0xFFFAFAFB) : Colors.transparent,
+          border: Border(
+            left: BorderSide(
+              color: employee.isActive ? _T.green : _T.slate300,
+              width: 2.75,
+            ),
+          ),
+        ),
         child: Row(
           children: [
-            // Checkbox
             SizedBox(
-              width: 24,
+              width: 20,
               child: Checkbox(
                 value: false,
-                onChanged: (value) {},
+                onChanged: (v) {},
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
 
-            // Name with avatar
+            // Employee Name & ID
             Expanded(
               flex: 2,
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 18,
+                    radius: 13,
                     backgroundColor: _getAvatarColor(employee.id),
                     child: Text(
-                      employee.name
-                          .split(' ')
-                          .map((e) => e[0])
-                          .join()
-                          .toUpperCase(),
+                      employee.name.isNotEmpty
+                          ? employee.name
+                              .split(' ')
+                              .map((e) => e[0])
+                              .join()
+                              .toUpperCase()
+                          : '?',
                       style: const TextStyle(
-                        color: _T.textInverse,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -736,19 +612,19 @@ class _EmployeeManagementScreenState
                       children: [
                         Text(
                           employee.name,
-                          style: TextStyle(
-                            color: _T.textPrimary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
+                          style: const TextStyle(
+                            color: _T.ink,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          employee.id,
-                          style: TextStyle(
-                            color: _T.textTertiary,
-                            fontSize: 11,
+                          'ID: ${employee.id}',
+                          style: const TextStyle(
+                            color: _T.slate400,
+                            fontSize: 10,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -765,32 +641,36 @@ class _EmployeeManagementScreenState
               flex: 2,
               child: Text(
                 employee.email,
-                style: TextStyle(color: _T.textSecondary, fontSize: 13),
+                style: const TextStyle(color: _T.ink3, fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
 
-            // Department
+            // Department Pill
             Expanded(
               flex: 1,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getDepartmentColor(
-                    employee.department,
-                  ).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(_rSmall),
-                ),
-                child: Text(
-                  employee.department,
-                  style: TextStyle(
-                    color: _getDepartmentColor(employee.department),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  decoration: BoxDecoration(
+                    color: _T.slate100,
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
+                  child: Text(
+                    employee.department,
+                    style: const TextStyle(
+                      color: _T.ink2,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
@@ -800,54 +680,64 @@ class _EmployeeManagementScreenState
               flex: 1,
               child: Text(
                 employee.role,
-                style: TextStyle(color: _T.textSecondary, fontSize: 13),
+                style: const TextStyle(color: _T.ink3, fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
 
-            // Status
-            Expanded(flex: 1, child: _buildStatusBadge(employee.isActive)),
+            // Status Badge
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildStatusBadge(employee.isActive),
+              ),
+            ),
 
-            // Current Shift
-            Expanded(flex: 1, child: _buildShiftBadge(employee)),
+            // Shift Status
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildShiftBadge(employee),
+              ),
+            ),
 
-            // This Week
-            Expanded(flex: 1, child: _buildWeekBadge(employee)),
+            // Week Metrics
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildWeekBadge(employee),
+              ),
+            ),
 
-            // Actions
+            // Quick Actions Toolbar
             SizedBox(
-              width: 100,
+              width: 90,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _buildIconButton(
+                  _buildActionIcon(
                     icon: Icons.edit_outlined,
                     tooltip: 'Edit',
                     onPressed: () => _showEmployeeModal(context, employee),
-                    size: 18,
-                    padding: 6,
                   ),
-                  const SizedBox(width: 8),
-                  _buildIconButton(
+                  _buildActionIcon(
                     icon: Icons.visibility_outlined,
                     tooltip: 'View Details',
                     onPressed: () => _showEmployeeDetails(context, employee),
-                    size: 18,
-                    padding: 6,
                   ),
-                  const SizedBox(width: 8),
-                  _buildIconButton(
-                    icon: Icons.delete_outline_rounded,
+                  _buildActionIcon(
+                    icon: Icons.delete_outline,
                     tooltip: 'Delete',
+                    color: _T.red,
                     onPressed: () => _showDeleteConfirmation(context, employee),
-                    size: 18,
-                    padding: 6,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
           ],
         ),
       ),
@@ -856,36 +746,29 @@ class _EmployeeManagementScreenState
 
   Widget _buildStatusBadge(bool isActive) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: (isActive ? _T.statusActive : _T.statusInactive).withOpacity(
-          0.1,
-        ),
-        borderRadius: BorderRadius.circular(_rSmall),
-        border: Border.all(
-          color: (isActive ? _T.statusActive : _T.statusInactive).withOpacity(
-            0.3,
-          ),
-        ),
+        color: isActive ? _T.greenBg : _T.redBg,
+        borderRadius: BorderRadius.circular(_T.rPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 5,
+            height: 5,
             decoration: BoxDecoration(
-              color: isActive ? _T.statusActive : _T.statusInactive,
+              color: isActive ? _T.green : _T.red,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Text(
             isActive ? 'Active' : 'Inactive',
             style: TextStyle(
-              color: isActive ? _T.statusActive : _T.statusInactive,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              color: isActive ? _T.green : _T.red,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -896,142 +779,116 @@ class _EmployeeManagementScreenState
   Widget _buildShiftBadge(EmployeeWithAttendance employee) {
     if (employee.isCurrentlyCheckedIn) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: _T.accentGreen.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(_rSmall),
-          border: Border.all(color: _T.accentGreen.withOpacity(0.3)),
+          color: _T.greenBg,
+          borderRadius: BorderRadius.circular(_T.rPill),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: _T.accentGreen,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Checked In',
-              style: TextStyle(
-                color: _T.accentGreen,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        child: const Text(
+          'Checked In',
+          style: TextStyle(
+            color: _T.green,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       );
     }
-
     if (employee.lastCheckOut != null) {
       final lastOut = DateFormat('HH:mm').format(employee.lastCheckOut!);
       return Text(
-        'Out at $lastOut',
-        style: TextStyle(color: _T.textTertiary, fontSize: 12),
+        'Out @ $lastOut',
+        style: const TextStyle(color: _T.slate400, fontSize: 11),
       );
     }
-
-    return Text('--', style: TextStyle(color: _T.textTertiary, fontSize: 12));
+    return const Text('--', style: TextStyle(color: _T.slate400, fontSize: 11));
   }
 
   Widget _buildWeekBadge(EmployeeWithAttendance employee) {
     if ((employee.currentWeekOvertime ?? 0) > 0) {
-      return Tooltip(
-        message: '${employee.currentWeekOvertime} hours overtime',
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: _T.statusWarning.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(_rSmall),
-          ),
-          child: Text(
-            '+${employee.currentWeekOvertime?.toStringAsFixed(1)}h OT',
-            style: TextStyle(
-              color: _T.statusWarning,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: _T.amberBg,
+          borderRadius: BorderRadius.circular(_T.rPill),
+        ),
+        child: Text(
+          '+${employee.currentWeekOvertime?.toStringAsFixed(1)}h OT',
+          style: const TextStyle(
+            color: _T.amber,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
     }
 
     if ((employee.weekendDaysWorked ?? 0) > 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: _T.statusPending.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(_rSmall),
-        ),
-        child: Text(
-          '${employee.weekendDaysWorked} weekends',
-          style: TextStyle(
-            color: _T.statusPending,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+      return Text(
+        '${employee.weekendDaysWorked}d weekend',
+        style: const TextStyle(color: _T.ink3, fontSize: 11),
       );
     }
 
-    return Text(
+    return const Text(
       'On track',
-      style: TextStyle(
-        color: _T.statusActive,
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-      ),
+      style: TextStyle(color: _T.slate400, fontSize: 11),
     );
   }
 
   Widget _buildTableFooter(BuildContext context, int totalCount) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Showing $totalCount ${totalCount == 1 ? 'employee' : 'employees'}',
-            style: TextStyle(color: _T.textSecondary, fontSize: 13),
+            'Showing $totalCount total ${totalCount == 1 ? 'record' : 'records'}',
+            style: const TextStyle(
+              color: _T.slate400,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           Row(
             children: [
-              _buildIconButton(
-                icon: Icons.navigate_before_rounded,
-                tooltip: 'Previous',
+              IconButton(
+                icon: const Icon(
+                  Icons.chevron_left,
+                  size: 16,
+                  color: _T.slate400,
+                ),
                 onPressed: () {},
-                size: 18,
-                padding: 8,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
               const SizedBox(width: 8),
               Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: _T.accentBlue,
-                  borderRadius: BorderRadius.circular(_rSmall),
+                  color: _T.primaryBg,
+                  borderRadius: BorderRadius.circular(_T.r),
                 ),
-                child: Text(
+                child: const Text(
                   '1',
                   style: TextStyle(
-                    color: _T.textInverse,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
+                    color: _T.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              _buildIconButton(
-                icon: Icons.navigate_next_rounded,
-                tooltip: 'Next',
+              IconButton(
+                icon: const Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: _T.slate400,
+                ),
                 onPressed: () {},
-                size: 18,
-                padding: 8,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),
@@ -1040,59 +897,158 @@ class _EmployeeManagementScreenState
     );
   }
 
-  Widget _buildLoadingState() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
+  Widget _buildPrimaryButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 15),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
       ),
-      padding: const EdgeInsets.all(40),
-      child: const Center(child: CircularProgressIndicator()),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _T.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        // height: 32,
+        fixedSize: Size.fromHeight(32),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+      ),
     );
   }
 
-  Widget _buildErrorState(
-    BuildContext context,
-    Object error,
-    StackTrace stackTrace,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
+  Widget _buildSecondaryIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        height: 32,
+        width: 32,
+        decoration: BoxDecoration(
+          color: _T.surfaceBg,
+          border: Border.all(color: _T.slate200),
+          borderRadius: BorderRadius.circular(_T.r),
+        ),
+        child: IconButton(
+          icon: Icon(icon, size: 16, color: _T.ink2),
+          onPressed: onPressed,
+          padding: EdgeInsets.zero,
+        ),
       ),
-      padding: const EdgeInsets.all(40),
+    );
+  }
+
+  Widget _buildActionIcon({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    Color color = _T.slate400,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        icon: Icon(icon, size: 15, color: color),
+        onPressed: onPressed,
+        padding: const EdgeInsets.all(4),
+        constraints: const BoxConstraints(),
+      ),
+    );
+  }
+
+  Widget _buildCompactDropdown<T>({
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          icon: const Icon(Icons.unfold_more, size: 14, color: _T.slate400),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: _T.ink2,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2, color: _T.primary),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, Object error, StackTrace st) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
+      ),
       child: Column(
         children: [
-          Icon(Icons.error_outline, size: 48, color: _T.statusInactive),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading employees',
+          const Icon(Icons.error_outline, size: 32, color: _T.red),
+          const SizedBox(height: 8),
+          const Text(
+            'Failed to load employees',
             style: TextStyle(
-              color: _T.textPrimary,
-              fontSize: 16,
+              color: _T.ink,
               fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             error.toString(),
-            style: TextStyle(color: _T.textSecondary, fontSize: 14),
+            style: const TextStyle(color: _T.slate400, fontSize: 11),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              ref.invalidate(employeesProvider);
-            },
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry'),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => ref.invalidate(employeesProvider),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _T.accentBlue,
-              foregroundColor: _T.textInverse,
+              backgroundColor: _T.primary,
+              // height: 30,
+              fixedSize: Size.fromHeight(30),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_T.r),
+              ),
             ),
+            child: const Text('Retry', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -1101,33 +1057,33 @@ class _EmployeeManagementScreenState
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: _T.bgPrimary,
-        border: Border.all(color: _T.borderLight),
-        borderRadius: BorderRadius.circular(_rLarge),
+        color: _T.surfaceBg,
+        borderRadius: BorderRadius.circular(_T.r),
+        border: Border.all(color: _T.slate200),
       ),
-      padding: const EdgeInsets.all(60),
       child: Column(
         children: [
-          Icon(Icons.people_outline, size: 64, color: _T.textTertiary),
-          const SizedBox(height: 16),
-          Text(
-            'No employees found',
+          const Icon(Icons.people_outline, size: 40, color: _T.slate400),
+          const SizedBox(height: 12),
+          const Text(
+            'No matching employees found',
             style: TextStyle(
-              color: _T.textPrimary,
-              fontSize: 18,
+              color: _T.ink,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Try adjusting your filters or add your first employee',
-            style: TextStyle(color: _T.textSecondary, fontSize: 14),
+          const SizedBox(height: 4),
+          const Text(
+            'Adjust your search queries or active status filter.',
+            style: TextStyle(color: _T.slate400, fontSize: 12),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildPrimaryButton(
             label: 'Add Employee',
-            icon: Icons.add_rounded,
+            icon: Icons.add,
             onPressed: () => _showEmployeeModal(context),
           ),
         ],
@@ -1135,132 +1091,65 @@ class _EmployeeManagementScreenState
     );
   }
 
-  // ============================================
-  // HELPER METHODS & DIALOGS
-  // ============================================
-
-  Widget _buildPrimaryButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          color: _T.accentBlue,
-          borderRadius: BorderRadius.circular(_rMedium),
-        ),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(_rMedium),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: _T.textInverse, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: _T.textInverse,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onPressed,
-    double size = 20,
-    double padding = 8,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_rMedium),
-          ),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(_rMedium),
-            child: Padding(
-              padding: EdgeInsets.all(padding),
-              child: Icon(icon, color: _T.textSecondary, size: size),
-            ),
-          ),
-        ),
-      ),
-    );
+  List<EmployeeWithAttendance> _sortEmployees(
+    List<EmployeeWithAttendance> employees,
+  ) {
+    final sorted = [...employees];
+    sorted.sort((a, b) {
+      int comparison = 0;
+      switch (_sortColumn) {
+        case 'name':
+          comparison = a.name.compareTo(b.name);
+          break;
+        case 'email':
+          comparison = a.email.compareTo(b.email);
+          break;
+        case 'department':
+          comparison = a.department.compareTo(b.department);
+          break;
+        case 'role':
+          comparison = a.role.compareTo(b.role);
+          break;
+        case 'status':
+          comparison = (a.isActive ? 1 : 0).compareTo(b.isActive ? 1 : 0);
+          break;
+        default:
+          comparison = 0;
+      }
+      return _sortAscending ? comparison : -comparison;
+    });
+    return sorted;
   }
 
   Color _getAvatarColor(String id) {
     final colors = [
-      const Color(0xFF3B82F6),
+      const Color(0xFF2563EB),
       const Color(0xFF10B981),
       const Color(0xFFF97316),
       const Color(0xFF8B5CF6),
       const Color(0xFFEC4899),
     ];
-    return colors[id.hashCode % colors.length];
-  }
-
-  Color _getDepartmentColor(String department) {
-    switch (department.toLowerCase()) {
-      case 'operations':
-        return _T.accentBlue;
-      case 'design':
-        return _T.accentOrange;
-      case 'tech':
-        return _T.accentGreen;
-      case 'sales':
-        return const Color(0xFFEC4899);
-      default:
-        return _T.textSecondary;
-    }
+    return colors[id.hashCode.abs() % colors.length];
   }
 
   void _showEmployeeModal(
     BuildContext context, [
     EmployeeWithAttendance? employee,
   ]) {
-    // OPEN ITEM: Import and show EmployeeFormModal from employee_management_modals.dart
-    // showDialog(
-    //   context: context,
-    //   builder: (context) => EmployeeFormModal(employee: employee),
-    // ).then((result) {
-    //   if (result == true) {
-    //     ref.invalidate(employeesProvider);
-    //   }
-    // });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          employee != null
-              ? 'Edit mode - Import EmployeeFormModal'
-              : 'Add mode - Import EmployeeFormModal',
-        ),
-      ),
-    );
+    showDialog(
+      context: context,
+      builder: (context) => EmployeeFormModal(employee: employee),
+    ).then((result) {
+      if (result == true) {
+        ref.invalidate(employeesProvider);
+      }
+    });
   }
 
   void _showEmployeeDetails(
     BuildContext context,
     EmployeeWithAttendance employee,
   ) {
-    // OPEN ITEM: Import and show EmployeeDetailsModal from employee_management_modals.dart
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('View details for ${employee.name}')),
     );
@@ -1274,35 +1163,42 @@ class _EmployeeManagementScreenState
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: _T.bgPrimary,
-            title: Text(
-              'Delete Employee?',
+            backgroundColor: _T.surfaceBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_T.rLg),
+            ),
+            title: const Text(
+              'Delete Employee',
               style: TextStyle(
-                color: _T.textPrimary,
+                color: _T.ink,
                 fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
             content: Text(
               'Are you sure you want to delete ${employee.name}? This action cannot be undone.',
-              style: TextStyle(color: _T.textSecondary),
+              style: const TextStyle(color: _T.ink3, fontSize: 13),
             ),
             actions: [
               TextButton(
                 onPressed: Navigator.of(context).pop,
-                child: Text(
+                child: const Text(
                   'Cancel',
-                  style: TextStyle(color: _T.textSecondary),
+                  style: TextStyle(color: _T.slate400),
                 ),
               ),
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _T.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_T.r),
+                  ),
+                ),
                 onPressed: () {
                   Navigator.of(context).pop();
                   _deleteEmployee(employee);
                 },
-                child: Text(
-                  'Delete',
-                  style: TextStyle(color: _T.statusInactive),
-                ),
+                child: const Text('Delete'),
               ),
             ],
           ),
@@ -1310,19 +1206,15 @@ class _EmployeeManagementScreenState
   }
 
   void _deleteEmployee(EmployeeWithAttendance employee) {
-    // OPEN ITEM: Call delete API
-    // ref.read(deleteEmployeeProvider(employee.id));
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Deleted ${employee.name}'),
-        backgroundColor: _T.statusActive,
+        backgroundColor: _T.green,
       ),
     );
   }
 
   void _showExportDialog(BuildContext context) {
-    // OPEN ITEM: Implement export to CSV/PDF
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Export functionality coming soon')),
     );

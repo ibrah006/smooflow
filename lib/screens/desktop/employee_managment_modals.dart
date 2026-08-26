@@ -1,43 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooflow/core/models/employee_with_attendance.dart';
+import 'package:smooflow/providers/employee_provider.dart';
 
-// Design constants
-const double _rSmall = 4;
-const double _rMedium = 6;
-const double _rLarge = 8;
-const double _rXL = 12;
-
+// Modern Compact SaaS Design Tokens (Aligned with EmployeeManagementScreen)
 class _T {
-  static const bgPrimary = Color(0xFFFFFFFF);
-  static const bgSecondary = Color(0xFFF8F9FB);
-  static const bgTertiary = Color(0xF5F7FA);
+  static const canvasBg = Color(0xFFF8FAFC);
+  static const surfaceBg = Color(0xFFFFFFFF);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate300 = Color(0xFFCBD5E1);
+  static const slate400 = Color(0xFF94A3B8);
 
-  static const textPrimary = Color(0xFF1A1A1A);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textTertiary = Color(0xFF9CA3AF);
-  static const textInverse = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF0F172A);
+  static const ink2 = Color(0xFF1E293B);
+  static const ink3 = Color(0xFF334155);
 
-  static const borderLight = Color(0xFFE5E7EB);
-  static const borderMedium = Color(0xFFD1D5DB);
+  static const primary = Color(0xFF2563EB);
+  static const primaryBg = Color(0xFFEFF6FF);
+  static const primaryBorder = Color(0xFFDBEAFE);
 
-  static const accentBlue = Color(0xFF3B82F6);
-  static const accentGreen = Color(0xFF10B981);
-  static const accentOrange = Color(0xFFF97316);
-  static const statusActive = Color(0xFF10B981);
-  static const statusInactive = Color(0xFFEF4444);
+  static const green = Color(0xFF10B981);
+  static const greenBg = Color(0xFFF0FDF4);
+  static const red = Color(0xFFEF4444);
+  static const redBg = Color(0xFFFEE2E2);
+  static const amber = Color(0xFFF59E0B);
+  static const amberBg = Color(0xFFFEF3C7);
+
+  static const double r = 6.0;
+  static const double rLg = 12.0;
+  static const double rPill = 99.0;
 }
 
-class EmployeeFormModal extends StatefulWidget {
+// ============================================
+// EMPLOYEE FORM MODAL
+// ============================================
+
+class EmployeeFormModal extends ConsumerStatefulWidget {
   final EmployeeWithAttendance? employee;
 
   const EmployeeFormModal({this.employee, Key? key}) : super(key: key);
 
   @override
-  State<EmployeeFormModal> createState() => _EmployeeFormModalState();
+  ConsumerState<EmployeeFormModal> createState() => _EmployeeFormModalState();
 }
 
-class _EmployeeFormModalState extends State<EmployeeFormModal> {
+class _EmployeeFormModalState extends ConsumerState<EmployeeFormModal> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _roleController;
@@ -86,150 +95,153 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
     final isEditing = widget.employee != null;
 
     return Dialog(
-      backgroundColor: _T.bgPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rXL)),
+      backgroundColor: _T.surfaceBg,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 680),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Modal header
+            // Header
             Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: const BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: _T.borderLight, width: 1),
+                  bottom: BorderSide(color: _T.slate200, width: 1),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Text(
-                        isEditing ? 'Edit Employee' : 'Add New Employee',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: _T.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Icon(
+                        isEditing ? Icons.edit_note : Icons.person_add_alt_1,
+                        color: _T.primary,
+                        size: 20,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isEditing
-                            ? 'Update employee information'
-                            : 'Create a new employee record',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _T.textSecondary,
-                        ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isEditing ? 'Edit Employee' : 'Add New Employee',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _T.ink,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          Text(
+                            isEditing
+                                ? 'Update existing employee records'
+                                : 'Enter details to register a new employee',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _T.slate400,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                   IconButton(
                     onPressed: Navigator.of(context).pop,
-                    icon: const Icon(Icons.close_rounded),
-                    color: _T.textSecondary,
+                    icon: const Icon(Icons.close, size: 18),
+                    color: _T.slate400,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
             ),
 
-            // Modal body
+            // Form Body
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Personal Information Section
-                    _buildSectionHeader('Personal Information'),
-                    const SizedBox(height: 16),
-
-                    // Name field
+                    _buildSectionHeader('PERSONAL INFORMATION'),
+                    const SizedBox(height: 12),
                     _buildFormField(
                       label: 'Full Name',
                       controller: _nameController,
-                      placeholder: 'John Doe',
+                      placeholder: 'e.g. Jane Doe',
                       required: true,
                     ),
-                    const SizedBox(height: 16),
-
-                    // Email field
+                    const SizedBox(height: 12),
                     _buildFormField(
                       label: 'Email Address',
                       controller: _emailController,
-                      placeholder: 'john@example.com',
+                      placeholder: 'jane.doe@company.com',
                       keyboardType: TextInputType.emailAddress,
                       required: true,
                     ),
-                    const SizedBox(height: 16),
-
-                    // Phone field
+                    const SizedBox(height: 12),
                     _buildFormField(
                       label: 'Phone Number',
                       controller: _phoneController,
                       placeholder: '+1 (555) 000-0000',
                       keyboardType: TextInputType.phone,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Employment Information Section
-                    _buildSectionHeader('Employment Information'),
-                    const SizedBox(height: 16),
-
-                    // Role and Department (row)
+                    _buildSectionHeader('EMPLOYMENT DETAILS'),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: _buildFormField(
                             label: 'Role',
                             controller: _roleController,
-                            placeholder: 'e.g., Designer, Developer',
+                            placeholder: 'Designer, Developer...',
                             required: true,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildDropdownField(
                             label: 'Department',
                             value: _selectedDepartment,
-                            items: [
+                            items: const [
                               'Operations',
                               'Design',
                               'Tech',
                               'Sales',
                               'Marketing',
                             ],
-                            onChanged: (value) {
-                              setState(
-                                () =>
-                                    _selectedDepartment = value ?? 'Operations',
-                              );
-                            },
+                            onChanged:
+                                (val) => setState(
+                                  () =>
+                                      _selectedDepartment = val ?? 'Operations',
+                                ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Salary Type and Rate (row)
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: _buildDropdownField(
                             label: 'Salary Type',
                             value: _selectedSalaryType,
-                            items: ['Hourly', 'Salary'],
-                            onChanged: (value) {
-                              setState(
-                                () =>
-                                    _selectedSalaryType =
-                                        (value ?? 'salary').toLowerCase(),
-                              );
-                            },
+                            items: const ['salary', 'hourly'],
+                            onChanged:
+                                (val) => setState(
+                                  () =>
+                                      _selectedSalaryType =
+                                          (val ?? 'salary').toLowerCase(),
+                                ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildFormField(
                             label: 'Hourly Rate (\$)',
@@ -242,29 +254,27 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Weekly hours threshold
+                    const SizedBox(height: 12),
                     _buildFormField(
                       label: 'Weekly Hours Threshold',
                       controller: _weeklyHoursController,
                       placeholder: '40',
                       keyboardType: TextInputType.number,
-                      suffix: 'hours',
+                      suffix: 'hrs/wk',
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Status Section
-                    _buildSectionHeader('Status'),
-                    const SizedBox(height: 16),
-
-                    // Active/Inactive toggle
+                    _buildSectionHeader('STATUS & ACCESSIBILITY'),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: _T.bgTertiary,
-                        border: Border.all(color: _T.borderLight),
-                        borderRadius: BorderRadius.circular(_rMedium),
+                        color: _T.slate100,
+                        borderRadius: BorderRadius.circular(_T.r),
+                        border: Border.all(color: _T.slate200),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -272,30 +282,32 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Employee Status',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.labelMedium?.copyWith(
+                              const Text(
+                                'Employee Account Status',
+                                style: TextStyle(
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: _T.textPrimary,
+                                  color: _T.ink,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 _isActive
-                                    ? 'Employee is active and can check in'
-                                    : 'Employee is inactive',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: _T.textSecondary),
+                                    ? 'Active employees can log hours and access tools'
+                                    : 'Inactive employees are restricted from check-ins',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: _T.slate400,
+                                ),
                               ),
                             ],
                           ),
                           Switch(
                             value: _isActive,
-                            onChanged:
-                                (value) => setState(() => _isActive = value),
-                            activeColor: _T.statusActive,
+                            onChanged: (val) => setState(() => _isActive = val),
+                            activeColor: _T.green,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
                         ],
                       ),
@@ -305,46 +317,45 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
               ),
             ),
 
-            // Modal footer
+            // Footer
             Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: _T.borderLight, width: 1),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _T.slate200, width: 1)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: Navigator.of(context).pop,
-                    child: Text(
+                    child: const Text(
                       'Cancel',
                       style: TextStyle(
-                        color: _T.textSecondary,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
+                        color: _T.slate400,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: _isSaving ? null : _handleSave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _T.accentBlue,
-                      foregroundColor: _T.textInverse,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+                      backgroundColor: _T.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      // height: 32,
+                      // maximumSize: Size.fromHeight(32),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(_rMedium),
+                        borderRadius: BorderRadius.circular(_T.r),
                       ),
                     ),
                     child:
                         _isSaving
                             ? const SizedBox(
-                              height: 16,
-                              width: 16,
+                              height: 14,
+                              width: 14,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
@@ -353,10 +364,10 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
                               ),
                             )
                             : Text(
-                              isEditing ? 'Update' : 'Create',
+                              isEditing ? 'Save Changes' : 'Create Employee',
                               style: const TextStyle(
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 14,
                               ),
                             ),
                   ),
@@ -373,10 +384,10 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
     return Text(
       title,
       style: const TextStyle(
-        color: _T.textPrimary,
-        fontSize: 13,
+        fontSize: 10,
         fontWeight: FontWeight.w700,
-        letterSpacing: 0.5,
+        color: _T.slate400,
+        letterSpacing: 0.75,
       ),
     );
   }
@@ -397,46 +408,54 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
             Text(
               label,
               style: const TextStyle(
-                color: _T.textPrimary,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
+                color: _T.ink2,
               ),
             ),
             if (required)
               const Text(
                 ' *',
-                style: TextStyle(color: Colors.red, fontSize: 13),
+                style: TextStyle(
+                  color: _T.red,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
           ],
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: placeholder,
-            hintStyle: const TextStyle(color: _T.textTertiary),
-            suffixText: suffix,
-            suffixStyle: const TextStyle(color: _T.textSecondary, fontSize: 13),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_rMedium),
-              borderSide: const BorderSide(color: _T.borderLight),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 34,
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: _T.ink,
+              fontWeight: FontWeight.w500,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_rMedium),
-              borderSide: const BorderSide(color: _T.borderLight),
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: const TextStyle(color: _T.slate400, fontSize: 12),
+              suffixText: suffix,
+              suffixStyle: const TextStyle(color: _T.slate400, fontSize: 11),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              filled: true,
+              fillColor: _T.surfaceBg,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(_T.r),
+                borderSide: const BorderSide(color: _T.slate200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(_T.r),
+                borderSide: const BorderSide(color: _T.primary, width: 1.5),
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_rMedium),
-              borderSide: const BorderSide(color: _T.accentBlue, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            isDense: true,
           ),
-          style: const TextStyle(color: _T.textPrimary, fontSize: 13),
         ),
       ],
     );
@@ -454,31 +473,44 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
         Text(
           label,
           style: const TextStyle(
-            color: _T.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
+            color: _T.ink2,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            border: Border.all(color: _T.borderLight),
-            borderRadius: BorderRadius.circular(_rMedium),
+            color: _T.surfaceBg,
+            borderRadius: BorderRadius.circular(_T.r),
+            border: Border.all(color: _T.slate200),
           ),
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            underline: const SizedBox.shrink(),
-            items:
-                items
-                    .map(
-                      (item) => DropdownMenuItem(
-                        value: item.toLowerCase(),
-                        child: Text(item),
-                      ),
-                    )
-                    .toList(),
-            onChanged: onChanged,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: const Icon(Icons.unfold_more, size: 14, color: _T.slate400),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: _T.ink2,
+              ),
+              items:
+                  items
+                      .map(
+                        (item) => DropdownMenuItem<String>(
+                          value: item,
+                          child: Text(
+                            item[0].toUpperCase() +
+                                item.substring(1).toLowerCase(),
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: onChanged,
+            ),
           ),
         ),
       ],
@@ -486,33 +518,65 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
   }
 
   Future<void> _handleSave() async {
-    // Validate fields
     if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
+          backgroundColor: _T.red,
         ),
       );
       return;
     }
 
     setState(() => _isSaving = true);
+    final isEditing = widget.employee != null;
 
     try {
-      // OPEN ITEM: Call API to save employee
-      // await repository.createOrUpdateEmployee(...)
+      if (isEditing) {
+        ref.read(
+          updateEmployeeProvider((
+            widget.employee!.id,
+            {
+              'name': _nameController.text,
+              'email': _emailController.text,
+              'role': _roleController.text,
+              'phone': _phoneController.text,
+              'department': _selectedDepartment,
+              'salaryType': _selectedSalaryType,
+              'hourlyRate': double.tryParse(_hourlyRateController.text) ?? 0.0,
+              'weeklyHoursThreshold':
+                  int.tryParse(_weeklyHoursController.text) ?? 40,
+              'isActive': _isActive,
+            },
+          )),
+        );
+      } else {
+        await ref.read(
+          createEmployeeProvider({
+            'name': _nameController.text,
+            'email': _emailController.text,
+            'role': _roleController.text,
+            'phone': _phoneController.text,
+            'department': _selectedDepartment,
+            'salaryType': _selectedSalaryType,
+            'hourlyRate': double.tryParse(_hourlyRateController.text) ?? 0.0,
+            'weeklyHoursThreshold':
+                int.tryParse(_weeklyHoursController.text) ?? 40,
+            'isActive': _isActive,
+          }),
+        );
+      }
 
       if (mounted) {
-        Navigator.of(context).pop(true); // Return true to indicate success
+        Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.employee != null
+              isEditing
                   ? 'Employee updated successfully'
                   : 'Employee created successfully',
             ),
-            backgroundColor: _T.statusActive,
+            backgroundColor: _T.green,
           ),
         );
       }
@@ -521,7 +585,7 @@ class _EmployeeFormModalState extends State<EmployeeFormModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: _T.red,
           ),
         );
       }
@@ -546,19 +610,22 @@ class EmployeeDetailsModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: _T.bgPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rXL)),
+      backgroundColor: _T.surfaceBg,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_T.rLg),
+      ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 620),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Modal header
+            // Modal Header
             Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: _T.borderLight, width: 1),
+                  bottom: BorderSide(color: _T.slate200, width: 1),
                 ),
               ),
               child: Row(
@@ -567,85 +634,47 @@ class EmployeeDetailsModal extends StatelessWidget {
                   Row(
                     children: [
                       CircleAvatar(
-                        radius: 28,
+                        radius: 22,
                         backgroundColor: _getAvatarColor(employee.id),
                         child: Text(
-                          employee.name
-                              .split(' ')
-                              .map((e) => e[0])
-                              .join()
-                              .toUpperCase(),
+                          employee.name.isNotEmpty
+                              ? employee.name
+                                  .split(' ')
+                                  .map((e) => e[0])
+                                  .join()
+                                  .toUpperCase()
+                              : '?',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontSize: 12,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             employee.name,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
-                              color: _T.textPrimary,
+                            style: const TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
+                              color: _T.ink,
+                              letterSpacing: -0.2,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(
-                                    employee.isActive,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(_rSmall),
-                                  border: Border.all(
-                                    color: _getStatusColor(
-                                      employee.isActive,
-                                    ).withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: _getStatusColor(
-                                          employee.isActive,
-                                        ),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      employee.isActive ? 'Active' : 'Inactive',
-                                      style: TextStyle(
-                                        color: _getStatusColor(
-                                          employee.isActive,
-                                        ),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              _buildStatusBadge(employee.isActive),
                               const SizedBox(width: 8),
                               Text(
-                                employee.id,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: _T.textTertiary),
+                                'ID: ${employee.id}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: _T.slate400,
+                                ),
                               ),
                             ],
                           ),
@@ -655,32 +684,49 @@ class EmployeeDetailsModal extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: Navigator.of(context).pop,
-                    icon: const Icon(Icons.close_rounded),
-                    color: _T.textSecondary,
+                    icon: const Icon(Icons.close, size: 18),
+                    color: _T.slate400,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
             ),
 
-            // Modal body - Tabbed content
+            // Modal Body - Tabbed Layout
             Expanded(
               child: DefaultTabController(
                 length: 3,
                 child: Column(
                   children: [
-                    // Tab bar
-                    TabBar(
-                      labelColor: _T.accentBlue,
-                      unselectedLabelColor: _T.textSecondary,
-                      indicatorColor: _T.accentBlue,
-                      tabs: const [
-                        Tab(text: 'Overview'),
-                        Tab(text: 'Attendance'),
-                        Tab(text: 'Compensation'),
-                      ],
+                    Container(
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: _T.slate200, width: 1),
+                        ),
+                        color: _T.slate100,
+                      ),
+                      child: const TabBar(
+                        labelColor: _T.primary,
+                        unselectedLabelColor: _T.slate400,
+                        indicatorColor: _T.primary,
+                        indicatorWeight: 2,
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        unselectedLabelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        tabs: [
+                          Tab(text: 'Overview'),
+                          Tab(text: 'Attendance'),
+                          Tab(text: 'Compensation'),
+                        ],
+                      ),
                     ),
-
-                    // Tab content
                     Expanded(
                       child: TabBarView(
                         children: [
@@ -695,20 +741,32 @@ class EmployeeDetailsModal extends StatelessWidget {
               ),
             ),
 
-            // Modal footer
+            // Modal Footer
             Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: _T.borderLight, width: 1),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _T.slate200, width: 1)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
+                  OutlinedButton(
                     onPressed: Navigator.of(context).pop,
-                    child: const Text('Close'),
+                    style: OutlinedButton.styleFrom(
+                      maximumSize: Size.fromHeight(32),
+                      side: const BorderSide(color: _T.slate200),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_T.r),
+                      ),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _T.ink2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -721,25 +779,25 @@ class EmployeeDetailsModal extends StatelessWidget {
 
   Widget _buildOverviewTab(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailSection('Personal Information', [
+          _buildDetailSection('PERSONAL INFORMATION', [
             _buildDetailRow('Email', employee.email),
             _buildDetailRow('Department', employee.department),
             _buildDetailRow('Role', employee.role),
           ]),
-          const SizedBox(height: 24),
-          _buildDetailSection('Employment', [
-            _buildDetailRow('Salary Type', employee.salaryType),
+          const SizedBox(height: 20),
+          _buildDetailSection('EMPLOYMENT TERMS', [
+            _buildDetailRow('Salary Type', employee.salaryType.toUpperCase()),
             _buildDetailRow(
               'Hourly Rate',
-              '\$${employee.hourlyRate.toStringAsFixed(2)}/hr',
+              '\$${employee.hourlyRate.toStringAsFixed(2)} / hr',
             ),
             _buildDetailRow(
-              'Weekly Hours',
-              '${employee.weeklyHoursThreshold}h',
+              'Weekly Threshold',
+              '${employee.weeklyHoursThreshold} hrs',
             ),
             _buildDetailRow(
               'Hire Date',
@@ -753,11 +811,11 @@ class EmployeeDetailsModal extends StatelessWidget {
 
   Widget _buildAttendanceTab(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailSection('Current Status', [
+          _buildDetailSection('CURRENT SHIFT STATUS', [
             if (employee.lastCheckIn != null)
               _buildDetailRow(
                 'Last Check-in',
@@ -769,27 +827,27 @@ class EmployeeDetailsModal extends StatelessWidget {
                 DateFormat('MMM d, HH:mm').format(employee.lastCheckOut!),
               ),
             _buildDetailRow(
-              'Currently',
-              employee.isCurrentlyCheckedIn ? '✓ Checked In' : '—',
+              'Status',
+              employee.isCurrentlyCheckedIn ? 'Checked In' : 'Checked Out',
             ),
           ]),
-          const SizedBox(height: 24),
-          _buildDetailSection('This Week', [
+          const SizedBox(height: 20),
+          _buildDetailSection('THIS WEEK PERFORMANCE', [
             _buildDetailRow(
               'Consecutive Days',
               '${employee.consecutiveDaysWorked} days',
             ),
             _buildDetailRow(
-              'Overtime',
-              '${employee.currentWeekOvertime?.toStringAsFixed(1) ?? '0'} hours',
+              'Overtime Hours',
+              '+${employee.currentWeekOvertime?.toStringAsFixed(1) ?? '0'} hrs',
             ),
             _buildDetailRow(
-              'Weekends Worked',
+              'Weekend Days',
               '${employee.weekendDaysWorked} days',
             ),
           ]),
-          const SizedBox(height: 24),
-          _buildDetailSection('Recent Shifts (Last 7 days)', [
+          const SizedBox(height: 20),
+          _buildDetailSection('RECENT SHIFTS', [
             _buildShiftRow('Monday', '8h 45m', true),
             _buildShiftRow('Tuesday', '9h 15m', true),
             _buildShiftRow('Wednesday', '8h 30m', true),
@@ -803,40 +861,44 @@ class EmployeeDetailsModal extends StatelessWidget {
 
   Widget _buildCompensationTab(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailSection('Pending Compensation', [
+          _buildDetailSection('PENDING COMPENSATION', [
             _buildDetailRow(
               'Overtime Hours',
-              '+${employee.currentWeekOvertime?.toStringAsFixed(1) ?? '0'}h',
+              '+${employee.currentWeekOvertime?.toStringAsFixed(1) ?? '0'} hrs',
             ),
             _buildDetailRow(
               'Weekend Days',
               '${employee.weekendDaysWorked} days',
             ),
             _buildDetailRow(
-              'Total Due',
-              '\$${(employee.currentWeekOvertime ?? 0 * 67.5).toStringAsFixed(2)}',
+              'Total Estimated Due',
+              '\$${((employee.currentWeekOvertime ?? 0) * employee.hourlyRate * 1.5).toStringAsFixed(2)}',
             ),
           ]),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _T.statusActive.withOpacity(0.1),
-              border: Border.all(color: _T.statusActive.withOpacity(0.3)),
-              borderRadius: BorderRadius.circular(_rMedium),
+              color: _T.primaryBg,
+              border: Border.all(color: _T.primaryBorder),
+              borderRadius: BorderRadius.circular(_T.r),
             ),
             child: Row(
-              children: [
-                Icon(Icons.info_outline, color: _T.statusActive, size: 20),
-                const SizedBox(width: 12),
+              children: const [
+                Icon(Icons.info_outline, color: _T.primary, size: 16),
+                SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Compensation is calculated and displayed for manager review. Final approval is required before payroll processing.',
-                    style: TextStyle(color: _T.statusActive, fontSize: 12),
+                    'Compensation calculations are estimates based on standard rate multipliers. Final approval is required prior to payroll entry.',
+                    style: TextStyle(
+                      color: _T.ink3,
+                      fontSize: 11.5,
+                      height: 1.3,
+                    ),
                   ),
                 ),
               ],
@@ -854,17 +916,18 @@ class EmployeeDetailsModal extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: _T.textPrimary,
-            fontSize: 13,
+            fontSize: 10,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            color: _T.slate400,
+            letterSpacing: 0.75,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: _T.borderLight),
-            borderRadius: BorderRadius.circular(_rMedium),
+            color: _T.surfaceBg,
+            border: Border.all(color: _T.slate200),
+            borderRadius: BorderRadius.circular(_T.r),
           ),
           child: Column(
             children:
@@ -873,8 +936,7 @@ class EmployeeDetailsModal extends StatelessWidget {
                   return Column(
                     children: [
                       entry.value,
-                      if (!isLast)
-                        Divider(height: 1, color: _T.borderLight, thickness: 1),
+                      if (!isLast) const Divider(height: 1, color: _T.slate200),
                     ],
                   );
                 }).toList(),
@@ -886,19 +948,16 @@ class EmployeeDetailsModal extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: _T.textSecondary, fontSize: 13),
-          ),
+          Text(label, style: const TextStyle(color: _T.slate400, fontSize: 12)),
           Text(
             value,
             style: const TextStyle(
-              color: _T.textPrimary,
-              fontSize: 13,
+              color: _T.ink,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -909,19 +968,16 @@ class EmployeeDetailsModal extends StatelessWidget {
 
   Widget _buildShiftRow(String day, String duration, bool worked) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            day,
-            style: const TextStyle(color: _T.textSecondary, fontSize: 13),
-          ),
+          Text(day, style: const TextStyle(color: _T.slate400, fontSize: 12)),
           Text(
             duration,
             style: TextStyle(
-              color: worked ? _T.statusActive : _T.textTertiary,
-              fontSize: 13,
+              color: worked ? _T.green : _T.slate400,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -930,18 +986,46 @@ class EmployeeDetailsModal extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(bool isActive) {
-    return isActive ? _T.statusActive : _T.statusInactive;
+  Widget _buildStatusBadge(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isActive ? _T.greenBg : _T.redBg,
+        borderRadius: BorderRadius.circular(_T.rPill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: isActive ? _T.green : _T.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              color: isActive ? _T.green : _T.red,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getAvatarColor(String id) {
     final colors = [
-      const Color(0xFF3B82F6),
+      const Color(0xFF2563EB),
       const Color(0xFF10B981),
       const Color(0xFFF97316),
       const Color(0xFF8B5CF6),
       const Color(0xFFEC4899),
     ];
-    return colors[id.hashCode % colors.length];
+    return colors[id.hashCode.abs() % colors.length];
   }
 }
