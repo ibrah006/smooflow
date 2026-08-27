@@ -298,7 +298,7 @@ class TaskRepo {
     required String? name,
     required DateTime? date,
     required List<PrintSpec>? updatedPrintSpecs,
-    required PrintSpec? newPrintSpec,
+    required List<PrintSpec>? newPrintSpecs,
     required int? deletePrintSpecId,
     required TaskPriority? priority,
   }) async {
@@ -309,7 +309,7 @@ class TaskRepo {
         date == task.date &&
         name == task.name &&
         task.priority == priority &&
-        newPrintSpec == null &&
+        newPrintSpecs == null &&
         deletePrintSpecId == null) {
       // Abort update
       // Nothing to update
@@ -332,7 +332,7 @@ class TaskRepo {
         ...name != null ? {"name": name} : {},
         "updatedPrintSpecs":
             updatedPrintSpecs?.map((spec) => spec.toJson()).toList(),
-        "newPrintSpec": newPrintSpec?.toCreateJson(),
+        "newPrintSpecs": newPrintSpecs?.map((p) => p.toCreateJson()),
         "deletePrintSpecId": deletePrintSpecId,
         "priority": priority != null ? priority.index + 1 : null,
       },

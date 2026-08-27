@@ -248,7 +248,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
             name: null,
             date: null,
             updatedPrintSpecs: null,
-            newPrintSpec: null,
+            newPrintSpecs: null,
             deletePrintSpecId: null,
             priority: newPriority,
           );

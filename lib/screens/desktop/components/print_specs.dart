@@ -268,8 +268,8 @@ class PrintSpecsEditor extends ConsumerStatefulWidget {
   final Function(
     List<PrintSpec>? specs,
     bool sharedRef, {
-    PrintSpec? newPrintSpec,
     int? deletePrintSpecId,
+    List<PrintSpec>? newPrintSpecs,
   })
   onUpdate;
 
@@ -358,6 +358,37 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
     } finally {
       if (mounted) setState(() => _pickingSheet = false);
     }
+  }
+
+  void _commitExtractedSpecs(List<PrintSpec> extracted, SpecSheetDraft sheet) {
+    late final sharedRef;
+    if (_sharedRef) {
+      try {
+        sharedRef = _items.first.ref ?? '';
+      } catch (_) {
+        sharedRef = '';
+      }
+    }
+
+    _committedTransientIds.addAll(
+      extracted.map((e) {
+        if (e.id >= 0) {
+          throw Exception(
+            "Attempting to commit (create) an already persisted PrintSpec with ID ${e.id}",
+          );
+        }
+
+        return e.id;
+      }),
+    );
+    widget.onUpdate(
+      null,
+      _sharedRef,
+      newPrintSpecs:
+          extracted.map((p) {
+            return p..ref = _sharedRef ? sharedRef : p.ref;
+          }).toList(),
+    );
   }
 
   // OPEN ITEM: mock pipeline only — replace the two delays + random outcome
@@ -747,7 +778,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                           widget.onUpdate(
                             null,
                             true,
-                            newPrintSpec: newPrintSpec,
+                            newPrintSpecs: [newPrintSpec],
                           );
                         }
                       },
@@ -917,9 +948,10 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                     widget.onUpdate(
                       null,
                       _sharedRef,
-                      newPrintSpec:
-                          updatedItem
-                            ..ref = _sharedRef ? sharedRef : updatedItem.ref,
+                      newPrintSpecs: [
+                        updatedItem
+                          ..ref = _sharedRef ? sharedRef : updatedItem.ref,
+                      ],
                     );
                   }
                 } else {

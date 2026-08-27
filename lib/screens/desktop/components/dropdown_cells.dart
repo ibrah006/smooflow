@@ -86,7 +86,7 @@ class _PriorityDropdownCellState extends ConsumerState<PriorityDropdownCell> {
             name: null,
             date: null,
             updatedPrintSpecs: null,
-            newPrintSpec: null,
+            newPrintSpecs: null,
             deletePrintSpecId: null,
             priority: newPriority,
           );
@@ -303,7 +303,7 @@ class _BillingDropdownCellState extends ConsumerState<BillingDropdownCell> {
             name: null,
             date: null,
             updatedPrintSpecs: null,
-            newPrintSpec: null,
+            newPrintSpecs: null,
             deletePrintSpecId: null,
             priority: null,
           );

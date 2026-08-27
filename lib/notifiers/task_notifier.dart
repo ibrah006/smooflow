@@ -466,7 +466,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
     required String? name,
     required DateTime? date,
     required List<PrintSpec>? updatedPrintSpecs,
-    required PrintSpec? newPrintSpec,
+    required List<PrintSpec>? newPrintSpecs,
     required int? deletePrintSpecId,
     required TaskPriority? priority,
   }) async {
@@ -497,15 +497,18 @@ class TaskNotifier extends StateNotifier<TaskState> {
         name == null &&
         date == null &&
         updatedPrintSpecs == null &&
-        newPrintSpec == null &&
+        newPrintSpecs == null &&
         deletePrintSpecId == null &&
         priority == null) {
       // Nothing to update
       return;
     }
 
-    if (newPrintSpec != null) {
-      state.addCurrentlyCreatingSpec(task.id, newPrintSpec.id);
+    if (newPrintSpecs != null) {
+      state.addCurrentlyCreatingSpecs(
+        task.id,
+        newPrintSpecs.map((p) => p.id).toList(),
+      );
     }
 
     if (deletePrintSpecId != null) {
@@ -521,7 +524,7 @@ class TaskNotifier extends StateNotifier<TaskState> {
       name: name,
       date: date,
       updatedPrintSpecs: updatedPrintSpecs,
-      newPrintSpec: newPrintSpec,
+      newPrintSpecs: newPrintSpecs,
       deletePrintSpecId: deletePrintSpecId,
       priority: priority,
     );

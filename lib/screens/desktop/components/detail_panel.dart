@@ -446,7 +446,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
             date: newValue,
             updatedPrintSpecs: null,
-            newPrintSpec: null,
+            newPrintSpecs: null,
             deletePrintSpecId: null,
             priority: null,
           );
@@ -473,7 +473,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
             size: null,
             date: null,
             updatedPrintSpecs: null,
-            newPrintSpec: null,
+            newPrintSpecs: null,
             deletePrintSpecId: null,
             priority: null,
           );
@@ -484,8 +484,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _onPrintSpecsChange(
     List<PrintSpec>? updatedPrintSpecs,
     bool sharedRef, {
-    PrintSpec? newPrintSpec,
     int? deletePrintSpecId,
+    List<PrintSpec>? newPrintSpecs,
   }) async {
     // We aggregate quantity for backwards compatibility
     // final totalQty = specs.fold(0, (sum, item) => sum + item.quantity);
@@ -511,7 +511,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           size: null,
           date: null,
           updatedPrintSpecs: updatedPrintSpecs,
-          newPrintSpec: newPrintSpec,
+          newPrintSpecs: newPrintSpecs,
           deletePrintSpecId: deletePrintSpecId,
           priority: null,
         );

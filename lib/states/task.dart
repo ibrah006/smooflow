@@ -262,11 +262,20 @@ class TaskState {
         [];
   }
 
+  @Deprecated("Use addCurrentlyCreatingSpecs instead")
   void addCurrentlyCreatingSpec(int taskId, int specLocalId) {
     _currentlyCreatingSpecs[taskId] = [
       ..._currentlyCreatingSpecs[taskId] ?? [],
       // here newPrintSpec.id automatically returns temp local id
       CreatingPrintSpecID(specLocalId),
+    ];
+  }
+
+  void addCurrentlyCreatingSpecs(int taskId, List<int> specLocalIds) {
+    _currentlyCreatingSpecs[taskId] = [
+      ..._currentlyCreatingSpecs[taskId] ?? [],
+      // here newPrintSpec.id automatically returns temp local id
+      ...specLocalIds.map((localSpec) => CreatingPrintSpecID(localSpec)),
     ];
   }
 
