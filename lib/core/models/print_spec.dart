@@ -59,6 +59,7 @@ class PrintSpec {
       ref: json['ref'] as String?,
       size: json['size'] as String?,
       quantity: json['quantity'] as int?,
+      sourceSheetId: json['attachmentId'] as int?,
     );
   }
 
