@@ -710,6 +710,7 @@ class EmployeeDetailsModal extends StatelessWidget {
                       child: const TabBar(
                         labelColor: _T.primary,
                         unselectedLabelColor: _T.slate400,
+                        dividerColor: _T.slate300,
                         indicatorColor: _T.primary,
                         indicatorWeight: 2,
                         labelStyle: TextStyle(
