@@ -8,9 +8,9 @@ import 'package:smooflow/states/task.dart';
 
 class FilteredTaskCacheState {
   final Map<TaskStatus, Map<String, int>>
-  totalCounts; // ✅ FIXED: Changed inner key to String for Project IDs
+  totalCounts; // FIXED: Changed inner key to String for Project IDs
   final Map<TaskStatus, Map<int, Task>>
-  cachedTasks; // ✅ Normalized by Task ID Map<taskId, Task>
+  cachedTasks; // Not Normalized by Task ID Map<taskId, Task>
   final bool isLoadingCounts;
 
   final String? error;

@@ -828,13 +828,20 @@ class TaskCacheNotifier
         if (localTaskDetails != null) {
           final detectedOldStatus = event.task!.status;
 
+          // Task from the local memory
           final currentMemoryTask = state.getLocalTask(event.task!.id)!;
+
+          print(
+            "[TaskCacheNotifier] name change event, changes: ${event.changes}",
+          );
 
           // Re-assemble the new task data object
           final newTaskData =
               event.task != null
                   ? event.task!
                   : _applyChanges(currentMemoryTask, event.changes ?? {});
+
+          print("[TaskCacheNotifier] updated task name: ${newTaskData.name}");
 
           if (detectedOldStatus == newTaskData.status) {
             // SCENARIO 1: Status Unchanged (Warm Update)
