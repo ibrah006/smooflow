@@ -133,16 +133,27 @@ class FilteredTaskCacheState {
   }
 
   Task? getLocalTask(int taskId) {
-    try {
-      final task = cachedTasks.values
-          .expand((statusMap) => statusMap.values)
-          .firstWhere((task) => task.id == taskId);
+    // Worst case: O(N), N: no. of tasks in memory
+    // try {
+    //   final task = cachedTasks.values
+    //       .expand((statusMap) => statusMap.values)
+    //       .firstWhere((task) => task.id == taskId);
 
-      return task;
-    } catch (e) {
-      // throw "Task with ID $taskId not found in memory";
-      return null;
+    //   return task;
+    // } catch (e) {
+    //   // throw "Task with ID $taskId not found in memory";
+    //   return null;
+    // }
+
+    // Better solution with O(S), S: no. of statuses
+    for (final tasksById in cachedTasks.values) {
+      final task = tasksById[taskId];
+      if (task != null) {
+        return task;
+      }
     }
+
+    return null;
   }
 
   /// Updates the task in memory if it already exists, otherwise, ignores
