@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mime/mime.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:smooflow/constants.dart';
 import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/screens/desktop/components/attachements_section.dart';
@@ -3136,4 +3137,169 @@ String getUnit(String taskSize) {
   final rightUnit = right.split(' ').length > 1 ? right.split(' ')[1] : '';
 
   return rightUnit;
+}
+
+class DetailPanelSkeleton extends StatelessWidget {
+  final bool isMobile;
+  const DetailPanelSkeleton({this.isMobile = false});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget box({double w = double.infinity, double h = 14, double r = 6}) =>
+        Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(r),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: _T.slate200,
+      highlightColor: _T.slate50,
+      child: Container(
+        width: isMobile ? double.infinity : kDetailWidth,
+        decoration: BoxDecoration(
+          color: _T.white,
+          border:
+              isMobile
+                  ? null
+                  : const Border(left: BorderSide(color: _T.slate200)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Topbar row (close icon + "TASK-###" + delete icon)
+            Container(
+              height: _T.topbarH,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _T.slate200)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(_T.r),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  box(w: 70, h: 11),
+                  const Spacer(),
+                  box(w: 20, h: 20, r: 4),
+                ],
+              ),
+            ),
+
+            // Stage stepper placeholder
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              child: Row(
+                children: List.generate(
+                  4,
+                  (i) => Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: i == 3 ? 0 : 8),
+                      child: box(h: 8, r: 4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Title + project row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(w: 200, h: 18),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(w: 100, h: 11),
+            ),
+            const SizedBox(height: 20),
+
+            // "Details" section title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(w: 60, h: 12),
+            ),
+            const SizedBox(height: 10),
+
+            // Details grid (2x2)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Column(
+                children: List.generate(
+                  2,
+                  (row) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(child: box(h: 30, r: 8)),
+                        const SizedBox(width: 10),
+                        Expanded(child: box(h: 30, r: 8)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // "Print Specifications" section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(w: 140, h: 12),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(h: 60, r: 10),
+            ),
+            const SizedBox(height: 20),
+
+            // "Attachments" section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: box(w: 100, h: 12),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  box(w: 80, h: 60, r: 8),
+                  const SizedBox(width: 8),
+                  box(w: 80, h: 60, r: 8),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // Footer placeholder
+            Container(
+              height: 64,
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _T.slate200)),
+              ),
+              child: Row(
+                children: [
+                  box(w: 90, h: 32, r: 8),
+                  const Spacer(),
+                  box(w: 110, h: 32, r: 8),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

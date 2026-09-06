@@ -180,6 +180,7 @@ class _AdminDesktopDashboardScreenState
     detailPanelProjectId = null;
   });
 
+  @Deprecated("Use _getSelectedTask instead for async retrieval")
   Task? get _selectedTask {
     return _selectedTaskId == null
         ? null
@@ -192,6 +193,31 @@ class _AdminDesktopDashboardScreenState
               ),
             )
             .getLocalTask(_selectedTaskId!);
+  }
+
+  Future<Task?> get _getSelectedTask async {
+    if (_selectedTaskId == null) return null;
+    try {
+      return ref
+          .read(
+            taskCacheProvider(
+              _selectedProjectId == null
+                  ? TaskFilter.empty
+                  : TaskFilter(projectId: detailPanelProjectId),
+            ),
+          )
+          .getLocalTask(_selectedTaskId!)!;
+    } catch (e) {
+      return ref
+          .read(
+            taskCacheProvider(
+              _selectedProjectId == null
+                  ? TaskFilter.empty
+                  : TaskFilter(projectId: detailPanelProjectId),
+            ).notifier,
+          )
+          .getTaskById(_selectedTaskId!);
+    }
   }
 
   Future<void> _advanceTask(Task advancedTask) async {
@@ -545,18 +571,12 @@ class _AdminDesktopDashboardScreenState
   // is identical; the only new branch is how the detail panel is laid out.
   // ─────────────────────────────────────────────────────────────────────
   Widget _buildMainContent(bool isMobile) {
-    print("This is the selected task id: ${_selectedTaskId}");
-
     return Stack(
       children: [
-        // Layer 0: workspace views (+ side-by-side detail panel on desktop)
         Row(
           children: [
             Expanded(child: _buildWorkspaceSwitcher()),
 
-            // Desktop-only inline detail panel. On mobile the panel is
-            // rendered as a full-screen overlay in Layer 1 below instead,
-            // so nothing is reserved here.
             if (!isMobile)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
@@ -564,11 +584,24 @@ class _AdminDesktopDashboardScreenState
                 width: _selectedTaskId != null ? _T.detailW : 0,
                 child:
                     _selectedTaskId != null
-                        ? DetailPanel(
+                        ? FutureBuilder<Task?>(
                           key: ValueKey(_selectedTaskId),
-                          task: _selectedTask!,
-                          onClose: _closeDetail,
-                          onAdvance: () => _advanceTask(_selectedTask!),
+                          future: _getSelectedTask,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState !=
+                                    ConnectionState.done ||
+                                snapshot.data == null) {
+                              return const DetailPanelSkeleton();
+                            }
+                            return DetailPanel(
+                              task: snapshot.data!,
+                              onClose: _closeDetail,
+                              onAdvance: () async {
+                                final t = await _getSelectedTask;
+                                if (t != null) _advanceTask(t);
+                              },
+                            );
+                          },
                         )
                         : const SizedBox.shrink(),
               ),
@@ -594,8 +627,7 @@ class _AdminDesktopDashboardScreenState
                   : const SizedBox.shrink(),
         ),
 
-        // Layer 2 (NEW): mobile full-screen detail panel, slides in from
-        // the right over the whole content area (list included).
+        // Layer 2: mobile full-screen detail panel
         if (isMobile)
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
@@ -611,11 +643,23 @@ class _AdminDesktopDashboardScreenState
                 ),
             child:
                 _selectedTaskId != null
-                    ? DetailPanel(
+                    ? FutureBuilder<Task?>(
                       key: ValueKey('mobile_detail_$_selectedTaskId'),
-                      task: _selectedTask!,
-                      onClose: _closeDetail,
-                      onAdvance: () => _advanceTask(_selectedTask!),
+                      future: _getSelectedTask,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done ||
+                            snapshot.data == null) {
+                          return const DetailPanelSkeleton(isMobile: true);
+                        }
+                        return DetailPanel(
+                          task: snapshot.data!,
+                          onClose: _closeDetail,
+                          onAdvance: () async {
+                            final t = await _getSelectedTask;
+                            if (t != null) _advanceTask(t);
+                          },
+                        );
+                      },
                     )
                     : const SizedBox.shrink(),
           ),
