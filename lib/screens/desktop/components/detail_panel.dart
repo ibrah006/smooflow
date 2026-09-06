@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mime/mime.dart';
 import 'package:smooflow/constants.dart';
+import 'package:smooflow/providers/task_cache_provider.dart';
 import 'package:smooflow/screens/desktop/components/attachements_section.dart';
+import 'package:smooflow/states/task.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:smooflow/components/discussion_forms.dart';
 import 'package:smooflow/components/permission_gate.dart';
@@ -27,7 +29,7 @@ import 'package:smooflow/providers/attachment_provider.dart';
 import 'package:smooflow/providers/member_provider.dart';
 import 'package:smooflow/providers/message_provider.dart';
 import 'package:smooflow/providers/project_provider.dart';
-import 'package:smooflow/providers/task_provider.dart';
+// import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/avatar_widget.dart';
 import 'package:smooflow/screens/desktop/components/current_stage_cell.dart';
 import 'package:smooflow/screens/desktop/components/date_field.dart';
@@ -301,8 +303,8 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       return;
     }
     await ref
-        .watch(taskNotifierProvider.notifier)
-        .progressStage(taskId: widget.task.id, newStatus: nextStage);
+        .watch(taskCacheProvider(TaskFilter.empty).notifier)
+        .progressStage(task: widget.task, newStatus: nextStage);
     setState(() {});
     widget.onAdvance();
   }
@@ -324,7 +326,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       nextStage = widget.task.status.nextStage!;
     }
 
-    await TaskProvider.setTaskState(
+    await TaskCacheProvider.setTaskState(
       ref: ref,
       taskId: widget.task.id,
       printerId: null,
@@ -338,9 +340,9 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   Future<void> _stageBackTo(TaskStatus target) async {
     await ref
-        .watch(taskNotifierProvider.notifier)
+        .read(taskCacheProvider(TaskFilter.empty).notifier)
         .progressStage(
-          taskId: widget.task.id,
+          task: widget.task,
           newStatus: target,
           isStageForward: false,
         );
@@ -426,17 +428,17 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   Future<void> _onTaskDateChange(DateTime newValue) async {
+    // TEST: if task doesn't exist in cache, this will throw an error, Should we handle this case?
     final taskDate =
         ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(widget.task.id)!
             .date ??
         null;
 
     if (!(taskDate?.isAtSameMomentAs(newValue) ?? false)) {
       await ref
-          .read(taskNotifierProvider.notifier)
+          .read(taskCacheProvider(TaskFilter.empty).notifier)
           .update(
             task: widget.task,
             name: null,
@@ -456,14 +458,13 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   Future<void> _onTaskNameChange(String newValue) async {
     final taskName =
         ref
-            .read(taskNotifierProvider)
-            .tasks
-            .firstWhere((t) => t.id == widget.task.id)
+            .read(taskCacheProvider(TaskFilter.empty))
+            .getLocalTask(widget.task.id)!
             .name;
 
     if (taskName != newValue.trim()) {
       await ref
-          .read(taskNotifierProvider.notifier)
+          .read(taskCacheProvider(TaskFilter.empty).notifier)
           .update(
             task: widget.task,
             name: newValue,
@@ -501,7 +502,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     // );
 
     await ref
-        .read(taskNotifierProvider.notifier)
+        .read(taskCacheProvider(TaskFilter.empty).notifier)
         .update(
           task: widget.task,
           name: null,
@@ -614,7 +615,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     setState(() => _isDiscussionOpen = true);
     ref.read(messageNotifierProvider).activeTaskId = widget.task.id;
     await ref
-        .read(taskNotifierProvider.notifier)
+        .read(taskCacheProvider(TaskFilter.empty).notifier)
         .updateMessageReadStatus(ref, widget.task.id);
   }
 
@@ -626,7 +627,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
   Future<void> markReadLastMessage() async {
     await ref
-        .read(taskNotifierProvider.notifier)
+        .read(taskCacheProvider(TaskFilter.empty).notifier)
         .updateMessageReadStatus(ref, widget.task.id);
   }
 

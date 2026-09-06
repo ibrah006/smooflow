@@ -285,6 +285,7 @@ class TaskStats {
 // EXISTING TASKPROVIDER CLASS (retained for backward compatibility)
 // ─────────────────────────────────────────────────────────────────────────────
 
+@Deprecated("This is deprecated, use TaskCacheProvider instead")
 class TaskProvider {
   /// This is the main function to call when changing task state (progressing stage, assigning/unassigning printer, etc)
   static Future<void> setTaskState({

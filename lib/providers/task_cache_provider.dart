@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/change_events/task_change_event.dart';
+import 'package:smooflow/core/models/stock_transaction.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/enums/task_status.dart';
+import 'package:smooflow/providers/material_provider.dart';
+import 'package:smooflow/providers/printer_provider.dart';
 import 'package:smooflow/states/filtered_task_cache.dart';
 import 'package:smooflow/notifiers/task_cache_notifier.dart';
 import 'package:smooflow/states/task.dart';
@@ -82,3 +85,88 @@ final taskCacheConnectionStatusProvider = StreamProvider<ConnectionStatus>((
     (_) => notifier.connectionStatus,
   );
 });
+
+class TaskCacheProvider {
+  /// This is the main function to call when changing task state (progressing stage, assigning/unassigning printer, etc)
+  /// This function assumes the task is already in the local state
+  static Future<void> setTaskState({
+    required WidgetRef ref,
+    required int taskId,
+    required TaskStatus newStatus,
+
+    /// Pass null when unnassigning printer from task or when progressing task stage without needing to assign a printer (e.g. progressing to completed status)
+    String? printerId,
+    String? stockTransactionBarcode,
+    String? materialId,
+    int? stockOutQuantity,
+
+    // Optional paramters
+    bool isStageForward = true,
+  }) async {
+    if (printerId == null && newStatus == TaskStatus.printing) {
+      throw "Printer ID must be provided when progressing task to printing status";
+    }
+    if (printerId != null &&
+        (materialId == null ||
+            stockTransactionBarcode == null ||
+            stockOutQuantity == null)) {
+      throw "Material ID and stock transaction barcode & stock out id must be provided when assigning printer to task for printing";
+    }
+
+    late final StockTransaction? stockOutTransaction;
+
+    final task =
+        ref.read(taskCacheProvider(TaskFilter.empty)).getLocalTask(taskId)!;
+
+    if (printerId != null) {
+      stockOutTransaction = await ref
+          .watch(taskCacheProvider(TaskFilter.empty).notifier)
+          .schedulePrint(
+            task: task,
+            printerId: printerId,
+            materialId:
+                materialId!, // This value is not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+            productionQuantity:
+                stockOutQuantity!, // This value is also not used in the backend when progressing stage to printing, so we can just pass in a placeholder value here to satisfy the function parameter requirement
+            barcode: stockTransactionBarcode!,
+          );
+    } else {
+      await ref
+          .watch(taskCacheProvider(TaskFilter.empty).notifier)
+          .progressStage(
+            task: task,
+            newStatus: newStatus,
+            printerId: printerId,
+            isStageForward: isStageForward,
+          );
+    }
+
+    if (printerId != null) {
+      ref
+          .watch(printerNotifierProvider.notifier)
+          .assignTask(printerId: printerId, taskId: taskId);
+    } else {
+      ref.watch(printerNotifierProvider.notifier).unassignTask(taskId: taskId);
+    }
+
+    // Commit stock out transaction
+    if (stockTransactionBarcode != null) {
+      print(
+        "committing stock out transaction, barcode: ${stockTransactionBarcode}",
+      );
+
+      try {
+        // stockTransactionBarcode != null implies that stockOutTransaction != null,
+        // we will still catch for error anyways.
+        ref
+            .watch(materialNotifierProvider.notifier)
+            .commitStockOutTransaction(
+              stockOutTransaction: stockOutTransaction!,
+            );
+      } catch (e) {
+        print("actual error: $e");
+        throw "Commit stock out transaction requested but server did not return updated stock out transaction";
+      }
+    }
+  }
+}
