@@ -25,6 +25,7 @@ class AttachmentRepository {
     int taskId,
     String path, {
     ValueChanged<double>? onProgress,
+    required bool isSpecSheet,
   }) async {
     final file = File(path);
     final fileName = path.split(Platform.pathSeparator).last;
@@ -47,6 +48,7 @@ class AttachmentRepository {
       fileName: fileName,
       mimeType: mimeType,
       sizeBytes: sizeBytes,
+      isSpecSheet: isSpecSheet,
     );
   }
 
@@ -89,6 +91,7 @@ class AttachmentRepository {
     required String fileName,
     required String mimeType,
     required int sizeBytes,
+    required bool isSpecSheet,
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/tasks/$taskId/attachments'),
@@ -98,6 +101,7 @@ class AttachmentRepository {
         'fileName': fileName,
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
+        isSpecSheet: isSpecSheet,
       }),
     );
     if (res.statusCode != 201) {

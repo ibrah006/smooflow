@@ -547,7 +547,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       setState(() => _attachments = [..._attachments, draft]);
 
       try {
-        final uploaded = await repo.uploadFile(widget.task.id, path);
+        final uploaded = await repo.uploadFile(
+          widget.task.id,
+          path,
+          isSpecSheet: false,
+        );
         if (!mounted) return;
         setState(() {
           _attachments =
