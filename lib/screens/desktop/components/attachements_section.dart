@@ -1,11 +1,16 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 // OPEN ITEM: add `desktop_drop` to pubspec.yaml for native OS drag-and-drop
 // support (`flutter pub add desktop_drop`). Uncomment the import + DropTarget
 // wrapper below once added. Click-to-browse works without it.
 // import 'package:desktop_drop/desktop_drop.dart';
+
+enum _PickSource { files, photos }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — copied from detail_panel.dart / print_specs.dart to match
@@ -186,21 +191,109 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
   bool _dragging = false;
   bool _picking = false;
 
+  bool get _isMobilePlatform =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
   Future<void> _pickFiles() async {
     if (_picking) return;
+
+    if (_isMobilePlatform) {
+      final source = await _showSourceSheet();
+      if (source == null) return; // user dismissed
+      if (source == _PickSource.photos) {
+        await _pickFromPhotos();
+      } else {
+        await _pickFromFiles();
+      }
+    } else {
+      await _pickFromFiles();
+    }
+  }
+
+  Future<_PickSource?> _showSourceSheet() {
+    if (Platform.isIOS) {
+      return showCupertinoModalPopup<_PickSource>(
+        context: context,
+        builder:
+            (ctx) => CupertinoActionSheet(
+              title: const Text('Add attachment'),
+              actions: [
+                CupertinoActionSheetAction(
+                  onPressed: () => Navigator.pop(ctx, _PickSource.files),
+                  child: const Text('Choose from Files'),
+                ),
+                CupertinoActionSheetAction(
+                  onPressed: () => Navigator.pop(ctx, _PickSource.photos),
+                  child: const Text('Choose from Photos'),
+                ),
+              ],
+              cancelButton: CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+            ),
+      );
+    }
+
+    // Android / other: Material bottom sheet
+    return showModalBottomSheet<_PickSource>(
+      context: context,
+      builder:
+          (ctx) => SafeArea(
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.insert_drive_file_outlined),
+                  title: const Text('Choose from Files'),
+                  onTap: () => Navigator.pop(ctx, _PickSource.files),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_outlined),
+                  title: const Text('Choose from Photos'),
+                  onTap: () => Navigator.pop(ctx, _PickSource.photos),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  Future<void> _pickFromFiles() async {
     setState(() => _picking = true);
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         withData: false,
       );
-      final files = result?.files ?? [];
+      await _handlePickedFiles(result?.files ?? []);
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
 
-      final tooBig = files.where((f) => f.size > _maxBytes).toList();
-      final ok = files.where((f) => f.size <= _maxBytes).toList();
+  Future<void> _pickFromPhotos() async {
+    setState(() => _picking = true);
+    try {
+      final picker = ImagePicker();
+      final images = await picker.pickMultiImage();
+      if (images.isEmpty) return;
+
+      // Convert XFile -> PlatformFile-like handling, since we need sizes
+      final tooBig = <String>[];
+      final okPaths = <String>[];
+
+      for (final img in images) {
+        final length = await img.length();
+        if (length > _maxBytes) {
+          tooBig.add(img.name);
+        } else {
+          okPaths.add(img.path);
+        }
+      }
 
       if (tooBig.isNotEmpty && mounted) {
-        final names = tooBig.map((f) => f.name).join(', ');
+        final names = tooBig.join(', ');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -211,12 +304,33 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
         );
       }
 
-      final paths = ok.map((f) => f.path).whereType<String>().toList();
-      if (paths.isNotEmpty) {
-        await widget.onUpload(paths);
+      if (okPaths.isNotEmpty) {
+        await widget.onUpload(okPaths);
       }
     } finally {
       if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  Future<void> _handlePickedFiles(List<PlatformFile> files) async {
+    final tooBig = files.where((f) => f.size > _maxBytes).toList();
+    final ok = files.where((f) => f.size <= _maxBytes).toList();
+
+    if (tooBig.isNotEmpty && mounted) {
+      final names = tooBig.map((f) => f.name).join(', ');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Skipped (over 3MB): $names',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+
+    final paths = ok.map((f) => f.path).whereType<String>().toList();
+    if (paths.isNotEmpty) {
+      await widget.onUpload(paths);
     }
   }
 
