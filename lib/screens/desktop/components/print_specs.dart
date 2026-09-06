@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/print_spec.dart';
@@ -681,8 +682,10 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSpecSheetsSection(),
-          const SizedBox(height: 2),
+          if (kDebugMode) ...[
+            _buildSpecSheetsSection(),
+            const SizedBox(height: 2),
+          ],
 
           // ── Shared Ref Toggle ──
           MouseRegion(
