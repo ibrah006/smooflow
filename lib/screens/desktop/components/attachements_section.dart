@@ -87,6 +87,7 @@ class TaskAttachment {
   final int sizeBytes;
   final String mimeType;
   final String uploadedByName;
+  final bool isSpecSheet;
   final DateTime uploadedAt;
 
   /// 0..1 while uploading, null once complete/not applicable.
@@ -103,6 +104,7 @@ class TaskAttachment {
     required this.uploadedAt,
     this.uploadProgress,
     this.isFailed = false,
+    this.isSpecSheet = false,
   });
 
   AttachmentKind get kind => attachmentKindFor(fileName, mimeType);
@@ -126,6 +128,7 @@ class TaskAttachment {
       uploadProgress:
           clearUploadProgress ? null : (uploadProgress ?? this.uploadProgress),
       isFailed: isFailed ?? this.isFailed,
+      isSpecSheet: isSpecSheet,
     );
   }
 }
