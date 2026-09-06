@@ -599,13 +599,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
     setState(() => _isProgressing = true);
 
-    if (newStage == TaskStatus.clientApproved) {
-      await approveDesignStage();
-    } else {
-      await _progressTaskStage(newTaskStage: newStage);
+    try {
+      if (newStage == TaskStatus.clientApproved) {
+        await approveDesignStage();
+      } else {
+        await _progressTaskStage(newTaskStage: newStage);
+      }
+    } finally {
+      setState(() => _isProgressing = false);
     }
-
-    setState(() => _isProgressing = false);
   }
 
   void _onOpenDiscussion() async {

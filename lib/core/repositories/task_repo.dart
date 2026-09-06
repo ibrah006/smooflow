@@ -376,6 +376,8 @@ class TaskRepo {
 
     final result = <TaskStatus, Map<String, int>>{};
 
+    print("result v2: $body");
+
     (body as Map<String, dynamic>).forEach((key, value) {
       try {
         final status = TaskStatus.values.byName(key);

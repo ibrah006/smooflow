@@ -367,6 +367,8 @@ class TaskCacheNotifier
     String? printerId,
     bool isStageForward = true,
   }) async {
+    final oldStatus = task.status;
+
     if (printerId == null && newStatus == TaskStatus.printing) {
       throw "Printer ID must be provided when progressing task to printing status";
     }
@@ -395,16 +397,41 @@ class TaskCacheNotifier
     }
 
     try {
-      state.cachedTasks.update(task.status, (statusMap) {
-        statusMap[taskId] = task..status = newStatus;
-        return statusMap;
-      });
+      // Remove from old status/project count.
+      // final oldProjectCounts = state.totalCounts[oldStatus];
+
+      // if (oldProjectCounts != null) {
+      //   final oldCount = oldProjectCounts[task.projectId] ?? 0;
+
+      //   if (oldCount > 1) {
+      //     oldProjectCounts[task.projectId] = oldCount - 1;
+      //   } else {
+      //     oldProjectCounts.remove(task.projectId);
+      //   }
+      // }
+
+      // // Add to new status/project count.
+      // final newProjectCounts = state.totalCounts.putIfAbsent(
+      //   newStatus,
+      //   () => {},
+      // );
+
+      // newProjectCounts[task.projectId] =
+      //     (newProjectCounts[task.projectId] ?? 0) + 1;
+
+      // // Move task between status buckets.
+      // state.cachedTasks[oldStatus]?.remove(task.id);
+
+      // state.cachedTasks.putIfAbsent(newStatus, () => {})[task.id] =
+      //     task..status = newStatus;
 
       state = state;
     } catch (e) {
       print(
-        "Error updating task status in memory after progressing stage\nFetching task from database to update in-memory state",
+        'Error updating task status in memory after progressing stage\n'
+        'Fetching task from database to update in-memory state: E: $e',
       );
+
       await getTaskById(taskId);
     }
   }
@@ -733,50 +760,10 @@ class TaskCacheNotifier
                 "[TaskCacheNotifier] old status after modifying count: ${updatedTotalCounts[detectedOldStatus]}",
               );
 
-              // Wipe out both lanes entirely so infinite viewports sync atomic alignments cleanly
-              updatedCachedTasks[detectedOldStatus]?.removeWhere(
-                (i, t) => t.id == event.taskId,
-              );
-              updatedCachedTasks.putIfAbsent(event.task!.status, () => {});
-
-              final newStatusTasks = updatedCachedTasks[event.task!.status]!;
-
-              final taskEvent = event.task!;
-
-              // Task's new status updated tasks entries
-              final List<Task> updatedStatusTasks = [];
-              bool hasAddedTaskToNewStatus = false;
-
-              print("task entries: ${newStatusTasks.entries}");
-              for (final taskEntry in newStatusTasks.entries) {
-                final t = taskEntry.value;
-
-                if (taskEvent.id < t.id) {
-                  updatedStatusTasks.insert(
-                    updatedStatusTasks.length,
-                    taskEvent,
-                  );
-
-                  updatedStatusTasks.addAll(
-                    newStatusTasks.values.skip(updatedStatusTasks.length - 1),
-                  );
-
-                  hasAddedTaskToNewStatus = true;
-                  break;
-                }
-
-                updatedStatusTasks.add(t);
-              }
-
-              if (!hasAddedTaskToNewStatus) {
-                updatedStatusTasks.add(event.task!);
-                hasAddedTaskToNewStatus = true;
-              }
-
-              updatedCachedTasks[event.task!.status] =
-                  updatedStatusTasks.asMap();
-              // [event.taskId!] =
-              //     event.task!;
+              // Don't try to patch offsets from partial cache data — just evict both
+              // lanes and let the lazy scroller re-fetch clean, correctly-aligned pages.
+              updatedCachedTasks[detectedOldStatus] = {};
+              updatedCachedTasks[event.task!.status] = {};
 
               print(
                 '[TaskCacheNotifier] Status sync mismatch solved. Evicted lanes: $detectedOldStatus -> ${event.task!.status}',

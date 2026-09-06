@@ -2376,14 +2376,21 @@ class _PaginatedTaskRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Properly watch ONLY this specific slot in Riverpod's dependency tree
-    final task = ref.watch(
-      taskCacheProvider(
-        filter,
-      ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
-    );
+    // final task = ref.watch(
+    //   taskCacheProvider(
+    //     filter,
+    //   ).select((state) => state.cachedTasks[status]?[indexWithinStatus]),
+    // );
+
+    final task =
+        ref
+            .watch(taskCacheProvider(filter))
+            .cachedTasks[status]?[indexWithinStatus];
 
     // 2. Trigger lazy page download if data isn't in cache yet
     if (task == null) {
+      print("task row build null: ${indexWithinStatus}");
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
           ref
