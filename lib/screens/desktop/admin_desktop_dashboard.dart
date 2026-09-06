@@ -545,7 +545,7 @@ class _AdminDesktopDashboardScreenState
   // is identical; the only new branch is how the detail panel is laid out.
   // ─────────────────────────────────────────────────────────────────────
   Widget _buildMainContent(bool isMobile) {
-    print("This is the selected task: $_selectedTask");
+    print("This is the selected task id: ${_selectedTaskId}");
 
     return Stack(
       children: [

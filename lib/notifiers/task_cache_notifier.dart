@@ -843,10 +843,17 @@ class TaskCacheNotifier
 
           print("[TaskCacheNotifier] updated task name: ${newTaskData.name}");
 
+          print(
+            "[TaskCacheNotifier] detectedOldStatus == newTaskData.status: ${detectedOldStatus == newTaskData.status}",
+          );
           if (detectedOldStatus == newTaskData.status) {
             // SCENARIO 1: Status Unchanged (Warm Update)
-            // Perfectly idempotent in-place map overwrite via ID key conversion
-            updatedCachedTasks[detectedOldStatus]![event.taskId!] = newTaskData;
+            // Won't work anymore, because there is no ID key in the map, only offset keys
+            // updatedCachedTasks[detectedOldStatus]![event.taskId!] = newTaskData;
+            state.updateLocalTask(newTaskData);
+            updatedCachedTasks[detectedOldStatus] =
+                state.cachedTasks[detectedOldStatus]!;
+
             stateDidMutate = true;
             print(
               '[TaskCacheNotifier] Idempotent in-place ID update completed for task ${event.taskId}',

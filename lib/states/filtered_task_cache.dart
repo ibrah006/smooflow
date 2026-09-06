@@ -134,38 +134,27 @@ class FilteredTaskCacheState {
 
   Task? getLocalTask(int taskId) {
     // Worst case: O(N), N: no. of tasks in memory
-    // try {
-    //   final task = cachedTasks.values
-    //       .expand((statusMap) => statusMap.values)
-    //       .firstWhere((task) => task.id == taskId);
+    try {
+      final task = cachedTasks.values
+          .expand((statusMap) => statusMap.values)
+          .firstWhere((task) => task.id == taskId);
 
-    //   return task;
-    // } catch (e) {
-    //   // throw "Task with ID $taskId not found in memory";
-    //   return null;
-    // }
-
-    // Better solution with O(S), S: no. of statuses
-    for (final tasksById in cachedTasks.values) {
-      final task = tasksById[taskId];
-      if (task != null) {
-        return task;
-      }
+      return task;
+    } catch (e) {
+      // throw "Task with ID $taskId not found in memory";
+      return null;
     }
-
-    return null;
   }
 
   /// Updates the task in memory if it already exists, otherwise, ignores
+  /// Do NOT call this function for status update, as it requires shifting the task's position within the cachedTasks map. Use `updateTaskStatus` instead.
   /// returns true if updated
   bool updateLocalTask(Task updatedTask) {
-    for (final entry in cachedTasks.entries) {
-      final tasks = entry.value;
-
-      if (tasks.containsKey(updatedTask.id)) {
-        tasks.remove(updatedTask.id);
-
-        cachedTasks[updatedTask.status]?[updatedTask.id] = updatedTask;
+    for (final statusTasks
+        in cachedTasks[updatedTask.status]?.entries ??
+            <MapEntry<int, Task>>[]) {
+      if (statusTasks.value.id == updatedTask.id) {
+        cachedTasks[updatedTask.status]?[statusTasks.key] = updatedTask;
         return true;
       }
     }
