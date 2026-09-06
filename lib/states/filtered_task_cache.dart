@@ -32,7 +32,9 @@ class FilteredTaskCacheState {
     Task? selectedTask,
     this.error,
     TaskFilter? filterApplied,
-  }) : _taskNameChangeEventsUnderway = taskNameChangeEventsUnderway,
+  }) : _taskNameChangeEventsUnderway = List<TaskNameChangeEventUnderway>.from(
+         taskNameChangeEventsUnderway,
+       ),
        _currentlyCreatingSpecs = currentlyCreatingSpecs,
        _currentlyDeletingSpecs =
            currentlyDeletingSpecs ??

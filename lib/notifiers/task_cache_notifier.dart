@@ -826,10 +826,9 @@ class TaskCacheNotifier
       case TaskChangeType.nameUpdated:
         // RULE A: Updates are Sparse Mutations. If NOT found in memory, discard the payload.
         if (localTaskDetails != null) {
-          final detectedOldStatus = localTaskDetails.$1;
+          final detectedOldStatus = event.task!.status;
 
-          final currentMemoryTask =
-              updatedCachedTasks[detectedOldStatus]![event.taskId]!;
+          final currentMemoryTask = state.getLocalTask(event.task!.id)!;
 
           // Re-assemble the new task data object
           final newTaskData =
