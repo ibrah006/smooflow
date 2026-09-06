@@ -781,9 +781,9 @@ class TaskCacheNotifier
 
           // Check if task has just been marked as completed
           if (
-          // This means that it's a status update event
+          // This means that it's a status update event and...
           event.changes?["status"] != null &&
-              // And that the new status is completed
+              // ... that the new status is completed
               event.task!.status == TaskStatus.completed) {
             ref
                 .read(projectByIdProvider(event.task!.projectId))!
