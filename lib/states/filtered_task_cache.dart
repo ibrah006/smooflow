@@ -154,6 +154,11 @@ class FilteredTaskCacheState {
         in cachedTasks[updatedTask.status]?.entries ??
             <MapEntry<int, Task>>[]) {
       if (statusTasks.value.id == updatedTask.id) {
+        if (cachedTasks[updatedTask.status]?[statusTasks.key]?.status !=
+            updatedTask.status) {
+          throw "Task status mismatch: cannot update task with a different status. Use updateTaskStatus instead.";
+        }
+
         cachedTasks[updatedTask.status]?[statusTasks.key] = updatedTask;
         return true;
       }
