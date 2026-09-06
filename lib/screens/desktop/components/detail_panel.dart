@@ -346,7 +346,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
           newStatus: target,
           isStageForward: false,
         );
-    setState(() {});
+
+    setState(() {
+      widget.task.status = target;
+    });
     widget.onAdvance();
   }
 
@@ -606,6 +609,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
       } else {
         await _progressTaskStage(newTaskStage: newStage);
       }
+
+      setState(() {
+        widget.task.status = newStage!;
+      });
     } finally {
       setState(() => _isProgressing = false);
     }
