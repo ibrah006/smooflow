@@ -457,7 +457,9 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   Widget _content() {
-    if (widget.attachments.isEmpty) {
+    final visible = widget.attachments.where((a) => !a.isSpecSheet).toList();
+
+    if (visible.isEmpty) {
       return _EmptyDropZone(
         dragging: _dragging,
         busy: _picking,
@@ -470,7 +472,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
       runSpacing: 10,
       children: [
         _AddTile(busy: _picking, onTap: _pickFiles),
-        ...widget.attachments.map(
+        ...visible.map(
           (a) => _AttachmentCard(
             key: ValueKey(a.id),
             attachment: a,
