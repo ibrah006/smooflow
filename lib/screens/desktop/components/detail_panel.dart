@@ -523,7 +523,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   // ── Attachments ────────────────────────────────────────────────────────────
-  Future<void> _onUploadAttachments(List<String> filePaths) async {
+  // ── Attachments ────────────────────────────────────────────────────────────
+  Future<void> _onUploadAttachments(
+    List<String> filePaths, {
+    bool isSpecSheet = false,
+  }) async {
     final repo = ref.read(attachmentRepositoryProvider);
 
     // Each file uploads independently so one failure doesn't block the rest,
@@ -542,6 +546,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         uploadedByName: LoginService.currentUser?.name ?? 'You',
         uploadedAt: DateTime.now(),
         uploadProgress: 0,
+        isSpecSheet: isSpecSheet,
       );
 
       setState(() => _attachments = [..._attachments, draft]);
@@ -550,7 +555,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         final uploaded = await repo.uploadFile(
           widget.task.id,
           path,
-          isSpecSheet: false,
+          isSpecSheet: isSpecSheet,
         );
         if (!mounted) return;
         setState(() {
@@ -965,7 +970,14 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                             const SizedBox(height: 8),
                             PrintSpecsEditor(
                               task: widget.task,
+                              attachments: _attachments,
                               onUpdate: _onPrintSpecsChange,
+                              onUploadSpecSheets:
+                                  (paths) => _onUploadAttachments(
+                                    paths,
+                                    isSpecSheet: true,
+                                  ),
+                              onDeleteSpecSheet: _onDeleteAttachment,
                             ),
                             const SizedBox(height: 18),
 
