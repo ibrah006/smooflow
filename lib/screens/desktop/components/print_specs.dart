@@ -1,4 +1,5 @@
 // print_specs.dart
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -10,6 +11,7 @@ import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/print_ref_history.dart';
 import 'package:smooflow/providers/task_provider.dart';
+import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
 import 'package:flutter_ocr_native/flutter_ocr_native.dart';
 
@@ -266,6 +268,11 @@ class SpecSheetDraft {
 // ─────────────────────────────────────────────────────────────────────────────
 class PrintSpecsEditor extends ConsumerStatefulWidget {
   final Task task;
+
+  /// Full task attachment list (same one passed to AttachmentsSection)
+  /// This widget filters to `isSpecSheet == true` for its own display
+  final List<TaskAttachment> attachments;
+
   final Function(
     List<PrintSpec>? specs,
     bool sharedRef, {
@@ -274,7 +281,21 @@ class PrintSpecsEditor extends ConsumerStatefulWidget {
   })
   onUpdate;
 
-  const PrintSpecsEditor({required this.task, required this.onUpdate});
+  /// Uploads the given local file paths as task attachments with
+  /// isSpecSheet: true. Mirrors AttachmentsSection.onUpload.
+  final Future<void> Function(List<String> filePaths) onUploadSpecSheets;
+
+  /// Deletes a spec-sheet attachment. Mirrors AttachmentsSection.onDelete.
+  final Future<void> Function(TaskAttachment attachment) onDeleteSpecSheet;
+
+  const PrintSpecsEditor({
+    super.key,
+    required this.task,
+    required this.attachments,
+    required this.onUpdate,
+    required this.onUploadSpecSheets,
+    required this.onDeleteSpecSheet,
+  });
 
   @override
   ConsumerState<PrintSpecsEditor> createState() => _PrintSpecsEditorState();
@@ -287,12 +308,19 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   // Tracks transient local item IDs that have fired an API request to prevent duplicate creation
   final Set<int> _committedTransientIds = {};
 
-  // ── Spec sheets state ─────────────────────────────────────────────────────
+  // ── Spec sheet state ───────────────────────────────────────────────────
+  // Local negative "sheet ids" exist only to link a PrintSpec (extracted via
+  // OCR, right after picking) back to the eventual TaskAttachment, which we
+  // match by fileName once it shows up in widget.attachments.
+  final Map<int, String> _sheetFileNames = {};
   List<SpecSheetDraft> _specSheets = [];
   int _nextSheetId = -1;
   bool _pickingSheet = false;
 
   final _ocrReader = OcrReader();
+
+  List<TaskAttachment> get _specSheetAttachments =>
+      widget.attachments.where((a) => a.isSpecSheet).toList();
 
   @override
   void initState() {
@@ -316,25 +344,19 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 
   void _initSpecs() {
     _committedTransientIds.clear();
-    _specSheets = [];
+    _sheetFileNames.clear();
     try {
       _items = List.from(widget.task.printSpecs);
-
       if (_items.isNotEmpty) {
         final firstRef = _items.first.ref;
         _sharedRef = _items.every((item) => item.ref == firstRef);
       } else {
         _sharedRef = true;
       }
-      return;
     } catch (_) {}
   }
 
-  void _notifyChange() {
-    widget.onUpdate(_items, _sharedRef);
-  }
-
-  // ── Spec sheet upload + mock extraction ───────────────────────────────────
+  // ── Spec sheet upload + OCR extraction ────────────────────────────────
   Future<void> _pickSpecSheets() async {
     if (_pickingSheet) return;
     setState(() => _pickingSheet = true);
@@ -344,106 +366,50 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
         type: FileType.image,
       );
       final files = result?.files ?? [];
-      for (final f in files) {
-        final path = f.path;
-        if (path == null) continue;
-        final sheet = SpecSheetDraft(
-          id: _nextSheetId--,
-          fileName: f.name,
-          localPath: path,
-          color: _kSheetColors[_specSheets.length % _kSheetColors.length],
-        );
-        setState(() => _specSheets = [..._specSheets, sheet]);
-        _processSpecSheet(sheet);
+      final paths = files.map((f) => f.path).whereType<String>().toList();
+      if (paths.isEmpty) return;
+
+      for (final path in paths) {
+        final fileName = path.split(Platform.pathSeparator).last;
+        final sheetId = _nextSheetId--;
+        _sheetFileNames[sheetId] = fileName;
+        unawaited(_runOcr(path, sheetId));
       }
+
+      // Parent uploads these as real task attachments with isSpecSheet: true.
+      await widget.onUploadSpecSheets(paths);
     } finally {
       if (mounted) setState(() => _pickingSheet = false);
     }
   }
 
-  void _commitExtractedSpecs(List<PrintSpec> extracted, SpecSheetDraft sheet) {
-    late final sharedRef;
-    if (_sharedRef) {
-      try {
-        sharedRef = _items.first.ref ?? '';
-      } catch (_) {
-        sharedRef = '';
-      }
-    }
-
-    _committedTransientIds.addAll(
-      extracted.map((e) {
-        if (e.id >= 0) {
-          throw Exception(
-            "Attempting to commit (create) an already persisted PrintSpec with ID ${e.id}",
-          );
-        }
-
-        return e.id;
-      }),
-    );
-    widget.onUpdate(
-      null,
-      _sharedRef,
-      newPrintSpecs:
-          extracted.map((p) {
-            return p..ref = _sharedRef ? sharedRef : p.ref;
-          }).toList(),
-    );
-  }
-
-  // OPEN ITEM: mock pipeline only — replace the two delays + random outcome
-  // below with a real upload call followed by an extraction API call once
-  // the backend supports it. UI states (uploading/extracting/done/failed)
-  // are already wired to whatever this method sets on `sheet.status`.
-  Future<void> _processSpecSheet(SpecSheetDraft sheet) async {
-    setState(() => sheet.status = SpecSheetStatus.extracting);
-
+  Future<void> _runOcr(String path, int sheetId) async {
     try {
-      // Works across Android, iOS, macOS, and Windows
-      final OcrResult result = await _ocrReader.readFromPath(sheet.localPath);
-
+      final OcrResult result = await _ocrReader.readFromPath(path);
       if (!mounted) return;
-
-      final extracted = _parseSizesFromOcr(result.text, sheet.id);
-
+      final extracted = _parseSizesFromOcr(result.text, sheetId);
       if (extracted.isEmpty) {
-        setState(() => sheet.status = SpecSheetStatus.completed);
-        print("[_processSpecSheet] empty extraction");
+        debugPrint('[_runOcr] empty extraction for $path');
         return;
       }
-
-      setState(() {
-        sheet.status = SpecSheetStatus.completed;
-        sheet.extractedSpecIds = extracted.map((e) => e.id).toList();
-        _items = [..._items, ...extracted];
-      });
+      setState(() => _items = [..._items, ...extracted]);
     } catch (e) {
-      print("[_processSpecSheet] extraction failed, error: $e");
-      if (mounted) {
-        setState(() => sheet.status = SpecSheetStatus.failed);
-      }
+      debugPrint('[_runOcr] extraction failed for $path, error: $e');
     }
   }
 
   List<PrintSpec> _parseSizesFromOcr(String fullText, int sheetId) {
     final List<PrintSpec> specs = [];
-
-    // Matches dimensions like "60x90 cm", "210×297 mm", "30 x 40 in", "120 * 80 cm"
     final sizeRegExp = RegExp(
       r'(\d+(?:\.\d+)?)\s*[xX×*]\s*(\d+(?:\.\d+)?)\s*(cm|mm|in|inch|inches|m|ft)?',
       caseSensitive: false,
     );
-
     final matches = sizeRegExp.allMatches(fullText);
-
     for (final match in matches) {
       final width = match.group(1);
       final height = match.group(2);
-      final unit = match.group(3) ?? 'cm'; // Default fallback unit
-
+      final unit = match.group(3) ?? 'cm';
       final formattedSize = '$width×$height ${unit.toLowerCase()}';
-
       specs.add(
         PrintSpec.create(
           ref: _sharedRef && _items.isNotEmpty ? _items.first.ref : '',
@@ -453,45 +419,37 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
         ),
       );
     }
-
     return specs;
   }
 
-  void _retrySheet(SpecSheetDraft sheet) {
-    setState(() => sheet.status = SpecSheetStatus.uploading);
-    _processSpecSheet(sheet);
+  int _countSizesFor(String fileName) {
+    final sheetIds =
+        _sheetFileNames.entries
+            .where((e) => e.value == fileName)
+            .map((e) => e.key)
+            .toSet();
+    if (sheetIds.isEmpty) return 0;
+    return _items.where((i) => sheetIds.contains(i.sourceSheetId)).length;
   }
 
-  void _deleteSpecSheet(SpecSheetDraft sheet) {
-    setState(() {
-      _specSheets = _specSheets.where((s) => s.id != sheet.id).toList();
-      _items = _items.where((i) => i.sourceSheetId != sheet.id).toList();
-    });
+  void _handleDeleteSpecSheet(TaskAttachment attachment) {
+    final sheetIds =
+        _sheetFileNames.entries
+            .where((e) => e.value == attachment.fileName)
+            .map((e) => e.key)
+            .toSet();
+    if (sheetIds.isNotEmpty) {
+      setState(() {
+        _items =
+            _items.where((i) => !sheetIds.contains(i.sourceSheetId)).toList();
+        _sheetFileNames.removeWhere((k, _) => sheetIds.contains(k));
+      });
+    }
+    widget.onDeleteSpecSheet(attachment);
   }
 
-  List<PrintSpec> _mockExtractSizes(int sheetId) {
-    final rand = Random();
-    final count = 1 + rand.nextInt(3);
-    const commonSizes = [
-      ('60', '90', 'cm'),
-      ('100', '200', 'cm'),
-      ('45', '60', 'cm'),
-      ('120', '80', 'cm'),
-      ('210', '297', 'mm'),
-      ('30', '40', 'in'),
-    ];
-    return List.generate(count, (i) {
-      final s = commonSizes[rand.nextInt(commonSizes.length)];
-      return PrintSpec.create(
-        ref: _sharedRef && _items.isNotEmpty ? _items.first.ref : '',
-        size: '${s.$1}×${s.$2} ${s.$3}',
-        quantity: 1 + rand.nextInt(5),
-        sourceSheetId: sheetId,
-      );
-    });
-  }
-
-  void _showSheetPreview(SpecSheetDraft sheet) {
+  void _showSheetPreview(TaskAttachment attachment) {
+    if (attachment.url == null) return;
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.75),
@@ -518,7 +476,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                       children: [
                         Expanded(
                           child: Text(
-                            sheet.fileName,
+                            attachment.fileName,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
@@ -527,31 +485,6 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                             ),
                           ),
                         ),
-                        if (sheet.status == SpecSheetStatus.completed)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: sheet.color.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(99),
-                                border: Border.all(
-                                  color: sheet.color.withOpacity(0.4),
-                                ),
-                              ),
-                              child: Text(
-                                '${sheet.extractedSpecIds.length} sizes found',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: sheet.color,
-                                ),
-                              ),
-                            ),
-                          ),
                         MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: GestureDetector(
@@ -573,8 +506,8 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   Flexible(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Image.file(
-                        File(sheet.localPath),
+                      child: Image.network(
+                        attachment.url!,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -587,6 +520,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   }
 
   Widget _buildSpecSheetsSection() {
+    final sheets = _specSheetAttachments;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -632,19 +566,22 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ..._specSheets.asMap().entries.map((e) {
+              ...sheets.asMap().entries.map((e) {
                 final index = e.key;
-                final sheet = e.value;
+                final attachment = e.value;
+                final color = _kSheetColors[index % _kSheetColors.length];
+                final sizesFound =
+                    (attachment.isUploading || attachment.isFailed)
+                        ? null
+                        : _countSizesFor(attachment.fileName);
                 return _SpecSheetThumb(
-                  key: ValueKey(sheet.id),
-                  sheet: sheet,
+                  key: ValueKey(attachment.id),
+                  attachment: attachment,
                   sheetIndex: index + 1,
-                  onDelete: () => _deleteSpecSheet(sheet),
-                  onTap:
-                      () =>
-                          sheet.status == SpecSheetStatus.failed
-                              ? _retrySheet(sheet)
-                              : _showSheetPreview(sheet),
+                  color: color,
+                  sizesFound: sizesFound,
+                  onDelete: () => _handleDeleteSpecSheet(attachment),
+                  onTap: () => _showSheetPreview(attachment),
                 );
               }),
               _AddSpecSheetTile(busy: _pickingSheet, onTap: _pickSpecSheets),
@@ -1032,20 +969,24 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SPEC SHEET THUMBNAIL + ADD TILE
+// SPEC SHEET THUMBNAIL (now backed by TaskAttachment) + ADD TILE
 // ─────────────────────────────────────────────────────────────────────────────
 class _SpecSheetThumb extends StatefulWidget {
-  final SpecSheetDraft sheet;
+  final TaskAttachment attachment;
   final int sheetIndex;
+  final Color color;
+  final int? sizesFound;
   final VoidCallback onDelete;
   final VoidCallback onTap;
 
   const _SpecSheetThumb({
     super.key,
-    required this.sheet,
+    required this.attachment,
     required this.sheetIndex,
+    required this.color,
     required this.onDelete,
     required this.onTap,
+    this.sizesFound,
   });
 
   @override
@@ -1057,11 +998,10 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
 
   @override
   Widget build(BuildContext context) {
-    final sheet = widget.sheet;
-    final busy =
-        sheet.status == SpecSheetStatus.uploading ||
-        sheet.status == SpecSheetStatus.extracting;
-    final failed = sheet.status == SpecSheetStatus.failed;
+    final a = widget.attachment;
+    final busy = a.isUploading;
+    final failed = a.isFailed;
+    final color = widget.color;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -1080,8 +1020,8 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                   failed
                       ? _T.red.withOpacity(0.5)
                       : (_hovered
-                          ? sheet.color.withOpacity(0.6)
-                          : sheet.color.withOpacity(0.35)),
+                          ? color.withOpacity(0.6)
+                          : color.withOpacity(0.35)),
               width: 1.4,
             ),
             boxShadow:
@@ -1100,21 +1040,29 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(_T.r - 1),
                 child: SizedBox.expand(
-                  child: Image.file(
-                    File(sheet.localPath),
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (_, __, ___) => Container(
-                          color: _T.slate100,
-                          child: const Icon(
-                            Icons.image_outlined,
-                            color: _T.slate400,
+                  child:
+                      a.url != null
+                          ? Image.network(
+                            a.url!,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => Container(
+                                  color: _T.slate100,
+                                  child: const Icon(
+                                    Icons.image_outlined,
+                                    color: _T.slate400,
+                                  ),
+                                ),
+                          )
+                          : Container(
+                            color: _T.slate100,
+                            child: const Icon(
+                              Icons.image_outlined,
+                              color: _T.slate400,
+                            ),
                           ),
-                        ),
-                  ),
                 ),
               ),
-
               if (busy || failed)
                 Positioned.fill(
                   child: Container(
@@ -1139,7 +1087,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                             )
                           else
                             const Icon(
-                              Icons.refresh_rounded,
+                              Icons.error_outline_rounded,
                               size: 18,
                               color: Colors.white,
                             ),
@@ -1147,11 +1095,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              failed
-                                  ? 'Failed — tap to retry'
-                                  : (sheet.status == SpecSheetStatus.uploading
-                                      ? 'Uploading…'
-                                      : 'Extracting sizes…'),
+                              failed ? 'Upload failed' : 'Uploading…',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 9,
@@ -1165,7 +1109,6 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                     ),
                   ),
                 ),
-
               if (!busy)
                 Positioned(
                   left: 0,
@@ -1183,7 +1126,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                       ),
                     ),
                     child: Text(
-                      sheet.fileName,
+                      a.fileName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -1194,8 +1137,6 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                     ),
                   ),
                 ),
-
-              // Sheet index chip — matches the "Sx" tag on extracted rows
               Positioned(
                 top: 5,
                 left: 5,
@@ -1204,7 +1145,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                   height: 16,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: sheet.color,
+                    color: color,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -1217,8 +1158,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                   ),
                 ),
               ),
-
-              if (sheet.status == SpecSheetStatus.completed)
+              if (widget.sizesFound != null)
                 Positioned(
                   top: 5,
                   right: 5,
@@ -1230,19 +1170,18 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(99),
-                      border: Border.all(color: sheet.color.withOpacity(0.5)),
+                      border: Border.all(color: color.withOpacity(0.5)),
                     ),
                     child: Text(
-                      '${sheet.extractedSpecIds.length} size${sheet.extractedSpecIds.length == 1 ? '' : 's'}',
+                      '${widget.sizesFound} size${widget.sizesFound == 1 ? '' : 's'}',
                       style: TextStyle(
                         fontSize: 8.5,
                         fontWeight: FontWeight.w800,
-                        color: sheet.color,
+                        color: color,
                       ),
                     ),
                   ),
                 ),
-
               if (_hovered && !busy)
                 Positioned(
                   bottom: 5,
