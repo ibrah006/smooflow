@@ -551,34 +551,35 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
 
       setState(() => _attachments = [..._attachments, draft]);
 
-      try {
-        final uploaded = await repo.uploadFile(
-          widget.task.id,
-          path,
-          isSpecSheet: isSpecSheet,
-        );
-        if (!mounted) return;
-        setState(() {
-          _attachments =
-              _attachments.map((a) => a.id == draftId ? uploaded : a).toList();
-        });
-      } catch (_) {
-        if (!mounted) return;
-        setState(() {
-          _attachments =
-              _attachments
-                  .map(
-                    (a) =>
-                        a.id == draftId
-                            ? a.copyWith(
-                              isFailed: true,
-                              clearUploadProgress: true,
-                            )
-                            : a,
-                  )
-                  .toList();
-        });
-      }
+      // try {
+      final uploaded = await repo.uploadFile(
+        widget.task.id,
+        path,
+        isSpecSheet: isSpecSheet,
+      );
+      if (!mounted) return;
+      setState(() {
+        _attachments =
+            _attachments.map((a) => a.id == draftId ? uploaded : a).toList();
+      });
+      // } catch (e) {
+      //   print("error caught while trying to upload: $e");
+      //   if (!mounted) return;
+      //   setState(() {
+      //     _attachments =
+      //         _attachments
+      //             .map(
+      //               (a) =>
+      //                   a.id == draftId
+      //                       ? a.copyWith(
+      //                         isFailed: true,
+      //                         clearUploadProgress: true,
+      //                       )
+      //                       : a,
+      //             )
+      //             .toList();
+      //   });
+      // }
     }
   }
 

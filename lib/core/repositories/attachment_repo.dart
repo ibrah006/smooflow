@@ -101,7 +101,7 @@ class AttachmentRepository {
         'fileName': fileName,
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
-        isSpecSheet: isSpecSheet,
+        'isSpecSheet': isSpecSheet,
       }),
     );
     if (res.statusCode != 201) {
@@ -140,6 +140,7 @@ class AttachmentRepository {
     mimeType: json['mimeType'] as String,
     uploadedByName: json['uploadedByName'] as String? ?? '',
     uploadedAt: DateTime.parse(json['createdAt'] as String),
+    isSpecSheet: json['isSpecSheet'] as bool,
   );
 }
 
