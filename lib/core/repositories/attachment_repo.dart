@@ -106,7 +106,15 @@ class AttachmentRepository {
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
         'isSpecSheet': isSpecSheet,
-        'printSpecs': printSpecs.map((e) => e.toCreateJson()).toList(),
+        'printSpecs':
+            printSpecs
+                .map(
+                  (e) =>
+                      e.toCreateJson()
+                        ..remove('id')
+                        ..remove('attachmentId'),
+                )
+                .toList(),
       }),
     );
     if (res.statusCode != 201) {
@@ -137,22 +145,25 @@ class AttachmentRepository {
     }
   }
 
-  TaskAttachment _fromJson(Map<String, dynamic> json) => TaskAttachment(
-    id: json['id'] as int,
-    fileName: json['fileName'] as String,
-    url: json['url'] as String,
-    sizeBytes: json['sizeBytes'] as int,
-    mimeType: json['mimeType'] as String,
-    uploadedByName: json['uploadedByName'] as String? ?? '',
-    uploadedAt: DateTime.parse(json['createdAt'] as String),
-    isSpecSheet: json['isSpecSheet'] as bool,
-    printSpecs:
-        json['printSpecs'] != null
-            ? (json['printSpecs'] as List)
-                .map((e) => PrintSpec.fromJson(e as Map<String, dynamic>))
-                .toList()
-            : [],
-  );
+  TaskAttachment _fromJson(Map<String, dynamic> json) {
+    print("[TaskAttachment from json], json: $json");
+    return TaskAttachment(
+      id: json['id'] as int,
+      fileName: json['fileName'] as String,
+      url: json['url'] as String,
+      sizeBytes: json['sizeBytes'] as int,
+      mimeType: json['mimeType'] as String,
+      uploadedByName: json['uploadedByName'] as String? ?? '',
+      uploadedAt: DateTime.parse(json['createdAt'] as String),
+      isSpecSheet: json['isSpecSheet'] as bool,
+      printSpecs:
+          json['printSpecs'] != null
+              ? (json['printSpecs'] as List)
+                  .map((e) => PrintSpec.fromJson(e as Map<String, dynamic>))
+                  .toList()
+              : [],
+    );
+  }
 }
 
 typedef ValueChanged<T> = void Function(T value);
