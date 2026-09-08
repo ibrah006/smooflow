@@ -106,7 +106,7 @@ class AttachmentRepository {
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
         'isSpecSheet': isSpecSheet,
-        'printSpecs': printSpecs.map((e) => e.toJson()).toList(),
+        'printSpecs': printSpecs.map((e) => e.toCreateJson()).toList(),
       }),
     );
     if (res.statusCode != 201) {
