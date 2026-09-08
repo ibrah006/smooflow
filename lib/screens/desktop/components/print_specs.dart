@@ -283,7 +283,11 @@ class PrintSpecsEditor extends ConsumerStatefulWidget {
 
   /// Uploads the given local file paths as task attachments with
   /// isSpecSheet: true. Mirrors AttachmentsSection.onUpload.
-  final Future<void> Function(List<String> filePaths) onUploadSpecSheets;
+  final Future<void> Function(
+    List<String> filePaths,
+    List<PrintSpec> printSpecs,
+  )
+  onUploadSpecSheets;
 
   /// Deletes a spec-sheet attachment. Mirrors AttachmentsSection.onDelete.
   final Future<void> Function(TaskAttachment attachment) onDeleteSpecSheet;
@@ -370,33 +374,63 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
       final paths = files.map((f) => f.path).whereType<String>().toList();
       if (paths.isEmpty) return;
 
-      for (final path in paths) {
-        final fileName = path.split(Platform.pathSeparator).last;
-        final sheetId = _nextSheetId--;
-        _sheetFileNames[sheetId] = fileName;
-        unawaited(_runOcr(path, sheetId));
-      }
+      final List<PrintSpec> newPrintSpecs = [];
+
+      await Future.wait(
+        paths.map((path) async {
+          final fileName = path.split(Platform.pathSeparator).last;
+          final sheetId = _nextSheetId--;
+
+          _sheetFileNames[sheetId] = fileName;
+
+          newPrintSpecs.addAll(await _runOcr(path, sheetId));
+        }),
+      );
+
+      // Sizes that already exist in the user's manually-added items.
+      final existingSizes =
+          _items.map((spec) => spec.size).whereType<String>().toSet();
+
+      // Deduplicate ONLY the new OCR results.
+      final seenSizes = <String>{...existingSizes};
+
+      final newUniquePrintSpecs =
+          newPrintSpecs.where((spec) {
+            final size = spec.size;
+
+            if (size == null) {
+              return true;
+            }
+
+            // add() returns false if we've already seen this size.
+            return seenSizes.add(size);
+          }).toList();
+
+      setState(() => _items = [..._items, ...newUniquePrintSpecs]);
 
       // Parent uploads these as real task attachments with isSpecSheet: true.
-      await widget.onUploadSpecSheets(paths);
+      await widget.onUploadSpecSheets(paths, newUniquePrintSpecs);
     } finally {
       if (mounted) setState(() => _pickingSheet = false);
     }
   }
 
-  Future<void> _runOcr(String path, int sheetId) async {
+  /// Returns all the extracted
+  Future<List<PrintSpec>> _runOcr(String path, int sheetId) async {
     try {
       final OcrResult result = await _ocrReader.readFromPath(path);
       debugPrint('[OCR raw] ${result.text.codeUnits}');
-      if (!mounted) return;
+      if (!mounted) return [];
       final extracted = _parseSizesFromOcr(result.text, sheetId);
       if (extracted.isEmpty) {
         debugPrint('[_runOcr] empty extraction for $path');
-        return;
+        return [];
       }
-      setState(() => _items = [..._items, ...extracted]);
+
+      return extracted;
     } catch (e) {
       debugPrint('[_runOcr] extraction failed for $path, error: $e');
+      throw 'Failed to extract data from file attached';
     }
   }
 

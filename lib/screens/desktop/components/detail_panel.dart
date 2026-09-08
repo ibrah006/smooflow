@@ -523,10 +523,11 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   // ── Attachments ────────────────────────────────────────────────────────────
-  // ── Attachments ────────────────────────────────────────────────────────────
   Future<void> _onUploadAttachments(
     List<String> filePaths, {
     bool isSpecSheet = false,
+    // Pass in print specs as parameter
+    List<PrintSpec> printSpecs = const [],
   }) async {
     final repo = ref.read(attachmentRepositoryProvider);
 
@@ -556,6 +557,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         widget.task.id,
         path,
         isSpecSheet: isSpecSheet,
+        printSpecs: isSpecSheet?  : []
       );
       if (!mounted) return;
       setState(() {
@@ -974,9 +976,10 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                               attachments: _attachments,
                               onUpdate: _onPrintSpecsChange,
                               onUploadSpecSheets:
-                                  (paths) => _onUploadAttachments(
+                                  (paths, printSpecs) => _onUploadAttachments(
                                     paths,
                                     isSpecSheet: true,
+                                    printSpecs: printSpecs
                                   ),
                               onDeleteSpecSheet: _onDeleteAttachment,
                             ),

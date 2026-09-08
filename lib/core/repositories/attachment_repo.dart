@@ -27,6 +27,7 @@ class AttachmentRepository {
     String path, {
     ValueChanged<double>? onProgress,
     required bool isSpecSheet,
+    List<PrintSpec> printSpecs = const [],
   }) async {
     final file = File(path);
     final fileName = path.split(Platform.pathSeparator).last;
@@ -50,6 +51,7 @@ class AttachmentRepository {
       mimeType: mimeType,
       sizeBytes: sizeBytes,
       isSpecSheet: isSpecSheet,
+      printSpecs: printSpecs,
     );
   }
 
@@ -93,6 +95,7 @@ class AttachmentRepository {
     required String mimeType,
     required int sizeBytes,
     required bool isSpecSheet,
+    required List<PrintSpec> printSpecs,
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/tasks/$taskId/attachments'),
@@ -103,6 +106,7 @@ class AttachmentRepository {
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
         'isSpecSheet': isSpecSheet,
+        'printSpecs': printSpecs.map((e) => e.toJson()).toList(),
       }),
     );
     if (res.statusCode != 201) {
