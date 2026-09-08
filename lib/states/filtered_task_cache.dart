@@ -135,9 +135,20 @@ class FilteredTaskCacheState {
   Task? getLocalTask(int taskId) {
     // Worst case: O(N), N: no. of tasks in memory
     try {
+      bool hasFoundTaskInMemory = false;
       final task = cachedTasks.values
           .expand((statusMap) => statusMap.values)
-          .firstWhere((task) => task.id == taskId);
+          .firstWhere((task) {
+            if (task.id == taskId) {
+              hasFoundTaskInMemory = true;
+              return true;
+            }
+            return false;
+          });
+
+      print(
+        "[FilteredTaskCacheState.getLocalTask] has found task in memory: ${hasFoundTaskInMemory}",
+      );
 
       return task;
     } catch (e) {

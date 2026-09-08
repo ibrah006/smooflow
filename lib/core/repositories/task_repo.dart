@@ -49,6 +49,7 @@ class TaskRepo {
     DateTime? activityLogLastModified,
     DateTime? assigneeLastAdded,
   }) async {
+    print("get task by id called for task: ${taskId}");
     final queryParams = <String, String>{};
     if (updatedAt != null) {
       queryParams['updatedAt'] = updatedAt.toIso8601String();
