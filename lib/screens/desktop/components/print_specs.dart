@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/core/models/task.dart';
 import 'package:smooflow/core/services/print_ref_history.dart';
+import 'package:smooflow/extensions/print_specs.dart';
 import 'package:smooflow/providers/task_provider.dart';
 import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 import 'package:smooflow/screens/desktop/components/ghost_text_field.dart';
@@ -387,28 +388,29 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
         }),
       );
 
-      // Sizes that already exist in the user's manually-added items.
+      // Existing manually-added sizes.
+      // These are only used to prevent OCR from adding another copy.
       final existingSizes =
-          _items.map((spec) => spec.size).whereType<String>().toSet();
+          _items.map((spec) => spec.normalizeSize).whereType<String>().toSet();
 
-      // Deduplicate ONLY the new OCR results.
       final seenSizes = <String>{...existingSizes};
 
+      // Deduplicate OCR results.
       final newUniquePrintSpecs =
           newPrintSpecs.where((spec) {
-            final size = spec.size;
+            final normalizedSize = spec.normalizeSize;
 
-            if (size == null) {
+            if (normalizedSize == null) {
               return true;
             }
 
-            // add() returns false if we've already seen this size.
-            return seenSizes.add(size);
+            return seenSizes.add(normalizedSize);
           }).toList();
 
-      setState(() => _items = [..._items, ...newUniquePrintSpecs]);
+      setState(() {
+        _items = [..._items, ...newUniquePrintSpecs];
+      });
 
-      // Parent uploads these as real task attachments with isSpecSheet: true.
       await widget.onUploadSpecSheets(paths, newUniquePrintSpecs);
     } finally {
       if (mounted) setState(() => _pickingSheet = false);
