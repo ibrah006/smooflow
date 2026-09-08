@@ -49,6 +49,22 @@ class _T {
   static const rXl = 16.0;
 }
 
+class _SpecSheetDetails {
+  final int attachmentId;
+  final Color color;
+  final String fileName;
+
+  /// print spec ids contained by this spec sheet
+  final Iterable<int> printSpecs;
+
+  _SpecSheetDetails({
+    required this.attachmentId,
+    required this.color,
+    required this.printSpecs,
+    required this.fileName,
+  });
+}
+
 class PrinterStub {
   final String id;
   final String name;
@@ -318,7 +334,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   // OCR, right after picking) back to the eventual TaskAttachment, which we
   // match by fileName once it shows up in widget.attachments.
   final Map<int, String> _sheetFileNames = {};
-  List<SpecSheetDraft> _specSheets = [];
+  List<SpecSheetDraft> _draftSpecSheets = [];
   int _nextSheetId = -1;
   bool _pickingSheet = false;
 
@@ -327,10 +343,33 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   List<TaskAttachment> get _specSheetAttachments =>
       widget.attachments.where((a) => a.isSpecSheet).toList();
 
+  late final List<_SpecSheetDetails> specSheets;
+
   @override
   void initState() {
     super.initState();
     _initSpecs();
+
+    int nextColorIndex = -1;
+
+    final specSheetAttachments = _specSheetAttachments;
+
+    specSheets =
+        specSheetAttachments.map((attachment) {
+          nextColorIndex =
+              nextColorIndex + 1 >= specSheetAttachments.length
+                  ? 0
+                  : nextColorIndex + 1;
+
+          return _SpecSheetDetails(
+            attachmentId: attachment.id,
+            color: _kSheetColors[nextColorIndex],
+            fileName: attachment.fileName,
+            printSpecs: _items
+                .where((spec) => spec.sourceSheetId == attachment.id)
+                .map((spec) => spec.id),
+          );
+        }).toList();
   }
 
   @override
@@ -860,9 +899,9 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
             SpecSheetDraft? sourceSheet;
             int? sheetIdx;
             if (item.sourceSheetId != null) {
-              for (int i = 0; i < _specSheets.length; i++) {
-                if (_specSheets[i].id == item.sourceSheetId) {
-                  sourceSheet = _specSheets[i];
+              for (int i = 0; i < _draftSpecSheets.length; i++) {
+                if (_draftSpecSheets[i].id == item.sourceSheetId) {
+                  sourceSheet = _draftSpecSheets[i];
                   sheetIdx = i + 1;
                   break;
                 }
@@ -876,6 +915,9 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
               sharedRef: _sharedRef,
               sourceSheet: sourceSheet,
               sheetIndex: sheetIdx,
+              sourceSheetDetails: specSheets.firstWhereOrNull(
+                (s) => s.attachmentId == item.sourceSheetId,
+              ),
               onChanged: (updatedItem) {
                 setState(() {
                   _items[index] = updatedItem;
@@ -1315,8 +1357,10 @@ class _SpecRowInline extends ConsumerStatefulWidget {
   final ValueChanged<PrintSpec> onChanged;
   final VoidCallback onDelete;
   final int taskId;
+  @Deprecated("Use sourceSheetDetails instead")
   final SpecSheetDraft? sourceSheet;
   final int? sheetIndex;
+  final _SpecSheetDetails? sourceSheetDetails;
 
   _SpecRowInline({
     super.key,
@@ -1327,6 +1371,7 @@ class _SpecRowInline extends ConsumerStatefulWidget {
     required this.taskId,
     this.sourceSheet,
     this.sheetIndex,
+    required this.sourceSheetDetails,
   });
 
   @override
@@ -1409,9 +1454,9 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
   }
 
   Widget _buildSourceChip() {
-    if (widget.sourceSheet == null)
+    if (widget.sourceSheetDetails == null)
       return const SizedBox(width: 16, height: 16);
-    final sheet = widget.sourceSheet!;
+    final sheet = widget.sourceSheetDetails!;
     return Tooltip(
       message: 'Extracted from ${sheet.fileName}',
       child: Container(
