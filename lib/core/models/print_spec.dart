@@ -23,6 +23,8 @@ class PrintSpec {
 
   int? _tempId;
 
+  int? taskId;
+
   double get width {
     return size != null ? double.tryParse(size!.split('×').first) ?? 0 : 0;
   }
@@ -47,11 +49,17 @@ class PrintSpec {
     this.size,
     this.quantity,
     this.sourceSheetId,
+    required this.taskId,
   }) : _id = id;
 
-  PrintSpec.create({this.ref, this.size, int quantity = 1, this.sourceSheetId})
-    : _tempId = Random().nextInt(2000000) * -1,
-      this.quantity = quantity;
+  PrintSpec.create({
+    this.ref,
+    this.size,
+    int quantity = 1,
+    this.sourceSheetId,
+    this.taskId,
+  }) : _tempId = Random().nextInt(2000000) * -1,
+       this.quantity = quantity;
 
   factory PrintSpec.fromJson(Map<String, dynamic> json) {
     return PrintSpec(
@@ -60,6 +68,7 @@ class PrintSpec {
       size: json['size'] as String?,
       quantity: json['quantity'] as int?,
       sourceSheetId: json['attachmentId'] as int?,
+      taskId: json['taskId'] as int,
     );
   }
 
@@ -74,6 +83,7 @@ class PrintSpec {
       'quantity': quantity,
       'id': id,
       'attachmentId': sourceSheetId,
+      'taskId': taskId,
     };
   }
 
@@ -96,6 +106,7 @@ class PrintSpec {
     int? quantity,
     int? sourceSheetId,
     bool clearSourceSheetId = false,
+    int? taskId,
   }) {
     // NOTE: previously the draft (id < 0) branch passed ref/size/quantity
     // through raw instead of falling back to `this.*`, so editing a single
@@ -116,6 +127,7 @@ class PrintSpec {
           quantity: quantity ?? this.quantity,
           sourceSheetId:
               clearSourceSheetId ? null : (sourceSheetId ?? this.sourceSheetId),
+          taskId: taskId ?? this.taskId,
         );
   }
 }

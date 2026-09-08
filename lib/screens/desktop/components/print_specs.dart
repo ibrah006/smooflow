@@ -454,6 +454,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
           size: formattedSize,
           quantity: 1,
           sourceSheetId: sheetId,
+          taskId: widget.task.id,
         ),
       );
     }
