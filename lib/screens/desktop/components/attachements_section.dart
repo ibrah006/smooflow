@@ -95,7 +95,7 @@ class TaskAttachment {
   final double? uploadProgress;
   final bool isFailed;
 
-  final List<PrintSpec> printSpecs;
+  final int printSpecsCount;
 
   const TaskAttachment({
     required this.id,
@@ -108,7 +108,7 @@ class TaskAttachment {
     this.uploadProgress,
     this.isFailed = false,
     this.isSpecSheet = false,
-    this.printSpecs = const [],
+    this.printSpecsCount = 0,
   });
 
   AttachmentKind get kind => attachmentKindFor(fileName, mimeType);
@@ -133,7 +133,7 @@ class TaskAttachment {
           clearUploadProgress ? null : (uploadProgress ?? this.uploadProgress),
       isFailed: isFailed ?? this.isFailed,
       isSpecSheet: isSpecSheet,
-      printSpecs: printSpecs,
+      printSpecsCount: printSpecsCount,
     );
   }
 }

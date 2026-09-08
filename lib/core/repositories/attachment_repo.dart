@@ -51,7 +51,7 @@ class AttachmentRepository {
       mimeType: mimeType,
       sizeBytes: sizeBytes,
       isSpecSheet: isSpecSheet,
-      printSpecs: printSpecs,
+      printSpecsCount: printSpecs,
     );
   }
 
@@ -95,7 +95,7 @@ class AttachmentRepository {
     required String mimeType,
     required int sizeBytes,
     required bool isSpecSheet,
-    required List<PrintSpec> printSpecs,
+    required List<PrintSpec> printSpecsCount,
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/tasks/$taskId/attachments'),
@@ -107,7 +107,7 @@ class AttachmentRepository {
         'sizeBytes': sizeBytes,
         'isSpecSheet': isSpecSheet,
         'printSpecs':
-            printSpecs
+            printSpecsCount
                 .map(
                   (e) =>
                       e.toCreateJson()
@@ -156,12 +156,7 @@ class AttachmentRepository {
       uploadedByName: json['uploadedByName'] as String? ?? '',
       uploadedAt: DateTime.parse(json['createdAt'] as String),
       isSpecSheet: json['isSpecSheet'] as bool,
-      printSpecs:
-          json['printSpecs'] != null
-              ? (json['printSpecs'] as List)
-                  .map((e) => PrintSpec.fromJson(e as Map<String, dynamic>))
-                  .toList()
-              : [],
+      printSpecsCount: json['printSpecs'] ?? 0,
     );
   }
 }

@@ -618,7 +618,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   attachment: attachment,
                   sheetIndex: index + 1,
                   color: color,
-                  sizesFound: sizesFound,
+                  // sizesFound: sizesFound,
                   onDelete: () => _handleDeleteSpecSheet(attachment),
                   onTap: () => _showSheetPreview(attachment),
                 );
@@ -1014,7 +1014,6 @@ class _SpecSheetThumb extends StatefulWidget {
   final TaskAttachment attachment;
   final int sheetIndex;
   final Color color;
-  final int? sizesFound;
   final VoidCallback onDelete;
   final VoidCallback onTap;
 
@@ -1025,7 +1024,6 @@ class _SpecSheetThumb extends StatefulWidget {
     required this.color,
     required this.onDelete,
     required this.onTap,
-    this.sizesFound,
   });
 
   @override
@@ -1197,7 +1195,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                   ),
                 ),
               ),
-              if (widget.sizesFound != null)
+              if (widget.attachment.printSpecsCount > 0)
                 Positioned(
                   top: 5,
                   right: 5,
@@ -1212,7 +1210,7 @@ class _SpecSheetThumbState extends State<_SpecSheetThumb> {
                       border: Border.all(color: color.withOpacity(0.5)),
                     ),
                     child: Text(
-                      '${widget.sizesFound} size${widget.sizesFound == 1 ? '' : 's'}',
+                      '${widget.attachment.printSpecsCount} size${widget.attachment.printSpecsCount == 1 ? '' : 's'}',
                       style: TextStyle(
                         fontSize: 8.5,
                         fontWeight: FontWeight.w800,
