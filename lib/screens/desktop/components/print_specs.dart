@@ -365,6 +365,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
         allowMultiple: true,
         type: FileType.image,
       );
+
       final files = result?.files ?? [];
       final paths = files.map((f) => f.path).whereType<String>().toList();
       if (paths.isEmpty) return;
@@ -386,6 +387,7 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   Future<void> _runOcr(String path, int sheetId) async {
     try {
       final OcrResult result = await _ocrReader.readFromPath(path);
+      debugPrint('[OCR raw] ${result.text.codeUnits}');
       if (!mounted) return;
       final extracted = _parseSizesFromOcr(result.text, sheetId);
       if (extracted.isEmpty) {

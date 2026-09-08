@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 import 'package:smooflow/screens/desktop/components/attachements_section.dart';
 
 /// Talks to the /tasks/:taskId/attachments endpoints and to R2 directly for
@@ -141,6 +142,12 @@ class AttachmentRepository {
     uploadedByName: json['uploadedByName'] as String? ?? '',
     uploadedAt: DateTime.parse(json['createdAt'] as String),
     isSpecSheet: json['isSpecSheet'] as bool,
+    printSpecs:
+        json['printSpecs'] != null
+            ? (json['printSpecs'] as List<Map>)
+                .map((e) => PrintSpec.fromJson(e as Map<String, dynamic>))
+                .toList()
+            : [],
   );
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:smooflow/core/models/print_spec.dart';
 // OPEN ITEM: add `desktop_drop` to pubspec.yaml for native OS drag-and-drop
 // support (`flutter pub add desktop_drop`). Uncomment the import + DropTarget
 // wrapper below once added. Click-to-browse works without it.
@@ -94,6 +95,8 @@ class TaskAttachment {
   final double? uploadProgress;
   final bool isFailed;
 
+  final List<PrintSpec> printSpecs;
+
   const TaskAttachment({
     required this.id,
     required this.fileName,
@@ -105,6 +108,7 @@ class TaskAttachment {
     this.uploadProgress,
     this.isFailed = false,
     this.isSpecSheet = false,
+    this.printSpecs = const [],
   });
 
   AttachmentKind get kind => attachmentKindFor(fileName, mimeType);
@@ -129,6 +133,7 @@ class TaskAttachment {
           clearUploadProgress ? null : (uploadProgress ?? this.uploadProgress),
       isFailed: isFailed ?? this.isFailed,
       isSpecSheet: isSpecSheet,
+      printSpecs: printSpecs,
     );
   }
 }
