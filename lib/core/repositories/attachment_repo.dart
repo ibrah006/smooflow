@@ -148,7 +148,7 @@ class AttachmentRepository {
     isSpecSheet: json['isSpecSheet'] as bool,
     printSpecs:
         json['printSpecs'] != null
-            ? (json['printSpecs'] as List<Map>)
+            ? (json['printSpecs'] as List)
                 .map((e) => PrintSpec.fromJson(e as Map<String, dynamic>))
                 .toList()
             : [],
