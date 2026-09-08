@@ -557,7 +557,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
         widget.task.id,
         path,
         isSpecSheet: isSpecSheet,
-        printSpecs: isSpecSheet?  : []
+        printSpecs: isSpecSheet ? printSpecs : [],
       );
       if (!mounted) return;
       setState(() {
@@ -979,7 +979,7 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                                   (paths, printSpecs) => _onUploadAttachments(
                                     paths,
                                     isSpecSheet: true,
-                                    printSpecs: printSpecs
+                                    printSpecs: printSpecs,
                                   ),
                               onDeleteSpecSheet: _onDeleteAttachment,
                             ),
