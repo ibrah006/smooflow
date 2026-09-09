@@ -146,7 +146,6 @@ class AttachmentRepository {
   }
 
   TaskAttachment _fromJson(Map<String, dynamic> json) {
-    print("[TaskAttachment from json], json: $json");
     return TaskAttachment(
       id: json['id'] as int,
       fileName: json['fileName'] as String,
