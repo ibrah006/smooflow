@@ -2389,8 +2389,6 @@ class _PaginatedTaskRow extends ConsumerWidget {
 
     // 2. Trigger lazy page download if data isn't in cache yet
     if (task == null) {
-      print("task row build null: ${indexWithinStatus}");
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
           ref
