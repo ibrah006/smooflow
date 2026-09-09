@@ -816,6 +816,8 @@ class TaskCacheNotifier
             //         })
             //         .toList() ??
             //     [];
+          } else if (event.changes?["deletePrintSpecId"] != null) {
+            state.updateLocalTask(event.task!);
           }
         }
 

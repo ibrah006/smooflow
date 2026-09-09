@@ -907,13 +907,13 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
               }
             }
 
-            print(
-              "item.sourceSheetId: ${item.sourceSheetId} specSheets len(${specSheets.length})",
-            );
+            // print(
+            //   "item.sourceSheetId: ${item.sourceSheetId} specSheets len(${specSheets.length})",
+            // );
 
-            specSheets.forEach((sheet) {
-              print("spec sheet ${sheet.attachmentId}");
-            });
+            // specSheets.forEach((sheet) {
+            //   print("spec sheet ${sheet.attachmentId}");
+            // });
 
             return _SpecRowInline(
               key: ValueKey(item.id),
