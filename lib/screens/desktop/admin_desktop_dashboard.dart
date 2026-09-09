@@ -180,24 +180,10 @@ class _AdminDesktopDashboardScreenState
     detailPanelProjectId = null;
   });
 
-  @Deprecated("Use _getSelectedTask instead for async retrieval")
-  Task? get _selectedTask {
-    return _selectedTaskId == null
-        ? null
-        : ref
-            .read(
-              taskCacheProvider(
-                _selectedProjectId == null
-                    ? TaskFilter.empty
-                    : TaskFilter(projectId: detailPanelProjectId),
-              ),
-            )
-            .getLocalTask(_selectedTaskId!);
-  }
-
   Future<Task?> get _getSelectedTask async {
     if (_selectedTaskId == null) return null;
     try {
+      print("getting local task");
       return ref
           .read(
             taskCacheProvider(
@@ -208,7 +194,7 @@ class _AdminDesktopDashboardScreenState
           )
           .getLocalTask(_selectedTaskId!)!;
     } catch (e) {
-      return ref
+      return await ref
           .read(
             taskCacheProvider(
               _selectedProjectId == null
@@ -445,8 +431,10 @@ class _AdminDesktopDashboardScreenState
 
     return GestureDetector(
       onTap: () {
-        _addTaskFocusNode.unfocus();
-        setState(() => _isAddingTask = false);
+        if (_isAddingTask == true) {
+          _addTaskFocusNode.unfocus();
+          setState(() => _isAddingTask = false);
+        }
       },
       child: PopScope(
         // On mobile, physical/gesture back closes the detail panel first
@@ -587,10 +575,19 @@ class _AdminDesktopDashboardScreenState
                         ? FutureBuilder<Task?>(
                           key: ValueKey(_selectedTaskId),
                           future: _getSelectedTask,
+                          initialData: ref
+                              .read(
+                                taskCacheProvider(
+                                  _selectedProjectId == null
+                                      ? TaskFilter.empty
+                                      : TaskFilter(
+                                        projectId: detailPanelProjectId,
+                                      ),
+                                ),
+                              )
+                              .getLocalTask(_selectedTaskId!),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState !=
-                                    ConnectionState.done ||
-                                snapshot.data == null) {
+                            if (snapshot.data == null) {
                               return const DetailPanelSkeleton();
                             }
                             return DetailPanel(
@@ -645,6 +642,15 @@ class _AdminDesktopDashboardScreenState
                 _selectedTaskId != null
                     ? FutureBuilder<Task?>(
                       key: ValueKey('mobile_detail_$_selectedTaskId'),
+                      initialData: ref
+                          .read(
+                            taskCacheProvider(
+                              _selectedProjectId == null
+                                  ? TaskFilter.empty
+                                  : TaskFilter(projectId: detailPanelProjectId),
+                            ),
+                          )
+                          .getLocalTask(_selectedTaskId!),
                       future: _getSelectedTask,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState != ConnectionState.done ||
