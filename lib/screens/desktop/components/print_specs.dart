@@ -696,10 +696,8 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (kDebugMode) ...[
-            _buildSpecSheetsSection(),
-            const SizedBox(height: 2),
-          ],
+          _buildSpecSheetsSection(),
+          const SizedBox(height: 2),
 
           // ── Shared Ref Toggle ──
           MouseRegion(
