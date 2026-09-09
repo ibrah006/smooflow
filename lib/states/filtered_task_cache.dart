@@ -35,7 +35,10 @@ class FilteredTaskCacheState {
   }) : _taskNameChangeEventsUnderway = List<TaskNameChangeEventUnderway>.from(
          taskNameChangeEventsUnderway,
        ),
-       _currentlyCreatingSpecs = currentlyCreatingSpecs,
+       _currentlyCreatingSpecs = {
+         for (final entry in currentlyCreatingSpecs.entries)
+           entry.key: List<CreatingPrintSpecID>.from(entry.value),
+       },
        _currentlyDeletingSpecs =
            currentlyDeletingSpecs ??
            {}, // ✅ FIXED: Fallback safely instead of clearing

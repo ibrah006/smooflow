@@ -531,7 +531,7 @@ class TaskCacheNotifier
     }
 
     if (deletePrintSpecId != null) {
-      state.addCurrentlyCreatingSpec(task.id, deletePrintSpecId);
+      state.addCurrentlyCreatingSpecs(task.id, [deletePrintSpecId]);
     }
 
     await _repo.update(
