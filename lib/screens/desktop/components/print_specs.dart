@@ -987,16 +987,20 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                   widget.onUpdate([updatedItem], _sharedRef);
                 }
               },
-              onDelete: () {
+              onDelete: () async {
                 final toBeRemoved = _items.elementAt(index);
                 setState(() {});
                 if (toBeRemoved.id > 0) {
                   // Request API deletion for persisted items
-                  widget.onUpdate(
+                  await widget.onUpdate(
                     null,
                     _sharedRef,
                     deletePrintSpecId: toBeRemoved.id,
                   );
+
+                  setState(() {
+                    _items.removeAt(index);
+                  });
                 }
               },
             );
