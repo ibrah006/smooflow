@@ -531,7 +531,7 @@ class TaskCacheNotifier
     }
 
     if (deletePrintSpecId != null) {
-      state.addCurrentlyCreatingSpecs(task.id, [deletePrintSpecId]);
+      state.addCurrentlyDeletingSpec(deletePrintSpecId);
     }
 
     await _repo.update(
@@ -886,6 +886,9 @@ class TaskCacheNotifier
             event.changes!["newPrintSpec"]["tempLocalId"],
             event.changes!["newPrintSpec"]["id"],
           );
+          stateDidMutate = true;
+        } else if (event.changes?["deletePrintSpecId"] != null) {
+          state.updateLocalTask(event.task!);
           stateDidMutate = true;
         }
         break;
