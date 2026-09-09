@@ -183,7 +183,6 @@ class _AdminDesktopDashboardScreenState
   Future<Task?> get _getSelectedTask async {
     if (_selectedTaskId == null) return null;
     try {
-      print("getting local task");
       return ref
           .read(
             taskCacheProvider(
