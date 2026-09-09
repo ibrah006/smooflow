@@ -51,6 +51,9 @@ class _T {
 }
 
 class _SpecSheetDetails {
+  /// The local index of spec sheet within task just for the purpose of user reference
+  /// A Spec Sheet's id is not guaranteed to be the same throughout its cycle
+  final int specSheetIndex;
   final int attachmentId;
   final Color color;
   final String fileName;
@@ -59,6 +62,7 @@ class _SpecSheetDetails {
   final Iterable<int> printSpecs;
 
   _SpecSheetDetails({
+    required this.specSheetIndex,
     required this.attachmentId,
     required this.color,
     required this.printSpecs,
@@ -344,45 +348,19 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
   List<TaskAttachment> get _specSheetAttachments =>
       widget.attachments.where((a) => a.isSpecSheet).toList();
 
-  late final List<_SpecSheetDetails> specSheets;
+  List<_SpecSheetDetails> specSheets = [];
 
   @override
   void initState() {
     super.initState();
     _initSpecs();
-
-    int nextColorIndex = -1;
-
-    final specSheetAttachments = _specSheetAttachments;
-
-    specSheets =
-        specSheetAttachments.map((attachment) {
-          nextColorIndex =
-              nextColorIndex + 1 >= specSheetAttachments.length
-                  ? 0
-                  : nextColorIndex + 1;
-
-          return _SpecSheetDetails(
-            attachmentId: attachment.id,
-            color: _kSheetColors[nextColorIndex],
-            fileName: attachment.fileName,
-            printSpecs: _items
-                .where((spec) => spec.sourceSheetId == attachment.id)
-                .map((spec) => spec.id),
-          );
-        }).toList();
   }
 
   @override
-  void dispose() {
-    _ocrReader.dispose();
-    super.dispose();
-  }
+  void didUpdateWidget(PrintSpecsEditor old) {
+    super.didUpdateWidget(old);
 
-  @override
-  void didUpdateWidget(covariant PrintSpecsEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.task.id != widget.task.id) {
+    if (old.task.id != widget.task.id) {
       _initSpecs();
     }
   }
@@ -689,6 +667,26 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
       // pass
     }
 
+    int nextColorIndex = -1;
+    final specSheetAttachments = _specSheetAttachments;
+
+    print("spec sheet attachments: ${specSheetAttachments.length}");
+
+    specSheets =
+        specSheetAttachments.map((attachment) {
+          nextColorIndex++;
+
+          return _SpecSheetDetails(
+            attachmentId: attachment.id,
+            specSheetIndex: nextColorIndex + 1,
+            color: _kSheetColors[nextColorIndex % _kSheetColors.length],
+            fileName: attachment.fileName,
+            printSpecs: _items
+                .where((spec) => spec.sourceSheetId == attachment.id)
+                .map((spec) => spec.id),
+          );
+        }).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: _T.slate50.withOpacity(0.5),
@@ -908,6 +906,14 @@ class _PrintSpecsEditorState extends ConsumerState<PrintSpecsEditor> {
                 }
               }
             }
+
+            print(
+              "item.sourceSheetId: ${item.sourceSheetId} specSheets len(${specSheets.length})",
+            );
+
+            specSheets.forEach((sheet) {
+              print("spec sheet ${sheet.attachmentId}");
+            });
 
             return _SpecRowInline(
               key: ValueKey(item.id),
@@ -1360,6 +1366,7 @@ class _SpecRowInline extends ConsumerStatefulWidget {
   final int taskId;
   @Deprecated("Use sourceSheetDetails instead")
   final SpecSheetDraft? sourceSheet;
+  @Deprecated("Use sourceSheetDetails.specSheetIndex instead")
   final int? sheetIndex;
   final _SpecSheetDetails? sourceSheetDetails;
 
@@ -1457,6 +1464,7 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
   Widget _buildSourceChip() {
     if (widget.sourceSheetDetails == null)
       return const SizedBox(width: 16, height: 16);
+
     final sheet = widget.sourceSheetDetails!;
     return Tooltip(
       message: 'Extracted from ${sheet.fileName}',
@@ -1470,7 +1478,7 @@ class _SpecRowInlineState extends ConsumerState<_SpecRowInline> {
           border: Border.all(color: sheet.color.withOpacity(0.5)),
         ),
         child: Text(
-          'S${widget.sheetIndex}',
+          'S${widget.sourceSheetDetails!.specSheetIndex}',
           style: TextStyle(
             fontSize: 8,
             fontWeight: FontWeight.w800,
