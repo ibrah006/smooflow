@@ -768,11 +768,15 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                 ),
               ),
 
-              _StageStepper(
-                currentStatus: widget.task.status,
-                onStageTap: (status) {
-                  _onAdvanceTask(true, newStage: status);
-                },
+              _PanelHero(
+                task: widget.task,
+                project: proj,
+                next: next,
+                ableToReinitialize: ableToReinitialize,
+                isProgressing: _isProgressing,
+                onNameSubmitted: _onTaskNameChange,
+                onStageTap: (status) => _onAdvanceTask(true, newStage: status),
+                onStatusTap: () => _onAdvanceTask(progressBtnEnabled),
               ),
 
               // ── Scrollable body ───────────────────────────────────────────────
@@ -782,50 +786,49 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: EdgeInsetsGeometry.symmetric(
-                          horizontal: 10,
-                        ).add(EdgeInsetsGeometry.only(top: 18)),
-                        child: GhostTextField(
-                          initialText: widget.task.name,
-                          onSubmitted: _onTaskNameChange,
-                          style: TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: _T.ink,
-                            letterSpacing: -0.3,
-                            height: 1.35,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: proj.color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              proj.name,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: _T.slate500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Padding(
+                      //   padding: EdgeInsetsGeometry.symmetric(
+                      //     horizontal: 10,
+                      //   ).add(EdgeInsetsGeometry.only(top: 18)),
+                      //   child: GhostTextField(
+                      //     initialText: widget.task.name,
+                      //     onSubmitted: _onTaskNameChange,
+                      //     style: TextStyle(
+                      //       fontFamily: 'Plus Jakarta Sans',
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.w700,
+                      //       color: _T.ink,
+                      //       letterSpacing: -0.3,
+                      //       height: 1.35,
+                      //     ),
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 2),
+                      // Padding(
+                      //   padding: const EdgeInsets.symmetric(horizontal: 18),
+                      //   child: Row(
+                      //     children: [
+                      //       Container(
+                      //         width: 8,
+                      //         height: 8,
+                      //         decoration: BoxDecoration(
+                      //           color: proj.color,
+                      //           shape: BoxShape.circle,
+                      //         ),
+                      //       ),
+                      //       const SizedBox(width: 5),
+                      //       Text(
+                      //         proj.name,
+                      //         style: const TextStyle(
+                      //           fontSize: 11.5,
+                      //           fontWeight: FontWeight.w600,
+                      //           color: _T.slate500,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       const SizedBox(height: 18),
-
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: const _DetailSectionTitle('Details'),
@@ -1123,6 +1126,178 @@ class __DetailPanelState extends ConsumerState<DetailPanel> {
     );
 
     return isMobile ? content : content;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PANEL HERO
+// Always-visible header block above the scrollable body: task identity,
+// the stage stepper, and a single-line readout of the next actionable step.
+// Tapping the status row triggers the same advance action as the footer's
+// primary button — no new business logic, just a second entry point to it.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PanelHero extends StatelessWidget {
+  final Task task;
+  final Project project;
+  final TaskStatus? next;
+  final bool ableToReinitialize;
+  final bool isProgressing;
+  final ValueChanged<String> onNameSubmitted;
+  final ValueChanged<TaskStatus> onStageTap;
+  final VoidCallback onStatusTap;
+
+  const _PanelHero({
+    required this.task,
+    required this.project,
+    required this.next,
+    required this.ableToReinitialize,
+    required this.isProgressing,
+    required this.onNameSubmitted,
+    required this.onStageTap,
+    required this.onStatusTap,
+  });
+
+  bool get _isLocked => next == TaskStatus.printing;
+  bool get _isDone => task.status == TaskStatus.completed;
+
+  String get _statusText {
+    if (_isLocked) {
+      return 'Handed off to production'
+          '${LoginService.currentUser?.isAdmin == true ? '' : ' — design locked'}';
+    }
+    if (next == TaskStatus.clientApproved) {
+      return 'Ready to confirm client approval';
+    }
+    if (ableToReinitialize) return 'Ready to re-initialize';
+    if (next != null) return 'Ready to advance to "${stageInfo(next!).label}"';
+    return 'No further stage to advance to';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor =
+        ableToReinitialize
+            ? _T.slate400
+            : (next == TaskStatus.clientApproved ? _T.green : _T.blue);
+
+    return Container(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsetsGeometry.symmetric(horizontal: 10),
+            child: GhostTextField(
+              initialText: task.name,
+              onSubmitted: onNameSubmitted,
+              style: const TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: _T.ink,
+                letterSpacing: -0.3,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: project.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  project.name,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: _T.slate500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _StageStepper(currentStatus: task.status, onStageTap: onStageTap),
+          // if (!_isDone) ...[
+          //   const SizedBox(height: 10),
+          //   MouseRegion(
+          //     cursor: _isLocked ? MouseCursor.defer : SystemMouseCursors.click,
+          //     child: GestureDetector(
+          //       onTap: _isLocked ? null : onStatusTap,
+          //       child: Container(
+          //         padding: const EdgeInsets.symmetric(
+          //           horizontal: 12,
+          //           vertical: 10,
+          //         ),
+          //         decoration: BoxDecoration(
+          //           color: _isLocked ? _T.slate50 : _T.blue50,
+          //           borderRadius: BorderRadius.circular(_T.r),
+          //           border: Border.all(
+          //             color:
+          //                 _isLocked ? _T.slate200 : _T.blue.withOpacity(0.25),
+          //           ),
+          //         ),
+          //         child: Row(
+          //           children: [
+          //             if (isProgressing)
+          //               const SizedBox(
+          //                 width: 13,
+          //                 height: 13,
+          //                 child: CircularProgressIndicator(
+          //                   strokeWidth: 2,
+          //                   color: _T.blue,
+          //                 ),
+          //               )
+          //             else if (_isLocked)
+          //               const Icon(
+          //                 Icons.lock_outline,
+          //                 size: 14,
+          //                 color: _T.slate400,
+          //               )
+          //             else
+          //               Container(
+          //                 width: 6,
+          //                 height: 6,
+          //                 decoration: BoxDecoration(
+          //                   color: statusColor,
+          //                   shape: BoxShape.circle,
+          //                 ),
+          //               ),
+          //             const SizedBox(width: 8),
+          //             Expanded(
+          //               child: Text(
+          //                 isProgressing ? 'Progressing…' : _statusText,
+          //                 style: TextStyle(
+          //                   fontSize: 12.5,
+          //                   fontWeight: FontWeight.w600,
+          //                   color: _isLocked ? _T.slate400 : _T.ink3,
+          //                 ),
+          //               ),
+          //             ),
+          //             if (!_isLocked && !isProgressing)
+          //               Icon(
+          //                 Icons.arrow_forward_rounded,
+          //                 size: 14,
+          //                 color: _T.blue.withOpacity(0.7),
+          //               ),
+          //           ],
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ],
+        ],
+      ),
+    );
   }
 }
 
